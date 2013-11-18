@@ -4,9 +4,9 @@ changelog
 Current:	raylib 1.0 (November 2013)
 
 
--------------------------------------------
+-----------------------------------------------
 Release: 	raylib 1.0.0 (18 November 2013)
--------------------------------------------
+-----------------------------------------------
 * Initial version
 * 6 Modules provided:
 	- core:     basic window/context creation functions, input management, timming functions
