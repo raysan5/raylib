@@ -1,5 +1,5 @@
 help me!
-========
+--------
 
 I’m working hard on raylib but my resources are quite limited. If you enjoy raylib and want to help / contribute in some way, 
 please, [let me know][raysan5].
@@ -14,9 +14,7 @@ The following help is highly appreciated:
 	- Testers of current features and multiple systems - Can you find some bug on raylib?
 
 If you can not help on any of the above points but you still want to contribute in some way... please, consider helping 
-with a small donation (just some euros...). It will really motivate to continue improving this project (and pay some bills… or some coffee).
-
-[Donation Page] (www.raylib.com/helpme.htm)
+with a small [donation](http://www.raylib.com/helpme.php) (just some euros...). It will really motivate to continue improving this project (and pay some bills… or some coffee).
 
 raylib philosophy
 ------------------
