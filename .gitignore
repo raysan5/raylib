@@ -12,14 +12,12 @@ src/vector3.o
 src/stb_image.o
 src/*.exe
 examples/*.o
-examples/*.exe
 
 # Ignore thumbnails created by windows
 Thumbs.db
 
 # Ignore files build by Visual Studio
 *.obj
-*.exe
 *.pdb
 *.aps
 *.vcproj.*.user
@@ -44,7 +42,6 @@ Thumbs.db
 *.sbr
 *.sdf
 obj/
-[Rr]elease/
 [Rr]elease.win32/
 _ReSharper*/
 [Tt]est[Rr]esult*
