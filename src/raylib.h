@@ -50,7 +50,7 @@
 #ifndef RAYLIB_H
 #define RAYLIB_H 
 
-//#define NO_AUDIO	// Audio is still being tested, deactivated by default
+#define NO_AUDIO	// Audio is still being tested, deactivated by default
 
 //----------------------------------------------------------------------------------
 // Some basic Defines
