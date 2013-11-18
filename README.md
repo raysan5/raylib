@@ -1,8 +1,4 @@
-
 <img src="http://www.raylib.com/favicon.ico" width=256>
-
-raylib
-=======
 
 about
 -----
@@ -12,7 +8,7 @@ raylib is a simple and easy-to-use library to learn C videogames programming.
 raylib is highly inspired by Borland BGI graphics lib (more specifically WinBGI) and by XNA framework. 
 Allegro and SDL have also been analyzed for reference.
 
-Want to see how easy is making games with raylib? Jump to [code examples!] (http://www.raylib.com/examples.htm)
+Want to see how easy is making games with raylib? Jump to [code examples!] (http://www.raylib.com/examples.php)
 
 history
 -------
@@ -51,10 +47,10 @@ features
    * Basic 3D Support (camera, basic models, OBJ models, etc)
    * Powerful Text module with SpriteFonts support
 
-raylib uses on its core module the outstanding [GLFW3] (http://glfw.org/) library. The best option by far I found for 
+raylib uses on its core module the outstanding [GLFW3] (http://www.glfw.org/) library. The best option by far I found for 
 window/context and input management (clean, focused, great license, well documented, modern, ...). 
 
-raylib is licensed under a zlib/libpng license like GLFW3. View [LICENSE] (link to license file).
+raylib is licensed under a zlib/libpng license like GLFW3. View [LICENSE] (https://github.com/raysan5/raylib/blob/master/LICENSE.md).
 
 tool requirements
 ------------------
@@ -101,7 +97,7 @@ contact
 
 If you are using raylib and you enjoy it, please, [let me know][raysan5].
 
-If you feel you can help, then, [helpme!] (http://www.raylib.com/helpme.htm)
+If you feel you can help, then, [helpme!] (http://www.raylib.com/helpme.php)
 
 acknowledgments
 ---------------
