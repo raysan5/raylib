@@ -4,7 +4,7 @@ roadmap
 First version of raylib is quite complete and functional but there is still a lot of things I would like to improve.
 Here it is a list of features I would like to add and functions to improve.
 
-Around the source code there are some TODO points with pending revisions/bugs and ere it is a list of features I would like to add.
+Around the source code there are some TODO points with pending revisions/bugs and here it is a list of features I would like to add.
 
 raylib v1.x
 

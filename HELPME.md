@@ -9,12 +9,12 @@ The following help is highly appreciated:
 	- C programming - Can you write / review / test / improve the code? 
 	- Translators / Localizators - Can you translate raylib to another language?
 	- Documentation / Tutorials / Example writters - Can you write some tutorial / example?
-	- Web Development (I need a lot of help with this...) - Can you help with the web?
+	- Web Development - Can you help with the web? Can you setup a forum?
 	- Porting to Linux and OSX - Can you compile and test raylib on another OS?
 	- Testers of current features and multiple systems - Can you find some bug on raylib?
 
 If you can not help on any of the above points but you still want to contribute in some way... please, consider helping 
-with a small [donation](http://www.raylib.com/helpme.php) (just some euros...). It will really motivate to continue improving this project (and pay some bills… or some coffee).
+with a small [donation](http://www.raylib.com/helpme.htm) (just some euros...). It will really motivate to continue improving this project (and pay some bills… or some coffee).
 
 raylib philosophy
 ------------------

@@ -8,7 +8,7 @@ raylib is a simple and easy-to-use library to learn C videogames programming.
 raylib is highly inspired by Borland BGI graphics lib (more specifically WinBGI) and by XNA framework. 
 Allegro and SDL have also been analyzed for reference.
 
-Want to see how easy is making games with raylib? Jump to [code examples!] (http://www.raylib.com/examples.php)
+Want to see how easy is making games with raylib? Jump to [code examples!] (http://www.raylib.com/examples.htm)
 
 history
 -------
@@ -97,7 +97,7 @@ contact
 
 If you are using raylib and you enjoy it, please, [let me know][raysan5].
 
-If you feel you can help, then, [helpme!] (http://www.raylib.com/helpme.php)
+If you feel you can help, then, [helpme!] (http://www.raylib.com/helpme.htm)
 
 acknowledgments
 ---------------
