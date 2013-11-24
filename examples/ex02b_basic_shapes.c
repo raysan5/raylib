@@ -37,23 +37,23 @@ int main()
             
             // TODO: draw some shapes... with names... :P
 /*            
-            void DrawPixel(int posX, int posY, Color color);                                                   // Draw a pixel
-            void DrawPixelV(Vector2 position, Color color);                                                    // Draw a pixel (Vector version)
-            void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color);                // Draw a line
-            void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);                                     // Draw a line (Vector version)
-            void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
-            void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2);       // Draw a gradient-filled circle
-            void DrawCircleV(Vector2 center, float radius, Color color);                                       // Draw a color-filled circle (Vector version)
-            void DrawCircleLines(int centerX, int centerY, float radius, Color color);                         // Draw circle outline
-            void DrawRectangle(int posX, int posY, int width, int height, Color color);                        // Draw a color-filled rectangle
-            void DrawRectangleRec(Rectangle rec, Color color);                                                 // Draw a color-filled rectangle
-            void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2); // Draw a gradient-filled rectangle
-            void DrawRectangleV(Vector2 position, Vector2 size, Color color);                                  // Draw a color-filled rectangle (Vector version)
-            void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
-            void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle
-            void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline
-            void DrawPoly(Vector2 *points, int numPoints, Color color);                                        // Draw a closed polygon defined by points
-            void DrawPolyLine(Vector2 *points, int numPoints, Color color);                                    // Draw polygon lines
+void DrawPixel(int posX, int posY, Color color);
+void DrawPixelV(Vector2 position, Color color);
+void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color);
+void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);
+void DrawCircle(int centerX, int centerY, float radius, Color color);
+void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2);
+void DrawCircleV(Vector2 center, float radius, Color color);
+void DrawCircleLines(int centerX, int centerY, float radius, Color color);
+void DrawRectangle(int posX, int posY, int width, int height, Color color);
+void DrawRectangleRec(Rectangle rec, Color color);
+void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2);
+void DrawRectangleV(Vector2 position, Vector2 size, Color color);
+void DrawRectangleLines(int posX, int posY, int width, int height, Color color);
+void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);
+void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);
+void DrawPoly(Vector2 *points, int numPoints, Color color);
+void DrawPolyLine(Vector2 *points, int numPoints, Color color);
 */            
             DrawRectangle(screenWidth/4 - 50, screenHeight/2 - 100, 100, 100, GOLD);
             DrawCircle(3*screenWidth/4, screenHeight/2 - 50, 50, MAROON);
