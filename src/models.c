@@ -674,7 +674,6 @@ void UnloadModel(Model model)
 void DrawModel(Model model, Vector3 position, float scale, Color color)
 {
     // NOTE: For models we use Vertex Arrays (OpenGL 1.1)
-    static float rotation = 0;
     
     glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
@@ -687,7 +686,7 @@ void DrawModel(Model model, Vector3 position, float scale, Color color)
         
     glPushMatrix();
         glTranslatef(position.x, position.y, position.z);
-        glRotatef(rotation * GetFrameTime(), 0, 1, 0);
+        //glRotatef(rotation * GetFrameTime(), 0, 1, 0);
         glScalef(scale, scale, scale);
         
         glColor4ub(color.r, color.g, color.b, color.a);
@@ -698,8 +697,6 @@ void DrawModel(Model model, Vector3 position, float scale, Color color)
     glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);              // Disable texture coords array
     glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
-    
-    rotation += 10;
 }
 
 // Draw a textured model

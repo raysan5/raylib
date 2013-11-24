@@ -17,7 +17,7 @@ examples/*.o
 Thumbs.db
 
 # Ignore files build by Visual Studio
-*.obj
+# *.obj --> Can be confused with 3d model!
 *.pdb
 *.aps
 *.vcproj.*.user
