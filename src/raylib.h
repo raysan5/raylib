@@ -260,19 +260,25 @@ int GetHexValue(Color color);                           // Returns hexadecimal v
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
-bool IsKeyPressed(int key);                             // Detect if a key is being pressed
-bool IsKeyReleased(int key);                            // Detect if a key is NOT being pressed
+bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
+bool IsKeyDown(int key);                                // Detect if a key is being pressed
+bool IsKeyReleased(int key);                            // Detect if a key has been released once
+bool IsKeyUp(int key);                                  // Detect if a key is NOT being pressed
 
-bool IsMouseButtonPressed(int button);                  // Detect if a mouse button is being pressed
-bool IsMouseButtonReleased(int button);                 // Detect if a mouse button is NOT being pressed
+bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
+bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
+bool IsMouseButtonReleased(int button);                 // Detect if a mouse button has been released once
+bool IsMouseButtonUp(int button);                       // Detect if a mouse button is NOT being pressed
 int GetMouseX();                                        // Returns mouse position X
 int GetMouseY();                                        // Returns mouse position Y
 Vector2 GetMousePosition();                             // Returns mouse position XY
 
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
-bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button is being pressed
-bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button is NOT being pressed
+bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
+bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
+bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
+bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
@@ -305,19 +311,20 @@ Texture2D LoadTexture(const char *fileName);                                    
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
-void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, float scale, Color tint); // Draw a part of a texture defined by a rectangle
+void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
+void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
 //------------------------------------------------------------------------------------
 SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load a SpriteFont image into GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory
-void DrawText(const char *text, int posX, int posY, int fontSize, int spacing, Color color);       // Draw text (using default font)
+void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
 void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int fontSize, int spacing, Color tint); // Draw text using SpriteFont
-int MeasureText(const char *text, int fontSize, int spacing);                                      // Measure string width for default font
+int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing);         // Measure string size for SpriteFont
 int GetFontBaseSize(SpriteFont spriteFont);                                                        // Returns the base size for a SpriteFont (chars height)
-void DrawFps(int posX, int posY);                                                                  // Shows current FPS on top-left corner
+void DrawFPS(int posX, int posY);                                                                  // Shows current FPS on top-left corner
 const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
 
 //------------------------------------------------------------------------------------

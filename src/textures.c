@@ -197,7 +197,7 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 }
 
 // Draw a part of a texture (defined by a rectangle)
-void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, float scale, Color tint)
+void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
     glEnable(GL_TEXTURE_2D);    // Enable textures usage
     
@@ -205,7 +205,7 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, fl
     
     glPushMatrix();
         glTranslatef(position.x, position.y, 0);
-        glScalef(scale, scale, 1.0f);
+        //glScalef(1.0f, 1.0f, 1.0f);
         //glRotatef(rotation, 0, 0, 1);
         
         glBegin(GL_QUADS);
@@ -227,6 +227,44 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, fl
             // Top-left corner for texture and quad
             glTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
             glVertex2f(0.0f, sourceRec.height);
+        glEnd();
+    glPopMatrix();
+    
+    glDisable(GL_TEXTURE_2D);    // Disable textures usage
+}
+
+// Draw a part of a texture (defined by a rectangle) with 'pro' parameters
+// TODO: Test this function...
+void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
+{
+    glEnable(GL_TEXTURE_2D);    // Enable textures usage
+    
+    glBindTexture(GL_TEXTURE_2D, texture.glId);
+    
+    glPushMatrix();
+        glTranslatef(-origin.x, -origin.y, 0);
+        glRotatef(rotation, 0, 0, 1);
+        glTranslatef(destRec.x + origin.x, destRec.y + origin.y, 0);
+        
+        glBegin(GL_QUADS);
+            glColor4ub(tint.r, tint.g, tint.b, tint.a);
+            glNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+            
+            // Bottom-left corner for texture and quad
+            glTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+            glVertex2f(0.0f, 0.0f);
+            
+            // Bottom-right corner for texture and quad
+            glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+            glVertex2f(destRec.width, 0.0f);
+            
+            // Top-right corner for texture and quad
+            glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+            glVertex2f(destRec.width, destRec.height);
+            
+            // Top-left corner for texture and quad
+            glTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+            glVertex2f(0.0f, destRec.height);
         glEnd();
     glPopMatrix();
     

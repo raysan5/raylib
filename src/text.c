@@ -283,11 +283,11 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 
 // Draw text (using default font)
 // NOTE: fontSize work like in any drawing program but if fontSize is lower than font-base-size, then font-base-size is used
-void DrawText(const char* text, int posX, int posY, int fontSize, int spacing, Color color)
+void DrawText(const char* text, int posX, int posY, int fontSize, Color color)
 {
     Vector2 position = { (float)posX, (float)posY };
     
-    DrawTextEx(defaultFont, text, position, fontSize, spacing, color);
+    DrawTextEx(defaultFont, text, position, fontSize, 1, color);
 }
 
 // Formatting of text with variables to 'embed'
@@ -349,15 +349,14 @@ void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int f
 }
 
 // Measure string width for default font
-int MeasureText(const char *text, int fontSize, int spacing)
+int MeasureText(const char *text, int fontSize)
 {
     Vector2 vec;
 
-    vec = MeasureTextEx(defaultFont, text, fontSize, spacing);
+    vec = MeasureTextEx(defaultFont, text, fontSize, 1);
 
     return (int)vec.x;
 }
-
 
 // Measure string size for SpriteFont
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing)
@@ -391,7 +390,7 @@ int GetFontBaseSize(SpriteFont spriteFont)
 
 // Shows current FPS on top-left corner
 // NOTE: Uses default font
-void DrawFps(int posX, int posY)
+void DrawFPS(int posX, int posY)
 {
     // NOTE: We are rendering fps every second for better viewing on high framerates
     static float fps;
@@ -403,7 +402,7 @@ void DrawFps(int posX, int posY)
     if (counter < refreshRate)
     {
         sprintf(buffer, "%2.0f FPS", fps);
-        DrawText(buffer, posX, posY, 20, 1, LIME);
+        DrawText(buffer, posX, posY, 20, LIME);
         
         counter++;
     }
@@ -412,7 +411,7 @@ void DrawFps(int posX, int posY)
         fps = GetFPS();
         refreshRate = fps;
         sprintf(buffer, "%2.0f FPS", fps);
-        DrawText(buffer, posX, posY, 20, 1, LIME);
+        DrawText(buffer, posX, posY, 20, LIME);
         
         counter = 0;
     }

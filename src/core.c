@@ -61,6 +61,15 @@ static double targetTime = 0;               // Desired time for one frame, if 0 
 static int windowWidth, windowHeight;       // Required to switch between windowed/fullscren mode (F11)
 static char *windowTitle;                   // Required to switch between windowed/fullscren mode (F11)
 
+static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
+static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
+
+static char previousMouseState[3] = { 0 };  // Required to check if mouse btn pressed/released once
+static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pressed/released once
+
+static char previousGamepadState[32] = {0}; // Required to check if gamepad btn pressed/released once
+static char currentGamepadState[32] = {0};  // Required to check if gamepad btn pressed/released once
+
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
@@ -289,29 +298,97 @@ int GetHexValue(Color color)
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
 
-// Detect if a key is being pressed (key held down)
+// Detect if a key has been pressed once
 bool IsKeyPressed(int key)
+{   
+    bool ret = false;
+
+    currentKeyState[key] = IsKeyDown(key);
+
+    if (currentKeyState[key] != previousKeyState[key])
+    {
+        if (currentKeyState[key]) ret = true;
+        previousKeyState[key] = currentKeyState[key];
+    }
+    else ret = false;
+    
+    return ret;
+}
+
+// Detect if a key is being pressed (key held down)
+bool IsKeyDown(int key)
 {
     if (glfwGetKey(window, key) == GLFW_PRESS) return true;
     else return false;
 }
 
-// Detect if a key is NOT being pressed (key not held down)
+// Detect if a key has been released once
 bool IsKeyReleased(int key)
+{   
+    bool ret = false;
+    
+    currentKeyState[key] = IsKeyUp(key);
+
+    if (currentKeyState[key] != previousKeyState[key])
+    {
+        if (currentKeyState[key]) ret = true;
+        previousKeyState[key] = currentKeyState[key];
+    }
+    else ret = false;
+    
+    return ret;
+}
+
+// Detect if a key is NOT being pressed (key not held down)
+bool IsKeyUp(int key)
 {
     if (glfwGetKey(window, key) == GLFW_RELEASE) return true;
     else return false;
 }
 
-// Detect if a mouse button is being pressed
+// Detect if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
+{
+    bool ret = false;
+
+    currentMouseState[button] = IsMouseButtonDown(button);
+
+    if (currentMouseState[button] != previousMouseState[button])
+    {
+        if (currentMouseState[button]) ret = true;
+        previousMouseState[button] = currentMouseState[button];
+    }
+    else ret = false;
+    
+    return ret;
+}
+
+// Detect if a mouse button is being pressed
+bool IsMouseButtonDown(int button)
 {
     if (glfwGetMouseButton(window, button) == GLFW_PRESS) return true;
     else return false;
 }
 
-// Detect if a mouse button is NOT being pressed
+// Detect if a mouse button has been released once
 bool IsMouseButtonReleased(int button)
+{
+    bool ret = false;
+
+    currentMouseState[button] = IsMouseButtonUp(button);
+
+    if (currentMouseState[button] != previousMouseState[button])
+    {
+        if (currentMouseState[button]) ret = true;
+        previousMouseState[button] = currentMouseState[button];
+    }
+    else ret = false;
+    
+    return ret;
+}
+
+// Detect if a mouse button is NOT being pressed
+bool IsMouseButtonUp(int button)
 {
     if (glfwGetMouseButton(window, button) == GLFW_RELEASE) return true;
     else return false;
@@ -386,6 +463,22 @@ Vector2 GetGamepadMovement(int gamepad)
 // Detect if a gamepad button is being pressed
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
+    bool ret = false;
+
+    currentGamepadState[button] = IsGamepadButtonDown(gamepad, button);
+
+    if (currentGamepadState[button] != previousGamepadState[button])
+    {
+        if (currentGamepadState[button]) ret = true;
+        previousGamepadState[button] = currentGamepadState[button];
+    }
+    else ret = false;
+    
+    return ret;
+}
+
+bool IsGamepadButtonDown(int gamepad, int button)
+{
     const unsigned char* buttons;
     int buttonsCount;
     
@@ -400,6 +493,22 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 
 // Detect if a gamepad button is NOT being pressed
 bool IsGamepadButtonReleased(int gamepad, int button)
+{
+    bool ret = false;
+
+    currentGamepadState[button] = IsGamepadButtonUp(gamepad, button);
+
+    if (currentGamepadState[button] != previousGamepadState[button])
+    {
+        if (currentGamepadState[button]) ret = true;
+        previousGamepadState[button] = currentGamepadState[button];
+    }
+    else ret = false;
+    
+    return ret;
+}
+
+bool IsGamepadButtonUp(int gamepad, int button)
 {
     const unsigned char* buttons;
     int buttonsCount;

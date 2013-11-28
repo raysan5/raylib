@@ -13,6 +13,7 @@
 
 int main()
 {
+<<<<<<< HEAD
     int screenWidth = 800;
     int screenHeight = 450;
     
@@ -28,9 +29,24 @@ int main()
     bool previousKeyState = currentKeyState;
     //----------------------------------------------------------
     
+=======
+	// Initialization
+	//--------------------------------------------------------------------------------------
+	int screenWidth = 800;
+	int screenHeight = 450;
+	
+	InitWindow(screenWidth, screenHeight, "raylib example 08 - audio loading and playing");
+	
+    InitAudioDevice();      // Initialize audio device
+	
+	Sound fx = LoadSound("resources/coin.wav");         // Load WAV audio file
+	//--------------------------------------------------------------------------------------
+	
+>>>>>>> Added some functions and examples update
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+<<<<<<< HEAD
         // Update
         //-----------------------------------------------------
         currentKeyState = IsKeyPressed(KEY_SPACE);      // Check if Space have been pressed
@@ -65,5 +81,33 @@ int main()
     CloseWindow();            // Close window and OpenGL context
     //----------------------------------------------------------
     
+=======
+		// Update
+		//----------------------------------------------------------------------------------
+		if (IsKeyPressed(KEY_SPACE)) PlaySound(fx);     // Play the sound!	
+		//----------------------------------------------------------------------------------
+		
+		// Draw
+		//----------------------------------------------------------------------------------
+		BeginDrawing();
+		
+			ClearBackground(RAYWHITE);
+			
+			DrawText("Press SPACE to PLAY the SOUND!", 240, 200, 20, LIGHTGRAY);
+		
+        EndDrawing();
+		//----------------------------------------------------------------------------------
+    }
+
+	// De-Initialization
+	//--------------------------------------------------------------------------------------
+	UnloadSound(fx);        // Unload sound data
+    
+	CloseAudioDevice();     // Close audio device
+	
+    CloseWindow();          // Close window and OpenGL context
+	//--------------------------------------------------------------------------------------
+	
+>>>>>>> Added some functions and examples update
     return 0;
 }

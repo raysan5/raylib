@@ -13,29 +13,29 @@
 
 int main()
 {
+    // Initialization
+    //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
     
-    // Initialization
-    //---------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "raylib example 02c - raylib color palette");
-    //----------------------------------------------------------
+    //--------------------------------------------------------------------------------------
     
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        //-----------------------------------------------------
+        //----------------------------------------------------------------------------------
         // TODO: Update your variables here
-        //-----------------------------------------------------
+        //----------------------------------------------------------------------------------
         
         // Draw
-        //-----------------------------------------------------
+        //----------------------------------------------------------------------------------
         BeginDrawing();
         
             ClearBackground(RAYWHITE);
             
-            DrawText("raylib color palette", 28, 42, 20, 2, BLACK);
+            DrawText("raylib color palette", 28, 42, 20, BLACK);
             
             DrawRectangle(26, 80, 100, 100, DARKGRAY);
             DrawRectangle(26, 188, 100, 100, GRAY);
@@ -60,36 +60,36 @@ int main()
             DrawRectangle(674, 296, 100, 100, BEIGE);
 
             
-            DrawText("DARKGRAY", 57, 166, 10, 2, BLACK);
-            DrawText("GRAY", 89, 274, 10, 2, BLACK);
-            DrawText("LIGHTGRAY", 51, 382, 10, 2, BLACK);
-            DrawText("MAROON", 180, 166, 10, 2, BLACK);
-            DrawText("RED", 207, 274, 10, 2, BLACK);
-            DrawText("PINK", 200, 382, 10, 2, BLACK);
-            DrawText("ORANGE", 290, 166, 10, 2, BLACK);
-            DrawText("GOLD", 306, 274, 10, 2, BLACK);
-            DrawText("YELLOW", 290, 382, 10, 2, BLACK);
-            DrawText("DARKGREEN", 374, 166, 10, 2, BLACK);
-            DrawText("LIME", 417, 274, 10, 2, BLACK);
-            DrawText("GREEN", 407, 382, 10, 2, BLACK);
-            DrawText("DARKBLUE", 491, 166, 10, 2, BLACK);
-            DrawText("BLUE", 523, 274, 10, 2, BLACK);
-            DrawText("SKYBLUE", 499, 382, 10, 2, BLACK);
-            DrawText("DARKPURPLE", 582, 166, 10, 2, BLACK);
-            DrawText("VIOLET", 617, 274, 10, 2, BLACK);
-            DrawText("PURPLE", 615, 382, 10, 2, BLACK);
-            DrawText("DARKBROWN", 695, 166, 10, 2, BLACK);
-            DrawText("BROWN", 728, 274, 10, 2, BLACK);
-            DrawText("BEIGE", 733, 382, 10, 2, BLACK);
+            DrawText("DARKGRAY", 65, 166, 10, BLACK);
+            DrawText("GRAY", 93, 274, 10, BLACK);
+            DrawText("LIGHTGRAY", 61, 382, 10, BLACK);
+            DrawText("MAROON", 186, 166, 10, BLACK);
+            DrawText("RED", 208, 274, 10, BLACK);
+            DrawText("PINK", 204, 382, 10, BLACK);
+            DrawText("ORANGE", 295, 166, 10, BLACK);
+            DrawText("GOLD", 310, 274, 10, BLACK);
+            DrawText("YELLOW", 300, 382, 10, BLACK);
+            DrawText("DARKGREEN", 382, 166, 10, BLACK);
+            DrawText("LIME", 420, 274, 10, BLACK);
+            DrawText("GREEN", 410, 382, 10, BLACK);
+            DrawText("DARKBLUE", 498, 166, 10, BLACK);
+            DrawText("BLUE", 526, 274, 10, BLACK);
+            DrawText("SKYBLUE", 505, 382, 10, BLACK);
+            DrawText("DARKPURPLE", 592, 166, 10, BLACK);
+            DrawText("VIOLET", 621, 274, 10, BLACK);
+            DrawText("PURPLE", 620, 382, 10, BLACK);
+            DrawText("DARKBROWN", 705, 166, 10, BLACK);
+            DrawText("BROWN", 733, 274, 10, BLACK);
+            DrawText("BEIGE", 737, 382, 10, BLACK);
         
         EndDrawing();
-        //-----------------------------------------------------
+        //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
-    //---------------------------------------------------------
+    //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
-    //----------------------------------------------------------
+    //--------------------------------------------------------------------------------------
     
     return 0;
 }
