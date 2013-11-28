@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 07b - Draw some basic 3d shapes (cube, sphere, cylinder...)
+*	raylib example 07b - Draw some basic 3d shapes (cube, sphere, cylinder...)
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
+*	This example has been created using raylib 1.0 (www.raylib.com)
+*	raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*	Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -13,30 +13,14 @@
 
 int main()
 {
-<<<<<<< HEAD
-    int screenWidth = 800;
-    int screenHeight = 450;
-=======
 	// Initialization
 	//--------------------------------------------------------------------------------------
 	int screenWidth = 800;
 	int screenHeight = 450;
->>>>>>> Added some functions and examples update
 
-    Vector3 position = { 0.0, 0.0, 0.0 };
-    
+	Vector3 position = { 0.0, 0.0, 0.0 };
+	
     // Define the camera to look into our 3d world
-<<<<<<< HEAD
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
-    
-    // Initialization
-    //---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib example 07b - 3d shapes");
-    
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
-    //----------------------------------------------------------
-    
-=======
 	Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
 	
 	InitWindow(screenWidth, screenHeight, "raylib example 07b - 3d shapes");
@@ -44,26 +28,9 @@ int main()
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 	
->>>>>>> Added some functions and examples update
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())	// Detect window close button or ESC key
     {
-<<<<<<< HEAD
-        // Update
-        //-----------------------------------------------------
-        // TODO: Update your variables here
-        //-----------------------------------------------------
-        
-        // Draw
-        //-----------------------------------------------------
-        BeginDrawing();
-        
-            ClearBackground(RAYWHITE);
-            
-            Begin3dMode(camera);
-            
-                DrawCube(position, 2, 2, 2, RED);           // Draw a cube
-=======
 		// Update
 		//----------------------------------------------------------------------------------
 		// TODO: Update your variables here
@@ -78,7 +45,6 @@ int main()
 			Begin3dMode(camera);
 			
 				DrawCube(position, 2, 2, 2, RED);           // Draw a cube
->>>>>>> Added some functions and examples update
                 DrawCubeWires(position, 2, 2, 2, MAROON);   // Draw a wired-cube
                 
                 // TODO: Draw some basic 3d shapes
@@ -92,23 +58,6 @@ void DrawSphereWires(Vector3 centerPos, float radius, Color color);
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color);
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color);
 */
-<<<<<<< HEAD
-                DrawGrid(10.0, 1.0);        // Draw a grid
-                
-            End3dMode();
-            
-            DrawFps(10, 10);
-        
-        EndDrawing();
-        //-----------------------------------------------------
-    }
-
-    // De-Initialization
-    //---------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
-    //----------------------------------------------------------
-    
-=======
 				DrawGrid(10.0, 1.0);        // Draw a grid
 				
 			End3dMode();
@@ -124,6 +73,5 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
     CloseWindow();		// Close window and OpenGL context
 	//--------------------------------------------------------------------------------------
 	
->>>>>>> Added some functions and examples update
     return 0;
 }
