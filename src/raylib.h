@@ -1,6 +1,6 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.0 (www.raylib.com)
+*   raylib 1.0.1 (www.raylib.com)
 *    
 *   A simple and easy-to-use library to learn C videogames programming
 *
