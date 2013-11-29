@@ -192,6 +192,12 @@ extern void UnloadDefaultFont()
     free(defaultFont.charSet);
 }
 
+// Get the default font, useful to be used with extended parameters
+SpriteFont GetDefaultFont()
+{
+    return defaultFont;
+}
+
 // Load a SpriteFont image into GPU memory
 SpriteFont LoadSpriteFont(const char* fileName)      
 {
