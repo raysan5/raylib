@@ -11,7 +11,7 @@ Update: 	raylib 1.0.1 (28 November 2013)
 [text] DrawFps() - Renamed to DrawFPS() for coherence with similar function
 [core] IsKeyPressed() - Change functionality, check if key pressed once
 [core] IsKeyDown() - Added, check if key is being pressed
-[core] IsKeyReleased() - Change functionality, chek if key released once
+[core] IsKeyReleased() - Change functionality, check if key released once
 [core] IsKeyUp() - Added, check if key is being NOT pressed
 [core] IsMouseButtonDown() - Added, check if mouse button is being pressed
 [core] IsMouseButtonPressed() - Change functionality, check if mouse button pressed once
