@@ -1,10 +1,20 @@
 changelog
 ---------
 
-Current:	raylib 1.0.1 (November 2013)
+Current:    raylib 1.0.2 (November 2013)
 
 -----------------------------------------------
-Update: 	raylib 1.0.1 (28 November 2013)
+Update:     raylib 1.0.2 (30 November 2013)
+-----------------------------------------------
+[text] GetDefaultFont() - Added, get default SpriteFont to be used on DrawTextEx()
+[shapes] CheckCollisionRecs() - Added, check collision between rectangles
+[shapes] CheckCollisionCircles() - Added, check collision between circles
+[shapes] CheckCollisionCircleRec() - Added, check collision circle-rectangle
+[shapes] GetCollisionRec() - Added, get collision rectangle
+[textures] CreateTexture2D() - Added, create Texture2D from Image data
+
+-----------------------------------------------
+Update:     raylib 1.0.1 (28 November 2013)
 -----------------------------------------------
 [text] DrawText() - Removed spacing parameter
 [text] MeasureText() - Removed spacing parameter
@@ -22,13 +32,13 @@ Update: 	raylib 1.0.1 (28 November 2013)
 [examples] Function changes applied to ALL examples
 
 -----------------------------------------------
-Release: 	raylib 1.0.0 (18 November 2013)
+Release:    raylib 1.0.0 (18 November 2013)
 -----------------------------------------------
 * Initial version
 * 6 Modules provided:
-	- core:     basic window/context creation functions, input management, timming functions
-	- shapes:   basic shapes drawing functions
-	- textures: image data loading and conversion to OpenGL textures
-	- text:     text drawing, sprite fonts loading, default font loading
-	- models:   basic 3d shapes drawing, OBJ models loading and drawing
-	- audio:	audio device initialization, WAV files loading and playing
+    - core:     basic window/context creation functions, input management, timming functions
+    - shapes:   basic shapes drawing functions
+    - textures: image data loading and conversion to OpenGL textures
+    - text:     text drawing, sprite fonts loading, default font loading
+    - models:   basic 3d shapes drawing, OBJ models loading and drawing
+    - audio:    audio device initialization, WAV files loading and playing
