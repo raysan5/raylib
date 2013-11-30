@@ -662,6 +662,38 @@ Model LoadModel(const char *fileName)
     return model;
 }
 
+// Load a heightmap image as a 3d model
+// TODO: Just do it...
+Model LoadHeightmap(Image heightmap, Vector3 resolution)
+{
+    Model model;
+    
+    int mapX = heightmap.width;
+	int mapZ = heightmap.height;
+    
+    // NOTE: One vertex per pixel
+    // TODO: Consider resolution when generating model data?
+    int numTriangles = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
+  
+    model.numVertices = numTriangles*3;
+
+    model.vertices = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
+    model.normals = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
+    model.texcoords = (Vector2 *)malloc(model.numVertices * sizeof(Vector2));
+
+	for(int z = 0; z < mapZ; z++)
+	{
+		for(int x = 0; x < mapX; x++)
+		{
+			// TODO: Fill vertices array with data
+		}
+	}
+
+	//SmoothHeightmap(&model);    // TODO: Smooth vertex interpolation
+    
+    return model;
+}
+
 // Unload 3d model from memory
 void UnloadModel(Model model)
 {
@@ -743,9 +775,9 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 basePos, float size
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 basePos, float size, Color tint)
 {
     // NOTE: Billboard size will represent the width, height maintains aspect ratio
-    Vector3 centerPos = { basePos.x, basePos.y + size * (float)texture.height/(float)texture.width/2, basePos.z };
-    Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
-    Vector3 rotation = { 90, 0, 0 };
+    //Vector3 centerPos = { basePos.x, basePos.y + size * (float)texture.height/(float)texture.width/2, basePos.z };
+    //Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
+    //Vector3 rotation = { 90, 0, 0 };
     
     // TODO: Calculate Y rotation to face always camera (use matrix)
     // OPTION: Lock Y-axis
@@ -766,7 +798,7 @@ void DrawHeightmap(Image heightmap, Vector3 centerPos, Vector3 scale, Color colo
     // NOTE: Heightmap resolution will depend on image size (one quad per pixel)
 
     // TODO: Review how this function works... probably we need:
-    // Model LoadHeightmap(Image image, Vector3 resolution);
+    // Model LoadHeightmap(Image heightmap, Vector3 resolution);
     
     // NOTE: We are allocating and de-allocating vertex data every frame! --> framerate drops 80%! CRAZY!
     Vector3 *terrainVertex = (Vector3 *)malloc(heightmap.width * heightmap.height * sizeof(Vector3));

@@ -157,6 +157,36 @@ Texture2D LoadTextureEx(const char *fileName, bool createPOT, bool mipmaps)
     return texture;
 }
 
+// Create a Texture2D from Image data
+// NOTE: Image is not unloaded, it should be done manually...
+Texture2D CreateTexture2D(Image image)
+{
+    Texture2D texture;
+    
+    // Convert image data to OpenGL texture
+    //----------------------------------------
+    GLuint id;
+    glGenTextures(1, &id);         // Generate Pointer to the Texture
+    
+    glBindTexture(GL_TEXTURE_2D, id);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repead on x-axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repead on y-axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels);
+    
+    // NOTE: Not using mipmappings (texture for 2D drawing)
+    // At this point we have the image converted to texture and uploaded to GPU
+    
+    texture.glId = id;
+    texture.width = image.width;
+    texture.height = image.height;
+    
+    return texture;
+}
+
 // Unload texture from GPU memory
 void UnloadTexture(Texture2D texture)
 {

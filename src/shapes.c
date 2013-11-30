@@ -2,7 +2,7 @@
 *
 *   raylib.shapes
 *
-*   Basic functions to draw 2d Shapes
+*   Basic functions to draw 2d Shapes and check collisions
 *     
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *    
@@ -26,7 +26,9 @@
 #include "raylib.h"
 
 #include <GL/gl.h>      // OpenGL functions
+#include <stdlib.h>     // Required for abs() function
 #include <math.h>       // Math related functions, sin() and cos() used on DrawCircle*
+                        // sqrt() and pow() and abs() used on CheckCollision*
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -323,4 +325,97 @@ void DrawPolyLine(Vector2 *points, int numPoints, Color color)
         
         //glDisable(GL_LINE_SMOOTH);
     }
-}                                                
+}
+
+// Check collision between two rectangles
+bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
+{
+    bool collision = false;
+    
+    int dx = abs((rec1.x + rec1.width / 2) - (rec2.x + rec2.width / 2));
+    int dy = abs((rec1.y + rec1.height / 2) - (rec2.y + rec2.height / 2));
+    
+    if ((dx <= (rec1.width / 2 + rec2.width / 2)) && ((dy <= (rec1.height / 2 + rec2.height / 2)))) collision = true;
+    
+    return collision;
+}
+
+// Check collision between two circles
+bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2)
+{
+    bool collision = false;
+    
+    float dx = center2.x - center1.x;      // X distance between centers
+    float dy = center2.y - center1.y;      // Y distance between centers
+    
+    float distance = sqrt(dx*dx + dy*dy);  // Distance between centers
+    
+    if (distance <= (radius1 + radius2)) collision = true;
+    
+    return collision;
+}
+
+// Check collision between circle and rectangle
+bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
+{
+    bool collision = false;
+    
+    float dx = abs((rec.x + rec.width / 2) - center.x);
+    float dy = abs((rec.y + rec.height / 2) - center.y);
+    
+    if ((dx <= (rec.width / 2 + radius)) && (dy <= (rec.height / 2 + radius))) collision = true;
+    
+    return collision;
+}
+
+// Get collision rectangle for two rectangles collision
+Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
+{
+    Rectangle retRec = { 0, 0, 0, 0 };
+    
+    if (CheckCollisionRecs(rec1, rec2))
+    {
+        int dxx = abs(rec1.x - rec2.x);
+        int dyy = abs(rec1.y - rec2.y);
+        
+        if (rec1.x <= rec2.x)
+        {
+            if (rec1.y <= rec2.y)
+            {	
+                retRec.x = rec2.x;
+                retRec.y = rec2.y;
+                retRec.width = rec1.width - dxx;
+                retRec.height = rec1.height - dyy;
+            }
+            else
+            {
+                retRec.x = rec2.x;
+                retRec.y = rec1.y;
+                retRec.width = rec1.width - dxx;
+                retRec.height = rec2.height - dyy;
+            }
+        }
+        else
+        {
+            if (rec1.y <= rec2.y)
+            {	
+                retRec.x = rec1.x;
+                retRec.y = rec2.y;
+                retRec.width = rec2.width - dxx;
+                retRec.height = rec1.height - dyy;
+            }
+            else
+            {
+                retRec.x = rec1.x;
+                retRec.y = rec1.y;
+                retRec.width = rec2.width - dxx;
+                retRec.height = rec2.height - dyy;
+            }
+        }
+        
+        if (retRec.width >= rec2.width) retRec.width = rec2.width;
+        if (retRec.height >= rec2.height) retRec.height = rec2.height;
+    }
+    
+    return retRec;
+}                                    

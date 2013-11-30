@@ -60,7 +60,7 @@ raylib has been developed using exclusively two tools:
    * Notepad++ (text editor) - [http://notepad-plus-plus.org/](http://notepad-plus-plus.org/)
    * MinGW (GCC compiler) - [http://www.mingw.org/](http://www.mingw.org/)
    
-Those are the tools I recommended to develop with raylib, actually, my students develop using this tools. 
+Those are the tools I recommend to develop with raylib, in fact, those are the tools my students use. 
 I believe those are the best tools to train spartan-programmers.
 
 Someone could argue about debugging. raylib is a library intended for learning and I think C it's a clear enough language

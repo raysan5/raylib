@@ -1,6 +1,6 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.1 (www.raylib.com)
+*   raylib 1.0.2 (www.raylib.com)
 *    
 *   A simple and easy-to-use library to learn C videogames programming
 *
@@ -301,6 +301,11 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);        
 void DrawPoly(Vector2 *points, int numPoints, Color color);                                        // Draw a closed polygon defined by points
 void DrawPolyLine(Vector2 *points, int numPoints, Color color);                                    // Draw polygon lines
 
+bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
+bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2);        // Check collision between two circles
+bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec);                         // Check collision between circle and rectangle
+Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2);                                         // Get collision rectangle for two rectangles collision
+
 //------------------------------------------------------------------------------------
 // Texture Loading and Drawing Functions (Module: textures)
 //------------------------------------------------------------------------------------
@@ -313,6 +318,7 @@ void DrawTexture(Texture2D texture, int posX, int posY, Color tint);            
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
+Texture2D CreateTexture2D(Image image);                                                            // Create a Texture2D from Image data
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
