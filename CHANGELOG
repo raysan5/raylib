@@ -1,10 +1,14 @@
 changelog
 ---------
 
-Current:    raylib 1.0.2 (November 2013)
+Current Release:    raylib 1.0.2 (November 2013)
+
+NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
+NOTE: Current Release includes all previous updates.
+
 
 -----------------------------------------------
-Update:     raylib 1.0.2 (30 November 2013)
+Release:     raylib 1.0.2 (30 November 2013)
 -----------------------------------------------
 [text] GetDefaultFont() - Added, get default SpriteFont to be used on DrawTextEx()
 [shapes] CheckCollisionRecs() - Added, check collision between rectangles
@@ -28,7 +32,6 @@ Update:     raylib 1.0.1 (28 November 2013)
 [core] IsMouseButtonUp() - Added, check if mouse button is NOT being pressed
 [core] IsMouseButtonReleased() - Change functionality, check if mouse button released once
 [textures] DrawTexturePro() - Added, texture drawing with 'pro' parameters
-
 [examples] Function changes applied to ALL examples
 
 -----------------------------------------------
