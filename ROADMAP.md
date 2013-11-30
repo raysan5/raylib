@@ -11,7 +11,7 @@ raylib v1.x
    - Review Billboard Drawing functions
    - Review Heightmap Loading and Drawing functions
    - Lighting support (only 3d mode) - CreateLight()
-   - Simple Collision Detection functions - CheckCollisionRects(), CheckCollisionCircles()
+   - [DONE] Simple Collision Detection functions
    - Default scene Camera controls (zoom, pan, rotate)   
    - Basic Procedural Texture / Image generation (Gradient, Checked, Spot, Noise, Cellular)
    - Software mipmapping generation and POT conversion (custom implementation)
