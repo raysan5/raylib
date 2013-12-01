@@ -16,6 +16,7 @@ Release:     raylib 1.0.2 (30 November 2013)
 [shapes] CheckCollisionCircleRec() - Added, check collision circle-rectangle
 [shapes] GetCollisionRec() - Added, get collision rectangle
 [textures] CreateTexture2D() - Added, create Texture2D from Image data
+[audio] Fixed WAV loading function, now audio works!
 
 -----------------------------------------------
 Update:     raylib 1.0.1 (28 November 2013)
