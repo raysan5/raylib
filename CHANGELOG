@@ -1,14 +1,14 @@
 changelog
 ---------
 
-Current Release:    raylib 1.0.2 (November 2013)
+Current Release:    raylib 1.0.2 (December 2013)
 
 NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
 NOTE: Current Release includes all previous updates.
 
 
 -----------------------------------------------
-Release:     raylib 1.0.2 (30 November 2013)
+Release:     raylib 1.0.2 (1 December 2013)
 -----------------------------------------------
 [text] GetDefaultFont() - Added, get default SpriteFont to be used on DrawTextEx()
 [shapes] CheckCollisionRecs() - Added, check collision between rectangles
