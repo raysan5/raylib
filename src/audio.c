@@ -51,6 +51,7 @@ typedef struct Wave {
     unsigned char *data;      // Buffer data pointer
     unsigned int sampleRate;
     unsigned int dataSize;
+    short bitsPerSample;
     short channels;
     short format;    
 } Wave;
@@ -133,14 +134,15 @@ Sound LoadSound(char *fileName)
     // The OpenAL format is worked out by looking at the number of channels and the bits per sample
     if (wave.channels == 1) 
     {
-        if (wave.sampleRate == 8 ) format = AL_FORMAT_MONO8;
-        else if (wave.sampleRate == 16) format = AL_FORMAT_MONO16;
+        if (wave.bitsPerSample == 8 ) format = AL_FORMAT_MONO8;
+        else if (wave.bitsPerSample == 16) format = AL_FORMAT_MONO16;
     } 
     else if (wave.channels == 2) 
     {
-        if (wave.sampleRate == 8 ) format = AL_FORMAT_STEREO8;
-        else if (wave.sampleRate == 16) format = AL_FORMAT_STEREO16;
+        if (wave.bitsPerSample == 8 ) format = AL_FORMAT_STEREO8;
+        else if (wave.bitsPerSample == 16) format = AL_FORMAT_STEREO16;
     }
+    
     
     // Create an audio source
     ALuint source;
@@ -158,7 +160,7 @@ Sound LoadSound(char *fileName)
     alGenBuffers(1, &buffer);            // Generate pointer to buffer
 
     // Upload sound data to buffer
-    alBufferData(buffer, format, wave.data, wave.dataSize, wave.sampleRate);
+    alBufferData(buffer, format, (void*)wave.data, wave.dataSize, wave.sampleRate);
 
     // Attach sound buffer to source
     alSourcei(source, AL_BUFFER, buffer);
@@ -168,7 +170,6 @@ Sound LoadSound(char *fileName)
     
     printf("Sample rate: %i\n", wave.sampleRate);
     printf("Channels: %i\n", wave.channels);
-    printf("Format: %i\n", wave.format);
     
     printf("Audio file loaded...!\n");
     
@@ -229,71 +230,96 @@ void StopSound(Sound sound)
 // Load WAV file into Wave structure
 static Wave LoadWAV(char *fileName) 
 {
-    Wave wave;
-    FILE *wavFile; 
+    // Basic WAV headers structs
+    typedef struct {
+        char chunkID[4];
+        long chunkSize;
+        char format[4];
+    } RiffHeader;
 
+    typedef struct {
+        char subChunkID[4];
+        long subChunkSize;
+        short audioFormat;
+        short numChannels;
+        long sampleRate;
+        long byteRate;
+        short blockAlign;
+        short bitsPerSample;
+    } WaveFormat;
+
+    typedef struct {
+        char subChunkID[4];
+        long subChunkSize;
+    } WaveData;
+    
+    RiffHeader riffHeader;
+    WaveFormat waveFormat;
+    WaveData waveData;
+    
+    Wave wave;
+    FILE *wavFile;
+    
     wavFile = fopen(fileName, "rb");
     
     if (!wavFile)
     {
-        printf("Could not load WAV file.\n");
+        printf("Could not open WAV file.\n");
         exit(1);
     }
+   
+    // Read in the first chunk into the struct
+    fread(&riffHeader, sizeof(RiffHeader), 1, wavFile);
+ 
+    // Check for RIFF and WAVE tags
+    if ((riffHeader.chunkID[0] != 'R' ||
+         riffHeader.chunkID[1] != 'I' ||
+         riffHeader.chunkID[2] != 'F' ||
+         riffHeader.chunkID[3] != 'F') ||
+        (riffHeader.format[0] != 'W' ||
+         riffHeader.format[1] != 'A' ||
+         riffHeader.format[2] != 'V' ||
+         riffHeader.format[3] != 'E'))
+            printf("Invalid RIFF or WAVE Header");
+ 
+    // Read in the 2nd chunk for the wave info
+    fread(&waveFormat, sizeof(WaveFormat), 1, wavFile);
     
-    unsigned char id[4];         // Four bytes to hold 'RIFF' and 'WAVE' (and other ids)
+    // Check for fmt tag
+    if (waveFormat.subChunkID[0] != 'f' ||
+        waveFormat.subChunkID[1] != 'm' ||
+        waveFormat.subChunkID[2] != 't' ||
+        waveFormat.subChunkID[3] != ' ')
+            printf("Invalid Wave Format");
+ 
+    // Check for extra parameters;
+    if (waveFormat.subChunkSize > 16)
+        fseek(wavFile, sizeof(short), SEEK_CUR);
+ 
+    // Read in the the last byte of data before the sound file
+    fread(&waveData, sizeof(WaveData), 1, wavFile);
     
-    unsigned int size = 0;       // File size (useless)
+    // Check for data tag
+    if (waveData.subChunkID[0] != 'd' ||
+        waveData.subChunkID[1] != 'a' ||
+        waveData.subChunkID[2] != 't' ||
+        waveData.subChunkID[3] != 'a')
+            printf("Invalid data header");
+ 
+    // Allocate memory for data
+    wave.data = (unsigned char *)malloc(sizeof(unsigned char) * waveData.subChunkSize); 
+ 
+    // Read in the sound data into the soundData variable
+    fread(wave.data, waveData.subChunkSize, 1, wavFile);
     
-    short format;
-    short channels;
-    short blockAlign;
-    short bitsPerSample;
-    
-    unsigned int formatLength;
-    unsigned int sampleRate;
-    unsigned int avgBytesSec;
-    unsigned int dataSize;
+    // Now we set the variables that we need later
+    wave.dataSize = waveData.subChunkSize;
+    wave.sampleRate = waveFormat.sampleRate;
+    wave.channels = waveFormat.numChannels;
+    wave.bitsPerSample = waveFormat.bitsPerSample;  
 
-    fread(id, sizeof(unsigned char), 4, wavFile);           // Read the first four bytes 
-    
-    if ((id[0] != 'R') || (id[1] != 'I') || (id[2] != 'F') || (id[3] != 'F'))
-    {
-        printf("Invalid RIFF file.\n");                     // If not "RIFF" id, exit
-        exit(1);
-    }                 
-
-    fread(&size, sizeof(unsigned int), 1, wavFile);         // Read file size
-    fread(id, sizeof(unsigned char), 4, wavFile);           // Read the next id
-    
-    if ((id[0] != 'W') || (id[1] != 'A') || (id[2] != 'V') || (id[3] != 'E'))
-    {
-        printf("Invalid WAVE file.\n");                     // If not "WAVE" id, exit
-        exit(1);
-    } 
-    
-    fread(id, sizeof(unsigned char), 4, wavFile);           // Read 4 bytes id "fmt "
-    fread(&formatLength, sizeof(unsigned int),1,wavFile);   // Read format lenght
-    fread(&format, sizeof(short), 1, wavFile);              // Read format tag
-    fread(&channels, sizeof(short), 1, wavFile);            // Read num channels (1 mono, 2 stereo) 
-    fread(&sampleRate, sizeof(unsigned int), 1, wavFile);   // Read sample rate (44100, 22050, etc...)
-    fread(&avgBytesSec, sizeof(short), 1, wavFile);         // Read average bytes per second (probably won't need this)
-    fread(&blockAlign, sizeof(short), 1, wavFile);          // Read block alignment (probably won't need this)
-    fread(&bitsPerSample, sizeof(short), 1, wavFile);       // Read bits per sample (8 bit or 16 bit) 
-    
-    fread(id, sizeof(unsigned char), 4, wavFile);           // Read 4 bytes id "data" 
-    fread(&dataSize, sizeof(unsigned int), 1, wavFile);     // Read data size (in bytes)
-    
-    wave.sampleRate = sampleRate;
-    wave.dataSize = dataSize;
-    wave.channels = channels;
-    wave.format = format;
-    
-    wave.data = (unsigned char *)malloc(sizeof(unsigned char) * dataSize);     // Allocate the required bytes to store data
-    
-    fread(wave.data, sizeof(unsigned char), dataSize, wavFile);         // Read the whole sound data chunk
-    
     return wave;
-} 
+}
 
 // Unload WAV file data
 static void UnloadWAV(Wave wave)

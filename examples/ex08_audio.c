@@ -2,6 +2,8 @@
 *
 *   raylib example 08 - Audio loading and playing
 *
+*   NOTE: This example requires OpenAL32 dll installed (or in the same folder)
+*
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
@@ -22,7 +24,7 @@ int main()
     
     InitAudioDevice();      // Initialize audio device
     
-    Sound fx = LoadSound("resources/coin.wav");         // Load WAV audio file
+    Sound fx = LoadSound("resources/weird.wav");         // Load WAV audio file
     //--------------------------------------------------------------------------------------
     
     // Main game loop

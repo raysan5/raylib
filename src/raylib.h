@@ -50,8 +50,6 @@
 #ifndef RAYLIB_H
 #define RAYLIB_H 
 
-#define NO_AUDIO    // Audio is still being tested, deactivated by default
-
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
@@ -367,8 +365,6 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 void DrawHeightmap(Image heightmap, Vector3 centerPos, Vector3 scale, Color color);                                    // REVIEW: Draw heightmap using image map (raylib 1.x)
 void DrawHeightmapEx(Image heightmap, Texture2D texture, Vector3 centerPos, Vector3 scale, Color tint);                // REVIEW: Draw textured heightmap (raylib 1.x)
 
-#ifndef NO_AUDIO
-
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
@@ -380,8 +376,6 @@ void PlaySound(Sound sound);                                    // Play a sound
 void PlaySoundEx(Sound sound, float timePosition, bool loop);   // Play a sound with extended parameters
 void PauseSound(Sound sound);                                   // Pause a sound
 void StopSound(Sound sound);                                    // Stop playing a sound
-
-#endif    // NO_AUDIO
 
 #ifdef __cplusplus
 }
