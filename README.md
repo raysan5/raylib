@@ -1,4 +1,4 @@
-<img src="http://www.raylib.com/favicon.ico" width=256>
+<img src="http://www.raylib.com/img/fb_raylib_logo.png" width=256>
 
 about
 -----
@@ -85,7 +85,7 @@ raylib could be build with the following command lines (Using GCC compiler):
 To compile examples, make sure raylib.h is placed in include path and libraries raylib (libraylib.a) and glfw3 (libglfw3.a) 
 are placed in the libraries path. It's also recommended to link with file icon.o for fancy raylib icon usage.
 
-	cd raylib/src/examples
+	cd raylib/examples
 	gcc -o test_code.exe test_code.c icon.o -lraylib -lglfw3 -lopengl32 -lgdi32 -std=c99 -Wl,--subsystem,windows
 
 contact
