@@ -529,8 +529,8 @@ bool IsGamepadButtonUp(int gamepad, int button)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
 {
-    printf(description);
-    //fprintf(stderr, description);
+    //printf(description);
+    fprintf(stderr, "%s", description);
 }
 
 // GLFW3 Keyboard Callback, runs on key pressed
