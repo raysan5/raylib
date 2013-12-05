@@ -104,8 +104,8 @@ acknowledgments
 
 The following people have contributed in some way to make raylib project a reality. Big thanks to them!
 
- - Zopokx
- - Elendow
+ - [Zopokx](https://github.com/Zopokx)
+ - [Elendow](http://www.elendow.com)
 
 	
 [raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"
