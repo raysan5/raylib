@@ -1,6 +1,6 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.2 (www.raylib.com)
+*   raylib 1.0.3 (www.raylib.com)
 *    
 *   A simple and easy-to-use library to learn C videogames programming
 *
@@ -236,10 +236,13 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
-void InitWindow(int width, int height, char* title);    // Initialize Window and Graphics Context (OpenGL)
+void InitWindow(int width, int height, const char *title);    // Initialize Window and Graphics Context (OpenGL)
+void InitWindowEx(int width, int height, const char* title, bool resizable, const char *cursorImage);
 void CloseWindow();                                     // Close Window and Terminate Context
 bool WindowShouldClose();                               // Detect if KEY_ESCAPE pressed or Close icon pressed
 void ToggleFullscreen();                                // Fullscreen toggle (by default F11)
+void SetCustomCursor(const char *cursorImage);          // Set a custom cursor icon/image
+void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 
 void ClearBackground(Color color);                      // Sets Background Color
 void BeginDrawing();                                    // Setup drawing canvas to start drawing
@@ -254,6 +257,8 @@ float GetFrameTime();                                   // Returns time in secon
 
 Color GetColor(int hexValue);                           // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                           // Returns hexadecimal value for a Color
+
+int GetRandomValue(int min, int max);                   // Returns a random value between min and max (both included)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -296,8 +301,9 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color);               
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline
-void DrawPoly(Vector2 *points, int numPoints, Color color);                                        // Draw a closed polygon defined by points
-void DrawPolyLine(Vector2 *points, int numPoints, Color color);                                    // Draw polygon lines
+void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a regular polygon (Vector version)
+void DrawPolyEx(Vector2 *points, int numPoints, Color color);                                      // Draw a closed polygon defined by points
+void DrawPolyExLines(Vector2 *points, int numPoints, Color color);                                 // Draw polygon lines
 
 bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
 bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2);        // Check collision between two circles
@@ -323,6 +329,7 @@ Texture2D CreateTexture2D(Image image);                                         
 //------------------------------------------------------------------------------------
 SpriteFont GetDefaultFont();                                                                       // Get the default SpriteFont
 SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load a SpriteFont image into GPU memory
+SpriteFont LoadFontRBMF(const char *fileName);
 void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
 void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int fontSize, int spacing, Color tint); // Draw text using SpriteFont

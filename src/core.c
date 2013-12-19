@@ -31,7 +31,8 @@
 #include <GLFW/glfw3.h>     // GLFW3 lib: Windows, OpenGL context and Input management
 //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
 #include <stdio.h>          // Standard input / output lib
-#include <stdlib.h>         // Declares malloc() and free() for memory management
+#include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
+#include <time.h>           // Useful to initialize random seed
 #include <math.h>           // Math related functions, tan() on SetPerspective
 #include "vector3.h"        // Basic Vector3 functions
 
@@ -59,7 +60,12 @@ static double frameTime;                    // Time measure for one frame
 static double targetTime = 0;               // Desired time for one frame, if 0 not applied
 
 static int windowWidth, windowHeight;       // Required to switch between windowed/fullscren mode (F11)
-static char *windowTitle;                   // Required to switch between windowed/fullscren mode (F11)
+static const char *windowTitle;             // Required to switch between windowed/fullscren mode (F11)
+static int exitKey = GLFW_KEY_ESCAPE;
+
+static bool customCursor = false;           // Tracks if custom cursor has been set
+static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
+static Texture2D cursor;                    // Cursor texture
 
 static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
 static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
@@ -83,6 +89,7 @@ extern void WriteBitmap(const char *fileName, const pixel *imgDataPixel, int wid
 static void InitGraphicsDevice();                                                          // Initialize Graphics Device (OpenGL stuff)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
+static void CursorEnterCallback(GLFWwindow* window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow* window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
 static void CameraLookAt(Vector3 position, Vector3 target, Vector3 up);                    // Setup camera view (updates MODELVIEW matrix)
 static void SetPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar); // Setup view projection (updates PROJECTION matrix)
@@ -93,13 +100,21 @@ static void TakeScreenshot();                                                   
 //----------------------------------------------------------------------------------
 
 // Initialize Window and Graphics Context (OpenGL)
-void InitWindow(int width, int height, char* title)
+void InitWindow(int width, int height, const char *title)
+{
+    InitWindowEx(width, height, title, true, NULL);
+}
+
+// Initialize Window and Graphics Context (OpenGL) with extended parameters
+void InitWindowEx(int width, int height, const char* title, bool resizable, const char *cursorImage)
 {
     glfwSetErrorCallback(ErrorCallback);
     
     if (!glfwInit()) exit(1);
     
-    //glfwWindowHint(GLFW_SAMPLES, 4);    // If called before windows creation, enables multisampling x4 (MSAA), default is 0
+    //glfwDefaultWindowHints()                  // Set default windows hints
+    //glfwWindowHint(GLFW_SAMPLES, 4);          // If called before windows creation, enables multisampling x4 (MSAA), default is 0
+    if (!resizable) glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); // Avoid window being resizable
         
     window = glfwCreateWindow(width, height, title, NULL, NULL);
     
@@ -114,6 +129,7 @@ void InitWindow(int width, int height, char* title)
     }
     
     glfwSetWindowSizeCallback(window, WindowSizeCallback);
+    glfwSetCursorEnterCallback(window, CursorEnterCallback);
     
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, KeyCallback);
@@ -125,6 +141,17 @@ void InitWindow(int width, int height, char* title)
     previousTime = glfwGetTime();
 
     LoadDefaultFont();
+    
+    if (cursorImage != NULL) 
+    {
+        // Load image as texture
+        cursor = LoadTexture(cursorImage);  
+    
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        customCursor = true;
+    }
+    
+    srand(time(NULL));      // Initialize random seed
 }
 
 // Close Window and Terminate Context
@@ -134,6 +161,24 @@ void CloseWindow()
 
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+// Set a custom cursor icon/image
+void SetCustomCursor(const char *cursorImage)
+{
+    if (customCursor) UnloadTexture(cursor);
+    
+    cursor = LoadTexture(cursorImage);
+    
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    customCursor = true;
+}
+
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
+{
+    exitKey = key;
 }
 
 // Detect if KEY_ESCAPE pressed or Close icon pressed
@@ -197,6 +242,8 @@ void BeginDrawing()
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing()
 {
+    if (customCursor && cursorOnScreen) DrawTexture(cursor, GetMouseX(), GetMouseY(), WHITE);
+
     glfwSwapBuffers(window);            // Swap back and front buffers
     glfwPollEvents();                   // Register keyboard/mouse events
     
@@ -292,6 +339,12 @@ Color GetColor(int hexValue)
 int GetHexValue(Color color)
 {
     return ((color.a << 24) + (color.r << 16) + (color.g << 8) + color.b);
+}
+
+// Returns a random value between min and max (both included)
+int GetRandomValue(int min, int max)
+{
+    return (rand()%(abs(max-min)+1) - abs(min));
 }
 
 //----------------------------------------------------------------------------------
@@ -529,14 +582,14 @@ bool IsGamepadButtonUp(int gamepad, int button)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
 {
-    //printf(description);
-    fprintf(stderr, "%s", description);
+    printf(description);
+    //fprintf(stderr, description);
 }
 
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    if (key == exitKey && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GL_TRUE);
         
@@ -550,6 +603,12 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     {
         TakeScreenshot();
     }
+}
+
+static void CursorEnterCallback(GLFWwindow* window, int enter)
+{
+    if (enter == GL_TRUE) cursorOnScreen = true;
+    else cursorOnScreen = false;
 }
 
 // GLFW3 WindowSize Callback, runs when window is resized

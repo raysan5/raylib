@@ -27,4 +27,13 @@ applications, and to alter it and redistribute it freely, subject to the followi
 fonts
 ------
 
-...soon...
+All rBMF fonts provided with raylib are free to use (freeware) and have been designed by the following people:
+
+Alpha Beta - Brian Kent (AEnigma)
+Setback - Brian Kent (AEnigma)
+Jupiter Crash - Brian Kent (AEnigma)
+Alagard - Hewett Tsoi
+Romulus - Hewett Tsoi
+Mecha - Captain Falcon
+PixelPlay - Aleksander Shevchuk
+PixAntiqua - Gerhard Großmann

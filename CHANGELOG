@@ -1,11 +1,26 @@
 changelog
 ---------
 
-Current Release:    raylib 1.0.2 (December 2013)
+Current Release:    raylib 1.0.3 (December 2013)
 
 NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
 NOTE: Current Release includes all previous updates.
 
+-----------------------------------------------
+Release:     raylib 1.0.3 (19 December 2013)
+-----------------------------------------------
+[fonts] Added 8 rBMF free fonts to be used on projects!
+[text] LoadSpriteFont() - Now supports rBMF file loading (raylib Bitmap Font)
+[examples] ex05a_sprite_fonts completed
+[examples] ex05b_rbmf_fonts completed
+[core] InitWindowEx() - InitWindow with extended parameters, resizing option and custom cursor!
+[core] GetRandomValue() - Added, returns a random value within a range (int)
+[core] SetExitKey() - Added, sets a key to exit program (default is ESC)
+[core] Custom cursor not drawn when mouse out of screen
+[shapes] CheckCollisionPointRec() - Added, check collision between point and rectangle
+[shapes] CheckCollisionPointCircle() - Added, check collision between point and circle
+[shapes] CheckCollisionPointTriangle() - Added, check collision between point and triangle
+[shapes] DrawPoly() - Added, draw regular polygons of n sides, rotation can be defined!
 
 -----------------------------------------------
 Release:     raylib 1.0.2 (1 December 2013)

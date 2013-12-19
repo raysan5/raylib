@@ -24,7 +24,7 @@ int main()
     
     InitAudioDevice();      // Initialize audio device
     
-    Sound fx = LoadSound("resources/weird.wav");         // Load WAV audio file
+    Sound fx = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
     //--------------------------------------------------------------------------------------
     
     // Main game loop

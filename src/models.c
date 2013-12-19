@@ -181,8 +181,6 @@ void DrawSphereWires(Vector3 centerPos, float radius, Color color)
 // Draw a cylinder/cone
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color)    // Could be used for pyramid and cone!
 {
-    static int count = 0;
-    
     Vector3 a = { position.x, position.y + height, position.z };
     Vector3 d = { 0.0f, 1.0f, 0.0f };
     Vector3 p;
@@ -202,7 +200,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
         
         glPushMatrix();
             //glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-            glRotatef(DEG2RAD*count, 0.0f, 1.0f, 0.0f);
+            //glRotatef(degrees, 0.0f, 1.0f, 0.0f);
             //glScalef(1.0f, 1.0f, 1.0f);
             
             // Draw cone top
@@ -239,7 +237,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
     {
         glPushMatrix();
             //glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-            glRotatef(DEG2RAD*count, 0.0f, 1.0f, 0.0f);
+            //glRotatef(degrees, 0.0f, 1.0f, 0.0f);
             //glScalef(1.0f, 1.0f, 1.0f);
 
             // Draw cylinder top (pointed cap)
@@ -290,8 +288,6 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             
         glPopMatrix();
     }
-    
-    count += 1;
 }
 
 // Draw a cylinder/cone wires

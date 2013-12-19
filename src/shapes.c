@@ -102,23 +102,13 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 }
 
 // Draw a color-filled circle
+// TODO: Review, on some GPUs is drawn with a weird transparency (GL_POLYGON_SMOOTH issue?)
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
     glEnable(GL_POLYGON_SMOOTH);
-    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);  // Deprecated on OGL 3.0
     
-    glBegin(GL_TRIANGLE_FAN);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2i(centerX, centerY);
-
-        for (int i=0; i <= 360; i++)        //i++ --> Step = 1.0 pixels
-        {
-            float degInRad = i*DEG2RAD;
-            //glVertex2f(cos(degInRad)*radius,sin(degInRad)*radius);
-
-            glVertex2f(centerX + sin(degInRad) * radius, centerY + cos(degInRad) * radius);
-        }
-    glEnd();
+    DrawPoly((Vector2){centerX, centerY}, 360, radius, 0, color);
     
     glDisable(GL_POLYGON_SMOOTH);
     
@@ -283,9 +273,30 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     glEnd();
 }
 
+// Draw a regular polygon of n sides (Vector version)
+void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
+{
+    if (sides < 3) sides = 3;
+
+    glPushMatrix();
+        glTranslatef(center.x, center.y, 0);
+        glRotatef(rotation, 0, 0, 1);
+        
+        glBegin(GL_TRIANGLE_FAN);
+            glColor4ub(color.r, color.g, color.b, color.a);
+            glVertex2f(0, 0);
+
+            for (int i=0; i <= sides; i++)
+            { 
+                glVertex2f(radius*cos(i*2*PI/sides), radius*sin(i*2*PI/sides));
+            }
+        glEnd();
+    glPopMatrix();
+}
+
 // Draw a closed polygon defined by points
 // NOTE: Array num elements MUST be passed as parameter to function
-void DrawPoly(Vector2 *points, int numPoints, Color color)
+void DrawPolyEx(Vector2 *points, int numPoints, Color color)
 {
     if (numPoints >= 3)
     {
@@ -307,7 +318,7 @@ void DrawPoly(Vector2 *points, int numPoints, Color color)
 
 // Draw polygon lines
 // NOTE: Array num elements MUST be passed as parameter to function                                                
-void DrawPolyLine(Vector2 *points, int numPoints, Color color)
+void DrawPolyExLines(Vector2 *points, int numPoints, Color color)
 {
     if (numPoints >= 2)
     {
@@ -325,6 +336,40 @@ void DrawPolyLine(Vector2 *points, int numPoints, Color color)
         
         //glDisable(GL_LINE_SMOOTH);
     }
+}
+
+// Check if point is inside rectangle
+bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
+{
+    bool collision = false;
+    
+    if ((point.x >= rec.x) && (point.x <= (rec.x + rec.width)) && (point.y >= rec.y) && (point.y <= (rec.y + rec.height))) collision = true;
+    
+    return collision;
+}
+
+// Check if point is inside circle
+bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius)
+{
+    return CheckCollisionCircles(point, 0, center, radius);
+}
+
+// Check if point is inside a triangle defined by three points (p1, p2, p3)
+bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3)
+{
+    bool collision = false;
+
+    float alpha = ((p2.y - p3.y)*(point.x - p3.x) + (p3.x - p2.x)*(point.y - p3.y)) /
+                  ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+                  
+    float beta = ((p3.y - p1.y)*(point.x - p3.x) + (p1.x - p3.x)*(point.y - p3.y)) /
+                 ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+                 
+    float gamma = 1.0f - alpha - beta;
+
+    if ((alpha > 0) && (beta > 0) & (gamma > 0)) collision = true;
+    
+    return collision;
 }
 
 // Check collision between two rectangles
