@@ -18,8 +18,6 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    Vector3 position = { 0.0, 0.0, 0.0 };
-    
     // Define the camera to look into our 3d world
     Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
     
@@ -44,20 +42,20 @@ int main()
             
             Begin3dMode(camera);
             
-                DrawCube(position, 2, 2, 2, RED);           // Draw a cube
-                DrawCubeWires(position, 2, 2, 2, MAROON);   // Draw a wired-cube
+                DrawCube((Vector3){-4, 0, 2}, 2, 5, 2, RED);
+                DrawCubeWires((Vector3){-4, 0, 2}, 2, 5, 2, GOLD);
+                DrawCubeWires((Vector3){-4, 0, -2}, 3, 6, 2, MAROON);
                 
-                // TODO: Draw some basic 3d shapes
-/*         
-void DrawCube(Vector3 position, float width, float height, float lenght, Color color);
-void DrawCubeV(Vector3 position, Vector3 size, Color color);
-void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);
-void DrawSphere(Vector3 centerPos, float radius, Color color);
-void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color);
-void DrawSphereWires(Vector3 centerPos, float radius, Color color);
-void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color);
-void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color);
-*/
+                DrawSphere((Vector3){-1, 0, -2}, 1, GREEN);     
+                DrawSphereWires((Vector3){1, 0, 2}, 2, LIME);
+                
+                DrawCylinder((Vector3){4, 0, -2}, 1, 2, 3, 4, SKYBLUE);
+                DrawCylinderWires((Vector3){4, 0, -2}, 1, 2, 3, 4, DARKBLUE);
+                DrawCylinderWires((Vector3){4.5, -1, 2}, 1, 1, 2, 6, BROWN);
+                
+                DrawCylinder((Vector3){1, 0, -4}, 0, 1.5, 3, 8, GOLD);
+                DrawCylinderWires((Vector3){1, 0, -4}, 0, 1.5, 3, 8, PINK);
+
                 DrawGrid(10.0, 1.0);        // Draw a grid
                 
             End3dMode();
