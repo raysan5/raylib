@@ -396,13 +396,11 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
         textWidth += spriteFont.charSet[(int)text[i] - FIRST_CHAR].w;
     }
     
-    textWidth += (int)((len - 1) * spacing);    // Adds chars spacing to measure
-    
     if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
     else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
     
     Vector2 vec;
-    vec.x = (float)textWidth * scaleFactor;
+    vec.x = (float)textWidth * scaleFactor + (len - 1) * spacing; // Adds chars spacing to measure
     vec.y = (float)spriteFont.charSet[0].h * scaleFactor;
     
     return vec;
