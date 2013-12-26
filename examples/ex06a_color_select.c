@@ -16,9 +16,30 @@ int main()
     // Initialization
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
-    int screenHeight = 450;
+    int screenHeight = 400;
     
-    InitWindow(screenWidth, screenHeight, "raylib example 06a - color selection");
+    Color colors[21] = { DARKGRAY, MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, DARKBROWN,
+                         GRAY, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK, YELLOW,
+                         GREEN, SKYBLUE, PURPLE, BEIGE };
+    
+    Rectangle recs[21];             // Rectangles array
+    
+    // Fills recs data (for every rectangle)
+    for (int i = 0; i < 21; i++)
+    {
+        recs[i].x = 20 + 100*(i%7) + 10*(i%7);
+        recs[i].y = 40 + 100*(i/7) + 10*(i/7);
+        recs[i].width = 100;
+        recs[i].height = 100;
+    }
+    
+    bool selected[21] = { false };   // Selected rectangles indicator
+    
+    Vector2 mousePoint;
+    
+    InitWindowEx(screenWidth, screenHeight, "raylib example 06a - color selection", false, "resources/mouse.png");
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -26,7 +47,18 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+        mousePoint = GetMousePosition();
+        
+        for (int i = 0; i < 21; i++)    // Iterate along all the rectangles
+        {
+            if (CheckCollisionPointRec(mousePoint, recs[i]))
+            {   
+                colors[i].a = 120;
+                
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) selected[i] = !selected[i];
+            }
+            else colors[i].a = 255;
+        }
         //----------------------------------------------------------------------------------
         
         // Draw
@@ -35,7 +67,19 @@ int main()
         
             ClearBackground(RAYWHITE);
             
-            // TODO: Comming soon...
+            for (int i = 0; i < 21; i++)    // Draw all rectangles
+            {
+                DrawRectangleRec(recs[i], colors[i]);
+                
+                // Draw four rectangles around selected rectangle
+                if (selected[i])
+                {
+                    DrawRectangle(recs[i].x, recs[i].y, 100, 10, RAYWHITE);        // Square top rectangle
+                    DrawRectangle(recs[i].x, recs[i].y, 10, 100, RAYWHITE);        // Square left rectangle
+                    DrawRectangle(recs[i].x + 90, recs[i].y, 10, 100, RAYWHITE);   // Square right rectangle
+                    DrawRectangle(recs[i].x, recs[i].y + 90, 100, 10, RAYWHITE);   // Square bottom rectangle
+                }
+            }
        
         EndDrawing();
         //----------------------------------------------------------------------------------
