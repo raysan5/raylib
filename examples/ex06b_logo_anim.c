@@ -40,7 +40,7 @@ int main()
     
     int state = 0;                  // Tracking animation states (State Machine)
     
-    float alpha = 1.0;
+    float alpha = 1.0;              // Useful for fading
     
     InitWindow(screenWidth, screenHeight, "raylib example 06b - raylib logo animation");
     
@@ -101,7 +101,30 @@ int main()
             {
                 alpha -= 0.02;
                 
-                if (alpha <= 0) alpha = 0;
+                if (alpha <= 0)
+                {
+                    alpha = 0;
+                    state = 4;
+                }
+            }
+        }
+        else if (state == 4)            // State 4: Reset and Replay
+        {
+            if (IsKeyPressed('R'))
+            {
+                framesCounter = 0;
+                lettersCount = 0;
+    
+                topSideRecWidth = 16;
+                leftSideRecHeight = 16;
+    
+                bottomSideRecWidth = 16;
+                rightSideRecHeight = 16;
+    
+                for (int i = 0; i < 8; i++) raylib[i] = ' ';
+                alpha = 1.0;
+
+                state = 0;      // Return to State 0
             }
         }
         //----------------------------------------------------------------------------------
@@ -135,7 +158,11 @@ int main()
                 DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
                 
                 DrawText(raylib, 356, 273, 50, Fade(BLACK, alpha));
-            } 
+            }
+            else if (state == 4)
+            {
+                DrawText("[R] REPLAY", 340, 200, 20, GRAY);
+            }
         
         EndDrawing();
         //----------------------------------------------------------------------------------
