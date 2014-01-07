@@ -344,7 +344,14 @@ int GetHexValue(Color color)
 // Returns a random value between min and max (both included)
 int GetRandomValue(int min, int max)
 {
-    return (rand()%(abs(max-min)+1) - abs(min));
+    if (min > max)
+    {
+        int tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    return (rand()%(abs(max-min)+1) + min);
 }
 
 //----------------------------------------------------------------------------------
