@@ -32,6 +32,8 @@
 #include <stdlib.h>          // Declares malloc() and free() for memory management
 #include "stb_image.h"       // Used to read image data (multiple formats support)
 
+#include "utils.h"           // rRES data decompression utility function
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -95,10 +97,121 @@ Image LoadImage(const char *fileName)
     return image;
 }
 
-// Unload image from CPU memory (RAM)
-void UnloadImage(Image image)
+// Load an image from rRES file (raylib Resource)
+Image LoadImageFromRES(const char *rresName, int resId)
 {
-    free(image.pixels);
+    // NOTE: rresName could be directly a char array with all the data!!! ---> TODO!
+    Image image;
+    bool found = false;
+
+    char id[4];             // rRES file identifier
+    unsigned char version;  // rRES file version and subversion
+    char useless;           // rRES header reserved data
+    short numRes;
+    
+    ResInfoHeader infoHeader;
+    
+    FILE *rresFile = fopen(rresName, "rb");
+
+    if (!rresFile) printf("Error opening raylib Resource file\n");
+    
+    // Read rres file (basic file check - id)
+    fread(&id[0], sizeof(char), 1, rresFile);
+    fread(&id[1], sizeof(char), 1, rresFile);
+    fread(&id[2], sizeof(char), 1, rresFile);
+    fread(&id[3], sizeof(char), 1, rresFile);
+    fread(&version, sizeof(char), 1, rresFile);
+    fread(&useless, sizeof(char), 1, rresFile);
+    
+    if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
+    {
+        printf("This is not a valid raylib Resource file!\n");
+        exit(1);
+    }
+    
+    // Read number of resources embedded
+    fread(&numRes, sizeof(short), 1, rresFile);
+    
+    for (int i = 0; i < numRes; i++)
+    {
+        fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
+        
+        if (infoHeader.id == resId)
+        {
+            found = true;
+            
+            // Check data is of valid IMAGE type
+            if (infoHeader.type == 0)   // IMAGE data type
+            {
+                // TODO: Check data compression type
+                
+                // NOTE: We suppose compression type 2 (DEFLATE - default)
+                short imgWidth, imgHeight;
+                char colorFormat, mipmaps;
+            
+                fread(&imgWidth, sizeof(short), 1, rresFile);   // Image width
+                fread(&imgHeight, sizeof(short), 1, rresFile);  // Image height
+                fread(&colorFormat, 1, 1, rresFile);            // Image data color format (default: RGBA 32 bit)
+                fread(&mipmaps, 1, 1, rresFile);                // Mipmap images included (default: 0)
+        
+                printf("Image width: %i\n", (int)imgWidth);
+                printf("Image height: %i\n", (int)imgHeight);
+                
+                image.width = (int)imgWidth;
+                image.height = (int)imgHeight;
+                
+                unsigned char *data = malloc(infoHeader.size);
+
+                fread(data, infoHeader.size, 1, rresFile);
+                
+                unsigned char *imgData = DecompressData(data, infoHeader.size, infoHeader.srcSize);
+                
+                image.pixels = (Color *)malloc(sizeof(Color)*imgWidth*imgHeight);
+                
+                int pix = 0;
+                
+                for (int i = 0; i < (imgWidth*imgHeight*4); i += 4)
+                {
+                    image.pixels[pix].r = imgData[i];
+                    image.pixels[pix].g = imgData[i+1];
+                    image.pixels[pix].b = imgData[i+2];
+                    image.pixels[pix].a = imgData[i+3];
+                    pix++;
+                }
+                
+                free(imgData);
+             
+                free(data);
+            }
+            else
+            {
+                printf("Required resource do not seem to be a valid IMAGE resource\n");
+                exit(2);
+            }
+        }
+        else
+        {
+            // Depending on type, skip the right amount of parameters
+            switch (infoHeader.type)
+            {
+                case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
+                case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
+                case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
+                case 3: break;   // TEXT: No parameters
+                case 4: break;   // RAW: No parameters
+                default: break;
+            }
+            
+            // Jump DATA to read next infoHeader
+            fseek(rresFile, infoHeader.size, SEEK_CUR);
+        }    
+    }
+    
+    fclose(rresFile);
+    
+    if (!found) printf("Required resource id could not be found in the raylib Resource file!\n");
+    
+    return image;
 }
 
 // Load an image as texture into GPU memory
@@ -136,6 +249,17 @@ Texture2D LoadTexture(const char *fileName)
     texture.glId = id;
     texture.width = imgWidth;
     texture.height = imgHeight;
+    
+    return texture;
+}
+
+// Load an image as texture from rRES file (raylib Resource)
+Texture2D LoadTextureFromRES(const char *rresName, int resId)
+{
+    Texture2D texture;
+
+    Image image = LoadImageFromRES(rresName, resId);
+    texture = CreateTexture2D(image);
     
     return texture;
 }
@@ -185,6 +309,12 @@ Texture2D CreateTexture2D(Image image)
     texture.height = image.height;
     
     return texture;
+}
+
+// Unload image from CPU memory (RAM)
+void UnloadImage(Image image)
+{
+    free(image.pixels);
 }
 
 // Unload texture from GPU memory
@@ -299,47 +429,4 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
     glPopMatrix();
     
     glDisable(GL_TEXTURE_2D);    // Disable textures usage
-}
-
-// Creates a bitmap (BMP) file from an array of pixel data
-// NOTE: This function is only used by module [core], not explicitly available to raylib users
-extern void WriteBitmap(const char *fileName, const Color *imgDataPixel, int width, int height)
-{
-    int filesize = 54 + 3*width*height;
-    
-    unsigned char bmpFileHeader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};    // Standard BMP file header
-    unsigned char bmpInfoHeader[40] = {40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};   // Standard BMP info header
-
-    bmpFileHeader[2] = (unsigned char)(filesize);
-    bmpFileHeader[3] = (unsigned char)(filesize>>8);
-    bmpFileHeader[4] = (unsigned char)(filesize>>16);
-    bmpFileHeader[5] = (unsigned char)(filesize>>24);
-
-    bmpInfoHeader[4] = (unsigned char)(width);
-    bmpInfoHeader[5] = (unsigned char)(width>>8);
-    bmpInfoHeader[6] = (unsigned char)(width>>16);
-    bmpInfoHeader[7] = (unsigned char)(width>>24);
-    bmpInfoHeader[8] = (unsigned char)(height);
-    bmpInfoHeader[9] = (unsigned char)(height>>8);
-    bmpInfoHeader[10] = (unsigned char)(height>>16);
-    bmpInfoHeader[11] = (unsigned char)(height>>24);
-
-    FILE *bmpFile = fopen(fileName, "wb");    // Define a pointer to bitmap file and open it in write-binary mode
-    
-    // NOTE: fwrite parameters are: data pointer, size in bytes of each element to be written, number of elements, file-to-write pointer
-    fwrite(bmpFileHeader, sizeof(unsigned char), 14, bmpFile);    // Write BMP file header data
-    fwrite(bmpInfoHeader, sizeof(unsigned char), 40, bmpFile);    // Write BMP info header data
-    
-    // Write pixel data to file
-    for (int y = 0; y < height ; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            fputc(imgDataPixel[x + y*width].b, bmpFile);
-            fputc(imgDataPixel[x + y*width].g, bmpFile);
-            fputc(imgDataPixel[x + y*width].r, bmpFile);
-        }
-    }
-
-    fclose(bmpFile);        // Close bitmap file
 }

@@ -1,10 +1,31 @@
 changelog
 ---------
 
-Current Release:    raylib 1.0.3 (December 2013)
+Current Release:    raylib 1.0.4 (January 2014)
 
 NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.0.4 (23 January 2014)
+-----------------------------------------------
+[tool] Published a first alpha version of rREM tool (raylib Resource Embedder)
+[core] GetRandomValue() - Bug corrected, now works right
+[core] Fade() - Added, fades a color to an alpha percentadge
+[core] WriteBitmap() - Moved to new module: utils.c, not used anymore
+[core] TakeScreenshot() - Now uses WritePNG() (utils.c)
+[utils] New module created with utility functions
+[utils] WritePNG() - Write a PNG file (used by TakeScreenshot() on core)
+[utils] DecompressData() - Added, used for rRES resource data decompresion
+[textures] LoadImageFromRES() - Added, load an image from a rRES resource file
+[textures] LoadTextureFromRES() - Added, load a texture from a rRES resource file
+[audio] LoadSoundFromRES() - Added, load a sound from a rRES resource file
+[audio] IsPlaying() - Added, check if a sound is currently playing
+[audio] SetVolume() - Added, set the volume for a sound
+[audio] SetPitch() - Added, set the pitch for a sound
+[examples] ex06a_color_select completed
+[examples] ex06b_logo_anim completed
+[examples] ex06c_font select completed
 
 -----------------------------------------------
 Release:     raylib 1.0.3 (19 December 2013)

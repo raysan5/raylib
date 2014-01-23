@@ -1,8 +1,8 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.3 (www.raylib.com)
+*   raylib 1.0.4 (www.raylib.com)
 *    
-*   A simple and easy-to-use library to learn C videogames programming
+*   A simple and easy-to-use library to learn videogames programming
 *
 *   Features:
 *     Library written in plain C code (C99)
@@ -16,13 +16,14 @@
 *     GLFW3 (www.glfw.org) for window/context management and input
 *     stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA, PSD, GIF, HDR, PIC)
 *     OpenAL Soft for audio device/context management
+*     tinfl for data decompression (DEFLATE algorithm)
 *
 *   Some design decisions:
 *     32bit Colors - All defined color are always RGBA
 *     32bit Textures - All loaded images are converted automatically to RGBA textures
 *     SpriteFonts - All loaded sprite-font images are converted to RGBA and POT textures
 *     One custom default font is loaded automatically when InitWindow()
-* 
+*
 *   -- LICENSE (raylib v1.0, November 2013) --
 *
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, 
@@ -236,29 +237,31 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
-void InitWindow(int width, int height, const char *title);    // Initialize Window and Graphics Context (OpenGL)
-void InitWindowEx(int width, int height, const char* title, bool resizable, const char *cursorImage);
-void CloseWindow();                                     // Close Window and Terminate Context
-bool WindowShouldClose();                               // Detect if KEY_ESCAPE pressed or Close icon pressed
-void ToggleFullscreen();                                // Fullscreen toggle (by default F11)
-void SetCustomCursor(const char *cursorImage);          // Set a custom cursor icon/image
-void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
+void InitWindow(int width, int height, const char *title);  // Initialize Window and Graphics Context (OpenGL)
+void InitWindowEx(int width, int height, const char* title, // Initialize Window and Graphics Context (OpenGL),...
+                  bool resizable, const char *cursorImage); // ...define if windows-resizable and custom cursor
+void CloseWindow();                                         // Close Window and Terminate Context
+bool WindowShouldClose();                                   // Detect if KEY_ESCAPE pressed or Close icon pressed
+void ToggleFullscreen();                                    // Fullscreen toggle (by default F11)
+void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
+void SetExitKey(int key);                                   // Set a custom key to exit program (default is ESC)
 
-void ClearBackground(Color color);                      // Sets Background Color
-void BeginDrawing();                                    // Setup drawing canvas to start drawing
-void EndDrawing();                                      // End canvas drawing and Swap Buffers (Double Buffering)
+void ClearBackground(Color color);                          // Sets Background Color
+void BeginDrawing();                                        // Setup drawing canvas to start drawing
+void EndDrawing();                                          // End canvas drawing and Swap Buffers (Double Buffering)
 
-void Begin3dMode(Camera cam);                           // Initializes 3D mode for drawing (Camera setup)
-void End3dMode();                                       // Ends 3D mode and returns to default 2D orthographic mode
+void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
+void End3dMode();                                           // Ends 3D mode and returns to default 2D orthographic mode
 
-void SetTargetFPS(int fps);                             // Set target FPS (maximum)
-float GetFPS();                                         // Returns current FPS
-float GetFrameTime();                                   // Returns time in seconds for one frame
+void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
+float GetFPS();                                             // Returns current FPS
+float GetFrameTime();                                       // Returns time in seconds for one frame
 
-Color GetColor(int hexValue);                           // Returns a Color struct from hexadecimal value
-int GetHexValue(Color color);                           // Returns hexadecimal value for a Color
+Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
+int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
 
-int GetRandomValue(int min, int max);                   // Returns a random value between min and max (both included)
+int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
+Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0 to 1.0
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -317,15 +320,18 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 // Texture Loading and Drawing Functions (Module: textures)
 //------------------------------------------------------------------------------------
 Image LoadImage(const char *fileName);                                                             // Load an image into CPU memory (RAM)
-void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
+Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
-//Texture2D LoadTextureEx(const char *fileName, bool createPOT, bool mipmaps);                     // Load an image as texture (and convert to POT with mipmaps) (raylib 1.x)
+Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
+Texture2D CreateTexture2D(Image image);                                                            // Create a Texture2D from Image data
+void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
+
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
-void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
-Texture2D CreateTexture2D(Image image);                                                            // Create a Texture2D from Image data
+void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin,     // Draw a part of a texture defined by a rectangle with 'pro' parameters
+                    float rotation, Color tint);                                      
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
@@ -334,7 +340,8 @@ SpriteFont GetDefaultFont();                                                    
 SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load a SpriteFont image into GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
-void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int fontSize, int spacing, Color tint); // Draw text using SpriteFont
+void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
+                int fontSize, int spacing, Color tint);
 int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing);         // Measure string size for SpriteFont
 int GetFontBaseSize(SpriteFont spriteFont);                                                        // Returns the base size for a SpriteFont (chars height)
@@ -362,6 +369,7 @@ void DrawGizmo(Vector3 position, bool orbits);                                  
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
+//Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void DrawModel(Model model, Vector3 position, float scale, Color color);                           // Draw a model
 void DrawModelEx(Model model, Texture2D texture, Vector3 position, float scale, Color tint);       // Draw a textured model
@@ -380,11 +388,15 @@ void DrawHeightmapEx(Image heightmap, Texture2D texture, Vector3 centerPos, Vect
 void InitAudioDevice();                                         // Initialize audio device and context
 void CloseAudioDevice();                                        // Close the audio device and context
 Sound LoadSound(char *fileName);                                // Load sound to memory
+Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 void UnloadSound(Sound sound);                                  // Unload sound
+
 void PlaySound(Sound sound);                                    // Play a sound
-void PlaySoundEx(Sound sound, float timePosition, bool loop);   // Play a sound with extended parameters
 void PauseSound(Sound sound);                                   // Pause a sound
 void StopSound(Sound sound);                                    // Stop playing a sound
+bool IsPlaying(Sound sound);                                    // Check if a sound is currently playing
+void SetVolume(Sound sound, float volume);                      // Set volume for a sound (1.0 is base level)
+void SetPitch(Sound sound, float pitch);                        // Set pitch for a sound (1.0 is base level)
 
 #ifdef __cplusplus
 }

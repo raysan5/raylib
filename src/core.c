@@ -35,6 +35,7 @@
 #include <time.h>           // Useful to initialize random seed
 #include <math.h>           // Math related functions, tan() on SetPerspective
 #include "vector3.h"        // Basic Vector3 functions
+#include "utils.h"          // WritePNG() function
 
 //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
 
@@ -81,7 +82,6 @@ static char currentGamepadState[32] = {0};  // Required to check if gamepad btn 
 //----------------------------------------------------------------------------------
 extern void LoadDefaultFont();               // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont();             // [Module: text] Unloads default font from GPU memory
-extern void WriteBitmap(const char *fileName, const pixel *imgDataPixel, int width, int height);    // [Module: textures] Writes a bitmap (BMP) file
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -352,6 +352,15 @@ int GetRandomValue(int min, int max)
     }
 
     return (rand()%(abs(max-min)+1) + min);
+}
+
+// Fades color by a percentadge
+Color Fade(Color color, float alpha)
+{
+    if (alpha < 0.0) alpha = 0.0;
+    else if (alpha > 1.0) alpha = 1.0;
+
+    return (Color){color.r, color.g, color.b, color.a*alpha};
 }
 
 //----------------------------------------------------------------------------------
@@ -737,21 +746,36 @@ static void TakeScreenshot()
     char buffer[20];            // Buffer to store file name
     int fbWidth, fbHeight;
     
-    Color *imgDataPixel;        // Pixel image data array
+    unsigned char *imgData;        // Pixel image data array
 
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
 
-    imgDataPixel = (Color *)malloc(fbWidth * fbHeight * sizeof(Color));
+    imgData = (unsigned char *)malloc(fbWidth * fbHeight * sizeof(unsigned char) * 4);
 
     // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
-    glReadPixels(0, 0, fbWidth, fbHeight, GL_RGBA, GL_UNSIGNED_BYTE, imgDataPixel);
+    glReadPixels(0, 0, fbWidth, fbHeight, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
     
-    sprintf(buffer, "screenshot%03i.bmp", shotNum);
+    // TODO: Flip image vertically!
+    
+    unsigned char *imgDataFlip = (unsigned char *)malloc(fbWidth * fbHeight * sizeof(unsigned char) * 4);
+    
+    for (int y = fbHeight-1; y >= 0; y--)
+    {
+        for (int x = 0; x < (fbWidth*4); x++)
+        {
+            imgDataFlip[x + (fbHeight - y - 1)*fbWidth*4] = imgData[x + (y*fbWidth*4)];
+        }
+    }
+    
+    free(imgData);
+    
+    sprintf(buffer, "screenshot%03i.png", shotNum);
 
     // NOTE: BMP directly stores data flipped vertically
-    WriteBitmap(buffer, imgDataPixel, fbWidth, fbHeight);    // Writes pixel data array into a bitmap (BMP) file
+    //WriteBitmap(buffer, imgDataPixel, fbWidth, fbHeight);    // Writes pixel data array into a bitmap (BMP) file
+    WritePNG(buffer, imgDataFlip, fbWidth, fbHeight);
     
-    free(imgDataPixel);
+    free(imgDataFlip);
     
     shotNum++;
 }

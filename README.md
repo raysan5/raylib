@@ -3,7 +3,7 @@
 about
 -----
 
-raylib is a simple and easy-to-use library to learn C videogames programming.
+raylib is a simple and easy-to-use library to learn videogames programming.
 
 raylib is highly inspired by Borland BGI graphics lib (more specifically WinBGI) and by XNA framework. 
 Allegro and SDL have also been analyzed for reference.
@@ -80,7 +80,8 @@ raylib could be build with the following command lines (Using GCC compiler):
 	gcc -c models.c -std=c99 -Wall
 	gcc -c vector3.c -std=c99 -Wall
 	gcc -c audio.c -std=c99 -Wall
-	ar rcs raylib.a core.o shapes.o textures.o stb_image.o text.o models.o vector3.o audio.o
+    gcc -c utils.c -std=c99 -Wall
+	ar rcs raylib.a core.o shapes.o textures.o stb_image.o text.o models.o vector3.o utils.o audio.o
 
 To compile examples, make sure raylib.h is placed in include path and libraries raylib (libraylib.a) and glfw3 (libglfw3.a) 
 are placed in the libraries path. It's also recommended to link with file icon.o for fancy raylib icon usage.

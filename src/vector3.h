@@ -26,7 +26,7 @@
 #ifndef VECTOR3_H
 #define VECTOR3_H
 
-#include "raylib.h"        // Defines Vector3 structure
+#include "raylib.h"     // Defines Vector3 structure
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
