@@ -49,7 +49,7 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-// No private (static) functions in this module
+static float GetHeightValue(Color pixel);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -465,100 +465,100 @@ Model LoadModel(const char *fileName)
     int numTexCoords = 0;
     int numTriangles = 0;
 
-    FILE* objfile;
+    FILE* objFile;
 
-    objfile = fopen(fileName, "rt");
+    objFile = fopen(fileName, "rt");
     
-    while(!feof(objfile))
+    while(!feof(objFile))
     {
-        fscanf(objfile, "%c", &dataType);
+        fscanf(objFile, "%c", &dataType);
         
         switch(dataType)
         {
             case '#':         // It's a comment
             {
-                fgets(comments, 200, objfile);                
+                fgets(comments, 200, objFile);                
             } break;
             case 'v': 
             {
-                fscanf(objfile, "%c", &dataType);
+                fscanf(objFile, "%c", &dataType);
                 
                 if (dataType == 't')    // Read texCoord
                 {
-                    fgets(comments, 200, objfile);
-                    fscanf(objfile, "%c", &dataType);
+                    fgets(comments, 200, objFile);
+                    fscanf(objFile, "%c", &dataType);
                 
                     while (dataType == 'v')
                     {
-                        fgets(comments, 200, objfile);
-                        fscanf(objfile, "%c", &dataType);
+                        fgets(comments, 200, objFile);
+                        fscanf(objFile, "%c", &dataType);
                     }
                     
                     if (dataType == '#')
                     {
-                        fscanf(objfile, "%i", &numTexCoords);
+                        fscanf(objFile, "%i", &numTexCoords);
                     }
                     else printf("Ouch! Something was wrong...");
                     
-                    fgets(comments, 200, objfile);
+                    fgets(comments, 200, objFile);
                 }
                 else if (dataType == 'n')    // Read normals
                 {
-                    fgets(comments, 200, objfile);
-                    fscanf(objfile, "%c", &dataType);
+                    fgets(comments, 200, objFile);
+                    fscanf(objFile, "%c", &dataType);
                 
                     while (dataType == 'v')
                     {
-                        fgets(comments, 200, objfile);
-                        fscanf(objfile, "%c", &dataType);
+                        fgets(comments, 200, objFile);
+                        fscanf(objFile, "%c", &dataType);
                     }
                     
                     if (dataType == '#')
                     {
-                        fscanf(objfile, "%i", &numNormals);
+                        fscanf(objFile, "%i", &numNormals);
                     }
                     else printf("Ouch! Something was wrong...");
                 
-                    fgets(comments, 200, objfile);
+                    fgets(comments, 200, objFile);
                 }
                 else    // Read vertex
                 {
-                    fgets(comments, 200, objfile);
-                    fscanf(objfile, "%c", &dataType);
+                    fgets(comments, 200, objFile);
+                    fscanf(objFile, "%c", &dataType);
                 
                     while (dataType == 'v')
                     {
-                        fgets(comments, 200, objfile);
-                        fscanf(objfile, "%c", &dataType);
+                        fgets(comments, 200, objFile);
+                        fscanf(objFile, "%c", &dataType);
                     }
                     
                     if (dataType == '#')
                     {
-                        fscanf(objfile, "%i", &numVertex);
+                        fscanf(objFile, "%i", &numVertex);
                     }
                     else printf("Ouch! Something was wrong...");
                     
-                    fgets(comments, 200, objfile);
+                    fgets(comments, 200, objFile);
                 }
             } break;
             case 'f':
             {
-                fgets(comments, 200, objfile);
-                fscanf(objfile, "%c", &dataType);
+                fgets(comments, 200, objFile);
+                fscanf(objFile, "%c", &dataType);
             
                 while (dataType == 'f')
                 {
-                    fgets(comments, 200, objfile);
-                    fscanf(objfile, "%c", &dataType);
+                    fgets(comments, 200, objFile);
+                    fscanf(objFile, "%c", &dataType);
                 }
                 
                 if (dataType == '#')
                 {
-                    fscanf(objfile, "%i", &numTriangles);
+                    fscanf(objFile, "%i", &numTriangles);
                 }
                 else printf("Ouch! Something was wrong...");
                 
-                fgets(comments, 200, objfile);
+                fgets(comments, 200, objFile);
             
             } break;
             default: break;
@@ -581,51 +581,51 @@ Model LoadModel(const char *fileName)
     
     int countMaxVertex = 0;
     
-    rewind(objfile);
+    rewind(objFile);
     
-    while(!feof(objfile))
+    while(!feof(objFile))
     {
-        fscanf(objfile, "%c", &dataType);
+        fscanf(objFile, "%c", &dataType);
         
         switch(dataType)
         {
             case '#': 
             {
-                fgets(comments, 200, objfile);                
+                fgets(comments, 200, objFile);                
             } break;
             case 'v': 
             {
-                fscanf(objfile, "%c", &dataType);
+                fscanf(objFile, "%c", &dataType);
                 
                 if (dataType == 't')    // Read texCoord
                 {
                     float useless = 0;
                 
-                    fscanf(objfile, "%f %f %f", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y, &useless);
+                    fscanf(objFile, "%f %f %f", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y, &useless);
                     countTexCoords++;
                     
-                    fscanf(objfile, "%c", &dataType);
+                    fscanf(objFile, "%c", &dataType);
                 }
                 else if (dataType == 'n')    // Read normals
                 {
-                    fscanf(objfile, "%f %f %f", &midNormals[countNormals].x, &midNormals[countNormals].y, &midNormals[countNormals].z );
+                    fscanf(objFile, "%f %f %f", &midNormals[countNormals].x, &midNormals[countNormals].y, &midNormals[countNormals].z );
                     countNormals++;
                     
-                    fscanf(objfile, "%c", &dataType);
+                    fscanf(objFile, "%c", &dataType);
                 }
                 else    // Read vertex
                 {
-                    fscanf(objfile, "%f %f %f", &midVertices[countVertex].x, &midVertices[countVertex].y, &midVertices[countVertex].z );
+                    fscanf(objFile, "%f %f %f", &midVertices[countVertex].x, &midVertices[countVertex].y, &midVertices[countVertex].z );
                     countVertex++;
                     
-                    fscanf(objfile, "%c", &dataType);
+                    fscanf(objFile, "%c", &dataType);
                 }
             } break;
             case 'f':
             {
                 int vNum, vtNum, vnNum;
-                fscanf(objfile, "%c", &dataType);
-                fscanf(objfile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
+                fscanf(objFile, "%c", &dataType);
+                fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
                 
                 model.vertices[countMaxVertex] = midVertices[vNum-1];
                 model.normals[countMaxVertex] = midNormals[vnNum-1];
@@ -633,7 +633,7 @@ Model LoadModel(const char *fileName)
                 model.texcoords[countMaxVertex].y = -midTexCoords[vtNum-1].y;
                 countMaxVertex++;
                                 
-                fscanf(objfile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
+                fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
                 
                 model.vertices[countMaxVertex] = midVertices[vNum-1];
                 model.normals[countMaxVertex] = midNormals[vnNum-1];
@@ -641,7 +641,7 @@ Model LoadModel(const char *fileName)
                 model.texcoords[countMaxVertex].y = -midTexCoords[vtNum-1].y;
                 countMaxVertex++;
                 
-                fscanf(objfile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
+                fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
                 
                 model.vertices[countMaxVertex] = midVertices[vNum-1];
                 model.normals[countMaxVertex] = midNormals[vnNum-1];
@@ -653,14 +653,13 @@ Model LoadModel(const char *fileName)
         }
     }
     
-    fclose(objfile);
+    fclose(objFile);
     
     return model;
 }
 
 // Load a heightmap image as a 3d model
-// TODO: Just do it...
-Model LoadHeightmap(Image heightmap, Vector3 resolution)
+Model LoadHeightmap(Image heightmap, float maxHeight)
 {
     Model model;
     
@@ -676,17 +675,72 @@ Model LoadHeightmap(Image heightmap, Vector3 resolution)
     model.vertices = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
     model.normals = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
     model.texcoords = (Vector2 *)malloc(model.numVertices * sizeof(Vector2));
+    
+    int vCounter = 0;
+    int trisCounter = 0;
+    
+    float scaleFactor = maxHeight/255;    // TODO: Review scaleFactor calculation
 
-	for(int z = 0; z < mapZ; z++)
+	for(int z = 0; z < mapZ-1; z++)
 	{
-		for(int x = 0; x < mapX; x++)
+		for(int x = 0; x < mapX-1; x++)
 		{
-			// TODO: Fill vertices array with data
+			// Fill vertices array with data
+            //----------------------------------------------------------
+            
+            // one triangle - 3 vertex
+            model.vertices[vCounter].x = x;
+            model.vertices[vCounter].y = GetHeightValue(heightmap.pixels[x + z*mapX])*scaleFactor;
+            model.vertices[vCounter].z = z;
+            
+            model.vertices[vCounter+1].x = x;
+            model.vertices[vCounter+1].y = GetHeightValue(heightmap.pixels[x + (z+1)*mapX])*scaleFactor;
+            model.vertices[vCounter+1].z = z+1;
+            
+            model.vertices[vCounter+2].x = x+1;
+            model.vertices[vCounter+2].y = GetHeightValue(heightmap.pixels[(x+1) + z*mapX])*scaleFactor;
+            model.vertices[vCounter+2].z = z;
+            
+            // another triangle - 3 vertex
+            model.vertices[vCounter+3] = model.vertices[vCounter+2];
+            model.vertices[vCounter+4] = model.vertices[vCounter+1];
+            
+            model.vertices[vCounter+5].x = x+1;
+            model.vertices[vCounter+5].y = GetHeightValue(heightmap.pixels[(x+1) + (z+1)*mapX])*scaleFactor;
+            model.vertices[vCounter+5].z = z+1;
+            
+            // Fill texcoords array with data
+            //--------------------------------------------------------------
+            model.texcoords[vCounter].x = (float)x / (mapX-1);
+            model.texcoords[vCounter].y = (float)z / (mapZ-1);
+            
+            model.texcoords[vCounter+1].x = (float)x / (mapX-1);
+            model.texcoords[vCounter+1].y = (float)(z+1) / (mapZ-1);
+            
+            model.texcoords[vCounter+2].x = (float)(x+1) / (mapX-1);
+            model.texcoords[vCounter+2].y = (float)z / (mapZ-1);
+            
+            model.texcoords[vCounter+3] = model.texcoords[vCounter+2];
+            model.texcoords[vCounter+4] = model.texcoords[vCounter+1];
+            
+            model.texcoords[vCounter+5].x = (float)(x+1) / (mapX-1);
+            model.texcoords[vCounter+5].y = (float)(z+1) / (mapZ-1);
+            
+            // Fill normals array with data
+            //--------------------------------------------------------------
+            // TODO: Review normals calculation
+            model.normals[vCounter] = (Vector3){ 0.0f, 1.0f, 0.0f };
+            model.normals[vCounter+1] = (Vector3){ 0.0f, 1.0f, 0.0f };
+            model.normals[vCounter+2] = (Vector3){ 0.0f, 1.0f, 0.0f };
+            model.normals[vCounter+3] = (Vector3){ 0.0f, 1.0f, 0.0f };
+            model.normals[vCounter+4] = (Vector3){ 0.0f, 1.0f, 0.0f };
+            model.normals[vCounter+5] = (Vector3){ 0.0f, 1.0f, 0.0f };
+            
+            vCounter += 6;
+            trisCounter += 2;
 		}
 	}
 
-	//SmoothHeightmap(&model);    // TODO: Smooth vertex interpolation
-    
     return model;
 }
 
@@ -702,6 +756,7 @@ void UnloadModel(Model model)
 void DrawModel(Model model, Vector3 position, float scale, Color color)
 {
     // NOTE: For models we use Vertex Arrays (OpenGL 1.1)
+    //static int rotation = 0;
     
     glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
@@ -725,6 +780,8 @@ void DrawModel(Model model, Vector3 position, float scale, Color color)
     glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);              // Disable texture coords array
     glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
+    
+    //rotation += 10;
 }
 
 // Draw a textured model
@@ -787,58 +844,8 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     glDisable(GL_TEXTURE_2D);
 }
 
-// Draw a heightmap using a provided image data
-void DrawHeightmap(Image heightmap, Vector3 centerPos, Vector3 scale, Color color)
+// Get current vertex y altitude (proportional to pixel colors in grayscale)
+static float GetHeightValue(Color pixel)
 {
-    // NOTE: Pixel-data is interpreted as grey-scale (even being a color image)
-    // NOTE: Heightmap resolution will depend on image size (one quad per pixel)
-
-    // TODO: Review how this function works... probably we need:
-    // Model LoadHeightmap(Image heightmap, Vector3 resolution);
-    
-    // NOTE: We are allocating and de-allocating vertex data every frame! --> framerate drops 80%! CRAZY!
-    Vector3 *terrainVertex = (Vector3 *)malloc(heightmap.width * heightmap.height * sizeof(Vector3));
-
-    for (int z = 0; z < heightmap.height; z++)
-    {
-        for (int x = 0; x < heightmap.width; x++)
-        {
-            terrainVertex[z*heightmap.height + x].x = (float)(x*scale.x);
-            terrainVertex[z*heightmap.height + x].y = ((float)heightmap.pixels[z*heightmap.height + x].r +
-                                    (float)heightmap.pixels[z*heightmap.height + x].g +
-                                    (float)heightmap.pixels[z*heightmap.height + x].b) / 3 * scale.y;
-            terrainVertex[z*heightmap.height + x].z = (float)(-z*scale.z);
-        }
-    }
-    
-    // TODO: Texture coordinates and normals computing
-    
-    for (int z = 0; z < heightmap.height-1; z++)
-    {
-        glBegin(GL_TRIANGLE_STRIP);
-        for (int x = 0; x < heightmap.width; x++)
-        {
-            glColor3f((float)heightmap.pixels[z*heightmap.height + x].r / 255.0f,
-                      (float)heightmap.pixels[z*heightmap.height + x].g / 255.0f,
-                      (float)heightmap.pixels[z*heightmap.height + x].b / 255.0f);
-            
-            glVertex3f(terrainVertex[z*heightmap.height + x].x, terrainVertex[z*heightmap.height + x].y, terrainVertex[z*heightmap.height + x].z);
-            glVertex3f(terrainVertex[(z+1)*heightmap.height + x].x, terrainVertex[(z+1)*heightmap.height + x].y, terrainVertex[(z+1)*heightmap.height + x].z);
-        }
-        glEnd();
-    }
-    
-    free(terrainVertex);
-}
-
-void DrawHeightmapEx(Image heightmap, Texture2D texture, Vector3 centerPos, Vector3 scale, Color tint)
-{
-    glEnable(GL_TEXTURE_2D);
-    
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
-    
-    // NOTE: No texture coordinates or normals defined at this moment...
-    DrawHeightmap(heightmap, centerPos, scale, tint);
-    
-    glDisable(GL_TEXTURE_2D);
+    return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
 }

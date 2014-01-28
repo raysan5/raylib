@@ -77,6 +77,9 @@ static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pr
 static char previousGamepadState[32] = {0}; // Required to check if gamepad btn pressed/released once
 static char currentGamepadState[32] = {0};  // Required to check if gamepad btn pressed/released once
 
+static int previousMouseWheelY = 0;
+static int currentMouseWheelY = 0;
+
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
@@ -89,6 +92,7 @@ extern void UnloadDefaultFont();             // [Module: text] Unloads default f
 static void InitGraphicsDevice();                                                          // Initialize Graphics Device (OpenGL stuff)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
+static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow* window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow* window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
 static void CameraLookAt(Vector3 position, Vector3 target, Vector3 up);                    // Setup camera view (updates MODELVIEW matrix)
@@ -133,6 +137,7 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
     
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, KeyCallback);
+    glfwSetScrollCallback(window, ScrollCallback);
     glfwSwapInterval(0);            // Disables GPU v-sync (if set), so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
                                     // If not set, swap interval uses GPU v-sync configuration
                                     // Framerate can be setup using SetTargetFPS()
@@ -195,6 +200,8 @@ void ToggleFullscreen()
         fullscreen = !fullscreen;          // Toggle fullscreen flag
 
         glfwDestroyWindow(window);         // Destroy the current window (we will recreate it!)
+        
+        // TODO: WARNING! All loaded resources are lost, we loose Context!
 
         // NOTE: Window aspect ratio is always windowWidth / windowHeight
         if (fullscreen) window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);    // Fullscreen mode
@@ -498,6 +505,16 @@ Vector2 GetMousePosition()
     return position;
 }
 
+// Returns mouse wheel movement Y
+int GetMouseWheelMove()
+{
+    previousMouseWheelY = currentMouseWheelY;
+
+    currentMouseWheelY = 0;
+    
+    return previousMouseWheelY;
+}
+
 // Detect if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
@@ -602,6 +619,12 @@ static void ErrorCallback(int error, const char *description)
     //fprintf(stderr, description);
 }
 
+// GLFW3 Srolling Callback, runs on mouse wheel
+static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    currentMouseWheelY = (int)yoffset;
+}
+
 // GLFW3 Keyboard Callback, runs on key pressed
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -661,8 +684,6 @@ static void InitGraphicsDevice()
     glOrtho(0, fbWidth, fbHeight, 0, 0, 1);     // Config orthographic mode: top-left corner --> (0,0)
     glMatrixMode(GL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     glLoadIdentity();                           // Reset current matrix (MODELVIEW)
-    
-    glDisable(GL_LIGHTING);                     // Lighting Disabled...
     
     // TODO: Create an efficient Lighting System with proper functions (raylib 1.x)
 /*    

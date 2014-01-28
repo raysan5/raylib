@@ -259,7 +259,7 @@ Texture2D LoadTextureFromRES(const char *rresName, int resId)
     Texture2D texture;
 
     Image image = LoadImageFromRES(rresName, resId);
-    texture = CreateTexture2D(image);
+    texture = CreateTexture(image);
     
     return texture;
 }
@@ -283,7 +283,7 @@ Texture2D LoadTextureEx(const char *fileName, bool createPOT, bool mipmaps)
 
 // Create a Texture2D from Image data
 // NOTE: Image is not unloaded, it should be done manually...
-Texture2D CreateTexture2D(Image image)
+Texture2D CreateTexture(Image image)
 {
     Texture2D texture;
     

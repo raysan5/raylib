@@ -11,12 +11,6 @@
 
 #include "raylib.h"
 
-// Useful function for fade-ins and fade-outs
-Color Fade(Color col, float alpha)
-{
-    return (Color){col.r, col.g, col.b, col.a*alpha};
-}
-
 int main()
 {
     // Initialization

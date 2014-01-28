@@ -611,7 +611,7 @@ static SpriteFont LoadRBMF(const char *fileName)
     
     printf("Image reconstructed correctly... now converting it to texture...");
     
-    spriteFont.texture = CreateTexture2D(image);
+    spriteFont.texture = CreateTexture(image);
     
     UnloadImage(image);     // Unload image data
     

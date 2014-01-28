@@ -504,6 +504,8 @@ static Wave LoadWAV(char *fileName)
     wave.channels = waveFormat.numChannels;
     wave.bitsPerSample = waveFormat.bitsPerSample;  
 
+    fclose(wavFile);
+    
     return wave;
 }
 

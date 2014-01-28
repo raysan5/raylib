@@ -7,6 +7,14 @@ NOTE: Only versions marked as 'Release' are available on release folder, updates
 NOTE: Current Release includes all previous updates.
 
 -----------------------------------------------
+Update:     raylib 1.0.5 (28 January 2014)
+-----------------------------------------------
+[audio] LoadSound() - Corrected a bug, WAV file was not closed!
+[core] GetMouseWheelMove() - Added, check mouse wheel Y movement
+[models] LoadHeightmap() - Added, Heightmap can be loaded as a Model
+[tool] rREM updated, now supports (partially) drag and drop of files 
+
+-----------------------------------------------
 Release:     raylib 1.0.4 (23 January 2014)
 -----------------------------------------------
 [tool] Published a first alpha version of rREM tool (raylib Resource Embedder)
