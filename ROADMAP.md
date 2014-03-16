@@ -8,8 +8,8 @@ Around the source code there are some TODO points with pending revisions/bugs an
 
 raylib v1.x
 
-   - Review Billboard Drawing functions
-   - Review Heightmap Loading and Drawing functions - Load Heightmap directly as a Model
+   - [DONE] Review Billboard Drawing functions
+   - [DONE] Review Heightmap Loading and Drawing functions - Load Heightmap directly as a Model
    - Lighting support (only 3d mode) - CreateLight()
    - [DONE] Simple Collision Detection functions
    - Default scene Camera controls (zoom, pan, rotate)   
