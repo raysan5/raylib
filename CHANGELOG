@@ -1,16 +1,32 @@
 changelog
 ---------
 
-Current Release:    raylib 1.0.4 (January 2014)
+Current Release:    raylib 1.0.6 (March 2014)
 
 NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.0.6 (16 March 2014)
+-----------------------------------------------
+[core] Removed unused lighting-system code
+[core] Removed SetPerspective() function, calculated directly
+[core] Unload and reload default font on fullscreen toggle
+[core] Corrected bug gamepad buttons checking if no gamepad available 
+[texture] DrawTextureV() - Added, to draw using Vector2 for position
+[texture] LoadTexture() - Redesigned, now uses LoadImage() + CreateTexture()
+[text] FormatText() - Corrected memory leak bug
+[models] Added Matrix struct and related functions
+[models] DrawBillboard() - Reviewed, now it works!
+[models] DrawBillboardRec() - Reviewed, now it works!
+[tests] Added folder with multiple tests for new functions
 
 -----------------------------------------------
 Update:     raylib 1.0.5 (28 January 2014)
 -----------------------------------------------
 [audio] LoadSound() - Corrected a bug, WAV file was not closed!
 [core] GetMouseWheelMove() - Added, check mouse wheel Y movement
+[texture] CreateTexture2D() renamed to CreateTexture()
 [models] LoadHeightmap() - Added, Heightmap can be loaded as a Model
 [tool] rREM updated, now supports (partially) drag and drop of files 
 

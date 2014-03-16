@@ -61,8 +61,16 @@ void DrawPixel(int posX, int posY, Color color)
         glColor4ub(color.r, color.g, color.b, color.a);
         glVertex2i(posX, posY);
     glEnd();
-    
-    // NOTE: Alternative method to draw a pixel (point)
+
+    // NOTE1: Alternative method to draw a pixel (GL_LINES)
+/*
+    glBegin(GL_LINES);
+        glColor4ub(color.r, color.g, color.b, color.a);
+        glVertex2i(posX, posY);
+        glVertex2i(posX+1, posY+1);
+    glEnd();
+*/    
+    // NOTE2: Alternative method to draw a pixel (glPoint())
 /*
     glEnable(GL_POINT_SMOOTH);
     glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);    // Deprecated on OGL 3.0
@@ -426,7 +434,7 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
         if (rec1.x <= rec2.x)
         {
             if (rec1.y <= rec2.y)
-            {	
+            {    
                 retRec.x = rec2.x;
                 retRec.y = rec2.y;
                 retRec.width = rec1.width - dxx;
@@ -443,7 +451,7 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
         else
         {
             if (rec1.y <= rec2.y)
-            {	
+            {    
                 retRec.x = rec1.x;
                 retRec.y = rec2.y;
                 retRec.width = rec2.width - dxx;

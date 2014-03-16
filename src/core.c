@@ -33,7 +33,7 @@
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 #include <time.h>           // Useful to initialize random seed
-#include <math.h>           // Math related functions, tan() on SetPerspective
+#include <math.h>           // Math related functions, tan() used to set perspective
 #include "vector3.h"        // Basic Vector3 functions
 #include "utils.h"          // WritePNG() function
 
@@ -96,7 +96,6 @@ static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset); 
 static void CursorEnterCallback(GLFWwindow* window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow* window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
 static void CameraLookAt(Vector3 position, Vector3 target, Vector3 up);                    // Setup camera view (updates MODELVIEW matrix)
-static void SetPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar); // Setup view projection (updates PROJECTION matrix)
 static void TakeScreenshot();                                                              // Takes a bitmap (BMP) screenshot and saves it in the same folder as executable
 
 //----------------------------------------------------------------------------------
@@ -147,14 +146,7 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
 
     LoadDefaultFont();
     
-    if (cursorImage != NULL) 
-    {
-        // Load image as texture
-        cursor = LoadTexture(cursorImage);  
-    
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-        customCursor = true;
-    }
+    if (cursorImage != NULL) SetCustomCursor(cursorImage);
     
     srand(time(NULL));      // Initialize random seed
 }
@@ -199,6 +191,8 @@ void ToggleFullscreen()
     {
         fullscreen = !fullscreen;          // Toggle fullscreen flag
 
+        UnloadDefaultFont();
+        
         glfwDestroyWindow(window);         // Destroy the current window (we will recreate it!)
         
         // TODO: WARNING! All loaded resources are lost, we loose Context!
@@ -217,6 +211,8 @@ void ToggleFullscreen()
         glfwSetKeyCallback(window, KeyCallback);
 
         InitGraphicsDevice();
+        
+        LoadDefaultFont();
     }
 }
 
@@ -275,15 +271,18 @@ void EndDrawing()
 // Initializes 3D mode for drawing (Camera setup)
 void Begin3dMode(Camera camera)
 {
-    //glEnable(GL_LIGHTING);            // TODO: Setup proper lighting system (raylib 1.x)
-    
     glMatrixMode(GL_PROJECTION);        // Switch to projection matrix
     
     glPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     glLoadIdentity();                   // Reset current matrix (PROJECTION)
     
-    SetPerspective(45.0f, (GLfloat)windowWidth/(GLfloat)windowHeight, 0.1f, 100.0f);    // Setup perspective projection
+    // Setup perspective projection
+    float aspect = (GLfloat)windowWidth/(GLfloat)windowHeight;
+    double top = 0.1f*tan(45.0f*PI / 360.0);
+    double right = top*aspect;
 
+    glFrustum(-right, right, -top, top, 0.1f, 100.0f);
+    
     glMatrixMode(GL_MODELVIEW);         // Switch back to modelview matrix
     glLoadIdentity();                   // Reset current matrix (MODELVIEW)
     
@@ -300,8 +299,6 @@ void End3dMode()
     glLoadIdentity();                   // Reset current matrix (MODELVIEW)
     
     glTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
-        
-    //glDisable(GL_LIGHTING);           // TODO: Setup proper lighting system (raylib 1.x)
 }
 
 // Set target FPS for the game
@@ -570,7 +567,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
     
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
     
-    if (buttons[button] == GLFW_PRESS)
+    if ((buttons != NULL) && (buttons[button] == GLFW_PRESS))
     {
         return true;
     }
@@ -601,7 +598,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
     
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
     
-    if (buttons[button] == GLFW_RELEASE)
+    if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE))
     {
         return true;
     }
@@ -685,19 +682,6 @@ static void InitGraphicsDevice()
     glMatrixMode(GL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     glLoadIdentity();                           // Reset current matrix (MODELVIEW)
     
-    // TODO: Create an efficient Lighting System with proper functions (raylib 1.x)
-/*    
-    glEnable(GL_COLOR_MATERIAL);                        // Enable materials, causes some glMaterial atributes to track the current color (glColor)...
-    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);  // Material types and where to apply them
-                                                        // NOTE: ONLY works with lighting; defines how light interacts with material
-                                                        
-    glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmbient);     // Define ambient light color property
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDiffuse);     // Define diffuse light color property
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPosition);   // Define light position
-    
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT1);                                // Enable light one (8 lights available at the same time)
-*/    
     // TODO: Review all shapes/models are drawn CCW and enable backface culling
 
     //glEnable(GL_CULL_FACE);       // Enable backface culling (Disabled by default)
@@ -744,19 +728,6 @@ static void CameraLookAt(Vector3 position, Vector3 target, Vector3 up)
     glMultMatrixf(rotMatrix);    // Multiply MODELVIEW matrix by rotation matrix
     
     glTranslatef(-position.x, -position.y, -position.z);    // Translate eye to position
-}
-
-// Setup view projection (updates PROJECTION matrix)
-static void SetPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
-{
-   double xmin, xmax, ymin, ymax;
-
-   ymax = zNear * tan(fovy * PI / 360.0);
-   ymin = -ymax;
-   xmin = ymin * aspect;
-   xmax = ymax * aspect;
-
-   glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
 }
 
 // Takes a bitmap (BMP) screenshot and saves it in the same folder as executable

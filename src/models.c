@@ -39,7 +39,14 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// ...
+
+// Matrix type (OpenGL style 4x4 - right handed)
+typedef struct Matrix {
+    float m0, m4, m8, m12;
+    float m1, m5, m9, m13;
+    float m2, m6, m10, m14;
+    float m3, m7, m11, m15;
+} Matrix;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -50,13 +57,15 @@
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static float GetHeightValue(Color pixel);
+static void MatrixTranspose(Matrix *mat);
+static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
 // Draw cube
-// NOTE: Cube position is de center position
+// NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color)
 {
     glPushMatrix();
@@ -664,7 +673,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     Model model;
     
     int mapX = heightmap.width;
-	int mapZ = heightmap.height;
+    int mapZ = heightmap.height;
     
     // NOTE: One vertex per pixel
     // TODO: Consider resolution when generating model data?
@@ -681,11 +690,11 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     
     float scaleFactor = maxHeight/255;    // TODO: Review scaleFactor calculation
 
-	for(int z = 0; z < mapZ-1; z++)
-	{
-		for(int x = 0; x < mapX-1; x++)
-		{
-			// Fill vertices array with data
+    for(int z = 0; z < mapZ-1; z++)
+    {
+        for(int x = 0; x < mapX-1; x++)
+        {
+            // Fill vertices array with data
             //----------------------------------------------------------
             
             // one triangle - 3 vertex
@@ -738,8 +747,8 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             
             vCounter += 6;
             trisCounter += 2;
-		}
-	}
+        }
+    }
 
     return model;
 }
@@ -805,47 +814,165 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 }
 
 // Draw a billboard
-void DrawBillboard(Camera camera, Texture2D texture, Vector3 basePos, float size, Color tint)
+void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
-    // NOTE: Billboard size will represent the width, height maintains aspect ratio
-    Vector3 centerPos = { basePos.x, basePos.y + size * (float)texture.height/(float)texture.width/2, basePos.z };
+    // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
     Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
-    Vector3 rotation = { 90, 0, 0 };
     
-    // TODO: Calculate Y rotation to face always camera (use matrix)
-    // OPTION: Lock Y-axis
+    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
+    MatrixTranspose(&viewMatrix);
+    
+    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
+    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+/*    
+    d-------c
+    |       |
+    |   *   |
+    |       |
+    a-------b
+*/  
+    VectorScale(&right, sizeRatio.x/2);
+    VectorScale(&up, sizeRatio.y/2);
+    
+    Vector3 p1 = VectorAdd(right, up);
+    Vector3 p2 = VectorSubtract(right, up);
 
+    Vector3 a = VectorSubtract(center, p2);
+    Vector3 b = VectorAdd(center, p1);
+    Vector3 c = VectorAdd(center, p2);
+    Vector3 d = VectorSubtract(center, p1);
+    
     glEnable(GL_TEXTURE_2D);
     
     glBindTexture(GL_TEXTURE_2D, texture.glId);
-    
-    DrawPlane(centerPos, sizeRatio, rotation, tint);    // TODO: Review this function...
+      
+    glBegin(GL_QUADS);
+        glColor4ub(tint.r, tint.g, tint.b, tint.a);
+        glNormal3f(0.0f, 1.0f, 0.0f); 
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(a.x, a.y, a.z);
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(b.x, b.y, b.z);
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(c.x, c.y, c.z);
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(d.x, d.y, d.z);
+    glEnd();
     
     glDisable(GL_TEXTURE_2D);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 basePos, float size, Color tint)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
 {
-    // NOTE: Billboard size will represent the width, height maintains aspect ratio
-    //Vector3 centerPos = { basePos.x, basePos.y + size * (float)texture.height/(float)texture.width/2, basePos.z };
-    //Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
-    //Vector3 rotation = { 90, 0, 0 };
-    
-    // TODO: Calculate Y rotation to face always camera (use matrix)
-    // OPTION: Lock Y-axis
+    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
+    Vector2 sizeRatio = { size, size * (float)sourceRec.height/sourceRec.width };
 
-    glEnable(GL_TEXTURE_2D);
+    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
+    MatrixTranspose(&viewMatrix);
+    
+    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
+    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+/*    
+    d-------c
+    |       |
+    |   *   |
+    |       |
+    a-------b
+*/  
+    VectorScale(&right, sizeRatio.x/2);
+    VectorScale(&up, sizeRatio.y/2);
+
+    Vector3 p1 = VectorAdd(right, up);
+    Vector3 p2 = VectorSubtract(right, up);
+
+    Vector3 a = VectorSubtract(center, p2);
+    Vector3 b = VectorAdd(center, p1);
+    Vector3 c = VectorAdd(center, p2);
+    Vector3 d = VectorSubtract(center, p1);
+    
+    glEnable(GL_TEXTURE_2D);    // Enable textures usage
     
     glBindTexture(GL_TEXTURE_2D, texture.glId);
     
-    // TODO: DrawPlane with correct textcoords for source rec.
+    glBegin(GL_QUADS);
+        glColor4ub(tint.r, tint.g, tint.b, tint.a);
+        
+        // Bottom-left corner for texture and quad
+        glTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+        glVertex3f(a.x, a.y, a.z);
+        
+        // Bottom-right corner for texture and quad
+        glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        glVertex3f(b.x, b.y, b.z);
+        
+        // Top-right corner for texture and quad
+        glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+        glVertex3f(c.x, c.y, c.z);
+        
+        // Top-left corner for texture and quad
+        glTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        glVertex3f(d.x, d.y, d.z);
+    glEnd();
     
-    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D);    // Disable textures usage
 }
 
 // Get current vertex y altitude (proportional to pixel colors in grayscale)
 static float GetHeightValue(Color pixel)
 {
     return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
+}
+
+// Returns camera look-at matrix (view matrix)
+static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
+{
+    Matrix result;
+    
+    Vector3 z = VectorSubtract(eye, target);
+    VectorNormalize(&z);
+    Vector3 x = VectorCrossProduct(up, z);
+    VectorNormalize(&x);
+    Vector3 y = VectorCrossProduct(z, x);
+    VectorNormalize(&y);
+    
+    result.m0 = x.x;
+    result.m1 = x.y;
+    result.m2 = x.z;
+    result.m3 = -((x.x * eye.x) + (x.y * eye.y) + (x.z * eye.z));
+    result.m4 = y.x;
+    result.m5 = y.y;
+    result.m6 = y.z;
+    result.m7 = -((y.x * eye.x) + (y.y * eye.y) + (y.z * eye.z));
+    result.m8 = z.x;
+    result.m9 = z.y;
+    result.m10 = z.z;
+    result.m11 = -((z.x * eye.x) + (z.y * eye.y) + (z.z * eye.z));
+    result.m12 = 0;
+    result.m13 = 0;
+    result.m14 = 0;
+    result.m15 = 1;
+    
+    return result;
+}
+
+// Transposes provided matrix
+static void MatrixTranspose(Matrix *mat)
+{
+    Matrix temp;
+
+    temp.m0 = mat->m0;
+    temp.m1 = mat->m4;
+    temp.m2 = mat->m8;
+    temp.m3 = mat->m12;
+    temp.m4 = mat->m1;
+    temp.m5 = mat->m5;
+    temp.m6 = mat->m9;
+    temp.m7 = mat->m13;
+    temp.m8 = mat->m2;
+    temp.m9 = mat->m6;
+    temp.m10 = mat->m10;
+    temp.m11 = mat->m14;
+    temp.m12 = mat->m3;
+    temp.m13 = mat->m7;
+    temp.m14 = mat->m11;
+    temp.m15 = mat->m15;
+    
+    *mat = temp;
 }

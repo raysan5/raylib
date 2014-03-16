@@ -1,6 +1,6 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.4 (www.raylib.com)
+*   raylib 1.0.6 (www.raylib.com)
 *    
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -325,11 +325,12 @@ Image LoadImage(const char *fileName);                                          
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
-Texture2D CreateTexture(Image image);                                                            // Create a Texture2D from Image data
+Texture2D CreateTexture(Image image);                                                              // Create a Texture2D from Image data
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
+void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin,     // Draw a part of a texture defined by a rectangle with 'pro' parameters
@@ -377,10 +378,8 @@ void UnloadModel(Model model);                                                  
 void DrawModel(Model model, Vector3 position, float scale, Color color);                           // Draw a model
 void DrawModelEx(Model model, Texture2D texture, Vector3 position, float scale, Color tint);       // Draw a textured model
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires
-
-// NOTE: The following functions work but are incomplete or require some revision
-void DrawBillboard(Camera camera, Texture2D texture, Vector3 basePos, float size, Color tint);                         // REVIEW: Draw a billboard (raylib 1.x)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 basePos, float size, Color tint); // REVIEW: Draw a billboard (raylib 1.x)
+void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec 
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

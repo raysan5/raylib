@@ -1,6 +1,6 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.4 (www.raylib.com)
+*   raylib 1.0.6 (www.raylib.com)
 *    
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -65,6 +65,7 @@
 #define KEY_SPACE            32
 #define KEY_ESCAPE          256
 #define KEY_ENTER           257
+#define KEY_BACKSPACE       259
 #define KEY_RIGHT           262
 #define KEY_LEFT            263
 #define KEY_DOWN            264
@@ -278,6 +279,7 @@ bool IsMouseButtonUp(int button);                       // Detect if a mouse but
 int GetMouseX();                                        // Returns mouse position X
 int GetMouseY();                                        // Returns mouse position Y
 Vector2 GetMousePosition();                             // Returns mouse position XY
+int GetMouseWheelMove();                                // Returns mouse wheel movement Y
 
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
@@ -323,11 +325,12 @@ Image LoadImage(const char *fileName);                                          
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
-Texture2D CreateTexture2D(Image image);                                                            // Create a Texture2D from Image data
+Texture2D CreateTexture(Image image);                                                              // Create a Texture2D from Image data
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
+void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin,     // Draw a part of a texture defined by a rectangle with 'pro' parameters
@@ -370,17 +373,13 @@ void DrawGizmo(Vector3 position, bool orbits);                                  
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
+Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void DrawModel(Model model, Vector3 position, float scale, Color color);                           // Draw a model
 void DrawModelEx(Model model, Texture2D texture, Vector3 position, float scale, Color tint);       // Draw a textured model
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires
-
-// NOTE: The following functions work but are incomplete or require some revision
-// DrawHeightmap is extremely inefficient and can impact performance up to 60%
-void DrawBillboard(Camera camera, Texture2D texture, Vector3 basePos, float size, Color tint);                         // REVIEW: Draw a billboard (raylib 1.x)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 basePos, float size, Color tint); // REVIEW: Draw a billboard (raylib 1.x)
-void DrawHeightmap(Image heightmap, Vector3 centerPos, Vector3 scale, Color color);                                    // REVIEW: Draw heightmap using image map (raylib 1.x)
-void DrawHeightmapEx(Image heightmap, Texture2D texture, Vector3 centerPos, Vector3 scale, Color tint);                // REVIEW: Draw textured heightmap (raylib 1.x)
+void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec 
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

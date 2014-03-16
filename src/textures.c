@@ -218,37 +218,11 @@ Image LoadImageFromRES(const char *rresName, int resId)
 Texture2D LoadTexture(const char *fileName)
 {
     Texture2D texture;
-
-    int imgWidth;
-    int imgHeight;
-    int imgBpp;
+    Image image;
     
-    // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-    // Force loading to 4 components (RGBA)
-    byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);    
-    
-    // Convert loaded data to OpenGL texture
-    //----------------------------------------
-    GLuint id;
-    glGenTextures(1, &id);         // Generate Pointer to the Texture
-    
-    glBindTexture(GL_TEXTURE_2D, id);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repead on x-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repead on y-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, imgWidth, imgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
-    
-    // NOTE: Not using mipmappings (texture for 2D drawing)
-    // At this point we have the image converted to texture and uploaded to GPU
-    
-    stbi_image_free(imgData);      // Now we can free loaded data from RAM memory
-    
-    texture.glId = id;
-    texture.width = imgWidth;
-    texture.height = imgHeight;
+    image = LoadImage(fileName);
+    texture = CreateTexture(image);
+    UnloadImage(image);
     
     return texture;
 }
@@ -260,23 +234,6 @@ Texture2D LoadTextureFromRES(const char *rresName, int resId)
 
     Image image = LoadImageFromRES(rresName, resId);
     texture = CreateTexture(image);
-    
-    return texture;
-}
-
-// Load an image as texture (and convert to POT with mipmaps)
-Texture2D LoadTextureEx(const char *fileName, bool createPOT, bool mipmaps)
-{
-    Texture2D texture;
-    
-    // TODO: Load and image and convert to Power-Of-Two
-    // NOTE: Conversion could be done just adding extra space to image or by scaling image
-    // NOTE: If scaling image, be careful with scaling algorithm (aproximation, bilinear, bicubic...)
-    
-    // TODO: Generate all required mipmap levels from image and convert to testure (not that easy)
-    // NOTE: If using OpenGL 1.1, the only option is doing mipmap generation on CPU side (i.e. gluBuild2DMipmaps)
-    // NOTE: raylib tries to minimize external dependencies so, we are not using GLU
-    // NOTE: Re-implement some function similar to gluBuild2DMipmaps (not that easy...)
     
     return texture;
 }
@@ -294,11 +251,18 @@ Texture2D CreateTexture(Image image)
     
     glBindTexture(GL_TEXTURE_2D, id);
     
+    // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used!
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repead on x-axis
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repead on y-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
     
+    // Trilinear filtering
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
+    //glGenerateMipmap(GL_TEXTURE_2D);    // OpenGL 3.3!
+    
+    // Upload texture to GPU
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels);
     
     // NOTE: Not using mipmappings (texture for 2D drawing)
@@ -327,6 +291,12 @@ void UnloadTexture(Texture2D texture)
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
 {
     DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY}, 0, 1.0f, tint);
+}
+
+// Draw a Texture2D with position defined as Vector2
+void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
+{
+    DrawTextureEx(texture, position, 0, 1.0f, tint);
 }
 
 // Draw a Texture2D with extended parameters

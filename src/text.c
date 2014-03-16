@@ -8,7 +8,7 @@
 *       stb_image - Multiple formats image loading (JPEG, PNG, BMP, TGA, PSD, GIF, HDR, PIC)
 *
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-*    
+*
 *   This software is provided "as-is", without any express or implied warranty. In no event 
 *   will the authors be held liable for any damages arising from the use of this software.
 *
@@ -37,8 +37,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FIRST_CHAR         32
-#define MAX_FONTCHARS  128
+#define FONT_FIRST_CHAR         32
+#define MAX_FONTCHARS          128
+#define MAX_FORMATTEXT_LENGTH   50
 
 #define BIT_CHECK(a,b) ((a) & (1<<(b)))
 
@@ -125,7 +126,7 @@ extern void LoadDefaultFont()
     
     for (int i = 0; i < defaultFont.numChars; i++)
     {
-        defaultFont.charSet[i].value = FIRST_CHAR + i;
+        defaultFont.charSet[i].value = FONT_FIRST_CHAR + i;  // First char is 32
         defaultFont.charSet[i].x = currentPosX;
         defaultFont.charSet[i].y = charsDivisor + currentLine * (charsHeight + charsDivisor);
         defaultFont.charSet[i].w = charsWidth[i];
@@ -329,31 +330,26 @@ void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int f
     if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
     else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
 
-    glDisable(GL_LIGHTING);        // When drawing text, disable LIGHTING
     glEnable(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, spriteFont.texture.glId);
 
-    glPushMatrix();
-    
-        // Optimized to use one draw call per string
-        glBegin(GL_QUADS);
-            for(int i = 0; i < length; i++)
-            {
-                c = spriteFont.charSet[(int)text[i] - FIRST_CHAR];
-                
-                glColor4ub(tint.r, tint.g, tint.b, tint.a);
-                glNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
-                glTexCoord2f((float)c.x / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);                     glVertex2f(positionX, position.y);
-                glTexCoord2f((float)c.x / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);             glVertex2f(positionX, position.y + (c.h) * scaleFactor);
-                glTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);     glVertex2f(positionX + (c.w) * scaleFactor, position.y + (c.h) * scaleFactor);
-                glTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);             glVertex2f(positionX + (c.w) * scaleFactor, position.y);
-                
-                positionX += ((spriteFont.charSet[(int)text[i] - FIRST_CHAR].w) * scaleFactor + spacing);
-            }
-        glEnd();
-        
-    glPopMatrix();
+    // Optimized to use one draw call per string
+    glBegin(GL_QUADS);
+        for(int i = 0; i < length; i++)
+        {
+            c = spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR];
+            
+            glColor4ub(tint.r, tint.g, tint.b, tint.a);
+            glNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
+            glTexCoord2f((float)c.x / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);                     glVertex2f(positionX, position.y);
+            glTexCoord2f((float)c.x / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);             glVertex2f(positionX, position.y + (c.h) * scaleFactor);
+            glTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);     glVertex2f(positionX + (c.w) * scaleFactor, position.y + (c.h) * scaleFactor);
+            glTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);             glVertex2f(positionX + (c.w) * scaleFactor, position.y);
+            
+            positionX += ((spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR].w) * scaleFactor + spacing);
+        }
+    glEnd();
         
     glDisable(GL_TEXTURE_2D);
 }
@@ -361,16 +357,13 @@ void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int f
 // Formatting of text with variables to 'embed'
 const char *FormatText(const char *text, ...)
 {
-    int length = strlen(text);
-    char *buffer = malloc(length + 20);  // We add 20 extra characters, should be enough... :P
-
+    static char buffer[MAX_FORMATTEXT_LENGTH];
+    
     va_list args;
     va_start(args, text);
     vsprintf(buffer, text, args);        // NOTE: We use vsprintf() defined in <stdarg.h>
     va_end(args);
-    
-    //strcat(buffer, "\0");              // We add a end-of-string mark at the end (not needed)
-    
+
     return buffer;
 }
 
@@ -393,7 +386,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
     
     for (int i = 0; i < len; i++)
     {
-        textWidth += spriteFont.charSet[(int)text[i] - FIRST_CHAR].w;
+        textWidth += spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR].w;
     }
     
     if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
@@ -491,7 +484,7 @@ static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Char
         while((xPosToRead < imgWidth) &&
               !PixelIsMagenta((imgDataPixel[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*imgWidth + xPosToRead])))
         {
-            tempCharSet[index].value = FIRST_CHAR + index;
+            tempCharSet[index].value = FONT_FIRST_CHAR + index;
             tempCharSet[index].x = xPosToRead;
             tempCharSet[index].y = lineSpacing + lineToRead * (charHeight + lineSpacing);
             tempCharSet[index].h = charHeight;

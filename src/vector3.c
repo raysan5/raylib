@@ -25,7 +25,7 @@
 
 #include "vector3.h"
 
-#include <math.h>
+#include <math.h>       // Used for fabs(), sqrt()
 
 // Add two vectors
 Vector3 VectorAdd(Vector3 v1, Vector3 v2)
