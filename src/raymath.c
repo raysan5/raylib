@@ -199,6 +199,28 @@ Vector3 VectorReflect(Vector3 vector, Vector3 normal)
     return result;
 }
 
+// Transforms a Vector3 with a given Matrix
+void VectorTransform(Vector3 *v, Matrix mat)
+{
+    float x = v->x;
+    float y = v->y; 
+    float z = v->z;
+    
+    //MatrixTranspose(&mat);
+    
+    v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
+    v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
+    v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
+};
+
+// Return a Vector3 init to zero
+Vector3 VectorZero()
+{
+    Vector3 zero = { 0.0, 0.0, 0.0 };
+    
+    return zero;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix math
 //----------------------------------------------------------------------------------
@@ -234,17 +256,17 @@ float MatrixDeterminant(Matrix mat)
     float result;
 
     // Cache the matrix values (speed optimization)
-	float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
-	float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
-	float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
-	float a30 = mat.m12, a31 = mat.m13, a32 = mat.m14, a33 = mat.m15;
+    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
+    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
+    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
+    float a30 = mat.m12, a31 = mat.m13, a32 = mat.m14, a33 = mat.m15;
 
-	result = a30*a21*a12*a03 - a20*a31*a12*a03 - a30*a11*a22*a03 + a10*a31*a22*a03 +
-			 a20*a11*a32*a03 - a10*a21*a32*a03 - a30*a21*a02*a13 + a20*a31*a02*a13 +
-			 a30*a01*a22*a13 - a00*a31*a22*a13 - a20*a01*a32*a13 + a00*a21*a32*a13 +
-			 a30*a11*a02*a23 - a10*a31*a02*a23 - a30*a01*a12*a23 + a00*a31*a12*a23 +
-			 a10*a01*a32*a23 - a00*a11*a32*a23 - a20*a11*a02*a33 + a10*a21*a02*a33 +
-			 a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
+    result = a30*a21*a12*a03 - a20*a31*a12*a03 - a30*a11*a22*a03 + a10*a31*a22*a03 +
+             a20*a11*a32*a03 - a10*a21*a32*a03 - a30*a21*a02*a13 + a20*a31*a02*a13 +
+             a30*a01*a22*a13 - a00*a31*a22*a13 - a20*a01*a32*a13 + a00*a21*a32*a13 +
+             a30*a11*a02*a23 - a10*a31*a02*a23 - a30*a01*a12*a23 + a00*a31*a12*a23 +
+             a10*a01*a32*a23 - a00*a11*a32*a23 - a20*a11*a02*a33 + a10*a21*a02*a33 +
+             a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
     
     return result;
 }
@@ -261,21 +283,21 @@ void MatrixTranspose(Matrix *mat)
     Matrix temp;
 
     temp.m0 = mat->m0;
-	temp.m1 = mat->m4;
-	temp.m2 = mat->m8;
-	temp.m3 = mat->m12;
-	temp.m4 = mat->m1;
-	temp.m5 = mat->m5;
-	temp.m6 = mat->m9;
-	temp.m7 = mat->m13;
-	temp.m8 = mat->m2;
-	temp.m9 = mat->m6;
-	temp.m10 = mat->m10;
-	temp.m11 = mat->m14;
-	temp.m12 = mat->m3;
-	temp.m13 = mat->m7;
-	temp.m14 = mat->m11;
-	temp.m15 = mat->m15;
+    temp.m1 = mat->m4;
+    temp.m2 = mat->m8;
+    temp.m3 = mat->m12;
+    temp.m4 = mat->m1;
+    temp.m5 = mat->m5;
+    temp.m6 = mat->m9;
+    temp.m7 = mat->m13;
+    temp.m8 = mat->m2;
+    temp.m9 = mat->m6;
+    temp.m10 = mat->m10;
+    temp.m11 = mat->m14;
+    temp.m12 = mat->m3;
+    temp.m13 = mat->m7;
+    temp.m14 = mat->m11;
+    temp.m15 = mat->m15;
     
     *mat = temp;
 }
@@ -285,50 +307,50 @@ void MatrixInvert(Matrix *mat)
 {
     Matrix temp;
     
-	// Cache the matrix values (speed optimization)
+    // Cache the matrix values (speed optimization)
     float a00 = mat->m0, a01 = mat->m1, a02 = mat->m2, a03 = mat->m3;
-	float a10 = mat->m4, a11 = mat->m5, a12 = mat->m6, a13 = mat->m7;
-	float a20 = mat->m8, a21 = mat->m9, a22 = mat->m10, a23 = mat->m11;
-	float a30 = mat->m12, a31 = mat->m13, a32 = mat->m14, a33 = mat->m15;
-	
-	float b00 = a00*a11 - a01*a10;
-	float b01 = a00*a12 - a02*a10;
-	float b02 = a00*a13 - a03*a10;
-	float b03 = a01*a12 - a02*a11;
-	float b04 = a01*a13 - a03*a11;
-	float b05 = a02*a13 - a03*a12;
-	float b06 = a20*a31 - a21*a30;
-	float b07 = a20*a32 - a22*a30;
-	float b08 = a20*a33 - a23*a30;
-	float b09 = a21*a32 - a22*a31;
-	float b10 = a21*a33 - a23*a31;
-	float b11 = a22*a33 - a23*a32;
+    float a10 = mat->m4, a11 = mat->m5, a12 = mat->m6, a13 = mat->m7;
+    float a20 = mat->m8, a21 = mat->m9, a22 = mat->m10, a23 = mat->m11;
+    float a30 = mat->m12, a31 = mat->m13, a32 = mat->m14, a33 = mat->m15;
     
-	// Calculate the invert determinant (inlined to avoid double-caching)
-	float invDet = 1/(b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06);
+    float b00 = a00*a11 - a01*a10;
+    float b01 = a00*a12 - a02*a10;
+    float b02 = a00*a13 - a03*a10;
+    float b03 = a01*a12 - a02*a11;
+    float b04 = a01*a13 - a03*a11;
+    float b05 = a02*a13 - a03*a12;
+    float b06 = a20*a31 - a21*a30;
+    float b07 = a20*a32 - a22*a30;
+    float b08 = a20*a33 - a23*a30;
+    float b09 = a21*a32 - a22*a31;
+    float b10 = a21*a33 - a23*a31;
+    float b11 = a22*a33 - a23*a32;
+    
+    // Calculate the invert determinant (inlined to avoid double-caching)
+    float invDet = 1/(b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06);
     
     printf("%f\n", invDet);
-	
-	temp.m0 = (a11*b11 - a12*b10 + a13*b09)*invDet;
-	temp.m1 = (-a01*b11 + a02*b10 - a03*b09)*invDet;
-	temp.m2 = (a31*b05 - a32*b04 + a33*b03)*invDet;
-	temp.m3 = (-a21*b05 + a22*b04 - a23*b03)*invDet;
-	temp.m4 = (-a10*b11 + a12*b08 - a13*b07)*invDet;
-	temp.m5 = (a00*b11 - a02*b08 + a03*b07)*invDet;
-	temp.m6 = (-a30*b05 + a32*b02 - a33*b01)*invDet;
-	temp.m7 = (a20*b05 - a22*b02 + a23*b01)*invDet;
-	temp.m8 = (a10*b10 - a11*b08 + a13*b06)*invDet;
-	temp.m9 = (-a00*b10 + a01*b08 - a03*b06)*invDet;
-	temp.m10 = (a30*b04 - a31*b02 + a33*b00)*invDet;
-	temp.m11 = (-a20*b04 + a21*b02 - a23*b00)*invDet;
-	temp.m12 = (-a10*b09 + a11*b07 - a12*b06)*invDet;
-	temp.m13 = (a00*b09 - a01*b07 + a02*b06)*invDet;
-	temp.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
-	temp.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
+    
+    temp.m0 = (a11*b11 - a12*b10 + a13*b09)*invDet;
+    temp.m1 = (-a01*b11 + a02*b10 - a03*b09)*invDet;
+    temp.m2 = (a31*b05 - a32*b04 + a33*b03)*invDet;
+    temp.m3 = (-a21*b05 + a22*b04 - a23*b03)*invDet;
+    temp.m4 = (-a10*b11 + a12*b08 - a13*b07)*invDet;
+    temp.m5 = (a00*b11 - a02*b08 + a03*b07)*invDet;
+    temp.m6 = (-a30*b05 + a32*b02 - a33*b01)*invDet;
+    temp.m7 = (a20*b05 - a22*b02 + a23*b01)*invDet;
+    temp.m8 = (a10*b10 - a11*b08 + a13*b06)*invDet;
+    temp.m9 = (-a00*b10 + a01*b08 - a03*b06)*invDet;
+    temp.m10 = (a30*b04 - a31*b02 + a33*b00)*invDet;
+    temp.m11 = (-a20*b04 + a21*b02 - a23*b00)*invDet;
+    temp.m12 = (-a10*b09 + a11*b07 - a12*b06)*invDet;
+    temp.m13 = (a00*b09 - a01*b07 + a02*b06)*invDet;
+    temp.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
+    temp.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
     
     PrintMatrix(temp);
-	
-	*mat = temp;
+    
+    *mat = temp;
 }
 
 // Normalize provided matrix
@@ -337,21 +359,21 @@ void MatrixNormalize(Matrix *mat)
     float det = MatrixDeterminant(*mat);
     
     mat->m0 /= det;
-	mat->m1 /= det;
-	mat->m2 /= det;
-	mat->m3 /= det;
-	mat->m4 /= det;
-	mat->m5 /= det;
-	mat->m6 /= det;
-	mat->m7 /= det;
-	mat->m8 /= det;
-	mat->m9 /= det;
-	mat->m10 /= det;
-	mat->m11 /= det;
-	mat->m12 /= det;
-	mat->m13 /= det;
-	mat->m14 /= det;
-	mat->m15 /= det;
+    mat->m1 /= det;
+    mat->m2 /= det;
+    mat->m3 /= det;
+    mat->m4 /= det;
+    mat->m5 /= det;
+    mat->m6 /= det;
+    mat->m7 /= det;
+    mat->m8 /= det;
+    mat->m9 /= det;
+    mat->m10 /= det;
+    mat->m11 /= det;
+    mat->m12 /= det;
+    mat->m13 /= det;
+    mat->m14 /= det;
+    mat->m15 /= det;
 }
 
 // Returns identity matrix
@@ -368,21 +390,21 @@ Matrix MatrixAdd(Matrix left, Matrix right)
     Matrix result = MatrixIdentity();
     
     result.m0 = left.m0 + right.m0;
-	result.m1 = left.m1 + right.m1;
-	result.m2 = left.m2 + right.m2;
-	result.m3 = left.m3 + right.m3;
-	result.m4 = left.m4 + right.m4;
-	result.m5 = left.m5 + right.m5;
-	result.m6 = left.m6 + right.m6;
-	result.m7 = left.m7 + right.m7;
-	result.m8 = left.m8 + right.m8;
-	result.m9 = left.m9 + right.m9;
-	result.m10 = left.m10 + right.m10;
-	result.m11 = left.m11 + right.m11;
-	result.m12 = left.m12 + right.m12;
-	result.m13 = left.m13 + right.m13;
-	result.m14 = left.m14 + right.m14;
-	result.m15 = left.m15 + right.m15;
+    result.m1 = left.m1 + right.m1;
+    result.m2 = left.m2 + right.m2;
+    result.m3 = left.m3 + right.m3;
+    result.m4 = left.m4 + right.m4;
+    result.m5 = left.m5 + right.m5;
+    result.m6 = left.m6 + right.m6;
+    result.m7 = left.m7 + right.m7;
+    result.m8 = left.m8 + right.m8;
+    result.m9 = left.m9 + right.m9;
+    result.m10 = left.m10 + right.m10;
+    result.m11 = left.m11 + right.m11;
+    result.m12 = left.m12 + right.m12;
+    result.m13 = left.m13 + right.m13;
+    result.m14 = left.m14 + right.m14;
+    result.m15 = left.m15 + right.m15;
 
     return result;
 }
@@ -393,21 +415,21 @@ Matrix MatrixSubstract(Matrix left, Matrix right)
     Matrix result = MatrixIdentity();
       
     result.m0 = left.m0 - right.m0;
-	result.m1 = left.m1 - right.m1;
-	result.m2 = left.m2 - right.m2;
-	result.m3 = left.m3 - right.m3;
-	result.m4 = left.m4 - right.m4;
-	result.m5 = left.m5 - right.m5;
-	result.m6 = left.m6 - right.m6;
-	result.m7 = left.m7 - right.m7;
-	result.m8 = left.m8 - right.m8;
-	result.m9 = left.m9 - right.m9;
-	result.m10 = left.m10 - right.m10;
-	result.m11 = left.m11 - right.m11;
-	result.m12 = left.m12 - right.m12;
-	result.m13 = left.m13 - right.m13;
-	result.m14 = left.m14 - right.m14;
-	result.m15 = left.m15 - right.m15;
+    result.m1 = left.m1 - right.m1;
+    result.m2 = left.m2 - right.m2;
+    result.m3 = left.m3 - right.m3;
+    result.m4 = left.m4 - right.m4;
+    result.m5 = left.m5 - right.m5;
+    result.m6 = left.m6 - right.m6;
+    result.m7 = left.m7 - right.m7;
+    result.m8 = left.m8 - right.m8;
+    result.m9 = left.m9 - right.m9;
+    result.m10 = left.m10 - right.m10;
+    result.m11 = left.m11 - right.m11;
+    result.m12 = left.m12 - right.m12;
+    result.m13 = left.m13 - right.m13;
+    result.m14 = left.m14 - right.m14;
+    result.m15 = left.m15 - right.m15;
 
     return result;
 }
@@ -476,51 +498,51 @@ Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
     
     Matrix mat = MatrixIdentity();
 
-	float x = axis.x, y = axis.y, z = axis.z;
+    float x = axis.x, y = axis.y, z = axis.z;
     
-	float length = sqrt(x*x + y*y + z*z);
+    float length = sqrt(x*x + y*y + z*z);
     
-	if ((length != 1) && (length != 0))
+    if ((length != 1) && (length != 0))
     {
-		length = 1 / length;
-		x *= length; 
-		y *= length; 
-		z *= length;
-	}
-	
-	float s = sin(angle);
-	float c = cos(angle);
-	float t = 1-c;
-	
-	// Cache some matrix values (speed optimization)
-	float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
-	float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
-	float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
-	
-	// Construct the elements of the rotation matrix
-	float b00 = x*x*t + c, b01 = y*x*t + z*s, b02 = z*x*t - y*s;
-	float b10 = x*y*t - z*s, b11 = y*y*t + c, b12 = z*y*t + x*s;
-	float b20 = x*z*t + y*s, b21 = y*z*t - x*s, b22 = z*z*t + c;
-	
-	// Perform rotation-specific matrix multiplication
-	result.m0 = a00*b00 + a10*b01 + a20*b02;
-	result.m1 = a01*b00 + a11*b01 + a21*b02;
-	result.m2 = a02*b00 + a12*b01 + a22*b02;
-	result.m3 = a03*b00 + a13*b01 + a23*b02;
-	result.m4 = a00*b10 + a10*b11 + a20*b12;
-	result.m5 = a01*b10 + a11*b11 + a21*b12;
-	result.m6 = a02*b10 + a12*b11 + a22*b12;
-	result.m7 = a03*b10 + a13*b11 + a23*b12;
-	result.m8 = a00*b20 + a10*b21 + a20*b22;
-	result.m9 = a01*b20 + a11*b21 + a21*b22;
-	result.m10 = a02*b20 + a12*b21 + a22*b22;
-	result.m11 = a03*b20 + a13*b21 + a23*b22;
-    result.m12 = mat.m12;
-	result.m13 = mat.m13;
-	result.m14 = mat.m14;
-	result.m15 = mat.m15;
+        length = 1 / length;
+        x *= length; 
+        y *= length; 
+        z *= length;
+    }
     
-	return result;
+    float s = sin(angle);
+    float c = cos(angle);
+    float t = 1-c;
+    
+    // Cache some matrix values (speed optimization)
+    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
+    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
+    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
+    
+    // Construct the elements of the rotation matrix
+    float b00 = x*x*t + c, b01 = y*x*t + z*s, b02 = z*x*t - y*s;
+    float b10 = x*y*t - z*s, b11 = y*y*t + c, b12 = z*y*t + x*s;
+    float b20 = x*z*t + y*s, b21 = y*z*t - x*s, b22 = z*z*t + c;
+    
+    // Perform rotation-specific matrix multiplication
+    result.m0 = a00*b00 + a10*b01 + a20*b02;
+    result.m1 = a01*b00 + a11*b01 + a21*b02;
+    result.m2 = a02*b00 + a12*b01 + a22*b02;
+    result.m3 = a03*b00 + a13*b01 + a23*b02;
+    result.m4 = a00*b10 + a10*b11 + a20*b12;
+    result.m5 = a01*b10 + a11*b11 + a21*b12;
+    result.m6 = a02*b10 + a12*b11 + a22*b12;
+    result.m7 = a03*b10 + a13*b11 + a23*b12;
+    result.m8 = a00*b20 + a10*b21 + a20*b22;
+    result.m9 = a01*b20 + a11*b21 + a21*b22;
+    result.m10 = a02*b20 + a12*b21 + a22*b22;
+    result.m11 = a03*b20 + a13*b21 + a23*b22;
+    result.m12 = mat.m12;
+    result.m13 = mat.m13;
+    result.m14 = mat.m14;
+    result.m15 = mat.m15;
+    
+    return result;
 };
 
 // Create rotation matrix from axis and angle
@@ -645,35 +667,35 @@ Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result;
 
-	// Cache the matrix values (speed optimization)
-	float a00 = left.m0, a01 = left.m1, a02 = left.m2, a03 = left.m3;
-	float a10 = left.m4, a11 = left.m5, a12 = left.m6, a13 = left.m7;
-	float a20 = left.m8, a21 = left.m9, a22 = left.m10, a23 = left.m11;
-	float a30 = left.m12, a31 = left.m13, a32 = left.m14, a33 = left.m15;
-	
-	float b00 = right.m0, b01 = right.m1, b02 = right.m2, b03 = right.m3;
-	float b10 = right.m4, b11 = right.m5, b12 = right.m6, b13 = right.m7;
-	float b20 = right.m8, b21 = right.m9, b22 = right.m10, b23 = right.m11;
-	float b30 = right.m12, b31 = right.m13, b32 = right.m14, b33 = right.m15;
-	
-	result.m0 = b00*a00 + b01*a10 + b02*a20 + b03*a30;
-	result.m1 = b00*a01 + b01*a11 + b02*a21 + b03*a31;
-	result.m2 = b00*a02 + b01*a12 + b02*a22 + b03*a32;
-	result.m3 = b00*a03 + b01*a13 + b02*a23 + b03*a33;
-	result.m4 = b10*a00 + b11*a10 + b12*a20 + b13*a30;
-	result.m5 = b10*a01 + b11*a11 + b12*a21 + b13*a31;
-	result.m6 = b10*a02 + b11*a12 + b12*a22 + b13*a32;
-	result.m7 = b10*a03 + b11*a13 + b12*a23 + b13*a33;
-	result.m8 = b20*a00 + b21*a10 + b22*a20 + b23*a30;
-	result.m9 = b20*a01 + b21*a11 + b22*a21 + b23*a31;
-	result.m10 = b20*a02 + b21*a12 + b22*a22 + b23*a32;
-	result.m11 = b20*a03 + b21*a13 + b22*a23 + b23*a33;
-	result.m12 = b30*a00 + b31*a10 + b32*a20 + b33*a30;
-	result.m13 = b30*a01 + b31*a11 + b32*a21 + b33*a31;
-	result.m14 = b30*a02 + b31*a12 + b32*a22 + b33*a32;
-	result.m15 = b30*a03 + b31*a13 + b32*a23 + b33*a33;
-	
-	return result;
+    // Cache the matrix values (speed optimization)
+    float a00 = left.m0, a01 = left.m1, a02 = left.m2, a03 = left.m3;
+    float a10 = left.m4, a11 = left.m5, a12 = left.m6, a13 = left.m7;
+    float a20 = left.m8, a21 = left.m9, a22 = left.m10, a23 = left.m11;
+    float a30 = left.m12, a31 = left.m13, a32 = left.m14, a33 = left.m15;
+    
+    float b00 = right.m0, b01 = right.m1, b02 = right.m2, b03 = right.m3;
+    float b10 = right.m4, b11 = right.m5, b12 = right.m6, b13 = right.m7;
+    float b20 = right.m8, b21 = right.m9, b22 = right.m10, b23 = right.m11;
+    float b30 = right.m12, b31 = right.m13, b32 = right.m14, b33 = right.m15;
+    
+    result.m0 = b00*a00 + b01*a10 + b02*a20 + b03*a30;
+    result.m1 = b00*a01 + b01*a11 + b02*a21 + b03*a31;
+    result.m2 = b00*a02 + b01*a12 + b02*a22 + b03*a32;
+    result.m3 = b00*a03 + b01*a13 + b02*a23 + b03*a33;
+    result.m4 = b10*a00 + b11*a10 + b12*a20 + b13*a30;
+    result.m5 = b10*a01 + b11*a11 + b12*a21 + b13*a31;
+    result.m6 = b10*a02 + b11*a12 + b12*a22 + b13*a32;
+    result.m7 = b10*a03 + b11*a13 + b12*a23 + b13*a33;
+    result.m8 = b20*a00 + b21*a10 + b22*a20 + b23*a30;
+    result.m9 = b20*a01 + b21*a11 + b22*a21 + b23*a31;
+    result.m10 = b20*a02 + b21*a12 + b22*a22 + b23*a32;
+    result.m11 = b20*a03 + b21*a13 + b22*a23 + b23*a33;
+    result.m12 = b30*a00 + b31*a10 + b32*a20 + b33*a30;
+    result.m13 = b30*a01 + b31*a11 + b32*a21 + b33*a31;
+    result.m14 = b30*a02 + b31*a12 + b32*a22 + b33*a32;
+    result.m15 = b30*a03 + b31*a13 + b32*a23 + b33*a33;
+    
+    return result;
 }
 
 // Returns perspective projection matrix
@@ -681,28 +703,28 @@ Matrix MatrixFrustum(double left, double right, double bottom, double top, doubl
 {
     Matrix result;
     
-	float rl = (right - left);
-	float tb = (top - bottom);
-	float fn = (far - near);
+    float rl = (right - left);
+    float tb = (top - bottom);
+    float fn = (far - near);
     
-	result.m0 = (near*2) / rl;
-	result.m1 = 0;
-	result.m2 = 0;
-	result.m3 = 0;
-	result.m4 = 0;
-	result.m5 = (near*2) / tb;
-	result.m6 = 0;
-	result.m7 = 0;
-	result.m8 = (right + left) / rl;
-	result.m9 = (top + bottom) / tb;
-	result.m10 = -(far + near) / fn;
-	result.m11 = -1;
-	result.m12 = 0;
-	result.m13 = 0;
-	result.m14 = -(far*near*2) / fn;
-	result.m15 = 0;
+    result.m0 = (near*2) / rl;
+    result.m1 = 0;
+    result.m2 = 0;
+    result.m3 = 0;
+    result.m4 = 0;
+    result.m5 = (near*2) / tb;
+    result.m6 = 0;
+    result.m7 = 0;
+    result.m8 = (right + left) / rl;
+    result.m9 = (top + bottom) / tb;
+    result.m10 = -(far + near) / fn;
+    result.m11 = -1;
+    result.m12 = 0;
+    result.m13 = 0;
+    result.m14 = -(far*near*2) / fn;
+    result.m15 = 0;
         
-	return result;
+    return result;
 }
 
 // Returns perspective projection matrix
@@ -720,25 +742,25 @@ Matrix MatrixOrtho(double left, double right, double bottom, double top, double 
     Matrix result;
     
     float rl = (right - left);
-	float tb = (top - bottom);
-	float fn = (far - near);
-	
+    float tb = (top - bottom);
+    float fn = (far - near);
+    
     result.m0 = 2 / rl;
-	result.m1 = 0;
-	result.m2 = 0;
-	result.m3 = 0;
-	result.m4 = 0;
-	result.m5 = 2 / tb;
-	result.m6 = 0;
-	result.m7 = 0;
-	result.m8 = 0;
-	result.m9 = 0;
-	result.m10 = -2 / fn;
-	result.m11 = 0;
-	result.m12 = -(left + right) / rl;
-	result.m13 = -(top + bottom) / tb;
-	result.m14 = -(far + near) / fn;
-	result.m15 = 1;
+    result.m1 = 0;
+    result.m2 = 0;
+    result.m3 = 0;
+    result.m4 = 0;
+    result.m5 = 2 / tb;
+    result.m6 = 0;
+    result.m7 = 0;
+    result.m8 = 0;
+    result.m9 = 0;
+    result.m10 = -2 / fn;
+    result.m11 = 0;
+    result.m12 = -(left + right) / rl;
+    result.m13 = -(top + bottom) / tb;
+    result.m14 = -(far + near) / fn;
+    result.m15 = 1;
     
     return result;
 }
@@ -747,7 +769,7 @@ Matrix MatrixOrtho(double left, double right, double bottom, double top, double 
 Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 {
     Matrix result;
-	
+    
     Vector3 z = VectorSubtract(eye, target);
     VectorNormalize(&z);
     Vector3 x = VectorCrossProduct(up, z);
@@ -793,7 +815,7 @@ void PrintMatrix(Matrix m)
 // Calculates the length of a quaternion
 float QuaternionLength(Quaternion quat)
 {
-	return sqrt(quat.x*quat.x + quat.y*quat.y + quat.z*quat.z + quat.w*quat.w);
+    return sqrt(quat.x*quat.x + quat.y*quat.y + quat.z*quat.z + quat.w*quat.w);
 }
 
 // Normalize provided quaternion
@@ -818,15 +840,15 @@ Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
 {
     Quaternion result;
 
-	float qax = q1.x, qay = q1.y, qaz = q1.z, qaw = q1.w;
-	float qbx = q2.x, qby = q2.y, qbz = q2.z, qbw = q2.w;
-	
-	result.x = qax*qbw + qaw*qbx + qay*qbz - qaz*qby;
-	result.y = qay*qbw + qaw*qby + qaz*qbx - qax*qbz;
-	result.z = qaz*qbw + qaw*qbz + qax*qby - qay*qbx;
-	result.w = qaw*qbw - qax*qbx - qay*qby - qaz*qbz;
-	
-	return result;
+    float qax = q1.x, qay = q1.y, qaz = q1.z, qaw = q1.w;
+    float qbx = q2.x, qby = q2.y, qbz = q2.z, qbw = q2.w;
+    
+    result.x = qax*qbw + qaw*qbx + qay*qbz - qaz*qby;
+    result.y = qay*qbw + qaw*qby + qaz*qbx - qax*qbz;
+    result.z = qaz*qbw + qaw*qbz + qax*qby - qay*qbx;
+    result.w = qaw*qbw - qax*qbx - qay*qby - qaz*qbz;
+    
+    return result;
 }
 
 // Calculates spherical linear interpolation between two quaternions
@@ -834,9 +856,9 @@ Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result;
 
-	float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
-	
-	if (abs(cosHalfTheta) >= 1.0) result = q1;
+    float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
+    
+    if (abs(cosHalfTheta) >= 1.0) result = q1;
     else
     {
         float halfTheta = acos(cosHalfTheta);
@@ -859,9 +881,9 @@ Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
             result.z = (q1.z*ratioA + q2.z*ratioB);
             result.w = (q1.w*ratioA + q2.w*ratioB);
         }
-	}
+    }
     
-	return result;
+    return result;
 }
 
 // Returns a quaternion from a given rotation matrix
@@ -947,42 +969,42 @@ Matrix QuaternionToMatrix(Quaternion q)
 {
     Matrix result;
 
-	float x = q.x, y = q.y, z = q.z, w = q.w;
+    float x = q.x, y = q.y, z = q.z, w = q.w;
 
-	float x2 = x + x;
-	float y2 = y + y;
-	float z2 = z + z;
+    float x2 = x + x;
+    float y2 = y + y;
+    float z2 = z + z;
 
-	float xx = x*x2;
-	float xy = x*y2;
-	float xz = x*z2;
+    float xx = x*x2;
+    float xy = x*y2;
+    float xz = x*z2;
 
-	float yy = y*y2;
-	float yz = y*z2;
-	float zz = z*z2;
+    float yy = y*y2;
+    float yz = y*z2;
+    float zz = z*z2;
 
-	float wx = w*x2;
-	float wy = w*y2;
-	float wz = w*z2;
+    float wx = w*x2;
+    float wy = w*y2;
+    float wz = w*z2;
 
-	result.m0 = 1 - (yy + zz);
-	result.m1 = xy - wz;
-	result.m2 = xz + wy;
-	result.m3 = 0;
-	result.m4 = xy + wz;
-	result.m5 = 1 - (xx + zz);
-	result.m6 = yz - wx;
-	result.m7 = 0;
-	result.m8 = xz - wy;
-	result.m9 = yz + wx;
-	result.m10 = 1 - (xx + yy);
-	result.m11 = 0;
-	result.m12 = 0;
-	result.m13 = 0;
-	result.m14 = 0;
-	result.m15 = 1;
-	
-	return result;
+    result.m0 = 1 - (yy + zz);
+    result.m1 = xy - wz;
+    result.m2 = xz + wy;
+    result.m3 = 0;
+    result.m4 = xy + wz;
+    result.m5 = 1 - (xx + zz);
+    result.m6 = yz - wx;
+    result.m7 = 0;
+    result.m8 = xz - wy;
+    result.m9 = yz + wx;
+    result.m10 = 1 - (xx + yy);
+    result.m11 = 0;
+    result.m12 = 0;
+    result.m13 = 0;
+    result.m14 = 0;
+    result.m15 = 1;
+    
+    return result;
 }
 
 // Returns the axis and the angle for a given quaternion

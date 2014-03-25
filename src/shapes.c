@@ -25,10 +25,11 @@
 
 #include "raylib.h"
 
-#include <GL/gl.h>      // OpenGL functions
 #include <stdlib.h>     // Required for abs() function
 #include <math.h>       // Math related functions, sin() and cos() used on DrawCircle*
                         // sqrt() and pow() and abs() used on CheckCollision*
+                        
+#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -57,149 +58,116 @@
 // Draw a pixel
 void DrawPixel(int posX, int posY, Color color)
 {
-    glBegin(GL_POINTS);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2i(posX, posY);
-    glEnd();
-
-    // NOTE1: Alternative method to draw a pixel (GL_LINES)
-/*
-    glBegin(GL_LINES);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2i(posX, posY);
-        glVertex2i(posX+1, posY+1);
-    glEnd();
-*/    
-    // NOTE2: Alternative method to draw a pixel (glPoint())
-/*
-    glEnable(GL_POINT_SMOOTH);
-    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);    // Deprecated on OGL 3.0
-    
-    glPointSize(1.0f);
-    glPoint((float)posX, (float)posY, 0.0f);
-*/
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2i(posX, posY);
+        rlVertex2i(posX + 1, posY + 1);
+    rlEnd();  
 }
 
 // Draw a pixel (Vector version)
 void DrawPixelV(Vector2 position, Color color)
 {
-    glBegin(GL_POINTS);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2f(position.x, position.y);
-    glEnd();
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2f(position.x, position.y);
+        rlVertex2i(position.x + 1, position.y + 1);
+    rlEnd();
 }
 
 // Draw a line
 void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color)
 {
-    glBegin(GL_LINES);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2i(startPosX, startPosY);
-        glVertex2i(endPosX, endPosY);
-    glEnd();
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2i(startPosX, startPosY);
+        rlVertex2i(endPosX, endPosY);
+    rlEnd();
 }
 
 // Draw a line  (Vector version)
 void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 {
-    glBegin(GL_LINES);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2f(startPos.x, startPos.y);
-        glVertex2f(endPos.x, endPos.y);
-    glEnd();
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2f(startPos.x, startPos.y);
+        rlVertex2f(endPos.x, endPos.y);
+    rlEnd();
 }
 
 // Draw a color-filled circle
 // TODO: Review, on some GPUs is drawn with a weird transparency (GL_POLYGON_SMOOTH issue?)
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
-    glEnable(GL_POLYGON_SMOOTH);
-    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);  // Deprecated on OGL 3.0
-    
     DrawPoly((Vector2){centerX, centerY}, 360, radius, 0, color);
-    
-    glDisable(GL_POLYGON_SMOOTH);
-    
-    // NOTE: Alternative method to draw a circle (point)
-/*
-    glEnable(GL_POINT_SMOOTH);
-    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);    // Deprecated on OGL 3.0
-    
-    glPointSize(radius);
-    glPoint((float)centerX, (float)centerY, 0.0f);
-*/
 }
 
 // Draw a gradient-filled circle
 // NOTE: Gradient goes from center (color1) to border (color2)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
 {
-    glBegin(GL_TRIANGLE_FAN);
-        glColor4ub(color1.r, color1.g, color1.b, color1.a);
-        glVertex2i(centerX, centerY);
-        glColor4ub(color2.r, color2.g, color2.b, color2.a);
-        
-        for (int i=0; i <= 360; i++)        //i++ --> Step = 1.0 pixels
+    rlBegin(RL_TRIANGLES);        
+        for (int i=0; i <= 360; i += 2)        //i++ --> Step = 1.0 pixels
         {
-            glVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
+            rlColor4ub(color1.r, color1.g, color1.b, color1.a);
+            rlVertex2i(centerX, centerY);
+            rlColor4ub(color2.r, color2.g, color2.b, color2.a);
+            rlVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
+            rlVertex2f(centerX + sin(DEG2RAD*(i+1)) * radius, centerY + cos(DEG2RAD*(i+1)) * radius);
         }
-    glEnd();
+    rlEnd();
 }
 
 // Draw a color-filled circle (Vector version)
 void DrawCircleV(Vector2 center, float radius, Color color)
 {
-    glEnable(GL_POLYGON_SMOOTH);
-    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-    
-    glBegin(GL_TRIANGLE_FAN);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2f(center.x, center.y);
-
-        for (int i=0; i <= 360; i++)        //i++ --> Step = 1.0 pixels
+    rlBegin(RL_TRIANGLES);
+        for (int i=0; i < 360; i += 2)
         {
-            glVertex2f(center.x + sin(DEG2RAD*i) * radius, center.y + cos(DEG2RAD*i) * radius);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2i(center.x, center.y);
+            rlVertex2f(center.x + sin(DEG2RAD*i) * radius, center.y + cos(DEG2RAD*i) * radius);
+            rlVertex2f(center.x + sin(DEG2RAD*(i+1)) * radius, center.y + cos(DEG2RAD*(i+1)) * radius);
         }
-    glEnd();
-    
-    glDisable(GL_POLYGON_SMOOTH);
+    rlEnd();
 }
 
 // Draw circle outline
 void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 {
-    glEnable(GL_LINE_SMOOTH);                    // Smoothies circle outline (anti-aliasing applied)
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);      // Best quality for line smooth (anti-aliasing best algorithm)
+    //glEnable(GL_LINE_SMOOTH);                    // Smoothies circle outline (anti-aliasing applied)
+    //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);      // Best quality for line smooth (anti-aliasing best algorithm)
     
-    glBegin(GL_LINE_LOOP);
-        glColor4ub(color.r, color.g, color.b, color.a);
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
         
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
         for (int i=0; i < 360; i++)
         {
-            glVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
+            rlVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
+            rlVertex2f(centerX + sin(DEG2RAD*(i+1)) * radius, centerY + cos(DEG2RAD*(i+1)) * radius);
         }
-   glEnd();
+   rlEnd();
    
-// NOTE: Alternative method to draw circle outline
-/*
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawCircle(centerX, centerY, radius, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-*/
-   glDisable(GL_LINE_SMOOTH);
+   //glDisable(GL_LINE_SMOOTH);
+   
+   // TODO: Draw all lines with line smooth??? --> Do it before drawing lines VAO
 }
 
 // Draw a color-filled rectangle
 void DrawRectangle(int posX, int posY, int width, int height, Color color)
 {
-    glBegin(GL_QUADS);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2i(posX, posY);
-        glVertex2i(posX + width, posY);
-        glVertex2i(posX + width, posY + height);
-        glVertex2i(posX, posY + height);
-    glEnd();
+    rlBegin(RL_QUADS);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlTexCoord2f(0.0f, 0.0f);
+        rlVertex2i(posX, posY);
+        rlTexCoord2f(0.0f, 1.0f); 
+        rlVertex2i(posX, posY + height);
+        rlTexCoord2f(1.0f, 1.0f); 
+        rlVertex2i(posX + width, posY + height);
+        rlTexCoord2f(1.0f, 0.0f);
+        rlVertex2i(posX + width, posY);
+    rlEnd();
 }
 
 // Draw a color-filled rectangle
@@ -212,73 +180,73 @@ void DrawRectangleRec(Rectangle rec, Color color)
 // NOTE: Gradient goes from bottom (color1) to top (color2)
 void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2)
 {
-    glBegin(GL_QUADS);
-        glColor4ub(color1.r, color1.g, color1.b, color1.a);
-        glVertex2i(posX, posY);
-        glVertex2i(posX + width, posY);
-        glColor4ub(color2.r, color2.g, color2.b, color2.a);
-        glVertex2i(posX + width, posY + height);
-        glVertex2i(posX, posY + height);
-    glEnd();
+    rlBegin(RL_QUADS);
+        rlColor4ub(color1.r, color1.g, color1.b, color1.a);
+        rlVertex2i(posX, posY);
+        rlColor4ub(color1.r, color1.g, color1.b, color1.a);
+        rlVertex2i(posX, posY + height);
+        rlColor4ub(color2.r, color2.g, color2.b, color2.a);
+        rlVertex2i(posX + width, posY + height);
+        rlColor4ub(color2.r, color2.g, color2.b, color2.a);
+        rlVertex2i(posX + width, posY);
+    rlEnd();
 }
 
 // Draw a color-filled rectangle (Vector version)
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-    glBegin(GL_QUADS);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2i(position.x, position.y);
-        glVertex2i(position.x + size.x, position.y);
-        glVertex2i(position.x + size.x, position.y + size.y);
-        glVertex2i(position.x, position.y + size.y);
-    glEnd();
+    rlBegin(RL_QUADS);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2i(position.x, position.y);
+        rlVertex2i(position.x, position.y + size.y);
+        rlVertex2i(position.x + size.x, position.y + size.y);
+        rlVertex2i(position.x + size.x, position.y);
+    rlEnd();
 }
 
 // Draw rectangle outline
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
-    //glEnable(GL_LINE_SMOOTH);                      // Smoothies circle outline (anti-aliasing applied)
-    //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);        // Best quality for line smooth (anti-aliasing best algorithm)
-    
-    // NOTE: Lines are rasterized using the "Diamond Exit" rule so, it's nearly impossible to obtain a pixel-perfect engine
-    // NOTE: Recommended trying to avoid using lines, at least >1.0f pixel lines with anti-aliasing (glLineWidth function)
-
-    glBegin(GL_LINE_LOOP);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2i(posX, posY);
-        glVertex2i(posX + width - 1, posY);
-        glVertex2i(posX + width - 1, posY + height - 1);
-        glVertex2i(posX, posY + height - 1);
-    glEnd();
-
-// NOTE: Alternative method to draw rectangle outline
-/*
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawRectangle(posX, posY, width - 1, height - 1, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-*/
-    //glDisable(GL_LINE_SMOOTH);
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2i(posX, posY);
+        rlVertex2i(posX + width - 1, posY);
+        
+        rlVertex2i(posX + width - 1, posY);
+        rlVertex2i(posX + width - 1, posY + height - 1);
+        
+        rlVertex2i(posX + width - 1, posY + height - 1);
+        rlVertex2i(posX, posY + height - 1);
+        
+        rlVertex2i(posX, posY + height - 1);
+        rlVertex2i(posX, posY);
+    rlEnd();
 }
 
 // Draw a triangle
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
-    glBegin(GL_TRIANGLES);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2f(v1.x, v1.y);
-        glVertex2f(v2.x, v2.y);
-        glVertex2f(v3.x, v3.y);
-    glEnd();
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2f(v1.x, v1.y);
+        rlVertex2f(v2.x, v2.y);
+        rlVertex2f(v3.x, v3.y);
+    rlEnd();
 }
 
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
-    glBegin(GL_LINE_LOOP);
-        glColor4ub(color.r, color.g, color.b, color.a);
-        glVertex2f(v1.x, v1.y);
-        glVertex2f(v2.x, v2.y);
-        glVertex2f(v3.x, v3.y);
-    glEnd();
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex2f(v1.x, v1.y);
+        rlVertex2f(v2.x, v2.y);
+        
+        rlVertex2f(v2.x, v2.y);
+        rlVertex2f(v3.x, v3.y);
+        
+        rlVertex2f(v3.x, v3.y);
+        rlVertex2f(v1.x, v1.y);
+    rlEnd();
 }
 
 // Draw a regular polygon of n sides (Vector version)
@@ -286,20 +254,20 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
 {
     if (sides < 3) sides = 3;
 
-    glPushMatrix();
-        glTranslatef(center.x, center.y, 0);
-        glRotatef(rotation, 0, 0, 1);
-        
-        glBegin(GL_TRIANGLE_FAN);
-            glColor4ub(color.r, color.g, color.b, color.a);
-            glVertex2f(0, 0);
+    rlPushMatrix();
 
-            for (int i=0; i <= sides; i++)
-            { 
-                glVertex2f(radius*cos(i*2*PI/sides), radius*sin(i*2*PI/sides));
+        rlRotatef(rotation, 0, 0, 1);   // TODO: compute vertex rotation manually!
+        
+        rlBegin(RL_TRIANGLES);
+            for (int i=0; i < 360; i += 2)
+            {
+                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlVertex2i(center.x, center.y);
+                rlVertex2f(center.x + sin(DEG2RAD*i) * radius, center.y + cos(DEG2RAD*i) * radius);
+                rlVertex2f(center.x + sin(DEG2RAD*(i+1)) * radius, center.y + cos(DEG2RAD*(i+1)) * radius);
             }
-        glEnd();
-    glPopMatrix();
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw a closed polygon defined by points
@@ -308,19 +276,16 @@ void DrawPolyEx(Vector2 *points, int numPoints, Color color)
 {
     if (numPoints >= 3)
     {
-        glEnable(GL_POLYGON_SMOOTH);
-        glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-    
-        glBegin(GL_POLYGON);
-            glColor4ub(color.r, color.g, color.b, color.a);
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
             
-            for (int i = 0; i < numPoints; i++)
+            for (int i = 0; i < numPoints - 2; i++)
             {
-                glVertex2f(points[i].x, points[i].y);
+                rlVertex2f(points[i].x, points[i].y);
+                rlVertex2f(points[i+1].x, points[i+1].y);
+                rlVertex2f(points[i+2].x, points[i+2].y);
             }
-        glEnd();
-        
-        glDisable(GL_POLYGON_SMOOTH);
+        rlEnd();
     }
 }
 
@@ -330,21 +295,21 @@ void DrawPolyExLines(Vector2 *points, int numPoints, Color color)
 {
     if (numPoints >= 2)
     {
-        //glEnable(GL_LINE_SMOOTH);                      // Smoothies circle outline (anti-aliasing applied)
-        //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);        // Best quality for line smooth (anti-aliasing best algorithm)
-    
-        glBegin(GL_LINE_LOOP);
-            glColor4ub(color.r, color.g, color.b, color.a);
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
             
-            for (int i = 0; i < numPoints; i++)
+            for (int i = 0; i < numPoints - 1; i++)
             {
-                glVertex2f(points[i].x, points[i].y);
+                rlVertex2f(points[i].x, points[i].y);
+                rlVertex2f(points[i+1].x, points[i+1].y);
             }
-        glEnd();
-        
-        //glDisable(GL_LINE_SMOOTH);
+        rlEnd();
     }
 }
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Collision Detection functions
+//----------------------------------------------------------------------------------
 
 // Check if point is inside rectangle
 bool CheckCollisionPointRec(Vector2 point, Rectangle rec)

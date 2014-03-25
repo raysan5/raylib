@@ -1,15 +1,17 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.6 (www.raylib.com)
+*   raylib 1.1 (www.raylib.com)
 *    
 *   A simple and easy-to-use library to learn videogames programming
 *
 *   Features:
 *     Library written in plain C code (C99)
 *     Uses C# PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL 1.1
+*     Hardware accelerated with OpenGL (1.1, 3.3+ or ES2)
+*     Unique OpenGL abstraction layer [rlgl]
 *     Powerful fonts module with SpriteFonts support
-*     Basic 3d support for Shapes and Models
+*     Basic 3d support for Shapes, Models, Heightmaps and Billboards
+*     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing
 *    
 *   Used external libs:
@@ -23,8 +25,9 @@
 *     32bit Textures - All loaded images are converted automatically to RGBA textures
 *     SpriteFonts - All loaded sprite-font images are converted to RGBA and POT textures
 *     One custom default font is loaded automatically when InitWindow()
+*     If using OpenGL 3.3+, one default shader is loaded automatically (internally defined)
 *
-*   -- LICENSE (raylib v1.0, November 2013) --
+*   -- LICENSE (raylib v1.1, March 2014) --
 *
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, 
 *   BSD-like license that allows static linking with closed source software:
@@ -213,12 +216,7 @@ typedef struct Camera {
 } Camera;
 
 // Basic 3d Model type
-typedef struct Model {
-    int numVertices;
-    Vector3 *vertices;
-    Vector2 *texcoords;
-    Vector3 *normals;
-} Model;
+typedef struct Model Model;
 
 // Basic Sound source and buffer
 typedef struct Sound {

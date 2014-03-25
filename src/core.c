@@ -28,14 +28,18 @@
 
 #include "raylib.h"
 
+#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+
 #include <GLFW/glfw3.h>     // GLFW3 lib: Windows, OpenGL context and Input management
 //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 #include <time.h>           // Useful to initialize random seed
 #include <math.h>           // Math related functions, tan() used to set perspective
-#include "vector3.h"        // Basic Vector3 functions
+//#include "vector3.h"      // Basic Vector3 functions, not required any more, replaced by raymath
 #include "utils.h"          // WritePNG() function
+
+#include "raymath.h"        // Required for data type Matrix and Matrix functions
 
 //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
 
@@ -47,7 +51,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef Color pixel;
+// ...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -62,7 +66,7 @@ static double targetTime = 0;               // Desired time for one frame, if 0 
 
 static int windowWidth, windowHeight;       // Required to switch between windowed/fullscren mode (F11)
 static const char *windowTitle;             // Required to switch between windowed/fullscren mode (F11)
-static int exitKey = GLFW_KEY_ESCAPE;
+static int exitKey = GLFW_KEY_ESCAPE;       // Default exit key (ESC)
 
 static bool customCursor = false;           // Tracks if custom cursor has been set
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
@@ -77,8 +81,10 @@ static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pr
 static char previousGamepadState[32] = {0}; // Required to check if gamepad btn pressed/released once
 static char currentGamepadState[32] = {0};  // Required to check if gamepad btn pressed/released once
 
-static int previousMouseWheelY = 0;
-static int currentMouseWheelY = 0;
+static int previousMouseWheelY = 0;         // Required to track mouse wheel variation
+static int currentMouseWheelY = 0;          // Required to track mouse wheel variation
+
+static Color background = { 0, 0, 0, 0 };   // Screen background color
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
@@ -89,13 +95,11 @@ extern void UnloadDefaultFont();             // [Module: text] Unloads default f
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitGraphicsDevice();                                                          // Initialize Graphics Device (OpenGL stuff)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
 static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow* window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow* window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
-static void CameraLookAt(Vector3 position, Vector3 target, Vector3 up);                    // Setup camera view (updates MODELVIEW matrix)
 static void TakeScreenshot();                                                              // Takes a bitmap (BMP) screenshot and saves it in the same folder as executable
 
 //----------------------------------------------------------------------------------
@@ -116,9 +120,17 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
     if (!glfwInit()) exit(1);
     
     //glfwDefaultWindowHints()                  // Set default windows hints
-    //glfwWindowHint(GLFW_SAMPLES, 4);          // If called before windows creation, enables multisampling x4 (MSAA), default is 0
+    
     if (!resizable) glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); // Avoid window being resizable
-        
+
+#ifdef USE_OPENGL_33
+    //glfwWindowHint(GLFW_SAMPLES, 4);          // Enables multisampling x4 (MSAA), default is 0
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE);
+#endif
+
     window = glfwCreateWindow(width, height, title, NULL, NULL);
     
     windowWidth = width;
@@ -140,21 +152,41 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
     glfwSwapInterval(0);            // Disables GPU v-sync (if set), so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
                                     // If not set, swap interval uses GPU v-sync configuration
                                     // Framerate can be setup using SetTargetFPS()
-    InitGraphicsDevice();
+
+    //------------------------------------------------------ 
+#ifdef USE_OPENGL_33
+    rlglInit();                     // Init rlgl
+#endif
+    //------------------------------------------------------
+    
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
+
+    //------------------------------------------------------ 
+    rlglInitGraphicsDevice(fbWidth, fbHeight);
+    //------------------------------------------------------
     
     previousTime = glfwGetTime();
 
-    LoadDefaultFont();
+    LoadDefaultFont();              // NOTE: External function (defined in module: text)
     
     if (cursorImage != NULL) SetCustomCursor(cursorImage);
     
-    srand(time(NULL));      // Initialize random seed
+    srand(time(NULL));              // Initialize random seed
+    
+    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 }
 
 // Close Window and Terminate Context
 void CloseWindow()
 {
     UnloadDefaultFont();
+    
+    //------------------------------------------------------
+#ifdef USE_OPENGL_33
+    rlglClose();                    // De-init rlgl
+#endif
+    //------------------------------------------------------
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -210,7 +242,10 @@ void ToggleFullscreen()
         glfwMakeContextCurrent(window);
         glfwSetKeyCallback(window, KeyCallback);
 
-        InitGraphicsDevice();
+        int fbWidth, fbHeight;
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
+
+        rlglInitGraphicsDevice(fbWidth, fbHeight);
         
         LoadDefaultFont();
     }
@@ -219,13 +254,12 @@ void ToggleFullscreen()
 // Sets Background Color
 void ClearBackground(Color color)
 {
-    // Color values clamp to 0.0f(0) and 1.0f(255)
-    float r = (float)color.r / 255;
-    float g = (float)color.g / 255;
-    float b = (float)color.b / 255;
-    float a = (float)color.a / 255;
-    
-    glClearColor(r, g, b, a);
+    if ((color.r != background.r) || (color.g != background.g) || (color.b != background.b) || (color.a != background.a))
+    {       
+        rlClearColor(color.r, color.g, color.b, color.a);
+        
+        background = color;
+    }
 }
 
 // Setup drawing canvas to start drawing
@@ -235,11 +269,14 @@ void BeginDrawing()
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, Depth Buffer is used for 3D
+    rlClearScreenBuffers();
     
-    glLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    
-    glTranslatef(0.375, 0.375, 0);      // HACK to have 2D pixel-perfect drawing on OpenGL
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+
+//#ifdef USE_OPENGL_11
+//  rlTranslatef(0.375, 0.375, 0);      // HACK to have 2D pixel-perfect drawing on OpenGL
+                                        // NOTE: Not required with OpenGL 3.3+
+//#endif
 }
 
 // End canvas drawing and Swap Buffers (Double Buffering)
@@ -247,6 +284,12 @@ void EndDrawing()
 {
     if (customCursor && cursorOnScreen) DrawTexture(cursor, GetMouseX(), GetMouseY(), WHITE);
 
+    //------------------------------------------------------
+#ifdef USE_OPENGL_33
+    rlglDraw();                         //  Draw Buffers
+#endif
+    //------------------------------------------------------
+    
     glfwSwapBuffers(window);            // Swap back and front buffers
     glfwPollEvents();                   // Register keyboard/mouse events
     
@@ -271,34 +314,48 @@ void EndDrawing()
 // Initializes 3D mode for drawing (Camera setup)
 void Begin3dMode(Camera camera)
 {
-    glMatrixMode(GL_PROJECTION);        // Switch to projection matrix
+    //------------------------------------------------------
+#ifdef USE_OPENGL_33
+    rlglDraw();                         //  Draw Buffers
+#endif
+    //------------------------------------------------------
+
+    rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     
-    glPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
-    glLoadIdentity();                   // Reset current matrix (PROJECTION)
+    rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
+    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
     
     // Setup perspective projection
     float aspect = (GLfloat)windowWidth/(GLfloat)windowHeight;
     double top = 0.1f*tan(45.0f*PI / 360.0);
     double right = top*aspect;
 
-    glFrustum(-right, right, -top, top, 0.1f, 100.0f);
+    rlFrustum(-right, right, -top, top, 0.1f, 100.0f);
     
-    glMatrixMode(GL_MODELVIEW);         // Switch back to modelview matrix
-    glLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
     
-    CameraLookAt(camera.position, camera.target, camera.up);        // Setup Camera view
+    // Setup Camera view
+    Matrix matLookAt = MatrixLookAt(camera.position, camera.target, camera.up);
+    rlMultMatrixf(GetMatrixVector(matLookAt));      // Multiply MODELVIEW matrix by view matrix (camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void End3dMode()
 {
-    glMatrixMode(GL_PROJECTION);        // Switch to projection matrix
-    glPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
+    //------------------------------------------------------
+#ifdef USE_OPENGL_33
+    rlglDraw();                         //  Draw Buffers
+#endif
+    //------------------------------------------------------
+
+    rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
+    rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
     
-    glMatrixMode(GL_MODELVIEW);         // Get back to modelview matrix
-    glLoadIdentity();                   // Reset current matrix (MODELVIEW)
+    rlMatrixMode(RL_MODELVIEW);         // Get back to modelview matrix
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
     
-    glTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
+    //rlTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
 }
 
 // Set target FPS for the game
@@ -650,124 +707,31 @@ static void CursorEnterCallback(GLFWwindow* window, int enter)
 // GLFW3 WindowSize Callback, runs when window is resized
 static void WindowSizeCallback(GLFWwindow* window, int width, int height)
 {
-    InitGraphicsDevice();   // If window is resized, graphics device is re-initialized
-                            // NOTE: Aspect ratio does not change, so, image can be deformed
-}
-
-// Initialize Graphics Device (OpenGL stuff)
-static void InitGraphicsDevice()
-{
     int fbWidth, fbHeight;
-    
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
 
-    glViewport(0, 0, fbWidth, fbHeight);                    // Set viewport width and height
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);                   // Set background color (black)
-    glClearDepth(1.0f);                                     // Clear depth buffer
-    
-    glEnable(GL_DEPTH_TEST);                                // Enables depth testing (required for 3D)
-    glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
-    
-    glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);      // Color blending function (how colors are mixed)
-    
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Improve quality of color and texture coordinate interpolation (Deprecated in OGL 3.0)
-                                                            // Other options: GL_FASTEST, GL_DONT_CARE (default)
-    
-    glMatrixMode(GL_PROJECTION);                // Switch to PROJECTION matrix
-    glLoadIdentity();                           // Reset current matrix (PROJECTION)
-    glOrtho(0, fbWidth, fbHeight, 0, 0, 1);     // Config orthographic mode: top-left corner --> (0,0)
-    glMatrixMode(GL_MODELVIEW);                 // Switch back to MODELVIEW matrix
-    glLoadIdentity();                           // Reset current matrix (MODELVIEW)
-    
-    // TODO: Review all shapes/models are drawn CCW and enable backface culling
-
-    //glEnable(GL_CULL_FACE);       // Enable backface culling (Disabled by default)
-    //glCullFace(GL_BACK);          // Cull the Back face (default)
-    //glFrontFace(GL_CCW);          // Front face are defined counter clockwise (default)
-    
-    glShadeModel(GL_SMOOTH);        // Smooth shading between vertex (vertex colors interpolation)
-                                    // Possible options: GL_SMOOTH (Color interpolation) or GL_FLAT (no interpolation)
-}
-
-// Setup camera view (updates MODELVIEW matrix)
-static void CameraLookAt(Vector3 position, Vector3 target, Vector3 up)
-{
-    float rotMatrix[16];            // Matrix to store camera rotation
-    
-    Vector3 rotX, rotY, rotZ;                // Vectors to calculate camera rotations X, Y, Z (Euler)
-    
-    // Construct rotation matrix from vectors
-    rotZ = VectorSubtract(position, target);
-    VectorNormalize(&rotZ);
-    rotY = up;                                // Y rotation vector
-    rotX = VectorCrossProduct(rotY, rotZ);    // X rotation vector = Y cross Z
-    rotY = VectorCrossProduct(rotZ, rotX);    // Recompute Y rotation = Z cross X
-    VectorNormalize(&rotX);                   // X rotation vector normalization
-    VectorNormalize(&rotY);                   // Y rotation vector normalization
-    
-    rotMatrix[0] = rotX.x;
-    rotMatrix[1] = rotY.x;
-    rotMatrix[2] = rotZ.x;    
-    rotMatrix[3] = 0.0f;    
-    rotMatrix[4] = rotX.y;
-    rotMatrix[5] = rotY.y;    
-    rotMatrix[6] = rotZ.y;
-    rotMatrix[7] = 0.0f;    
-    rotMatrix[8] = rotX.z;
-    rotMatrix[9] = rotY.z;
-    rotMatrix[10] = rotZ.z;
-    rotMatrix[11] = 0.0f;
-    rotMatrix[12] = 0.0f;
-    rotMatrix[13] = 0.0f;
-    rotMatrix[14] = 0.0f;
-    rotMatrix[15] = 1.0f;
-
-    glMultMatrixf(rotMatrix);    // Multiply MODELVIEW matrix by rotation matrix
-    
-    glTranslatef(-position.x, -position.y, -position.z);    // Translate eye to position
+    // If window is resized, graphics device is re-initialized
+    // NOTE: Aspect ratio does not change, so, image can be deformed
+    rlglInitGraphicsDevice(fbWidth, fbHeight);
 }
 
 // Takes a bitmap (BMP) screenshot and saves it in the same folder as executable
 static void TakeScreenshot()
 {
     static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
-        
+
     char buffer[20];            // Buffer to store file name
-    int fbWidth, fbHeight;
-    
-    unsigned char *imgData;        // Pixel image data array
+    int fbWidth, fbHeight;      // Frame buffer width and height
 
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
 
-    imgData = (unsigned char *)malloc(fbWidth * fbHeight * sizeof(unsigned char) * 4);
+    unsigned char *imgData = rlglReadScreenPixels(fbWidth, fbHeight);
 
-    // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
-    glReadPixels(0, 0, fbWidth, fbHeight, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
-    
-    // TODO: Flip image vertically!
-    
-    unsigned char *imgDataFlip = (unsigned char *)malloc(fbWidth * fbHeight * sizeof(unsigned char) * 4);
-    
-    for (int y = fbHeight-1; y >= 0; y--)
-    {
-        for (int x = 0; x < (fbWidth*4); x++)
-        {
-            imgDataFlip[x + (fbHeight - y - 1)*fbWidth*4] = imgData[x + (y*fbWidth*4)];
-        }
-    }
-    
-    free(imgData);
-    
     sprintf(buffer, "screenshot%03i.png", shotNum);
 
-    // NOTE: BMP directly stores data flipped vertically
-    //WriteBitmap(buffer, imgDataPixel, fbWidth, fbHeight);    // Writes pixel data array into a bitmap (BMP) file
-    WritePNG(buffer, imgDataFlip, fbWidth, fbHeight);
-    
-    free(imgDataFlip);
-    
+    WritePNG(buffer, imgData, fbWidth, fbHeight);
+
+    free(imgData);
+
     shotNum++;
 }

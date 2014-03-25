@@ -28,11 +28,12 @@
 
 #include "raylib.h"
 
-#include <GL/gl.h>           // OpenGL functions
 #include <stdlib.h>          // Declares malloc() and free() for memory management
 #include "stb_image.h"       // Used to read image data (multiple formats support)
 
 #include "utils.h"           // rRES data decompression utility function
+
+#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -48,6 +49,11 @@ typedef unsigned char byte;
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 // It's lonely here...
+
+//----------------------------------------------------------------------------------
+// Other Modules Functions Declaration (required by text)
+//----------------------------------------------------------------------------------
+//...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -238,43 +244,6 @@ Texture2D LoadTextureFromRES(const char *rresName, int resId)
     return texture;
 }
 
-// Create a Texture2D from Image data
-// NOTE: Image is not unloaded, it should be done manually...
-Texture2D CreateTexture(Image image)
-{
-    Texture2D texture;
-    
-    // Convert image data to OpenGL texture
-    //----------------------------------------
-    GLuint id;
-    glGenTextures(1, &id);         // Generate Pointer to the Texture
-    
-    glBindTexture(GL_TEXTURE_2D, id);
-    
-    // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used!
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repead on x-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repead on y-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    
-    // Trilinear filtering
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
-    //glGenerateMipmap(GL_TEXTURE_2D);    // OpenGL 3.3!
-    
-    // Upload texture to GPU
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels);
-    
-    // NOTE: Not using mipmappings (texture for 2D drawing)
-    // At this point we have the image converted to texture and uploaded to GPU
-    
-    texture.glId = id;
-    texture.width = image.width;
-    texture.height = image.height;
-    
-    return texture;
-}
-
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
@@ -284,7 +253,7 @@ void UnloadImage(Image image)
 // Unload texture from GPU memory
 void UnloadTexture(Texture2D texture)
 {
-    glDeleteTextures(1, &texture.glId);
+    rlDeleteTextures(texture.glId);
 }
 
 // Draw a Texture2D
@@ -302,101 +271,126 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 // Draw a Texture2D with extended parameters
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
-    glEnable(GL_TEXTURE_2D);    // Enable textures usage
+    rlEnableTexture(texture.glId);
     
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
+    // TODO: Apply rotation to vertex! --> rotate from origin CW (0, 0)
+    // TODO: Compute vertex scaling!
     
-    glPushMatrix();
-        // NOTE: Rotation is applied before translation and scaling, even being called in inverse order...
-        // NOTE: Rotation point is upper-left corner
-        glTranslatef(position.x, position.y, 0);
-        glScalef(scale, scale, 1.0f);
-        glRotatef(rotation, 0, 0, 1);
+    // NOTE: Rotation is applied before translation and scaling, even being called in inverse order...
+    // NOTE: Rotation point is upper-left corner
+    //rlTranslatef(position.x, position.y, 0);
+    //rlScalef(scale, scale, 1.0f);
+    //rlRotatef(rotation, 0, 0, 1);
         
-        glBegin(GL_QUADS);
-            glColor4ub(tint.r, tint.g, tint.b, tint.a);
-            glNormal3f(0.0f, 0.0f, 1.0f);                                         // Normal vector pointing towards viewer
-            glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);                     // Bottom-left corner for texture and quad
-            glTexCoord2f(1.0f, 0.0f); glVertex2f(texture.width, 0.0f);            // Bottom-right corner for texture and quad
-            glTexCoord2f(1.0f, 1.0f); glVertex2f(texture.width, texture.height);  // Top-right corner for texture and quad
-            glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, texture.height);           // Top-left corner for texture and quad
-        glEnd();
-    glPopMatrix();
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        rlNormal3f(0.0f, 0.0f, 1.0f);                               // Normal vector pointing towards viewer
+        
+        rlTexCoord2f(0.0f, 0.0f);
+        rlVertex2f(position.x, position.y);                         // Bottom-left corner for texture and quad
+        
+        rlTexCoord2f(0.0f, 1.0f); 
+        rlVertex2f(position.x, position.y + texture.height);        // Bottom-right corner for texture and quad
+        
+        rlTexCoord2f(1.0f, 1.0f); 
+        rlVertex2f(position.x + texture.width, position.y + texture.height);  // Top-right corner for texture and quad
+        
+        rlTexCoord2f(1.0f, 0.0f); 
+        rlVertex2f(position.x + texture.width, position.y);         // Top-left corner for texture and quad
+    rlEnd();
     
-    glDisable(GL_TEXTURE_2D);    // Disable textures usage
+    rlDisableTexture();
 }
 
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    glEnable(GL_TEXTURE_2D);    // Enable textures usage
+    rlEnableTexture(texture.glId);
     
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
-    
-    glPushMatrix();
-        glTranslatef(position.x, position.y, 0);
-        //glScalef(1.0f, 1.0f, 1.0f);
-        //glRotatef(rotation, 0, 0, 1);
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
         
-        glBegin(GL_QUADS);
-            glColor4ub(tint.r, tint.g, tint.b, tint.a);
-            glNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-            
-            // Bottom-left corner for texture and quad
-            glTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
-            glVertex2f(0.0f, 0.0f);
-            
-            // Bottom-right corner for texture and quad
-            glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-            glVertex2f(sourceRec.width, 0.0f);
-            
-            // Top-right corner for texture and quad
-            glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
-            glVertex2f(sourceRec.width, sourceRec.height);
-            
-            // Top-left corner for texture and quad
-            glTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-            glVertex2f(0.0f, sourceRec.height);
-        glEnd();
-    glPopMatrix();
+        // Bottom-left corner for texture and quad
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+        rlVertex2f(position.x, position.y);
+        
+        // Bottom-right corner for texture and quad
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlVertex2f(position.x, position.y + sourceRec.height);
+        
+        // Top-right corner for texture and quad
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+        rlVertex2f(position.x + sourceRec.width, position.y + sourceRec.height);
+        
+        // Top-left corner for texture and quad 
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlVertex2f(position.x + sourceRec.width, position.y);
+    rlEnd();
     
-    glDisable(GL_TEXTURE_2D);    // Disable textures usage
+    rlDisableTexture();
 }
 
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
 // TODO: Test this function...
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
-    glEnable(GL_TEXTURE_2D);    // Enable textures usage
+    rlEnableTexture(texture.glId);
     
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
+    // TODO: Apply translation, rotation and scaling of vertex manually!
     
-    glPushMatrix();
-        glTranslatef(-origin.x, -origin.y, 0);
-        glRotatef(rotation, 0, 0, 1);
-        glTranslatef(destRec.x + origin.x, destRec.y + origin.y, 0);
+    //rlTranslatef(-origin.x, -origin.y, 0);
+    //rlRotatef(rotation, 0, 0, 1);
+    //rlTranslatef(destRec.x + origin.x, destRec.y + origin.y, 0);
         
-        glBegin(GL_QUADS);
-            glColor4ub(tint.r, tint.g, tint.b, tint.a);
-            glNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-            
-            // Bottom-left corner for texture and quad
-            glTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
-            glVertex2f(0.0f, 0.0f);
-            
-            // Bottom-right corner for texture and quad
-            glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-            glVertex2f(destRec.width, 0.0f);
-            
-            // Top-right corner for texture and quad
-            glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
-            glVertex2f(destRec.width, destRec.height);
-            
-            // Top-left corner for texture and quad
-            glTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-            glVertex2f(0.0f, destRec.height);
-        glEnd();
-    glPopMatrix();
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+        
+        // Bottom-left corner for texture and quad
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+        rlVertex2f(0.0f, 0.0f);
+        
+        // Bottom-right corner for texture and quad
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlVertex2f(destRec.width, 0.0f);
+        
+        // Top-right corner for texture and quad
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+        rlVertex2f(destRec.width, destRec.height);
+        
+        // Top-left corner for texture and quad
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlVertex2f(0.0f, destRec.height);
+    rlEnd();
     
-    glDisable(GL_TEXTURE_2D);    // Disable textures usage
+    rlDisableTexture();
+}
+
+Texture2D CreateTexture(Image image)
+{
+    Texture2D texture;
+    
+    unsigned char *img = malloc(image.width * image.height * 4);
+    
+    int j = 0;
+    
+    for (int i = 0; i < image.width * image.height * 4; i += 4)
+    {
+        img[i] = image.pixels[j].r;
+        img[i+1] = image.pixels[j].g;
+        img[i+2] = image.pixels[j].b;
+        img[i+3] = image.pixels[j].a;
+        
+        j++;
+    }
+
+    texture.glId = rlglTexture(image.width, image.height, img);
+
+    texture.width = image.width;
+    texture.height = image.height;
+    
+    free(img);
+    
+    return texture;
 }

@@ -29,7 +29,10 @@
 #include <stdio.h>       // Standard input/output functions, used to read model files data
 #include <stdlib.h>      // Declares malloc() and free() for memory management
 #include <math.h>        // Used for sin, cos, tan
-#include "vector3.h"     // Basic Vector3 functions
+
+#include "raymath.h"     // Required for data type Matrix and Matrix functions
+
+#include "rlgl.h"        // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -39,14 +42,30 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
-// Matrix type (OpenGL style 4x4 - right handed)
-typedef struct Matrix {
-    float m0, m4, m8, m12;
-    float m1, m5, m9, m13;
-    float m2, m6, m10, m14;
-    float m3, m7, m11, m15;
-} Matrix;
+#ifdef USE_OPENGL_11
+    struct Model {
+        int numVertices;
+        Vector3 *vertices;
+        Vector2 *texcoords;
+        Vector3 *normals;
+    };
+#else
+    struct Model {
+        int numVertices;
+        Vector3 *vertices;
+        Vector2 *texcoords;
+        Vector3 *normals;
+    };
+    
+/*     
+    struct Model
+    {
+        GLUint vaoId;
+        Matrix transform;
+        int polyMode;
+    }
+*/    
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -57,8 +76,6 @@ typedef struct Matrix {
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static float GetHeightValue(Color pixel);
-static void MatrixTranspose(Matrix *mat);
-static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -68,52 +85,66 @@ static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 // NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color)
 {
-    glPushMatrix();
-        glTranslatef(position.x, position.y, position.z);
-        //glRotatef(rotation, 0.0f, 1.0f, 0.0f);
-        //glScalef(1.0f, 1.0f, 1.0f);
+    // THIS WORKS!
+/*
+    Matrix mat = MatrixTranslate(2.0, 0.0, 0.0);
+    MatrixTranspose(&mat);
+    VectorTransform(&position, mat);
+    
+    PrintMatrix(mat);
+*/
+    
+    float x = position.x;
+    float y = position.y;
+    float z = position.z;
 
-        glBegin(GL_QUADS);
-            glColor4ub(color.r, color.g, color.b, color.a);
-            
+    rlPushMatrix();
+                
+        // NOTE: Be careful! Function order matters (scale, translate, rotate)
+        //rlScalef(2.0f, 2.0f, 2.0f);
+        //rlTranslatef(2.0f, 0.0f, 0.0f);
+        rlRotatef(45, 0, 1, 0);
+    
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);           
             // Front Face
-            glNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-width/2, -height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( width/2, -height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( width/2,  height/2,  lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-width/2,  height/2,  lenght/2);  // Top Left Of The Texture and Quad
+            rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left Of The Texture and Quad
             // Back Face
-            glNormal3f( 0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-width/2, -height/2, -lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-width/2,  height/2, -lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( width/2,  height/2, -lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( width/2, -height/2, -lenght/2);  // Bottom Left Of The Texture and Quad
+            rlNormal3f( 0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Left Of The Texture and Quad
             // Top Face
-            glNormal3f( 0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-width/2,  height/2, -lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-width/2,  height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( width/2,  height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( width/2,  height/2, -lenght/2);  // Top Right Of The Texture and Quad
+            rlNormal3f( 0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
             // Bottom Face
-            glNormal3f( 0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-width/2, -height/2, -lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( width/2, -height/2, -lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( width/2, -height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-width/2, -height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
+            rlNormal3f( 0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
             // Right face
-            glNormal3f( 1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( width/2, -height/2, -lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( width/2,  height/2, -lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( width/2,  height/2,  lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( width/2, -height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
+            rlNormal3f( 1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
             // Left Face
-            glNormal3f(-1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-width/2, -height/2, -lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-width/2, -height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-width/2,  height/2,  lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-width/2,  height/2, -lenght/2);  // Top Left Of The Texture and Quad
-        glEnd();
-    glPopMatrix();
+            rlNormal3f(-1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw cube (Vector version)
@@ -125,9 +156,11 @@ void DrawCubeV(Vector3 position, Vector3 size, Color color)
 // Draw cube wires
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawCube(position, width, height, lenght, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // TODO: Draw cube using RL_LINES!
+    
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //DrawCube(position, width, height, lenght, color);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 // Draw sphere
@@ -143,14 +176,16 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
     float lat1, z1, zr1;
     float lng, x, y;
     
-    glPushMatrix();
-        glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-        glRotatef(90, 1, 0, 0);
-        glScalef(radius, radius, radius);
+    // TODO: Review vertex translate/rotate/scale mechanism
+    
+    rlPushMatrix();
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
+        rlRotatef(90, 1, 0, 0);
+        rlScalef(radius, radius, radius);
         
-        glBegin(GL_QUAD_STRIP);
+        rlBegin(GL_QUAD_STRIP);
                     
-            glColor4ub(color.r, color.g, color.b, color.a);
+            rlColor4ub(color.r, color.g, color.b, color.a);
             
             for(int i = 0; i <= rings; i++) 
             {
@@ -168,23 +203,25 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
                     x = cos(lng);
                     y = sin(lng);
         
-                    glNormal3f(x * zr0, y * zr0, z0);
-                    glVertex3f(x * zr0, y * zr0, z0);
+                    rlNormal3f(x * zr0, y * zr0, z0);
+                    rlVertex3f(x * zr0, y * zr0, z0);
                     
-                    glNormal3f(x * zr1, y * zr1, z1);
-                    glVertex3f(x * zr1, y * zr1, z1);
+                    rlNormal3f(x * zr1, y * zr1, z1);
+                    rlVertex3f(x * zr1, y * zr1, z1);
                 }
             }
-        glEnd();
-    glPopMatrix();
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw sphere wires
 void DrawSphereWires(Vector3 centerPos, float radius, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawSphere(centerPos, radius, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // TODO: Draw sphere using RL_LINES!
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //DrawSphere(centerPos, radius, color);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 // Draw a cylinder/cone
@@ -200,136 +237,131 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 
     if (radiusTop == 0)    // Draw pyramid or cone
     {
-        //void drawCone(const Vector3 &d, const Vector3 &a, const float h, const float rd, const int n)
         //d – axis defined as a normalized vector from base to apex
         //a – position of apex (top point)
         //h – height
         //rd – radius of directrix
         //n – number of radial "slices"
+
+        // TODO: Review drawing to use RL_TRIANGLES
         
-        glPushMatrix();
-            //glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-            //glRotatef(degrees, 0.0f, 1.0f, 0.0f);
-            //glScalef(1.0f, 1.0f, 1.0f);
+        // Draw cone top
+        rlBegin(GL_TRIANGLE_FAN);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex3f(a.x, a.y, a.z);
             
-            // Draw cone top
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(a.x, a.y, a.z);
-                for (int i = 0; i <= slices; i++) 
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-         
-            // Draw cone bottom
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(c.x, c.y, c.z);
-                for (int i = slices; i >= 0; i--) 
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
+            for (int i = 0; i <= slices; i++) 
+            {
+                float rad = angInc * i;
+                p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
+                p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
+                p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
+                rlVertex3f(p.x, p.y, p.z);
+            }
+        rlEnd();
+     
+        // Draw cone bottom
+        rlBegin(GL_TRIANGLE_FAN);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex3f(c.x, c.y, c.z);
             
-        glPopMatrix();
+            for (int i = slices; i >= 0; i--) 
+            {
+                float rad = angInc * i;
+                p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
+                p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
+                p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
+                rlVertex3f(p.x, p.y, p.z);
+            }
+        rlEnd();
     }
     else    // Draw cylinder
     {
-        glPushMatrix();
-            //glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-            //glRotatef(degrees, 0.0f, 1.0f, 0.0f);
-            //glScalef(1.0f, 1.0f, 1.0f);
-
-            // Draw cylinder top (pointed cap)
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(c.x, c.y + height, c.z);
-                for (int i = slices; i >= 0; i--) 
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusTop);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusTop) + height;
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusTop);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-            
-            // Draw cylinder sides
-            glBegin(GL_TRIANGLE_STRIP);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                for (int i = slices; i >= 0; i--)
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusTop);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusTop) + height;
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusTop);
-                    glVertex3f(p.x, p.y, p.z);
-                    
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-            
-            // Draw cylinder bottom
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(c.x, c.y, c.z);
-                for (int i = slices; i >= 0; i--) 
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-            
-        glPopMatrix();
+    
+        // TODO: Review drawing to use RL_TRIANGLES
+    
+        // Draw cylinder top (pointed cap)
+        rlBegin(GL_TRIANGLE_FAN);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex3f(c.x, c.y + height, c.z);
+            for (int i = slices; i >= 0; i--) 
+            {
+                float rad = angInc * i;
+                p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusTop);
+                p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusTop) + height;
+                p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusTop);
+                rlVertex3f(p.x, p.y, p.z);
+            }
+        rlEnd();
+        
+        // Draw cylinder sides
+        rlBegin(GL_TRIANGLE_STRIP);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            for (int i = slices; i >= 0; i--)
+            {
+                float rad = angInc * i;
+                p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusTop);
+                p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusTop) + height;
+                p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusTop);
+                rlVertex3f(p.x, p.y, p.z);
+                
+                p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
+                p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
+                p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
+                rlVertex3f(p.x, p.y, p.z);
+            }
+        rlEnd();
+        
+        // Draw cylinder bottom
+        rlBegin(GL_TRIANGLE_FAN);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex3f(c.x, c.y, c.z);
+            for (int i = slices; i >= 0; i--) 
+            {
+                float rad = angInc * i;
+                p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
+                p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
+                p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
+                rlVertex3f(p.x, p.y, p.z);
+            }
+        rlEnd();
     }
 }
 
 // Draw a cylinder/cone wires
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // TODO: Draw sphere using RL_LINES!
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     DrawCylinder(position, radiusTop, radiusBottom, height, slices, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
 {
+    // TODO: Review vertex translate/rotate/scale mechanism
+
     // NOTE: Plane is always created on XZ ground and then rotated
-    glPushMatrix();
-        glTranslatef(centerPos.x, centerPos.y, centerPos.z);
+    rlPushMatrix();
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         
         // TODO: Review multiples rotations Gimbal-Lock... use matrix or quaternions...
-        glRotatef(rotation.x, 1, 0, 0);
-        glRotatef(rotation.y, 0, 1, 0);
-        glRotatef(rotation.z, 0, 0, 1);
-        glScalef(size.x, 1.0f, size.y);
+        rlRotatef(rotation.x, 1, 0, 0);
+        rlRotatef(rotation.y, 0, 1, 0);
+        rlRotatef(rotation.z, 0, 0, 1);
+        rlScalef(size.x, 1.0f, size.y);
     
-        glBegin(GL_QUADS);
-            glColor4ub(color.r, color.g, color.b, color.a);
-            glNormal3f(0.0f, 1.0f, 0.0f); 
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.0f, -0.5f);
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.0f, -0.5f);
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.0f, 0.5f);
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.0f, 0.5f);
-        glEnd();
-
-    glPopMatrix();
+        rlBegin(GL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 1.0f, 0.0f); 
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, -0.5f);
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(0.5f, 0.0f, -0.5f);
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(0.5f, 0.0f, 0.5f);
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(-0.5f, 0.0f, 0.5f);
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw a plane with divisions
@@ -341,71 +373,75 @@ void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX,
     float texPieceW = 1 / size.x;
     float texPieceH = 1 / size.y;
 
+    // TODO: Review vertex translate/rotate/scale mechanism
+    
     // NOTE: Plane is always created on XZ ground and then rotated
-    glPushMatrix();
-        glTranslatef(-size.x / 2, 0.0f, -size.y / 2);
-        glTranslatef(centerPos.x, centerPos.y, centerPos.z);
+    rlPushMatrix();
+        rlTranslatef(-size.x / 2, 0.0f, -size.y / 2);
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         
         // TODO: Review multiples rotations Gimbal-Lock... use matrix or quaternions...
-        glRotatef(rotation.x, 1, 0, 0);
-        glRotatef(rotation.y, 0, 1, 0);
-        glRotatef(rotation.z, 0, 0, 1);
+        rlRotatef(rotation.x, 1, 0, 0);
+        rlRotatef(rotation.y, 0, 1, 0);
+        rlRotatef(rotation.z, 0, 0, 1);
     
-        glBegin(GL_QUADS);
-            glColor4ub(color.r, color.g, color.b, color.a);
-            glNormal3f(0.0f, 1.0f, 0.0f);
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 1.0f, 0.0f);
             
             for (int z = 0; z < slicesZ; z++)
             {
                 for (int x = 0; x < slicesX; x++)
                 {
                     // Draw the plane quad by quad (with textcoords)
-                    glTexCoord2f((float)x * texPieceW, (float)z * texPieceH);
-                    glVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght);
+                    rlTexCoord2f((float)x * texPieceW, (float)z * texPieceH);
+                    rlVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght);
                     
-                    glTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH);
-                    glVertex3f((float)x * quadWidth  + quadWidth, 0.0f, (float)z * quadLenght);
+                    rlTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH);
+                    rlVertex3f((float)x * quadWidth  + quadWidth, 0.0f, (float)z * quadLenght);
                     
-                    glTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH + texPieceH);
-                    glVertex3f((float)x * quadWidth + quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
+                    rlTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH + texPieceH);
+                    rlVertex3f((float)x * quadWidth + quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
                     
-                    glTexCoord2f((float)x * texPieceW, (float)z * texPieceH + texPieceH);
-                    glVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
+                    rlTexCoord2f((float)x * texPieceW, (float)z * texPieceH + texPieceH);
+                    rlVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
                 }
             }
-        glEnd();
+        rlEnd();
 
-    glPopMatrix();
+    rlPopMatrix();
 }
 
 // Draw a grid centered at (0, 0, 0)
 void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices / 2;
-    
-    //glEnable(GL_LINE_SMOOTH);                    // Smoothies circle outline (anti-aliasing applied)
-    //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);      // Best quality for line smooth (anti-aliasing best algorithm)
 
-    glPushMatrix();
-        glScalef(spacing, 1.0f, spacing);
-
-        glBegin(GL_LINES);
-            for(int i = -halfSlices; i <= halfSlices; i++)
+    rlBegin(RL_LINES);
+        for(int i = -halfSlices; i <= halfSlices; i++)
+        {
+            if (i == 0)
             {
-                if (i == 0) glColor3f(0.5f, 0.5f, 0.5f);
-                else glColor3f(0.75f, 0.75f, 0.75f);
-                
-                glVertex3f((float)i, 0.0f, (float)-halfSlices);
-                glVertex3f((float)i, 0.0f, (float)halfSlices);
-
-                glVertex3f((float)-halfSlices, 0.0f, (float)i);
-                glVertex3f((float)halfSlices, 0.0f, (float)i);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
             }
-        glEnd();
-        
-    glPopMatrix();
-    
-    //glDisable(GL_LINE_SMOOTH);
+            else
+            {
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+            }
+            
+            rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
+            rlVertex3f((float)i*spacing, 0.0f, (float)halfSlices*spacing);
+
+            rlVertex3f((float)-halfSlices*spacing, 0.0f, (float)i*spacing);
+            rlVertex3f((float)halfSlices*spacing, 0.0f, (float)i*spacing);
+        }
+    rlEnd();
 }
 
 // Draw gizmo (with or without orbits)
@@ -418,44 +454,47 @@ void DrawGizmo(Vector3 position, bool orbits)
     //glEnable(GL_LINE_SMOOTH);                    // Smoothies circle outline (anti-aliasing applied)
     //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);      // Best quality for line smooth (anti-aliasing best algorithm)
     
-    glPushMatrix();
-        glTranslatef(position.x, position.y, position.z);
-        //glRotatef(rotation, 0, 1, 0);
-        glScalef(lenght, lenght, lenght);
+    // GL_LINE_SMOOTH is very poorly supported on desktop GL. 
+    // A lot of drivers ignore it, so most people avoid using...
     
-        glBegin(GL_LINES);
-            glColor3f(1.0f, 0.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            glVertex3f(1.0f, 0.0f, 0.0f);
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+        //glRotatef(rotation, 0, 1, 0);
+        rlScalef(lenght, lenght, lenght);
+    
+        rlBegin(GL_LINES);
+            rlColor3f(1.0f, 0.0f, 0.0f);
+            rlVertex3f(0.0f, 0.0f, 0.0f);
+            rlVertex3f(1.0f, 0.0f, 0.0f);
             
-            glColor3f(0.0f, 1.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            glVertex3f(0.0f, 1.0f, 0.0f);
+            rlColor3f(0.0f, 1.0f, 0.0f);
+            rlVertex3f(0.0f, 0.0f, 0.0f);
+            rlVertex3f(0.0f, 1.0f, 0.0f);
             
-            glColor3f(0.0f, 0.0f, 1.0f);
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, 1.0f);
-        glEnd();
+            rlColor3f(0.0f, 0.0f, 1.0f);
+            rlVertex3f(0.0f, 0.0f, 0.0f);
+            rlVertex3f(0.0f, 0.0f, 1.0f);
+        rlEnd();
         
         if (orbits)
         {
-            glBegin(GL_LINE_LOOP);
-                glColor4f(1.0f, 0.0f, 0.0f, 0.4f);
-                for (int i=0; i < 360; i++) glVertex3f(sin(DEG2RAD*i) * radius, 0, cos(DEG2RAD*i) * radius);
-            glEnd();
+            rlBegin(GL_LINE_LOOP);
+                rlColor4f(1.0f, 0.0f, 0.0f, 0.4f);
+                for (int i=0; i < 360; i++) rlVertex3f(sin(DEG2RAD*i) * radius, 0, cos(DEG2RAD*i) * radius);
+            rlEnd();
             
-            glBegin(GL_LINE_LOOP);
-                glColor4f(0.0f, 1.0f, 0.0f, 0.4f);
-                for (int i=0; i < 360; i++) glVertex3f(sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius, 0);
-            glEnd();
+            rlBegin(GL_LINE_LOOP);
+                rlColor4f(0.0f, 1.0f, 0.0f, 0.4f);
+                for (int i=0; i < 360; i++) rlVertex3f(sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius, 0);
+            rlEnd();
             
-            glBegin(GL_LINE_LOOP);
-                glColor4f(0.0f, 0.0f, 1.0f, 0.4f);
-                for (int i=0; i < 360; i++) glVertex3f(0, sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius);
-            glEnd();
+            rlBegin(GL_LINE_LOOP);
+                rlColor4f(0.0f, 0.0f, 1.0f, 0.4f);
+                for (int i=0; i < 360; i++) rlVertex3f(0, sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius);
+            rlEnd();
         }
     
-    glPopMatrix();
+    rlPopMatrix();
     
     //glDisable(GL_LINE_SMOOTH);
 }
@@ -464,7 +503,7 @@ void DrawGizmo(Vector3 position, bool orbits)
 // TODO: Add comments explaining this function process
 Model LoadModel(const char *fileName)                                    
 {
-    Model model;
+    struct Model model;
     
     char dataType;
     char comments[200];
@@ -664,6 +703,12 @@ Model LoadModel(const char *fileName)
     
     fclose(objFile);
     
+#ifdef USE_OPENGL_33
+    
+    // TODO: Use loaded data to generate VAO
+
+#endif
+
     return model;
 }
 
@@ -749,6 +794,12 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             trisCounter += 2;
         }
     }
+    
+#ifdef USE_OPENGL_33
+    
+    // TODO: Use loaded data to generate VAO
+
+#endif
 
     return model;
 }
@@ -767,6 +818,8 @@ void DrawModel(Model model, Vector3 position, float scale, Color color)
     // NOTE: For models we use Vertex Arrays (OpenGL 1.1)
     //static int rotation = 0;
     
+    // NOTE: Add OpenGL 3.3+ VAOs-based drawing! --> Move this stuff to rlgl?
+    
     glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
     glEnableClientState(GL_NORMAL_ARRAY);                     // Enable normals array
@@ -776,41 +829,60 @@ void DrawModel(Model model, Vector3 position, float scale, Color color)
     glNormalPointer(GL_FLOAT, 0, model.normals);              // Pointer to normals array
     //glColorPointer(4, GL_UNSIGNED_BYTE, 0, model.colors);   // Pointer to colors array (NOT USED)
         
-    glPushMatrix();
-        glTranslatef(position.x, position.y, position.z);
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
         //glRotatef(rotation * GetFrameTime(), 0, 1, 0);
-        glScalef(scale, scale, scale);
+        rlScalef(scale, scale, scale);
         
-        glColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4ub(color.r, color.g, color.b, color.a);
 
         glDrawArrays(GL_TRIANGLES, 0, model.numVertices);
-    glPopMatrix();
+    rlPopMatrix();
     
     glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);              // Disable texture coords array
     glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
     
     //rotation += 10;
+
+// Model drawing in OpenGL 3.3+, transform is passed to shader
+/*
+    glUseProgram(shaderProgram);        // Use our shader
+    
+    Matrix modelview = MatrixMultiply(model.transform, view);
+    
+    glUniformMatrix4fv(projectionMatrixLoc, 1, false, GetMatrixVector(projection));
+    glUniformMatrix4fv(modelviewMatrixLoc, 1, false, GetMatrixVector(modelview));
+    glUniform1i(textureLoc, 0);
+   
+    glBindVertexArray(model.vaoId);
+    glBindTexture(GL_TEXTURE_2D, model.texId);
+
+    glDrawArrays(GL_TRIANGLES, 0, model.numVertices);
+
+    glBindTexture(GL_TEXTURE_2D, 0);    // Unbind textures
+    glBindVertexArray(0);               // Unbind VAO
+*/
 }
 
 // Draw a textured model
 void DrawModelEx(Model model, Texture2D texture, Vector3 position, float scale, Color tint)
 {
-    glEnable(GL_TEXTURE_2D);
-    
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
+    rlEnableTexture(texture.glId);
     
     DrawModel(model, position, scale, tint);
     
-    glDisable(GL_TEXTURE_2D);
+    rlDisableTexture();
 }
 
 // Draw a model wires
 void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // TODO: Draw model using RL_LINES... or look for a way to deal with polygon mode!
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     DrawModel(model, position, scale, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 // Draw a billboard
@@ -842,20 +914,18 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     Vector3 c = VectorAdd(center, p2);
     Vector3 d = VectorSubtract(center, p1);
     
-    glEnable(GL_TEXTURE_2D);
-    
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
+    rlEnableTexture(texture.glId);
       
-    glBegin(GL_QUADS);
-        glColor4ub(tint.r, tint.g, tint.b, tint.a);
-        glNormal3f(0.0f, 1.0f, 0.0f); 
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(a.x, a.y, a.z);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(b.x, b.y, b.z);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(c.x, c.y, c.z);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(d.x, d.y, d.z);
-    glEnd();
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        rlNormal3f(0.0f, 1.0f, 0.0f); 
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
+        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
+        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
+        rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
+    rlEnd();
     
-    glDisable(GL_TEXTURE_2D);
+    rlDisableTexture();
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
@@ -887,92 +957,33 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     Vector3 c = VectorAdd(center, p2);
     Vector3 d = VectorSubtract(center, p1);
     
-    glEnable(GL_TEXTURE_2D);    // Enable textures usage
+    rlEnableTexture(texture.glId);
     
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
-    
-    glBegin(GL_QUADS);
-        glColor4ub(tint.r, tint.g, tint.b, tint.a);
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
         
         // Bottom-left corner for texture and quad
-        glTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
-        glVertex3f(a.x, a.y, a.z);
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+        rlVertex3f(a.x, a.y, a.z);
         
         // Bottom-right corner for texture and quad
-        glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-        glVertex3f(b.x, b.y, b.z);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlVertex3f(b.x, b.y, b.z);
         
         // Top-right corner for texture and quad
-        glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
-        glVertex3f(c.x, c.y, c.z);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+        rlVertex3f(c.x, c.y, c.z);
         
         // Top-left corner for texture and quad
-        glTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-        glVertex3f(d.x, d.y, d.z);
-    glEnd();
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlVertex3f(d.x, d.y, d.z);
+    rlEnd();
     
-    glDisable(GL_TEXTURE_2D);    // Disable textures usage
+    rlDisableTexture();
 }
 
 // Get current vertex y altitude (proportional to pixel colors in grayscale)
 static float GetHeightValue(Color pixel)
 {
     return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
-}
-
-// Returns camera look-at matrix (view matrix)
-static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
-{
-    Matrix result;
-    
-    Vector3 z = VectorSubtract(eye, target);
-    VectorNormalize(&z);
-    Vector3 x = VectorCrossProduct(up, z);
-    VectorNormalize(&x);
-    Vector3 y = VectorCrossProduct(z, x);
-    VectorNormalize(&y);
-    
-    result.m0 = x.x;
-    result.m1 = x.y;
-    result.m2 = x.z;
-    result.m3 = -((x.x * eye.x) + (x.y * eye.y) + (x.z * eye.z));
-    result.m4 = y.x;
-    result.m5 = y.y;
-    result.m6 = y.z;
-    result.m7 = -((y.x * eye.x) + (y.y * eye.y) + (y.z * eye.z));
-    result.m8 = z.x;
-    result.m9 = z.y;
-    result.m10 = z.z;
-    result.m11 = -((z.x * eye.x) + (z.y * eye.y) + (z.z * eye.z));
-    result.m12 = 0;
-    result.m13 = 0;
-    result.m14 = 0;
-    result.m15 = 1;
-    
-    return result;
-}
-
-// Transposes provided matrix
-static void MatrixTranspose(Matrix *mat)
-{
-    Matrix temp;
-
-    temp.m0 = mat->m0;
-    temp.m1 = mat->m4;
-    temp.m2 = mat->m8;
-    temp.m3 = mat->m12;
-    temp.m4 = mat->m1;
-    temp.m5 = mat->m5;
-    temp.m6 = mat->m9;
-    temp.m7 = mat->m13;
-    temp.m8 = mat->m2;
-    temp.m9 = mat->m6;
-    temp.m10 = mat->m10;
-    temp.m11 = mat->m14;
-    temp.m12 = mat->m3;
-    temp.m13 = mat->m7;
-    temp.m14 = mat->m11;
-    temp.m15 = mat->m15;
-    
-    *mat = temp;
 }
