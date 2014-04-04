@@ -131,7 +131,7 @@ Sound LoadSound(char *fileName)
     // NOTE: Buffer space is allocated inside LoadWAV, Wave must be freed
     Wave wave = LoadWAV(fileName);
     
-    ALenum format;
+    ALenum format = 0;
     // The OpenAL format is worked out by looking at the number of channels and the bits per sample
     if (wave.channels == 1) 
     {
@@ -257,7 +257,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
                 free(data);
                 
                 // Convert wave to Sound (OpenAL)
-                ALenum format;
+                ALenum format = 0;
                 
                 // The OpenAL format is worked out by looking at the number of channels and the bits per sample
                 if (wave.channels == 1) 

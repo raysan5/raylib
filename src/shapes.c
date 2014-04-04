@@ -62,7 +62,7 @@ void DrawPixel(int posX, int posY, Color color)
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2i(posX, posY);
         rlVertex2i(posX + 1, posY + 1);
-    rlEnd();  
+    rlEnd();
 }
 
 // Draw a pixel (Vector version)
@@ -96,7 +96,6 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 }
 
 // Draw a color-filled circle
-// TODO: Review, on some GPUs is drawn with a weird transparency (GL_POLYGON_SMOOTH issue?)
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
     DrawPoly((Vector2){centerX, centerY}, 360, radius, 0, color);
@@ -107,13 +106,13 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
 {
     rlBegin(RL_TRIANGLES);        
-        for (int i=0; i <= 360; i += 2)        //i++ --> Step = 1.0 pixels
+        for (int i=0; i < 360; i += 2)
         {
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
             rlVertex2i(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
             rlVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
-            rlVertex2f(centerX + sin(DEG2RAD*(i+1)) * radius, centerY + cos(DEG2RAD*(i+1)) * radius);
+            rlVertex2f(centerX + sin(DEG2RAD*(i+2)) * radius, centerY + cos(DEG2RAD*(i+2)) * radius);
         }
     rlEnd();
 }
@@ -127,7 +126,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2i(center.x, center.y);
             rlVertex2f(center.x + sin(DEG2RAD*i) * radius, center.y + cos(DEG2RAD*i) * radius);
-            rlVertex2f(center.x + sin(DEG2RAD*(i+1)) * radius, center.y + cos(DEG2RAD*(i+1)) * radius);
+            rlVertex2f(center.x + sin(DEG2RAD*(i+2)) * radius, center.y + cos(DEG2RAD*(i+2)) * radius);
         }
     rlEnd();
 }
@@ -135,9 +134,6 @@ void DrawCircleV(Vector2 center, float radius, Color color)
 // Draw circle outline
 void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 {
-    //glEnable(GL_LINE_SMOOTH);                    // Smoothies circle outline (anti-aliasing applied)
-    //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);      // Best quality for line smooth (anti-aliasing best algorithm)
-    
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         
@@ -148,10 +144,6 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
             rlVertex2f(centerX + sin(DEG2RAD*(i+1)) * radius, centerY + cos(DEG2RAD*(i+1)) * radius);
         }
    rlEnd();
-   
-   //glDisable(GL_LINE_SMOOTH);
-   
-   // TODO: Draw all lines with line smooth??? --> Do it before drawing lines VAO
 }
 
 // Draw a color-filled rectangle
@@ -255,16 +247,17 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
     if (sides < 3) sides = 3;
 
     rlPushMatrix();
-
-        rlRotatef(rotation, 0, 0, 1);   // TODO: compute vertex rotation manually!
+        rlTranslatef(center.x, center.y, 0.0);
+        rlRotatef(rotation, 0, 0, 1);
         
         rlBegin(RL_TRIANGLES);
-            for (int i=0; i < 360; i += 2)
+            for (int i=0; i < 360; i += 360/sides)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
-                rlVertex2i(center.x, center.y);
-                rlVertex2f(center.x + sin(DEG2RAD*i) * radius, center.y + cos(DEG2RAD*i) * radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i+1)) * radius, center.y + cos(DEG2RAD*(i+1)) * radius);
+                
+                rlVertex2i(0, 0);
+                rlVertex2f(sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius);
+                rlVertex2f(sin(DEG2RAD*(i+360/sides)) * radius, cos(DEG2RAD*(i+360/sides)) * radius);
             }
         rlEnd();
     rlPopMatrix();

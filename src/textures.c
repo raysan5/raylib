@@ -273,31 +273,30 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 {
     rlEnableTexture(texture.glId);
     
-    // TODO: Apply rotation to vertex! --> rotate from origin CW (0, 0)
-    // TODO: Compute vertex scaling!
-    
     // NOTE: Rotation is applied before translation and scaling, even being called in inverse order...
-    // NOTE: Rotation point is upper-left corner
-    //rlTranslatef(position.x, position.y, 0);
-    //rlScalef(scale, scale, 1.0f);
-    //rlRotatef(rotation, 0, 0, 1);
-        
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-        rlNormal3f(0.0f, 0.0f, 1.0f);                               // Normal vector pointing towards viewer
-        
-        rlTexCoord2f(0.0f, 0.0f);
-        rlVertex2f(position.x, position.y);                         // Bottom-left corner for texture and quad
-        
-        rlTexCoord2f(0.0f, 1.0f); 
-        rlVertex2f(position.x, position.y + texture.height);        // Bottom-right corner for texture and quad
-        
-        rlTexCoord2f(1.0f, 1.0f); 
-        rlVertex2f(position.x + texture.width, position.y + texture.height);  // Top-right corner for texture and quad
-        
-        rlTexCoord2f(1.0f, 0.0f); 
-        rlVertex2f(position.x + texture.width, position.y);         // Top-left corner for texture and quad
-    rlEnd();
+    // NOTE: Rotation point is upper-left corner    
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, 0.0);
+        rlScalef(scale, scale, 1.0f);
+        rlRotatef(rotation, 0, 0, 1);
+    
+        rlBegin(RL_QUADS);
+            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                               // Normal vector pointing towards viewer
+            
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex2f(position.x, position.y);                         // Bottom-left corner for texture and quad
+            
+            rlTexCoord2f(0.0f, 1.0f); 
+            rlVertex2f(position.x, position.y + texture.height);        // Bottom-right corner for texture and quad
+            
+            rlTexCoord2f(1.0f, 1.0f); 
+            rlVertex2f(position.x + texture.width, position.y + texture.height);  // Top-right corner for texture and quad
+            
+            rlTexCoord2f(1.0f, 0.0f); 
+            rlVertex2f(position.x + texture.width, position.y);         // Top-left corner for texture and quad
+        rlEnd();
+    rlPopMatrix();
     
     rlDisableTexture();
 }
@@ -337,32 +336,33 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
 {
     rlEnableTexture(texture.glId);
     
-    // TODO: Apply translation, rotation and scaling of vertex manually!
-    
-    //rlTranslatef(-origin.x, -origin.y, 0);
-    //rlRotatef(rotation, 0, 0, 1);
-    //rlTranslatef(destRec.x + origin.x, destRec.y + origin.y, 0);
-        
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-        rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-        
-        // Bottom-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
-        rlVertex2f(0.0f, 0.0f);
-        
-        // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-        rlVertex2f(destRec.width, 0.0f);
-        
-        // Top-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
-        rlVertex2f(destRec.width, destRec.height);
-        
-        // Top-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-        rlVertex2f(0.0f, destRec.height);
-    rlEnd();
+    // NOTE: First we translate texture to origin to apply rotation and translation from there
+    rlPushMatrix();
+        rlTranslatef(-origin.x, -origin.y, 0);  
+        rlRotatef(rotation, 0, 0, 1);
+        rlTranslatef(destRec.x + origin.x, destRec.y + origin.y, 0);
+            
+        rlBegin(RL_QUADS);
+            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+            
+            // Bottom-left corner for texture and quad
+            rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+            rlVertex2f(0.0f, 0.0f);
+            
+            // Bottom-right corner for texture and quad
+            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+            rlVertex2f(destRec.width, 0.0f);
+            
+            // Top-right corner for texture and quad
+            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+            rlVertex2f(destRec.width, destRec.height);
+            
+            // Top-left corner for texture and quad
+            rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+            rlVertex2f(0.0f, destRec.height);
+        rlEnd();
+    rlPopMatrix();
     
     rlDisableTexture();
 }
@@ -385,7 +385,7 @@ Texture2D CreateTexture(Image image)
         j++;
     }
 
-    texture.glId = rlglTexture(image.width, image.height, img);
+    texture.glId = rlglLoadTexture(image.width, image.height, img);
 
     texture.width = image.width;
     texture.height = image.height;

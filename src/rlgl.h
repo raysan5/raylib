@@ -29,9 +29,15 @@
 #ifndef RLGL_H
 #define RLGL_H
 
+//#define RLGL_STANDALONE       // NOTE: To use rlgl as standalone lib, just uncomment this line
+
+#ifndef RLGL_STANDALONE
+    #include "raylib.h"         // Required for typedef: Model
+#endif
+
 // Select desired OpenGL version
-//#define USE_OPENGL_11
-#define USE_OPENGL_33
+#define USE_OPENGL_11
+//#define USE_OPENGL_33
 //#define USE_OPENGL_ES2
 
 //----------------------------------------------------------------------------------
@@ -49,6 +55,29 @@ typedef unsigned char byte;
 typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
+
+#ifdef RLGL_STANDALONE
+    typedef struct Model Model;
+#endif
+
+typedef struct {
+    int numVertices;
+    float *vertices;            // 3 components per vertex
+    float *texcoords;           // 2 components per vertex
+    float *normals;             // 3 components per vertex
+} VertexData;
+
+#ifdef USE_OPENGL_11
+struct Model {
+    VertexData data;
+};
+#else
+struct Model {
+    unsigned int vaoId;
+    Matrix transform;
+    int numVertices;
+};
+#endif
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -88,7 +117,8 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 //------------------------------------------------------------------------------------
 void rlEnableTexture(unsigned int id);      // Enable texture usage
 void rlDisableTexture();                    // Disable texture usage
-void rlDeleteTextures(unsigned int id);     // Delete OpenGL texture
+void rlDeleteTextures(unsigned int id);     // Delete OpenGL texture from GPU
+void rlDeleteVertexArrays(unsigned int id); // Unload vertex data from GPU memory
 void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
 void rlClearScreenBuffers();                // Clear used screen buffers (color and depth)
 
@@ -96,13 +126,15 @@ void rlClearScreenBuffers();                // Clear used screen buffers (color 
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
 #ifdef USE_OPENGL_33
-void rlglInit();                            // Initialize rlgl (shaders, VAO, VBO...)
-void rlglClose();                           // De-init rlgl
-void rlglDraw();                            // Draw VAOs
+void rlglInit();                                // Initialize rlgl (shaders, VAO, VBO...)
+void rlglClose();                               // De-init rlgl
+void rlglDraw();                                // Draw VAOs
+unsigned int rlglLoadModel(VertexData data);
 #endif
 
+void rlglDrawModel(Model model, bool wires);    // Draw model
 void rlglInitGraphicsDevice(int fbWidth, int fbHeight);  // Initialize Graphics Device (OpenGL stuff)
-unsigned int rlglTexture(int width, int height, unsigned char *pixels); // Create OpenGL texture
+unsigned int rlglLoadTexture(int width, int height, unsigned char *pixels); // Load in GPU OpenGL texture
 byte *rlglReadScreenPixels(int width, int height);    // Read screen pixel data (color buffer)
 
 #ifdef USE_OPENGL_33

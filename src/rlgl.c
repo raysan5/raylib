@@ -49,9 +49,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MATRIX_STACK_SIZE          16   // TODO: REVIEW: Matrix stack required?
+#define MATRIX_STACK_SIZE          16   // Matrix stack max size
 #define MAX_DRAWS_BY_TEXTURE      256   // Draws are organized by texture changes
-#define TEMP_VERTEX_BUFFER_SIZE  1024   // Temporal Vertex Buffer (required for post-transformations)
+#define TEMP_VERTEX_BUFFER_SIZE  1024   // Temporal Vertex Buffer (required for vertex-transformations)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -67,7 +67,7 @@ typedef struct {
     float *vertices;            // 3 components per vertex
     float *colors;              // 4 components per vertex
 } VertexPositionColorBuffer;
-
+/*
 typedef struct {
     int vCounter;
     int tcCounter;
@@ -76,7 +76,17 @@ typedef struct {
     float *texcoords;           // 2 components per vertex
     float *colors;              // 4 components per vertex
 } VertexPositionColorTextureBuffer;
-
+*/
+/*
+typedef struct {
+    int vCounter;
+    int tcCounter;
+    int nCounter;
+    float *vertices;            // 3 components per vertex
+    float *texcoords;           // 2 components per vertex
+    float *normals;             // 3 components per vertex
+} VertexPositionTextureNormalBuffer;
+*/
 typedef struct {
     int vCounter;
     int tcCounter;
@@ -108,8 +118,8 @@ static int currentMatrixMode;
 static DrawMode currentDrawMode;
 
 // Vertex arrays for lines, triangles and quads
-static VertexPositionColorBuffer lines;
-static VertexPositionColorTextureBuffer triangles;
+static VertexPositionColorBuffer lines;         // No texture support
+static VertexPositionColorBuffer triangles;     // No texture support
 static VertexPositionColorTextureIndexBuffer quads;
 
 // Vetex-Fragment Shader Program ID
@@ -614,6 +624,14 @@ void rlDeleteTextures(unsigned int id)
     glDeleteTextures(1, &id);
 }
 
+// Unload vertex data from GPU memory
+void rlDeleteVertexArrays(unsigned int id)
+{
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+    glDeleteVertexArrays(1, &id);
+#endif
+}
+
 // Clear color buffer with color
 void rlClearColor(byte r, byte g, byte b, byte a)
 {
@@ -655,10 +673,11 @@ void rlglInit()
 
     if (glewIsSupported("GL_VERSION_3_3")) printf("OpenGL 3.3 initialized\n"); 
 /*
+    // TODO: GLEW is a big library that loads ALL extensions, maybe using glad we can only load required ones...
     if (!gladLoadGL()) 
     {
-        printf("Something went wrong!\n");
-        exit(-1);
+        fprintf(stderr, printf("Failed to initialize glad.\n");
+        exit(1);
     }
 */    
     // Set default draw mode
@@ -694,7 +713,7 @@ void rlglInit()
     printf("Vendor:   %s\n", glGetString(GL_VENDOR));
     printf("Renderer: %s\n", glGetString(GL_RENDERER));
     printf("Version:  %s\n", glGetString(GL_VERSION));
-    printf("GLSL:     %s\n\n", glGetString(0x8B8C));  // GL_SHADING_LANGUAGE_VERSION
+    printf("GLSL:     %s\n\n", glGetString(0x8B8C));  //GL_SHADING_LANGUAGE_VERSION
     
     InitializeBuffers();    // Init vertex arrays
     InitializeVAOs();       // Init VBO and VAO
@@ -707,7 +726,7 @@ void rlglInit()
     // Create default white texture for plain colors (required by shader)
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
     
-    whiteTexture = rlglTexture(1, 1, pixels);     
+    whiteTexture = rlglLoadTexture(1, 1, pixels);     
     
     // Init draw calls tracking system
     draws = (DrawCall *)malloc(sizeof(DrawCall)*MAX_DRAWS_BY_TEXTURE);
@@ -794,8 +813,12 @@ void rlglDraw()
     
     if (triangles.vCounter > 0)
     {
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    
         glBindVertexArray(vaoTriangles);
         glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
     
     if (quads.vCounter > 0)
@@ -830,8 +853,6 @@ void rlglDraw()
             glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid*) (sizeof(GLuint) * indicesOffset));
 
             indicesOffset += draws[i].vCount/4*6;
-            
-            //printf("-------Next vertex offset: %i\n", indicesOffset/6*4);
         }
     }
     
@@ -849,7 +870,7 @@ void rlglDraw()
     lines.cCounter = 0;
     
     triangles.vCounter = 0;
-    triangles.vCounter = 0;
+    triangles.cCounter = 0;
     
     quads.vCounter = 0;
     quads.tcCounter = 0;
@@ -859,6 +880,58 @@ void rlglDraw()
 #ifdef USE_VBO_DOUBLE_BUFFERS
     useBufferB = !useBufferB;   // Change buffers usage!
 #endif
+}
+
+void rlglDrawModel(Model model, bool wires)
+{
+    if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+#ifdef USE_OPENGL_11
+    // NOTE: For models we use Vertex Arrays (OpenGL 1.1)
+    glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
+    glEnableClientState(GL_NORMAL_ARRAY);                     // Enable normals array
+        
+    glVertexPointer(3, GL_FLOAT, 0, model.vertices);          // Pointer to vertex coords array
+    glTexCoordPointer(2, GL_FLOAT, 0, model.texcoords);       // Pointer to texture coords array
+    glNormalPointer(GL_FLOAT, 0, model.normals);              // Pointer to normals array
+    //glColorPointer(4, GL_UNSIGNED_BYTE, 0, model.colors);   // Pointer to colors array (NOT USED)
+        
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+        //glRotatef(rotation * GetFrameTime(), 0, 1, 0);
+        rlScalef(scale, scale, scale);
+        
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        glDrawArrays(GL_TRIANGLES, 0, model.numVertices);
+    rlPopMatrix();
+    
+    glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);              // Disable texture coords array
+    glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
+#endif
+
+#ifdef USE_OPENGL_33
+    glUseProgram(shaderProgram);        // Use our shader
+    
+    Matrix modelview2 = MatrixMultiply(model.transform, modelview);
+    
+    // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
+    glUniformMatrix4fv(projectionMatrixLoc, 1, false, GetMatrixVector(projection));
+    glUniformMatrix4fv(modelviewMatrixLoc, 1, false, GetMatrixVector(modelview2));
+    glUniform1i(textureLoc, 0);
+   
+    glBindVertexArray(model.vaoId);
+    //glBindTexture(GL_TEXTURE_2D, model.textureId);
+
+    glDrawArrays(GL_TRIANGLES, 0, model.numVertices);
+
+    //glBindTexture(GL_TEXTURE_2D, 0);    // Unbind textures
+    glBindVertexArray(0);               // Unbind VAO
+#endif
+
+    if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 #endif
@@ -909,7 +982,7 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
 // NOTE: Image is not unloaded, it should be done manually...
-unsigned int rlglTexture(int width, int height, unsigned char *pixels)
+unsigned int rlglLoadTexture(int width, int height, unsigned char *pixels)
 {
     glBindTexture(GL_TEXTURE_2D,0); // Free any old binding
 
@@ -926,7 +999,7 @@ unsigned int rlglTexture(int width, int height, unsigned char *pixels)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
  
 #ifdef USE_OPENGL_33 
-    // Trilinear filtering!
+    // Trilinear filtering
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
     //glGenerateMipmap(GL_TEXTURE_2D);    // OpenGL 3.3!
@@ -946,6 +1019,39 @@ unsigned int rlglTexture(int width, int height, unsigned char *pixels)
     
     return id;
 }
+
+#ifdef USE_OPENGL_33 
+unsigned int rlglLoadModel(VertexData data)
+{
+    GLuint vaoModel;            // Vertex Array Objects (VAO)
+    GLuint vertexBuffer[3];     // Vertex Buffer Objects (VBO)
+
+    // Initialize Quads VAO (Buffer A)
+    glGenVertexArrays(1, &vaoModel);
+    glBindVertexArray(vaoModel);
+ 
+    // Create buffers for our vertex data (positions, texcoords, normals)
+    glGenBuffers(3, vertexBuffer);
+ 
+    // Enable vertex attributes
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*data.numVertices, data.vertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(vertexLoc);
+    glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*data.numVertices, data.texcoords, GL_STATIC_DRAW);      
+    glEnableVertexAttribArray(texcoordLoc);
+    glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*data.numVertices, data.normals, GL_STATIC_DRAW);   
+    //glEnableVertexAttribArray(normalLoc);
+    //glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
+    
+    return vaoModel;
+}
+#endif
 
 // Read screen pixel data (color buffer)
 unsigned char *rlglReadScreenPixels(int width, int height)
@@ -1303,11 +1409,13 @@ static void UpdateBuffers()
  
     // Triangles - vertex positions buffer
     glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*3*MAX_TRIANGLES_BATCH, triangles.vertices, GL_DYNAMIC_DRAW);
-
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*3*MAX_TRIANGLES_BATCH, triangles.vertices, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*triangles.vCounter, triangles.vertices);
+    
     // Triangles - colors buffer
     glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*triangles.cCounter, triangles.colors);
     
     //--------------------------------------------------------------
 
@@ -1354,6 +1462,12 @@ static void UpdateBuffers()
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*quads.vCounter, quads.colors);
     }
+    
+        
+    // Another option would be using buffer mapping...
+    //triangles.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+    // Now we can modify vertices
+    //glUnmapBuffer(GL_ARRAY_BUFFER);
     
     //--------------------------------------------------------------
     

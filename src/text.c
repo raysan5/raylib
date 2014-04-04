@@ -313,7 +313,6 @@ void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int f
 
     rlEnableTexture(spriteFont.texture.glId);
 
-    // Optimized to use one draw call per string
     rlBegin(RL_QUADS);
         for(int i = 0; i < length; i++)
         {
