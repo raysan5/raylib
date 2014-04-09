@@ -29,13 +29,23 @@
 #include "utils.h"
 
 #include <stdlib.h>         // malloc(), free()
-#include <stdio.h>          // printf()
+#include <stdio.h>          // printf(), fprintf()
+#include <stdarg.h>         // Used for functions with variable number of parameters (TraceLog())
 //#include <string.h>       // String management functions: strlen(), strrchr(), strcmp()
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "stb_image_write.h"    // Create PNG file
 #include "tinfl.c"
+
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+static FILE *logstream = NULL;
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Utilities
+//----------------------------------------------------------------------------------
 
 // Data decompression function
 // NOTE: Allocated data MUST be freed!
@@ -50,28 +60,28 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
     // Check correct memory allocation
     if (!pUncomp)
     {
-        printf("Out of memory!\n");
-        return NULL;
+        TraceLog(WARNING, "Out of memory while decompressing data");
     }
-    
-    // Decompress data
-    tempUncompSize = tinfl_decompress_mem_to_mem(pUncomp, (size_t)uncompSize, data, compSize, 1);
-    
-    if (tempUncompSize == -1)
+    else
     {
-        printf("Decompression failed!\n");
-        free(pUncomp);
-        return NULL;
-    }
-    
-    if (uncompSize != (int)tempUncompSize)
-    {
-        printf("WARNING! Expected uncompressed size do not match! Data may be corrupted!\n");
-        printf(" -- Expected uncompressed size: %i\n", uncompSize);
-        printf(" -- Returned uncompressed size: %i\n", tempUncompSize);
-    }
+        // Decompress data
+        tempUncompSize = tinfl_decompress_mem_to_mem(pUncomp, (size_t)uncompSize, data, compSize, 1);
+        
+        if (tempUncompSize == -1)
+        {
+            TraceLog(WARNING, "Data decompression failed");
+            free(pUncomp);
+        }
+        
+        if (uncompSize != (int)tempUncompSize)
+        {
+            TraceLog(WARNING, "Expected uncompressed size do not match, data may be corrupted");
+            TraceLog(WARNING, " -- Expected uncompressed size: %i", uncompSize);
+            TraceLog(WARNING, " -- Returned uncompressed size: %i", tempUncompSize);
+        }
 
-    printf("Decompressed from %u bytes to %u bytes\n", (mz_uint32)compSize, (mz_uint32)tempUncompSize);
+        TraceLog(INFO, "Data decompressed successfully from %u bytes to %u bytes", (mz_uint32)compSize, (mz_uint32)tempUncompSize);
+    }
     
     return pUncomp;
 }
@@ -125,3 +135,99 @@ void WritePNG(const char *fileName, unsigned char *imgData, int width, int heigh
 {
     stbi_write_png(fileName, width, height, 4, imgData, width*4); // It WORKS!!!
 }
+
+// Outputs a trace log message (INFO, ERROR, WARNING)
+// NOTE: If a file has been init, output log is written there
+void TraceLog(int msgType, const char *text, ...)
+{
+    // TODO: This function requires some refactoring...
+
+    // NOTE: If trace log file has been set, stdout is being redirected to a file
+    va_list args;
+    int traceDebugMsgs = 1;
+    
+#ifdef DO_NOT_TRACE_DEBUG_MSGS
+    traceDebugMsgs = 0;
+#endif
+    
+    if (logstream != NULL)
+    {
+        switch(msgType)
+        {
+            case 0: fprintf(logstream, "INFO: "); break;
+            case 1: fprintf(logstream, "ERROR: "); break;
+            case 2: fprintf(logstream, "WARNING: "); break;
+            case 3: if (traceDebugMsgs) fprintf(logstream, "DEBUG: "); break;
+            default: break;
+        }
+        
+        if (msgType == 3)
+        {
+            if (traceDebugMsgs)
+            {
+                va_start(args, text);
+                vfprintf(logstream, text, args);
+                va_end(args);
+                
+                fprintf(logstream, "\n");
+            }
+        }
+        else
+        {
+            va_start(args, text);
+            vfprintf(logstream, text, args);
+            va_end(args);
+            
+            fprintf(logstream, "\n");
+        }
+    }
+    else
+    {   
+        switch(msgType)
+        {
+            case 0: fprintf(stdout, "INFO: "); break;
+            case 1: fprintf(stdout, "ERROR: "); break;
+            case 2: fprintf(stdout, "WARNING: "); break;
+            case 3: if (traceDebugMsgs) fprintf(stdout, "DEBUG: "); break;
+            default: break;
+        }
+        
+        if (msgType == 3)
+        {
+            if (traceDebugMsgs)
+            {
+                va_start(args, text);
+                vfprintf(stdout, text, args);
+                va_end(args);
+                
+                fprintf(stdout, "\n");
+            }
+        }
+        else
+        {
+            va_start(args, text);
+            vfprintf(stdout, text, args);
+            va_end(args);
+            
+            fprintf(stdout, "\n");
+        }
+    }
+    
+    if (msgType == 1) exit(1);      // If ERROR message, exit program
+}
+
+// Inits a trace log file
+void InitTraceLogFile(const char *logFileName)
+{
+    // stdout redirected to stream file
+    FILE *logstream = fopen(logFileName, "w");
+
+    if (logstream == NULL) TraceLog(WARNING, "Unable to open log file");
+}
+
+// Closes the trace log file
+void CloseTraceLogFile()
+{
+    if (logstream != NULL) fclose(logstream);
+}
+

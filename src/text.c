@@ -50,13 +50,22 @@
 typedef unsigned char byte;
 
 // SpriteFont one Character (Glyph) data
-struct Character {
+typedef struct Character {
     int value;        //char value = ' '; (int)value = 32;
     int x;
     int y;
     int w;
     int h;
+} Character;
+
+// SpriteFont type, includes texture and charSet array data
+/*
+struct SpriteFont {
+    Texture2D texture;
+    int numChars;
+    Character *charSet;
 };
+*/
 
 //----------------------------------------------------------------------------------
 // Global variables
@@ -177,6 +186,8 @@ extern void LoadDefaultFont()
         }
         else currentPosX = testPosX;
     }
+    
+    TraceLog(INFO, "Default font loaded successfully");
 }
 
 extern void UnloadDefaultFont()
@@ -232,8 +243,8 @@ SpriteFont LoadSpriteFont(const char* fileName)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
         int numChars = ParseImageData(imgDataPixel, imgWidth, imgHeight, &spriteFont.charSet);
         
-        fprintf(stderr, "SpriteFont data parsed correctly!\n");
-        fprintf(stderr, "SpriteFont num chars: %i\n", numChars);
+        TraceLog(INFO, "[%s] SpriteFont data parsed correctly", fileName);
+        TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", numChars);
         
         spriteFont.numChars = numChars;
         
@@ -257,7 +268,7 @@ SpriteFont LoadSpriteFont(const char* fileName)
                 }
             }
             
-            fprintf(stderr, "SpriteFont texture converted to POT: %i %i\n", potWidth, potHeight);
+            TraceLog(WARNING, "SpriteFont texture converted to POT: %ix%i", potWidth, potHeight);
         }
         
         free(imgDataPixel);
@@ -347,7 +358,7 @@ const char *FormatText(const char *text, ...)
     
     va_list args;
     va_start(args, text);
-    vsprintf(buffer, text, args);        // NOTE: We use vsprintf() defined in <stdarg.h>
+    vsprintf(buffer, text, args);
     va_end(args);
 
     return buffer;
@@ -547,7 +558,7 @@ static SpriteFont LoadRBMF(const char *fileName)
 
     fread(&rbmfHeader, sizeof(rbmfInfoHeader), 1, rbmfFile);
     
-    //printf("rBMF info: %i %i %i %i\n", rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
+    TraceLog(INFO, "[%s] Loading rBMF file, size: %ix%i, numChars: %i, charHeight: %i", fileName, rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
     
     spriteFont.numChars = (int)rbmfHeader.numChars;
     
@@ -563,8 +574,6 @@ static SpriteFont LoadRBMF(const char *fileName)
     rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars * sizeof(unsigned char));
     
     for(int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
-    
-    printf("Just read image data and width data... Starting image reconstruction...");
     
     // Re-construct image from rbmfFileData
     //-----------------------------------------
@@ -585,13 +594,13 @@ static SpriteFont LoadRBMF(const char *fileName)
         counter++;
     }
     
-    printf("Image reconstructed correctly... now converting it to texture...");
+    TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
     
     spriteFont.texture = CreateTexture(image);
     
     UnloadImage(image);     // Unload image data
     
-    printf("Starting charSet reconstruction...\n");
+    TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
     
     // Reconstruct charSet using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
     spriteFont.charSet = (Character *)malloc(spriteFont.numChars * sizeof(Character));     // Allocate space for our character data
@@ -620,11 +629,9 @@ static SpriteFont LoadRBMF(const char *fileName)
             spriteFont.charSet[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
         }
         else currentPosX = testPosX;
-        
-        //printf("Char %i data: %i %i %i %i\n", spriteFont.charSet[i].value, spriteFont.charSet[i].x, spriteFont.charSet[i].y, spriteFont.charSet[i].w, spriteFont.charSet[i].h); 
     }
     
-    printf("CharSet reconstructed correctly... Data should be ready...\n");
+    TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
     
     fclose(rbmfFile);
     
@@ -634,6 +641,7 @@ static SpriteFont LoadRBMF(const char *fileName)
     return spriteFont;
 }
 
+// Get the extension for a filename
 static const char *GetExtension(const char *fileName) 
 {
     const char *dot = strrchr(fileName, '.');

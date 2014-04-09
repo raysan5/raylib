@@ -92,6 +92,9 @@ static Color background = { 0, 0, 0, 0 };   // Screen background color
 extern void LoadDefaultFont();               // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont();             // [Module: text] Unloads default font from GPU memory
 
+extern bool MusicStreamUpdate();             // [Module: audio] Updates buffers for music streamming
+extern void PlayCurrentMusic();              // [Module: audio] Plays current music stream
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -117,7 +120,7 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
 {
     glfwSetErrorCallback(ErrorCallback);
     
-    if (!glfwInit()) exit(1);
+    if (!glfwInit()) TraceLog(ERROR, "Failed to initialize GLFW");
     
     //glfwDefaultWindowHints()                  // Set default windows hints
     
@@ -140,7 +143,7 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
     if (!window)
     {
         glfwTerminate();
-        exit(1);
+        TraceLog(ERROR, "Failed to initialize Window");
     }
     
     glfwSetWindowSizeCallback(window, WindowSizeCallback);
@@ -154,7 +157,7 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
                                     // Framerate can be setup using SetTargetFPS()
 
     //------------------------------------------------------ 
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlglInit();                     // Init rlgl
 #endif
     //------------------------------------------------------
@@ -183,7 +186,7 @@ void CloseWindow()
     UnloadDefaultFont();
     
     //------------------------------------------------------
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlglClose();                    // De-init rlgl
 #endif
     //------------------------------------------------------
@@ -230,13 +233,21 @@ void ToggleFullscreen()
         // TODO: WARNING! All loaded resources are lost, we loose Context!
 
         // NOTE: Window aspect ratio is always windowWidth / windowHeight
-        if (fullscreen) window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);    // Fullscreen mode
+        if (fullscreen)
+        {
+            // TODO: Get desktop window size and adapt aspect-ratio (?)
+            //const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            //windowWidth = mode->width;
+            //windowHeight = mode->height;
+            
+            window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);    // Fullscreen mode
+        }
         else window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, NULL, NULL);
-    
+
         if (!window)
         {
             glfwTerminate();
-            exit(1);
+            TraceLog(ERROR, "Failed to initialize Window when switching fullscreen mode");
         }
         
         glfwMakeContextCurrent(window);
@@ -285,13 +296,17 @@ void EndDrawing()
     if (customCursor && cursorOnScreen) DrawTexture(cursor, GetMouseX(), GetMouseY(), WHITE);
 
     //------------------------------------------------------
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlglDraw();                         //  Draw Buffers
 #endif
     //------------------------------------------------------
     
     glfwSwapBuffers(window);            // Swap back and front buffers
     glfwPollEvents();                   // Register keyboard/mouse events
+    
+    //MusicStreamUpdate();
+    //if (!MusicIsPlaying()) 
+    //PlayCurrentMusic();
     
     currentTime = glfwGetTime();
     drawTime = currentTime - previousTime;
@@ -315,7 +330,7 @@ void EndDrawing()
 void Begin3dMode(Camera camera)
 {
     //------------------------------------------------------
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlglDraw();                         //  Draw Buffers
 #endif
     //------------------------------------------------------
@@ -344,7 +359,7 @@ void Begin3dMode(Camera camera)
 void End3dMode()
 {
     //------------------------------------------------------
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlglDraw();                         //  Draw Buffers
 #endif
     //------------------------------------------------------
@@ -363,7 +378,7 @@ void SetTargetFPS(int fps)
 {
     targetTime = 1 / (float)fps;
     
-    printf("TargetTime per Frame: %f seconds\n", (float)targetTime);
+    TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
 }
 
 // Returns current FPS
@@ -431,18 +446,18 @@ Color Fade(Color color, float alpha)
 // Detect if a key has been pressed once
 bool IsKeyPressed(int key)
 {   
-    bool ret = false;
+    bool pressed = false;
 
     currentKeyState[key] = IsKeyDown(key);
 
     if (currentKeyState[key] != previousKeyState[key])
     {
-        if (currentKeyState[key]) ret = true;
+        if (currentKeyState[key]) pressed = true;
         previousKeyState[key] = currentKeyState[key];
     }
-    else ret = false;
+    else pressed = false;
     
-    return ret;
+    return pressed;
 }
 
 // Detect if a key is being pressed (key held down)
@@ -455,18 +470,18 @@ bool IsKeyDown(int key)
 // Detect if a key has been released once
 bool IsKeyReleased(int key)
 {   
-    bool ret = false;
+    bool released = false;
     
     currentKeyState[key] = IsKeyUp(key);
 
     if (currentKeyState[key] != previousKeyState[key])
     {
-        if (currentKeyState[key]) ret = true;
+        if (currentKeyState[key]) released = true;
         previousKeyState[key] = currentKeyState[key];
     }
-    else ret = false;
+    else released = false;
     
-    return ret;
+    return released;
 }
 
 // Detect if a key is NOT being pressed (key not held down)
@@ -479,18 +494,18 @@ bool IsKeyUp(int key)
 // Detect if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
 {
-    bool ret = false;
+    bool pressed = false;
 
     currentMouseState[button] = IsMouseButtonDown(button);
 
     if (currentMouseState[button] != previousMouseState[button])
     {
-        if (currentMouseState[button]) ret = true;
+        if (currentMouseState[button]) pressed = true;
         previousMouseState[button] = currentMouseState[button];
     }
-    else ret = false;
+    else pressed = false;
     
-    return ret;
+    return pressed;
 }
 
 // Detect if a mouse button is being pressed
@@ -503,18 +518,18 @@ bool IsMouseButtonDown(int button)
 // Detect if a mouse button has been released once
 bool IsMouseButtonReleased(int button)
 {
-    bool ret = false;
+    bool released = false;
 
     currentMouseState[button] = IsMouseButtonUp(button);
 
     if (currentMouseState[button] != previousMouseState[button])
     {
-        if (currentMouseState[button]) ret = true;
+        if (currentMouseState[button]) released = true;
         previousMouseState[button] = currentMouseState[button];
     }
-    else ret = false;
+    else released = false;
     
-    return ret;
+    return released;
 }
 
 // Detect if a mouse button is NOT being pressed
@@ -603,18 +618,18 @@ Vector2 GetGamepadMovement(int gamepad)
 // Detect if a gamepad button is being pressed
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
-    bool ret = false;
+    bool pressed = false;
 
     currentGamepadState[button] = IsGamepadButtonDown(gamepad, button);
 
     if (currentGamepadState[button] != previousGamepadState[button])
     {
-        if (currentGamepadState[button]) ret = true;
+        if (currentGamepadState[button]) pressed = true;
         previousGamepadState[button] = currentGamepadState[button];
     }
-    else ret = false;
+    else pressed = false;
     
-    return ret;
+    return pressed;
 }
 
 bool IsGamepadButtonDown(int gamepad, int button)
@@ -634,18 +649,18 @@ bool IsGamepadButtonDown(int gamepad, int button)
 // Detect if a gamepad button is NOT being pressed
 bool IsGamepadButtonReleased(int gamepad, int button)
 {
-    bool ret = false;
+    bool released = false;
 
     currentGamepadState[button] = IsGamepadButtonUp(gamepad, button);
 
     if (currentGamepadState[button] != previousGamepadState[button])
     {
-        if (currentGamepadState[button]) ret = true;
+        if (currentGamepadState[button]) released = true;
         previousGamepadState[button] = currentGamepadState[button];
     }
-    else ret = false;
+    else released = false;
     
-    return ret;
+    return released;
 }
 
 bool IsGamepadButtonUp(int gamepad, int button)
@@ -669,8 +684,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
 {
-    printf(description);
-    //fprintf(stderr, description);
+    TraceLog(WARNING, "GLFW3 Error: %s", description);
 }
 
 // GLFW3 Srolling Callback, runs on mouse wheel

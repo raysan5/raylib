@@ -31,7 +31,7 @@
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 
-#include "raymath.h"        // Required for data type Matrix and Matrix functions
+// TODO: Security check in case multiple USE_OPENGL_* defined
 
 #ifdef USE_OPENGL_11
     #include <GL/gl.h>      // Extensions loading lib
@@ -51,7 +51,7 @@
 //----------------------------------------------------------------------------------
 #define MATRIX_STACK_SIZE          16   // Matrix stack max size
 #define MAX_DRAWS_BY_TEXTURE      256   // Draws are organized by texture changes
-#define TEMP_VERTEX_BUFFER_SIZE  1024   // Temporal Vertex Buffer (required for vertex-transformations)
+#define TEMP_VERTEX_BUFFER_SIZE  4096   // Temporal Vertex Buffer (required for vertex-transformations)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -226,9 +226,7 @@ void rlPushMatrix()
 {
     if (stackCounter == MATRIX_STACK_SIZE - 1)
     {
-        printf("ERROR: Stack Buffer Overflow! (MAX 16 MATRIX)");
-        
-        exit(1);
+        TraceLog(ERROR, "Stack Buffer Overflow (MAX %i Matrix)", MATRIX_STACK_SIZE);
     }
 
     stack[stackCounter] = *currentMatrix;
@@ -667,17 +665,22 @@ void rlglInit()
     
     if (error != GLEW_OK) 
     {
-        fprintf(stderr, "Failed to initialize GLEW - Error: %s\n", glewGetErrorString(error));
-        exit(1);
+        TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
     }
 
-    if (glewIsSupported("GL_VERSION_3_3")) printf("OpenGL 3.3 initialized\n"); 
+    if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 initialized\n");
+    
+    // Print OpenGL and GLSL version
+    TraceLog(INFO, "Vendor:   %s", glGetString(GL_VENDOR));
+    TraceLog(INFO, "Renderer: %s", glGetString(GL_RENDERER));
+    TraceLog(INFO, "Version:  %s", glGetString(GL_VERSION));
+    TraceLog(INFO, "GLSL:     %s\n", glGetString(0x8B8C));  //GL_SHADING_LANGUAGE_VERSION
+    
 /*
     // TODO: GLEW is a big library that loads ALL extensions, maybe using glad we can only load required ones...
     if (!gladLoadGL()) 
     {
-        fprintf(stderr, printf("Failed to initialize glad.\n");
-        exit(1);
+        TraceLog("ERROR: Failed to initialize glad\n");
     }
 */    
     // Set default draw mode
@@ -707,13 +710,7 @@ void rlglInit()
     // Get handles to GLSL uniform vars locations (fragment-shader)
     textureLoc  = glGetUniformLocation(shaderProgram, "texture0");
     
-    printf("Default shaders loaded\n\n");
-    
-    // Print OpenGL and GLSL version
-    printf("Vendor:   %s\n", glGetString(GL_VENDOR));
-    printf("Renderer: %s\n", glGetString(GL_RENDERER));
-    printf("Version:  %s\n", glGetString(GL_VERSION));
-    printf("GLSL:     %s\n\n", glGetString(0x8B8C));  //GL_SHADING_LANGUAGE_VERSION
+    TraceLog(INFO, "Default shader loaded");
     
     InitializeBuffers();    // Init vertex arrays
     InitializeVAOs();       // Init VBO and VAO
@@ -726,7 +723,10 @@ void rlglInit()
     // Create default white texture for plain colors (required by shader)
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
     
-    whiteTexture = rlglLoadTexture(1, 1, pixels);     
+    whiteTexture = rlglLoadTexture(1, 1, pixels);
+    
+    if (whiteTexture != 0) TraceLog(INFO, "Base white texture successfully created, id: %i", whiteTexture);
+    else TraceLog(WARNING, "Base white texture could not be created");
     
     // Init draw calls tracking system
     draws = (DrawCall *)malloc(sizeof(DrawCall)*MAX_DRAWS_BY_TEXTURE);
@@ -836,16 +836,14 @@ void rlglDraw()
             glBindVertexArray(vaoQuads);
         }
         
-        //printf("\nRequired Draws: %i\n", drawsCounter);
+        //TraceLog(INFO, "Draws required per frame: %i", drawsCounter);
      
         for (int i = 0; i < drawsCounter; i++)
         {
             numQuads = draws[i].vCount/4;
             numIndicesToProcess = numQuads*6;  // Get number of Quads * 6 index by Quad
             
-            //printf("Quads to render: %i - ", numQuads);
-            //printf("Vertex Count: %i - ", draws[i].vCount);
-            //printf("Binding texture: %i\n", draws[i].texId);
+            //TraceLog(INFO, "Quads to render: %i - Vertex Count: %i", numQuads, draws[i].vCount);
 
             glBindTexture(GL_TEXTURE_2D, draws[i].texId);
             
@@ -882,7 +880,10 @@ void rlglDraw()
 #endif
 }
 
-void rlglDrawModel(Model model, bool wires)
+#endif      // End for OpenGL 3.3+ and ES2 only functions
+
+// Draw a 3d model
+void rlglDrawModel(Model model, Vector3 position, float scale, bool wires)
 {
     if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
@@ -892,19 +893,19 @@ void rlglDrawModel(Model model, bool wires)
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
     glEnableClientState(GL_NORMAL_ARRAY);                     // Enable normals array
         
-    glVertexPointer(3, GL_FLOAT, 0, model.vertices);          // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, model.texcoords);       // Pointer to texture coords array
-    glNormalPointer(GL_FLOAT, 0, model.normals);              // Pointer to normals array
+    glVertexPointer(3, GL_FLOAT, 0, model.data.vertices);     // Pointer to vertex coords array
+    glTexCoordPointer(2, GL_FLOAT, 0, model.data.texcoords);  // Pointer to texture coords array
+    glNormalPointer(GL_FLOAT, 0, model.data.normals);         // Pointer to normals array
     //glColorPointer(4, GL_UNSIGNED_BYTE, 0, model.colors);   // Pointer to colors array (NOT USED)
         
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
-        //glRotatef(rotation * GetFrameTime(), 0, 1, 0);
+        //rlRotatef(rotation * GetFrameTime(), 0, 1, 0);
         rlScalef(scale, scale, scale);
         
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4ub(1.0f, 1.0f, 1.0f, 1.0f);
 
-        glDrawArrays(GL_TRIANGLES, 0, model.numVertices);
+        glDrawArrays(GL_TRIANGLES, 0, model.data.numVertices);
     rlPopMatrix();
     
     glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
@@ -912,7 +913,7 @@ void rlglDrawModel(Model model, bool wires)
     glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
 #endif
 
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     glUseProgram(shaderProgram);        // Use our shader
     
     Matrix modelview2 = MatrixMultiply(model.transform, modelview);
@@ -933,8 +934,6 @@ void rlglDrawModel(Model model, bool wires)
 
     if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
-
-#endif
 
 // Initialize Graphics Device (OpenGL stuff)
 void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
@@ -968,7 +967,7 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
     rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
     
-    // TODO: Review all shapes/models are drawn CCW and enable backface culling
+    // NOTE: All shapes/models triangles are drawn CCW
 
     glEnable(GL_CULL_FACE);       // Enable backface culling (Disabled by default)
     //glCullFace(GL_BACK);        // Cull the Back face (default)
@@ -978,11 +977,13 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
     glShadeModel(GL_SMOOTH);      // Smooth shading between vertex (vertex colors interpolation) (Deprecated on OpenGL 3.3+)
                                   // Possible options: GL_SMOOTH (Color interpolation) or GL_FLAT (no interpolation)
 #endif
+
+    TraceLog(INFO, "OpenGL graphics device initialized");
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
 // NOTE: Image is not unloaded, it should be done manually...
-unsigned int rlglLoadTexture(int width, int height, unsigned char *pixels)
+unsigned int rlglLoadTexture(int width, int height, unsigned char *data)
 {
     glBindTexture(GL_TEXTURE_2D,0); // Free any old binding
 
@@ -998,7 +999,7 @@ unsigned int rlglLoadTexture(int width, int height, unsigned char *pixels)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
  
-#ifdef USE_OPENGL_33 
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     // Trilinear filtering
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
@@ -1008,20 +1009,84 @@ unsigned int rlglLoadTexture(int width, int height, unsigned char *pixels)
     // NOTE: Not using mipmappings (texture for 2D drawing)
     // At this point we have the image converted to texture and uploaded to GPU
     
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     
     // At this point we have the image converted to texture and uploaded to GPU
     
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
     
-    printf("New texture created, id: %i (%i x %i)\n", id, width, height);
+    TraceLog(INFO, "New texture created, id: %i (%i x %i)", id, width, height);
     
     return id;
 }
 
-#ifdef USE_OPENGL_33 
-unsigned int rlglLoadModel(VertexData data)
+
+#ifdef USE_OPENGL_33
+
+#define FOURCC_DXT1 0x31545844 // Equivalent to "DXT1" in ASCII
+#define FOURCC_DXT3 0x33545844 // Equivalent to "DXT3" in ASCII
+#define FOURCC_DXT5 0x35545844 // Equivalent to "DXT5" in ASCII
+
+// Convert image data to OpenGL texture (returns OpenGL valid Id)
+// NOTE: Expected compressed data from DDS file
+unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format)
+{
+    // Create one OpenGL texture
+    GLuint id;
+    int compFormat = 0;
+    
+    TraceLog(DEBUG, "Compressed texture width: %i", width);
+    TraceLog(DEBUG, "Compressed texture height: %i", height);
+    TraceLog(DEBUG, "Compressed texture mipmap levels: %i", mipmapCount);
+    TraceLog(DEBUG, "Compressed texture format: 0x%x", format);
+    
+    switch(format) 
+    { 
+        case FOURCC_DXT1: compFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break; 
+        case FOURCC_DXT3: compFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break; 
+        case FOURCC_DXT5: compFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break; 
+        default: compFormat = -1; break;
+    }
+    
+    if (compFormat == -1)
+    {
+        TraceLog(WARNING, "Texture compressed format not recognized");
+        id = 0;
+    }
+    else
+    {
+        glGenTextures(1, &id);
+
+        // Bind the texture
+        glBindTexture(GL_TEXTURE_2D, id);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    
+        unsigned int blockSize = (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16; 
+        unsigned int offset = 0;
+        
+        // Load the mipmaps 
+        for (int level = 0; level < mipmapCount && (width || height); level++) 
+        { 
+            unsigned int size = ((width+3)/4)*((height+3)/4)*blockSize;
+            
+            glCompressedTexImage2D(GL_TEXTURE_2D, level, compFormat, width, height, 0, size, data + offset); 
+         
+            offset += size;
+            width  /= 2; 
+            height /= 2; 
+
+            // Security check for NPOT textures
+            if (width < 1) width = 1;
+            if (height < 1) height = 1;
+        }
+    }
+
+    return id;
+}
+
+// Load vertex data into a VAO
+unsigned int rlglLoadModel(VertexData mesh)
 {
     GLuint vaoModel;            // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];     // Vertex Buffer Objects (VBO)
@@ -1035,17 +1100,17 @@ unsigned int rlglLoadModel(VertexData data)
  
     // Enable vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*data.numVertices, data.vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.numVertices, mesh.vertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(vertexLoc);
     glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
     
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*data.numVertices, data.texcoords, GL_STATIC_DRAW);      
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.numVertices, mesh.texcoords, GL_STATIC_DRAW);      
     glEnableVertexAttribArray(texcoordLoc);
     glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
     
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*data.numVertices, data.normals, GL_STATIC_DRAW);   
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.numVertices, mesh.normals, GL_STATIC_DRAW);   
     //glEnableVertexAttribArray(normalLoc);
     //glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
     
@@ -1077,7 +1142,7 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     return imgData;     // NOTE: image data should be freed
 }
 
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
 
 void PrintProjectionMatrix()
 {
@@ -1154,7 +1219,7 @@ static GLuint LoadDefaultShaders()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
  
-    return(program);
+    return program;
 }
 
 
@@ -1191,14 +1256,14 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
  
-    return(program);
+    return program;
 }
 
 // Read shader text file
 static char *TextFileRead(char *fn) 
 {
     FILE *fp;
-    char *content = NULL;
+    char *text = NULL;
 
     int count=0;
 
@@ -1214,15 +1279,15 @@ static char *TextFileRead(char *fn)
 
             if (count > 0) 
             {
-                content = (char *)malloc(sizeof(char) * (count+1));
-                count = fread(content, sizeof(char), count, fp);
-                content[count] = '\0';
+                text = (char *)malloc(sizeof(char) * (count+1));
+                count = fread(text, sizeof(char), count, fp);
+                text[count] = '\0';
             }
             
             fclose(fp);
         }
     }
-    return content;
+    return text;
 }
 
 // Allocate and initialize float array buffers to store vertex data (lines, triangles, quads)
@@ -1377,10 +1442,10 @@ static void InitializeVAOs()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBufferB[3]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
     
-    printf("Using VBO double buffering\n");
+    TraceLog(INFO, "Using VBO double buffering");
 #endif
  
-    printf("Vertex buffers initialized (lines, triangles, quads)\n\n");
+    TraceLog(INFO, "Vertex buffers successfully initialized (lines, triangles, quads)\n");
  
     // Unbind the current VAO
     glBindVertexArray(0);
@@ -1475,4 +1540,33 @@ static void UpdateBuffers()
     glBindVertexArray(0);
 }
 
+#endif
+
+#ifdef RLGL_STANDALONE
+
+typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+
+// Output a trace log message
+// NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
+void TraceLog(int msgType, const char *text, ...)
+{
+    va_list args;
+    va_start(args, text);
+    
+    switch(msgType)
+    {
+        case 0: fprintf(stdout, "INFO: "); break;
+        case 1: fprintf(stdout, "ERROR: "); break;
+        case 2: fprintf(stdout, "WARNING: "); break;
+        case 3: fprintf(logstream, "DEBUG: "); break;
+        default: break;
+    }
+    
+    vfprintf(stdout, text, args);
+    fprintf(stdout, "\n");
+    
+    va_end(args);
+    
+    if (msgType == 1) exit(1);
+}
 #endif

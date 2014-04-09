@@ -568,53 +568,48 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
-void DrawGizmoEx(Vector3 position, Vector3 rotation, float scale, bool orbits)
+void DrawGizmoEx(Vector3 position, Vector3 rot, float scale, bool orbits)
 {
+    static float rotation = 0;
     // NOTE: RGB = XYZ
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
+        rlRotatef(rotation, 0, 1, 0);
         rlScalef(scale, scale, scale);
-        
-        if(rotation.x) rlRotatef(rotation.x, 1, 0, 0);
-        if(rotation.y) rlRotatef(rotation.y, 0, 1, 0);
-        if(rotation.z) rlRotatef(rotation.z, 0, 0, 1);
-    
+
         rlBegin(RL_LINES);
             // X Axis
-            rlColor4ub(200, 0, 0, 255); // RED
-            rlVertex3f(position.x, position.y, position.z);
-            rlVertex3f(position.x + 1, position.y, position.z);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x, position.y, position.z);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + 1, position.y, position.z);
             
             // ArrowX
-            rlVertex3f(position.x + 1.1, position.y, position.z);
-            rlVertex3f(position.x + .9, position.y, position.z + .1);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + 1.1, position.y, position.z);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + .9, position.y, position.z + .1);
             
-            rlVertex3f(position.x + 1.1, position.y, position.z);
-            rlVertex3f(position.x + .9, position.y, position.z - .1);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + 1.1, position.y, position.z);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + .9, position.y, position.z - .1);
             
             // Y Axis
-            rlColor4ub(0, 200, 0, 255); // GREEN
-            rlVertex3f(position.x, position.y, position.z);
-            rlVertex3f(position.x, position.y + 1, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y + 1, position.z);
             
             // ArrowY
-            rlVertex3f(position.x, position.y + 1.1, position.z);
-            rlVertex3f(position.x + .1, position.y + .9, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y + 1.1, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + .1, position.y + .9, position.z);
             
-            rlVertex3f(position.x, position.y + 1.1, position.z);
-            rlVertex3f(position.x - .1, position.y + .9, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y + 1.1, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x - .1, position.y + .9, position.z);
             
             // Z Axis
-            rlColor4ub(0, 0, 200, 255); // BLUE
-            rlVertex3f(position.x, position.y, position.z);
-            rlVertex3f(position.x, position.y, position.z - 1);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z - 1);
             
             // ArrowZ
-            rlVertex3f(position.x, position.y, position.z - 1.1);
-            rlVertex3f(position.x + .1, position.y, position.z - .9);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z - 1.1);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + .1, position.y, position.z - .9);
             
-            rlVertex3f(position.x, position.y, position.z - 1.1);
-            rlVertex3f(position.x - .1, position.y, position.z - .9);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z - 1.1);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x - .1, position.y, position.z - .9);
             
             // Extra
             if(orbits)
@@ -622,31 +617,30 @@ void DrawGizmoEx(Vector3 position, Vector3 rotation, float scale, bool orbits)
                 int n = 3;
                 
                 // X Axis
-                rlColor4ub(200, 0, 0, 255); // RED
-                for (int i=0; i < 360; i++)
+                for (int i=0; i < 360; i += 6)
                 {
-                    rlVertex3f(0, position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n);
-                    rlVertex3f(0,position.x + sin(DEG2RAD*(i+1)) * scale/n, position.y + cos(DEG2RAD*(i+1)) * scale/n);
+                    rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n);
+                    rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n);
                 }
                 
                 // Y Axis
-                rlColor4ub(0, 200, 0, 255); // GREEN
-                for (int i=0; i < 360; i++)
+                for (int i=0; i < 360; i += 6)
                 {
-                    rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, 0, position.y + cos(DEG2RAD*i) * scale/n);
-                    rlVertex3f(position.x + sin(DEG2RAD*(i+1)) * scale/n, 0, position.y + cos(DEG2RAD*(i+1)) * scale/n);
+                    rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, 0, position.y + cos(DEG2RAD*i) * scale/n);
+                    rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, 0, position.y + cos(DEG2RAD*(i+6)) * scale/n);
                 }
                 
                 // Z Axis
-                rlColor4ub(0, 0, 200, 255); // BLUE
-                for (int i=0; i < 360; i++)
+                for (int i=0; i < 360; i += 6)
                 {
-                    rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n, 0);
-                    rlVertex3f(position.x + sin(DEG2RAD*(i+1)) * scale/n, position.y + cos(DEG2RAD*(i+1)) * scale/n, 0);
+                    rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n, 0);
+                    rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n, 0);
                 }
             }
         rlEnd();
     rlPopMatrix();
+    
+    rotation += 0.1f;
 }
 
 // Load a 3d model (.OBJ)
@@ -696,7 +690,6 @@ Model LoadModel(const char *fileName)
                     {
                         fscanf(objFile, "%i", &numTexCoords);
                     }
-                    else printf("Ouch! Something was wrong...");
                     
                     fgets(comments, 200, objFile);
                 }
@@ -715,7 +708,6 @@ Model LoadModel(const char *fileName)
                     {
                         fscanf(objFile, "%i", &numNormals);
                     }
-                    else printf("Ouch! Something was wrong...");
                 
                     fgets(comments, 200, objFile);
                 }
@@ -734,7 +726,6 @@ Model LoadModel(const char *fileName)
                     {
                         fscanf(objFile, "%i", &numVertex);
                     }
-                    else printf("Ouch! Something was wrong...");
                     
                     fgets(comments, 200, objFile);
                 }
@@ -754,7 +745,6 @@ Model LoadModel(const char *fileName)
                 {
                     fscanf(objFile, "%i", &numTriangles);
                 }
-                else printf("Ouch! Something was wrong...");
                 
                 fgets(comments, 200, objFile);
             
@@ -1024,7 +1014,7 @@ void UnloadModel(Model model)
     free(model.data.normals);
 #endif
 
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlDeleteVertexArrays(model.vaoId);
 #endif
 }
@@ -1032,7 +1022,7 @@ void UnloadModel(Model model)
 // Draw a model
 void DrawModel(Model model, Vector3 position, float scale, Color color)
 {
-    rlglDrawModel(model, false);
+    rlglDrawModel(model, position, scale, false);
 }
 
 // Draw a textured model
@@ -1048,7 +1038,7 @@ void DrawModelEx(Model model, Texture2D texture, Vector3 position, float scale, 
 // Draw a model wires
 void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 {
-    rlglDrawModel(model, true);
+    rlglDrawModel(model, position, scale, true);
 }
 
 // Draw a billboard

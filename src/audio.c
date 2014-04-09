@@ -37,7 +37,7 @@
 
 #include "utils.h"           // rRES data decompression utility function
 
-//#include "stb_vorbis.h"    // TODO: OGG loading functions
+//#include "stb_vorbis.h"      // OGG loading functions
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -47,6 +47,29 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+// Sound source type (all file loaded in memory)
+/*
+struct Sound {
+    unsigned int source;
+    unsigned int buffer;
+};
+
+// Music type (file streamming from memory)
+// NOTE: Anything longer than ~10 seconds should be Music...
+struct Music {
+    stb_vorbis* stream;
+	stb_vorbis_info info;
+    
+    ALuint id; 
+	ALuint buffers[2];
+	ALuint source;
+	ALenum format;
+ 
+	int bufferSize;
+	int totalSamplesLeft;
+	bool loop;
+};
+*/
 
 // Wave file data
 typedef struct Wave {
@@ -60,7 +83,8 @@ typedef struct Wave {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// Nop...
+static bool musicIsPlaying;
+static Music *currentMusic;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -68,6 +92,10 @@ typedef struct Wave {
 static Wave LoadWAV(char *fileName);
 static void UnloadWAV(Wave wave);
 //static Ogg LoadOGG(char *fileName);
+static bool MusicStream(Music music, ALuint buffer);
+
+extern bool MusicStreamUpdate();
+extern void PlayCurrentMusic();
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
@@ -79,30 +107,27 @@ void InitAudioDevice()
     // Open and initialize a device with default settings
     ALCdevice *device = alcOpenDevice(NULL);
     
-    if(!device)
-    {
-        fprintf(stderr, "Could not open a device!\n");
-        exit(1);
-    }
+    if(!device) TraceLog(ERROR, "Could not open audio device");
 
     ALCcontext *context = alcCreateContext(device, NULL);
     
     if(context == NULL || alcMakeContextCurrent(context) == ALC_FALSE)
     {
-        if(context != NULL)    alcDestroyContext(context);
+        if(context != NULL) alcDestroyContext(context);
         
         alcCloseDevice(device);
         
-        fprintf(stderr, "Could not set a context!\n");
-        exit(1);
+        TraceLog(ERROR, "Could not setup audio context");
     }
 
-    printf("Opened \"%s\"\n", alcGetString(device, ALC_DEVICE_SPECIFIER));
+    TraceLog(INFO, "Audio device and context initialized: %s\n", alcGetString(device, ALC_DEVICE_SPECIFIER));
     
     // Listener definition (just for 2D)
     alListener3f(AL_POSITION, 0, 0, 0);
     alListener3f(AL_VELOCITY, 0, 0, 0);
     alListener3f(AL_ORIENTATION, 0, 0, -1);
+    
+    musicIsPlaying = false;
 }
 
 // Close the audio device for the current context, and destroys the context
@@ -111,7 +136,7 @@ void CloseAudioDevice()
     ALCdevice *device;
     ALCcontext *context = alcGetCurrentContext();
     
-    if (context == NULL) return;
+    if (context == NULL) TraceLog(WARNING, "Could not get current audio context for closing");
 
     device = alcGetContextsDevice(context);
 
@@ -169,10 +194,8 @@ Sound LoadSound(char *fileName)
     // Unallocate WAV data
     UnloadWAV(wave);
     
-    printf("Sample rate: %i\n", wave.sampleRate);
-    printf("Channels: %i\n", wave.channels);
-    
-    printf("Audio file loaded...!\n");
+    TraceLog(INFO, "[%s] Sound file loaded successfully", fileName);  
+    TraceLog(INFO, "[%s] Sample rate: %i - Channels: %i", fileName, wave.sampleRate, wave.channels);
     
     sound.source = source;
     sound.buffer = buffer;
@@ -196,139 +219,136 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
     
     FILE *rresFile = fopen(rresName, "rb");
 
-    if (!rresFile) printf("Error opening raylib Resource file\n");
-    
-    // Read rres file (basic file check - id)
-    fread(&id[0], sizeof(char), 1, rresFile);
-    fread(&id[1], sizeof(char), 1, rresFile);
-    fread(&id[2], sizeof(char), 1, rresFile);
-    fread(&id[3], sizeof(char), 1, rresFile);
-    fread(&version, sizeof(char), 1, rresFile);
-    fread(&useless, sizeof(char), 1, rresFile);
-    
-    if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
+    if (!rresFile) TraceLog(WARNING, "[%s] Could not open raylib resource file", rresName);
+    else
     {
-        printf("This is not a valid raylib Resource file!\n");
-        exit(1);
-    }
-    
-    // Read number of resources embedded
-    fread(&numRes, sizeof(short), 1, rresFile);
-    
-    for (int i = 0; i < numRes; i++)
-    {
-        fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
+        // Read rres file (basic file check - id)
+        fread(&id[0], sizeof(char), 1, rresFile);
+        fread(&id[1], sizeof(char), 1, rresFile);
+        fread(&id[2], sizeof(char), 1, rresFile);
+        fread(&id[3], sizeof(char), 1, rresFile);
+        fread(&version, sizeof(char), 1, rresFile);
+        fread(&useless, sizeof(char), 1, rresFile);
         
-        if (infoHeader.id == resId)
+        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
         {
-            found = true;
-
-            // Check data is of valid SOUND type
-            if (infoHeader.type == 1)   // SOUND data type
-            {
-                // TODO: Check data compression type
-                // NOTE: We suppose compression type 2 (DEFLATE - default)
-                
-                // Reading SOUND parameters
-                Wave wave;
-                short sampleRate, bps;
-                char channels, reserved;
-            
-                fread(&sampleRate, sizeof(short), 1, rresFile); // Sample rate (frequency)
-                fread(&bps, sizeof(short), 1, rresFile);        // Bits per sample
-                fread(&channels, 1, 1, rresFile);               // Channels (1 - mono, 2 - stereo)
-                fread(&reserved, 1, 1, rresFile);               // <reserved>
-        
-                printf("Sample rate: %i\n", (int)sampleRate);
-                printf("Bits per sample: %i\n", (int)bps);
-                printf("Channels: %i\n", (int)channels);
-                
-                wave.sampleRate = sampleRate;
-                wave.dataSize = infoHeader.srcSize;
-                wave.bitsPerSample = bps;
-                wave.channels = (short)channels;
-                
-                unsigned char *data = malloc(infoHeader.size);
-
-                fread(data, infoHeader.size, 1, rresFile);
-                
-                wave.data = DecompressData(data, infoHeader.size, infoHeader.srcSize);
-                
-                free(data);
-                
-                // Convert wave to Sound (OpenAL)
-                ALenum format = 0;
-                
-                // The OpenAL format is worked out by looking at the number of channels and the bits per sample
-                if (wave.channels == 1) 
-                {
-                    if (wave.bitsPerSample == 8 ) format = AL_FORMAT_MONO8;
-                    else if (wave.bitsPerSample == 16) format = AL_FORMAT_MONO16;
-                } 
-                else if (wave.channels == 2) 
-                {
-                    if (wave.bitsPerSample == 8 ) format = AL_FORMAT_STEREO8;
-                    else if (wave.bitsPerSample == 16) format = AL_FORMAT_STEREO16;
-                }
-                
-                
-                // Create an audio source
-                ALuint source;
-                alGenSources(1, &source);            // Generate pointer to audio source
-
-                alSourcef(source, AL_PITCH, 1);    
-                alSourcef(source, AL_GAIN, 1);
-                alSource3f(source, AL_POSITION, 0, 0, 0);
-                alSource3f(source, AL_VELOCITY, 0, 0, 0);
-                alSourcei(source, AL_LOOPING, AL_FALSE);
-                
-                // Convert loaded data to OpenAL buffer
-                //----------------------------------------
-                ALuint buffer;
-                alGenBuffers(1, &buffer);            // Generate pointer to buffer
-
-                // Upload sound data to buffer
-                alBufferData(buffer, format, (void*)wave.data, wave.dataSize, wave.sampleRate);
-
-                // Attach sound buffer to source
-                alSourcei(source, AL_BUFFER, buffer);
-                
-                // Unallocate WAV data
-                UnloadWAV(wave);
-
-                printf("Audio file loaded...!\n");
-                
-                sound.source = source;
-                sound.buffer = buffer;
-            }
-            else
-            {
-
-                printf("Required resource do not seem to be a valid IMAGE resource\n");
-                exit(2);
-            }
+            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
         }
         else
         {
-            // Depending on type, skip the right amount of parameters
-            switch (infoHeader.type)
-            {
-                case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
-                case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
-                case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                case 3: break;   // TEXT: No parameters
-                case 4: break;   // RAW: No parameters
-                default: break;
-            }
+            // Read number of resources embedded
+            fread(&numRes, sizeof(short), 1, rresFile);
             
-            // Jump DATA to read next infoHeader
-            fseek(rresFile, infoHeader.size, SEEK_CUR);
-        }    
+            for (int i = 0; i < numRes; i++)
+            {
+                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
+                
+                if (infoHeader.id == resId)
+                {
+                    found = true;
+
+                    // Check data is of valid SOUND type
+                    if (infoHeader.type == 1)   // SOUND data type
+                    {
+                        // TODO: Check data compression type
+                        // NOTE: We suppose compression type 2 (DEFLATE - default)
+                        
+                        // Reading SOUND parameters
+                        Wave wave;
+                        short sampleRate, bps;
+                        char channels, reserved;
+                    
+                        fread(&sampleRate, sizeof(short), 1, rresFile); // Sample rate (frequency)
+                        fread(&bps, sizeof(short), 1, rresFile);        // Bits per sample
+                        fread(&channels, 1, 1, rresFile);               // Channels (1 - mono, 2 - stereo)
+                        fread(&reserved, 1, 1, rresFile);               // <reserved>
+                                
+                        wave.sampleRate = sampleRate;
+                        wave.dataSize = infoHeader.srcSize;
+                        wave.bitsPerSample = bps;
+                        wave.channels = (short)channels;
+                        
+                        unsigned char *data = malloc(infoHeader.size);
+
+                        fread(data, infoHeader.size, 1, rresFile);
+                        
+                        wave.data = DecompressData(data, infoHeader.size, infoHeader.srcSize);
+                        
+                        free(data);
+                        
+                        // Convert wave to Sound (OpenAL)
+                        ALenum format = 0;
+                        
+                        // The OpenAL format is worked out by looking at the number of channels and the bits per sample
+                        if (wave.channels == 1) 
+                        {
+                            if (wave.bitsPerSample == 8 ) format = AL_FORMAT_MONO8;
+                            else if (wave.bitsPerSample == 16) format = AL_FORMAT_MONO16;
+                        } 
+                        else if (wave.channels == 2) 
+                        {
+                            if (wave.bitsPerSample == 8 ) format = AL_FORMAT_STEREO8;
+                            else if (wave.bitsPerSample == 16) format = AL_FORMAT_STEREO16;
+                        }
+                        
+                        
+                        // Create an audio source
+                        ALuint source;
+                        alGenSources(1, &source);            // Generate pointer to audio source
+
+                        alSourcef(source, AL_PITCH, 1);    
+                        alSourcef(source, AL_GAIN, 1);
+                        alSource3f(source, AL_POSITION, 0, 0, 0);
+                        alSource3f(source, AL_VELOCITY, 0, 0, 0);
+                        alSourcei(source, AL_LOOPING, AL_FALSE);
+                        
+                        // Convert loaded data to OpenAL buffer
+                        //----------------------------------------
+                        ALuint buffer;
+                        alGenBuffers(1, &buffer);            // Generate pointer to buffer
+
+                        // Upload sound data to buffer
+                        alBufferData(buffer, format, (void*)wave.data, wave.dataSize, wave.sampleRate);
+
+                        // Attach sound buffer to source
+                        alSourcei(source, AL_BUFFER, buffer);
+                        
+                        // Unallocate WAV data
+                        UnloadWAV(wave);
+
+                        TraceLog(INFO, "[%s] Sound loaded successfully from resource, sample rate: %i", rresName, (int)sampleRate);
+                        
+                        sound.source = source;
+                        sound.buffer = buffer;
+                    }
+                    else
+                    {
+                        TraceLog(WARNING, "[%s] Required resource do not seem to be a valid SOUND resource", rresName);
+                    }
+                }
+                else
+                {
+                    // Depending on type, skip the right amount of parameters
+                    switch (infoHeader.type)
+                    {
+                        case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
+                        case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
+                        case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
+                        case 3: break;   // TEXT: No parameters
+                        case 4: break;   // RAW: No parameters
+                        default: break;
+                    }
+                    
+                    // Jump DATA to read next infoHeader
+                    fseek(rresFile, infoHeader.size, SEEK_CUR);
+                }    
+            }
+        }
+        
+        fclose(rresFile);
     }
     
-    fclose(rresFile);
-    
-    if (!found) printf("Required resource id could not be found in the raylib Resource file!\n");
+    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
     
     return sound;
 }
@@ -345,7 +365,7 @@ void PlaySound(Sound sound)
 {
     alSourcePlay(sound.source);        // Play the sound
     
-    printf("Playing sound!\n");
+    TraceLog(INFO, "Playing sound");
 
     // Find the current position of the sound being played
     // NOTE: Only work when the entire file is in a single buffer
@@ -390,7 +410,7 @@ void StopSound(Sound sound)
 }
 
 // Check if a sound is playing
-bool IsPlaying(Sound sound)
+bool SoundIsPlaying(Sound sound)
 {
     bool playing = false;
     ALint state;
@@ -399,6 +419,16 @@ bool IsPlaying(Sound sound)
     if (state == AL_PLAYING) playing = true;
     
     return playing;
+}
+
+// Check if music is playing
+bool MusicIsPlaying(Music music)
+{
+    ALenum state;
+    
+    alGetSourcei(music.source, AL_SOURCE_STATE, &state);
+    
+    return (state == AL_PLAYING);
 }
 
 // Set volume for a sound
@@ -450,61 +480,65 @@ static Wave LoadWAV(char *fileName)
     
     if (!wavFile)
     {
-        printf("Could not open WAV file.\n");
-        exit(1);
+        TraceLog(WARNING, "[%s] Could not open WAV file", fileName);
     }
-   
-    // Read in the first chunk into the struct
-    fread(&riffHeader, sizeof(RiffHeader), 1, wavFile);
- 
-    // Check for RIFF and WAVE tags
-    if ((riffHeader.chunkID[0] != 'R' ||
-         riffHeader.chunkID[1] != 'I' ||
-         riffHeader.chunkID[2] != 'F' ||
-         riffHeader.chunkID[3] != 'F') ||
-        (riffHeader.format[0] != 'W' ||
-         riffHeader.format[1] != 'A' ||
-         riffHeader.format[2] != 'V' ||
-         riffHeader.format[3] != 'E'))
-            printf("Invalid RIFF or WAVE Header");
- 
-    // Read in the 2nd chunk for the wave info
-    fread(&waveFormat, sizeof(WaveFormat), 1, wavFile);
-    
-    // Check for fmt tag
-    if (waveFormat.subChunkID[0] != 'f' ||
-        waveFormat.subChunkID[1] != 'm' ||
-        waveFormat.subChunkID[2] != 't' ||
-        waveFormat.subChunkID[3] != ' ')
-            printf("Invalid Wave Format");
- 
-    // Check for extra parameters;
-    if (waveFormat.subChunkSize > 16)
-        fseek(wavFile, sizeof(short), SEEK_CUR);
- 
-    // Read in the the last byte of data before the sound file
-    fread(&waveData, sizeof(WaveData), 1, wavFile);
-    
-    // Check for data tag
-    if (waveData.subChunkID[0] != 'd' ||
-        waveData.subChunkID[1] != 'a' ||
-        waveData.subChunkID[2] != 't' ||
-        waveData.subChunkID[3] != 'a')
-            printf("Invalid data header");
- 
-    // Allocate memory for data
-    wave.data = (unsigned char *)malloc(sizeof(unsigned char) * waveData.subChunkSize); 
- 
-    // Read in the sound data into the soundData variable
-    fread(wave.data, waveData.subChunkSize, 1, wavFile);
-    
-    // Now we set the variables that we need later
-    wave.dataSize = waveData.subChunkSize;
-    wave.sampleRate = waveFormat.sampleRate;
-    wave.channels = waveFormat.numChannels;
-    wave.bitsPerSample = waveFormat.bitsPerSample;  
+    else
+    {
+        // Read in the first chunk into the struct
+        fread(&riffHeader, sizeof(RiffHeader), 1, wavFile);
+     
+        // Check for RIFF and WAVE tags
+        if (((riffHeader.chunkID[0] != 'R') || (riffHeader.chunkID[1] != 'I') || (riffHeader.chunkID[2] != 'F') || (riffHeader.chunkID[3] != 'F')) ||
+            ((riffHeader.format[0] != 'W') || (riffHeader.format[1] != 'A') || (riffHeader.format[2] != 'V') || (riffHeader.format[3] != 'E')))
+        {
+                TraceLog(WARNING, "[%s] Invalid RIFF or WAVE Header", fileName);
+        }
+        else
+        {
+            // Read in the 2nd chunk for the wave info
+            fread(&waveFormat, sizeof(WaveFormat), 1, wavFile);
+            
+            // Check for fmt tag
+            if ((waveFormat.subChunkID[0] != 'f') || (waveFormat.subChunkID[1] != 'm') ||
+                (waveFormat.subChunkID[2] != 't') || (waveFormat.subChunkID[3] != ' '))
+            {
+                TraceLog(WARNING, "[%s] Invalid Wave format", fileName);
+            }
+            else
+            {
+                // Check for extra parameters;
+                if (waveFormat.subChunkSize > 16) fseek(wavFile, sizeof(short), SEEK_CUR);
+             
+                // Read in the the last byte of data before the sound file
+                fread(&waveData, sizeof(WaveData), 1, wavFile);
+                
+                // Check for data tag
+                if ((waveData.subChunkID[0] != 'd') || (waveData.subChunkID[1] != 'a') ||
+                    (waveData.subChunkID[2] != 't') || (waveData.subChunkID[3] != 'a'))
+                {
+                    TraceLog(WARNING, "[%s] Invalid data header", fileName);
+                }
+                else
+                {
+                    // Allocate memory for data
+                    wave.data = (unsigned char *)malloc(sizeof(unsigned char) * waveData.subChunkSize); 
+                 
+                    // Read in the sound data into the soundData variable
+                    fread(wave.data, waveData.subChunkSize, 1, wavFile);
+                    
+                    // Now we set the variables that we need later
+                    wave.dataSize = waveData.subChunkSize;
+                    wave.sampleRate = waveFormat.sampleRate;
+                    wave.channels = waveFormat.numChannels;
+                    wave.bitsPerSample = waveFormat.bitsPerSample;
+                    
+                    TraceLog(INFO, "[%s] Wave file loaded successfully", fileName);
+                }
+            }
+        }
 
-    fclose(wavFile);
+        fclose(wavFile);
+    }
     
     return wave;
 }
@@ -516,5 +550,192 @@ static void UnloadWAV(Wave wave)
 }
 
 // TODO: Ogg data loading
-//static Ogg LoadOGG(char *fileName) { }
+Music LoadMusic(char *fileName)
+{
+    Music music;
+    
+    // Open audio stream
+    music.stream = stb_vorbis_open_filename(fileName, NULL, NULL);
+    
+	if (music.stream == NULL) TraceLog(WARNING, "Could not open ogg audio file");
+    else
+    {
+        // Get file info
+        music.info = stb_vorbis_get_info(music.stream);
+        
+        printf("Ogg sample rate: %i\n", music.info.sample_rate);
+        printf("Ogg channels: %i\n", music.info.channels);
+        printf("Temp memory required: %i\n", music.info.temp_memory_required);
+        
+        if (music.info.channels == 2) music.format = AL_FORMAT_STEREO16;
+        else music.format = AL_FORMAT_MONO16;
+        
+        music.bufferSize = 4096*8;
+        music.loop = true;          // We loop by default
+        
+        // Create an audio source
+        alGenSources(1, &music.source);             // Generate pointer to audio source
 
+        alSourcef(music.source, AL_PITCH, 1);    
+        alSourcef(music.source, AL_GAIN, 1);
+        alSource3f(music.source, AL_POSITION, 0, 0, 0);
+        alSource3f(music.source, AL_VELOCITY, 0, 0, 0);
+        alSourcei(music.source, AL_LOOPING, AL_TRUE);     // We loop by default
+        
+        // Convert loaded data to OpenAL buffers
+        alGenBuffers(2, music.buffers);
+    /*
+        if (!MusicStream(music, music.buffers[0])) exit(1);
+        if (!MusicStream(music, music.buffers[1])) exit(1);
+        
+        alSourceQueueBuffers(music.source, 2, music.buffers);
+     
+        PlayMusic(music);
+    */ 
+        music.totalSamplesLeft = stb_vorbis_stream_length_in_samples(music.stream) * music.info.channels;
+     
+        currentMusic = &music;
+    }
+    
+    return music;
+}
+
+void UnloadMusic(Music music)
+{
+    StopMusic(music);
+
+    alDeleteSources(1, &music.source);
+	alDeleteBuffers(2, music.buffers);
+    
+	stb_vorbis_close(music.stream);
+}
+
+void PlayMusic(Music music)
+{
+    //if (MusicIsPlaying(music)) return true;
+
+    if (!MusicStream(music, music.buffers[0])) TraceLog(WARNING, "MusicStream returned 0");
+    if (!MusicStream(music, music.buffers[1])) TraceLog(WARNING, "MusicStream returned 0");
+    
+    alSourceQueueBuffers(music.source, 2, music.buffers);
+    alSourcePlay(music.source);
+
+    TraceLog(INFO, "Playing music");
+}
+
+extern void PlayCurrentMusic()
+{
+    if (!MusicStream(*currentMusic, currentMusic->buffers[0])) TraceLog(WARNING, "MusicStream returned 0");
+    if (!MusicStream(*currentMusic, currentMusic->buffers[1])) TraceLog(WARNING, "MusicStream returned 0");
+    
+    alSourceQueueBuffers(currentMusic->source, 2, currentMusic->buffers);
+    alSourcePlay(currentMusic->source);
+}
+
+// Stop reproducing music
+void StopMusic(Music music)
+{
+    alSourceStop(music.source);
+    
+    musicIsPlaying = false;
+}
+
+static bool MusicStream(Music music, ALuint buffer)
+{
+	//Uncomment this to avoid VLAs
+	//#define BUFFER_SIZE 4096*32
+	#ifndef BUFFER_SIZE//VLAs ftw
+	#define BUFFER_SIZE (music.bufferSize)
+	#endif
+	ALshort pcm[BUFFER_SIZE];
+    
+	int  size = 0;
+	int  result = 0;
+ 
+	while (size < BUFFER_SIZE)
+    {
+		result = stb_vorbis_get_samples_short_interleaved(music.stream, music.info.channels, pcm+size, BUFFER_SIZE-size);
+        
+		if (result > 0) size += (result*music.info.channels);
+		else break;
+	}
+ 
+	if (size == 0) return false;
+ 
+	alBufferData(buffer, music.format, pcm, size*sizeof(ALshort), music.info.sample_rate);
+    
+	music.totalSamplesLeft -= size;
+	
+    #undef BUFFER_SIZE
+ 
+	return true;
+}
+/*
+extern bool MusicStreamUpdate()
+{
+	ALint processed = 0;
+ 
+    alGetSourcei(currentMusic->source, AL_BUFFERS_PROCESSED, &processed);
+ 
+    while (processed--)
+    {
+        ALuint buffer = 0;
+        
+        alSourceUnqueueBuffers(currentMusic->source, 1, &buffer);
+ 
+		if (!MusicStream(*currentMusic, buffer))
+        {
+			bool shouldExit = true;
+ 
+			if (currentMusic->loop)
+            {
+				stb_vorbis_seek_start(currentMusic->stream);
+				currentMusic->totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic->stream) * currentMusic->info.channels;
+				
+                shouldExit = !MusicStream(*currentMusic, buffer);
+			}
+ 
+			if (shouldExit) return false;
+		}
+        
+		alSourceQueueBuffers(currentMusic->source, 1, &buffer);
+	}
+ 
+	return true;
+}
+*/
+extern bool MusicStreamUpdate()
+{
+    int processed;
+    bool active = true;
+ 
+    alGetSourcei(currentMusic->source, AL_BUFFERS_PROCESSED, &processed);
+    
+    printf("Data processed: %i\n", processed);
+ 
+    while (processed--)
+    {
+        ALuint buffer = 0;
+        
+        alSourceUnqueueBuffers(currentMusic->source, 1, &buffer);
+
+        active = MusicStream(*currentMusic, buffer);
+ 
+        alSourceQueueBuffers(currentMusic->source, 1, &buffer);
+    }
+ 
+    return active;
+}
+
+void MusicStreamEmpty()
+{
+    int queued;
+    
+    alGetSourcei(currentMusic->source, AL_BUFFERS_QUEUED, &queued);
+    
+    while(queued--)
+    {
+        ALuint buffer;  
+        alSourceUnqueueBuffers(currentMusic->source, 1, &buffer);
+    }
+}

@@ -11,6 +11,7 @@
 // Get the latest version and other information at:
 //     http://nothings.org/stb_vorbis/
 
+
 // Todo:
 //
 //   - seeking (note you can seek yourself using the pushdata API)
@@ -24,12 +25,6 @@
 //       files to around 6 hours (Ogg supports 64-bit)
 // 
 // All of these limitations may be removed in future versions.
-
-
-//////////////////////////////////////////////////////////////////////////////
-//
-//  HEADER BEGINS HERE
-//
 
 #ifndef STB_VORBIS_INCLUDE_STB_VORBIS_H
 #define STB_VORBIS_INCLUDE_STB_VORBIS_H

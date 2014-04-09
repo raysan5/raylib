@@ -29,8 +29,8 @@
 #include "raylib.h"
 
 #include <stdlib.h>          // Declares malloc() and free() for memory management
+#include <string.h>          // Required for strcmp(), strrchr(), strncmp()
 #include "stb_image.h"       // Used to read image data (multiple formats support)
-
 #include "utils.h"           // rRES data decompression utility function
 
 #include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
@@ -45,6 +45,14 @@
 //----------------------------------------------------------------------------------
 typedef unsigned char byte;
 
+typedef struct {
+    unsigned char *data;
+    int width;
+    int height;
+    int mipmaps;
+    int format;
+} ImageDDS;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -58,7 +66,8 @@ typedef unsigned char byte;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-// No private (static) functions in this module (.c file)
+static const char *GetExtension(const char *fileName);
+static ImageDDS LoadDDS(const char *fileName);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -69,32 +78,44 @@ Image LoadImage(const char *fileName)
 {
     Image image;
     
-    int imgWidth;
-    int imgHeight;
-    int imgBpp;
-    
-    // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-    // Force loading to 4 components (RGBA)
-    byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);    
-    
-    // Convert array to pixel array for working convenience
-    image.pixels = (Color *)malloc(imgWidth * imgHeight * sizeof(Color));
-    
-    int pix = 0;
-    
-    for (int i = 0; i < (imgWidth * imgHeight * 4); i += 4)
-    {
-        image.pixels[pix].r = imgData[i];
-        image.pixels[pix].g = imgData[i+1];
-        image.pixels[pix].b = imgData[i+2];
-        image.pixels[pix].a = imgData[i+3];
-        pix++;
+    if ((strcmp(GetExtension(fileName),"png") == 0) ||
+        (strcmp(GetExtension(fileName),"bmp") == 0) ||
+        (strcmp(GetExtension(fileName),"tga") == 0) ||
+        (strcmp(GetExtension(fileName),"jpg") == 0) ||
+        (strcmp(GetExtension(fileName),"gif") == 0) ||
+        (strcmp(GetExtension(fileName),"psd") == 0) ||
+        (strcmp(GetExtension(fileName),"pic") == 0))
+    {       
+        int imgWidth;
+        int imgHeight;
+        int imgBpp;
+        
+        // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
+        // Force loading to 4 components (RGBA)
+        byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);    
+        
+        // Convert array to pixel array for working convenience
+        image.pixels = (Color *)malloc(imgWidth * imgHeight * sizeof(Color));
+        
+        int pix = 0;
+        
+        for (int i = 0; i < (imgWidth * imgHeight * 4); i += 4)
+        {
+            image.pixels[pix].r = imgData[i];
+            image.pixels[pix].g = imgData[i+1];
+            image.pixels[pix].b = imgData[i+2];
+            image.pixels[pix].a = imgData[i+3];
+            pix++;
+        }
+        
+        stbi_image_free(imgData);
+        
+        image.width = imgWidth;
+        image.height = imgHeight;
+        
+        TraceLog(INFO, "[%s] Image loaded successfully", fileName);
     }
-    
-    stbi_image_free(imgData);
-    
-    image.width = imgWidth;
-    image.height = imgHeight;
+    else TraceLog(WARNING, "[%s] Image extension not recognized, it can't be loaded", fileName);
     
     // ALTERNATIVE: We can load pixel data directly into Color struct pixels array, 
     // to do that struct data alignment should be the right one (4 byte); it is.
@@ -119,103 +140,104 @@ Image LoadImageFromRES(const char *rresName, int resId)
     
     FILE *rresFile = fopen(rresName, "rb");
 
-    if (!rresFile) printf("Error opening raylib Resource file\n");
-    
-    // Read rres file (basic file check - id)
-    fread(&id[0], sizeof(char), 1, rresFile);
-    fread(&id[1], sizeof(char), 1, rresFile);
-    fread(&id[2], sizeof(char), 1, rresFile);
-    fread(&id[3], sizeof(char), 1, rresFile);
-    fread(&version, sizeof(char), 1, rresFile);
-    fread(&useless, sizeof(char), 1, rresFile);
-    
-    if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
+    if (!rresFile) TraceLog(WARNING, "[%s] Could not open raylib resource file", rresName);
+    else
     {
-        printf("This is not a valid raylib Resource file!\n");
-        exit(1);
-    }
-    
-    // Read number of resources embedded
-    fread(&numRes, sizeof(short), 1, rresFile);
-    
-    for (int i = 0; i < numRes; i++)
-    {
-        fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
+        // Read rres file (basic file check - id)
+        fread(&id[0], sizeof(char), 1, rresFile);
+        fread(&id[1], sizeof(char), 1, rresFile);
+        fread(&id[2], sizeof(char), 1, rresFile);
+        fread(&id[3], sizeof(char), 1, rresFile);
+        fread(&version, sizeof(char), 1, rresFile);
+        fread(&useless, sizeof(char), 1, rresFile);
         
-        if (infoHeader.id == resId)
+        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
         {
-            found = true;
-            
-            // Check data is of valid IMAGE type
-            if (infoHeader.type == 0)   // IMAGE data type
-            {
-                // TODO: Check data compression type
-                
-                // NOTE: We suppose compression type 2 (DEFLATE - default)
-                short imgWidth, imgHeight;
-                char colorFormat, mipmaps;
-            
-                fread(&imgWidth, sizeof(short), 1, rresFile);   // Image width
-                fread(&imgHeight, sizeof(short), 1, rresFile);  // Image height
-                fread(&colorFormat, 1, 1, rresFile);            // Image data color format (default: RGBA 32 bit)
-                fread(&mipmaps, 1, 1, rresFile);                // Mipmap images included (default: 0)
-        
-                printf("Image width: %i\n", (int)imgWidth);
-                printf("Image height: %i\n", (int)imgHeight);
-                
-                image.width = (int)imgWidth;
-                image.height = (int)imgHeight;
-                
-                unsigned char *data = malloc(infoHeader.size);
-
-                fread(data, infoHeader.size, 1, rresFile);
-                
-                unsigned char *imgData = DecompressData(data, infoHeader.size, infoHeader.srcSize);
-                
-                image.pixels = (Color *)malloc(sizeof(Color)*imgWidth*imgHeight);
-                
-                int pix = 0;
-                
-                for (int i = 0; i < (imgWidth*imgHeight*4); i += 4)
-                {
-                    image.pixels[pix].r = imgData[i];
-                    image.pixels[pix].g = imgData[i+1];
-                    image.pixels[pix].b = imgData[i+2];
-                    image.pixels[pix].a = imgData[i+3];
-                    pix++;
-                }
-                
-                free(imgData);
-             
-                free(data);
-            }
-            else
-            {
-                printf("Required resource do not seem to be a valid IMAGE resource\n");
-                exit(2);
-            }
+            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
         }
         else
         {
-            // Depending on type, skip the right amount of parameters
-            switch (infoHeader.type)
-            {
-                case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
-                case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
-                case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                case 3: break;   // TEXT: No parameters
-                case 4: break;   // RAW: No parameters
-                default: break;
-            }
+            // Read number of resources embedded
+            fread(&numRes, sizeof(short), 1, rresFile);
             
-            // Jump DATA to read next infoHeader
-            fseek(rresFile, infoHeader.size, SEEK_CUR);
-        }    
+            for (int i = 0; i < numRes; i++)
+            {
+                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
+                
+                if (infoHeader.id == resId)
+                {
+                    found = true;
+                    
+                    // Check data is of valid IMAGE type
+                    if (infoHeader.type == 0)   // IMAGE data type
+                    {
+                        // TODO: Check data compression type
+                        
+                        // NOTE: We suppose compression type 2 (DEFLATE - default)
+                        short imgWidth, imgHeight;
+                        char colorFormat, mipmaps;
+                    
+                        fread(&imgWidth, sizeof(short), 1, rresFile);   // Image width
+                        fread(&imgHeight, sizeof(short), 1, rresFile);  // Image height
+                        fread(&colorFormat, 1, 1, rresFile);            // Image data color format (default: RGBA 32 bit)
+                        fread(&mipmaps, 1, 1, rresFile);                // Mipmap images included (default: 0)
+                
+                        image.width = (int)imgWidth;
+                        image.height = (int)imgHeight;
+                        
+                        unsigned char *data = malloc(infoHeader.size);
+
+                        fread(data, infoHeader.size, 1, rresFile);
+                        
+                        unsigned char *imgData = DecompressData(data, infoHeader.size, infoHeader.srcSize);
+                        
+                        image.pixels = (Color *)malloc(sizeof(Color)*imgWidth*imgHeight);
+                        
+                        int pix = 0;
+                        
+                        for (int i = 0; i < (imgWidth*imgHeight*4); i += 4)
+                        {
+                            image.pixels[pix].r = imgData[i];
+                            image.pixels[pix].g = imgData[i+1];
+                            image.pixels[pix].b = imgData[i+2];
+                            image.pixels[pix].a = imgData[i+3];
+                            pix++;
+                        }
+                        
+                        free(imgData);
+                     
+                        free(data);
+                        
+                        TraceLog(INFO, "[%s] Image loaded successfully from resource, size: %ix%i", rresName, image.width, image.height);
+                    }
+                    else
+                    {
+                        TraceLog(WARNING, "[%s] Required resource do not seem to be a valid IMAGE resource", rresName);
+                    }
+                }
+                else
+                {
+                    // Depending on type, skip the right amount of parameters
+                    switch (infoHeader.type)
+                    {
+                        case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
+                        case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
+                        case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
+                        case 3: break;   // TEXT: No parameters
+                        case 4: break;   // RAW: No parameters
+                        default: break;
+                    }
+                    
+                    // Jump DATA to read next infoHeader
+                    fseek(rresFile, infoHeader.size, SEEK_CUR);
+                }
+            }
+        }
+        
+        fclose(rresFile);
     }
     
-    fclose(rresFile);
-    
-    if (!found) printf("Required resource id could not be found in the raylib Resource file!\n");
+    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
     
     return image;
 }
@@ -224,11 +246,33 @@ Image LoadImageFromRES(const char *rresName, int resId)
 Texture2D LoadTexture(const char *fileName)
 {
     Texture2D texture;
-    Image image;
-    
-    image = LoadImage(fileName);
-    texture = CreateTexture(image);
-    UnloadImage(image);
+
+    if (strcmp(GetExtension(fileName),"dds") == 0)
+    {
+#ifdef USE_OPENGL_11 
+        TraceLog(WARNING, "[%s] DDS file loading requires OpenGL 3.2+ or ES 2.0", fileName);
+#else
+        ImageDDS image = LoadDDS(fileName);
+        
+        texture.glId = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.format);
+
+        texture.width = image.width;
+        texture.height = image.height;
+        
+        if (texture.glId == 0) TraceLog(WARNING, "Compressed texture could not be loaded");
+        else TraceLog(INFO, "Compressed texture loaded succesfully");
+#endif
+    }
+    else
+    {
+        Image image = LoadImage(fileName);
+        
+        if (image.pixels != NULL)
+        {
+            texture = CreateTexture(image);
+            UnloadImage(image);
+        }
+    }
     
     return texture;
 }
@@ -259,7 +303,7 @@ void UnloadTexture(Texture2D texture)
 // Draw a Texture2D
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
 {
-    DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY}, 0, 1.0f, tint);
+    DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY }, 0, 1.0f, tint);
 }
 
 // Draw a Texture2D with position defined as Vector2
@@ -276,9 +320,9 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
     // NOTE: Rotation is applied before translation and scaling, even being called in inverse order...
     // NOTE: Rotation point is upper-left corner    
     rlPushMatrix();
-        rlTranslatef(position.x, position.y, 0.0);
-        rlScalef(scale, scale, 1.0f);
+        //rlTranslatef(position.x, position.y, 0.0);
         rlRotatef(rotation, 0, 0, 1);
+        rlScalef(scale, scale, 1.0f);
     
         rlBegin(RL_QUADS);
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
@@ -390,7 +434,114 @@ Texture2D CreateTexture(Image image)
     texture.width = image.width;
     texture.height = image.height;
     
+    TraceLog(INFO, "Texture created succesfully");
+    
     free(img);
     
     return texture;
+}
+
+// Get the extension for a filename
+static const char *GetExtension(const char *fileName) 
+{
+    const char *dot = strrchr(fileName, '.');
+    if(!dot || dot == fileName) return "";
+    return (dot + 1);
+}
+
+// Loading DDS image compressed data 
+ImageDDS LoadDDS(const char *fileName)
+{   
+    // TODO: Review and expand DDS file loading to support uncompressed formats and new formats
+
+    // DDS Pixel Format
+    typedef struct {
+        unsigned int size;
+        unsigned int flags;
+        unsigned int fourCC;
+        unsigned int rgbBitCount;
+        unsigned int rBitMask;
+        unsigned int gBitMask;
+        unsigned int bitMask;
+        unsigned int aBitMask;
+    } ddsPixelFormat;
+    
+    // DDS Header (124 bytes)
+    typedef struct {
+        unsigned int size;
+        unsigned int flags;
+        unsigned int height;
+        unsigned int width;
+        unsigned int pitchOrLinearSize;
+        unsigned int depth;
+        unsigned int mipMapCount;
+        unsigned int reserved1[11];
+        ddsPixelFormat ddspf;
+        unsigned int caps;
+        unsigned int caps2;
+        unsigned int caps3;
+        unsigned int caps4;
+        unsigned int reserved2;
+    } ddsHeader;
+    
+    ImageDDS image;
+    ddsHeader header;
+
+    FILE *ddsFile = fopen(fileName, "rb");
+    
+    if (ddsFile == NULL)
+    {
+        TraceLog(WARNING, "DDS File could not be opened");
+    }
+    else
+    {
+        // Verify the type of file
+        char filecode[4];
+        
+        fread(filecode, 1, 4, ddsFile);
+        
+        if (strncmp(filecode, "DDS ", 4) != 0) 
+        { 
+            TraceLog(WARNING, "DDS File does not seem to be valid");
+            fclose(ddsFile);
+        }
+        else
+        {       
+            // Get the surface descriptor
+            fread(&header, sizeof(ddsHeader), 1, ddsFile);
+
+            int height = header.height;
+            int width = header.width;
+            int linearSize = header.pitchOrLinearSize;
+            int mipMapCount = header.mipMapCount;
+            int fourCC = header.ddspf.fourCC;
+            
+            TraceLog(DEBUG, "[%s] DDS file header size: %i", fileName, sizeof(ddsHeader));
+            
+            TraceLog(DEBUG, "[%s] DDS file pixel format size: %i", fileName, header.ddspf.size);
+            TraceLog(DEBUG, "[%s] DDS file pixel format flags: 0x%x", fileName, header.ddspf.flags);
+            TraceLog(DEBUG, "[%s] DDS file format: 0x%x", fileName, fourCC);
+            
+            int bufsize;
+            
+            // Calculate data size, including all mipmaps 
+            bufsize = mipMapCount > 1 ? linearSize * 2 : linearSize; 
+            
+            image.data = (unsigned char*)malloc(bufsize * sizeof(unsigned char)); 
+            
+            fread(image.data, 1, bufsize, ddsFile); 
+            
+            // Close file pointer
+            fclose(ddsFile);
+
+            //int components = (fourCC == FOURCC_DXT1) ? 3 : 4; // Not required
+            
+            image.width = width;
+            image.height = height;
+            image.mipmaps = mipMapCount;
+            image.format = fourCC;
+        }
+    }
+    
+    return image;
 }

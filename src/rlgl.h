@@ -33,17 +33,20 @@
 
 #ifndef RLGL_STANDALONE
     #include "raylib.h"         // Required for typedef: Model
+    #include "utils.h"          // Required for function TraceLog()
 #endif
 
+#include "raymath.h"        // Required for data type Matrix and Matrix functions
+
 // Select desired OpenGL version
-#define USE_OPENGL_11
-//#define USE_OPENGL_33
+//#define USE_OPENGL_11
+#define USE_OPENGL_33
 //#define USE_OPENGL_ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_LINES_BATCH         1024
+#define MAX_LINES_BATCH         8192    // 1024
 #define MAX_TRIANGLES_BATCH     2048
 #define MAX_QUADS_BATCH         8192
 
@@ -57,7 +60,7 @@ typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
 #ifdef RLGL_STANDALONE
-    typedef struct Model Model;
+typedef struct Model Model;
 #endif
 
 typedef struct {
@@ -125,19 +128,20 @@ void rlClearScreenBuffers();                // Clear used screen buffers (color 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
 void rlglInit();                                // Initialize rlgl (shaders, VAO, VBO...)
 void rlglClose();                               // De-init rlgl
 void rlglDraw();                                // Draw VAOs
 unsigned int rlglLoadModel(VertexData data);
+unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format);
 #endif
 
-void rlglDrawModel(Model model, bool wires);    // Draw model
+void rlglDrawModel(Model model, Vector3 position, float scale, bool wires);   // Draw model
 void rlglInitGraphicsDevice(int fbWidth, int fbHeight);  // Initialize Graphics Device (OpenGL stuff)
 unsigned int rlglLoadTexture(int width, int height, unsigned char *pixels); // Load in GPU OpenGL texture
 byte *rlglReadScreenPixels(int width, int height);    // Read screen pixel data (color buffer)
 
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
 void PrintProjectionMatrix();       // DEBUG: Print projection matrix
 void PrintModelviewMatrix();        // DEBUG: Print modelview matrix
 #endif
