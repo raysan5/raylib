@@ -2,10 +2,10 @@
 *
 *   raylib test - Testing Heightmap Loading and Drawing
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This test has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -25,10 +25,12 @@ int main()
     
     InitWindow(screenWidth, screenHeight, "raylib test - Heightmap loading and drawing");
     
-    Image img = LoadImage("heightmap.png");
+    Image img = LoadImage("resources/heightmap.png");
     Model map = LoadHeightmap(img, 4);
-    Texture2D tex = CreateTexture(img);
+    Texture2D texture = CreateTexture(img, false);
     UnloadImage(img);
+    
+    SetModelTexture(&map, texture);  
     
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -49,8 +51,7 @@ int main()
             
             Begin3dMode(camera);
             
-                //DrawModel(map, position, 0.5f, MAROON);   
-                DrawModelEx(map, tex, position, 0.5f, WHITE);   // Draw 3d model with texture
+                DrawModel(map, position, 0.5f, MAROON);   
                 
                 DrawGrid(10.0, 1.0);        // Draw a grid
                 

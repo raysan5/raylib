@@ -2,7 +2,7 @@
 *
 *   raylib test - Testing FormatText() function
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This test has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
