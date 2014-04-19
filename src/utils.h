@@ -32,12 +32,14 @@
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
-//...
+//#define DO_NOT_TRACE_DEBUG_MSGS   // Use this define to avoid DEBUG tracing
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef enum { IMAGE, SOUND, MODEL, TEXT, RAW } DataType;
+
+typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 
 // One resource info header, every resource includes this header (8 byte)
 typedef struct {
@@ -61,8 +63,13 @@ extern "C" {            // Prevents name mangling of functions
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 unsigned char *DecompressData(const unsigned char *data, unsigned long compSize, int uncompSize);
+
 void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height);
 void WritePNG(const char *fileName, unsigned char *imgData, int width, int height);
+
+void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message
+void InitTraceLogFile(const char *logFileName);     // Inits a trace log file
+void CloseTraceLogFile();                           // Closes the trace log file
 
 #ifdef __cplusplus
 }

@@ -28,11 +28,12 @@
 
 #include "raylib.h"
 
-#include <GL/gl.h>        // OpenGL functions
 #include <stdlib.h>       // Declares malloc() and free() for memory management
 #include <string.h>       // String management functions (just strlen() is used)
 #include <stdarg.h>       // Used for functions with variable number of parameters (FormatText())
 #include "stb_image.h"    // Used to read image data (multiple formats support)
+
+#include "rlgl.h"         // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -49,19 +50,33 @@
 typedef unsigned char byte;
 
 // SpriteFont one Character (Glyph) data
-struct Character {
+typedef struct Character {
     int value;        //char value = ' '; (int)value = 32;
     int x;
     int y;
     int w;
     int h;
+} Character;
+
+// SpriteFont type, includes texture and charSet array data
+/*
+struct SpriteFont {
+    Texture2D texture;
+    int numChars;
+    Character *charSet;
 };
+*/
 
 //----------------------------------------------------------------------------------
 // Global variables
 //----------------------------------------------------------------------------------
 static SpriteFont defaultFont;        // Default font provided by raylib
 // NOTE: defaultFont is loaded on InitWindow and disposed on CloseWindow [module: core]
+
+//----------------------------------------------------------------------------------
+// Other Modules Functions Declaration (required by text)
+//----------------------------------------------------------------------------------
+//...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -78,9 +93,11 @@ static const char *GetExtension(const char *fileName);
 extern void LoadDefaultFont() 
 {
     defaultFont.numChars = 96;              // We know our default font has 94 chars
-    defaultFont.texture.width = 128;        // We know our default font texture is 128 pixels width
-    defaultFont.texture.height = 64;        // We know our default font texture is 64 pixels height
-    
+
+    Image image;
+    image.width = 128;                      // We know our default font image is 128 pixels width
+    image.height = 64;                      // We know our default font image is 64 pixels height
+        
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct SpriteFont without creating large global variables
     // This data is automatically allocated to Stack and automatically deallocated at the end of this function
@@ -115,7 +132,31 @@ extern void LoadDefaultFont()
                            7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 5, 6, 5, 7, 6, 6, 6, 6, 6, 6, 7, 6, 7, 7, 6, 6, 6, 2, 7, 2, 3, 5, 
                            2, 5, 5, 5, 5, 5, 4, 5, 5, 1, 2, 5, 2, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 3, 1, 3, 4, 4 };
 
+    // Re-construct image from defaultFontData and generate OpenGL texture
+    //----------------------------------------------------------------------
+    image.pixels = (Color *)malloc(image.width * image.height * sizeof(Color));
+    
+    for (int i = 0; i < image.width * image.height; i++) image.pixels[i] = BLANK;        // Initialize array
 
+    int counter = 0;        // Font data elements counter
+    
+    // Fill imgData with defaultFontData (convert from bit to pixel!)
+    for (int i = 0; i < image.width * image.height; i += 32)
+    {
+        for (int j = 31; j >= 0; j--)
+        {
+            if (BIT_CHECK(defaultFontData[counter], j)) image.pixels[i+j] = WHITE;
+        }
+        
+        counter++;
+        
+        if (counter > 256) counter = 0;         // Security check...
+    }
+    
+    defaultFont.texture = CreateTexture(image); // Convert loaded image to OpenGL texture
+
+    UnloadImage(image);
+    
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, numChars
     //------------------------------------------------------------------------------
     defaultFont.charSet = (Character *)malloc(defaultFont.numChars * sizeof(Character));    // Allocate space for our character data
@@ -146,52 +187,12 @@ extern void LoadDefaultFont()
         else currentPosX = testPosX;
     }
     
-    // Re-construct image from defaultFontData and generate OpenGL texture
-    //----------------------------------------------------------------------
-    Color *imgDataPixel = (Color *)malloc(defaultFont.texture.width * defaultFont.texture.height * sizeof(Color));
-    
-    for (int i = 0; i < defaultFont.texture.width * defaultFont.texture.height; i++) imgDataPixel[i] = BLANK;        // Initialize array
-
-    int counter = 0;        // Font data elements counter
-    
-    // Fill imgData with defaultFontData (convert from bit to pixel!)
-    for (int i = 0; i < defaultFont.texture.width * defaultFont.texture.height; i += 32)
-    {
-        for (int j = 31; j >= 0; j--)
-        {
-            if (BIT_CHECK(defaultFontData[counter], j)) imgDataPixel[i+j] = WHITE;
-        }
-        
-        counter++;
-        
-        if (counter > 256) counter = 0;        // Security check...
-    }
-    
-    // Convert loaded data to OpenGL texture
-    //----------------------------------------
-    GLuint id;
-    glGenTextures(1, &id);                    // Generate pointer to the texture
-    
-    glBindTexture(GL_TEXTURE_2D, id);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);            // Set texture to clamp on x-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);            // Set texture to clamp on y-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);      // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);      // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, defaultFont.texture.width, defaultFont.texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgDataPixel);
-    
-    // NOTE: Not using mipmappings (texture for 2D drawing)
-    // At this point we have the image converted to texture and uploaded to GPU
-    
-    free(imgDataPixel);                    // Now we can free loaded data from RAM memory
-    
-    defaultFont.texture.glId = id;
+    TraceLog(INFO, "Default font loaded successfully");
 }
 
 extern void UnloadDefaultFont()
 {
-    glDeleteTextures(1, &defaultFont.texture.glId);
+    rlDeleteTextures(defaultFont.texture.glId);
     free(defaultFont.charSet);
 }
 
@@ -205,6 +206,8 @@ SpriteFont GetDefaultFont()
 SpriteFont LoadSpriteFont(const char* fileName)      
 {
     SpriteFont spriteFont;
+    
+    Image image;
     
     // Check file extension
     if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);
@@ -240,8 +243,8 @@ SpriteFont LoadSpriteFont(const char* fileName)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
         int numChars = ParseImageData(imgDataPixel, imgWidth, imgHeight, &spriteFont.charSet);
         
-        fprintf(stderr, "SpriteFont data parsed correctly!\n");
-        fprintf(stderr, "SpriteFont num chars: %i\n", numChars);
+        TraceLog(INFO, "[%s] SpriteFont data parsed correctly", fileName);
+        TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", numChars);
         
         spriteFont.numChars = numChars;
         
@@ -265,29 +268,18 @@ SpriteFont LoadSpriteFont(const char* fileName)
                 }
             }
             
-            fprintf(stderr, "SpriteFont texture converted to POT: %i %i\n", potWidth, potHeight);
+            TraceLog(WARNING, "SpriteFont texture converted to POT: %ix%i", potWidth, potHeight);
         }
         
         free(imgDataPixel);
 
-        // Convert loaded data to OpenGL texture
-        //----------------------------------------
-        GLuint id;
-        glGenTextures(1, &id);                    // Generate pointer to the texture
+        image.pixels = imgDataPixelPOT;
+        image.width = potWidth;
+        image.height = potHeight;
         
-        glBindTexture(GL_TEXTURE_2D, id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);     // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);     // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, potWidth, potHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgDataPixelPOT);
-        
-        // NOTE: Not using mipmappings (texture for 2D drawing)
-        // At this point we have the image converted to texture and uploaded to GPU
-        
-        free(imgDataPixelPOT);                    // Now we can free loaded data from RAM memory
-        
-        spriteFont.texture.glId = id;
-        spriteFont.texture.width = potWidth;
-        spriteFont.texture.height = potHeight;
+        spriteFont.texture = CreateTexture(image); // Convert loaded image to OpenGL texture
+
+        UnloadImage(image);
     }
     
     return spriteFont;
@@ -296,7 +288,7 @@ SpriteFont LoadSpriteFont(const char* fileName)
 // Unload SpriteFont from GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
-    glDeleteTextures(1, &spriteFont.texture.glId);
+    rlDeleteTextures(spriteFont.texture.glId);
     free(spriteFont.charSet);
 }
 
@@ -330,28 +322,33 @@ void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int f
     if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
     else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
 
-    glEnable(GL_TEXTURE_2D);
+    rlEnableTexture(spriteFont.texture.glId);
 
-    glBindTexture(GL_TEXTURE_2D, spriteFont.texture.glId);
-
-    // Optimized to use one draw call per string
-    glBegin(GL_QUADS);
+    rlBegin(RL_QUADS);
         for(int i = 0; i < length; i++)
         {
             c = spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR];
             
-            glColor4ub(tint.r, tint.g, tint.b, tint.a);
-            glNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
-            glTexCoord2f((float)c.x / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);                     glVertex2f(positionX, position.y);
-            glTexCoord2f((float)c.x / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);             glVertex2f(positionX, position.y + (c.h) * scaleFactor);
-            glTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);     glVertex2f(positionX + (c.w) * scaleFactor, position.y + (c.h) * scaleFactor);
-            glTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);             glVertex2f(positionX + (c.w) * scaleFactor, position.y);
+            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
+            
+            rlTexCoord2f((float)c.x / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);                     
+            rlVertex2f(positionX, position.y);
+            
+            rlTexCoord2f((float)c.x / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);             
+            rlVertex2f(positionX, position.y + (c.h) * scaleFactor);
+            
+            rlTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);     
+            rlVertex2f(positionX + (c.w) * scaleFactor, position.y + (c.h) * scaleFactor);
+            
+            rlTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);             
+            rlVertex2f(positionX + (c.w) * scaleFactor, position.y);
             
             positionX += ((spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR].w) * scaleFactor + spacing);
         }
-    glEnd();
-        
-    glDisable(GL_TEXTURE_2D);
+    rlEnd();
+
+    rlDisableTexture();
 }
 
 // Formatting of text with variables to 'embed'
@@ -361,7 +358,7 @@ const char *FormatText(const char *text, ...)
     
     va_list args;
     va_start(args, text);
-    vsprintf(buffer, text, args);        // NOTE: We use vsprintf() defined in <stdarg.h>
+    vsprintf(buffer, text, args);
     va_end(args);
 
     return buffer;
@@ -417,21 +414,18 @@ void DrawFPS(int posX, int posY)
     char buffer[20];
     
     if (counter < refreshRate)
-    {
-        sprintf(buffer, "%2.0f FPS", fps);
-        DrawText(buffer, posX, posY, 20, LIME);
-        
+    {      
         counter++;
     }
     else
     {
         fps = GetFPS();
         refreshRate = fps;
-        sprintf(buffer, "%2.0f FPS", fps);
-        DrawText(buffer, posX, posY, 20, LIME);
-        
         counter = 0;
     }
+    
+    sprintf(buffer, "%2.0f FPS", fps);
+    DrawText(buffer, posX, posY, 20, LIME);
 }
 
 //----------------------------------------------------------------------------------
@@ -564,7 +558,7 @@ static SpriteFont LoadRBMF(const char *fileName)
 
     fread(&rbmfHeader, sizeof(rbmfInfoHeader), 1, rbmfFile);
     
-    //printf("rBMF info: %i %i %i %i\n", rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
+    TraceLog(INFO, "[%s] Loading rBMF file, size: %ix%i, numChars: %i, charHeight: %i", fileName, rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
     
     spriteFont.numChars = (int)rbmfHeader.numChars;
     
@@ -580,8 +574,6 @@ static SpriteFont LoadRBMF(const char *fileName)
     rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars * sizeof(unsigned char));
     
     for(int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
-    
-    printf("Just read image data and width data... Starting image reconstruction...");
     
     // Re-construct image from rbmfFileData
     //-----------------------------------------
@@ -602,13 +594,13 @@ static SpriteFont LoadRBMF(const char *fileName)
         counter++;
     }
     
-    printf("Image reconstructed correctly... now converting it to texture...");
+    TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
     
     spriteFont.texture = CreateTexture(image);
     
     UnloadImage(image);     // Unload image data
     
-    printf("Starting charSet reconstruction...\n");
+    TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
     
     // Reconstruct charSet using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
     spriteFont.charSet = (Character *)malloc(spriteFont.numChars * sizeof(Character));     // Allocate space for our character data
@@ -637,11 +629,9 @@ static SpriteFont LoadRBMF(const char *fileName)
             spriteFont.charSet[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
         }
         else currentPosX = testPosX;
-        
-        //printf("Char %i data: %i %i %i %i\n", spriteFont.charSet[i].value, spriteFont.charSet[i].x, spriteFont.charSet[i].y, spriteFont.charSet[i].w, spriteFont.charSet[i].h); 
     }
     
-    printf("CharSet reconstructed correctly... Data should be ready...\n");
+    TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
     
     fclose(rbmfFile);
     
@@ -651,6 +641,7 @@ static SpriteFont LoadRBMF(const char *fileName)
     return spriteFont;
 }
 
+// Get the extension for a filename
 static const char *GetExtension(const char *fileName) 
 {
     const char *dot = strrchr(fileName, '.');

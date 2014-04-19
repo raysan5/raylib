@@ -1,15 +1,17 @@
 ﻿/*********************************************************************************************
 * 
-*   raylib 1.0.6 (www.raylib.com)
+*   raylib 1.1 (www.raylib.com)
 *    
 *   A simple and easy-to-use library to learn videogames programming
 *
 *   Features:
 *     Library written in plain C code (C99)
 *     Uses C# PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL 1.1
+*     Hardware accelerated with OpenGL (1.1, 3.3+ or ES2)
+*     Unique OpenGL abstraction layer [rlgl]
 *     Powerful fonts module with SpriteFonts support
-*     Basic 3d support for Shapes and Models
+*     Basic 3d support for Shapes, Models, Heightmaps and Billboards
+*     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing
 *    
 *   Used external libs:
@@ -23,8 +25,9 @@
 *     32bit Textures - All loaded images are converted automatically to RGBA textures
 *     SpriteFonts - All loaded sprite-font images are converted to RGBA and POT textures
 *     One custom default font is loaded automatically when InitWindow()
+*     If using OpenGL 3.3+, one default shader is loaded automatically (internally defined)
 *
-*   -- LICENSE (raylib v1.0, November 2013) --
+*   -- LICENSE (raylib v1.1, March 2014) --
 *
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, 
 *   BSD-like license that allows static linking with closed source software:
@@ -50,6 +53,8 @@
 
 #ifndef RAYLIB_H
 #define RAYLIB_H 
+
+#include "stb_vorbis.h"
 
 //----------------------------------------------------------------------------------
 // Some basic Defines
@@ -150,6 +155,19 @@
 // Boolean type
 typedef enum { false, true } bool;
 
+// Vector2 type
+typedef struct Vector2 {
+    float x;
+    float y;
+} Vector2;
+
+// Vector3 type
+typedef struct Vector3 {
+    float x;
+    float y;
+    float z;
+} Vector3;
+
 // Color type, RGBA (32bit)
 typedef struct Color {
     unsigned char r;
@@ -182,29 +200,6 @@ typedef struct Texture2D {
     int height;
 } Texture2D;
 
-// SpriteFont one Character (Glyph) data, defined in text module
-typedef struct Character Character;
-
-// SpriteFont type, includes texture and charSet array data
-typedef struct SpriteFont {
-    Texture2D texture;
-    int numChars;
-    Character *charSet;
-} SpriteFont;
-
-// Vector2 type
-typedef struct Vector2 {
-    float x;
-    float y;
-} Vector2;
-
-// Vector3 type
-typedef struct Vector3 {
-    float x;
-    float y;
-    float z;
-} Vector3;
-
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera {
     Vector3 position;
@@ -212,19 +207,41 @@ typedef struct Camera {
     Vector3 up;
 } Camera;
 
-// Basic 3d Model type
-typedef struct Model {
-    int numVertices;
-    Vector3 *vertices;
-    Vector2 *texcoords;
-    Vector3 *normals;
-} Model;
+typedef struct Character Character;
 
-// Basic Sound source and buffer
+// SpriteFont type
+typedef struct SpriteFont {
+    Texture2D texture;
+    int numChars;
+    Character *charSet;
+} SpriteFont;
+
+// 3d Model type
+// NOTE: If using OpenGL 1.1 loaded in CPU; if OpenGL 3.3+ loaded in GPU
+typedef struct Model Model; // Defined in module: rlgl
+
+// Sound source type
 typedef struct Sound {
     unsigned int source;
     unsigned int buffer;
 } Sound;
+
+typedef struct OggStream OggStream;
+
+// Music type (streamming)
+typedef struct Music {
+    stb_vorbis *stream;
+	stb_vorbis_info info;
+    
+    unsigned int source;
+	unsigned int buffers[2];
+
+	int format;
+ 
+	int bufferSize;
+	int totalSamplesLeft;
+	bool loop;
+} Music;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -357,15 +374,17 @@ const char *FormatText(const char *text, ...);                                  
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires
+void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float lenght, Color color); // Draw cube textured
 void DrawSphere(Vector3 centerPos, float radius, Color color);                                     // Draw sphere
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color);            // Draw sphere with extended parameters
-void DrawSphereWires(Vector3 centerPos, float radius, Color color);                                // Draw sphere wires
+void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color);         // Draw sphere wires
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone wires
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color);                    // Draw a plane
 void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX, int slicesZ, Color color); // Draw a plane with divisions
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
-void DrawGizmo(Vector3 position, bool orbits);                                                     // Draw gizmo (with or without orbits)
+void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
+void DrawGizmoEx(Vector3 position, Vector3 rot, float scale, bool orbits);                    // Draw gizmo with extended parameters
 //DrawTorus(), DrawTeapot() are useless...
 
 //------------------------------------------------------------------------------------
@@ -389,13 +408,18 @@ void CloseAudioDevice();                                        // Close the aud
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 void UnloadSound(Sound sound);                                  // Unload sound
+Music LoadMusic(char *fileName);
+void UnloadMusic(Music music);
 
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound
 void StopSound(Sound sound);                                    // Stop playing a sound
-bool IsPlaying(Sound sound);                                    // Check if a sound is currently playing
+bool SoundIsPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetVolume(Sound sound, float volume);                      // Set volume for a sound (1.0 is base level)
 void SetPitch(Sound sound, float pitch);                        // Set pitch for a sound (1.0 is base level)
+void PlayMusic(Music music);
+void StopMusic(Music music);
+bool MusicIsPlaying();
 
 #ifdef __cplusplus
 }

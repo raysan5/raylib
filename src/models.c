@@ -29,7 +29,9 @@
 #include <stdio.h>       // Standard input/output functions, used to read model files data
 #include <stdlib.h>      // Declares malloc() and free() for memory management
 #include <math.h>        // Used for sin, cos, tan
-#include "vector3.h"     // Basic Vector3 functions
+
+#include "raymath.h"     // Required for data type Matrix and Matrix functions
+#include "rlgl.h"        // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -39,14 +41,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
-// Matrix type (OpenGL style 4x4 - right handed)
-typedef struct Matrix {
-    float m0, m4, m8, m12;
-    float m1, m5, m9, m13;
-    float m2, m6, m10, m14;
-    float m3, m7, m11, m15;
-} Matrix;
+// ...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -57,8 +52,6 @@ typedef struct Matrix {
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static float GetHeightValue(Color pixel);
-static void MatrixTranspose(Matrix *mat);
-static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -68,52 +61,75 @@ static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up);
 // NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color)
 {
-    glPushMatrix();
-        glTranslatef(position.x, position.y, position.z);
-        //glRotatef(rotation, 0.0f, 1.0f, 0.0f);
-        //glScalef(1.0f, 1.0f, 1.0f);
+    float x = position.x;
+    float y = position.y;
+    float z = position.z;
 
-        glBegin(GL_QUADS);
-            glColor4ub(color.r, color.g, color.b, color.a);
+    rlPushMatrix();
+
+        // NOTE: Be careful! Function order matters (scale, translate, rotate)
+        //rlScalef(2.0f, 2.0f, 2.0f);
+        //rlTranslatef(0.0f, 0.0f, 0.0f);
+        //rlRotatef(45, 0, 1, 0);
+    
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);       
             
-            // Front Face
-            glNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-width/2, -height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( width/2, -height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( width/2,  height/2,  lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-width/2,  height/2,  lenght/2);  // Top Left Of The Texture and Quad
-            // Back Face
-            glNormal3f( 0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-width/2, -height/2, -lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-width/2,  height/2, -lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( width/2,  height/2, -lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( width/2, -height/2, -lenght/2);  // Bottom Left Of The Texture and Quad
-            // Top Face
-            glNormal3f( 0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-width/2,  height/2, -lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-width/2,  height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( width/2,  height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( width/2,  height/2, -lenght/2);  // Top Right Of The Texture and Quad
-            // Bottom Face
-            glNormal3f( 0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-width/2, -height/2, -lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( width/2, -height/2, -lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( width/2, -height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-width/2, -height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
-            // Right face
-            glNormal3f( 1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
-            glTexCoord2f(1.0f, 0.0f); glVertex3f( width/2, -height/2, -lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f( width/2,  height/2, -lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f( width/2,  height/2,  lenght/2);  // Top Left Of The Texture and Quad
-            glTexCoord2f(0.0f, 0.0f); glVertex3f( width/2, -height/2,  lenght/2);  // Bottom Left Of The Texture and Quad
-            // Left Face
-            glNormal3f(-1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-width/2, -height/2, -lenght/2);  // Bottom Left Of The Texture and Quad
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(-width/2, -height/2,  lenght/2);  // Bottom Right Of The Texture and Quad
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(-width/2,  height/2,  lenght/2);  // Top Right Of The Texture and Quad
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-width/2,  height/2, -lenght/2);  // Top Left Of The Texture and Quad
-        glEnd();
-    glPopMatrix();
+            // Front Face -----------------------------------------------------
+            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            
+            // Back Face ------------------------------------------------------
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            
+            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            
+            // Top Face -------------------------------------------------------
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Bottom Left
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Bottom Right
+            
+            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Bottom Right
+            
+            // Bottom Face ----------------------------------------------------
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
+            
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Top Right
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Left
+            
+            // Right face -----------------------------------------------------
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Left
+            
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Left
+            
+            // Left Face ------------------------------------------------------
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Right
+            
+            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Right
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw cube (Vector version)
@@ -125,9 +141,130 @@ void DrawCubeV(Vector3 position, Vector3 size, Color color)
 // Draw cube wires
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawCube(position, width, height, lenght, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    float x = position.x;
+    float y = position.y;
+    float z = position.z;
+    
+    rlPushMatrix();
+
+        //rlRotatef(45, 0, 1, 0);
+    
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);       
+            
+            // Front Face -----------------------------------------------------
+            // Bottom Line
+            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            
+            // Left Line
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right
+            
+            // Top Line
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            
+            // Right Line
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
+                
+            // Back Face ------------------------------------------------------
+            // Bottom Line
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            
+            // Left Line
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
+            
+            // Top Line
+            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            
+            // Right Line
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left
+            
+            // Top Face -------------------------------------------------------
+            // Left Line
+            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left Front
+            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Back
+            
+            // Right Line
+            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right Front
+            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Back
+
+            // Bottom Face  ---------------------------------------------------
+            // Left Line
+            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Top Left Front
+            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Left Back
+            
+            // Right Line
+            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Top Right Front
+            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Top Right Back
+        rlEnd();
+    rlPopMatrix();
+}
+
+// Draw cube
+// NOTE: Cube position is the center position
+void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float lenght, Color color)
+{
+    float x = position.x;
+    float y = position.y;
+    float z = position.z;
+
+    rlEnableTexture(texture.glId);
+    
+    rlPushMatrix();      
+        // NOTE: Be careful! Function order matters (scale, translate, rotate)
+        //rlScalef(2.0f, 2.0f, 2.0f);
+        //rlTranslatef(2.0f, 0.0f, 0.0f);
+        //rlRotatef(45, 0, 1, 0);
+    
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);           
+            // Front Face
+            rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left Of The Texture and Quad
+            // Back Face
+            rlNormal3f( 0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Left Of The Texture and Quad
+            // Top Face
+            rlNormal3f( 0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            // Bottom Face
+            rlNormal3f( 0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            // Right face
+            rlNormal3f( 1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            // Left Face
+            rlNormal3f(-1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+        rlEnd();
+    rlPopMatrix();
+    
+    rlDisableTexture();
 }
 
 // Draw sphere
@@ -139,200 +276,197 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 // Draw sphere with extended parameters
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    float lat0, z0, zr0;
-    float lat1, z1, zr1;
-    float lng, x, y;
-    
-    glPushMatrix();
-        glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-        glRotatef(90, 1, 0, 0);
-        glScalef(radius, radius, radius);
+    rlPushMatrix();
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
+        //rlRotatef(rotation, 0, 1, 0);
+        rlScalef(radius, radius, radius);
         
-        glBegin(GL_QUAD_STRIP);
-                    
-            glColor4ub(color.r, color.g, color.b, color.a);
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
             
-            for(int i = 0; i <= rings; i++) 
+            for(int i = 0; i < 2 * rings + 1; i ++)
             {
-                lat0 = PI * (-0.5 + (float)(i - 1) / rings);
-                z0  = sin(lat0);
-                zr0 =  cos(lat0);
-            
-                lat1 = PI * (-0.5 + (float)i / rings);
-                z1 = sin(lat1);
-                zr1 = cos(lat1);
-        
-                for(int j = 0; j <= slices; j++) 
+                for(int j = 0; j < slices; j++)
                 {
-                    lng = 2 * PI * (float)(j - 1) / slices;
-                    x = cos(lng);
-                    y = sin(lng);
-        
-                    glNormal3f(x * zr0, y * zr0, z0);
-                    glVertex3f(x * zr0, y * zr0, z0);
-                    
-                    glNormal3f(x * zr1, y * zr1, z1);
-                    glVertex3f(x * zr1, y * zr1, z1);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*i)) * sin(DEG2RAD*(j*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*i)) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*i)) * cos(DEG2RAD*(j*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i+1))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i+1))) * sin(DEG2RAD*(j*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i+1))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i+1))) * cos(DEG2RAD*(j*360/slices)) * radius);
+
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*i)) * sin(DEG2RAD*(j*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*i)) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*i)) * cos(DEG2RAD*(j*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i))) * sin(DEG2RAD*((j+1)*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i))) * cos(DEG2RAD*((j+1)*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i+1))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)) * radius);
                 }
             }
-        glEnd();
-    glPopMatrix();
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw sphere wires
-void DrawSphereWires(Vector3 centerPos, float radius, Color color)
+void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawSphere(centerPos, radius, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-}
-
-// Draw a cylinder/cone
-void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color)    // Could be used for pyramid and cone!
-{
-    Vector3 a = { position.x, position.y + height, position.z };
-    Vector3 d = { 0.0f, 1.0f, 0.0f };
-    Vector3 p;
-    Vector3 c = { a.x + (-d.x * height), a.y + (-d.y * height), a.z + (-d.z * height) };    //= a + (-d * h);
-    Vector3 e0 = VectorPerpendicular(d);
-    Vector3 e1 = VectorCrossProduct(e0, d);
-    float angInc = 360.0 / slices * DEG2RAD;
-
-    if (radiusTop == 0)    // Draw pyramid or cone
-    {
-        //void drawCone(const Vector3 &d, const Vector3 &a, const float h, const float rd, const int n)
-        //d – axis defined as a normalized vector from base to apex
-        //a – position of apex (top point)
-        //h – height
-        //rd – radius of directrix
-        //n – number of radial "slices"
+    rlPushMatrix();
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
+        //rlRotatef(rotation, 0, 1, 0);
+        rlScalef(radius, radius, radius);
         
-        glPushMatrix();
-            //glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-            //glRotatef(degrees, 0.0f, 1.0f, 0.0f);
-            //glScalef(1.0f, 1.0f, 1.0f);
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
             
-            // Draw cone top
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(a.x, a.y, a.z);
-                for (int i = 0; i <= slices; i++) 
+            for(int i = 0; i < 2 * rings + 1; i ++)
+            {
+                for(int j = 0; j < slices; j++)
                 {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-         
-            // Draw cone bottom
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(c.x, c.y, c.z);
-                for (int i = slices; i >= 0; i--) 
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-            
-        glPopMatrix();
-    }
-    else    // Draw cylinder
-    {
-        glPushMatrix();
-            //glTranslatef(centerPos.x, centerPos.y, centerPos.z);
-            //glRotatef(degrees, 0.0f, 1.0f, 0.0f);
-            //glScalef(1.0f, 1.0f, 1.0f);
-
-            // Draw cylinder top (pointed cap)
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(c.x, c.y + height, c.z);
-                for (int i = slices; i >= 0; i--) 
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusTop);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusTop) + height;
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusTop);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-            
-            // Draw cylinder sides
-            glBegin(GL_TRIANGLE_STRIP);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                for (int i = slices; i >= 0; i--)
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusTop);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusTop) + height;
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusTop);
-                    glVertex3f(p.x, p.y, p.z);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*i)) * sin(DEG2RAD*(j*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*i)) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*i)) * cos(DEG2RAD*(j*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i+1))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)) * radius);
                     
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i+1))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i+1))) * sin(DEG2RAD*(j*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i+1))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i+1))) * cos(DEG2RAD*(j*360/slices)) * radius);
+                    
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*(i+1))) * sin(DEG2RAD*(j*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*(i+1))) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*(i+1))) * cos(DEG2RAD*(j*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(90/rings)*i)) * sin(DEG2RAD*(j*360/slices)) * radius, 
+                               sin(DEG2RAD*(270+(90/rings)*i)) * radius, 
+                               cos(DEG2RAD*(270+(90/rings)*i)) * cos(DEG2RAD*(j*360/slices)) * radius);
                 }
-            glEnd();
-            
-            // Draw cylinder bottom
-            glBegin(GL_TRIANGLE_FAN);
-                glColor4ub(color.r, color.g, color.b, color.a);
-                glVertex3f(c.x, c.y, c.z);
-                for (int i = slices; i >= 0; i--) 
-                {
-                    float rad = angInc * i;
-                    p.x = c.x + (((e0.x * cos(rad)) + (e1.x * sin(rad))) * radiusBottom);
-                    p.y = c.y + (((e0.y * cos(rad)) + (e1.y * sin(rad))) * radiusBottom);
-                    p.z = c.z + (((e0.z * cos(rad)) + (e1.z * sin(rad))) * radiusBottom);
-                    glVertex3f(p.x, p.y, p.z);
-                }
-            glEnd();
-            
-        glPopMatrix();
-    }
+            }
+        rlEnd();
+    rlPopMatrix();
 }
 
-// Draw a cylinder/cone wires
-void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color)
+// Draw a cylinder
+// NOTE: It could be also used for pyramid and cone
+void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawCylinder(position, radiusTop, radiusBottom, height, slices, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (sides < 3) sides = 3;
+    
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            if (radiusTop > 0)
+            {
+                // Draw Body -------------------------------------------------------------------------------------
+                for(int i = 0; i < 360; i += 360/sides)
+                {
+                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom); //Bottom Right
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop); //Top Right
+                    
+                    rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop); //Top Left
+                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop); //Top Right
+                }
+                
+                // Draw Cap --------------------------------------------------------------------------------------
+                for(int i = 0; i < 360; i += 360/sides)
+                {
+                    rlVertex3f(0, height, 0);
+                    rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
+                }
+            }
+            else
+            {
+                // Draw Cone -------------------------------------------------------------------------------------
+                for(int i = 0; i < 360; i += 360/sides)
+                {
+                    rlVertex3f(0, height, 0);
+                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                }
+            }
+            
+            // Draw Base -----------------------------------------------------------------------------------------
+            for(int i = 0; i < 360; i += 360/sides)
+            {
+                rlVertex3f(0, 0, 0);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+            }
+        rlEnd();    
+    rlPopMatrix();
+}
+
+// Draw a wired cylinder
+// NOTE: It could be also used for pyramid and cone
+void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
+{
+    if(sides < 3) sides = 3;
+    
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+        
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+          
+            for(int i = 0; i < 360; i += 360/sides)
+            {
+                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                
+                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
+                
+                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
+                rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
+                
+                rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
+                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+            }
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw a plane
+// TODO: Test this function
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
 {
     // NOTE: Plane is always created on XZ ground and then rotated
-    glPushMatrix();
-        glTranslatef(centerPos.x, centerPos.y, centerPos.z);
+    rlPushMatrix();
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         
         // TODO: Review multiples rotations Gimbal-Lock... use matrix or quaternions...
-        glRotatef(rotation.x, 1, 0, 0);
-        glRotatef(rotation.y, 0, 1, 0);
-        glRotatef(rotation.z, 0, 0, 1);
-        glScalef(size.x, 1.0f, size.y);
+        rlRotatef(rotation.x, 1, 0, 0);
+        rlRotatef(rotation.y, 0, 1, 0);
+        rlRotatef(rotation.z, 0, 0, 1);
+        rlScalef(size.x, 1.0f, size.y);
     
-        glBegin(GL_QUADS);
-            glColor4ub(color.r, color.g, color.b, color.a);
-            glNormal3f(0.0f, 1.0f, 0.0f); 
-            glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.0f, -0.5f);
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.0f, -0.5f);
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.0f, 0.5f);
-            glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.0f, 0.5f);
-        glEnd();
-
-    glPopMatrix();
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 1.0f, 0.0f); 
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, -0.5f);
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(0.5f, 0.0f, -0.5f);
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(0.5f, 0.0f, 0.5f);
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(-0.5f, 0.0f, 0.5f);
+        rlEnd();
+    rlPopMatrix();
 }
 
 // Draw a plane with divisions
+// TODO: Test this function
 void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX, int slicesZ, Color color)
 {
     float quadWidth = size.x / slicesX;
@@ -342,129 +476,178 @@ void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX,
     float texPieceH = 1 / size.y;
 
     // NOTE: Plane is always created on XZ ground and then rotated
-    glPushMatrix();
-        glTranslatef(-size.x / 2, 0.0f, -size.y / 2);
-        glTranslatef(centerPos.x, centerPos.y, centerPos.z);
+    rlPushMatrix();
+        rlTranslatef(-size.x / 2, 0.0f, -size.y / 2);
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         
         // TODO: Review multiples rotations Gimbal-Lock... use matrix or quaternions...
-        glRotatef(rotation.x, 1, 0, 0);
-        glRotatef(rotation.y, 0, 1, 0);
-        glRotatef(rotation.z, 0, 0, 1);
+        rlRotatef(rotation.x, 1, 0, 0);
+        rlRotatef(rotation.y, 0, 1, 0);
+        rlRotatef(rotation.z, 0, 0, 1);
     
-        glBegin(GL_QUADS);
-            glColor4ub(color.r, color.g, color.b, color.a);
-            glNormal3f(0.0f, 1.0f, 0.0f);
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 1.0f, 0.0f);
             
             for (int z = 0; z < slicesZ; z++)
             {
                 for (int x = 0; x < slicesX; x++)
                 {
                     // Draw the plane quad by quad (with textcoords)
-                    glTexCoord2f((float)x * texPieceW, (float)z * texPieceH);
-                    glVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght);
+                    rlTexCoord2f((float)x * texPieceW, (float)z * texPieceH);
+                    rlVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght);
                     
-                    glTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH);
-                    glVertex3f((float)x * quadWidth  + quadWidth, 0.0f, (float)z * quadLenght);
+                    rlTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH);
+                    rlVertex3f((float)x * quadWidth  + quadWidth, 0.0f, (float)z * quadLenght);
                     
-                    glTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH + texPieceH);
-                    glVertex3f((float)x * quadWidth + quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
+                    rlTexCoord2f((float)x * texPieceW + texPieceW, (float)z * texPieceH + texPieceH);
+                    rlVertex3f((float)x * quadWidth + quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
                     
-                    glTexCoord2f((float)x * texPieceW, (float)z * texPieceH + texPieceH);
-                    glVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
+                    rlTexCoord2f((float)x * texPieceW, (float)z * texPieceH + texPieceH);
+                    rlVertex3f((float)x * quadWidth, 0.0f, (float)z * quadLenght + quadLenght);
                 }
             }
-        glEnd();
+        rlEnd();
 
-    glPopMatrix();
+    rlPopMatrix();
 }
 
 // Draw a grid centered at (0, 0, 0)
 void DrawGrid(int slices, float spacing)
 {
     int halfSlices = slices / 2;
-    
-    //glEnable(GL_LINE_SMOOTH);                    // Smoothies circle outline (anti-aliasing applied)
-    //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);      // Best quality for line smooth (anti-aliasing best algorithm)
 
-    glPushMatrix();
-        glScalef(spacing, 1.0f, spacing);
-
-        glBegin(GL_LINES);
-            for(int i = -halfSlices; i <= halfSlices; i++)
+    rlBegin(RL_LINES);
+        for(int i = -halfSlices; i <= halfSlices; i++)
+        {
+            if (i == 0)
             {
-                if (i == 0) glColor3f(0.5f, 0.5f, 0.5f);
-                else glColor3f(0.75f, 0.75f, 0.75f);
-                
-                glVertex3f((float)i, 0.0f, (float)-halfSlices);
-                glVertex3f((float)i, 0.0f, (float)halfSlices);
-
-                glVertex3f((float)-halfSlices, 0.0f, (float)i);
-                glVertex3f((float)halfSlices, 0.0f, (float)i);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
             }
-        glEnd();
-        
-    glPopMatrix();
-    
-    //glDisable(GL_LINE_SMOOTH);
+            else
+            {
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+            }
+            
+            rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
+            rlVertex3f((float)i*spacing, 0.0f, (float)halfSlices*spacing);
+
+            rlVertex3f((float)-halfSlices*spacing, 0.0f, (float)i*spacing);
+            rlVertex3f((float)halfSlices*spacing, 0.0f, (float)i*spacing);
+        }
+    rlEnd();
 }
 
-// Draw gizmo (with or without orbits)
-void DrawGizmo(Vector3 position, bool orbits)
+// Draw gizmo
+void DrawGizmo(Vector3 position)
 {
     // NOTE: RGB = XYZ
     float lenght = 1.0f;
-    float radius = 1.0f;
+
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+        //rlRotatef(rotation, 0, 1, 0);
+        rlScalef(lenght, lenght, lenght);
     
-    //glEnable(GL_LINE_SMOOTH);                    // Smoothies circle outline (anti-aliasing applied)
-    //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);      // Best quality for line smooth (anti-aliasing best algorithm)
-    
-    glPushMatrix();
-        glTranslatef(position.x, position.y, position.z);
-        //glRotatef(rotation, 0, 1, 0);
-        glScalef(lenght, lenght, lenght);
-    
-        glBegin(GL_LINES);
-            glColor3f(1.0f, 0.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            glVertex3f(1.0f, 0.0f, 0.0f);
+        rlBegin(RL_LINES);
+            rlColor3f(1.0f, 0.0f, 0.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
+            rlColor3f(1.0f, 0.0f, 0.0f); rlVertex3f(1.0f, 0.0f, 0.0f);
             
-            glColor3f(0.0f, 1.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            glVertex3f(0.0f, 1.0f, 0.0f);
+            rlColor3f(0.0f, 1.0f, 0.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
+            rlColor3f(0.0f, 1.0f, 0.0f); rlVertex3f(0.0f, 1.0f, 0.0f);
             
-            glColor3f(0.0f, 0.0f, 1.0f);
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, 1.0f);
-        glEnd();
-        
-        if (orbits)
-        {
-            glBegin(GL_LINE_LOOP);
-                glColor4f(1.0f, 0.0f, 0.0f, 0.4f);
-                for (int i=0; i < 360; i++) glVertex3f(sin(DEG2RAD*i) * radius, 0, cos(DEG2RAD*i) * radius);
-            glEnd();
+            rlColor3f(0.0f, 0.0f, 1.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
+            rlColor3f(0.0f, 0.0f, 1.0f); rlVertex3f(0.0f, 0.0f, 1.0f);
+        rlEnd();    
+    rlPopMatrix();
+}
+
+void DrawGizmoEx(Vector3 position, Vector3 rot, float scale, bool orbits)
+{
+    static float rotation = 0;
+    // NOTE: RGB = XYZ
+    rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+        rlRotatef(rotation, 0, 1, 0);
+        rlScalef(scale, scale, scale);
+
+        rlBegin(RL_LINES);
+            // X Axis
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x, position.y, position.z);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + 1, position.y, position.z);
             
-            glBegin(GL_LINE_LOOP);
-                glColor4f(0.0f, 1.0f, 0.0f, 0.4f);
-                for (int i=0; i < 360; i++) glVertex3f(sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius, 0);
-            glEnd();
+            // ArrowX
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + 1.1, position.y, position.z);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + .9, position.y, position.z + .1);
             
-            glBegin(GL_LINE_LOOP);
-                glColor4f(0.0f, 0.0f, 1.0f, 0.4f);
-                for (int i=0; i < 360; i++) glVertex3f(0, sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius);
-            glEnd();
-        }
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + 1.1, position.y, position.z);
+            rlColor4ub(200, 0, 0, 255); rlVertex3f(position.x + .9, position.y, position.z - .1);
+            
+            // Y Axis
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y + 1, position.z);
+            
+            // ArrowY
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y + 1.1, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + .1, position.y + .9, position.z);
+            
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x, position.y + 1.1, position.z);
+            rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x - .1, position.y + .9, position.z);
+            
+            // Z Axis
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z - 1);
+            
+            // ArrowZ
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z - 1.1);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + .1, position.y, position.z - .9);
+            
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x, position.y, position.z - 1.1);
+            rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x - .1, position.y, position.z - .9);
+            
+            // Extra
+            if(orbits)
+            {
+                int n = 3;
+                
+                // X Axis
+                for (int i=0; i < 360; i += 6)
+                {
+                    rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n);
+                    rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n);
+                }
+                
+                // Y Axis
+                for (int i=0; i < 360; i += 6)
+                {
+                    rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, 0, position.y + cos(DEG2RAD*i) * scale/n);
+                    rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, 0, position.y + cos(DEG2RAD*(i+6)) * scale/n);
+                }
+                
+                // Z Axis
+                for (int i=0; i < 360; i += 6)
+                {
+                    rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n, 0);
+                    rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n, 0);
+                }
+            }
+        rlEnd();
+    rlPopMatrix();
     
-    glPopMatrix();
-    
-    //glDisable(GL_LINE_SMOOTH);
+    rotation += 0.1f;
 }
 
 // Load a 3d model (.OBJ)
 // TODO: Add comments explaining this function process
 Model LoadModel(const char *fileName)                                    
 {
-    Model model;
+    VertexData vData;
     
     char dataType;
     char comments[200];
@@ -507,7 +690,6 @@ Model LoadModel(const char *fileName)
                     {
                         fscanf(objFile, "%i", &numTexCoords);
                     }
-                    else printf("Ouch! Something was wrong...");
                     
                     fgets(comments, 200, objFile);
                 }
@@ -526,7 +708,6 @@ Model LoadModel(const char *fileName)
                     {
                         fscanf(objFile, "%i", &numNormals);
                     }
-                    else printf("Ouch! Something was wrong...");
                 
                     fgets(comments, 200, objFile);
                 }
@@ -545,7 +726,6 @@ Model LoadModel(const char *fileName)
                     {
                         fscanf(objFile, "%i", &numVertex);
                     }
-                    else printf("Ouch! Something was wrong...");
                     
                     fgets(comments, 200, objFile);
                 }
@@ -565,7 +745,6 @@ Model LoadModel(const char *fileName)
                 {
                     fscanf(objFile, "%i", &numTriangles);
                 }
-                else printf("Ouch! Something was wrong...");
                 
                 fgets(comments, 200, objFile);
             
@@ -578,17 +757,19 @@ Model LoadModel(const char *fileName)
     Vector3 midNormals[numNormals];
     Vector2 midTexCoords[numTexCoords];
     
-    model.numVertices = numTriangles*3;
-
-    model.vertices = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
-    model.normals = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
-    model.texcoords = (Vector2 *)malloc(model.numVertices * sizeof(Vector2));
+    vData.numVertices = numTriangles*3;
+    
+    vData.vertices = (float *)malloc(vData.numVertices * 3 * sizeof(float));
+    vData.texcoords = (float *)malloc(vData.numVertices * 2 * sizeof(float));
+    vData.normals = (float *)malloc(vData.numVertices * 3 * sizeof(float));
     
     int countVertex = 0;
     int countNormals = 0;
     int countTexCoords = 0;
     
-    int countMaxVertex = 0;
+    int vCounter = 0;       // Used to count vertices float by float
+    int tcCounter = 0;      // Used to count texcoords float by float
+    int nCounter = 0;       // Used to count normals float by float
     
     rewind(objFile);
     
@@ -632,31 +813,58 @@ Model LoadModel(const char *fileName)
             } break;
             case 'f':
             {
+                // At this point all vertex data (v, vt, vn) have been gathered on midVertices, midTexCoords, midNormals
+                // Now we can organize that data into our VertexData struct
+            
                 int vNum, vtNum, vnNum;
                 fscanf(objFile, "%c", &dataType);
                 fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
                 
-                model.vertices[countMaxVertex] = midVertices[vNum-1];
-                model.normals[countMaxVertex] = midNormals[vnNum-1];
-                model.texcoords[countMaxVertex].x = midTexCoords[vtNum-1].x;
-                model.texcoords[countMaxVertex].y = -midTexCoords[vtNum-1].y;
-                countMaxVertex++;
-                                
+                vData.vertices[vCounter] = midVertices[vNum-1].x;
+                vData.vertices[vCounter + 1] = midVertices[vNum-1].y;
+                vData.vertices[vCounter + 2] = midVertices[vNum-1].z;
+                vCounter += 3;
+                
+                vData.normals[nCounter] = midNormals[vnNum-1].x;
+                vData.normals[nCounter + 1] = midNormals[vnNum-1].y;
+                vData.normals[nCounter + 2] = midNormals[vnNum-1].z;
+                nCounter += 3;
+                
+                vData.texcoords[tcCounter] = midTexCoords[vtNum-1].x;
+                vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum-1].y;
+                tcCounter += 2;
+
                 fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
                 
-                model.vertices[countMaxVertex] = midVertices[vNum-1];
-                model.normals[countMaxVertex] = midNormals[vnNum-1];
-                model.texcoords[countMaxVertex].x = midTexCoords[vtNum-1].x;
-                model.texcoords[countMaxVertex].y = -midTexCoords[vtNum-1].y;
-                countMaxVertex++;
+                vData.vertices[vCounter] = midVertices[vNum-1].x;
+                vData.vertices[vCounter + 1] = midVertices[vNum-1].y;
+                vData.vertices[vCounter + 2] = midVertices[vNum-1].z;
+                vCounter += 3;
+                
+                vData.normals[nCounter] = midNormals[vnNum-1].x;
+                vData.normals[nCounter + 1] = midNormals[vnNum-1].y;
+                vData.normals[nCounter + 2] = midNormals[vnNum-1].z;
+                nCounter += 3;
+                
+                vData.texcoords[tcCounter] = midTexCoords[vtNum-1].x;
+                vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum-1].y;
+                tcCounter += 2;
                 
                 fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
                 
-                model.vertices[countMaxVertex] = midVertices[vNum-1];
-                model.normals[countMaxVertex] = midNormals[vnNum-1];
-                model.texcoords[countMaxVertex].x = midTexCoords[vtNum-1].x;
-                model.texcoords[countMaxVertex].y = -midTexCoords[vtNum-1].y;
-                countMaxVertex++;
+                vData.vertices[vCounter] = midVertices[vNum-1].x;
+                vData.vertices[vCounter + 1] = midVertices[vNum-1].y;
+                vData.vertices[vCounter + 2] = midVertices[vNum-1].z;
+                vCounter += 3;
+                
+                vData.normals[nCounter] = midNormals[vnNum-1].x;
+                vData.normals[nCounter + 1] = midNormals[vnNum-1].y;
+                vData.normals[nCounter + 2] = midNormals[vnNum-1].z;
+                nCounter += 3;
+                
+                vData.texcoords[tcCounter] = midTexCoords[vtNum-1].x;
+                vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum-1].y;
+                tcCounter += 2;
             } break;
             default: break;
         }
@@ -664,14 +872,29 @@ Model LoadModel(const char *fileName)
     
     fclose(objFile);
     
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+
+    Model model;
+
+#ifdef USE_OPENGL_11
+    model.data = vData;      // model data is vertex data  
+#else   
+    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
+    
+    // Now that vertex data is uploaded to GPU, we can free arrays
+    free(vData.vertices);
+    free(vData.texcoords);
+    free(vData.normals);
+#endif
+
     return model;
 }
 
 // Load a heightmap image as a 3d model
 Model LoadHeightmap(Image heightmap, float maxHeight)
 {
-    Model model;
-    
+    VertexData vData;
+
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
     
@@ -679,13 +902,16 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     // TODO: Consider resolution when generating model data?
     int numTriangles = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
   
-    model.numVertices = numTriangles*3;
+    vData.numVertices = numTriangles*3;
 
-    model.vertices = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
-    model.normals = (Vector3 *)malloc(model.numVertices * sizeof(Vector3));
-    model.texcoords = (Vector2 *)malloc(model.numVertices * sizeof(Vector2));
+    vData.vertices = (float *)malloc(vData.numVertices * 3 * sizeof(float));
+    vData.normals = (float *)malloc(vData.numVertices * 3 * sizeof(float));
+    vData.texcoords = (float *)malloc(vData.numVertices * 2 * sizeof(float));
     
-    int vCounter = 0;
+    int vCounter = 0;       // Used to count vertices float by float
+    int tcCounter = 0;      // Used to count texcoords float by float
+    int nCounter = 0;       // Used to count normals float by float
+    
     int trisCounter = 0;
     
     float scaleFactor = maxHeight/255;    // TODO: Review scaleFactor calculation
@@ -698,57 +924,83 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             //----------------------------------------------------------
             
             // one triangle - 3 vertex
-            model.vertices[vCounter].x = x;
-            model.vertices[vCounter].y = GetHeightValue(heightmap.pixels[x + z*mapX])*scaleFactor;
-            model.vertices[vCounter].z = z;
+            vData.vertices[vCounter] = x;
+            vData.vertices[vCounter + 1] = GetHeightValue(heightmap.pixels[x + z*mapX])*scaleFactor;
+            vData.vertices[vCounter + 2] = z;
             
-            model.vertices[vCounter+1].x = x;
-            model.vertices[vCounter+1].y = GetHeightValue(heightmap.pixels[x + (z+1)*mapX])*scaleFactor;
-            model.vertices[vCounter+1].z = z+1;
+            vData.vertices[vCounter + 3] = x;
+            vData.vertices[vCounter + 4] = GetHeightValue(heightmap.pixels[x + (z+1)*mapX])*scaleFactor;
+            vData.vertices[vCounter + 5] = z+1;
             
-            model.vertices[vCounter+2].x = x+1;
-            model.vertices[vCounter+2].y = GetHeightValue(heightmap.pixels[(x+1) + z*mapX])*scaleFactor;
-            model.vertices[vCounter+2].z = z;
+            vData.vertices[vCounter + 6] = x+1;
+            vData.vertices[vCounter + 7] = GetHeightValue(heightmap.pixels[(x+1) + z*mapX])*scaleFactor;
+            vData.vertices[vCounter + 8] = z;
             
             // another triangle - 3 vertex
-            model.vertices[vCounter+3] = model.vertices[vCounter+2];
-            model.vertices[vCounter+4] = model.vertices[vCounter+1];
+            vData.vertices[vCounter + 9] = vData.vertices[vCounter + 6];
+            vData.vertices[vCounter + 10] = vData.vertices[vCounter + 7];
+            vData.vertices[vCounter + 11] = vData.vertices[vCounter + 8];
             
-            model.vertices[vCounter+5].x = x+1;
-            model.vertices[vCounter+5].y = GetHeightValue(heightmap.pixels[(x+1) + (z+1)*mapX])*scaleFactor;
-            model.vertices[vCounter+5].z = z+1;
+            vData.vertices[vCounter + 12] = vData.vertices[vCounter + 3];
+            vData.vertices[vCounter + 13] = vData.vertices[vCounter + 4];
+            vData.vertices[vCounter + 14] = vData.vertices[vCounter + 5];
+            
+            vData.vertices[vCounter + 15] = x+1;
+            vData.vertices[vCounter + 16] = GetHeightValue(heightmap.pixels[(x+1) + (z+1)*mapX])*scaleFactor;
+            vData.vertices[vCounter + 17] = z+1;
+            vCounter += 18;     // 6 vertex, 18 floats
             
             // Fill texcoords array with data
             //--------------------------------------------------------------
-            model.texcoords[vCounter].x = (float)x / (mapX-1);
-            model.texcoords[vCounter].y = (float)z / (mapZ-1);
+            vData.texcoords[tcCounter] = (float)x / (mapX-1);
+            vData.texcoords[tcCounter + 1] = (float)z / (mapZ-1);
             
-            model.texcoords[vCounter+1].x = (float)x / (mapX-1);
-            model.texcoords[vCounter+1].y = (float)(z+1) / (mapZ-1);
+            vData.texcoords[tcCounter + 2] = (float)x / (mapX-1);
+            vData.texcoords[tcCounter + 3] = (float)(z+1) / (mapZ-1);
             
-            model.texcoords[vCounter+2].x = (float)(x+1) / (mapX-1);
-            model.texcoords[vCounter+2].y = (float)z / (mapZ-1);
+            vData.texcoords[tcCounter + 4] = (float)(x+1) / (mapX-1);
+            vData.texcoords[tcCounter + 5] = (float)z / (mapZ-1);
             
-            model.texcoords[vCounter+3] = model.texcoords[vCounter+2];
-            model.texcoords[vCounter+4] = model.texcoords[vCounter+1];
+            vData.texcoords[tcCounter + 6] = vData.texcoords[tcCounter + 4];
+            vData.texcoords[tcCounter + 7] = vData.texcoords[tcCounter + 5];
             
-            model.texcoords[vCounter+5].x = (float)(x+1) / (mapX-1);
-            model.texcoords[vCounter+5].y = (float)(z+1) / (mapZ-1);
+            vData.texcoords[tcCounter + 8] = vData.texcoords[tcCounter + 2];
+            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 1];
+            
+            vData.texcoords[tcCounter + 10] = (float)(x+1) / (mapX-1);
+            vData.texcoords[tcCounter + 11] = (float)(z+1) / (mapZ-1);
+            tcCounter += 12;    // 6 texcoords, 12 floats
             
             // Fill normals array with data
             //--------------------------------------------------------------
             // TODO: Review normals calculation
-            model.normals[vCounter] = (Vector3){ 0.0f, 1.0f, 0.0f };
-            model.normals[vCounter+1] = (Vector3){ 0.0f, 1.0f, 0.0f };
-            model.normals[vCounter+2] = (Vector3){ 0.0f, 1.0f, 0.0f };
-            model.normals[vCounter+3] = (Vector3){ 0.0f, 1.0f, 0.0f };
-            model.normals[vCounter+4] = (Vector3){ 0.0f, 1.0f, 0.0f };
-            model.normals[vCounter+5] = (Vector3){ 0.0f, 1.0f, 0.0f };
+            for (int i = 0; i < 18; i += 3)
+            {
+                vData.normals[nCounter + i] = 0.0f;
+                vData.normals[nCounter + i + 1] = 1.0f;
+                vData.normals[nCounter + i + 2] = 0.0f;
+            }
             
-            vCounter += 6;
+            nCounter += 18;     // 6 vertex, 18 floats
+            
             trisCounter += 2;
         }
     }
+    
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+
+    Model model;
+
+#ifdef USE_OPENGL_11
+    model.data = vData;      // model data is vertex data  
+#else   
+    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
+
+    // Now that vertex data is uploaded to GPU, we can free arrays
+    free(vData.vertices);
+    free(vData.texcoords);
+    free(vData.normals);
+#endif
 
     return model;
 }
@@ -756,61 +1008,37 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 // Unload 3d model from memory
 void UnloadModel(Model model)
 {
-    free(model.vertices);
-    free(model.texcoords);
-    free(model.normals);
+#ifdef USE_OPENGL_11
+    free(model.data.vertices);
+    free(model.data.texcoords);
+    free(model.data.normals);
+#endif
+
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+    rlDeleteVertexArrays(model.vaoId);
+#endif
 }
 
 // Draw a model
 void DrawModel(Model model, Vector3 position, float scale, Color color)
 {
-    // NOTE: For models we use Vertex Arrays (OpenGL 1.1)
-    //static int rotation = 0;
-    
-    glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
-    glEnableClientState(GL_NORMAL_ARRAY);                     // Enable normals array
-        
-    glVertexPointer(3, GL_FLOAT, 0, model.vertices);          // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, model.texcoords);       // Pointer to texture coords array
-    glNormalPointer(GL_FLOAT, 0, model.normals);              // Pointer to normals array
-    //glColorPointer(4, GL_UNSIGNED_BYTE, 0, model.colors);   // Pointer to colors array (NOT USED)
-        
-    glPushMatrix();
-        glTranslatef(position.x, position.y, position.z);
-        //glRotatef(rotation * GetFrameTime(), 0, 1, 0);
-        glScalef(scale, scale, scale);
-        
-        glColor4ub(color.r, color.g, color.b, color.a);
-
-        glDrawArrays(GL_TRIANGLES, 0, model.numVertices);
-    glPopMatrix();
-    
-    glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);              // Disable texture coords array
-    glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
-    
-    //rotation += 10;
+    rlglDrawModel(model, position, scale, false);
 }
 
 // Draw a textured model
 void DrawModelEx(Model model, Texture2D texture, Vector3 position, float scale, Color tint)
 {
-    glEnable(GL_TEXTURE_2D);
-    
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
+    rlEnableTexture(texture.glId);
     
     DrawModel(model, position, scale, tint);
     
-    glDisable(GL_TEXTURE_2D);
+    rlDisableTexture();
 }
 
 // Draw a model wires
 void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    DrawModel(model, position, scale, color);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    rlglDrawModel(model, position, scale, true);
 }
 
 // Draw a billboard
@@ -842,20 +1070,18 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     Vector3 c = VectorAdd(center, p2);
     Vector3 d = VectorSubtract(center, p1);
     
-    glEnable(GL_TEXTURE_2D);
-    
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
+    rlEnableTexture(texture.glId);
       
-    glBegin(GL_QUADS);
-        glColor4ub(tint.r, tint.g, tint.b, tint.a);
-        glNormal3f(0.0f, 1.0f, 0.0f); 
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(a.x, a.y, a.z);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(b.x, b.y, b.z);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(c.x, c.y, c.z);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(d.x, d.y, d.z);
-    glEnd();
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        rlNormal3f(0.0f, 1.0f, 0.0f); 
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
+        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
+        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
+        rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
+    rlEnd();
     
-    glDisable(GL_TEXTURE_2D);
+    rlDisableTexture();
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
@@ -887,92 +1113,33 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     Vector3 c = VectorAdd(center, p2);
     Vector3 d = VectorSubtract(center, p1);
     
-    glEnable(GL_TEXTURE_2D);    // Enable textures usage
+    rlEnableTexture(texture.glId);
     
-    glBindTexture(GL_TEXTURE_2D, texture.glId);
-    
-    glBegin(GL_QUADS);
-        glColor4ub(tint.r, tint.g, tint.b, tint.a);
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
         
         // Bottom-left corner for texture and quad
-        glTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
-        glVertex3f(a.x, a.y, a.z);
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+        rlVertex3f(a.x, a.y, a.z);
         
         // Bottom-right corner for texture and quad
-        glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-        glVertex3f(b.x, b.y, b.z);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlVertex3f(b.x, b.y, b.z);
         
         // Top-right corner for texture and quad
-        glTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
-        glVertex3f(c.x, c.y, c.z);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+        rlVertex3f(c.x, c.y, c.z);
         
         // Top-left corner for texture and quad
-        glTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-        glVertex3f(d.x, d.y, d.z);
-    glEnd();
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlVertex3f(d.x, d.y, d.z);
+    rlEnd();
     
-    glDisable(GL_TEXTURE_2D);    // Disable textures usage
+    rlDisableTexture();
 }
 
 // Get current vertex y altitude (proportional to pixel colors in grayscale)
 static float GetHeightValue(Color pixel)
 {
     return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
-}
-
-// Returns camera look-at matrix (view matrix)
-static Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
-{
-    Matrix result;
-    
-    Vector3 z = VectorSubtract(eye, target);
-    VectorNormalize(&z);
-    Vector3 x = VectorCrossProduct(up, z);
-    VectorNormalize(&x);
-    Vector3 y = VectorCrossProduct(z, x);
-    VectorNormalize(&y);
-    
-    result.m0 = x.x;
-    result.m1 = x.y;
-    result.m2 = x.z;
-    result.m3 = -((x.x * eye.x) + (x.y * eye.y) + (x.z * eye.z));
-    result.m4 = y.x;
-    result.m5 = y.y;
-    result.m6 = y.z;
-    result.m7 = -((y.x * eye.x) + (y.y * eye.y) + (y.z * eye.z));
-    result.m8 = z.x;
-    result.m9 = z.y;
-    result.m10 = z.z;
-    result.m11 = -((z.x * eye.x) + (z.y * eye.y) + (z.z * eye.z));
-    result.m12 = 0;
-    result.m13 = 0;
-    result.m14 = 0;
-    result.m15 = 1;
-    
-    return result;
-}
-
-// Transposes provided matrix
-static void MatrixTranspose(Matrix *mat)
-{
-    Matrix temp;
-
-    temp.m0 = mat->m0;
-    temp.m1 = mat->m4;
-    temp.m2 = mat->m8;
-    temp.m3 = mat->m12;
-    temp.m4 = mat->m1;
-    temp.m5 = mat->m5;
-    temp.m6 = mat->m9;
-    temp.m7 = mat->m13;
-    temp.m8 = mat->m2;
-    temp.m9 = mat->m6;
-    temp.m10 = mat->m10;
-    temp.m11 = mat->m14;
-    temp.m12 = mat->m3;
-    temp.m13 = mat->m7;
-    temp.m14 = mat->m11;
-    temp.m15 = mat->m15;
-    
-    *mat = temp;
 }

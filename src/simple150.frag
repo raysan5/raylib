@@ -11,5 +11,4 @@ void main()
 {
     // Output pixel color
     pixelColor = texture(texture0, fragTexCoord) * fragColor;
-    //pixelColor = fragColor;
 }
