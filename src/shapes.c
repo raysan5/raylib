@@ -112,6 +112,7 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
             rlVertex2i(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
             rlVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
+            rlColor4ub(color2.r, color2.g, color2.b, color2.a);
             rlVertex2f(centerX + sin(DEG2RAD*(i+2)) * radius, centerY + cos(DEG2RAD*(i+2)) * radius);
         }
     rlEnd();
@@ -149,17 +150,10 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 // Draw a color-filled rectangle
 void DrawRectangle(int posX, int posY, int width, int height, Color color)
 {
-    rlBegin(RL_QUADS);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlTexCoord2f(0.0f, 0.0f);
-        rlVertex2i(posX, posY);
-        rlTexCoord2f(0.0f, 1.0f); 
-        rlVertex2i(posX, posY + height);
-        rlTexCoord2f(1.0f, 1.0f); 
-        rlVertex2i(posX + width, posY + height);
-        rlTexCoord2f(1.0f, 0.0f);
-        rlVertex2i(posX + width, posY);
-    rlEnd();
+    Vector2 position = { (float)posX, (float)posY };
+    Vector2 size = { (float)width, (float)height };
+
+    DrawRectangleV(position, size, color);
 }
 
 // Draw a color-filled rectangle
@@ -172,26 +166,29 @@ void DrawRectangleRec(Rectangle rec, Color color)
 // NOTE: Gradient goes from bottom (color1) to top (color2)
 void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2)
 {
-    rlBegin(RL_QUADS);
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a);
-        rlVertex2i(posX, posY);
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a);
-        rlVertex2i(posX, posY + height);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-        rlVertex2i(posX + width, posY + height);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-        rlVertex2i(posX + width, posY);
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX, posY);
+        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX, posY + height);
+        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX + width, posY + height);
+        
+        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX, posY);
+        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX + width, posY + height);        
+        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX + width, posY);
     rlEnd();
 }
 
 // Draw a color-filled rectangle (Vector version)
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-    rlBegin(RL_QUADS);
+    rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
+        
         rlVertex2i(position.x, position.y);
         rlVertex2i(position.x, position.y + size.y);
         rlVertex2i(position.x + size.x, position.y + size.y);
+        
+        rlVertex2i(position.x, position.y);
+        rlVertex2i(position.x + size.x, position.y + size.y);        
         rlVertex2i(position.x + size.x, position.y);
     rlEnd();
 }

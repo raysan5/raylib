@@ -1,10 +1,43 @@
 changelog
 ---------
 
-Current Release:    raylib 1.0.6 (March 2014)
+Current Release:    raylib 1.1.0 (April 2014)
 
 NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.1.0 (19 April 2014)
+-----------------------------------------------
+NOTE: 
+  This version supposed a complete internal redesign of the library to support OpenGL 3.3+ and OpenGL ES 2.0.
+  New module [rlgl] has been added to 'translate' immediate mode style functions (i.e. rlVertex3f()) to GL 1.1, 3.3+ or ES2.
+  Another new module [raymath] has also been added with lot of useful 3D math vector-matrix-quaternion functions.
+
+[rlgl] New module, abstracts OpenGL rendering (multiple versions support)
+[raymath] New module, useful 3D math vector-matrix-quaternion functions
+[core] Adapt all OpenGL code (initialization, drawing) to use [rlgl]
+[shapes] Rewrite all shapes drawing functions to use [rlgl]
+[textures] Adapt texture GPU loading to use [rlgl]
+[textures] Added support for DDS images (compressed and uncompressed)
+[textures] CreateTexture() - Redesigned to add mipmap automatic generation
+[textures] DrawTexturePro() - Redesigned and corrected bugs
+[models] Rewrite all 3d-shapes drawing functions to use [rlgl]
+[models] Adapt model loading and drawing to use [rlgl]
+[models] Model struct updated to include texture id
+[models] SetModelTexture() - Added, link a texture to a model
+[models] DrawModelEx() - Redesigned with extended parameters
+[audio] Added music streaming support (OGG files)
+[audio] Added support for OGG files as Sound
+[audio] PlayMusicStream() - Added, open a new music stream and play it
+[audio] StopMusicStream() - Added, stop music stream playing and close stream
+[audio] PauseMusicStream() - Added, pause music stream playing
+[audio] MusicIsPlaying() - Added, to check if music is playing
+[audio] SetMusicVolume() - Added, set volume for music
+[audio] GetMusicTimeLength() - Added, get current music time length (in seconds)
+[audio] GetMusicTimePlayed() - Added, get current music time played (in seconds)
+[utils] Added log tracing functionality - TraceLog(), TraceLogOpen(), TraceLogClose()
+[*] Log tracing messages all around the code
 
 -----------------------------------------------
 Release:     raylib 1.0.6 (16 March 2014)

@@ -115,6 +115,7 @@ Matrix MatrixRotateX(float angle);                      // Returns x-rotation ma
 Matrix MatrixRotateY(float angle);                      // Returns y-rotation matrix (angle in radians)
 Matrix MatrixRotateZ(float angle);                      // Returns z-rotation matrix (angle in radians)
 Matrix MatrixScale(float x, float y, float z);          // Returns scaling matrix
+Matrix MatrixTransform(Vector3 translation, Vector3 rotation, Vector3 scale);   // Returns transformation matrix for a given translation, rotation and scale
 Matrix MatrixMultiply(Matrix left, Matrix right);       // Returns two matrix multiplication
 Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far);  // Returns perspective projection matrix
 Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix

@@ -35,6 +35,8 @@
 
 #include "rlgl.h"         // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
+#include "utils.h"        // Required for function GetExtendion()
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -58,15 +60,6 @@ typedef struct Character {
     int h;
 } Character;
 
-// SpriteFont type, includes texture and charSet array data
-/*
-struct SpriteFont {
-    Texture2D texture;
-    int numChars;
-    Character *charSet;
-};
-*/
-
 //----------------------------------------------------------------------------------
 // Global variables
 //----------------------------------------------------------------------------------
@@ -85,7 +78,6 @@ static bool PixelIsMagenta(Color p);                // Check if a pixel is magen
 static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Character **charSet);    // Parse image pixel data to obtain character set measures
 static int GetNextPOT(int num);                     // Calculate next power-of-two value for a given value
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
-static const char *GetExtension(const char *fileName);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -153,8 +145,7 @@ extern void LoadDefaultFont()
         if (counter > 256) counter = 0;         // Security check...
     }
     
-    defaultFont.texture = CreateTexture(image); // Convert loaded image to OpenGL texture
-
+    defaultFont.texture = CreateTexture(image, false); // Convert loaded image to OpenGL texture
     UnloadImage(image);
     
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, numChars
@@ -192,7 +183,7 @@ extern void LoadDefaultFont()
 
 extern void UnloadDefaultFont()
 {
-    rlDeleteTextures(defaultFont.texture.glId);
+    rlDeleteTextures(defaultFont.texture.id);
     free(defaultFont.charSet);
 }
 
@@ -277,8 +268,7 @@ SpriteFont LoadSpriteFont(const char* fileName)
         image.width = potWidth;
         image.height = potHeight;
         
-        spriteFont.texture = CreateTexture(image); // Convert loaded image to OpenGL texture
-
+        spriteFont.texture = CreateTexture(image, false); // Convert loaded image to OpenGL texture
         UnloadImage(image);
     }
     
@@ -288,7 +278,7 @@ SpriteFont LoadSpriteFont(const char* fileName)
 // Unload SpriteFont from GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
-    rlDeleteTextures(spriteFont.texture.glId);
+    rlDeleteTextures(spriteFont.texture.id);
     free(spriteFont.charSet);
 }
 
@@ -322,7 +312,7 @@ void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int f
     if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
     else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
 
-    rlEnableTexture(spriteFont.texture.glId);
+    rlEnableTexture(spriteFont.texture.id);
 
     rlBegin(RL_QUADS);
         for(int i = 0; i < length; i++)
@@ -513,11 +503,11 @@ static int GetNextPOT(int num)
     if (num != 0)
     {
         num--;
-        num |= (num >> 1);    // Or first 2 bits
+        num |= (num >> 1);     // Or first 2 bits
         num |= (num >> 2);     // Or next 2 bits
         num |= (num >> 4);     // Or next 4 bits
         num |= (num >> 8);     // Or next 8 bits
-        num |= (num >> 16); // Or next 16 bits
+        num |= (num >> 16);    // Or next 16 bits
         num++;
     }
 
@@ -596,8 +586,7 @@ static SpriteFont LoadRBMF(const char *fileName)
     
     TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
     
-    spriteFont.texture = CreateTexture(image);
-    
+    spriteFont.texture = CreateTexture(image, false);
     UnloadImage(image);     // Unload image data
     
     TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
@@ -641,10 +630,12 @@ static SpriteFont LoadRBMF(const char *fileName)
     return spriteFont;
 }
 
-// Get the extension for a filename
-static const char *GetExtension(const char *fileName) 
+// Generate a sprite font from TTF data (font size required)
+static SpriteFont GenerateFromTTF(const char *fileName, int fontSize)
 {
-    const char *dot = strrchr(fileName, '.');
-    if(!dot || dot == fileName) return "";
-    return dot + 1;
+    SpriteFont font;
+    
+    // TODO: Load TTF and generate bitmap font and chars data
+    
+    return font;
 }

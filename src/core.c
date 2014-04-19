@@ -89,11 +89,10 @@ static Color background = { 0, 0, 0, 0 };   // Screen background color
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-extern void LoadDefaultFont();               // [Module: text] Loads default font on InitWindow()
-extern void UnloadDefaultFont();             // [Module: text] Unloads default font from GPU memory
+extern void LoadDefaultFont();              // [Module: text] Loads default font on InitWindow()
+extern void UnloadDefaultFont();            // [Module: text] Unloads default font from GPU memory
 
-extern bool MusicStreamUpdate();             // [Module: audio] Updates buffers for music streamming
-extern void PlayCurrentMusic();              // [Module: audio] Plays current music stream
+extern void UpdateMusicStream();            // [Module: audio] Updates buffers for music streaming
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -103,7 +102,7 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
 static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow* window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow* window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
-static void TakeScreenshot();                                                              // Takes a bitmap (BMP) screenshot and saves it in the same folder as executable
+static void TakeScreenshot();                                                              // Takes a screenshot and saves it in the same folder as executable
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
@@ -304,9 +303,7 @@ void EndDrawing()
     glfwSwapBuffers(window);            // Swap back and front buffers
     glfwPollEvents();                   // Register keyboard/mouse events
     
-    //MusicStreamUpdate();
-    //if (!MusicIsPlaying()) 
-    //PlayCurrentMusic();
+    UpdateMusicStream();        // NOTE: Function checks if music is enabled
     
     currentTime = glfwGetTime();
     drawTime = currentTime - previousTime;
@@ -748,4 +745,6 @@ static void TakeScreenshot()
     free(imgData);
 
     shotNum++;
+    
+    TraceLog(INFO, "[%s] Screenshot taken!", buffer);
 }

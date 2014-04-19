@@ -10,7 +10,7 @@ The following help is highly appreciated:
 	- Translators / Localizators - Can you translate raylib to another language?
 	- Documentation / Tutorials / Example writters - Can you write some tutorial / example?
 	- Web Development - Can you help with the web? Can you setup a forum?
-	- Porting to Linux and OSX - Can you compile and test raylib on another OS?
+	- Porting to Linux, OSX... - Can you compile and test raylib on another OS?
 	- Testers of current features and multiple systems - Can you find some bug on raylib?
 
 If you can not help on any of the above points but you still want to contribute in some way... please, consider helping 
@@ -34,4 +34,4 @@ contact
    * Facebook: [http://www.facebook.com/raylibgames](http://www.facebook.com/raylibgames)
 
    
-[raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"
+[raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"

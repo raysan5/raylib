@@ -31,10 +31,24 @@
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 
-// TODO: Security check in case multiple USE_OPENGL_* defined
+// Security check in case no USE_OPENGL_* defined
+#if !defined(USE_OPENGL_11) && !defined(USE_OPENGL_33) && !defined(USE_OPENGL_ES2)
+    #define USE_OPENGL_11
+#endif
+
+// Security check in case multiple USE_OPENGL_* defined
+#ifdef USE_OPENGL_11
+    #ifdef USE_OPENGL_33
+        #undef USE_OPENGL_33
+    #endif
+    
+    #ifdef USE_OPENGL_ES2
+        #undef USE_OPENGL_ES2
+    #endif   
+#endif
 
 #ifdef USE_OPENGL_11
-    #include <GL/gl.h>      // Extensions loading lib
+    #include <GL/gl.h>      // Basic OpenGL include
 #endif
 
 #ifdef USE_OPENGL_33
@@ -42,7 +56,7 @@
     #include <GL/glew.h>    // Extensions loading lib
 #endif
 
-//#include "glad.h"         // Extensions loading lib? --> REVIEW
+//#include "glad.h"         // Other extensions loading lib? --> REVIEW
 
 #define USE_VBO_DOUBLE_BUFFERS    // Enable VBO double buffers usage --> REVIEW!
 
@@ -56,18 +70,18 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef struct {
-    int numQuads;
-    int texId;
-} QuadsByTexture;
 
+// Vertex buffer (position + color arrays)
+// NOTE: Used for lines and triangles VAOs
 typedef struct {
     int vCounter;
     int cCounter;
     float *vertices;            // 3 components per vertex
     float *colors;              // 4 components per vertex
 } VertexPositionColorBuffer;
-/*
+
+// Vertex buffer (position + texcoords + color arrays)
+// NOTE: Not used
 typedef struct {
     int vCounter;
     int tcCounter;
@@ -76,8 +90,9 @@ typedef struct {
     float *texcoords;           // 2 components per vertex
     float *colors;              // 4 components per vertex
 } VertexPositionColorTextureBuffer;
-*/
-/*
+
+// Vertex buffer (position + texcoords + normals arrays)
+// NOTE: Not used
 typedef struct {
     int vCounter;
     int tcCounter;
@@ -86,7 +101,9 @@ typedef struct {
     float *texcoords;           // 2 components per vertex
     float *normals;             // 3 components per vertex
 } VertexPositionTextureNormalBuffer;
-*/
+
+// Vertex buffer (position + texcoords + colors + indices arrays)
+// NOTE: Used for quads VAO
 typedef struct {
     int vCounter;
     int tcCounter;
@@ -97,11 +114,21 @@ typedef struct {
     unsigned int *indices;      // 6 indices per quad
 } VertexPositionColorTextureIndexBuffer;
 
+// Draw call type
+// NOTE: Used to track required draw-calls, organized by texture
 typedef struct {
-    GLuint texId;
-    int firstVertex;    // Actually, when using glDrawElements, this parameter is useless..
-    int vCount;
+    GLuint textureId;
+    int vertexCount;
 } DrawCall;
+
+// pixel type (same as Color type)
+// NOTE: Used exclusively in mipmap generation functions
+typedef struct {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+} pixel;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -140,7 +167,6 @@ static GLuint quadsBuffer[4];
 
 #ifdef USE_VBO_DOUBLE_BUFFERS
 // Double buffering
-// TODO: REVIEW -> Not getting any performance improvement... why?
 static GLuint vaoQuadsB;
 static GLuint quadsBufferB[4];
 static bool useBufferB = false;
@@ -170,6 +196,11 @@ static void UpdateBuffers();
 // Shader files loading (external) - Not used but useful...
 static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName);
 static char *TextFileRead(char *fn);
+#endif
+
+#ifdef USE_OPENGL_11
+static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
+static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -216,7 +247,7 @@ void rlMatrixMode(int mode)
 {
     if (mode == RL_PROJECTION) currentMatrix = &projection;
     else if (mode == RL_MODELVIEW) currentMatrix = &modelview;
-    //else if (mode == GL_TEXTURE) TODO: NEVER USED!
+    //else if (mode == RL_TEXTURE) // Not supported
     
     currentMatrixMode = mode;
 }
@@ -257,6 +288,7 @@ void rlLoadIdentity()
 void rlTranslatef(float x, float y, float z)
 {
     Matrix mat = MatrixTranslate(x, y, z);
+    MatrixTranspose(&mat);
     
     *currentMatrix = MatrixMultiply(*currentMatrix, mat);
 }
@@ -264,12 +296,14 @@ void rlTranslatef(float x, float y, float z)
 // Multiply the current matrix by a rotation matrix
 void rlRotatef(float angleDeg, float x, float y, float z)
 {
-    // TODO: Rotation matrix --> REVIEW!
+    // TODO: Support rotation in multiple axes
     Matrix rot = MatrixIdentity();
     
     if (x == 1) rot = MatrixRotateX(angleDeg*DEG2RAD);
     else if (y == 1) rot = MatrixRotateY(angleDeg*DEG2RAD);
     else if (z == 1) rot = MatrixRotateZ(angleDeg*DEG2RAD);
+    
+    MatrixTranspose(&rot);
     
     *currentMatrix = MatrixMultiply(*currentMatrix, rot);
 }
@@ -278,6 +312,7 @@ void rlRotatef(float angleDeg, float x, float y, float z)
 void rlScalef(float x, float y, float z)
 {
     Matrix mat = MatrixScale(x, y, z);
+    MatrixTranspose(&mat);
     
     *currentMatrix = MatrixMultiply(*currentMatrix, mat);
 }
@@ -356,12 +391,12 @@ void rlEnd()
 {
     if (useTempBuffer)
     {
-        // IT WORKS!!! --> Refactor...
-        Matrix mat = *currentMatrix;
-        MatrixTranspose(&mat);
+        // NOTE: In this case, *currentMatrix is already transposed because transposing has been applied
+        // independently to translation-scale-rotation matrices -> t(M1 x M2) = t(M2) x t(M1)
+        // This way, rlTranslatef(), rlRotatef()... behaviour is the same than OpenGL 1.1
 
         // Apply transformation matrix to all temp vertices
-        for (int i = 0; i < tempBufferCount; i++) VectorTransform(&tempBuffer[i], mat);
+        for (int i = 0; i < tempBufferCount; i++) VectorTransform(&tempBuffer[i], *currentMatrix);
         
         // Deactivate tempBuffer usage to allow rlVertex3f do its job
         useTempBuffer = false;
@@ -373,7 +408,7 @@ void rlEnd()
         tempBufferCount = 0;
     }
 
-    // Make sure vertexCounter is the same for vertices-texcoords-normals-colors
+    // Make sure vertexCount is the same for vertices-texcoords-normals-colors
     // NOTE: In OpenGL 1.1, one glColor call can be made for all the subsequent glVertex calls.
     switch (currentDrawMode)
     {
@@ -490,7 +525,7 @@ void rlVertex3f(float x, float y, float z)
                 
                 quads.vCounter++;
                 
-                draws[drawsCounter - 1].vCount++;
+                draws[drawsCounter - 1].vertexCount++;
                 
             } break;
             default: break;
@@ -596,13 +631,12 @@ void rlEnableTexture(unsigned int id)
 #endif
 
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    if (draws[drawsCounter - 1].texId != id)
+    if (draws[drawsCounter - 1].textureId != id)
     {
-        if (draws[drawsCounter - 1].vCount > 0) drawsCounter++;
+        if (draws[drawsCounter - 1].vertexCount > 0) drawsCounter++;
         
-        draws[drawsCounter - 1].texId = id;
-        draws[drawsCounter - 1].firstVertex = draws[drawsCounter - 2].vCount;
-        draws[drawsCounter - 1].vCount = 0;
+        draws[drawsCounter - 1].textureId = id;
+        draws[drawsCounter - 1].vertexCount = 0;
     }
 #endif
 }
@@ -708,9 +742,7 @@ void rlglInit()
     projectionMatrixLoc = glGetUniformLocation(shaderProgram, "projectionMatrix");
     
     // Get handles to GLSL uniform vars locations (fragment-shader)
-    textureLoc  = glGetUniformLocation(shaderProgram, "texture0");
-    
-    TraceLog(INFO, "Default shader loaded");
+    textureLoc = glGetUniformLocation(shaderProgram, "texture0");
     
     InitializeBuffers();    // Init vertex arrays
     InitializeVAOs();       // Init VBO and VAO
@@ -723,9 +755,9 @@ void rlglInit()
     // Create default white texture for plain colors (required by shader)
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
     
-    whiteTexture = rlglLoadTexture(1, 1, pixels);
+    whiteTexture = rlglLoadTexture(pixels, 1, 1, false);
     
-    if (whiteTexture != 0) TraceLog(INFO, "Base white texture successfully created, id: %i", whiteTexture);
+    if (whiteTexture != 0) TraceLog(INFO, "[ID %i] Base white texture created successfully", whiteTexture);
     else TraceLog(WARNING, "Base white texture could not be created");
     
     // Init draw calls tracking system
@@ -733,13 +765,12 @@ void rlglInit()
     
     for (int i = 0; i < MAX_DRAWS_BY_TEXTURE; i++)
     {
-        draws[i].texId = 0;
-        draws[i].firstVertex = 0;
-        draws[i].vCount = 0;
+        draws[i].textureId = 0;
+        draws[i].vertexCount = 0;
     }
     
     drawsCounter = 1;
-    draws[drawsCounter - 1].texId = whiteTexture;
+    draws[drawsCounter - 1].textureId = whiteTexture;
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -789,6 +820,8 @@ void rlglClose()
     
     // Free GPU texture
     glDeleteTextures(1, &whiteTexture);
+    
+    free(draws);
 }
 
 void rlglDraw()
@@ -823,7 +856,7 @@ void rlglDraw()
     
     if (quads.vCounter > 0)
     {
-        int numQuads = 0;
+        int quadsCount = 0;
         int numIndicesToProcess = 0;
         int indicesOffset = 0;
 
@@ -836,21 +869,21 @@ void rlglDraw()
             glBindVertexArray(vaoQuads);
         }
         
-        //TraceLog(INFO, "Draws required per frame: %i", drawsCounter);
+        //TraceLog(DEBUG, "Draws required per frame: %i", drawsCounter);
      
         for (int i = 0; i < drawsCounter; i++)
         {
-            numQuads = draws[i].vCount/4;
-            numIndicesToProcess = numQuads*6;  // Get number of Quads * 6 index by Quad
+            quadsCount = draws[i].vertexCount/4;
+            numIndicesToProcess = quadsCount*6;  // Get number of Quads * 6 index by Quad
             
-            //TraceLog(INFO, "Quads to render: %i - Vertex Count: %i", numQuads, draws[i].vCount);
+            //TraceLog(DEBUG, "Quads to render: %i - Vertex Count: %i", quadsCount, draws[i].vertexCount);
 
-            glBindTexture(GL_TEXTURE_2D, draws[i].texId);
+            glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
             
             // NOTE: The final parameter tells the GPU the offset in bytes from the start of the index buffer to the location of the first index to process
             glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid*) (sizeof(GLuint) * indicesOffset));
 
-            indicesOffset += draws[i].vCount/4*6;
+            indicesOffset += draws[i].vertexCount/4*6;
         }
     }
     
@@ -859,9 +892,8 @@ void rlglDraw()
     
     // Reset draws counter
     drawsCounter = 1;
-    draws[0].texId = whiteTexture;
-    draws[0].firstVertex = 0;
-    draws[0].vCount = 0;
+    draws[0].textureId = whiteTexture;
+    draws[0].vertexCount = 0;
     
     // Reset vertex counters for next frame
     lines.vCounter = 0;
@@ -883,52 +915,71 @@ void rlglDraw()
 #endif      // End for OpenGL 3.3+ and ES2 only functions
 
 // Draw a 3d model
-void rlglDrawModel(Model model, Vector3 position, float scale, bool wires)
+void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires)
 {
     if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
 #ifdef USE_OPENGL_11
-    // NOTE: For models we use Vertex Arrays (OpenGL 1.1)
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, model.textureId);
+
+    // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
     glEnableClientState(GL_NORMAL_ARRAY);                     // Enable normals array
         
-    glVertexPointer(3, GL_FLOAT, 0, model.data.vertices);     // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, model.data.texcoords);  // Pointer to texture coords array
-    glNormalPointer(GL_FLOAT, 0, model.data.normals);         // Pointer to normals array
+    glVertexPointer(3, GL_FLOAT, 0, model.mesh.vertices);     // Pointer to vertex coords array
+    glTexCoordPointer(2, GL_FLOAT, 0, model.mesh.texcoords);  // Pointer to texture coords array
+    glNormalPointer(GL_FLOAT, 0, model.mesh.normals);         // Pointer to normals array
     //glColorPointer(4, GL_UNSIGNED_BYTE, 0, model.colors);   // Pointer to colors array (NOT USED)
-        
+    
+    //TraceLog(DEBUG, "Drawing model.mesh, VertexCount: %i", model.mesh.vertexCount);
+    
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
-        //rlRotatef(rotation * GetFrameTime(), 0, 1, 0);
-        rlScalef(scale, scale, scale);
+        rlScalef(scale.x, scale.y, scale.z);
+        //rlRotatef(rotation, 0, 1, 0);
         
-        rlColor4ub(1.0f, 1.0f, 1.0f, 1.0f);
+        // TODO: If rotate in multiple axis, get rotation matrix and use rlMultMatrix()
 
-        glDrawArrays(GL_TRIANGLES, 0, model.data.numVertices);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
     rlPopMatrix();
     
     glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);              // Disable texture coords array
     glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
+    
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     glUseProgram(shaderProgram);        // Use our shader
     
-    Matrix modelview2 = MatrixMultiply(model.transform, modelview);
+    // Get transform matrix (rotation -> scale -> translation)
+    Matrix transform = MatrixTransform(position, rotation, scale);
+    Matrix modelviewworld = MatrixMultiply(transform, modelview);
     
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
     glUniformMatrix4fv(projectionMatrixLoc, 1, false, GetMatrixVector(projection));
-    glUniformMatrix4fv(modelviewMatrixLoc, 1, false, GetMatrixVector(modelview2));
+    glUniformMatrix4fv(modelviewMatrixLoc, 1, false, GetMatrixVector(modelviewworld));
     glUniform1i(textureLoc, 0);
+    
+    //TraceLog(DEBUG, "ShaderProgram: %i, VAO ID: %i, VertexCount: %i", shaderProgram, model.vaoId, model.mesh.vertexCount);
    
     glBindVertexArray(model.vaoId);
-    //glBindTexture(GL_TEXTURE_2D, model.textureId);
+    
+    // TODO: Update vertex color
+    glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*model.mesh.vertexCount, model.mesh.colors);
+    
+    glBindTexture(GL_TEXTURE_2D, model.textureId);
 
-    glDrawArrays(GL_TRIANGLES, 0, model.numVertices);
+    glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
 
-    //glBindTexture(GL_TEXTURE_2D, 0);    // Unbind textures
+    glBindTexture(GL_TEXTURE_2D, 0);    // Unbind textures
     glBindVertexArray(0);               // Unbind VAO
 #endif
 
@@ -982,8 +1033,7 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-// NOTE: Image is not unloaded, it should be done manually...
-unsigned int rlglLoadTexture(int width, int height, unsigned char *data)
+unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool genMipmaps)
 {
     glBindTexture(GL_TEXTURE_2D,0); // Free any old binding
 
@@ -996,27 +1046,82 @@ unsigned int rlglLoadTexture(int width, int height, unsigned char *data)
     // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used!
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repead on x-axis
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repead on y-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
- 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    // Trilinear filtering
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
-    //glGenerateMipmap(GL_TEXTURE_2D);    // OpenGL 3.3!
-#endif  
 
-    // NOTE: Not using mipmappings (texture for 2D drawing)
-    // At this point we have the image converted to texture and uploaded to GPU
+    bool texIsPOT = false;
     
+    // Check if width and height are power-of-two (POT)
+    if (((width > 0) && ((width & (width - 1)) == 0)) && ((height > 0) && ((height & (height - 1)) == 0))) texIsPOT = true;
+    
+    if (!texIsPOT)
+    {
+        TraceLog(WARNING, "[ID %i] Texture is not power-of-two, mipmaps can not be generated", id);
+        
+        genMipmaps = false;
+    }
+    
+    // If mipmaps are being used, we configure mag-min filters accordingly
+    if (genMipmaps)
+    {
+        // Trilinear filtering with mipmaps
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
+    }
+    else
+    {
+        // Not using mipmappings
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
+    }
+
+#ifdef USE_OPENGL_11
+    if (genMipmaps)
+    {
+        TraceLog(WARNING, "[ID %i] Mipmaps generated manually on CPU side", id);
+
+        // Compute required mipmaps
+        // NOTE: data size is reallocated to fit mipmaps data
+        int mipmapCount = GenerateMipmaps(data, width, height);
+
+        int offset = 0;
+        int size = 0;
+        
+        int mipWidth = width;
+        int mipHeight = height;
+        
+        // Load the mipmaps       
+        for (int level = 0; level < mipmapCount; level++)
+        {
+            glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data + offset);
+            
+            size = mipWidth*mipHeight*4;
+            offset += size;
+            
+            mipWidth /= 2;
+            mipHeight /= 2;
+        }
+    }
+    else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+#endif
+
+
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     
+    if (genMipmaps)
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);  // Generate mipmaps automatically
+        TraceLog(INFO, "[ID %i] Mipmaps generated automatically for new texture", id);
+    }
+    
+#endif
+
     // At this point we have the image converted to texture and uploaded to GPU
     
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
     
-    TraceLog(INFO, "New texture created, id: %i (%i x %i)", id, width, height);
+    TraceLog(INFO, "[ID %i] New texture created (%i x %i)", id, width, height);
     
     return id;
 }
@@ -1024,51 +1129,42 @@ unsigned int rlglLoadTexture(int width, int height, unsigned char *data)
 
 #ifdef USE_OPENGL_33
 
-#define FOURCC_DXT1 0x31545844 // Equivalent to "DXT1" in ASCII
-#define FOURCC_DXT3 0x33545844 // Equivalent to "DXT3" in ASCII
-#define FOURCC_DXT5 0x35545844 // Equivalent to "DXT5" in ASCII
-
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-// NOTE: Expected compressed data from DDS file
-unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format)
+// NOTE: Expected compressed image data and POT image
+unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compFormat)
 {
     // Create one OpenGL texture
     GLuint id;
-    int compFormat = 0;
+    
+    glGenTextures(1, &id);
     
     TraceLog(DEBUG, "Compressed texture width: %i", width);
     TraceLog(DEBUG, "Compressed texture height: %i", height);
     TraceLog(DEBUG, "Compressed texture mipmap levels: %i", mipmapCount);
-    TraceLog(DEBUG, "Compressed texture format: 0x%x", format);
-    
-    switch(format) 
-    { 
-        case FOURCC_DXT1: compFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break; 
-        case FOURCC_DXT3: compFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break; 
-        case FOURCC_DXT5: compFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break; 
-        default: compFormat = -1; break;
-    }
-    
-    if (compFormat == -1)
+    TraceLog(DEBUG, "Compressed texture format: 0x%x", compFormat);
+        
+    if (compFormat == 0)
     {
-        TraceLog(WARNING, "Texture compressed format not recognized");
+        TraceLog(WARNING, "[ID %i] Texture compressed format not recognized", id);
         id = 0;
     }
     else
     {
-        glGenTextures(1, &id);
-
         // Bind the texture
         glBindTexture(GL_TEXTURE_2D, id);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     
-        unsigned int blockSize = (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16; 
-        unsigned int offset = 0;
+        int blockSize = 0;
+        int offset = 0;
+        
+        if (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) blockSize = 8;
+        else blockSize = 16;
         
         // Load the mipmaps 
         for (int level = 0; level < mipmapCount && (width || height); level++) 
         { 
-            unsigned int size = ((width+3)/4)*((height+3)/4)*blockSize;
+            // NOTE: size specifies the number of bytes of image data (S3TC/DXTC)
+            unsigned int size = ((width + 3)/4)*((height + 3)/4)*blockSize;
             
             glCompressedTexImage2D(GL_TEXTURE_2D, level, compFormat, width, height, 0, size, data + offset); 
          
@@ -1100,19 +1196,27 @@ unsigned int rlglLoadModel(VertexData mesh)
  
     // Enable vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.numVertices, mesh.vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.vertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(vertexLoc);
     glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
     
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.numVertices, mesh.texcoords, GL_STATIC_DRAW);      
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.vertexCount, mesh.texcoords, GL_STATIC_DRAW);      
     glEnableVertexAttribArray(texcoordLoc);
     glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
     
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.numVertices, mesh.normals, GL_STATIC_DRAW);   
+    //glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);   
     //glEnableVertexAttribArray(normalLoc);
     //glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*mesh.vertexCount, mesh.colors, GL_STATIC_DRAW);   
+    glEnableVertexAttribArray(colorLoc);
+    glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
+    
+    if (vaoModel > 0) TraceLog(INFO, "[ID %i] Model uploaded successfully to VRAM (GPU)", vaoModel);
+    else TraceLog(WARNING, "Model could not be uploaded to VRAM (GPU)");
     
     return vaoModel;
 }
@@ -1208,6 +1312,9 @@ static GLuint LoadDefaultShaders()
 
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
+    
+    TraceLog(INFO, "[ID %i] Default vertex shader compiled succesfully", vertexShader);
+    TraceLog(INFO, "[ID %i] Default fragment shader compiled succesfully", fragmentShader);
  
     program = glCreateProgram();
     
@@ -1218,6 +1325,8 @@ static GLuint LoadDefaultShaders()
  
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    
+    TraceLog(INFO, "[ID %i] Default shader program loaded succesfully", program);
  
     return program;
 }
@@ -1245,6 +1354,9 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
 
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
+    
+    TraceLog(INFO, "[ID %i] Vertex shader compiled succesfully", vertexShader);
+    TraceLog(INFO, "[ID %i] Fragment shader compiled succesfully", fragmentShader);
  
     program = glCreateProgram();
     
@@ -1255,6 +1367,8 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
  
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    
+    TraceLog(INFO, "[ID %i] Shader program loaded succesfully", program);
  
     return program;
 }
@@ -1364,7 +1478,8 @@ static void InitializeVAOs()
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(colorLoc);
     glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
-
+    
+    TraceLog(INFO, "[ID %i] Lines VAO successfully initialized", vaoLines);
     //-------------------------------------------------------------- 
     
     // Initialize Triangles VAO
@@ -1384,7 +1499,8 @@ static void InitializeVAOs()
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(colorLoc);
     glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
-
+    
+    TraceLog(INFO, "[ID %i] Triangles VAO successfully initialized", vaoTriangles);
     //-------------------------------------------------------------- 
     
     // Initialize Quads VAO (Buffer A)
@@ -1414,6 +1530,8 @@ static void InitializeVAOs()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
     
+    TraceLog(INFO, "[ID %i] Quads VAO successfully initialized", vaoQuads);
+    
 #ifdef USE_VBO_DOUBLE_BUFFERS
     // Initialize Quads VAO (Buffer B)
     glGenVertexArrays(1, &vaoQuadsB);
@@ -1442,10 +1560,8 @@ static void InitializeVAOs()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBufferB[3]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
     
-    TraceLog(INFO, "Using VBO double buffering");
+    TraceLog(INFO, "[ID %i] Second Quads VAO successfully initilized (double buffering)", vaoQuadsB);
 #endif
- 
-    TraceLog(INFO, "Vertex buffers successfully initialized (lines, triangles, quads)\n");
  
     // Unbind the current VAO
     glBindVertexArray(0);
@@ -1540,6 +1656,135 @@ static void UpdateBuffers()
     glBindVertexArray(0);
 }
 
+#endif //defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+
+#ifdef USE_OPENGL_11
+
+// Mipmaps data is generated after image data
+static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
+{
+    int mipmapCount = 1;                // Required mipmap levels count (including base level)
+    int width = baseWidth;
+    int height = baseHeight;
+    int size = baseWidth*baseHeight*4;  // Size in bytes (will include mipmaps...)
+
+    // Count mipmap levels required
+    while ((width != 1) && (height != 1))
+    {
+        if (width != 1) width /= 2;
+        if (height != 1) height /= 2;
+        
+        TraceLog(DEBUG, "Next mipmap size: %i x %i", width, height);
+        
+        mipmapCount++;
+        
+        size += (width*height*4);       // Add mipmap size (in bytes)
+    }
+    
+    TraceLog(DEBUG, "Total mipmaps required: %i", mipmapCount);
+    TraceLog(DEBUG, "Total size of data required: %i", size);
+    
+    unsigned char *temp = realloc(data, size);
+    
+    if (temp != NULL) data = temp;
+    else TraceLog(WARNING, "Mipmaps required memory could not be allocated");
+    
+    width = baseWidth;
+    height = baseHeight;
+    size = (width*height*4);
+    
+    // Generate mipmaps
+    // NOTE: Every mipmap data is stored after data
+    pixel *image = (pixel *)malloc(width*height*sizeof(pixel));
+    pixel *mipmap = NULL;
+    int offset = 0;
+    int j = 0;
+
+    for (int i = 0; i < size; i += 4)
+    {
+        image[j].r = data[i];
+        image[j].g = data[i + 1];
+        image[j].b = data[i + 2];
+        image[j].a = data[i + 3];
+        j++;
+    }
+    
+    TraceLog(DEBUG, "Mipmap base (%i, %i)", width, height);
+    
+    for (int mip = 1; mip < mipmapCount; mip++)
+    {
+        mipmap = GenNextMipmap(image, width, height);
+        
+        offset += (width*height*4); // Size of last mipmap
+        j = 0;
+        
+        width /= 2;
+        height /= 2;
+        size = (width*height*4);    // Mipmap size to store after offset
+
+        // Add mipmap to data
+        for (int i = 0; i < size; i += 4)
+        {
+            data[offset + i] = mipmap[j].r;
+            data[offset + i + 1] = mipmap[j].g;
+            data[offset + i + 2] = mipmap[j].b;
+            data[offset + i + 3] = mipmap[j].a; 
+            j++;
+        }
+
+        free(image);
+        
+        image = mipmap;
+        mipmap = NULL;
+    }
+    
+    free(mipmap);       // free mipmap data
+    
+    return mipmapCount;
+}
+
+// Manual mipmap generation (basic scaling algorithm)
+static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
+{
+    int x2, y2;
+    pixel prow, pcol;
+
+    int width = srcWidth / 2;
+    int height = srcHeight / 2;
+
+    pixel *mipmap = (pixel *)malloc(width*height*sizeof(pixel));
+
+    // Scaling algorithm works perfectly (box-filter)
+    for (int y = 0; y < height; y++) 
+    {
+        y2 = 2 * y;
+
+        for (int x = 0; x < width; x++) 
+        {
+            x2 = 2 * x;
+
+            prow.r = (srcData[y2*srcWidth + x2].r + srcData[y2*srcWidth + x2 + 1].r)/2;
+            prow.g = (srcData[y2*srcWidth + x2].g + srcData[y2*srcWidth + x2 + 1].g)/2;
+            prow.b = (srcData[y2*srcWidth + x2].b + srcData[y2*srcWidth + x2 + 1].b)/2;
+            prow.a = (srcData[y2*srcWidth + x2].a + srcData[y2*srcWidth + x2 + 1].a)/2;
+
+            pcol.r = (srcData[(y2+1)*srcWidth + x2].r + srcData[(y2+1)*srcWidth + x2 + 1].r)/2;
+            pcol.g = (srcData[(y2+1)*srcWidth + x2].g + srcData[(y2+1)*srcWidth + x2 + 1].g)/2;
+            pcol.b = (srcData[(y2+1)*srcWidth + x2].b + srcData[(y2+1)*srcWidth + x2 + 1].b)/2;
+            pcol.a = (srcData[(y2+1)*srcWidth + x2].a + srcData[(y2+1)*srcWidth + x2 + 1].a)/2;
+
+            mipmap[y*width + x].r = (prow.r + pcol.r)/2;
+            mipmap[y*width + x].g = (prow.g + pcol.g)/2;
+            mipmap[y*width + x].b = (prow.b + pcol.b)/2;
+            mipmap[y*width + x].a = (prow.a + pcol.a)/2;
+        }
+    }
+    
+    TraceLog(DEBUG, "Mipmap generated successfully (%i, %i)", width, height);
+
+    return mipmap;
+}
+
 #endif
 
 #ifdef RLGL_STANDALONE
@@ -1555,10 +1800,10 @@ void TraceLog(int msgType, const char *text, ...)
     
     switch(msgType)
     {
-        case 0: fprintf(stdout, "INFO: "); break;
-        case 1: fprintf(stdout, "ERROR: "); break;
-        case 2: fprintf(stdout, "WARNING: "); break;
-        case 3: fprintf(logstream, "DEBUG: "); break;
+        case INFO: fprintf(stdout, "INFO: "); break;
+        case ERROR: fprintf(stdout, "ERROR: "); break;
+        case WARNING: fprintf(stdout, "WARNING: "); break;
+        case DEBUG: fprintf(stdout, "DEBUG: "); break;
         default: break;
     }
     
@@ -1567,6 +1812,6 @@ void TraceLog(int msgType, const char *text, ...)
     
     va_end(args);
     
-    if (msgType == 1) exit(1);
+    if (msgType == ERROR) exit(1);
 }
 #endif

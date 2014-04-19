@@ -46,12 +46,14 @@
 typedef unsigned char byte;
 
 typedef struct {
-    unsigned char *data;
-    int width;
-    int height;
-    int mipmaps;
-    int format;
-} ImageDDS;
+    unsigned char *data;    // Image raw data
+    int width;              // Image base width
+    int height;             // Image base height
+    //int bpp;              // bytes per pixel
+    //int components;       // num color components
+    int mipmaps;            // Mipmap levels, 1 by default
+    int compFormat;         // Compressed data format, 0 if no compression
+} ImageEx;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -66,8 +68,7 @@ typedef struct {
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static const char *GetExtension(const char *fileName);
-static ImageDDS LoadDDS(const char *fileName);
+static ImageEx LoadDDS(const char *fileName);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -77,6 +78,11 @@ static ImageDDS LoadDDS(const char *fileName);
 Image LoadImage(const char *fileName)
 {
     Image image;
+    
+    // Initial values
+    image.pixels = NULL;
+    image.width = 0;
+    image.height = 0;
     
     if ((strcmp(GetExtension(fileName),"png") == 0) ||
         (strcmp(GetExtension(fileName),"bmp") == 0) ||
@@ -115,6 +121,35 @@ Image LoadImage(const char *fileName)
         
         TraceLog(INFO, "[%s] Image loaded successfully", fileName);
     }
+    else if (strcmp(GetExtension(fileName),"dds") == 0)
+    {
+        // NOTE: DDS uncompressed images can also be loaded (discarding mipmaps...)
+        
+        ImageEx imageDDS = LoadDDS(fileName);
+        
+        if (imageDDS.compFormat == 0)
+        {
+            image.pixels = (Color *)malloc(imageDDS.width * imageDDS.height * sizeof(Color));
+            image.width = imageDDS.width;
+            image.height = imageDDS.height;
+            
+            int pix = 0;
+        
+            for (int i = 0; i < (image.width * image.height * 4); i += 4)
+            {
+                image.pixels[pix].r = imageDDS.data[i];
+                image.pixels[pix].g = imageDDS.data[i+1];
+                image.pixels[pix].b = imageDDS.data[i+2];
+                image.pixels[pix].a = imageDDS.data[i+3];
+                pix++;
+            }
+            
+            free(imageDDS.data);
+            
+            TraceLog(INFO, "[%s] Image loaded successfully", fileName);
+        }
+        else TraceLog(WARNING, "[%s] Compressed image data could not be loaded", fileName);    
+    }
     else TraceLog(WARNING, "[%s] Image extension not recognized, it can't be loaded", fileName);
     
     // ALTERNATIVE: We can load pixel data directly into Color struct pixels array, 
@@ -127,7 +162,8 @@ Image LoadImage(const char *fileName)
 // Load an image from rRES file (raylib Resource)
 Image LoadImageFromRES(const char *rresName, int resId)
 {
-    // NOTE: rresName could be directly a char array with all the data!!! ---> TODO!
+    // TODO: rresName could be directly a char array with all the data! --> support it! :P
+    
     Image image;
     bool found = false;
 
@@ -172,8 +208,8 @@ Image LoadImageFromRES(const char *rresName, int resId)
                     if (infoHeader.type == 0)   // IMAGE data type
                     {
                         // TODO: Check data compression type
-                        
                         // NOTE: We suppose compression type 2 (DEFLATE - default)
+
                         short imgWidth, imgHeight;
                         char colorFormat, mipmaps;
                     
@@ -220,11 +256,11 @@ Image LoadImageFromRES(const char *rresName, int resId)
                     // Depending on type, skip the right amount of parameters
                     switch (infoHeader.type)
                     {
-                        case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
-                        case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
-                        case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                        case 3: break;   // TEXT: No parameters
-                        case 4: break;   // RAW: No parameters
+                        case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
+                        case 1: fseek(rresFile, 6, SEEK_CUR); break;    // SOUND: Jump 6 bytes of parameters
+                        case 2: fseek(rresFile, 5, SEEK_CUR); break;    // MODEL: Jump 5 bytes of parameters (TODO: Review)
+                        case 3: break;                                  // TEXT: No parameters
+                        case 4: break;                                  // RAW: No parameters
                         default: break;
                     }
                     
@@ -249,19 +285,26 @@ Texture2D LoadTexture(const char *fileName)
 
     if (strcmp(GetExtension(fileName),"dds") == 0)
     {
-#ifdef USE_OPENGL_11 
-        TraceLog(WARNING, "[%s] DDS file loading requires OpenGL 3.2+ or ES 2.0", fileName);
-#else
-        ImageDDS image = LoadDDS(fileName);
+        ImageEx image = LoadDDS(fileName);
         
-        texture.glId = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.format);
-
+        if (image.compFormat == 0)
+        {
+            texture.id = rlglLoadTexture(image.data, image.width, image.height, false);
+        }
+        else
+        {
+#ifdef USE_OPENGL_33
+            texture.id = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.compFormat);
+#endif
+        }
+        
         texture.width = image.width;
         texture.height = image.height;
         
-        if (texture.glId == 0) TraceLog(WARNING, "Compressed texture could not be loaded");
-        else TraceLog(INFO, "Compressed texture loaded succesfully");
-#endif
+        if (texture.id == 0) TraceLog(WARNING, "[%s] DDS texture could not be loaded", fileName);
+        else TraceLog(INFO, "[%s] DDS texture loaded succesfully", fileName);
+        
+        free(image.data);
     }
     else
     {
@@ -269,7 +312,7 @@ Texture2D LoadTexture(const char *fileName)
         
         if (image.pixels != NULL)
         {
-            texture = CreateTexture(image);
+            texture = CreateTexture(image, false);
             UnloadImage(image);
         }
     }
@@ -283,7 +326,8 @@ Texture2D LoadTextureFromRES(const char *rresName, int resId)
     Texture2D texture;
 
     Image image = LoadImageFromRES(rresName, resId);
-    texture = CreateTexture(image);
+    texture = CreateTexture(image, false);
+    UnloadImage(image);
     
     return texture;
 }
@@ -297,7 +341,7 @@ void UnloadImage(Image image)
 // Unload texture from GPU memory
 void UnloadTexture(Texture2D texture)
 {
-    rlDeleteTextures(texture.glId);
+    rlDeleteTextures(texture.id);
 }
 
 // Draw a Texture2D
@@ -315,76 +359,32 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 // Draw a Texture2D with extended parameters
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
-    rlEnableTexture(texture.glId);
+    Rectangle sourceRec = { 0, 0, texture.width, texture.height };
+    Rectangle destRec = { (int)position.x, (int)position.y, texture.width*scale, texture.height*scale };
+    Vector2 origin = { 0, 0 };
     
-    // NOTE: Rotation is applied before translation and scaling, even being called in inverse order...
-    // NOTE: Rotation point is upper-left corner    
-    rlPushMatrix();
-        //rlTranslatef(position.x, position.y, 0.0);
-        rlRotatef(rotation, 0, 0, 1);
-        rlScalef(scale, scale, 1.0f);
-    
-        rlBegin(RL_QUADS);
-            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);                               // Normal vector pointing towards viewer
-            
-            rlTexCoord2f(0.0f, 0.0f);
-            rlVertex2f(position.x, position.y);                         // Bottom-left corner for texture and quad
-            
-            rlTexCoord2f(0.0f, 1.0f); 
-            rlVertex2f(position.x, position.y + texture.height);        // Bottom-right corner for texture and quad
-            
-            rlTexCoord2f(1.0f, 1.0f); 
-            rlVertex2f(position.x + texture.width, position.y + texture.height);  // Top-right corner for texture and quad
-            
-            rlTexCoord2f(1.0f, 0.0f); 
-            rlVertex2f(position.x + texture.width, position.y);         // Top-left corner for texture and quad
-        rlEnd();
-    rlPopMatrix();
-    
-    rlDisableTexture();
+    DrawTexturePro(texture, sourceRec, destRec, origin, rotation, tint);
 }
 
 // Draw a part of a texture (defined by a rectangle)
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
-    rlEnableTexture(texture.glId);
+    Rectangle destRec = { (int)position.x, (int)position.y, sourceRec.width, sourceRec.height };
+    Vector2 origin = { 0, 0 };
     
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-        rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-        
-        // Bottom-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
-        rlVertex2f(position.x, position.y);
-        
-        // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-        rlVertex2f(position.x, position.y + sourceRec.height);
-        
-        // Top-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
-        rlVertex2f(position.x + sourceRec.width, position.y + sourceRec.height);
-        
-        // Top-left corner for texture and quad 
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-        rlVertex2f(position.x + sourceRec.width, position.y);
-    rlEnd();
-    
-    rlDisableTexture();
+    DrawTexturePro(texture, sourceRec, destRec, origin, 0, tint);
 }
 
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
-// TODO: Test this function...
+// NOTE: origin is relative to destination rectangle size
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
-    rlEnableTexture(texture.glId);
+    rlEnableTexture(texture.id);
     
-    // NOTE: First we translate texture to origin to apply rotation and translation from there
     rlPushMatrix();
-        rlTranslatef(-origin.x, -origin.y, 0);  
+        rlTranslatef(destRec.x, destRec.y, 0);
         rlRotatef(rotation, 0, 0, 1);
-        rlTranslatef(destRec.x + origin.x, destRec.y + origin.y, 0);
+        rlTranslatef(-origin.x, -origin.y, 0);
             
         rlBegin(RL_QUADS);
             rlColor4ub(tint.r, tint.g, tint.b, tint.a);
@@ -395,65 +395,84 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
             rlVertex2f(0.0f, 0.0f);
             
             // Bottom-right corner for texture and quad
-            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-            rlVertex2f(destRec.width, 0.0f);
+            rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+            rlVertex2f(0.0f, destRec.height);
             
             // Top-right corner for texture and quad
             rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
             rlVertex2f(destRec.width, destRec.height);
             
             // Top-left corner for texture and quad
-            rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-            rlVertex2f(0.0f, destRec.height);
+            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+            rlVertex2f(destRec.width, 0.0f);
         rlEnd();
     rlPopMatrix();
     
     rlDisableTexture();
 }
 
-Texture2D CreateTexture(Image image)
+// Create a texture from an image
+// NOTE: image is not unloaded, iot must be done manually
+Texture2D CreateTexture(Image image, bool genMipmaps)
 {
     Texture2D texture;
     
-    unsigned char *img = malloc(image.width * image.height * 4);
+    // Init texture to default values
+    texture.id = 0;
+    texture.width = 0;
+    texture.height = 0;
     
-    int j = 0;
-    
-    for (int i = 0; i < image.width * image.height * 4; i += 4)
+    if (image.pixels != NULL)
     {
-        img[i] = image.pixels[j].r;
-        img[i+1] = image.pixels[j].g;
-        img[i+2] = image.pixels[j].b;
-        img[i+3] = image.pixels[j].a;
+        unsigned char *imgData = malloc(image.width * image.height * 4);
         
-        j++;
+        int j = 0;
+        
+        for (int i = 0; i < image.width * image.height * 4; i += 4)
+        {
+            imgData[i] = image.pixels[j].r;
+            imgData[i+1] = image.pixels[j].g;
+            imgData[i+2] = image.pixels[j].b;
+            imgData[i+3] = image.pixels[j].a;
+            
+            j++;
+        }
+
+        // NOTE: rlglLoadTexture() can generate mipmaps (POT image required)
+        texture.id = rlglLoadTexture(imgData, image.width, image.height, genMipmaps);
+
+        texture.width = image.width;
+        texture.height = image.height;
+        
+        TraceLog(INFO, "[ID %i] Texture created succesfully", texture.id);
+        
+        free(imgData);
     }
-
-    texture.glId = rlglLoadTexture(image.width, image.height, img);
-
-    texture.width = image.width;
-    texture.height = image.height;
-    
-    TraceLog(INFO, "Texture created succesfully");
-    
-    free(img);
+    else TraceLog(WARNING, "Texture could not be created, image data is not valid");
     
     return texture;
 }
 
-// Get the extension for a filename
-static const char *GetExtension(const char *fileName) 
-{
-    const char *dot = strrchr(fileName, '.');
-    if(!dot || dot == fileName) return "";
-    return (dot + 1);
-}
-
-// Loading DDS image compressed data 
-ImageDDS LoadDDS(const char *fileName)
+// Loading DDS image data (compressed or uncompressed)
+// NOTE: Compressed data loading not supported on OpenGL 1.1
+ImageEx LoadDDS(const char *fileName)
 {   
-    // TODO: Review and expand DDS file loading to support uncompressed formats and new formats
+    #define FOURCC_DXT1 0x31545844  // Equivalent to "DXT1" in ASCII
+    #define FOURCC_DXT3 0x33545844  // Equivalent to "DXT3" in ASCII
+    #define FOURCC_DXT5 0x35545844  // Equivalent to "DXT5" in ASCII
+    
+    #ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+    #define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+    #endif
 
+    #ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+    #define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+    #endif
+
+    #ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+    #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+    #endif
+    
     // DDS Pixel Format
     typedef struct {
         unsigned int size;
@@ -484,7 +503,7 @@ ImageDDS LoadDDS(const char *fileName)
         unsigned int reserved2;
     } ddsHeader;
     
-    ImageDDS image;
+    ImageEx image;
     ddsHeader header;
 
     FILE *ddsFile = fopen(fileName, "rb");
@@ -510,36 +529,84 @@ ImageDDS LoadDDS(const char *fileName)
             // Get the surface descriptor
             fread(&header, sizeof(ddsHeader), 1, ddsFile);
 
-            int height = header.height;
-            int width = header.width;
-            int linearSize = header.pitchOrLinearSize;
-            int mipMapCount = header.mipMapCount;
-            int fourCC = header.ddspf.fourCC;
-            
             TraceLog(DEBUG, "[%s] DDS file header size: %i", fileName, sizeof(ddsHeader));
-            
             TraceLog(DEBUG, "[%s] DDS file pixel format size: %i", fileName, header.ddspf.size);
             TraceLog(DEBUG, "[%s] DDS file pixel format flags: 0x%x", fileName, header.ddspf.flags);
-            TraceLog(DEBUG, "[%s] DDS file format: 0x%x", fileName, fourCC);
+            TraceLog(DEBUG, "[%s] DDS file format: 0x%x", fileName, header.ddspf.fourCC);
             
-            int bufsize;
+            image.width = header.width;
+            image.height = header.height;
+            image.mipmaps = 1;
+            image.compFormat = 0;
             
-            // Calculate data size, including all mipmaps 
-            bufsize = mipMapCount > 1 ? linearSize * 2 : linearSize; 
+            if (header.ddspf.flags == 0x40 && header.ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
+            {
+                image.data = (unsigned char *)malloc(header.width * header.height * 4);
+                unsigned char *buffer = (unsigned char *)malloc(header.width * header.height * 3);
             
-            image.data = (unsigned char*)malloc(bufsize * sizeof(unsigned char)); 
+                fread(buffer, image.width*image.height*3, 1, ddsFile);
+                
+                unsigned char *src = buffer;
+                unsigned char *dest = image.data;
+                
+                for(int y = 0; y < image.height; y++) 
+                {
+                    for(int x = 0; x < image.width; x++) 
+                    {
+                        *dest++ = *src++;
+                        *dest++ = *src++;
+                        *dest++ = *src++;
+                        *dest++ = 255;
+                    }
+                }
+                
+                free(buffer);
+            }
+            else if (header.ddspf.flags == 0x41 && header.ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
+            {
+                image.data = (unsigned char *)malloc(header.width * header.height * 4);
             
-            fread(image.data, 1, bufsize, ddsFile); 
+                fread(image.data, image.width*image.height*4, 1, ddsFile);
             
-            // Close file pointer
-            fclose(ddsFile);
-
-            //int components = (fourCC == FOURCC_DXT1) ? 3 : 4; // Not required
+                image.mipmaps = 1;
+                image.compFormat = 0;
+            }
+            else if ((header.ddspf.flags == 0x04) && (header.ddspf.fourCC > 0))
+            {
+#ifdef USE_OPENGL_11 
+                TraceLog(WARNING, "[%s] DDS image uses compression, not supported by current OpenGL version", fileName);
+                TraceLog(WARNING, "[%s] DDS compressed files require OpenGL 3.2+ or ES 2.0", fileName);
+                fclose(ddsFile);
+#else
+                int bufsize;
+                
+                // Calculate data size, including all mipmaps
+                if (header.mipMapCount > 1) bufsize = header.pitchOrLinearSize * 2;
+                else bufsize = header.pitchOrLinearSize; 
+                
+                image.data = (unsigned char*)malloc(bufsize * sizeof(unsigned char)); 
+                
+                fread(image.data, 1, bufsize, ddsFile); 
+                
+                // Close file pointer
+                fclose(ddsFile);
+                
+                image.mipmaps = header.mipMapCount;
+                image.compFormat = 0;
+           
+                switch(header.ddspf.fourCC)
+                { 
+                    case FOURCC_DXT1: image.compFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break; 
+                    case FOURCC_DXT3: image.compFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break; 
+                    case FOURCC_DXT5: image.compFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break; 
+                    default: break;
+                }
             
-            image.width = width;
-            image.height = height;
-            image.mipmaps = mipMapCount;
-            image.format = fourCC;
+                // NOTE: Image num color components not required... for now...
+                //if (fourCC == FOURCC_DXT1) image.components = 3;
+                //else image.components = 4;
+#endif
+            }
         }
     }
     

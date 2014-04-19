@@ -25,9 +25,9 @@
 
 #include "raylib.h"
 
-#include <GL/gl.h>       // OpenGL functions
 #include <stdio.h>       // Standard input/output functions, used to read model files data
 #include <stdlib.h>      // Declares malloc() and free() for memory management
+#include <string.h>      // Required for strcmp()
 #include <math.h>        // Used for sin, cos, tan
 
 #include "raymath.h"     // Required for data type Matrix and Matrix functions
@@ -52,6 +52,7 @@
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static float GetHeightValue(Color pixel);
+static VertexData LoadOBJ(const char *fileName);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -67,9 +68,9 @@ void DrawCube(Vector3 position, float width, float height, float lenght, Color c
 
     rlPushMatrix();
 
-        // NOTE: Be careful! Function order matters (scale, translate, rotate)
-        //rlScalef(2.0f, 2.0f, 2.0f);
+        // NOTE: Be careful! Function order matters (rotate -> scale -> translate)
         //rlTranslatef(0.0f, 0.0f, 0.0f);
+        //rlScalef(2.0f, 2.0f, 2.0f);
         //rlRotatef(45, 0, 1, 0);
     
         rlBegin(RL_TRIANGLES);
@@ -215,9 +216,9 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     float y = position.y;
     float z = position.z;
 
-    rlEnableTexture(texture.glId);
+    rlEnableTexture(texture.id);
     
-    rlPushMatrix();      
+    //rlPushMatrix();      
         // NOTE: Be careful! Function order matters (scale, translate, rotate)
         //rlScalef(2.0f, 2.0f, 2.0f);
         //rlTranslatef(2.0f, 0.0f, 0.0f);
@@ -262,7 +263,7 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
         rlEnd();
-    rlPopMatrix();
+    //rlPopMatrix();
     
     rlDisableTexture();
 }
@@ -278,13 +279,13 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 {
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
-        //rlRotatef(rotation, 0, 1, 0);
         rlScalef(radius, radius, radius);
+        //rlRotatef(rotation, 0, 1, 0);
         
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
             
-            for(int i = 0; i < 2 * rings + 1; i ++)
+            for(int i = 0; i < 2 * rings + 1; i++)
             {
                 for(int j = 0; j < slices; j++)
                 {
@@ -317,14 +318,14 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     rlPushMatrix();
-        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
-        //rlRotatef(rotation, 0, 1, 0);
+        //rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
+        //rlRotatef(rotation, 0, 1, 0);
         
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
             
-            for(int i = 0; i < 2 * rings + 1; i ++)
+            for(int i = 0; i < 2 * rings + 1; i++)
             {
                 for(int j = 0; j < slices; j++)
                 {
@@ -447,12 +448,12 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
     // NOTE: Plane is always created on XZ ground and then rotated
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
+        rlScalef(size.x, 1.0f, size.y);
         
         // TODO: Review multiples rotations Gimbal-Lock... use matrix or quaternions...
         rlRotatef(rotation.x, 1, 0, 0);
         rlRotatef(rotation.y, 0, 1, 0);
         rlRotatef(rotation.z, 0, 0, 1);
-        rlScalef(size.x, 1.0f, size.y);
     
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -568,14 +569,13 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
-void DrawGizmoEx(Vector3 position, Vector3 rot, float scale, bool orbits)
-{
-    static float rotation = 0;
+void DrawGizmoEx(Vector3 position, Vector3 rotation, float scale)
+{   
     // NOTE: RGB = XYZ
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
-        rlRotatef(rotation, 0, 1, 0);
         rlScalef(scale, scale, scale);
+        rlRotatef(rotation.y, 0, 1, 0);
 
         rlBegin(RL_LINES);
             // X Axis
@@ -612,40 +612,324 @@ void DrawGizmoEx(Vector3 position, Vector3 rot, float scale, bool orbits)
             rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x - .1, position.y, position.z - .9);
             
             // Extra
-            if(orbits)
+            int n = 3;
+            
+            // X Axis
+            for (int i=0; i < 360; i += 6)
             {
-                int n = 3;
-                
-                // X Axis
-                for (int i=0; i < 360; i += 6)
-                {
-                    rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n);
-                    rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n);
-                }
-                
-                // Y Axis
-                for (int i=0; i < 360; i += 6)
-                {
-                    rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, 0, position.y + cos(DEG2RAD*i) * scale/n);
-                    rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, 0, position.y + cos(DEG2RAD*(i+6)) * scale/n);
-                }
-                
-                // Z Axis
-                for (int i=0; i < 360; i += 6)
-                {
-                    rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n, 0);
-                    rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n, 0);
-                }
+                rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n);
+                rlColor4ub(200, 0, 0, 255); rlVertex3f(0, position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n);
+            }
+            
+            // Y Axis
+            for (int i=0; i < 360; i += 6)
+            {
+                rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, 0, position.y + cos(DEG2RAD*i) * scale/n);
+                rlColor4ub(0, 200, 0, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, 0, position.y + cos(DEG2RAD*(i+6)) * scale/n);
+            }
+            
+            // Z Axis
+            for (int i=0; i < 360; i += 6)
+            {
+                rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*i) * scale/n, position.y + cos(DEG2RAD*i) * scale/n, 0);
+                rlColor4ub(0, 0, 200, 255); rlVertex3f(position.x + sin(DEG2RAD*(i+6)) * scale/n, position.y + cos(DEG2RAD*(i+6)) * scale/n, 0);
             }
         rlEnd();
     rlPopMatrix();
-    
-    rotation += 0.1f;
 }
 
-// Load a 3d model (.OBJ)
-// TODO: Add comments explaining this function process
+// Load a 3d model
 Model LoadModel(const char *fileName)                                    
+{
+    VertexData vData;
+    
+    if (strcmp(GetExtension(fileName),"obj") == 0) vData = LoadOBJ(fileName);
+    else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName); 
+
+    Model model;
+
+    model.mesh = vData;                     // Model mesh is vertex data
+    model.textureId = 0;
+    
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
+    model.textureId = 1;                    // Default whiteTexture
+
+    // Now that vertex data is uploaded to GPU, we can free arrays
+    //free(vData.vertices);
+    //free(vData.texcoords);
+    //free(vData.normals);
+#endif
+
+    return model;
+}
+
+// Load a heightmap image as a 3d model
+Model LoadHeightmap(Image heightmap, float maxHeight)
+{
+    VertexData vData;
+
+    int mapX = heightmap.width;
+    int mapZ = heightmap.height;
+    
+    // NOTE: One vertex per pixel
+    // TODO: Consider resolution when generating model data?
+    int numTriangles = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
+  
+    vData.vertexCount = numTriangles*3;
+
+    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
+    
+    int vCounter = 0;       // Used to count vertices float by float
+    int tcCounter = 0;      // Used to count texcoords float by float
+    int nCounter = 0;       // Used to count normals float by float
+    
+    int trisCounter = 0;
+    
+    float scaleFactor = maxHeight/255;    // TODO: Review scaleFactor calculation
+
+    for(int z = 0; z < mapZ-1; z++)
+    {
+        for(int x = 0; x < mapX-1; x++)
+        {
+            // Fill vertices array with data
+            //----------------------------------------------------------
+            
+            // one triangle - 3 vertex
+            vData.vertices[vCounter] = x;
+            vData.vertices[vCounter + 1] = GetHeightValue(heightmap.pixels[x + z*mapX])*scaleFactor;
+            vData.vertices[vCounter + 2] = z;
+            
+            vData.vertices[vCounter + 3] = x;
+            vData.vertices[vCounter + 4] = GetHeightValue(heightmap.pixels[x + (z+1)*mapX])*scaleFactor;
+            vData.vertices[vCounter + 5] = z+1;
+            
+            vData.vertices[vCounter + 6] = x+1;
+            vData.vertices[vCounter + 7] = GetHeightValue(heightmap.pixels[(x+1) + z*mapX])*scaleFactor;
+            vData.vertices[vCounter + 8] = z;
+            
+            // another triangle - 3 vertex
+            vData.vertices[vCounter + 9] = vData.vertices[vCounter + 6];
+            vData.vertices[vCounter + 10] = vData.vertices[vCounter + 7];
+            vData.vertices[vCounter + 11] = vData.vertices[vCounter + 8];
+            
+            vData.vertices[vCounter + 12] = vData.vertices[vCounter + 3];
+            vData.vertices[vCounter + 13] = vData.vertices[vCounter + 4];
+            vData.vertices[vCounter + 14] = vData.vertices[vCounter + 5];
+            
+            vData.vertices[vCounter + 15] = x+1;
+            vData.vertices[vCounter + 16] = GetHeightValue(heightmap.pixels[(x+1) + (z+1)*mapX])*scaleFactor;
+            vData.vertices[vCounter + 17] = z+1;
+            vCounter += 18;     // 6 vertex, 18 floats
+            
+            // Fill texcoords array with data
+            //--------------------------------------------------------------
+            vData.texcoords[tcCounter] = (float)x / (mapX-1);
+            vData.texcoords[tcCounter + 1] = (float)z / (mapZ-1);
+            
+            vData.texcoords[tcCounter + 2] = (float)x / (mapX-1);
+            vData.texcoords[tcCounter + 3] = (float)(z+1) / (mapZ-1);
+            
+            vData.texcoords[tcCounter + 4] = (float)(x+1) / (mapX-1);
+            vData.texcoords[tcCounter + 5] = (float)z / (mapZ-1);
+            
+            vData.texcoords[tcCounter + 6] = vData.texcoords[tcCounter + 4];
+            vData.texcoords[tcCounter + 7] = vData.texcoords[tcCounter + 5];
+            
+            vData.texcoords[tcCounter + 8] = vData.texcoords[tcCounter + 2];
+            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 1];
+            
+            vData.texcoords[tcCounter + 10] = (float)(x+1) / (mapX-1);
+            vData.texcoords[tcCounter + 11] = (float)(z+1) / (mapZ-1);
+            tcCounter += 12;    // 6 texcoords, 12 floats
+            
+            // Fill normals array with data
+            //--------------------------------------------------------------
+            // NOTE: Current Model implementation doe not use normals! 
+            for (int i = 0; i < 18; i += 3)
+            {
+                vData.normals[nCounter + i] = 0.0f;
+                vData.normals[nCounter + i + 1] = 1.0f;
+                vData.normals[nCounter + i + 2] = 0.0f;
+            }
+            
+            // TODO: Calculate normals in an efficient way
+            
+            nCounter += 18;     // 6 vertex, 18 floats
+            
+            trisCounter += 2;
+        }
+    }
+    
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+
+    Model model;
+
+    model.mesh = vData;                     // Model mesh is vertex data
+    model.textureId = 0;
+    
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
+    model.textureId = 1;                    // Default whiteTexture
+
+    // Now that vertex data is uploaded to GPU, we can free arrays
+    //free(vData.vertices);
+    //free(vData.texcoords);
+    //free(vData.normals);
+#endif
+
+    return model;
+}
+
+// Unload 3d model from memory
+void UnloadModel(Model model)
+{
+    free(model.mesh.vertices);
+    free(model.mesh.texcoords);
+    free(model.mesh.normals);
+
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+    rlDeleteVertexArrays(model.vaoId);
+#endif
+}
+
+void SetModelTexture(Model *model, Texture2D texture)
+{
+    if (texture.id <= 0) model->textureId = 1;  // Default white texture (use mesh color)
+    else model->textureId = texture.id;
+}
+
+// Draw a model (with texture if set)
+void DrawModel(Model model, Vector3 position, float scale, Color tint)
+{
+    Vector3 vScale = { scale, scale, scale };
+    Vector3 rotation = { 0, 0, 0 };
+
+    rlglDrawModel(model, position, rotation, vScale, tint, false);
+}
+
+// Draw a model with extended parameters
+void DrawModelEx(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color tint)
+{
+    rlglDrawModel(model, position, rotation, scale, tint, false);
+}
+
+// Draw a model wires (with texture if set)
+void DrawModelWires(Model model, Vector3 position, float scale, Color color)
+{
+    Vector3 vScale = { scale, scale, scale };
+    Vector3 rotation = { 0, 0, 0 };
+
+    rlglDrawModel(model, position, rotation, vScale, color, true);
+}
+
+// Draw a billboard
+void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
+{
+    // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
+    Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
+    
+    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
+    MatrixTranspose(&viewMatrix);
+    
+    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
+    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+/*    
+    d-------c
+    |       |
+    |   *   |
+    |       |
+    a-------b
+*/  
+    VectorScale(&right, sizeRatio.x/2);
+    VectorScale(&up, sizeRatio.y/2);
+    
+    Vector3 p1 = VectorAdd(right, up);
+    Vector3 p2 = VectorSubtract(right, up);
+
+    Vector3 a = VectorSubtract(center, p2);
+    Vector3 b = VectorAdd(center, p1);
+    Vector3 c = VectorAdd(center, p2);
+    Vector3 d = VectorSubtract(center, p1);
+    
+    rlEnableTexture(texture.id);
+      
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        rlNormal3f(0.0f, 1.0f, 0.0f); 
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
+        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
+        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
+        rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
+    rlEnd();
+    
+    rlDisableTexture();
+}
+
+// Draw a billboard (part of a texture defined by a rectangle)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
+{
+    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
+    Vector2 sizeRatio = { size, size * (float)sourceRec.height/sourceRec.width };
+
+    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
+    MatrixTranspose(&viewMatrix);
+    
+    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
+    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+/*    
+    d-------c
+    |       |
+    |   *   |
+    |       |
+    a-------b
+*/  
+    VectorScale(&right, sizeRatio.x/2);
+    VectorScale(&up, sizeRatio.y/2);
+
+    Vector3 p1 = VectorAdd(right, up);
+    Vector3 p2 = VectorSubtract(right, up);
+
+    Vector3 a = VectorSubtract(center, p2);
+    Vector3 b = VectorAdd(center, p1);
+    Vector3 c = VectorAdd(center, p2);
+    Vector3 d = VectorSubtract(center, p1);
+    
+    rlEnableTexture(texture.id);
+    
+    rlBegin(RL_QUADS);
+        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+        
+        // Bottom-left corner for texture and quad
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
+        rlVertex3f(a.x, a.y, a.z);
+        
+        // Bottom-right corner for texture and quad
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlVertex3f(b.x, b.y, b.z);
+        
+        // Top-right corner for texture and quad
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
+        rlVertex3f(c.x, c.y, c.z);
+        
+        // Top-left corner for texture and quad
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlVertex3f(d.x, d.y, d.z);
+    rlEnd();
+    
+    rlDisableTexture();
+}
+
+// Get current vertex y altitude (proportional to pixel colors in grayscale)
+static float GetHeightValue(Color pixel)
+{
+    return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
+}
+
+// Load OBJ mesh data
+static VertexData LoadOBJ(const char *fileName)
 {
     VertexData vData;
     
@@ -661,6 +945,8 @@ Model LoadModel(const char *fileName)
 
     objFile = fopen(fileName, "rt");
     
+    // First pass over all file to get numVertex, numNormals, numTexCoords, numTriangles
+    // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
     while(!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
@@ -671,7 +957,14 @@ Model LoadModel(const char *fileName)
             {
                 fgets(comments, 200, objFile);                
             } break;
-            case 'v': 
+            case 'o':         // New object
+            {
+                // TODO: Read multiple objects, we need to know numMeshes + verticesPerMesh
+                
+                // NOTE: One OBJ file can contain multible meshes defined, one after every 'o'
+                
+            } break;
+            case 'v':
             {
                 fscanf(objFile, "%c", &dataType);
                 
@@ -753,15 +1046,18 @@ Model LoadModel(const char *fileName)
         }
     }
     
-    Vector3 midVertices[numVertex];
-    Vector3 midNormals[numNormals];
-    Vector2 midTexCoords[numTexCoords];
+    // Once we know the number of vertices to store, we create required arrays
+    Vector3 *midVertices = (Vector3 *)malloc(numVertex*sizeof(Vector3));
+    Vector3 *midNormals = (Vector3 *)malloc(numNormals*sizeof(Vector3));
+    Vector2 *midTexCoords = (Vector2 *)malloc(numTexCoords*sizeof(Vector2));
     
-    vData.numVertices = numTriangles*3;
+    vData.vertexCount = numTriangles*3;
     
-    vData.vertices = (float *)malloc(vData.numVertices * 3 * sizeof(float));
-    vData.texcoords = (float *)malloc(vData.numVertices * 2 * sizeof(float));
-    vData.normals = (float *)malloc(vData.numVertices * 3 * sizeof(float));
+    // Additional arrays to store vertex data as floats
+    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
+    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.colors = (float *)malloc(vData.vertexCount * 4 * sizeof(float));
     
     int countVertex = 0;
     int countNormals = 0;
@@ -771,8 +1067,9 @@ Model LoadModel(const char *fileName)
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
     
-    rewind(objFile);
+    rewind(objFile);        // Return to the beginning of the file, to read again
     
+    // Reading again file to get vertex data
     while(!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
@@ -872,274 +1169,16 @@ Model LoadModel(const char *fileName)
     
     fclose(objFile);
     
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
-
-    Model model;
-
-#ifdef USE_OPENGL_11
-    model.data = vData;      // model data is vertex data  
-#else   
-    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
+    // NOTE: We set all vertex colors to white
+    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 1.0f;
     
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    free(vData.vertices);
-    free(vData.texcoords);
-    free(vData.normals);
-#endif
-
-    return model;
-}
-
-// Load a heightmap image as a 3d model
-Model LoadHeightmap(Image heightmap, float maxHeight)
-{
-    VertexData vData;
-
-    int mapX = heightmap.width;
-    int mapZ = heightmap.height;
-    
-    // NOTE: One vertex per pixel
-    // TODO: Consider resolution when generating model data?
-    int numTriangles = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
-  
-    vData.numVertices = numTriangles*3;
-
-    vData.vertices = (float *)malloc(vData.numVertices * 3 * sizeof(float));
-    vData.normals = (float *)malloc(vData.numVertices * 3 * sizeof(float));
-    vData.texcoords = (float *)malloc(vData.numVertices * 2 * sizeof(float));
-    
-    int vCounter = 0;       // Used to count vertices float by float
-    int tcCounter = 0;      // Used to count texcoords float by float
-    int nCounter = 0;       // Used to count normals float by float
-    
-    int trisCounter = 0;
-    
-    float scaleFactor = maxHeight/255;    // TODO: Review scaleFactor calculation
-
-    for(int z = 0; z < mapZ-1; z++)
-    {
-        for(int x = 0; x < mapX-1; x++)
-        {
-            // Fill vertices array with data
-            //----------------------------------------------------------
-            
-            // one triangle - 3 vertex
-            vData.vertices[vCounter] = x;
-            vData.vertices[vCounter + 1] = GetHeightValue(heightmap.pixels[x + z*mapX])*scaleFactor;
-            vData.vertices[vCounter + 2] = z;
-            
-            vData.vertices[vCounter + 3] = x;
-            vData.vertices[vCounter + 4] = GetHeightValue(heightmap.pixels[x + (z+1)*mapX])*scaleFactor;
-            vData.vertices[vCounter + 5] = z+1;
-            
-            vData.vertices[vCounter + 6] = x+1;
-            vData.vertices[vCounter + 7] = GetHeightValue(heightmap.pixels[(x+1) + z*mapX])*scaleFactor;
-            vData.vertices[vCounter + 8] = z;
-            
-            // another triangle - 3 vertex
-            vData.vertices[vCounter + 9] = vData.vertices[vCounter + 6];
-            vData.vertices[vCounter + 10] = vData.vertices[vCounter + 7];
-            vData.vertices[vCounter + 11] = vData.vertices[vCounter + 8];
-            
-            vData.vertices[vCounter + 12] = vData.vertices[vCounter + 3];
-            vData.vertices[vCounter + 13] = vData.vertices[vCounter + 4];
-            vData.vertices[vCounter + 14] = vData.vertices[vCounter + 5];
-            
-            vData.vertices[vCounter + 15] = x+1;
-            vData.vertices[vCounter + 16] = GetHeightValue(heightmap.pixels[(x+1) + (z+1)*mapX])*scaleFactor;
-            vData.vertices[vCounter + 17] = z+1;
-            vCounter += 18;     // 6 vertex, 18 floats
-            
-            // Fill texcoords array with data
-            //--------------------------------------------------------------
-            vData.texcoords[tcCounter] = (float)x / (mapX-1);
-            vData.texcoords[tcCounter + 1] = (float)z / (mapZ-1);
-            
-            vData.texcoords[tcCounter + 2] = (float)x / (mapX-1);
-            vData.texcoords[tcCounter + 3] = (float)(z+1) / (mapZ-1);
-            
-            vData.texcoords[tcCounter + 4] = (float)(x+1) / (mapX-1);
-            vData.texcoords[tcCounter + 5] = (float)z / (mapZ-1);
-            
-            vData.texcoords[tcCounter + 6] = vData.texcoords[tcCounter + 4];
-            vData.texcoords[tcCounter + 7] = vData.texcoords[tcCounter + 5];
-            
-            vData.texcoords[tcCounter + 8] = vData.texcoords[tcCounter + 2];
-            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 1];
-            
-            vData.texcoords[tcCounter + 10] = (float)(x+1) / (mapX-1);
-            vData.texcoords[tcCounter + 11] = (float)(z+1) / (mapZ-1);
-            tcCounter += 12;    // 6 texcoords, 12 floats
-            
-            // Fill normals array with data
-            //--------------------------------------------------------------
-            // TODO: Review normals calculation
-            for (int i = 0; i < 18; i += 3)
-            {
-                vData.normals[nCounter + i] = 0.0f;
-                vData.normals[nCounter + i + 1] = 1.0f;
-                vData.normals[nCounter + i + 2] = 0.0f;
-            }
-            
-            nCounter += 18;     // 6 vertex, 18 floats
-            
-            trisCounter += 2;
-        }
-    }
+    // Now we can free temp mid* arrays
+    free(midVertices);
+    free(midNormals);
+    free(midTexCoords);
     
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
-
-    Model model;
-
-#ifdef USE_OPENGL_11
-    model.data = vData;      // model data is vertex data  
-#else   
-    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
-
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    free(vData.vertices);
-    free(vData.texcoords);
-    free(vData.normals);
-#endif
-
-    return model;
-}
-
-// Unload 3d model from memory
-void UnloadModel(Model model)
-{
-#ifdef USE_OPENGL_11
-    free(model.data.vertices);
-    free(model.data.texcoords);
-    free(model.data.normals);
-#endif
-
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    rlDeleteVertexArrays(model.vaoId);
-#endif
-}
-
-// Draw a model
-void DrawModel(Model model, Vector3 position, float scale, Color color)
-{
-    rlglDrawModel(model, position, scale, false);
-}
-
-// Draw a textured model
-void DrawModelEx(Model model, Texture2D texture, Vector3 position, float scale, Color tint)
-{
-    rlEnableTexture(texture.glId);
+    TraceLog(INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
     
-    DrawModel(model, position, scale, tint);
-    
-    rlDisableTexture();
-}
-
-// Draw a model wires
-void DrawModelWires(Model model, Vector3 position, float scale, Color color)
-{
-    rlglDrawModel(model, position, scale, true);
-}
-
-// Draw a billboard
-void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
-{
-    // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
-    Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
-    
-    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&viewMatrix);
-    
-    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
-/*    
-    d-------c
-    |       |
-    |   *   |
-    |       |
-    a-------b
-*/  
-    VectorScale(&right, sizeRatio.x/2);
-    VectorScale(&up, sizeRatio.y/2);
-    
-    Vector3 p1 = VectorAdd(right, up);
-    Vector3 p2 = VectorSubtract(right, up);
-
-    Vector3 a = VectorSubtract(center, p2);
-    Vector3 b = VectorAdd(center, p1);
-    Vector3 c = VectorAdd(center, p2);
-    Vector3 d = VectorSubtract(center, p1);
-    
-    rlEnableTexture(texture.glId);
-      
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-        rlNormal3f(0.0f, 1.0f, 0.0f); 
-        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
-        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
-        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
-        rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
-    rlEnd();
-    
-    rlDisableTexture();
-}
-
-// Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
-{
-    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size, size * (float)sourceRec.height/sourceRec.width };
-
-    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&viewMatrix);
-    
-    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
-/*    
-    d-------c
-    |       |
-    |   *   |
-    |       |
-    a-------b
-*/  
-    VectorScale(&right, sizeRatio.x/2);
-    VectorScale(&up, sizeRatio.y/2);
-
-    Vector3 p1 = VectorAdd(right, up);
-    Vector3 p2 = VectorSubtract(right, up);
-
-    Vector3 a = VectorSubtract(center, p2);
-    Vector3 b = VectorAdd(center, p1);
-    Vector3 c = VectorAdd(center, p2);
-    Vector3 d = VectorSubtract(center, p1);
-    
-    rlEnableTexture(texture.glId);
-    
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-        
-        // Bottom-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height); 
-        rlVertex3f(a.x, a.y, a.z);
-        
-        // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-        rlVertex3f(b.x, b.y, b.z);
-        
-        // Top-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height); 
-        rlVertex3f(c.x, c.y, c.z);
-        
-        // Top-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-        rlVertex3f(d.x, d.y, d.z);
-    rlEnd();
-    
-    rlDisableTexture();
-}
-
-// Get current vertex y altitude (proportional to pixel colors in grayscale)
-static float GetHeightValue(Color pixel)
-{
-    return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
+    return vData;
 }

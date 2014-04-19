@@ -3,9 +3,6 @@
 *   raylib.utils
 *
 *   Some utility functions: rRES files data decompression
-*    
-*   Uses external lib:    
-*       tinfl - zlib DEFLATE algorithm decompression lib
 *       
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *    
@@ -32,12 +29,12 @@
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
-//#define DO_NOT_TRACE_DEBUG_MSGS   // Use this define to avoid DEBUG tracing
+#define DO_NOT_TRACE_DEBUG_MSGS   // Use this define to avoid DEBUG tracing
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum { IMAGE, SOUND, MODEL, TEXT, RAW } DataType;
+typedef enum { IMAGE = 0, SOUND, MODEL, TEXT, RAW } DataType;
 
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 
@@ -68,8 +65,10 @@ void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int he
 void WritePNG(const char *fileName, unsigned char *imgData, int width, int height);
 
 void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message
-void InitTraceLogFile(const char *logFileName);     // Inits a trace log file
-void CloseTraceLogFile();                           // Closes the trace log file
+void TraceLogOpen(const char *logFileName);         // Open a trace log file (if desired)
+void TraceLogClose();                               // Close the trace log file
+
+const char *GetExtension(const char *fileName);
 
 #ifdef __cplusplus
 }

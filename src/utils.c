@@ -4,8 +4,9 @@
 *
 *   Utils Functions Definitions
 *    
-*   Uses external lib:    
+*   Uses external libs:    
 *       tinfl - zlib DEFLATE algorithm decompression lib
+*       stb_image_write - PNG writting functions
 *       
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *    
@@ -28,14 +29,14 @@
 
 #include "utils.h"
 
-#include <stdlib.h>         // malloc(), free()
-#include <stdio.h>          // printf(), fprintf()
-#include <stdarg.h>         // Used for functions with variable number of parameters (TraceLog())
-//#include <string.h>       // String management functions: strlen(), strrchr(), strcmp()
+#include <stdlib.h>             // malloc(), free()
+#include <stdio.h>              // printf(), fprintf()
+#include <stdarg.h>             // Used for functions with variable number of parameters (TraceLog())
+//#include <string.h>           // String management functions: strlen(), strrchr(), strcmp()
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-
 #include "stb_image_write.h"    // Create PNG file
+
 #include "tinfl.c"
 
 //----------------------------------------------------------------------------------
@@ -140,84 +141,39 @@ void WritePNG(const char *fileName, unsigned char *imgData, int width, int heigh
 // NOTE: If a file has been init, output log is written there
 void TraceLog(int msgType, const char *text, ...)
 {
-    // TODO: This function requires some refactoring...
-
-    // NOTE: If trace log file has been set, stdout is being redirected to a file
     va_list args;
     int traceDebugMsgs = 1;
     
 #ifdef DO_NOT_TRACE_DEBUG_MSGS
     traceDebugMsgs = 0;
 #endif
+
+    // NOTE: If trace log file not set, output redirected to stdout 
+    if (logstream == NULL) logstream = stdout;
     
-    if (logstream != NULL)
+    switch(msgType)
     {
-        switch(msgType)
-        {
-            case 0: fprintf(logstream, "INFO: "); break;
-            case 1: fprintf(logstream, "ERROR: "); break;
-            case 2: fprintf(logstream, "WARNING: "); break;
-            case 3: if (traceDebugMsgs) fprintf(logstream, "DEBUG: "); break;
-            default: break;
-        }
-        
-        if (msgType == 3)
-        {
-            if (traceDebugMsgs)
-            {
-                va_start(args, text);
-                vfprintf(logstream, text, args);
-                va_end(args);
-                
-                fprintf(logstream, "\n");
-            }
-        }
-        else
-        {
-            va_start(args, text);
-            vfprintf(logstream, text, args);
-            va_end(args);
-            
-            fprintf(logstream, "\n");
-        }
-    }
-    else
-    {   
-        switch(msgType)
-        {
-            case 0: fprintf(stdout, "INFO: "); break;
-            case 1: fprintf(stdout, "ERROR: "); break;
-            case 2: fprintf(stdout, "WARNING: "); break;
-            case 3: if (traceDebugMsgs) fprintf(stdout, "DEBUG: "); break;
-            default: break;
-        }
-        
-        if (msgType == 3)
-        {
-            if (traceDebugMsgs)
-            {
-                va_start(args, text);
-                vfprintf(stdout, text, args);
-                va_end(args);
-                
-                fprintf(stdout, "\n");
-            }
-        }
-        else
-        {
-            va_start(args, text);
-            vfprintf(stdout, text, args);
-            va_end(args);
-            
-            fprintf(stdout, "\n");
-        }
+        case INFO: fprintf(logstream, "INFO: "); break;
+        case ERROR: fprintf(logstream, "ERROR: "); break;
+        case WARNING: fprintf(logstream, "WARNING: "); break;
+        case DEBUG: if (traceDebugMsgs) fprintf(logstream, "DEBUG: "); break;
+        default: break;
     }
     
-    if (msgType == 1) exit(1);      // If ERROR message, exit program
+    if ((msgType != DEBUG) || ((msgType == DEBUG) && (traceDebugMsgs)))
+    {
+        va_start(args, text);
+        vfprintf(logstream, text, args);
+        va_end(args);
+        
+        fprintf(logstream, "\n");
+    }
+    
+    if (msgType == ERROR) exit(1);      // If ERROR message, exit program
 }
 
-// Inits a trace log file
-void InitTraceLogFile(const char *logFileName)
+// Open a trace log file (if desired)
+void TraceLogOpen(const char *logFileName)
 {
     // stdout redirected to stream file
     FILE *logstream = fopen(logFileName, "w");
@@ -225,9 +181,25 @@ void InitTraceLogFile(const char *logFileName)
     if (logstream == NULL) TraceLog(WARNING, "Unable to open log file");
 }
 
-// Closes the trace log file
-void CloseTraceLogFile()
+// Close the trace log file
+void TraceLogClose()
 {
     if (logstream != NULL) fclose(logstream);
+}
+
+// Keep track of memory allocated
+// NOTE: mallocType defines the type of data allocated
+void RecordMalloc(int mallocType, int mallocSize, const char *msg)
+{
+    // TODO: Investigate how to record memory allocation data...
+    // Maybe creating my own malloc function...
+}
+
+// Get the extension for a filename
+const char *GetExtension(const char *fileName) 
+{
+    const char *dot = strrchr(fileName, '.');
+    if(!dot || dot == fileName) return "";
+    return (dot + 1);
 }
 

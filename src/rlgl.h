@@ -36,19 +36,19 @@
     #include "utils.h"          // Required for function TraceLog()
 #endif
 
-#include "raymath.h"        // Required for data type Matrix and Matrix functions
+#include "raymath.h"            // Required for data type Matrix and Matrix functions
 
 // Select desired OpenGL version
-//#define USE_OPENGL_11
-#define USE_OPENGL_33
+#define USE_OPENGL_11
+//#define USE_OPENGL_33
 //#define USE_OPENGL_ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_LINES_BATCH         8192    // 1024
-#define MAX_TRIANGLES_BATCH     2048
-#define MAX_QUADS_BATCH         8192
+#define MAX_LINES_BATCH         8192    // NOTE: Be careful with limits!
+#define MAX_TRIANGLES_BATCH     4096    // NOTE: Be careful with limits!
+#define MAX_QUADS_BATCH         8192    // NOTE: Be careful with limits!
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -60,26 +60,20 @@ typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
 #ifdef RLGL_STANDALONE
-typedef struct Model Model;
-#endif
+    typedef struct {
+        int vertexCount;
+        float *vertices;            // 3 components per vertex
+        float *texcoords;           // 2 components per vertex
+        float *normals;             // 3 components per vertex
+        float *colors;
+    } VertexData;
 
-typedef struct {
-    int numVertices;
-    float *vertices;            // 3 components per vertex
-    float *texcoords;           // 2 components per vertex
-    float *normals;             // 3 components per vertex
-} VertexData;
-
-#ifdef USE_OPENGL_11
-struct Model {
-    VertexData data;
-};
-#else
-struct Model {
-    unsigned int vaoId;
-    Matrix transform;
-    int numVertices;
-};
+    typedef struct Model {
+        VertexData mesh;
+        unsigned int vaoId;
+        unsigned int textureId;
+        //Matrix transform;
+    } Model;
 #endif
 
 #ifdef __cplusplus
@@ -90,8 +84,8 @@ extern "C" {            // Prevents name mangling of functions
 // Functions Declaration - Matrix operations
 //------------------------------------------------------------------------------------
 void rlMatrixMode(int mode);                    // Choose the current matrix to be transformed
-void rlPushMatrix();                            // TODO: REVIEW: Required? - Push the current matrix to stack
-void rlPopMatrix();                             // TODO: REVIEW: Required? - Pop lattest inserted matrix from stack
+void rlPushMatrix();                            // Push the current matrix to stack
+void rlPopMatrix();                             // Pop lattest inserted matrix from stack
 void rlLoadIdentity();                          // Reset current matrix to identity matrix
 void rlTranslatef(float x, float y, float z);   // Multiply the current matrix by a translation matrix
 void rlRotatef(float angleDeg, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
@@ -132,13 +126,14 @@ void rlClearScreenBuffers();                // Clear used screen buffers (color 
 void rlglInit();                                // Initialize rlgl (shaders, VAO, VBO...)
 void rlglClose();                               // De-init rlgl
 void rlglDraw();                                // Draw VAOs
-unsigned int rlglLoadModel(VertexData data);
+unsigned int rlglLoadModel(VertexData mesh);
 unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format);
 #endif
 
-void rlglDrawModel(Model model, Vector3 position, float scale, bool wires);   // Draw model
+void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires);
+
 void rlglInitGraphicsDevice(int fbWidth, int fbHeight);  // Initialize Graphics Device (OpenGL stuff)
-unsigned int rlglLoadTexture(int width, int height, unsigned char *pixels); // Load in GPU OpenGL texture
+unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool genMipmaps); // Load in GPU OpenGL texture
 byte *rlglReadScreenPixels(int width, int height);    // Read screen pixel data (color buffer)
 
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)

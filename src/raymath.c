@@ -435,7 +435,7 @@ Matrix MatrixSubstract(Matrix left, Matrix right)
 }
 
 // Returns translation matrix
-// TODO: REVIEW
+// TODO: Review this function
 Matrix MatrixTranslate(float x, float y, float z)
 {
 /*
@@ -478,6 +478,7 @@ Matrix MatrixTranslate(float x, float y, float z)
 }
 
 // Returns rotation matrix
+// TODO: Review this function
 Matrix MatrixRotate(float angleX, float angleY, float angleZ)
 {
     Matrix result;
@@ -492,6 +493,7 @@ Matrix MatrixRotate(float angleX, float angleY, float angleZ)
 }
 
 // Create rotation matrix from axis and angle
+// TODO: Test this function
 Matrix MatrixFromAxisAngle(Vector3 axis, float angle) 
 {
     Matrix result;
@@ -545,7 +547,8 @@ Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
     return result;
 };
 
-// Create rotation matrix from axis and angle
+// Create rotation matrix from axis and angle (version 2)
+// TODO: Test this function
 Matrix MatrixFromAxisAngle2(Vector3 axis, float angle)
 {
     Matrix result;
@@ -657,6 +660,21 @@ Matrix MatrixRotateZ(float angle)
 Matrix MatrixScale(float x, float y, float z)
 {
     Matrix result = { x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1 };
+
+    return result;
+}
+
+// Returns transformation matrix for a given translation, rotation and scale
+// NOTE: Transformation order is rotation -> scale -> translation
+Matrix MatrixTransform(Vector3 translation, Vector3 rotation, Vector3 scale)
+{
+    Matrix result = MatrixIdentity();
+    
+    Matrix mRotation = MatrixRotate(rotation.x, rotation.y, rotation.z);
+    Matrix mScale = MatrixScale(scale.x, scale.y, scale.z);
+    Matrix mTranslate = MatrixTranslate(translation.x, translation.y, translation.z);
+
+    result = MatrixMultiply(MatrixMultiply(mRotation, mScale), mTranslate);
 
     return result;
 }
