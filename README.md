@@ -39,7 +39,7 @@ Enjoy it.
 notes on raylib 1.1
 -------------------
 
-On April 2014, after 6 month of first raylib release, raybil 1.1 has been released. This new version presents a
+On April 2014, after 6 month of first raylib release, raylib 1.1 has been released. This new version presents a
 complete internal redesign of the library to support OpenGL 1.1, OpenGL 3.3+ and OpenGL ES 2.0.
 
 A new module named [rlgl] (https://github.com/raysan5/raylib/blob/master/src/rlgl.h) has been added to the library. This new module translate raylib-OpenGL-style 
@@ -140,6 +140,7 @@ The following people have contributed in some way to make raylib project a reali
 
  - [Zopokx](https://github.com/Zopokx)
  - [Elendow](http://www.elendow.com)
-
+ - Victor Dual
+ - Marc Palau
 	
 [raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"
