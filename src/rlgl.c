@@ -702,7 +702,7 @@ void rlglInit()
         TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
     }
 
-    if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 initialized\n");
+    if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 initialized successfully\n");
     
     // Print OpenGL and GLSL version
     TraceLog(INFO, "Vendor:   %s", glGetString(GL_VENDOR));
@@ -1029,7 +1029,7 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
                                   // Possible options: GL_SMOOTH (Color interpolation) or GL_FLAT (no interpolation)
 #endif
 
-    TraceLog(INFO, "OpenGL graphics device initialized");
+    TraceLog(INFO, "OpenGL Graphics Device initialized successfully");
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
@@ -1313,8 +1313,8 @@ static GLuint LoadDefaultShaders()
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
     
-    TraceLog(INFO, "[ID %i] Default vertex shader compiled succesfully", vertexShader);
-    TraceLog(INFO, "[ID %i] Default fragment shader compiled succesfully", fragmentShader);
+    TraceLog(INFO, "[ID %i] Default vertex shader compiled successfully", vertexShader);
+    TraceLog(INFO, "[ID %i] Default fragment shader compiled successfully", fragmentShader);
  
     program = glCreateProgram();
     
@@ -1326,7 +1326,7 @@ static GLuint LoadDefaultShaders()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     
-    TraceLog(INFO, "[ID %i] Default shader program loaded succesfully", program);
+    TraceLog(INFO, "[ID %i] Default shader program loaded successfully", program);
  
     return program;
 }
@@ -1355,8 +1355,8 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
     
-    TraceLog(INFO, "[ID %i] Vertex shader compiled succesfully", vertexShader);
-    TraceLog(INFO, "[ID %i] Fragment shader compiled succesfully", fragmentShader);
+    TraceLog(INFO, "[ID %i] Vertex shader compiled successfully", vertexShader);
+    TraceLog(INFO, "[ID %i] Fragment shader compiled successfully", fragmentShader);
  
     program = glCreateProgram();
     
@@ -1368,7 +1368,7 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     
-    TraceLog(INFO, "[ID %i] Shader program loaded succesfully", program);
+    TraceLog(INFO, "[ID %i] Shader program loaded successfully", program);
  
     return program;
 }
@@ -1479,7 +1479,7 @@ static void InitializeVAOs()
     glEnableVertexAttribArray(colorLoc);
     glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
     
-    TraceLog(INFO, "[ID %i] Lines VAO successfully initialized", vaoLines);
+    TraceLog(INFO, "[ID %i] Lines VAO initialized successfully", vaoLines);
     //-------------------------------------------------------------- 
     
     // Initialize Triangles VAO
@@ -1500,7 +1500,7 @@ static void InitializeVAOs()
     glEnableVertexAttribArray(colorLoc);
     glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
     
-    TraceLog(INFO, "[ID %i] Triangles VAO successfully initialized", vaoTriangles);
+    TraceLog(INFO, "[ID %i] Triangles VAO initialized successfully", vaoTriangles);
     //-------------------------------------------------------------- 
     
     // Initialize Quads VAO (Buffer A)
@@ -1530,7 +1530,7 @@ static void InitializeVAOs()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
     
-    TraceLog(INFO, "[ID %i] Quads VAO successfully initialized", vaoQuads);
+    TraceLog(INFO, "[ID %i] Quads VAO initialized successfully", vaoQuads);
     
 #ifdef USE_VBO_DOUBLE_BUFFERS
     // Initialize Quads VAO (Buffer B)

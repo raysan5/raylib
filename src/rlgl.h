@@ -39,8 +39,8 @@
 #include "raymath.h"            // Required for data type Matrix and Matrix functions
 
 // Select desired OpenGL version
-#define USE_OPENGL_11
-//#define USE_OPENGL_33
+//#define USE_OPENGL_11
+#define USE_OPENGL_33
 //#define USE_OPENGL_ES2
 
 //----------------------------------------------------------------------------------

@@ -302,7 +302,7 @@ Texture2D LoadTexture(const char *fileName)
         texture.height = image.height;
         
         if (texture.id == 0) TraceLog(WARNING, "[%s] DDS texture could not be loaded", fileName);
-        else TraceLog(INFO, "[%s] DDS texture loaded succesfully", fileName);
+        else TraceLog(INFO, "[%s] DDS texture loaded successfully", fileName);
         
         free(image.data);
     }
@@ -444,7 +444,7 @@ Texture2D CreateTexture(Image image, bool genMipmaps)
         texture.width = image.width;
         texture.height = image.height;
         
-        TraceLog(INFO, "[ID %i] Texture created succesfully", texture.id);
+        TraceLog(INFO, "[ID %i] Texture created successfully", texture.id);
         
         free(imgData);
     }

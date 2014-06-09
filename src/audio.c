@@ -116,7 +116,7 @@ void InitAudioDevice()
         TraceLog(ERROR, "Could not setup audio context");
     }
 
-    TraceLog(INFO, "Audio device and context initialized: %s\n", alcGetString(device, ALC_DEVICE_SPECIFIER));
+    TraceLog(INFO, "Audio device and context initialized successfully: %s\n", alcGetString(device, ALC_DEVICE_SPECIFIER));
     
     // Listener definition (just for 2D)
     alListener3f(AL_POSITION, 0, 0, 0);

@@ -221,7 +221,7 @@ typedef struct Camera {
 } Camera;
 
 // Vertex data definning a mesh
-typedef struct {
+typedef struct VertexData {
     int vertexCount;
     float *vertices;            // 3 components per vertex
     float *texcoords;           // 2 components per vertex
