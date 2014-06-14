@@ -285,7 +285,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
             
-            for(int i = 0; i < 2 * rings + (rings / 3); i++)
+            for(int i = 0; i < (rings + 2); i++)
             {
                 for(int j = 0; j < slices; j++)
                 {
@@ -319,7 +319,7 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
 {
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
-        //rlScalef(radius, radius, radius);
+        rlScalef(radius, radius, radius);
         //rlRotatef(rotation, 0, 1, 0);
         
         rlBegin(RL_LINES);
@@ -329,26 +329,26 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
             {
                 for(int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)) * radius, 
-                               sin(DEG2RAD*(270+(180/(rings + 1))*i)) * radius, 
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)) * radius);
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)) * radius, 
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * radius, 
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)), 
+                               sin(DEG2RAD*(270+(180/(rings + 1))*i)), 
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)), 
+                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))), 
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
                     
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)) * radius, 
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * radius, 
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)) * radius);
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)) * radius, 
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * radius, 
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)), 
+                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))), 
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)), 
+                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))), 
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
                     
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)) * radius, 
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * radius, 
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)) * radius);
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)) * radius, 
-                               sin(DEG2RAD*(270+(180/(rings + 1))*i)) * radius, 
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)) * radius);
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)), 
+                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))), 
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)), 
+                               sin(DEG2RAD*(270+(180/(rings + 1))*i)), 
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
                 }
             }
         rlEnd();
