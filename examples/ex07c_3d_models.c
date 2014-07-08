@@ -29,6 +29,7 @@ int main()
     
     Texture2D texture = LoadTexture("resources/catwhite.png");
     Model cat = LoadModel("resources/cat.obj");
+    SetModelTexture(&cat, texture); // Link texture to model
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -36,10 +37,10 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_LEFT)) position.x -= 0.2;
-        if (IsKeyPressed(KEY_RIGHT)) position.x += 0.2;
-        if (IsKeyPressed(KEY_UP)) position.z -= 0.2;
-        if (IsKeyPressed(KEY_DOWN)) position.z += 0.2;
+        if (IsKeyDown(KEY_LEFT)) position.x -= 0.2;
+        if (IsKeyDown(KEY_RIGHT)) position.x += 0.2;
+        if (IsKeyDown(KEY_UP)) position.z -= 0.2;
+        if (IsKeyDown(KEY_DOWN)) position.z += 0.2;
         //----------------------------------------------------------------------------------
         
         // Draw
@@ -50,11 +51,11 @@ int main()
             
             Begin3dMode(camera);
             
-                DrawModelEx(cat, texture, position, 0.1f, WHITE);   // Draw 3d model with texture
+                DrawModel(cat, position, 0.1f, WHITE);   // Draw 3d model with texture
 
                 DrawGrid(10.0, 1.0);        // Draw a grid
                 
-                DrawGizmo(position, false); 
+                DrawGizmo(position); 
                 
             End3dMode();
             
