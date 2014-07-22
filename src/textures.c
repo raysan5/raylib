@@ -100,26 +100,30 @@ Image LoadImage(const char *fileName)
         // Force loading to 4 components (RGBA)
         byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);    
         
-        // Convert array to pixel array for working convenience
-        image.pixels = (Color *)malloc(imgWidth * imgHeight * sizeof(Color));
-        
-        int pix = 0;
-        
-        for (int i = 0; i < (imgWidth * imgHeight * 4); i += 4)
+        if (imgData != NULL)
         {
-            image.pixels[pix].r = imgData[i];
-            image.pixels[pix].g = imgData[i+1];
-            image.pixels[pix].b = imgData[i+2];
-            image.pixels[pix].a = imgData[i+3];
-            pix++;
+            // Convert array to pixel array for working convenience
+            image.pixels = (Color *)malloc(imgWidth * imgHeight * sizeof(Color));
+            
+            int pix = 0;
+            
+            for (int i = 0; i < (imgWidth * imgHeight * 4); i += 4)
+            {
+                image.pixels[pix].r = imgData[i];
+                image.pixels[pix].g = imgData[i+1];
+                image.pixels[pix].b = imgData[i+2];
+                image.pixels[pix].a = imgData[i+3];
+                pix++;
+            }
+            
+            stbi_image_free(imgData);
+            
+            image.width = imgWidth;
+            image.height = imgHeight;
+            
+            TraceLog(INFO, "[%s] Image loaded successfully", fileName);
         }
-        
-        stbi_image_free(imgData);
-        
-        image.width = imgWidth;
-        image.height = imgHeight;
-        
-        TraceLog(INFO, "[%s] Image loaded successfully", fileName);
+        else TraceLog(WARNING, "[%s] Image could not be loaded", fileName);
     }
     else if (strcmp(GetExtension(fileName),"dds") == 0)
     {

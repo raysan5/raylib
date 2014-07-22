@@ -88,6 +88,8 @@ I believe those are the best tools to train spartan-programmers.
 Someone could argue about debugging. raylib is a library intended for learning and I think C it's a clear enough language
 to allow writing small-mid size programs with a printf-based debugging. All raylib examples have also been written this way.
 
+Since raylib v1.1, you can download a windows Installer package for easy installation and configuration. Check [raylib Webpage](http://www.raylib.com/)
+
 building
 --------
 
@@ -143,4 +145,4 @@ The following people have contributed in some way to make raylib project a reali
  - Victor Dual
  - Marc Palau
 	
-[raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"
+[raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"

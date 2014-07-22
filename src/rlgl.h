@@ -65,7 +65,7 @@ typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
         float *vertices;            // 3 components per vertex
         float *texcoords;           // 2 components per vertex
         float *normals;             // 3 components per vertex
-        float *colors;
+        unsigned char *colors;
     } VertexData;
 
     typedef struct Model {

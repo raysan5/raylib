@@ -86,6 +86,8 @@ static int currentMouseWheelY = 0;          // Required to track mouse wheel var
 
 static Color background = { 0, 0, 0, 0 };   // Screen background color
 
+static bool showLogo = false;
+
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
@@ -103,6 +105,7 @@ static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset); 
 static void CursorEnterCallback(GLFWwindow* window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow* window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
 static void TakeScreenshot();                                                              // Takes a screenshot and saves it in the same folder as executable
+static void LogoAnimation();                                                               // Plays raylib logo appearing animation
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
@@ -177,6 +180,13 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
     srand(time(NULL));              // Initialize random seed
     
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
+    
+    // raylib logo appearing animation
+    if (showLogo)
+    {
+        SetTargetFPS(60);
+        LogoAnimation();
+    }
 }
 
 // Close Window and Terminate Context
@@ -436,6 +446,12 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, color.a*alpha};
 }
 
+// Activates raylib logo at startup
+void ShowLogo()
+{
+    showLogo = true;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
@@ -681,7 +697,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
 {
-    TraceLog(WARNING, "GLFW3 Error: %s", description);
+    TraceLog(WARNING, "[GLFW3 Error] Code: %i Decription: %s", error, description);
 }
 
 // GLFW3 Srolling Callback, runs on mouse wheel
@@ -721,9 +737,15 @@ static void WindowSizeCallback(GLFWwindow* window, int width, int height)
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
 
-    // If window is resized, graphics device is re-initialized
-    // NOTE: Aspect ratio does not change, so, image can be deformed
+    // If window is resized, graphics device is re-initialized (but only ortho mode)
     rlglInitGraphicsDevice(fbWidth, fbHeight);
+    
+    // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
+    windowWidth = fbWidth;
+    windowHeight = fbHeight;
+    
+    // Background must be also re-cleared
+    rlClearColor(background.r, background.g, background.b, background.a);
 }
 
 // Takes a bitmap (BMP) screenshot and saves it in the same folder as executable
@@ -747,4 +769,123 @@ static void TakeScreenshot()
     shotNum++;
     
     TraceLog(INFO, "[%s] Screenshot taken!", buffer);
+}
+
+static void LogoAnimation()
+{
+    int logoPositionX = windowWidth/2 - 128;
+    int logoPositionY = windowHeight/2 - 128;
+    
+    int framesCounter = 0;
+    int lettersCount = 0;
+    
+    int topSideRecWidth = 16;
+    int leftSideRecHeight = 16;
+    
+    int bottomSideRecWidth = 16;
+    int rightSideRecHeight = 16;
+    
+    char raylib[8] = "       ";     // raylib text array, max 8 letters
+    int state = 0;                  // Tracking animation states (State Machine)
+    float alpha = 1.0;              // Useful for fading
+    
+    while (!WindowShouldClose() && (state != 4))    // Detect window close button or ESC key
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        if (state == 0)                 // State 0: Small box blinking
+        {
+            framesCounter++;
+        
+            if (framesCounter == 84)
+            {                
+                state = 1;
+                framesCounter = 0;      // Reset counter... will be used later...
+            }
+        }
+        else if (state == 1)            // State 1: Top and left bars growing
+        {
+            topSideRecWidth += 4;
+            leftSideRecHeight += 4;
+            
+            if (topSideRecWidth == 256) state = 2;
+        }
+        else if (state == 2)            // State 2: Bottom and right bars growing
+        {
+            bottomSideRecWidth += 4;
+            rightSideRecHeight += 4;
+            
+            if (bottomSideRecWidth == 256) state = 3;
+        }
+        else if (state == 3)            // State 3: Letters appearing (one by one)
+        {
+            framesCounter++;
+            
+            if (framesCounter/12)       // Every 12 frames, one more letter!
+            {    
+                lettersCount++;
+                framesCounter = 0;
+            }
+            
+            switch (lettersCount)
+            {
+                case 1: raylib[0] = 'r'; break;
+                case 2: raylib[1] = 'a'; break;
+                case 3: raylib[2] = 'y'; break;
+                case 4: raylib[3] = 'l'; break;
+                case 5: raylib[4] = 'i'; break;
+                case 6: raylib[5] = 'b'; break;
+                default: break;
+            }
+            
+            if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
+            {
+                alpha -= 0.02;
+                
+                if (alpha <= 0)
+                {
+                    alpha = 0;
+                    state = 4;
+                }
+            }
+        }
+        //----------------------------------------------------------------------------------
+        
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+        
+            if (state == 0)
+            {
+                if ((framesCounter/12)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
+            }
+            else if (state == 1)
+            {
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
+            }
+            else if (state == 2)
+            {
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
+                DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
+                
+                DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
+                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
+            }
+            else if (state == 3)
+            {
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
+                
+                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
+                
+                DrawRectangle(windowWidth/2 - 112, windowHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
+                
+                DrawText(raylib, 356, 273, 50, Fade(BLACK, alpha));
+            }
+        
+        EndDrawing();
+        //----------------------------------------------------------------------------------
+    }
 }

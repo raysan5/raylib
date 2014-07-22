@@ -681,6 +681,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));
     
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -765,6 +766,9 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
 
+    // Fill color data
+    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
+    
     Model model;
 
     model.mesh = vData;                     // Model mesh is vertex data
@@ -780,6 +784,329 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     //free(vData.normals);
 #endif
 
+    return model;
+}
+
+// Load a map image as a 3d model (cubes based)
+Model LoadCubesmap(Image cubesmap)
+{
+    VertexData vData;
+
+    // Map cube size will be 1.0
+    float mapCubeSide = 1.0f;
+    int mapWidth = cubesmap.width * (int)mapCubeSide;
+    int mapHeight = cubesmap.height * (int)mapCubeSide;
+    
+    // NOTE: Max possible number of triangles numCubes * (12 triangles by cube) 
+    int maxTriangles = cubesmap.width*cubesmap.height*12;
+
+    int vCounter = 0;       // Used to count vertices
+    int tcCounter = 0;      // Used to count texcoords
+    int nCounter = 0;       // Used to count normals
+    
+    float w = mapCubeSide;
+    float h = mapCubeSide;
+    float h2 = mapCubeSide;
+    
+    Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles * 3 * sizeof(Vector3));
+    Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles * 3 * sizeof(Vector2));
+	Vector3 *mapNormals = (Vector3 *)malloc(maxTriangles * 3 * sizeof(Vector3));
+    
+    for (int z = 0; z < mapHeight; z += mapCubeSide)
+    {
+        for (int x = 0; x < mapWidth; x += mapCubeSide)
+        {            
+            // Define the 8 vertex of the cube, we will combine them accordingly later...
+            Vector3 v1 = { x - w/2, h2, z - h/2 };
+            Vector3 v2 = { x - w/2, h2, z + h/2 };
+            Vector3 v3 = { x + w/2, h2, z + h/2 };
+            Vector3 v4 = { x + w/2, h2, z - h/2 };
+            Vector3 v5 = { x + w/2, 0, z - h/2 };
+            Vector3 v6 = { x - w/2, 0, z - h/2 };
+            Vector3 v7 = { x - w/2, 0, z + h/2 };
+            Vector3 v8 = { x + w/2, 0, z + h/2 };
+            
+            // Define the 6 normals of the cube, we will combine them accordingly later...
+            Vector3 n1 = { 1.0f, 0.0f, 0.0f };
+            Vector3 n2 = { -1.0f, 0.0f, 0.0f };
+            Vector3 n3 = { 0.0f, 1.0f, 0.0f };
+            Vector3 n4 = { 0.0f, -1.0f, 0.0f };
+            Vector3 n5 = { 0.0f, 0.0f, 1.0f };
+            Vector3 n6 = { 0.0f, 0.0f, -1.0f };
+            
+            // Define the 4 texture coordinates of the cube, we will combine them accordingly later...
+            // TODO: Use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
+            Vector2 vt2 = { 0.0f, 0.0f }; 
+            Vector2 vt1 = { 0.0f, 1.0f };
+            Vector2 vt4 = { 1.0f, 0.0f };
+            Vector2 vt3 = { 1.0f, 1.0f };
+            
+            // We check pixel color to be WHITE, we will full cubes
+            if ((cubesmap.pixels[z*cubesmap.width + x].r == 255) &&
+                (cubesmap.pixels[z*cubesmap.width + x].g == 255) &&
+                (cubesmap.pixels[z*cubesmap.width + x].b == 255))
+            {
+                // Define triangles (Checking Collateral Cubes!)
+                //----------------------------------------------
+                
+                // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
+                mapVertices[vCounter] = v1;
+                mapVertices[vCounter + 1] = v2; 
+                mapVertices[vCounter + 2] = v3; 
+                mapVertices[vCounter + 3] = v1; 
+                mapVertices[vCounter + 4] = v3; 
+                mapVertices[vCounter + 5] = v4;
+                vCounter += 6;
+                
+                mapNormals[nCounter] = n3;
+                mapNormals[nCounter + 1] = n3; 
+                mapNormals[nCounter + 2] = n3; 
+                mapNormals[nCounter + 3] = n3; 
+                mapNormals[nCounter + 4] = n3; 
+                mapNormals[nCounter + 5] = n3;
+                nCounter += 6;
+                
+                mapTexcoords[tcCounter] = vt2;
+                mapTexcoords[tcCounter + 1] = vt1; 
+                mapTexcoords[tcCounter + 2] = vt3; 
+                mapTexcoords[tcCounter + 3] = vt2; 
+                mapTexcoords[tcCounter + 4] = vt3; 
+                mapTexcoords[tcCounter + 5] = vt4;
+                tcCounter += 6;
+                
+                // Define bottom triangles (2 tris, 6 vertex --> v6-v8-v7, v6-v5-v8)
+                mapVertices[vCounter] = v6;
+                mapVertices[vCounter + 1] = v8; 
+                mapVertices[vCounter + 2] = v7; 
+                mapVertices[vCounter + 3] = v6; 
+                mapVertices[vCounter + 4] = v5; 
+                mapVertices[vCounter + 5] = v8;
+                vCounter += 6;
+                
+                mapNormals[nCounter] = n4;
+                mapNormals[nCounter + 1] = n4; 
+                mapNormals[nCounter + 2] = n4; 
+                mapNormals[nCounter + 3] = n4; 
+                mapNormals[nCounter + 4] = n4; 
+                mapNormals[nCounter + 5] = n4;
+                nCounter += 6;
+                
+                mapTexcoords[tcCounter] = vt4;
+                mapTexcoords[tcCounter + 1] = vt1; 
+                mapTexcoords[tcCounter + 2] = vt3; 
+                mapTexcoords[tcCounter + 3] = vt4; 
+                mapTexcoords[tcCounter + 4] = vt2; 
+                mapTexcoords[tcCounter + 5] = vt1;
+                tcCounter += 6;
+                
+                if (((z < cubesmap.height - 1) && 
+                (cubesmap.pixels[(z + 1)*cubesmap.width + x].r == 0) &&
+                (cubesmap.pixels[(z + 1)*cubesmap.width + x].g == 0) &&
+                (cubesmap.pixels[(z + 1)*cubesmap.width + x].b == 0)) || (z == cubesmap.height - 1))
+                {
+                    // Define front triangles (2 tris, 6 vertex) --> v2 v7 v3, v3 v7 v8
+                    // NOTE: Collateral occluded faces are not generated
+                    mapVertices[vCounter] = v2;
+                    mapVertices[vCounter + 1] = v7; 
+                    mapVertices[vCounter + 2] = v3; 
+                    mapVertices[vCounter + 3] = v3; 
+                    mapVertices[vCounter + 4] = v7; 
+                    mapVertices[vCounter + 5] = v8;
+                    vCounter += 6;
+                    
+                    mapNormals[nCounter] = n6;
+                    mapNormals[nCounter + 1] = n6; 
+                    mapNormals[nCounter + 2] = n6; 
+                    mapNormals[nCounter + 3] = n6; 
+                    mapNormals[nCounter + 4] = n6; 
+                    mapNormals[nCounter + 5] = n6;
+                    nCounter += 6;
+                    
+                    mapTexcoords[tcCounter] = vt2;
+                    mapTexcoords[tcCounter + 1] = vt1; 
+                    mapTexcoords[tcCounter + 2] = vt4; 
+                    mapTexcoords[tcCounter + 3] = vt4; 
+                    mapTexcoords[tcCounter + 4] = vt1; 
+                    mapTexcoords[tcCounter + 5] = vt3;
+                    tcCounter += 6;
+                }
+                
+                if (((z > 0) &&
+                (cubesmap.pixels[(z - 1)*cubesmap.width + x].r == 0) &&
+                (cubesmap.pixels[(z - 1)*cubesmap.width + x].g == 0) &&
+                (cubesmap.pixels[(z - 1)*cubesmap.width + x].b == 0)) || (z == 0))
+                {
+                    // Define back triangles (2 tris, 6 vertex) --> v1 v5 v6, v1 v4 v5
+                    // NOTE: Collateral occluded faces are not generated
+                    mapVertices[vCounter] = v1;
+                    mapVertices[vCounter + 1] = v5; 
+                    mapVertices[vCounter + 2] = v6; 
+                    mapVertices[vCounter + 3] = v1; 
+                    mapVertices[vCounter + 4] = v4; 
+                    mapVertices[vCounter + 5] = v5;
+                    vCounter += 6;
+                    
+                    mapNormals[nCounter] = n5;
+                    mapNormals[nCounter + 1] = n5; 
+                    mapNormals[nCounter + 2] = n5; 
+                    mapNormals[nCounter + 3] = n5; 
+                    mapNormals[nCounter + 4] = n5; 
+                    mapNormals[nCounter + 5] = n5;
+                    nCounter += 6;
+                    
+                    mapTexcoords[tcCounter] = vt4;
+                    mapTexcoords[tcCounter + 1] = vt1; 
+                    mapTexcoords[tcCounter + 2] = vt3; 
+                    mapTexcoords[tcCounter + 3] = vt4; 
+                    mapTexcoords[tcCounter + 4] = vt2; 
+                    mapTexcoords[tcCounter + 5] = vt1;
+                    tcCounter += 6;
+                }
+                
+                if (((x < cubesmap.width - 1) &&
+                (cubesmap.pixels[z*cubesmap.width + (x + 1)].r == 0) &&
+                (cubesmap.pixels[z*cubesmap.width + (x + 1)].g == 0) &&
+                (cubesmap.pixels[z*cubesmap.width + (x + 1)].b == 0)) || (x == cubesmap.width - 1))
+                {
+                    // Define right triangles (2 tris, 6 vertex) --> v3 v8 v4, v4 v8 v5
+                    // NOTE: Collateral occluded faces are not generated
+                    mapVertices[vCounter] = v3;
+                    mapVertices[vCounter + 1] = v8; 
+                    mapVertices[vCounter + 2] = v4; 
+                    mapVertices[vCounter + 3] = v4; 
+                    mapVertices[vCounter + 4] = v8; 
+                    mapVertices[vCounter + 5] = v5;
+                    vCounter += 6;
+                    
+                    mapNormals[nCounter] = n1;
+                    mapNormals[nCounter + 1] = n1; 
+                    mapNormals[nCounter + 2] = n1; 
+                    mapNormals[nCounter + 3] = n1; 
+                    mapNormals[nCounter + 4] = n1; 
+                    mapNormals[nCounter + 5] = n1;
+                    nCounter += 6;
+                    
+                    mapTexcoords[tcCounter] = vt2;
+                    mapTexcoords[tcCounter + 1] = vt1; 
+                    mapTexcoords[tcCounter + 2] = vt4; 
+                    mapTexcoords[tcCounter + 3] = vt4; 
+                    mapTexcoords[tcCounter + 4] = vt1; 
+                    mapTexcoords[tcCounter + 5] = vt3;
+                    tcCounter += 6;
+                }
+                
+                if (((x > 0) &&
+                (cubesmap.pixels[z*cubesmap.width + (x - 1)].r == 0) &&
+                (cubesmap.pixels[z*cubesmap.width + (x - 1)].g == 0) &&
+                (cubesmap.pixels[z*cubesmap.width + (x - 1)].b == 0)) || (x == 0))
+                {
+                    // Define left triangles (2 tris, 6 vertex) --> v1 v7 v2, v1 v6 v7
+                    // NOTE: Collateral occluded faces are not generated
+                    mapVertices[vCounter] = v1;
+                    mapVertices[vCounter + 1] = v7; 
+                    mapVertices[vCounter + 2] = v2; 
+                    mapVertices[vCounter + 3] = v1; 
+                    mapVertices[vCounter + 4] = v6; 
+                    mapVertices[vCounter + 5] = v7;
+                    vCounter += 6;
+                    
+                    mapNormals[nCounter] = n2;
+                    mapNormals[nCounter + 1] = n2; 
+                    mapNormals[nCounter + 2] = n2; 
+                    mapNormals[nCounter + 3] = n2; 
+                    mapNormals[nCounter + 4] = n2; 
+                    mapNormals[nCounter + 5] = n2;
+                    nCounter += 6;
+                    
+                    mapTexcoords[tcCounter] = vt2;
+                    mapTexcoords[tcCounter + 1] = vt3; 
+                    mapTexcoords[tcCounter + 2] = vt4; 
+                    mapTexcoords[tcCounter + 3] = vt2; 
+                    mapTexcoords[tcCounter + 4] = vt1; 
+                    mapTexcoords[tcCounter + 5] = vt3;
+                    tcCounter += 6;
+                }
+            }
+            // We check pixel color to be BLACK, we will only draw floor and roof
+            else if  ((cubesmap.pixels[z*cubesmap.width + x].r == 0) &&
+                      (cubesmap.pixels[z*cubesmap.width + x].g == 0) &&
+                      (cubesmap.pixels[z*cubesmap.width + x].b == 0))
+            {
+                // Define top triangles (2 tris, 6 vertex --> v1-v3-v2, v1-v4-v3)
+                // TODO: ...
+                
+                // Define bottom triangles (2 tris, 6 vertex --> v6-v7-v8, v6-v8-v5) 
+                // TODO: ...
+            }
+        }	
+    }
+
+    // Move data from mapVertices temp arays to vertices float array
+    vData.vertexCount = vCounter;
+    
+    printf("Vertex count: %i\n", vCounter);
+
+    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));
+    
+    // Fill color data
+    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
+    
+    int fCounter = 0;
+    
+    // Move vertices data
+    for (int i = 0; i < vCounter; i++)
+    {
+        vData.vertices[fCounter] = mapVertices[i].x;
+        vData.vertices[fCounter + 1] = mapVertices[i].y;
+        vData.vertices[fCounter + 2] = mapVertices[i].z;
+        fCounter += 3;
+    }
+    
+    fCounter = 0;
+    
+    // Move normals data
+    for (int i = 0; i < nCounter; i++)
+    {
+        vData.normals[fCounter] = mapNormals[i].x;
+        vData.normals[fCounter + 1] = mapNormals[i].y;
+        vData.normals[fCounter + 2] = mapNormals[i].z;
+        fCounter += 3;
+    }
+        
+    fCounter = 0;
+    
+    // Move texcoords data
+    for (int i = 0; i < tcCounter; i++)
+    {
+        vData.texcoords[fCounter] = mapTexcoords[i].x;
+        vData.texcoords[fCounter + 1] = mapTexcoords[i].y;
+        fCounter += 2;
+    }
+    
+    free(mapVertices);
+    free(mapNormals);
+    free(mapTexcoords);
+    
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+    
+    Model model;
+
+    model.mesh = vData;                     // Model mesh is vertex data
+    model.textureId = 0;
+    
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
+    model.textureId = 1;                    // Default whiteTexture
+
+    // Now that vertex data is uploaded to GPU, we can free arrays
+    //free(vData.vertices);
+    //free(vData.texcoords);
+    //free(vData.normals);
+#endif
+    
     return model;
 }
 
@@ -945,141 +1272,81 @@ static VertexData LoadOBJ(const char *fileName)
 
     objFile = fopen(fileName, "rt");
     
-    // First pass over all file to get numVertex, numNormals, numTexCoords, numTriangles
+    // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
+    // NOTE: faces MUST be defined as TRIANGLES, not QUADS
     while(!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
         
         switch(dataType)
         {
-            case '#':         // It's a comment
+            case '#':   // Comments
+            case 'o':   // Object name (One OBJ file can contain multible named meshes)
+            case 'g':   // Group name
+            case 's':   // Smoothing level
+            case 'm':   // mtllib [external .mtl file name]
+            case 'u':   // usemtl [material name]
             {
-                fgets(comments, 200, objFile);                
-            } break;
-            case 'o':         // New object
-            {
-                // TODO: Read multiple objects, we need to know numMeshes + verticesPerMesh
-                
-                // NOTE: One OBJ file can contain multible meshes defined, one after every 'o'
-                
-            } break;
+                fgets(comments, 200, objFile); 
+            } break; 
             case 'v':
             {
                 fscanf(objFile, "%c", &dataType);
                 
                 if (dataType == 't')    // Read texCoord
                 {
-                    fgets(comments, 200, objFile);
-                    fscanf(objFile, "%c", &dataType);
-                
-                    while (dataType == 'v')
-                    {
-                        fgets(comments, 200, objFile);
-                        fscanf(objFile, "%c", &dataType);
-                    }
-                    
-                    if (dataType == '#')
-                    {
-                        fscanf(objFile, "%i", &numTexCoords);
-                    }
-                    
+                    numTexCoords++;
                     fgets(comments, 200, objFile);
                 }
                 else if (dataType == 'n')    // Read normals
                 {
-                    fgets(comments, 200, objFile);
-                    fscanf(objFile, "%c", &dataType);
-                
-                    while (dataType == 'v')
-                    {
-                        fgets(comments, 200, objFile);
-                        fscanf(objFile, "%c", &dataType);
-                    }
-                    
-                    if (dataType == '#')
-                    {
-                        fscanf(objFile, "%i", &numNormals);
-                    }
-                
+                    numNormals++;
                     fgets(comments, 200, objFile);
                 }
                 else    // Read vertex
                 {
-                    fgets(comments, 200, objFile);
-                    fscanf(objFile, "%c", &dataType);
-                
-                    while (dataType == 'v')
-                    {
-                        fgets(comments, 200, objFile);
-                        fscanf(objFile, "%c", &dataType);
-                    }
-                    
-                    if (dataType == '#')
-                    {
-                        fscanf(objFile, "%i", &numVertex);
-                    }
-                    
+                    numVertex++;
                     fgets(comments, 200, objFile);
                 }
             } break;
             case 'f':
             {
+                numTriangles++;
                 fgets(comments, 200, objFile);
-                fscanf(objFile, "%c", &dataType);
-            
-                while (dataType == 'f')
-                {
-                    fgets(comments, 200, objFile);
-                    fscanf(objFile, "%c", &dataType);
-                }
-                
-                if (dataType == '#')
-                {
-                    fscanf(objFile, "%i", &numTriangles);
-                }
-                
-                fgets(comments, 200, objFile);
-            
             } break;
             default: break;
         }
     }
     
+    TraceLog(DEBUG, "[%s] Model num vertices: %i", fileName, numVertex);
+    TraceLog(DEBUG, "[%s] Model num texcoords: %i", fileName, numTexCoords);
+    TraceLog(DEBUG, "[%s] Model num normals: %i", fileName, numNormals);
+    TraceLog(DEBUG, "[%s] Model num triangles: %i", fileName, numTriangles);
+    
     // Once we know the number of vertices to store, we create required arrays
     Vector3 *midVertices = (Vector3 *)malloc(numVertex*sizeof(Vector3));
-    Vector3 *midNormals = (Vector3 *)malloc(numNormals*sizeof(Vector3));
-    Vector2 *midTexCoords = (Vector2 *)malloc(numTexCoords*sizeof(Vector2));
-    
-    vData.vertexCount = numTriangles*3;
-    
-    // Additional arrays to store vertex data as floats
-    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
-    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.colors = (float *)malloc(vData.vertexCount * 4 * sizeof(float));
-    
+    Vector3 *midNormals;
+    if (numNormals > 0) midNormals = (Vector3 *)malloc(numNormals*sizeof(Vector3));
+    Vector2 *midTexCoords;
+    if (numTexCoords > 0) midTexCoords = (Vector2 *)malloc(numTexCoords*sizeof(Vector2));
+
     int countVertex = 0;
     int countNormals = 0;
     int countTexCoords = 0;
-    
-    int vCounter = 0;       // Used to count vertices float by float
-    int tcCounter = 0;      // Used to count texcoords float by float
-    int nCounter = 0;       // Used to count normals float by float
-    
+
     rewind(objFile);        // Return to the beginning of the file, to read again
     
-    // Reading again file to get vertex data
+    // Second reading pass: Get vertex data to fill intermediate arrays
+    // NOTE: This second pass is required in case of multiple meshes defined in same OBJ
+    // TODO: Consider that diferent meshes can have different vertex data available (position, texcoords, normals)
     while(!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
         
         switch(dataType)
         {
-            case '#': 
-            {
-                fgets(comments, 200, objFile);                
-            } break;
+            case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'f': fgets(comments, 200, objFile); break; 
             case 'v': 
             {
                 fscanf(objFile, "%c", &dataType);
@@ -1108,60 +1375,107 @@ static VertexData LoadOBJ(const char *fileName)
                     fscanf(objFile, "%c", &dataType);
                 }
             } break;
+            default: break;
+        }
+    }
+    
+    // At this point all vertex data (v, vt, vn) has been gathered on midVertices, midTexCoords, midNormals
+    // Now we can organize that data into our VertexData struct
+    
+    vData.vertexCount = numTriangles*3;
+    
+    // Additional arrays to store vertex data as floats
+    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
+    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));
+    
+    int vCounter = 0;       // Used to count vertices float by float
+    int tcCounter = 0;      // Used to count texcoords float by float
+    int nCounter = 0;       // Used to count normals float by float
+    
+    int vNum[3], vtNum[3], vnNum[3];
+    
+    rewind(objFile);        // Return to the beginning of the file, to read again
+    
+    if (numNormals == 0) TraceLog(INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
+    
+    // Third reading pass: Get faces (triangles) data and fill VertexArray
+    while(!feof(objFile))
+    {
+        fscanf(objFile, "%c", &dataType);
+        
+        switch(dataType)
+        {
+            case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'v': fgets(comments, 200, objFile); break;  
             case 'f':
             {
-                // At this point all vertex data (v, vt, vn) have been gathered on midVertices, midTexCoords, midNormals
-                // Now we can organize that data into our VertexData struct
-            
-                int vNum, vtNum, vnNum;
-                fscanf(objFile, "%c", &dataType);
-                fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
+                // NOTE: It could be that OBJ does not have normals or texcoords defined!
                 
-                vData.vertices[vCounter] = midVertices[vNum-1].x;
-                vData.vertices[vCounter + 1] = midVertices[vNum-1].y;
-                vData.vertices[vCounter + 2] = midVertices[vNum-1].z;
+                if ((numNormals == 0) && (numTexCoords == 0)) fscanf(objFile, "%i %i %i", &vNum[0], &vNum[1], &vNum[2]);
+                else if (numNormals == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vNum[0], &vtNum[0], &vNum[1], &vtNum[1], &vNum[2], &vtNum[2]);
+                else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vNum[0], &vtNum[0], &vnNum[0], &vNum[1], &vtNum[1], &vnNum[1], &vNum[2], &vtNum[2], &vnNum[2]);
+                
+                vData.vertices[vCounter] = midVertices[vNum[0]-1].x;
+                vData.vertices[vCounter + 1] = midVertices[vNum[0]-1].y;
+                vData.vertices[vCounter + 2] = midVertices[vNum[0]-1].z;
+                vCounter += 3;
+                vData.vertices[vCounter] = midVertices[vNum[1]-1].x;
+                vData.vertices[vCounter + 1] = midVertices[vNum[1]-1].y;
+                vData.vertices[vCounter + 2] = midVertices[vNum[1]-1].z;
+                vCounter += 3;
+                vData.vertices[vCounter] = midVertices[vNum[2]-1].x;
+                vData.vertices[vCounter + 1] = midVertices[vNum[2]-1].y;
+                vData.vertices[vCounter + 2] = midVertices[vNum[2]-1].z;
                 vCounter += 3;
                 
-                vData.normals[nCounter] = midNormals[vnNum-1].x;
-                vData.normals[nCounter + 1] = midNormals[vnNum-1].y;
-                vData.normals[nCounter + 2] = midNormals[vnNum-1].z;
-                nCounter += 3;
+                if (numNormals > 0)
+                {
+                    vData.normals[nCounter] = midNormals[vnNum[0]-1].x;
+                    vData.normals[nCounter + 1] = midNormals[vnNum[0]-1].y;
+                    vData.normals[nCounter + 2] = midNormals[vnNum[0]-1].z;
+                    nCounter += 3;
+                    vData.normals[nCounter] = midNormals[vnNum[1]-1].x;
+                    vData.normals[nCounter + 1] = midNormals[vnNum[1]-1].y;
+                    vData.normals[nCounter + 2] = midNormals[vnNum[1]-1].z;
+                    nCounter += 3;
+                    vData.normals[nCounter] = midNormals[vnNum[2]-1].x;
+                    vData.normals[nCounter + 1] = midNormals[vnNum[2]-1].y;
+                    vData.normals[nCounter + 2] = midNormals[vnNum[2]-1].z;
+                    nCounter += 3;
+                }
+                else
+                {
+                    // If normals not defined, they are calculated from the 3 vertices [N = (V2 - V1) x (V3 - V1)]
+                    Vector3 norm = VectorCrossProduct(VectorSubtract(midVertices[vNum[1]-1], midVertices[vNum[0]-1]), VectorSubtract(midVertices[vNum[2]-1], midVertices[vNum[0]-1]));
+                    VectorNormalize(&norm);
+                    
+                    vData.normals[nCounter] = norm.x;
+                    vData.normals[nCounter + 1] = norm.y;
+                    vData.normals[nCounter + 2] = norm.z;
+                    nCounter += 3;
+                    vData.normals[nCounter] = norm.x;
+                    vData.normals[nCounter + 1] = norm.y;
+                    vData.normals[nCounter + 2] = norm.z;
+                    nCounter += 3;
+                    vData.normals[nCounter] = norm.x;
+                    vData.normals[nCounter + 1] = norm.y;
+                    vData.normals[nCounter + 2] = norm.z;
+                    nCounter += 3;
+                }
                 
-                vData.texcoords[tcCounter] = midTexCoords[vtNum-1].x;
-                vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum-1].y;
-                tcCounter += 2;
-
-                fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
-                
-                vData.vertices[vCounter] = midVertices[vNum-1].x;
-                vData.vertices[vCounter + 1] = midVertices[vNum-1].y;
-                vData.vertices[vCounter + 2] = midVertices[vNum-1].z;
-                vCounter += 3;
-                
-                vData.normals[nCounter] = midNormals[vnNum-1].x;
-                vData.normals[nCounter + 1] = midNormals[vnNum-1].y;
-                vData.normals[nCounter + 2] = midNormals[vnNum-1].z;
-                nCounter += 3;
-                
-                vData.texcoords[tcCounter] = midTexCoords[vtNum-1].x;
-                vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum-1].y;
-                tcCounter += 2;
-                
-                fscanf(objFile, "%i/%i/%i", &vNum, &vtNum, &vnNum);
-                
-                vData.vertices[vCounter] = midVertices[vNum-1].x;
-                vData.vertices[vCounter + 1] = midVertices[vNum-1].y;
-                vData.vertices[vCounter + 2] = midVertices[vNum-1].z;
-                vCounter += 3;
-                
-                vData.normals[nCounter] = midNormals[vnNum-1].x;
-                vData.normals[nCounter + 1] = midNormals[vnNum-1].y;
-                vData.normals[nCounter + 2] = midNormals[vnNum-1].z;
-                nCounter += 3;
-                
-                vData.texcoords[tcCounter] = midTexCoords[vtNum-1].x;
-                vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum-1].y;
-                tcCounter += 2;
+                if (numTexCoords > 0)
+                {
+                    vData.texcoords[tcCounter] = midTexCoords[vtNum[0]-1].x;
+                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[0]-1].y;
+                    tcCounter += 2;
+                    vData.texcoords[tcCounter] = midTexCoords[vtNum[1]-1].x;
+                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[1]-1].y;
+                    tcCounter += 2;
+                    vData.texcoords[tcCounter] = midTexCoords[vtNum[2]-1].x;
+                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[2]-1].y;
+                    tcCounter += 2;
+                }
             } break;
             default: break;
         }
@@ -1169,8 +1483,11 @@ static VertexData LoadOBJ(const char *fileName)
     
     fclose(objFile);
     
+    // Security check, just in case no normals or no texcoords defined in OBJ
+    if (numTexCoords == 0) for (int i = 0; i < (2*vData.vertexCount); i++) vData.texcoords[i] = 0.0f;
+    
     // NOTE: We set all vertex colors to white
-    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 1.0f;
+    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
     
     // Now we can free temp mid* arrays
     free(midVertices);

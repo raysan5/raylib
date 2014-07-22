@@ -221,16 +221,16 @@ typedef struct Camera {
 } Camera;
 
 // Vertex data definning a mesh
-typedef struct {
+typedef struct VertexData {
     int vertexCount;
     float *vertices;            // 3 components per vertex
     float *texcoords;           // 2 components per vertex
     float *normals;             // 3 components per vertex
-    float *colors;              // 4 components per vertex
+    unsigned char *colors;      // 4 components per vertex
 } VertexData;
 
 // 3d Model type
-// NOTE: If using OpenGL 1.1 loaded in CPU (mesh); if OpenGL 3.3+ loaded in GPU (vaoId)
+// NOTE: If using OpenGL 1.1, loaded in CPU (mesh); if OpenGL 3.3+ loaded in GPU (vaoId)
 typedef struct Model {
     VertexData mesh;
     unsigned int vaoId;
@@ -281,6 +281,8 @@ int GetHexValue(Color color);                               // Returns hexadecim
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0 to 1.0
+
+void ShowLogo();                                            // Activates raylib logo at startup
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -395,6 +397,7 @@ void DrawGizmoEx(Vector3 position, Vector3 rotation, float scale);              
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
+Model LoadCubesmap(Image cubesmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
 

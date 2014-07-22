@@ -230,12 +230,14 @@ SpriteFont LoadSpriteFont(const char* fileName)
         
         // At this point we have a pixel array with all the data...
         
+        TraceLog(INFO, "[%s] SpriteFont image loaded: %i x %i", fileName, imgWidth, imgHeight);
+        
         // Process bitmap Font pixel data to get measures (Character array)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
         int numChars = ParseImageData(imgDataPixel, imgWidth, imgHeight, &spriteFont.charSet);
         
         TraceLog(INFO, "[%s] SpriteFont data parsed correctly", fileName);
-        TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", numChars);
+        TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
         
         spriteFont.numChars = numChars;
         

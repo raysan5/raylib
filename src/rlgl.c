@@ -58,8 +58,6 @@
 
 //#include "glad.h"         // Other extensions loading lib? --> REVIEW
 
-#define USE_VBO_DOUBLE_BUFFERS    // Enable VBO double buffers usage --> REVIEW!
-
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -77,7 +75,7 @@ typedef struct {
     int vCounter;
     int cCounter;
     float *vertices;            // 3 components per vertex
-    float *colors;              // 4 components per vertex
+    unsigned char *colors;      // 4 components per vertex
 } VertexPositionColorBuffer;
 
 // Vertex buffer (position + texcoords + color arrays)
@@ -88,7 +86,7 @@ typedef struct {
     int cCounter;
     float *vertices;            // 3 components per vertex
     float *texcoords;           // 2 components per vertex
-    float *colors;              // 4 components per vertex
+    unsigned char *colors;      // 4 components per vertex
 } VertexPositionColorTextureBuffer;
 
 // Vertex buffer (position + texcoords + normals arrays)
@@ -110,7 +108,7 @@ typedef struct {
     int cCounter;
     float *vertices;            // 3 components per vertex
     float *texcoords;           // 2 components per vertex
-    float *colors;              // 4 components per vertex
+    unsigned char *colors;      // 4 components per vertex
     unsigned int *indices;      // 6 indices per quad
 } VertexPositionColorTextureIndexBuffer;
 
@@ -164,13 +162,6 @@ static GLuint vaoLines, vaoTriangles, vaoQuads;
 static GLuint linesBuffer[2];
 static GLuint trianglesBuffer[2];
 static GLuint quadsBuffer[4];
-
-#ifdef USE_VBO_DOUBLE_BUFFERS
-// Double buffering
-static GLuint vaoQuadsB;
-static GLuint quadsBufferB[4];
-static bool useBufferB = false;
-#endif
 
 static DrawCall *draws;
 static int drawsCounter;
@@ -566,7 +557,7 @@ void rlNormal3f(float x, float y, float z)
 }
 
 // Define one vertex (color)
-void rlColor4f(float x, float y, float z, float w)
+void rlColor4ub(byte x, byte y, byte z, byte w)
 {
     switch (currentDrawMode)
     {
@@ -605,15 +596,15 @@ void rlColor4f(float x, float y, float z, float w)
 }
 
 // Define one vertex (color)
-void rlColor4ub(byte r, byte g, byte b, byte a)
+void rlColor4f(float r, float g, float b, float a)
 {
-    rlColor4f((float)r/255, (float)g/255, (float)b/255, (float)a/255); 
+    rlColor4ub((byte)(r*255), (byte)(g*255), (byte)(b*255), (byte)(a*255)); 
 }
 
 // Define one vertex (color)
 void rlColor3f(float x, float y, float z)
 {
-    rlColor4f(x, y, z, 1.0);
+    rlColor4ub((byte)(x*255), (byte)(y*255), (byte)(z*255), 255);
 }
 
 #endif
@@ -826,48 +817,23 @@ void rlglClose()
 
 void rlglDraw()
 {
+    UpdateBuffers();
+    
     glUseProgram(shaderProgram);        // Use our shader
     
     glUniformMatrix4fv(projectionMatrixLoc, 1, false, GetMatrixVector(projection));
     glUniformMatrix4fv(modelviewMatrixLoc, 1, false, GetMatrixVector(modelview));
     glUniform1i(textureLoc, 0);
-
-    UpdateBuffers();
-
-    if (lines.vCounter > 0)
-    {
-        glBindTexture(GL_TEXTURE_2D, whiteTexture);
     
-        glBindVertexArray(vaoLines);
-        glDrawArrays(GL_LINES, 0, lines.vCounter);
-        
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    
-    if (triangles.vCounter > 0)
-    {
-        glBindTexture(GL_TEXTURE_2D, whiteTexture);
-    
-        glBindVertexArray(vaoTriangles);
-        glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
-        
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    
+    // NOTE: We draw in this order: textured quads, triangles shapes, lines   
+   
     if (quads.vCounter > 0)
     {
         int quadsCount = 0;
         int numIndicesToProcess = 0;
         int indicesOffset = 0;
 
-#ifdef USE_VBO_DOUBLE_BUFFERS
-        // Depending on useBufferB, use Buffer A or Buffer B
-        if (useBufferB) glBindVertexArray(vaoQuadsB);
-        else
-#endif
-        { 
-            glBindVertexArray(vaoQuads);
-        }
+        glBindVertexArray(vaoQuads);
         
         //TraceLog(DEBUG, "Draws required per frame: %i", drawsCounter);
      
@@ -885,9 +851,30 @@ void rlglDraw()
 
             indicesOffset += draws[i].vertexCount/4*6;
         }
+        
+        glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures 
     }
     
-    glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures
+    if (triangles.vCounter > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    
+        glBindVertexArray(vaoTriangles);
+        glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    
+    if (lines.vCounter > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    
+        glBindVertexArray(vaoLines);
+        glDrawArrays(GL_LINES, 0, lines.vCounter);
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    
     glBindVertexArray(0);   // Unbind VAO
     
     // Reset draws counter
@@ -905,11 +892,6 @@ void rlglDraw()
     quads.vCounter = 0;
     quads.tcCounter = 0;
     quads.cCounter = 0;
- 
-    // TODO: Review double buffer performance -> no improvement! (?)
-#ifdef USE_VBO_DOUBLE_BUFFERS
-    useBufferB = !useBufferB;   // Change buffers usage!
-#endif
 }
 
 #endif      // End for OpenGL 3.3+ and ES2 only functions
@@ -931,7 +913,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
     glVertexPointer(3, GL_FLOAT, 0, model.mesh.vertices);     // Pointer to vertex coords array
     glTexCoordPointer(2, GL_FLOAT, 0, model.mesh.texcoords);  // Pointer to texture coords array
     glNormalPointer(GL_FLOAT, 0, model.mesh.normals);         // Pointer to normals array
-    //glColorPointer(4, GL_UNSIGNED_BYTE, 0, model.colors);   // Pointer to colors array (NOT USED)
+    //glColorPointer(4, GL_UNSIGNED_BYTE, 0, model.mesh.colors);   // Pointer to colors array (NOT USED)
     
     //TraceLog(DEBUG, "Drawing model.mesh, VertexCount: %i", model.mesh.vertexCount);
     
@@ -966,15 +948,36 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
     glUniformMatrix4fv(projectionMatrixLoc, 1, false, GetMatrixVector(projection));
     glUniformMatrix4fv(modelviewMatrixLoc, 1, false, GetMatrixVector(modelviewworld));
     glUniform1i(textureLoc, 0);
+
+    // Apply color tinting to model: 2 OPTIONS
+/*  
+    // OPTION 1
+    // Update colors array (model.mesh.colors) with color
+    int j = 0;
+    for (int i = 0; i < model.mesh.vertexCount; i++)
+    {
+        model.mesh.colors[j] = color.r;
+        model.mesh.colors[j+1] = color.g;
+        model.mesh.colors[j+2] = color.b;
+        model.mesh.colors[j+3] = color.a;
+        j += 4;
+    }
+    
+    // Update colors buffer in CPU (using Shader)
+    glBindVertexArray(model.vaoId);
+    GLuint colorVboId;
+    glGetVertexAttribIuiv(2, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &colorVboId);   // NOTE: Color VBO is buffer index 2
+    glBindBuffer(GL_ARRAY_BUFFER, colorVboId);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*model.mesh.vertexCount, model.mesh.colors);
+   
+    // OPTION 2: Just update one uniform on fragment shader
+    // NOTE: It requires shader modification to add uniform (fragment shader) and create location point
+    //glUniform4f(fragmentUniformColorLoc, (float)color.r/255, (float)color.g/255, (float)color.b/255, (float)color.a/255);
+*/ 
     
     //TraceLog(DEBUG, "ShaderProgram: %i, VAO ID: %i, VertexCount: %i", shaderProgram, model.vaoId, model.mesh.vertexCount);
    
     glBindVertexArray(model.vaoId);
-    
-    // TODO: Update vertex color
-    glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*model.mesh.vertexCount, model.mesh.colors);
-    
     glBindTexture(GL_TEXTURE_2D, model.textureId);
 
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
@@ -989,8 +992,8 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 // Initialize Graphics Device (OpenGL stuff)
 void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
 {
-    //glViewport(0, 0, fbWidth, fbHeight);  // Set viewport width and height
-                                            // NOTE: Not required, viewport will be full window space
+    glViewport(0, 0, fbWidth, fbHeight);  // Set viewport width and height
+                                          // NOTE: Required! viewport must be recalculated if screen resized!
 
     // NOTE: Don't confuse glViewport with the transformation matrix
     // NOTE: glViewport just defines the area of the context that you will actually draw to.
@@ -1052,7 +1055,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     // Check if width and height are power-of-two (POT)
     if (((width > 0) && ((width & (width - 1)) == 0)) && ((height > 0) && ((height & (height - 1)) == 0))) texIsPOT = true;
     
-    if (!texIsPOT)
+    if (genMipmaps && !texIsPOT)
     {
         TraceLog(WARNING, "[ID %i] Texture is not power-of-two, mipmaps can not be generated", id);
         
@@ -1194,26 +1197,29 @@ unsigned int rlglLoadModel(VertexData mesh)
     // Create buffers for our vertex data (positions, texcoords, normals)
     glGenBuffers(3, vertexBuffer);
  
-    // Enable vertex attributes
+    // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.vertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(vertexLoc);
     glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
     
+    // Enable vertex attributes: texcoords
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.vertexCount, mesh.texcoords, GL_STATIC_DRAW);      
     glEnableVertexAttribArray(texcoordLoc);
     glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
     
+    // Enable vertex attributes: normals
     //glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);   
     //glEnableVertexAttribArray(normalLoc);
     //glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
     
+    // Enable vertex attributes: colors
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*mesh.vertexCount, mesh.colors, GL_STATIC_DRAW);   
+    glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*mesh.vertexCount, mesh.colors, GL_STATIC_DRAW);   
     glEnableVertexAttribArray(colorLoc);
-    glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
     
     if (vaoModel > 0) TraceLog(INFO, "[ID %i] Model uploaded successfully to VRAM (GPU)", vaoModel);
     else TraceLog(WARNING, "Model could not be uploaded to VRAM (GPU)");
@@ -1408,34 +1414,34 @@ static char *TextFileRead(char *fn)
 static void InitializeBuffers()
 {
     // Initialize lines arrays (vertex position and color data)
-    lines.vertices = (float *)malloc(sizeof(float)*3*2*MAX_LINES_BATCH);    // 3 float by vertex, 2 vertex by line
-    lines.colors = (float *)malloc(sizeof(float)*4*2*MAX_LINES_BATCH);      // 4 float by color, 2 colors by line
+    lines.vertices = (float *)malloc(sizeof(float)*3*2*MAX_LINES_BATCH);        // 3 float by vertex, 2 vertex by line
+    lines.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*2*MAX_LINES_BATCH);  // 4 float by color, 2 colors by line
 
     for (int i = 0; i < (3*2*MAX_LINES_BATCH); i++) lines.vertices[i] = 0.0;
-    for (int i = 0; i < (4*2*MAX_LINES_BATCH); i++) lines.colors[i] = 0.0;
+    for (int i = 0; i < (4*2*MAX_LINES_BATCH); i++) lines.colors[i] = 0;
     
     lines.vCounter = 0;
     lines.cCounter = 0;
     
     // Initialize triangles arrays (vertex position and color data)
-    triangles.vertices = (float *)malloc(sizeof(float)*3*3*MAX_TRIANGLES_BATCH);    // 3 float by vertex, 3 vertex by triangle
-    triangles.colors = (float *)malloc(sizeof(float)*4*3*MAX_TRIANGLES_BATCH);      // 4 float by color, 3 colors by triangle
+    triangles.vertices = (float *)malloc(sizeof(float)*3*3*MAX_TRIANGLES_BATCH);        // 3 float by vertex, 3 vertex by triangle
+    triangles.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*3*MAX_TRIANGLES_BATCH);  // 4 float by color, 3 colors by triangle
 
     for (int i = 0; i < (3*3*MAX_TRIANGLES_BATCH); i++) triangles.vertices[i] = 0.0;
-    for (int i = 0; i < (4*3*MAX_TRIANGLES_BATCH); i++) triangles.colors[i] = 0.0;
+    for (int i = 0; i < (4*3*MAX_TRIANGLES_BATCH); i++) triangles.colors[i] = 0;
     
     triangles.vCounter = 0;
     triangles.cCounter = 0;
     
     // Initialize quads arrays (vertex position, texcoord and color data... and indexes)
-    quads.vertices = (float *)malloc(sizeof(float)*3*4*MAX_QUADS_BATCH);    // 3 float by vertex, 4 vertex by quad
-    quads.texcoords = (float *)malloc(sizeof(float)*2*4*MAX_QUADS_BATCH);   // 2 float by texcoord, 4 texcoord by quad
-    quads.colors = (float *)malloc(sizeof(float)*4*4*MAX_QUADS_BATCH);      // 4 float by color, 4 colors by quad
-    quads.indices = (unsigned int *)malloc(sizeof(int)*6*MAX_QUADS_BATCH);  // 6 int by quad (indices)
+    quads.vertices = (float *)malloc(sizeof(float)*3*4*MAX_QUADS_BATCH);        // 3 float by vertex, 4 vertex by quad
+    quads.texcoords = (float *)malloc(sizeof(float)*2*4*MAX_QUADS_BATCH);       // 2 float by texcoord, 4 texcoord by quad
+    quads.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*4*MAX_QUADS_BATCH);  // 4 float by color, 4 colors by quad
+    quads.indices = (unsigned int *)malloc(sizeof(int)*6*MAX_QUADS_BATCH);      // 6 int by quad (indices)
     
     for (int i = 0; i < (3*4*MAX_QUADS_BATCH); i++) quads.vertices[i] = 0.0;
     for (int i = 0; i < (2*4*MAX_QUADS_BATCH); i++) quads.texcoords[i] = 0.0;
-    for (int i = 0; i < (4*4*MAX_QUADS_BATCH); i++) quads.colors[i] = 0.0;
+    for (int i = 0; i < (4*4*MAX_QUADS_BATCH); i++) quads.colors[i] = 0;
     
     int k = 0;
     
@@ -1475,9 +1481,9 @@ static void InitializeVAOs()
     
     // Lines - colors buffer
     glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(colorLoc);
-    glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
     
     TraceLog(INFO, "[ID %i] Lines VAO initialized successfully", vaoLines);
     //-------------------------------------------------------------- 
@@ -1496,9 +1502,9 @@ static void InitializeVAOs()
     glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
     
     glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(colorLoc);
-    glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
     
     TraceLog(INFO, "[ID %i] Triangles VAO initialized successfully", vaoTriangles);
     //-------------------------------------------------------------- 
@@ -1522,46 +1528,15 @@ static void InitializeVAOs()
     glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
     
     glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);   
+    glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);   
     glEnableVertexAttribArray(colorLoc);
-    glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
     
     // Fill index buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
     
     TraceLog(INFO, "[ID %i] Quads VAO initialized successfully", vaoQuads);
-    
-#ifdef USE_VBO_DOUBLE_BUFFERS
-    // Initialize Quads VAO (Buffer B)
-    glGenVertexArrays(1, &vaoQuadsB);
-    glBindVertexArray(vaoQuadsB);
- 
-    // Create buffers for our vertex data
-    glGenBuffers(4, quadsBufferB);
- 
-    // Enable vertex attributes
-    glBindBuffer(GL_ARRAY_BUFFER, quadsBufferB[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(vertexLoc);
-    glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, quadsBufferB[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);      
-    glEnableVertexAttribArray(texcoordLoc);
-    glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, quadsBufferB[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);   
-    glEnableVertexAttribArray(colorLoc);
-    glVertexAttribPointer(colorLoc, 4, GL_FLOAT, 0, 0, 0);
-    
-    // Fill index buffer
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBufferB[3]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
-    
-    TraceLog(INFO, "[ID %i] Second Quads VAO successfully initilized (double buffering)", vaoQuadsB);
-#endif
  
     // Unbind the current VAO
     glBindVertexArray(0);
@@ -1581,7 +1556,7 @@ static void UpdateBuffers()
     // Lines - colors buffer
     glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*lines.vCounter, lines.colors);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*lines.cCounter, lines.colors);
     
     //--------------------------------------------------------------    
     
@@ -1596,54 +1571,27 @@ static void UpdateBuffers()
     // Triangles - colors buffer
     glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*triangles.cCounter, triangles.colors);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*triangles.cCounter, triangles.colors);
     
     //--------------------------------------------------------------
 
-    // Depending on useBufferB, update Buffer A or Buffer B
-#ifdef USE_VBO_DOUBLE_BUFFERS
-    if (useBufferB)
-    {
-        // Activate Quads VAO (Buffer B)
-        glBindVertexArray(vaoQuadsB);
-     
-        // Quads - vertex positions buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBufferB[0]);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*quads.vCounter, quads.vertices);
+    // Activate Quads VAO
+    glBindVertexArray(vaoQuads);
+ 
+    // Quads - vertex positions buffer
+    glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*quads.vCounter, quads.vertices);
 
-        // Quads - texture coordinates buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBufferB[1]);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*quads.vCounter, quads.texcoords);
-        
-        // Quads - colors buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBufferB[2]);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*quads.vCounter, quads.colors);
-    }
-    else
-#endif
-    {
-        // Activate Quads VAO (Buffer A)
-        glBindVertexArray(vaoQuads);
-     
-        // Quads - vertex positions buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*quads.vCounter, quads.vertices);
-
-        // Quads - texture coordinates buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*quads.vCounter, quads.texcoords);
-        
-        // Quads - colors buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*quads.vCounter, quads.colors);
-    }
+    // Quads - texture coordinates buffer
+    glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*quads.vCounter, quads.texcoords);
     
+    // Quads - colors buffer
+    glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*quads.vCounter, quads.colors);
         
     // Another option would be using buffer mapping...
     //triangles.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);

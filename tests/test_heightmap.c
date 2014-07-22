@@ -30,7 +30,7 @@ int main()
     Texture2D texture = CreateTexture(img, false);
     UnloadImage(img);
     
-    SetModelTexture(&map, texture);  
+    SetModelTexture(&map, texture);
     
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -51,11 +51,11 @@ int main()
             
             Begin3dMode(camera);
             
-                DrawModel(map, position, 0.5f, MAROON);   
+                DrawModel(map, position, 0.5f, MAROON);
                 
                 DrawGrid(10.0, 1.0);        // Draw a grid
                 
-                DrawGizmo(position, false); 
+                DrawGizmo(position); 
                 
             End3dMode();
             
@@ -67,7 +67,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(tex);     // Unload texture
+    UnloadTexture(texture); // Unload texture
     UnloadModel(map);       // Unload model
     
     CloseWindow();          // Close window and OpenGL context

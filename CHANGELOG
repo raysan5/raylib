@@ -1,10 +1,27 @@
 changelog
 ---------
 
-Current Release:    raylib 1.1.0 (April 2014)
+Current Release:    raylib 1.1.1 (22 July 2014)
 
 NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.1.1 (22 July 2014)
+-----------------------------------------------
+[core] ShowLogo() - To enable raylib logo animation at startup
+[core] Corrected bug with window resizing
+[rlgl] Redefined colors arrays to use byte instead of float
+[rlgl] Removed double buffer system (no performance improvement)
+[rlgl] rlglDraw() - Reorganized buffers drawing order
+[rlgl] Corrected bug on screen resizing
+[models] DrawSphereWires() - Corrected some issues
+[models] LoadOBJ() - Redesigned to support multiple meshes
+[models] LoadCubesMap() - Loading a map as cubes (by pixel color)
+[textures] Added security check if file doesn't exist
+[text] Corrected bug on SpriteFont loading
+[examples] Corrected some 3d examples
+[test] Added cubesmap loading test
 
 -----------------------------------------------
 Release:     raylib 1.1.0 (19 April 2014)

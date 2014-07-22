@@ -1,15 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib example 07b - Draw some basic 3d shapes (cube, sphere, cylinder...)
+*   raylib test - Testing Heightmap Loading and Drawing
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This test has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
-#include "raylib.h"
+#include "../raylib.h"
 
 int main()
 {
@@ -18,10 +18,19 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Vector3 position = { 0.5, 0.0, 0.5 };
     
-    InitWindow(screenWidth, screenHeight, "raylib example 07b - 3d shapes");
+    // Define the camera to look into our 3d world
+    Camera camera = {{ 7.0, 6.0, 7.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    
+    InitWindow(screenWidth, screenHeight, "raylib test - Heightmap loading and drawing");
+    
+    Image img = LoadImage("resources/cubesmap.png");
+    Model map = LoadCubesmap(img);
+    Texture2D texture = CreateTexture(img, false);
+    UnloadImage(img);
+    
+    SetModelTexture(&map, texture);  
     
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -31,7 +40,11 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+        if (IsKeyDown(KEY_UP)) camera.position.y += 0.2f;
+        else if (IsKeyDown(KEY_DOWN)) camera.position.y -= 0.2f;
+        
+        if (IsKeyDown(KEY_RIGHT)) camera.position.z += 0.2f;
+        else if (IsKeyDown(KEY_LEFT)) camera.position.z -= 0.2f;
         //----------------------------------------------------------------------------------
         
         // Draw
@@ -42,21 +55,13 @@ int main()
             
             Begin3dMode(camera);
             
-                DrawCube((Vector3){-4, 0, 2}, 2, 5, 2, RED);
-                DrawCubeWires((Vector3){-4, 0, 2}, 2, 5, 2, GOLD);
-                DrawCubeWires((Vector3){-4, 0, -2}, 3, 6, 2, MAROON);
+                //DrawCube(position, 1.0f, 1.0f, 1.0f, RED);
+            
+                DrawModel(map, position, 1.0f, MAROON);
                 
-                DrawSphere((Vector3){-1, 0, -2}, 1, GREEN);     
-                DrawSphereWires((Vector3){1, 0, 2}, 2, 16, 16, LIME);
-                
-                DrawCylinder((Vector3){4, 0, -2}, 1, 2, 3, 4, SKYBLUE);
-                DrawCylinderWires((Vector3){4, 0, -2}, 1, 2, 3, 4, DARKBLUE);
-                DrawCylinderWires((Vector3){4.5, -1, 2}, 1, 1, 2, 6, BROWN);
-                
-                DrawCylinder((Vector3){1, 0, -4}, 0, 1.5, 3, 8, GOLD);
-                DrawCylinderWires((Vector3){1, 0, -4}, 0, 1.5, 3, 8, PINK);
-
                 DrawGrid(10.0, 1.0);        // Draw a grid
+                
+                DrawGizmo(position); 
                 
             End3dMode();
             
@@ -68,7 +73,10 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    UnloadTexture(texture);     // Unload texture
+    UnloadModel(map);       // Unload model
+    
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     
     return 0;
