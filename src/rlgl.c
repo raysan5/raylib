@@ -825,7 +825,17 @@ void rlglDraw()
     glUniformMatrix4fv(modelviewMatrixLoc, 1, false, GetMatrixVector(modelview));
     glUniform1i(textureLoc, 0);
     
-    // NOTE: We draw in this order: textured quads, triangles shapes, lines   
+    // NOTE: We draw in this order: triangle shapes, textured quads and lines   
+   
+    if (triangles.vCounter > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    
+        glBindVertexArray(vaoTriangles);
+        glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
    
     if (quads.vCounter > 0)
     {
@@ -853,16 +863,6 @@ void rlglDraw()
         }
         
         glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures 
-    }
-    
-    if (triangles.vCounter > 0)
-    {
-        glBindTexture(GL_TEXTURE_2D, whiteTexture);
-    
-        glBindVertexArray(vaoTriangles);
-        glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
-        
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
     
     if (lines.vCounter > 0)

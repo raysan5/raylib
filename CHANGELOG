@@ -15,6 +15,7 @@ Release:     raylib 1.1.1 (22 July 2014)
 [rlgl] Removed double buffer system (no performance improvement)
 [rlgl] rlglDraw() - Reorganized buffers drawing order
 [rlgl] Corrected bug on screen resizing
+[shapes] DrawRectangle() - Use QUADS instead of TRIANGLES
 [models] DrawSphereWires() - Corrected some issues
 [models] LoadOBJ() - Redesigned to support multiple meshes
 [models] LoadCubesMap() - Loading a map as cubes (by pixel color)
