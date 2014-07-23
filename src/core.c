@@ -882,7 +882,7 @@ static void LogoAnimation()
                 
                 DrawRectangle(windowWidth/2 - 112, windowHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
                 
-                DrawText(raylib, 356, 273, 50, Fade(BLACK, alpha));
+                DrawText(raylib, windowWidth/2 - 44, windowHeight/2 + 48, 50, Fade(BLACK, alpha));
             }
         
         EndDrawing();

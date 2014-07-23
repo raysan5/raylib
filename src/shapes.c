@@ -31,6 +31,11 @@
                         
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
+// Security check in case no USE_OPENGL_* defined
+#if !defined(USE_OPENGL_11) && !defined(USE_OPENGL_33) && !defined(USE_OPENGL_ES2)
+    #define USE_OPENGL_11
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -180,7 +185,7 @@ void DrawRectangleGradient(int posX, int posY, int width, int height, Color colo
 // Draw a color-filled rectangle (Vector version)
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-/*
+#ifdef USE_OPENGL_11
     rlBegin(RL_TRIANGLES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         
@@ -192,10 +197,10 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
         rlVertex2i(position.x + size.x, position.y + size.y);        
         rlVertex2i(position.x + size.x, position.y);
     rlEnd();
-*/    
+#endif   
 
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     // NOTE: This shape uses QUADS to avoid drawing order issues (view rlglDraw)
-
     rlEnableTexture(1); // Default white texture
 
     rlBegin(RL_QUADS);
@@ -216,6 +221,7 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
     rlEnd();
 
     rlDisableTexture();
+#endif
 }
 
 // Draw rectangle outline
@@ -223,17 +229,17 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2i(posX, posY);
-        rlVertex2i(posX + width - 1, posY);
+        rlVertex2i(posX + 1, posY + 1);
+        rlVertex2i(posX + width, posY + 1);
         
-        rlVertex2i(posX + width - 1, posY);
-        rlVertex2i(posX + width - 1, posY + height - 1);
+        rlVertex2i(posX + width, posY + 1);
+        rlVertex2i(posX + width, posY + height);
         
-        rlVertex2i(posX + width - 1, posY + height - 1);
-        rlVertex2i(posX, posY + height - 1);
+        rlVertex2i(posX + width, posY + height);
+        rlVertex2i(posX + 1, posY + height);
         
-        rlVertex2i(posX, posY + height - 1);
-        rlVertex2i(posX, posY);
+        rlVertex2i(posX + 1, posY + height);
+        rlVertex2i(posX + 1, posY + 1);
     rlEnd();
 }
 

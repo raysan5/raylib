@@ -35,6 +35,11 @@
 
 #include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
+// Security check in case no USE_OPENGL_* defined
+#if !defined(USE_OPENGL_11) && !defined(USE_OPENGL_33) && !defined(USE_OPENGL_ES2)
+    #define USE_OPENGL_11
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -297,7 +302,7 @@ Texture2D LoadTexture(const char *fileName)
         }
         else
         {
-#ifdef USE_OPENGL_33
+#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
             texture.id = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.compFormat);
 #endif
         }

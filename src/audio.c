@@ -371,7 +371,7 @@ void PlaySound(Sound sound)
 {
     alSourcePlay(sound.source);        // Play the sound
     
-    TraceLog(INFO, "Playing sound");
+    //TraceLog(INFO, "Playing sound");
 
     // Find the current position of the sound being played
     // NOTE: Only work when the entire file is in a single buffer
