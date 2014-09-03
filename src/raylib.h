@@ -259,22 +259,22 @@ extern "C" {            // Prevents name mangling of functions
 void InitWindow(int width, int height, const char *title);  // Initialize Window and Graphics Context (OpenGL)
 void InitWindowEx(int width, int height, const char* title, // Initialize Window and Graphics Context (OpenGL),...
                   bool resizable, const char *cursorImage); // ...define if windows-resizable and custom cursor
-void CloseWindow();                                         // Close Window and Terminate Context
-bool WindowShouldClose();                                   // Detect if KEY_ESCAPE pressed or Close icon pressed
-void ToggleFullscreen();                                    // Fullscreen toggle (by default F11)
+void CloseWindow(void);                                     // Close Window and Terminate Context
+bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
+void ToggleFullscreen(void);                                // Fullscreen toggle (by default F11)
 void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
 void SetExitKey(int key);                                   // Set a custom key to exit program (default is ESC)
 
 void ClearBackground(Color color);                          // Sets Background Color
-void BeginDrawing();                                        // Setup drawing canvas to start drawing
-void EndDrawing();                                          // End canvas drawing and Swap Buffers (Double Buffering)
+void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
+void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
 void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
-void End3dMode();                                           // Ends 3D mode and returns to default 2D orthographic mode
+void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
-float GetFPS();                                             // Returns current FPS
-float GetFrameTime();                                       // Returns time in seconds for one frame
+float GetFPS(void);                                         // Returns current FPS
+float GetFrameTime(void);                                   // Returns time in seconds for one frame
 
 Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
@@ -282,7 +282,7 @@ int GetHexValue(Color color);                               // Returns hexadecim
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0 to 1.0
 
-void ShowLogo();                                            // Activates raylib logo at startup
+void ShowLogo(void);                                        // Activates raylib logo at startup
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -296,10 +296,10 @@ bool IsMouseButtonPressed(int button);                  // Detect if a mouse but
 bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
 bool IsMouseButtonReleased(int button);                 // Detect if a mouse button has been released once
 bool IsMouseButtonUp(int button);                       // Detect if a mouse button is NOT being pressed
-int GetMouseX();                                        // Returns mouse position X
-int GetMouseY();                                        // Returns mouse position Y
-Vector2 GetMousePosition();                             // Returns mouse position XY
-int GetMouseWheelMove();                                // Returns mouse wheel movement Y
+int GetMouseX(void);                                    // Returns mouse position X
+int GetMouseY(void);                                    // Returns mouse position Y
+Vector2 GetMousePosition(void);                         // Returns mouse position XY
+int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
@@ -359,7 +359,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
 //------------------------------------------------------------------------------------
-SpriteFont GetDefaultFont();                                                                       // Get the default SpriteFont
+SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load a SpriteFont image into GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory
 
@@ -411,8 +411,8 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
-void InitAudioDevice();                                         // Initialize audio device and context
-void CloseAudioDevice();                                        // Close the audio device and context (and music stream)
+void InitAudioDevice(void);                                     // Initialize audio device and context
+void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
@@ -425,12 +425,12 @@ void SetSoundVolume(Sound sound, float volume);                 // Set volume fo
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
 void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
-void StopMusicStream();                                         // Stop music playing (close stream)
-void PauseMusicStream();                                        // Pause music playing
-bool MusicIsPlaying();                                          // Check if music is playing
+void StopMusicStream(void);                                     // Stop music playing (close stream)
+void PauseMusicStream(void);                                    // Pause music playing
+bool MusicIsPlaying(void);                                      // Check if music is playing
 void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
-float GetMusicTimeLength();                                     // Get current music time length (in seconds)
-float GetMusicTimePlayed();                                     // Get current music time played (in seconds)
+float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
+float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
 
 #ifdef __cplusplus
 }

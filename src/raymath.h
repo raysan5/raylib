@@ -92,7 +92,7 @@ float VectorDistance(Vector3 v1, Vector3 v2);           // Calculate distance be
 Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount); // Calculate linear interpolation between two vectors
 Vector3 VectorReflect(Vector3 vector, Vector3 normal);  // Calculate reflected vector to normal
 void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Vector3 with a given Matrix
-Vector3 VectorZero();                                   // Return a Vector3 init to zero
+Vector3 VectorZero(void);                               // Return a Vector3 init to zero
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix

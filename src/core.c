@@ -91,10 +91,10 @@ static bool showLogo = false;
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-extern void LoadDefaultFont();              // [Module: text] Loads default font on InitWindow()
-extern void UnloadDefaultFont();            // [Module: text] Unloads default font from GPU memory
+extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
+extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
 
-extern void UpdateMusicStream();            // [Module: audio] Updates buffers for music streaming
+extern void UpdateMusicStream(void);        // [Module: audio] Updates buffers for music streaming
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -104,8 +104,8 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
 static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow* window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow* window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
-static void TakeScreenshot();                                                              // Takes a screenshot and saves it in the same folder as executable
-static void LogoAnimation();                                                               // Plays raylib logo appearing animation
+static void TakeScreenshot(void);                                                          // Takes a screenshot and saves it in the same folder as executable
+static void LogoAnimation(void);                                                           // Plays raylib logo appearing animation
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
@@ -190,7 +190,7 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
 }
 
 // Close Window and Terminate Context
-void CloseWindow()
+void CloseWindow(void)
 {
     UnloadDefaultFont();
 
@@ -223,13 +223,13 @@ void SetExitKey(int key)
 }
 
 // Detect if KEY_ESCAPE pressed or Close icon pressed
-bool WindowShouldClose()
+bool WindowShouldClose(void)
 {
     return (glfwWindowShouldClose(window));
 }
 
 // Fullscreen toggle (by default F11)
-void ToggleFullscreen()
+void ToggleFullscreen(void)
 {
     if (glfwGetKey(window, GLFW_KEY_F11))
     {
@@ -283,7 +283,7 @@ void ClearBackground(Color color)
 }
 
 // Setup drawing canvas to start drawing
-void BeginDrawing()
+void BeginDrawing(void)
 {
     currentTime = glfwGetTime();        // glfwGetTime() returns a 'double' containing the number of elapsed seconds since glfwInit() was called
     updateTime = currentTime - previousTime;
@@ -300,7 +300,7 @@ void BeginDrawing()
 }
 
 // End canvas drawing and Swap Buffers (Double Buffering)
-void EndDrawing()
+void EndDrawing(void)
 {
     if (customCursor && cursorOnScreen) DrawTexture(cursor, GetMouseX(), GetMouseY(), WHITE);
 
@@ -363,7 +363,7 @@ void Begin3dMode(Camera camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
-void End3dMode()
+void End3dMode(void)
 {
     //------------------------------------------------------
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
@@ -389,13 +389,13 @@ void SetTargetFPS(int fps)
 }
 
 // Returns current FPS
-float GetFPS()
+float GetFPS(void)
 {
     return (1/(float)frameTime);
 }
 
 // Returns time in seconds for one frame
-float GetFrameTime()
+float GetFrameTime(void)
 {
     // As we are operating quite a lot with frameTime, it could be no stable
     // so we round it before before passing around to be used
@@ -447,7 +447,7 @@ Color Fade(Color color, float alpha)
 }
 
 // Activates raylib logo at startup
-void ShowLogo()
+void ShowLogo(void)
 {
     showLogo = true;
 }
@@ -553,7 +553,7 @@ bool IsMouseButtonUp(int button)
 }
 
 // Returns mouse position X
-int GetMouseX()
+int GetMouseX(void)
 {
     double mouseX;
     double mouseY;
@@ -564,7 +564,7 @@ int GetMouseX()
 }
 
 // Returns mouse position Y
-int GetMouseY()
+int GetMouseY(void)
 {
     double mouseX;
     double mouseY;
@@ -575,7 +575,7 @@ int GetMouseY()
 }
 
 // Returns mouse position XY
-Vector2 GetMousePosition()
+Vector2 GetMousePosition(void)
 {
     double mouseX;
     double mouseY;
@@ -588,7 +588,7 @@ Vector2 GetMousePosition()
 }
 
 // Returns mouse wheel movement Y
-int GetMouseWheelMove()
+int GetMouseWheelMove(void)
 {
     previousMouseWheelY = currentMouseWheelY;
 
@@ -749,7 +749,7 @@ static void WindowSizeCallback(GLFWwindow* window, int width, int height)
 }
 
 // Takes a bitmap (BMP) screenshot and saves it in the same folder as executable
-static void TakeScreenshot()
+static void TakeScreenshot(void)
 {
     static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
 

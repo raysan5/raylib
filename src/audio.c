@@ -90,15 +90,15 @@ static Wave LoadOGG(char *fileName);
 static void UnloadWave(Wave wave);
 
 static bool BufferMusicStream(ALuint buffer);   // Fill music buffers with data
-static void EmptyMusicStream();                 // Empty music buffers
-extern void UpdateMusicStream();                // Updates buffers (refill) for music streaming
+static void EmptyMusicStream(void);             // Empty music buffers
+extern void UpdateMusicStream(void);            // Updates buffers (refill) for music streaming
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
 
 // Initialize audio device and context
-void InitAudioDevice()
+void InitAudioDevice(void)
 {
     // Open and initialize a device with default settings
     ALCdevice *device = alcOpenDevice(NULL);
@@ -125,7 +125,7 @@ void InitAudioDevice()
 }
 
 // Close the audio device for the current context, and destroys the context
-void CloseAudioDevice()
+void CloseAudioDevice(void)
 {
     StopMusicStream();      // Stop music streaming and close current stream
 
@@ -486,7 +486,7 @@ void PlayMusicStream(char *fileName)
 }
 
 // Stop music playing (close stream)
-void StopMusicStream()
+void StopMusicStream(void)
 {
     if (musicEnabled)
     {
@@ -504,14 +504,14 @@ void StopMusicStream()
 }
 
 // Pause music playing
-void PauseMusicStream()
+void PauseMusicStream(void)
 {
     // TODO: Record music is paused or check if music available!
     alSourcePause(currentMusic.source);
 }
 
 // Check if music is playing
-bool MusicIsPlaying()
+bool MusicIsPlaying(void)
 {
     ALenum state;
 
@@ -527,7 +527,7 @@ void SetMusicVolume(float volume)
 }
 
 // Get current music time length (in seconds)
-float GetMusicTimeLength()
+float GetMusicTimeLength(void)
 {
     float totalSeconds = stb_vorbis_stream_length_in_seconds(currentMusic.stream);
 
@@ -535,7 +535,7 @@ float GetMusicTimeLength()
 }
 
 // Get current music time played (in seconds)
-float GetMusicTimePlayed()
+float GetMusicTimePlayed(void)
 {
     int totalSamples = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
 
@@ -589,7 +589,7 @@ static bool BufferMusicStream(ALuint buffer)
 }
 
 // Empty music buffers
-static void EmptyMusicStream()
+static void EmptyMusicStream(void)
 {
     ALuint buffer = 0;
     int queued = 0;
@@ -605,7 +605,7 @@ static void EmptyMusicStream()
 }
 
 // Update (re-fill) music buffers if data already processed
-extern void UpdateMusicStream()
+extern void UpdateMusicStream(void)
 {
     ALuint buffer = 0;
     ALint processed = 0;

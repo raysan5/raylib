@@ -82,7 +82,7 @@ static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (ra
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-extern void LoadDefaultFont()
+extern void LoadDefaultFont(void)
 {
     defaultFont.numChars = 96;              // We know our default font has 94 chars
 
@@ -181,14 +181,14 @@ extern void LoadDefaultFont()
     TraceLog(INFO, "Default font loaded successfully");
 }
 
-extern void UnloadDefaultFont()
+extern void UnloadDefaultFont(void)
 {
     rlDeleteTextures(defaultFont.texture.id);
     free(defaultFont.charSet);
 }
 
 // Get the default font, useful to be used with extended parameters
-SpriteFont GetDefaultFont()
+SpriteFont GetDefaultFont(void)
 {
     return defaultFont;
 }

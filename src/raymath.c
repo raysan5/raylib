@@ -214,7 +214,7 @@ void VectorTransform(Vector3 *v, Matrix mat)
 };
 
 // Return a Vector3 init to zero
-Vector3 VectorZero()
+Vector3 VectorZero(void)
 {
     Vector3 zero = { 0.0, 0.0, 0.0 };
 

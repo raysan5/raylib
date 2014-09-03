@@ -179,10 +179,10 @@ static GLuint whiteTexture;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-static GLuint LoadDefaultShaders();
-static void InitializeBuffers();
-static void InitializeVAOs();
-static void UpdateBuffers();
+static GLuint LoadDefaultShaders(void);
+static void InitializeBuffers(void);
+static void InitializeVAOs(void);
+static void UpdateBuffers(void);
 
 // Shader files loading (external) - Not used but useful...
 static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName);
@@ -223,9 +223,9 @@ void rlOrtho(double left, double right, double bottom, double top, double near, 
     glOrtho(left, right, bottom, top, near, far);
 }
 
-void rlPushMatrix() { glPushMatrix(); }
-void rlPopMatrix() { glPopMatrix(); }
-void rlLoadIdentity() { glLoadIdentity(); }
+void rlPushMatrix(void) { glPushMatrix(); }
+void rlPopMatrix(void) { glPopMatrix(); }
+void rlLoadIdentity(void) { glLoadIdentity(); }
 void rlTranslatef(float x, float y, float z) { glTranslatef(x, y, z); }
 void rlRotatef(float angleDeg, float x, float y, float z) { glRotatef(angleDeg, x, y, z); }
 void rlScalef(float x, float y, float z) { glScalef(x, y, z); }
@@ -244,7 +244,7 @@ void rlMatrixMode(int mode)
 }
 
 // Push the current matrix to stack
-void rlPushMatrix()
+void rlPushMatrix(void)
 {
     if (stackCounter == MATRIX_STACK_SIZE - 1)
     {
@@ -259,7 +259,7 @@ void rlPushMatrix()
 }
 
 // Pop lattest inserted matrix from stack
-void rlPopMatrix()
+void rlPopMatrix(void)
 {
     if (stackCounter > 0)
     {
@@ -270,7 +270,7 @@ void rlPopMatrix()
 }
 
 // Reset current matrix to identity matrix
-void rlLoadIdentity()
+void rlLoadIdentity(void)
 {
     *currentMatrix = MatrixIdentity();
 }
@@ -358,7 +358,7 @@ void rlBegin(int mode)
     }
 }
 
-void rlEnd() { glEnd(); }
+void rlEnd(void) { glEnd(); }
 void rlVertex2i(int x, int y) { glVertex2i(x, y); }
 void rlVertex2f(float x, float y) { glVertex2f(x, y); }
 void rlVertex3f(float x, float y, float z) { glVertex3f(x, y, z); }
@@ -378,7 +378,7 @@ void rlBegin(int mode)
 }
 
 // Finish vertex providing
-void rlEnd()
+void rlEnd(void)
 {
     if (useTempBuffer)
     {
@@ -633,7 +633,7 @@ void rlEnableTexture(unsigned int id)
 }
 
 // Disable texture usage
-void rlDisableTexture()
+void rlDisableTexture(void)
 {
 #ifdef USE_OPENGL_11
     glDisable(GL_TEXTURE_2D);
@@ -668,7 +668,7 @@ void rlClearColor(byte r, byte g, byte b, byte a)
 }
 
 // Clear used screen buffers (color and depth)
-void rlClearScreenBuffers()
+void rlClearScreenBuffers(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers: Color and Depth (Depth is used for 3D)
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     // Stencil buffer not used...
@@ -681,7 +681,7 @@ void rlClearScreenBuffers()
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
 
 // Init OpenGL 3.3+ required data
-void rlglInit()
+void rlglInit(void)
 {
     // Initialize GLEW
     glewExperimental = 1;       // Needed for core profile
@@ -765,7 +765,7 @@ void rlglInit()
 }
 
 // Vertex Buffer Object deinitialization (memory free)
-void rlglClose()
+void rlglClose(void)
 {
     // Unbind everything
     glBindVertexArray(0);
@@ -815,7 +815,7 @@ void rlglClose()
     free(draws);
 }
 
-void rlglDraw()
+void rlglDraw(void)
 {
     UpdateBuffers();
 
@@ -1254,12 +1254,12 @@ unsigned char *rlglReadScreenPixels(int width, int height)
 
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
 
-void PrintProjectionMatrix()
+void PrintProjectionMatrix(void)
 {
     PrintMatrix(projection);
 }
 
-void PrintModelviewMatrix()
+void PrintModelviewMatrix(void)
 {
     PrintMatrix(modelview);
 }
@@ -1273,7 +1273,7 @@ void PrintModelviewMatrix()
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
 
 // Load Shaders (Vertex and Fragment)
-static GLuint LoadDefaultShaders()
+static GLuint LoadDefaultShaders(void)
 {
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
 
@@ -1411,7 +1411,7 @@ static char *TextFileRead(char *fn)
 }
 
 // Allocate and initialize float array buffers to store vertex data (lines, triangles, quads)
-static void InitializeBuffers()
+static void InitializeBuffers(void)
 {
     // Initialize lines arrays (vertex position and color data)
     lines.vertices = (float *)malloc(sizeof(float)*3*2*MAX_LINES_BATCH);        // 3 float by vertex, 2 vertex by line
@@ -1464,7 +1464,7 @@ static void InitializeBuffers()
 }
 
 // Initialize Vertex Array Objects (Contain VBO)
-static void InitializeVAOs()
+static void InitializeVAOs(void)
 {
     // Initialize Lines VAO
     glGenVertexArrays(1, &vaoLines);
@@ -1543,7 +1543,7 @@ static void InitializeVAOs()
 }
 
 // Update VBOs with vertex array data
-static void UpdateBuffers()
+static void UpdateBuffers(void)
 {
     // Activate Lines VAO
     glBindVertexArray(vaoLines);

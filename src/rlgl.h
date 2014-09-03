@@ -84,9 +84,9 @@ extern "C" {            // Prevents name mangling of functions
 // Functions Declaration - Matrix operations
 //------------------------------------------------------------------------------------
 void rlMatrixMode(int mode);                    // Choose the current matrix to be transformed
-void rlPushMatrix();                            // Push the current matrix to stack
-void rlPopMatrix();                             // Pop lattest inserted matrix from stack
-void rlLoadIdentity();                          // Reset current matrix to identity matrix
+void rlPushMatrix(void);                        // Push the current matrix to stack
+void rlPopMatrix(void);                         // Pop lattest inserted matrix from stack
+void rlLoadIdentity(void);                      // Reset current matrix to identity matrix
 void rlTranslatef(float x, float y, float z);   // Multiply the current matrix by a translation matrix
 void rlRotatef(float angleDeg, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
 void rlScalef(float x, float y, float z);       // Multiply the current matrix by a scaling matrix
@@ -98,7 +98,7 @@ void rlOrtho(double left, double right, double bottom, double top, double near, 
 // Functions Declaration - Vertex level operations
 //------------------------------------------------------------------------------------
 void rlBegin(int mode);                         // Initialize drawing mode (how to organize vertex)
-void rlEnd();                                   // Finish vertex providing
+void rlEnd(void);                               // Finish vertex providing
 void rlVertex2i(int x, int y);                  // Define one vertex (position) - 2 int
 void rlVertex2f(float x, float y);              // Define one vertex (position) - 2 float
 void rlVertex3f(float x, float y, float z);     // Define one vertex (position) - 3 float
@@ -113,19 +113,19 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 // NOTE: This functions are used to completely abstract raylib code from OpenGL layer
 //------------------------------------------------------------------------------------
 void rlEnableTexture(unsigned int id);      // Enable texture usage
-void rlDisableTexture();                    // Disable texture usage
+void rlDisableTexture(void);                // Disable texture usage
 void rlDeleteTextures(unsigned int id);     // Delete OpenGL texture from GPU
 void rlDeleteVertexArrays(unsigned int id); // Unload vertex data from GPU memory
 void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
-void rlClearScreenBuffers();                // Clear used screen buffers (color and depth)
+void rlClearScreenBuffers(void);            // Clear used screen buffers (color and depth)
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-void rlglInit();                                // Initialize rlgl (shaders, VAO, VBO...)
-void rlglClose();                               // De-init rlgl
-void rlglDraw();                                // Draw VAOs
+void rlglInit(void);                            // Initialize rlgl (shaders, VAO, VBO...)
+void rlglClose(void);                           // De-init rlgl
+void rlglDraw(void);                            // Draw VAOs
 unsigned int rlglLoadModel(VertexData mesh);
 unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format);
 #endif
@@ -137,8 +137,8 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
 byte *rlglReadScreenPixels(int width, int height);    // Read screen pixel data (color buffer)
 
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-void PrintProjectionMatrix();       // DEBUG: Print projection matrix
-void PrintModelviewMatrix();        // DEBUG: Print modelview matrix
+void PrintProjectionMatrix(void);       // DEBUG: Print projection matrix
+void PrintModelviewMatrix(void);        // DEBUG: Print modelview matrix
 #endif
 
 #ifdef __cplusplus
