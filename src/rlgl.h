@@ -1,22 +1,22 @@
 /*********************************************************************************************
-* 
+*
 *   rlgl - raylib OpenGL abstraction layer
-*    
+*
 *   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
 *       OpenGL 1.1  - Direct map rl* -> gl*
 *       OpenGL 3.3+ - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Same behaviour as OpenGL 3.3+ (NOT TESTED)
-* 
+*
 *   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-*    
-*   This software is provided "as-is", without any express or implied warranty. In no event 
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
 *
-*   Permission is granted to anyone to use this software for any purpose, including commercial 
+*   Permission is granted to anyone to use this software for any purpose, including commercial
 *   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 *
-*     1. The origin of this software must not be misrepresented; you must not claim that you 
-*     wrote the original software. If you use this software in a product, an acknowledgment 
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
 *     in the product documentation would be appreciated but is not required.
 *
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented

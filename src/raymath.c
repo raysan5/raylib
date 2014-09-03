@@ -5,15 +5,15 @@
 *   Some useful functions to work with Vector3, Matrix and Quaternions
 *
 *   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-*    
-*   This software is provided "as-is", without any express or implied warranty. In no event 
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
 *
-*   Permission is granted to anyone to use this software for any purpose, including commercial 
+*   Permission is granted to anyone to use this software for any purpose, including commercial
 *   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 *
-*     1. The origin of this software must not be misrepresented; you must not claim that you 
-*     wrote the original software. If you use this software in a product, an acknowledgment 
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
 *     in the product documentation would be appreciated but is not required.
 *
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -51,7 +51,7 @@ Vector3 VectorAdd(Vector3 v1, Vector3 v2)
     result.x = v1.x + v2.x;
     result.y = v1.y + v2.y;
     result.z = v1.z + v2.z;
-    
+
     return result;
 }
 
@@ -63,7 +63,7 @@ Vector3 VectorSubtract(Vector3 v1, Vector3 v2)
     result.x = v1.x - v2.x;
     result.y = v1.y - v2.y;
     result.z = v1.z - v2.z;
-    
+
     return result;
 }
 
@@ -75,7 +75,7 @@ Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2)
     result.x = v1.y*v2.z - v1.z*v2.y;
     result.y = v1.z*v2.x - v1.x*v2.z;
     result.z = v1.x*v2.y - v1.y*v2.x;
-    
+
     return result;
 }
 
@@ -83,23 +83,23 @@ Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2)
 Vector3 VectorPerpendicular(Vector3 v)
 {
     Vector3 result;
-    
+
     float min = fabs(v.x);
     Vector3 cardinalAxis = {1.0, 0.0, 0.0};
- 
-    if (fabs(v.y) < min) 
+
+    if (fabs(v.y) < min)
     {
         min = fabs(v.y);
         cardinalAxis = (Vector3){0.0, 1.0, 0.0};
     }
- 
-    if(fabs(v.z) < min) 
+
+    if(fabs(v.z) < min)
     {
         cardinalAxis = (Vector3){0.0, 0.0, 1.0};
     }
-    
+
     result = VectorCrossProduct(v, cardinalAxis);
- 
+
     return result;
 }
 
@@ -107,9 +107,9 @@ Vector3 VectorPerpendicular(Vector3 v)
 float VectorDotProduct(Vector3 v1, Vector3 v2)
 {
     float result;
-    
+
     result = v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
-    
+
     return result;
 }
 
@@ -117,9 +117,9 @@ float VectorDotProduct(Vector3 v1, Vector3 v2)
 float VectorLength(const Vector3 v)
 {
     float length;
-    
+
     length = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
-    
+
     return length;
 }
 
@@ -145,11 +145,11 @@ void VectorNormalize(Vector3 *v)
     float length, ilength;
 
     length = VectorLength(*v);
-    
+
     if (length == 0) length = 1;
 
     ilength = 1.0/length;
-    
+
     v->x *= ilength;
     v->y *= ilength;
     v->z *= ilength;
@@ -159,13 +159,13 @@ void VectorNormalize(Vector3 *v)
 float VectorDistance(Vector3 v1, Vector3 v2)
 {
     float result;
-    
+
     float dx = v2.x - v1.x;
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
-        
+
     result = sqrt(dx*dx + dy*dy + dz*dz);
-    
+
     return result;
 }
 
@@ -173,7 +173,7 @@ float VectorDistance(Vector3 v1, Vector3 v2)
 Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount)
 {
     Vector3 result;
-    
+
     result.x = v1.x + amount * (v2.x - v1.x);
     result.y = v1.y + amount * (v2.y - v1.y);
     result.z = v1.z + amount * (v2.z - v1.z);
@@ -187,11 +187,11 @@ Vector3 VectorReflect(Vector3 vector, Vector3 normal)
     // I is the original vector
     // N is the normal of the incident plane
     // R = I - (2 * N * ( DotProduct[ I,N] ))
-    
+
     Vector3 result;
-    
+
     float dotProduct = VectorDotProduct(vector, normal);
-    
+
     result.x = vector.x - (2.0 * normal.x) * dotProduct;
     result.y = vector.y - (2.0 * normal.y) * dotProduct;
     result.z = vector.z - (2.0 * normal.z) * dotProduct;
@@ -203,11 +203,11 @@ Vector3 VectorReflect(Vector3 vector, Vector3 normal)
 void VectorTransform(Vector3 *v, Matrix mat)
 {
     float x = v->x;
-    float y = v->y; 
+    float y = v->y;
     float z = v->z;
-    
+
     //MatrixTranspose(&mat);
-    
+
     v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
     v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
@@ -217,7 +217,7 @@ void VectorTransform(Vector3 *v, Matrix mat)
 Vector3 VectorZero()
 {
     Vector3 zero = { 0.0, 0.0, 0.0 };
-    
+
     return zero;
 }
 
@@ -229,7 +229,7 @@ Vector3 VectorZero()
 float *GetMatrixVector(Matrix mat)
 {
     static float vector[16];
-    
+
     vector[0] = mat.m0;
     vector[1] = mat.m4;
     vector[2] = mat.m8;
@@ -246,7 +246,7 @@ float *GetMatrixVector(Matrix mat)
     vector[13] = mat.m7;
     vector[14] = mat.m11;
     vector[15] = mat.m15;
-  
+
     return vector;
 }
 
@@ -267,7 +267,7 @@ float MatrixDeterminant(Matrix mat)
              a30*a11*a02*a23 - a10*a31*a02*a23 - a30*a01*a12*a23 + a00*a31*a12*a23 +
              a10*a01*a32*a23 - a00*a11*a32*a23 - a20*a11*a02*a33 + a10*a21*a02*a33 +
              a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
-    
+
     return result;
 }
 
@@ -298,7 +298,7 @@ void MatrixTranspose(Matrix *mat)
     temp.m13 = mat->m7;
     temp.m14 = mat->m11;
     temp.m15 = mat->m15;
-    
+
     *mat = temp;
 }
 
@@ -306,13 +306,13 @@ void MatrixTranspose(Matrix *mat)
 void MatrixInvert(Matrix *mat)
 {
     Matrix temp;
-    
+
     // Cache the matrix values (speed optimization)
     float a00 = mat->m0, a01 = mat->m1, a02 = mat->m2, a03 = mat->m3;
     float a10 = mat->m4, a11 = mat->m5, a12 = mat->m6, a13 = mat->m7;
     float a20 = mat->m8, a21 = mat->m9, a22 = mat->m10, a23 = mat->m11;
     float a30 = mat->m12, a31 = mat->m13, a32 = mat->m14, a33 = mat->m15;
-    
+
     float b00 = a00*a11 - a01*a10;
     float b01 = a00*a12 - a02*a10;
     float b02 = a00*a13 - a03*a10;
@@ -325,12 +325,12 @@ void MatrixInvert(Matrix *mat)
     float b09 = a21*a32 - a22*a31;
     float b10 = a21*a33 - a23*a31;
     float b11 = a22*a33 - a23*a32;
-    
+
     // Calculate the invert determinant (inlined to avoid double-caching)
     float invDet = 1/(b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06);
-    
+
     printf("%f\n", invDet);
-    
+
     temp.m0 = (a11*b11 - a12*b10 + a13*b09)*invDet;
     temp.m1 = (-a01*b11 + a02*b10 - a03*b09)*invDet;
     temp.m2 = (a31*b05 - a32*b04 + a33*b03)*invDet;
@@ -347,9 +347,9 @@ void MatrixInvert(Matrix *mat)
     temp.m13 = (a00*b09 - a01*b07 + a02*b06)*invDet;
     temp.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
     temp.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
-    
+
     PrintMatrix(temp);
-    
+
     *mat = temp;
 }
 
@@ -357,7 +357,7 @@ void MatrixInvert(Matrix *mat)
 void MatrixNormalize(Matrix *mat)
 {
     float det = MatrixDeterminant(*mat);
-    
+
     mat->m0 /= det;
     mat->m1 /= det;
     mat->m2 /= det;
@@ -388,7 +388,7 @@ Matrix MatrixIdentity()
 Matrix MatrixAdd(Matrix left, Matrix right)
 {
     Matrix result = MatrixIdentity();
-    
+
     result.m0 = left.m0 + right.m0;
     result.m1 = left.m1 + right.m1;
     result.m2 = left.m2 + right.m2;
@@ -413,7 +413,7 @@ Matrix MatrixAdd(Matrix left, Matrix right)
 Matrix MatrixSubstract(Matrix left, Matrix right)
 {
     Matrix result = MatrixIdentity();
-      
+
     result.m0 = left.m0 - right.m0;
     result.m1 = left.m1 - right.m1;
     result.m2 = left.m2 - right.m2;
@@ -444,36 +444,36 @@ Matrix MatrixTranslate(float x, float y, float z)
         0, 1, 0, 0
         0, 0, 1, 0
         x, y, z, 1
-    Is the correct Translation Matrix. Why? Opengl Uses column-major matrix ordering. 
-    Which is the Transpose of the Matrix you initially presented, which is in row-major ordering. 
-    Row major is used in most math text-books and also DirectX, so it is a common 
+    Is the correct Translation Matrix. Why? Opengl Uses column-major matrix ordering.
+    Which is the Transpose of the Matrix you initially presented, which is in row-major ordering.
+    Row major is used in most math text-books and also DirectX, so it is a common
     point of confusion for those new to OpenGL.
-    
+
     * matrix notation used in opengl documentation does not describe in-memory layout for OpenGL matrices
-    
+
     Translation matrix should be laid out in memory like this:
     { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, trabsX, transY, transZ, 1 }
-    
-    
+
+
     9.005 Are OpenGL matrices column-major or row-major?
 
-    For programming purposes, OpenGL matrices are 16-value arrays with base vectors laid out 
-    contiguously in memory. The translation components occupy the 13th, 14th, and 15th elements 
-    of the 16-element matrix, where indices are numbered from 1 to 16 as described in section 
+    For programming purposes, OpenGL matrices are 16-value arrays with base vectors laid out
+    contiguously in memory. The translation components occupy the 13th, 14th, and 15th elements
+    of the 16-element matrix, where indices are numbered from 1 to 16 as described in section
     2.11.2 of the OpenGL 2.1 Specification.
 
-    Column-major versus row-major is purely a notational convention. Note that post-multiplying 
-    with column-major matrices produces the same result as pre-multiplying with row-major matrices. 
-    The OpenGL Specification and the OpenGL Reference Manual both use column-major notation. 
+    Column-major versus row-major is purely a notational convention. Note that post-multiplying
+    with column-major matrices produces the same result as pre-multiplying with row-major matrices.
+    The OpenGL Specification and the OpenGL Reference Manual both use column-major notation.
     You can use any notation, as long as it's clearly stated.
 
-    Sadly, the use of column-major format in the spec and blue book has resulted in endless confusion 
-    in the OpenGL programming community. Column-major notation suggests that matrices 
+    Sadly, the use of column-major format in the spec and blue book has resulted in endless confusion
+    in the OpenGL programming community. Column-major notation suggests that matrices
     are not laid out in memory as a programmer would expect.
 */
 
     Matrix result = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1 };
-    
+
     return result;
 }
 
@@ -482,50 +482,50 @@ Matrix MatrixTranslate(float x, float y, float z)
 Matrix MatrixRotate(float angleX, float angleY, float angleZ)
 {
     Matrix result;
-    
+
     Matrix rotX = MatrixRotateX(angleX);
     Matrix rotY = MatrixRotateY(angleY);
     Matrix rotZ = MatrixRotateZ(angleZ);
-    
+
     result = MatrixMultiply(MatrixMultiply(rotX, rotY), rotZ);
-      
+
     return result;
 }
 
 // Create rotation matrix from axis and angle
 // TODO: Test this function
-Matrix MatrixFromAxisAngle(Vector3 axis, float angle) 
+Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
 {
     Matrix result;
-    
+
     Matrix mat = MatrixIdentity();
 
     float x = axis.x, y = axis.y, z = axis.z;
-    
+
     float length = sqrt(x*x + y*y + z*z);
-    
+
     if ((length != 1) && (length != 0))
     {
         length = 1 / length;
-        x *= length; 
-        y *= length; 
+        x *= length;
+        y *= length;
         z *= length;
     }
-    
+
     float s = sin(angle);
     float c = cos(angle);
     float t = 1-c;
-    
+
     // Cache some matrix values (speed optimization)
     float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
     float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
     float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
-    
+
     // Construct the elements of the rotation matrix
     float b00 = x*x*t + c, b01 = y*x*t + z*s, b02 = z*x*t - y*s;
     float b10 = x*y*t - z*s, b11 = y*y*t + c, b12 = z*y*t + x*s;
     float b20 = x*z*t + y*s, b21 = y*z*t - x*s, b22 = z*z*t + c;
-    
+
     // Perform rotation-specific matrix multiplication
     result.m0 = a00*b00 + a10*b01 + a20*b02;
     result.m1 = a01*b00 + a11*b01 + a21*b02;
@@ -543,7 +543,7 @@ Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
     result.m13 = mat.m13;
     result.m14 = mat.m14;
     result.m15 = mat.m15;
-    
+
     return result;
 };
 
@@ -552,7 +552,7 @@ Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
 Matrix MatrixFromAxisAngle2(Vector3 axis, float angle)
 {
     Matrix result;
-    
+
     VectorNormalize(&axis);
     float axisX = axis.x, axisY = axis.y, axisZ = axis.y;
 
@@ -589,7 +589,7 @@ Matrix MatrixFromAxisAngle2(Vector3 axis, float angle)
     result.m13 = 0;
     result.m14 = 0;
     result.m15 = 1;
-    
+
     return result;
 }
 
@@ -597,14 +597,14 @@ Matrix MatrixFromAxisAngle2(Vector3 axis, float angle)
 Matrix MatrixFromQuaternion(Quaternion q)
 {
     Matrix result = MatrixIdentity();
-    
+
     Vector3 axis;
     float angle;
-    
+
     QuaternionToAxisAngle(q, &axis, &angle);
-    
+
     result = MatrixFromAxisAngle2(axis, angle);
-    
+
     return result;
 }
 
@@ -612,10 +612,10 @@ Matrix MatrixFromQuaternion(Quaternion q)
 Matrix MatrixRotateX(float angle)
 {
     Matrix result = MatrixIdentity();
-    
+
     float cosres = (float)cos(angle);
     float sinres = (float)sin(angle);
-       
+
     result.m5 = cosres;
     result.m6 = -sinres;
     result.m9 = sinres;
@@ -628,10 +628,10 @@ Matrix MatrixRotateX(float angle)
 Matrix MatrixRotateY(float angle)
 {
     Matrix result = MatrixIdentity();
-    
+
     float cosres = (float)cos(angle);
     float sinres = (float)sin(angle);
-    
+
     result.m0 = cosres;
     result.m2 = sinres;
     result.m8 = -sinres;
@@ -644,10 +644,10 @@ Matrix MatrixRotateY(float angle)
 Matrix MatrixRotateZ(float angle)
 {
     Matrix result = MatrixIdentity();
-    
+
     float cosres = (float)cos(angle);
     float sinres = (float)sin(angle);
-    
+
     result.m0 = cosres;
     result.m1 = -sinres;
     result.m4 = sinres;
@@ -669,7 +669,7 @@ Matrix MatrixScale(float x, float y, float z)
 Matrix MatrixTransform(Vector3 translation, Vector3 rotation, Vector3 scale)
 {
     Matrix result = MatrixIdentity();
-    
+
     Matrix mRotation = MatrixRotate(rotation.x, rotation.y, rotation.z);
     Matrix mScale = MatrixScale(scale.x, scale.y, scale.z);
     Matrix mTranslate = MatrixTranslate(translation.x, translation.y, translation.z);
@@ -690,12 +690,12 @@ Matrix MatrixMultiply(Matrix left, Matrix right)
     float a10 = left.m4, a11 = left.m5, a12 = left.m6, a13 = left.m7;
     float a20 = left.m8, a21 = left.m9, a22 = left.m10, a23 = left.m11;
     float a30 = left.m12, a31 = left.m13, a32 = left.m14, a33 = left.m15;
-    
+
     float b00 = right.m0, b01 = right.m1, b02 = right.m2, b03 = right.m3;
     float b10 = right.m4, b11 = right.m5, b12 = right.m6, b13 = right.m7;
     float b20 = right.m8, b21 = right.m9, b22 = right.m10, b23 = right.m11;
     float b30 = right.m12, b31 = right.m13, b32 = right.m14, b33 = right.m15;
-    
+
     result.m0 = b00*a00 + b01*a10 + b02*a20 + b03*a30;
     result.m1 = b00*a01 + b01*a11 + b02*a21 + b03*a31;
     result.m2 = b00*a02 + b01*a12 + b02*a22 + b03*a32;
@@ -712,19 +712,19 @@ Matrix MatrixMultiply(Matrix left, Matrix right)
     result.m13 = b30*a01 + b31*a11 + b32*a21 + b33*a31;
     result.m14 = b30*a02 + b31*a12 + b32*a22 + b33*a32;
     result.m15 = b30*a03 + b31*a13 + b32*a23 + b33*a33;
-    
+
     return result;
 }
 
 // Returns perspective projection matrix
-Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far) 
+Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far)
 {
     Matrix result;
-    
+
     float rl = (right - left);
     float tb = (top - bottom);
     float fn = (far - near);
-    
+
     result.m0 = (near*2) / rl;
     result.m1 = 0;
     result.m2 = 0;
@@ -741,7 +741,7 @@ Matrix MatrixFrustum(double left, double right, double bottom, double top, doubl
     result.m13 = 0;
     result.m14 = -(far*near*2) / fn;
     result.m15 = 0;
-        
+
     return result;
 }
 
@@ -755,14 +755,14 @@ Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 }
 
 // Returns orthographic projection matrix
-Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far) 
+Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far)
 {
     Matrix result;
-    
+
     float rl = (right - left);
     float tb = (top - bottom);
     float fn = (far - near);
-    
+
     result.m0 = 2 / rl;
     result.m1 = 0;
     result.m2 = 0;
@@ -779,7 +779,7 @@ Matrix MatrixOrtho(double left, double right, double bottom, double top, double 
     result.m13 = -(top + bottom) / tb;
     result.m14 = -(far + near) / fn;
     result.m15 = 1;
-    
+
     return result;
 }
 
@@ -787,14 +787,14 @@ Matrix MatrixOrtho(double left, double right, double bottom, double top, double 
 Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 {
     Matrix result;
-    
+
     Vector3 z = VectorSubtract(eye, target);
     VectorNormalize(&z);
     Vector3 x = VectorCrossProduct(up, z);
     VectorNormalize(&x);
     Vector3 y = VectorCrossProduct(z, x);
     VectorNormalize(&y);
-    
+
     result.m0 = x.x;
     result.m1 = x.y;
     result.m2 = x.z;
@@ -811,7 +811,7 @@ Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     result.m13 = 0;
     result.m14 = 0;
     result.m15 = 1;
-    
+
     return result;
 }
 
@@ -837,16 +837,16 @@ float QuaternionLength(Quaternion quat)
 }
 
 // Normalize provided quaternion
-void QuaternionNormalize(Quaternion *q) 
+void QuaternionNormalize(Quaternion *q)
 {
     float length, ilength;
 
     length = QuaternionLength(*q);
-    
+
     if (length == 0) length = 1;
 
     ilength = 1.0/length;
-    
+
     q->x *= ilength;
     q->y *= ilength;
     q->z *= ilength;
@@ -854,28 +854,28 @@ void QuaternionNormalize(Quaternion *q)
 }
 
 // Calculate two quaternion multiplication
-Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2) 
+Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
 {
     Quaternion result;
 
     float qax = q1.x, qay = q1.y, qaz = q1.z, qaw = q1.w;
     float qbx = q2.x, qby = q2.y, qbz = q2.z, qbw = q2.w;
-    
+
     result.x = qax*qbw + qaw*qbx + qay*qbz - qaz*qby;
     result.y = qay*qbw + qaw*qby + qaz*qbx - qax*qbz;
     result.z = qaz*qbw + qaw*qbz + qax*qby - qay*qbx;
     result.w = qaw*qbw - qax*qbx - qay*qby - qaz*qbz;
-    
+
     return result;
 }
 
 // Calculates spherical linear interpolation between two quaternions
-Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount) 
+Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result;
 
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
-    
+
     if (abs(cosHalfTheta) >= 1.0) result = q1;
     else
     {
@@ -892,15 +892,15 @@ Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         else
         {
             float ratioA = sin((1 - amount)*halfTheta) / sinHalfTheta;
-            float ratioB = sin(amount*halfTheta) / sinHalfTheta; 
-            
+            float ratioB = sin(amount*halfTheta) / sinHalfTheta;
+
             result.x = (q1.x*ratioA + q2.x*ratioB);
             result.y = (q1.y*ratioA + q2.y*ratioB);
             result.z = (q1.z*ratioA + q2.z*ratioB);
             result.w = (q1.w*ratioA + q2.w*ratioB);
         }
     }
-    
+
     return result;
 }
 
@@ -956,7 +956,7 @@ Quaternion QuaternionFromMatrix(Matrix matrix)
             result.z = s * 0.25;
         }
     }
-    
+
     return result;
 }
 
@@ -966,24 +966,24 @@ Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0, 0, 0, 1 };
 
-    if (VectorLength(axis) != 0.0) 
+    if (VectorLength(axis) != 0.0)
 
     angle *= 0.5;
-    
+
     VectorNormalize(&axis);
 
     result.x = axis.x * (float)sin(angle);
     result.y = axis.y * (float)sin(angle);
     result.z = axis.z * (float)sin(angle);
     result.w = (float)cos(angle);
-    
+
     QuaternionNormalize(&result);
 
     return result;
 }
 
 // Calculates the matrix from the given quaternion
-Matrix QuaternionToMatrix(Quaternion q) 
+Matrix QuaternionToMatrix(Quaternion q)
 {
     Matrix result;
 
@@ -1021,7 +1021,7 @@ Matrix QuaternionToMatrix(Quaternion q)
     result.m13 = 0;
     result.m14 = 0;
     result.m15 = 1;
-    
+
     return result;
 }
 
@@ -1035,7 +1035,7 @@ void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 
     resAngle = 2.0f * (float)acos(q.w);
     float den = (float)sqrt(1.0 - q.w * q.w);
-    
+
     if (den > 0.0001f)
     {
         resAxis.x = q.x / den;
@@ -1044,11 +1044,11 @@ void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
     }
     else
     {
-        // This occurs when the angle is zero. 
+        // This occurs when the angle is zero.
         // Not a problem: just set an arbitrary normalized axis.
         resAxis.x = 1.0;
     }
-    
+
     *outAxis = resAxis;
     *outAngle = resAngle;
 }

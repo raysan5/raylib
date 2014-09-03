@@ -3,20 +3,20 @@
 *   raylib.core
 *
 *   Basic functions to manage Windows, OpenGL context and Input
-*    
-*   Uses external lib:    
+*
+*   Uses external lib:
 *       GLFW3 - Window, context and Input management (static lib version)
 *
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-*    
-*   This software is provided "as-is", without any express or implied warranty. In no event 
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
 *
-*   Permission is granted to anyone to use this software for any purpose, including commercial 
+*   Permission is granted to anyone to use this software for any purpose, including commercial
 *   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 *
-*     1. The origin of this software must not be misrepresented; you must not claim that you 
-*     wrote the original software. If you use this software in a product, an acknowledgment 
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
 *     in the product documentation would be appreciated but is not required.
 *
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -121,11 +121,11 @@ void InitWindow(int width, int height, const char *title)
 void InitWindowEx(int width, int height, const char* title, bool resizable, const char *cursorImage)
 {
     glfwSetErrorCallback(ErrorCallback);
-    
+
     if (!glfwInit()) TraceLog(ERROR, "Failed to initialize GLFW");
-    
+
     //glfwDefaultWindowHints()                  // Set default windows hints
-    
+
     if (!resizable) glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); // Avoid window being resizable
 
 #ifdef USE_OPENGL_33
@@ -137,20 +137,20 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
 #endif
 
     window = glfwCreateWindow(width, height, title, NULL, NULL);
-    
+
     windowWidth = width;
     windowHeight = height;
     windowTitle = title;
-    
+
     if (!window)
     {
         glfwTerminate();
         TraceLog(ERROR, "Failed to initialize Window");
     }
-    
+
     glfwSetWindowSizeCallback(window, WindowSizeCallback);
     glfwSetCursorEnterCallback(window, CursorEnterCallback);
-    
+
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetScrollCallback(window, ScrollCallback);
@@ -158,29 +158,29 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
                                     // If not set, swap interval uses GPU v-sync configuration
                                     // Framerate can be setup using SetTargetFPS()
 
-    //------------------------------------------------------ 
+    //------------------------------------------------------
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlglInit();                     // Init rlgl
 #endif
     //------------------------------------------------------
-    
+
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
 
-    //------------------------------------------------------ 
+    //------------------------------------------------------
     rlglInitGraphicsDevice(fbWidth, fbHeight);
     //------------------------------------------------------
-    
+
     previousTime = glfwGetTime();
 
     LoadDefaultFont();              // NOTE: External function (defined in module: text)
-    
+
     if (cursorImage != NULL) SetCustomCursor(cursorImage);
-    
+
     srand(time(NULL));              // Initialize random seed
-    
+
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
-    
+
     // raylib logo appearing animation
     if (showLogo)
     {
@@ -193,7 +193,7 @@ void InitWindowEx(int width, int height, const char* title, bool resizable, cons
 void CloseWindow()
 {
     UnloadDefaultFont();
-    
+
     //------------------------------------------------------
 #if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
     rlglClose();                    // De-init rlgl
@@ -208,9 +208,9 @@ void CloseWindow()
 void SetCustomCursor(const char *cursorImage)
 {
     if (customCursor) UnloadTexture(cursor);
-    
+
     cursor = LoadTexture(cursorImage);
-    
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     customCursor = true;
 }
@@ -231,14 +231,14 @@ bool WindowShouldClose()
 // Fullscreen toggle (by default F11)
 void ToggleFullscreen()
 {
-    if (glfwGetKey(window, GLFW_KEY_F11)) 
+    if (glfwGetKey(window, GLFW_KEY_F11))
     {
         fullscreen = !fullscreen;          // Toggle fullscreen flag
 
         UnloadDefaultFont();
-        
+
         glfwDestroyWindow(window);         // Destroy the current window (we will recreate it!)
-        
+
         // TODO: WARNING! All loaded resources are lost, we loose Context!
 
         // NOTE: Window aspect ratio is always windowWidth / windowHeight
@@ -248,7 +248,7 @@ void ToggleFullscreen()
             //const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             //windowWidth = mode->width;
             //windowHeight = mode->height;
-            
+
             window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);    // Fullscreen mode
         }
         else window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, NULL, NULL);
@@ -258,7 +258,7 @@ void ToggleFullscreen()
             glfwTerminate();
             TraceLog(ERROR, "Failed to initialize Window when switching fullscreen mode");
         }
-        
+
         glfwMakeContextCurrent(window);
         glfwSetKeyCallback(window, KeyCallback);
 
@@ -266,7 +266,7 @@ void ToggleFullscreen()
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);    // Get framebuffer size of current window
 
         rlglInitGraphicsDevice(fbWidth, fbHeight);
-        
+
         LoadDefaultFont();
     }
 }
@@ -275,9 +275,9 @@ void ToggleFullscreen()
 void ClearBackground(Color color)
 {
     if ((color.r != background.r) || (color.g != background.g) || (color.b != background.b) || (color.a != background.a))
-    {       
+    {
         rlClearColor(color.r, color.g, color.b, color.a);
-        
+
         background = color;
     }
 }
@@ -290,7 +290,7 @@ void BeginDrawing()
     previousTime = currentTime;
 
     rlClearScreenBuffers();
-    
+
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
 //#ifdef USE_OPENGL_11
@@ -309,18 +309,18 @@ void EndDrawing()
     rlglDraw();                         //  Draw Buffers
 #endif
     //------------------------------------------------------
-    
+
     glfwSwapBuffers(window);            // Swap back and front buffers
     glfwPollEvents();                   // Register keyboard/mouse events
-    
+
     UpdateMusicStream();        // NOTE: Function checks if music is enabled
-    
+
     currentTime = glfwGetTime();
     drawTime = currentTime - previousTime;
     previousTime = currentTime;
-    
+
     frameTime = updateTime + drawTime;
-    
+
     double extraTime = 0;
 
     while (frameTime < targetTime)
@@ -343,20 +343,20 @@ void Begin3dMode(Camera camera)
     //------------------------------------------------------
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
-    
+
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
-    
+
     // Setup perspective projection
     float aspect = (GLfloat)windowWidth/(GLfloat)windowHeight;
     double top = 0.1f*tan(45.0f*PI / 360.0);
     double right = top*aspect;
 
     rlFrustum(-right, right, -top, top, 0.1f, 100.0f);
-    
+
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    
+
     // Setup Camera view
     Matrix matLookAt = MatrixLookAt(camera.position, camera.target, camera.up);
     rlMultMatrixf(GetMatrixVector(matLookAt));      // Multiply MODELVIEW matrix by view matrix (camera)
@@ -373,10 +373,10 @@ void End3dMode()
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
-    
+
     rlMatrixMode(RL_MODELVIEW);         // Get back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-    
+
     //rlTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
 }
 
@@ -384,7 +384,7 @@ void End3dMode()
 void SetTargetFPS(int fps)
 {
     targetTime = 1 / (float)fps;
-    
+
     TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
 }
 
@@ -401,7 +401,7 @@ float GetFrameTime()
     // so we round it before before passing around to be used
     // NOTE: There are still problems with high framerates (>500fps)
     double roundedFrameTime =  round(frameTime*10000) / 10000;
-    
+
     return (float)roundedFrameTime;    // Time in seconds to run a frame
 }
 
@@ -414,7 +414,7 @@ Color GetColor(int hexValue)
     color.g = (unsigned char)(hexValue >> 16) & 0xFF;
     color.b = (unsigned char)(hexValue >> 8) & 0xFF;
     color.a = (unsigned char)hexValue & 0xFF;
-    
+
     return color;
 }
 
@@ -458,7 +458,7 @@ void ShowLogo()
 
 // Detect if a key has been pressed once
 bool IsKeyPressed(int key)
-{   
+{
     bool pressed = false;
 
     currentKeyState[key] = IsKeyDown(key);
@@ -469,7 +469,7 @@ bool IsKeyPressed(int key)
         previousKeyState[key] = currentKeyState[key];
     }
     else pressed = false;
-    
+
     return pressed;
 }
 
@@ -482,9 +482,9 @@ bool IsKeyDown(int key)
 
 // Detect if a key has been released once
 bool IsKeyReleased(int key)
-{   
+{
     bool released = false;
-    
+
     currentKeyState[key] = IsKeyUp(key);
 
     if (currentKeyState[key] != previousKeyState[key])
@@ -493,7 +493,7 @@ bool IsKeyReleased(int key)
         previousKeyState[key] = currentKeyState[key];
     }
     else released = false;
-    
+
     return released;
 }
 
@@ -517,7 +517,7 @@ bool IsMouseButtonPressed(int button)
         previousMouseState[button] = currentMouseState[button];
     }
     else pressed = false;
-    
+
     return pressed;
 }
 
@@ -541,7 +541,7 @@ bool IsMouseButtonReleased(int button)
         previousMouseState[button] = currentMouseState[button];
     }
     else released = false;
-    
+
     return released;
 }
 
@@ -557,7 +557,7 @@ int GetMouseX()
 {
     double mouseX;
     double mouseY;
-    
+
     glfwGetCursorPos(window, &mouseX, &mouseY);
 
     return (int)mouseX;
@@ -568,7 +568,7 @@ int GetMouseY()
 {
     double mouseX;
     double mouseY;
-    
+
     glfwGetCursorPos(window, &mouseX, &mouseY);
 
     return (int)mouseY;
@@ -579,9 +579,9 @@ Vector2 GetMousePosition()
 {
     double mouseX;
     double mouseY;
-    
+
     glfwGetCursorPos(window, &mouseX, &mouseY);
-    
+
     Vector2 position = { (float)mouseX, (float)mouseY };
 
     return position;
@@ -593,7 +593,7 @@ int GetMouseWheelMove()
     previousMouseWheelY = currentMouseWheelY;
 
     currentMouseWheelY = 0;
-    
+
     return previousMouseWheelY;
 }
 
@@ -601,7 +601,7 @@ int GetMouseWheelMove()
 bool IsGamepadAvailable(int gamepad)
 {
     int result = glfwJoystickPresent(gamepad);
-    
+
     if (result == 1) return true;
     else return false;
 }
@@ -610,20 +610,20 @@ bool IsGamepadAvailable(int gamepad)
 Vector2 GetGamepadMovement(int gamepad)
 {
     Vector2 vec = { 0, 0 };
-    
+
     const float *axes;
     int axisCount;
-    
+
     axes = glfwGetJoystickAxes(gamepad, &axisCount);
-    
+
     if (axisCount >= 2)
     {
-        vec.x = axes[0];    // Left joystick X    
+        vec.x = axes[0];    // Left joystick X
         vec.y = axes[1];    // Left joystick Y
-        
+
         //vec.x = axes[2];    // Right joystick X
         //vec.x = axes[3];    // Right joystick Y
-    }        
+    }
 
     return vec;
 }
@@ -641,7 +641,7 @@ bool IsGamepadButtonPressed(int gamepad, int button)
         previousGamepadState[button] = currentGamepadState[button];
     }
     else pressed = false;
-    
+
     return pressed;
 }
 
@@ -649,9 +649,9 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     const unsigned char* buttons;
     int buttonsCount;
-    
+
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
-    
+
     if ((buttons != NULL) && (buttons[button] == GLFW_PRESS))
     {
         return true;
@@ -672,7 +672,7 @@ bool IsGamepadButtonReleased(int gamepad, int button)
         previousGamepadState[button] = currentGamepadState[button];
     }
     else released = false;
-    
+
     return released;
 }
 
@@ -680,9 +680,9 @@ bool IsGamepadButtonUp(int gamepad, int button)
 {
     const unsigned char* buttons;
     int buttonsCount;
-    
+
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
-    
+
     if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE))
     {
         return true;
@@ -712,7 +712,7 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     if (key == exitKey && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GL_TRUE);
-        
+
         // NOTE: Before closing window, while loop must be left!
     }
     else if (key == GLFW_KEY_F11 && action == GLFW_PRESS)
@@ -739,11 +739,11 @@ static void WindowSizeCallback(GLFWwindow* window, int width, int height)
 
     // If window is resized, graphics device is re-initialized (but only ortho mode)
     rlglInitGraphicsDevice(fbWidth, fbHeight);
-    
+
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
     windowWidth = fbWidth;
     windowHeight = fbHeight;
-    
+
     // Background must be also re-cleared
     rlClearColor(background.r, background.g, background.b, background.a);
 }
@@ -767,7 +767,7 @@ static void TakeScreenshot()
     free(imgData);
 
     shotNum++;
-    
+
     TraceLog(INFO, "[%s] Screenshot taken!", buffer);
 }
 
@@ -775,20 +775,20 @@ static void LogoAnimation()
 {
     int logoPositionX = windowWidth/2 - 128;
     int logoPositionY = windowHeight/2 - 128;
-    
+
     int framesCounter = 0;
     int lettersCount = 0;
-    
+
     int topSideRecWidth = 16;
     int leftSideRecHeight = 16;
-    
+
     int bottomSideRecWidth = 16;
     int rightSideRecHeight = 16;
-    
+
     char raylib[8] = "       ";     // raylib text array, max 8 letters
     int state = 0;                  // Tracking animation states (State Machine)
     float alpha = 1.0;              // Useful for fading
-    
+
     while (!WindowShouldClose() && (state != 4))    // Detect window close button or ESC key
     {
         // Update
@@ -796,9 +796,9 @@ static void LogoAnimation()
         if (state == 0)                 // State 0: Small box blinking
         {
             framesCounter++;
-        
+
             if (framesCounter == 84)
-            {                
+            {
                 state = 1;
                 framesCounter = 0;      // Reset counter... will be used later...
             }
@@ -807,26 +807,26 @@ static void LogoAnimation()
         {
             topSideRecWidth += 4;
             leftSideRecHeight += 4;
-            
+
             if (topSideRecWidth == 256) state = 2;
         }
         else if (state == 2)            // State 2: Bottom and right bars growing
         {
             bottomSideRecWidth += 4;
             rightSideRecHeight += 4;
-            
+
             if (bottomSideRecWidth == 256) state = 3;
         }
         else if (state == 3)            // State 3: Letters appearing (one by one)
         {
             framesCounter++;
-            
+
             if (framesCounter/12)       // Every 12 frames, one more letter!
-            {    
+            {
                 lettersCount++;
                 framesCounter = 0;
             }
-            
+
             switch (lettersCount)
             {
                 case 1: raylib[0] = 'r'; break;
@@ -837,11 +837,11 @@ static void LogoAnimation()
                 case 6: raylib[5] = 'b'; break;
                 default: break;
             }
-            
+
             if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
             {
                 alpha -= 0.02;
-                
+
                 if (alpha <= 0)
                 {
                     alpha = 0;
@@ -850,11 +850,11 @@ static void LogoAnimation()
             }
         }
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             if (state == 0)
             {
                 if ((framesCounter/12)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
@@ -868,7 +868,7 @@ static void LogoAnimation()
             {
                 DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
                 DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-                
+
                 DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
                 DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
             }
@@ -876,15 +876,15 @@ static void LogoAnimation()
             {
                 DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
                 DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
-                
+
                 DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
                 DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
-                
+
                 DrawRectangle(windowWidth/2 - 112, windowHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
-                
+
                 DrawText(raylib, windowWidth/2 - 44, windowHeight/2 + 48, 50, Fade(BLACK, alpha));
             }
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }

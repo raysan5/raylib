@@ -1,7 +1,7 @@
 ﻿/*********************************************************************************************
-* 
+*
 *   raylib 1.1 (www.raylib.com)
-*    
+*
 *   A simple and easy-to-use library to learn videogames programming
 *
 *   Features:
@@ -14,7 +14,7 @@
 *     Basic 3d support for Shapes, Models, Heightmaps and Billboards
 *     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing with streaming support
-*    
+*
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
 *     GLEW for OpenGL extensions loading (3.3+ and ES2)
@@ -33,19 +33,19 @@
 *
 *   -- LICENSE (raylib v1.1, April 2014) --
 *
-*   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, 
+*   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
-*    
+*
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-*    
-*   This software is provided "as-is", without any express or implied warranty. In no event 
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
 *
-*   Permission is granted to anyone to use this software for any purpose, including commercial 
+*   Permission is granted to anyone to use this software for any purpose, including commercial
 *   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 *
-*     1. The origin of this software must not be misrepresented; you must not claim that you 
-*     wrote the original software. If you use this software in a product, an acknowledgment 
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
 *     in the product documentation would be appreciated but is not required.
 *
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -354,7 +354,7 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint);             
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin,     // Draw a part of a texture defined by a rectangle with 'pro' parameters
-                    float rotation, Color tint);                                      
+                    float rotation, Color tint);
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
@@ -406,7 +406,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotation, Vector3 scale,
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec 
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

@@ -3,21 +3,21 @@
 *   raylib.utils
 *
 *   Utils Functions Definitions
-*    
-*   Uses external libs:    
+*
+*   Uses external libs:
 *       tinfl - zlib DEFLATE algorithm decompression lib
 *       stb_image_write - PNG writting functions
-*       
+*
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-*    
-*   This software is provided "as-is", without any express or implied warranty. In no event 
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
 *
-*   Permission is granted to anyone to use this software for any purpose, including commercial 
+*   Permission is granted to anyone to use this software for any purpose, including commercial
 *   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 *
-*     1. The origin of this software must not be misrepresented; you must not claim that you 
-*     wrote the original software. If you use this software in a product, an acknowledgment 
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
 *     in the product documentation would be appreciated but is not required.
 *
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -54,10 +54,10 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
 {
     int tempUncompSize;
     unsigned char *pUncomp;
-    
+
     // Allocate buffer to hold decompressed data
     pUncomp = (mz_uint8 *)malloc((size_t)uncompSize);
-    
+
     // Check correct memory allocation
     if (!pUncomp)
     {
@@ -67,13 +67,13 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
     {
         // Decompress data
         tempUncompSize = tinfl_decompress_mem_to_mem(pUncomp, (size_t)uncompSize, data, compSize, 1);
-        
+
         if (tempUncompSize == -1)
         {
             TraceLog(WARNING, "Data decompression failed");
             free(pUncomp);
         }
-        
+
         if (uncompSize != (int)tempUncompSize)
         {
             TraceLog(WARNING, "Expected uncompressed size do not match, data may be corrupted");
@@ -83,7 +83,7 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
 
         TraceLog(INFO, "Data decompressed successfully from %u bytes to %u bytes", (mz_uint32)compSize, (mz_uint32)tempUncompSize);
     }
-    
+
     return pUncomp;
 }
 
@@ -92,7 +92,7 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
 void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height)
 {
     int filesize = 54 + 3*width*height;
-    
+
     unsigned char bmpFileHeader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};    // Standard BMP file header
     unsigned char bmpInfoHeader[40] = {40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};   // Standard BMP info header
 
@@ -111,11 +111,11 @@ void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int he
     bmpInfoHeader[11] = (unsigned char)(height>>24);
 
     FILE *bmpFile = fopen(fileName, "wb");    // Define a pointer to bitmap file and open it in write-binary mode
-    
+
     // NOTE: fwrite parameters are: data pointer, size in bytes of each element to be written, number of elements, file-to-write pointer
     fwrite(bmpFileHeader, sizeof(unsigned char), 14, bmpFile);    // Write BMP file header data
     fwrite(bmpInfoHeader, sizeof(unsigned char), 40, bmpFile);    // Write BMP info header data
-    
+
     // Write pixel data to file
     for (int y = 0; y < height ; y++)
     {
@@ -143,14 +143,14 @@ void TraceLog(int msgType, const char *text, ...)
 {
     va_list args;
     int traceDebugMsgs = 1;
-    
+
 #ifdef DO_NOT_TRACE_DEBUG_MSGS
     traceDebugMsgs = 0;
 #endif
 
-    // NOTE: If trace log file not set, output redirected to stdout 
+    // NOTE: If trace log file not set, output redirected to stdout
     if (logstream == NULL) logstream = stdout;
-    
+
     switch(msgType)
     {
         case INFO: fprintf(logstream, "INFO: "); break;
@@ -159,16 +159,16 @@ void TraceLog(int msgType, const char *text, ...)
         case DEBUG: if (traceDebugMsgs) fprintf(logstream, "DEBUG: "); break;
         default: break;
     }
-    
+
     if ((msgType != DEBUG) || ((msgType == DEBUG) && (traceDebugMsgs)))
     {
         va_start(args, text);
         vfprintf(logstream, text, args);
         va_end(args);
-        
+
         fprintf(logstream, "\n");
     }
-    
+
     if (msgType == ERROR) exit(1);      // If ERROR message, exit program
 }
 
@@ -196,7 +196,7 @@ void RecordMalloc(int mallocType, int mallocSize, const char *msg)
 }
 
 // Get the extension for a filename
-const char *GetExtension(const char *fileName) 
+const char *GetExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
     if(!dot || dot == fileName) return "";
