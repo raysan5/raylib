@@ -27,7 +27,7 @@ int main()
     
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     
-    Texture2D texture = LoadTexture("resources/catwhite.png");
+    Texture2D texture = LoadTexture("resources/catsham.png");
     Model cat = LoadModel("resources/cat.obj");
     SetModelTexture(&cat, texture); // Link texture to model
     //--------------------------------------------------------------------------------------

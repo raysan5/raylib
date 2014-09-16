@@ -19,7 +19,6 @@ int main()
     int screenHeight = 450;
     
     Vector2 ballPosition = { -100.0, -100.0 };
-    int counter = 0;
     int mouseX, mouseY;
     
     InitWindow(screenWidth, screenHeight, "raylib example 06 - mouse input");

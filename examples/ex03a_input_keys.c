@@ -30,10 +30,10 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_RIGHT)) ballPosition.x += 0.8;
-        if (IsKeyPressed(KEY_LEFT)) ballPosition.x -= 0.8;
-        if (IsKeyPressed(KEY_UP)) ballPosition.y -= 0.8;
-        if (IsKeyPressed(KEY_DOWN)) ballPosition.y += 0.8;
+        if (IsKeyDown(KEY_RIGHT)) ballPosition.x += 0.8;
+        if (IsKeyDown(KEY_LEFT)) ballPosition.x -= 0.8;
+        if (IsKeyDown(KEY_UP)) ballPosition.y -= 0.8;
+        if (IsKeyDown(KEY_DOWN)) ballPosition.y += 0.8;
         //----------------------------------------------------------------------------------
         
         // Draw

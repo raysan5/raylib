@@ -37,7 +37,7 @@ int main()
     
     Vector2 mousePoint;
     
-    InitWindowEx(screenWidth, screenHeight, "raylib example 06a - color selection", false, "resources/mouse.png");
+    InitWindow(screenWidth, screenHeight, "raylib example 06a - color selection");
     
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------

@@ -12,6 +12,7 @@ src/vector3.o
 src/stb_image.o
 src/*.exe
 examples/*.o
+examples/*.exe
 
 # Ignore thumbnails created by windows
 Thumbs.db
