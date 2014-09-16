@@ -59,14 +59,14 @@ notes on raylib 1.2
 -------------------
 
 On September 2014, after 5 month of raylib 1.1 release, it comes raylib 1.2. Again, this version presents a
-complete internal redesign of [core] (https://github.com/raysan5/raylib/blob/master/src/core.h) module to support two new platforms: Android and Raspberry Pi.
+complete internal redesign of [core] (https://github.com/raysan5/raylib/blob/master/src/core.c) module to support two new platforms: [Android] (http://www.android.com/) and [Raspberry Pi] (http://www.raspberrypi.org/).
 
 It's been some month of really hard work to accomodate raylib to those new platforms while keeping it easy for the user.
 On Android, raylib manages internally the activity cicle, as well as the inputs; on Raspberry Pi, a complete raw input
 system has been written from scratch.
 
-A new display initialization system has been created to accomodate to multiple resolutions, adding black bars if required;
-user only defines whatever screen size and it gets properly displayed.
+A new display initialization system has been created to support multiple resolutions, adding black bars if required;
+user only defines desired screen size and it gets properly displayed.
 
 Now raylib can easily deploy games to Android devices and Raspberry Pi (console mode).
 
@@ -85,12 +85,12 @@ features
    *  Powerful math module for Vector and Matrix operations [raymath]
    *  Audio loading and playing with streaming support (WAV and OGG)
    *  Custom color palette for fancy visuals on raywhite background
-   *  Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi
+   *  Multiple platforms support: Windows, Linux, Mac, Android and Raspberry Pi
 
 raylib uses on its core module the outstanding [GLFW3] (http://www.glfw.org/) library. The best option by far I found for 
 multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, ...).
 
-raylib uses on its audio module [OpenAL Soft] (http://kcat.strangesoft.net/openal.html) audio library, in multiple flavours,
+raylib uses on its [audio] (https://github.com/raysan5/raylib/blob/master/src/audio.c) module, [OpenAL Soft] (http://kcat.strangesoft.net/openal.html) audio library, in multiple flavours,
 to accomodate to Android and Raspberry Pi.
 
 On Android, raylib uses native_app_glue module (provided on Android NDK) and native Android libraries to manage window/context, 
@@ -119,41 +119,41 @@ Since raylib v1.1, you can download a windows Installer package for easy install
 building source (generate libraylib.a)
 --------------------------------------
 
-Building raylib sources on desktop platforms:
+**Building raylib sources on desktop platforms:**
 
-Step 1: Using MinGW make tool, just navigate from command line to raylib/src/ folder and type:
+_Step 1:_ Using MinGW make tool, just navigate from command line to raylib/src/ folder and type:
 
     mingw32-make PLATFORM=PLATFORM_DESKTOP
 
-* NOTE: By default raylib compiles using OpenGL 1.1 to maximize compatibility; to use OpenGL 3.3 just type:
+NOTE: By default raylib compiles using OpenGL 1.1 to maximize compatibility; to use OpenGL 3.3 just type:
 
     mingw32-make PLATFORM=PLATFORM_DESKTOP GRAPHICS=GRAPHICS_API_OPENGL_33
 
-Building raylib sources on Raspberry Pi:
+**Building raylib sources on Raspberry Pi:**
 
-Step 1. Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
+_Step 1._ Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
 
     sudo apt-get install openal1
 
-Step 2. Navigate from command line to raylib/src/ folder and type:
+_Step 2._ Navigate from command line to raylib/src/ folder and type:
 
     make
 
-Building raylib sources for Android:
+**Building raylib sources for Android:**
 
-Step 1. Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
+_Step 1._ Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
 
-    - Download and decompress on C: [Android SDK r23] (http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
-    - Download and decompress on C: [Android NDK r10b] (http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
-    - Download and decompress on C: [Apache Ant 1.9.4] (http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
+    * Download and decompress on C: [Android SDK r23] (http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
+    * Download and decompress on C: [Android NDK r10b] (http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
+    * Download and decompress on C: [Apache Ant 1.9.4] (http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
 
-Step 2. Create the following environment variables with the correct paths: 
+_Step 2._ Create the following environment variables with the correct paths: 
 
-    ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
-    ANDROID_NDK_ROOT = C:\android-ndk-r10b
-    ANT_HOME = C:\apache-ant-1.9.4
+    * ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
+    * ANDROID_NDK_ROOT = C:\android-ndk-r10b
+    * ANT_HOME = C:\apache-ant-1.9.4
 
-Step 3. Navigate from command line to folder raylib/template_android/ and type:
+_Step 3._ Navigate from command line to folder raylib/template_android/ and type:
 
     %ANDROID_NDK_ROOT%\ndk-build
 
@@ -163,60 +163,60 @@ to Android project; if using raylib/template_android project, copy it to raylib/
 building examples
 -----------------
 
-Building raylib examples on desktop platforms:
+**Building raylib examples on desktop platforms:**
 
-Step 1: Using MinGW make tool, just navigate from command line to raylib/examples/ folder and type:
+_Step 1:_ Using MinGW make tool, just navigate from command line to raylib/examples/ folder and type:
 
     mingw32-make PLATFORM=PLATFORM_DESKTOP
 
-* NOTE: Make sure the following libs (and their headers) are placed on their respectibe MinGW folders:
+NOTE: Make sure the following libs (and their headers) are placed on their respectibe MinGW folders:
 
     libglfw3.a    - GLFW3 (static version)
     libglew32.a   - GLEW, OpenGL extension loading, only required if using OpenGL 3.3+ or ES2
     libopenal32.a - OpenAL Soft, audio device management
 
-Building raylib examples on Raspberry Pi:
+**Building raylib examples on Raspberry Pi:**
 
-Step 1. Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
+_Step 1._ Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
 
     sudo apt-get install openal1
 
-Step 2. Navigate from command line to raylib/examples/ folder and type:
+_Step 2._ Navigate from command line to raylib/examples/ folder and type:
 
     make
 
-Building raylib project for Android (using template):
+**Building raylib project for Android (using template):**
 
-Step 1. Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
+_Step 1._ Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
 
-    - Download and decompress on C: [Android SDK r23] (http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
-    - Download and decompress on C: [Android NDK r10b] (http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
-    - Download and decompress on C: [Apache Ant 1.9.4] (http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
+    * Download and decompress on C: [Android SDK r23] (http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
+    * Download and decompress on C: [Android NDK r10b] (http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
+    * Download and decompress on C: [Apache Ant 1.9.4] (http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
 
-Step 2. Create the following environment variables with the correct paths: 
+_Step 2._ Create the following environment variables with the correct paths: 
 
-    ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
-    ANDROID_NDK_ROOT = C:\android-ndk-r10b
-    ANT_HOME = C:\apache-ant-1.9.4
+    * ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
+    * ANDROID_NDK_ROOT = C:\android-ndk-r10b
+    * ANT_HOME = C:\apache-ant-1.9.4
 
-Step 3. To compile project, navigate from command line to folder raylib/template_android/ and type:
+_Step 3._ To compile project, navigate from command line to folder raylib/template_android/ and type:
 
     %ANDROID_NDK_ROOT%\ndk-build
 
-Step 4. To generate APK, navigate to folder raylib/template_android/ and type:
+_Step 4._ To generate APK, navigate to folder raylib/template_android/ and type:
 
     %ANT_HOME%\bin\ant debug
 
-Step 5: To install APK into connected device (previously intalled drivers and activated USB debug mode on device):
+_Step 5:_ To install APK into connected device (previously intalled drivers and activated USB debug mode on device):
 
     %ANT_HOME%\bin\ant installd
 
-Step 6: To view log output from device:
+_Step 6:_ To view log output from device:
 
     %ANDROID_SDK_TOOLS%\adb logcat -c
     %ANDROID_SDK_TOOLS%\adb -d  logcat raylib:V *:S
 
-If you have any doubt, [just let me know][raysan5].
+**If you have any doubt, [just let me know][raysan5].**
 
 contact
 -------
