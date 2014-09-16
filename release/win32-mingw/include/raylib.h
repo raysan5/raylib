@@ -1,7 +1,7 @@
-﻿/*********************************************************************************************
-* 
-*   raylib 1.1 (www.raylib.com)
-*    
+﻿/**********************************************************************************************
+*
+*   raylib 1.2 (www.raylib.com)
+*
 *   A simple and easy-to-use library to learn videogames programming
 *
 *   Features:
@@ -14,7 +14,7 @@
 *     Basic 3d support for Shapes, Models, Heightmaps and Billboards
 *     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing with streaming support
-*    
+*
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
 *     GLEW for OpenGL extensions loading (3.3+ and ES2)
@@ -31,21 +31,21 @@
 *     One custom default font is loaded automatically when InitWindow()
 *     If using OpenGL 3.3+ or ES2, one default shader is loaded automatically (internally defined)
 *
-*   -- LICENSE (raylib v1.1, April 2014) --
+*   -- LICENSE (raylib v1.2, September 2014) --
 *
-*   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, 
+*   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
-*    
+*
 *   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-*    
-*   This software is provided "as-is", without any express or implied warranty. In no event 
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
 *
-*   Permission is granted to anyone to use this software for any purpose, including commercial 
+*   Permission is granted to anyone to use this software for any purpose, including commercial
 *   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 *
-*     1. The origin of this software must not be misrepresented; you must not claim that you 
-*     wrote the original software. If you use this software in a product, an acknowledgment 
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
 *     in the product documentation would be appreciated but is not required.
 *
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -58,6 +58,15 @@
 #ifndef RAYLIB_H
 #define RAYLIB_H
 
+// Choose your platform here or just define it at compile time: -DPLATFORM_DESKTOP
+//#define PLATFORM_DESKTOP      // Windows, Linux or OSX
+//#define PLATFORM_ANDROID      // Android device
+//#define PLATFORM_RPI          // Raspberry Pi
+
+#if defined(PLATFORM_ANDROID)
+    #include <android_native_app_glue.h>    // Defines android_app struct
+#endif
+
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
@@ -65,10 +74,10 @@
 #define PI 3.14159265358979323846
 #endif
 
-#define DEG2RAD (PI / 180.0)
-#define RAD2DEG (180.0 / PI)
+#define DEG2RAD (PI / 180.0f)
+#define RAD2DEG (180.0f / PI)
 
-// Keyboard Function Keys
+// Keyboard Function Keys 
 #define KEY_SPACE            32
 #define KEY_ESCAPE          256
 #define KEY_ENTER           257
@@ -107,16 +116,16 @@
 
 // Gamepad Buttons
 // NOTE: Adjusted for a PS3 USB Controller
-#define GAMEPAD_BUTTON_A      2
-#define GAMEPAD_BUTTON_B      1
-#define GAMEPAD_BUTTON_X      3
-#define GAMEPAD_BUTTON_Y      4
-#define GAMEPAD_BUTTON_R1     7
-#define GAMEPAD_BUTTON_R2     5
-#define GAMEPAD_BUTTON_L1     6
-#define GAMEPAD_BUTTON_L2     8
-#define GAMEPAD_BUTTON_SELECT 9
-#define GAMEPAD_BUTTON_START 10
+#define GAMEPAD_BUTTON_A        2
+#define GAMEPAD_BUTTON_B        1
+#define GAMEPAD_BUTTON_X        3
+#define GAMEPAD_BUTTON_Y        4
+#define GAMEPAD_BUTTON_R1       7
+#define GAMEPAD_BUTTON_R2       5
+#define GAMEPAD_BUTTON_L1       6
+#define GAMEPAD_BUTTON_L2       8
+#define GAMEPAD_BUTTON_SELECT   9
+#define GAMEPAD_BUTTON_START   10
 
 // TODO: Review Xbox360 USB Controller Buttons
 
@@ -234,6 +243,7 @@ typedef struct VertexData {
 typedef struct Model {
     VertexData mesh;
     unsigned int vaoId;
+    unsigned int vboId[4];
     unsigned int textureId;
     //Matrix transform;
 } Model;
@@ -256,37 +266,45 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
-void InitWindow(int width, int height, const char *title);  // Initialize Window and Graphics Context (OpenGL)
-void InitWindowEx(int width, int height, const char* title, // Initialize Window and Graphics Context (OpenGL),...
-                  bool resizable, const char *cursorImage); // ...define if windows-resizable and custom cursor
-void CloseWindow();                                         // Close Window and Terminate Context
-bool WindowShouldClose();                                   // Detect if KEY_ESCAPE pressed or Close icon pressed
-void ToggleFullscreen();                                    // Fullscreen toggle (by default F11)
+#if defined(PLATFORM_ANDROID)
+void InitWindow(int width, int height, struct android_app *state);  // Init Android activity
+#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
+#endif
+
+void CloseWindow(void);                                     // Close Window and Terminate Context
+bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
+void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
 void SetExitKey(int key);                                   // Set a custom key to exit program (default is ESC)
+#endif
+int GetScreenWidth(void);                                   // Get current screen width
+int GetScreenHeight(void);                                  // Get current screen height
 
 void ClearBackground(Color color);                          // Sets Background Color
-void BeginDrawing();                                        // Setup drawing canvas to start drawing
-void EndDrawing();                                          // End canvas drawing and Swap Buffers (Double Buffering)
+void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
+void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
 void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
-void End3dMode();                                           // Ends 3D mode and returns to default 2D orthographic mode
+void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
-float GetFPS();                                             // Returns current FPS
-float GetFrameTime();                                       // Returns time in seconds for one frame
+float GetFPS(void);                                         // Returns current FPS
+float GetFrameTime(void);                                   // Returns time in seconds for one frame
 
 Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
-Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0 to 1.0
+Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-void ShowLogo();                                            // Activates raylib logo at startup
+void ShowLogo(void);                                        // Activates raylib logo at startup
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
 bool IsKeyDown(int key);                                // Detect if a key is being pressed
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
@@ -296,10 +314,10 @@ bool IsMouseButtonPressed(int button);                  // Detect if a mouse but
 bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
 bool IsMouseButtonReleased(int button);                 // Detect if a mouse button has been released once
 bool IsMouseButtonUp(int button);                       // Detect if a mouse button is NOT being pressed
-int GetMouseX();                                        // Returns mouse position X
-int GetMouseY();                                        // Returns mouse position Y
-Vector2 GetMousePosition();                             // Returns mouse position XY
-int GetMouseWheelMove();                                // Returns mouse wheel movement Y
+int GetMouseX(void);                                    // Returns mouse position X
+int GetMouseY(void);                                    // Returns mouse position Y
+Vector2 GetMousePosition(void);                         // Returns mouse position XY
+int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
@@ -307,6 +325,13 @@ bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad b
 bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
 bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
 bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
+#endif
+
+#if defined(PLATFORM_ANDROID)
+int GetTouchX(void);                                    // Returns touch position X
+int GetTouchY(void);                                    // Returns touch position Y
+Vector2 GetTouchPosition(void);                         // Returns touch position XY
+#endif
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
@@ -354,12 +379,12 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint);             
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);         // Draw a part of a texture defined by a rectangle
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin,     // Draw a part of a texture defined by a rectangle with 'pro' parameters
-                    float rotation, Color tint);                                      
+                    float rotation, Color tint);
 
 //------------------------------------------------------------------------------------
 // Font Loading and Text Drawing Functions (Module: text)
 //------------------------------------------------------------------------------------
-SpriteFont GetDefaultFont();                                                                       // Get the default SpriteFont
+SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load a SpriteFont image into GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory
 
@@ -406,13 +431,13 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotation, Vector3 scale,
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec 
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
-void InitAudioDevice();                                         // Initialize audio device and context
-void CloseAudioDevice();                                        // Close the audio device and context (and music stream)
+void InitAudioDevice(void);                                     // Initialize audio device and context
+void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
@@ -425,12 +450,13 @@ void SetSoundVolume(Sound sound, float volume);                 // Set volume fo
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
 void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
-void StopMusicStream();                                         // Stop music playing (close stream)
-void PauseMusicStream();                                        // Pause music playing
-bool MusicIsPlaying();                                          // Check if music is playing
+void StopMusicStream(void);                                     // Stop music playing (close stream)
+void PauseMusicStream(void);                                    // Pause music playing
+void ResumeMusicStream(void);                                   // Resume playing paused music
+bool MusicIsPlaying(void);                                      // Check if music is playing
 void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
-float GetMusicTimeLength();                                     // Get current music time length (in seconds)
-float GetMusicTimePlayed();                                     // Get current music time played (in seconds)
+float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
+float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
 
 #ifdef __cplusplus
 }
