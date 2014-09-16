@@ -1,4 +1,4 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
@@ -31,32 +31,21 @@
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 
-// Security check in case no USE_OPENGL_* defined
-#if !defined(USE_OPENGL_11) && !defined(USE_OPENGL_33) && !defined(USE_OPENGL_ES2)
-    #define USE_OPENGL_11
-#endif
-
-// Security check in case multiple USE_OPENGL_* defined
-#ifdef USE_OPENGL_11
-    #ifdef USE_OPENGL_33
-        #undef USE_OPENGL_33
-    #endif
-
-    #ifdef USE_OPENGL_ES2
-        #undef USE_OPENGL_ES2
-    #endif
-#endif
-
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
     #include <GL/gl.h>      // Basic OpenGL include
 #endif
 
-#ifdef USE_OPENGL_33
+#if defined(GRAPHICS_API_OPENGL_33)
     #define GLEW_STATIC
     #include <GL/glew.h>    // Extensions loading lib
+    //#include "glad.h"     // TODO: Other extensions loading lib? --> REVIEW
 #endif
 
-//#include "glad.h"         // Other extensions loading lib? --> REVIEW
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    #include <EGL/egl.h>
+    #include <GLES2/gl2.h>
+    #include <GLES2/gl2ext.h>
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -64,6 +53,7 @@
 #define MATRIX_STACK_SIZE          16   // Matrix stack max size
 #define MAX_DRAWS_BY_TEXTURE      256   // Draws are organized by texture changes
 #define TEMP_VERTEX_BUFFER_SIZE  4096   // Temporal Vertex Buffer (required for vertex-transformations)
+                                        // NOTE: Every vertex are 3 floats (12 bytes)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -98,6 +88,7 @@ typedef struct {
     float *vertices;            // 3 components per vertex
     float *texcoords;           // 2 components per vertex
     float *normals;             // 3 components per vertex
+    //short *normals;           // NOTE: Less data load... but padding issues and normalizing required!
 } VertexPositionTextureNormalBuffer;
 
 // Vertex buffer (position + texcoords + colors + indices arrays)
@@ -109,7 +100,12 @@ typedef struct {
     float *vertices;            // 3 components per vertex
     float *texcoords;           // 2 components per vertex
     unsigned char *colors;      // 4 components per vertex
-    unsigned int *indices;      // 6 indices per quad
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    unsigned int *indices;      // 6 indices per quad (could be int)
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    unsigned short *indices;    // 6 indices per quad (must be short)
+                                // NOTE: 6*2 byte = 12 byte, not alignment problem!
+#endif
 } VertexPositionColorTextureIndexBuffer;
 
 // Draw call type
@@ -131,7 +127,7 @@ typedef struct {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static Matrix stack[MATRIX_STACK_SIZE];
 static int stackCounter = 0;
 
@@ -173,15 +169,26 @@ static bool useTempBuffer = false;
 
 // White texture useful for plain color polys (required by shader)
 static GLuint whiteTexture;
+
+// Support for VAOs (OpenGL ES2 could not support VAO extensions)
+static bool vaoSupported = false;
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+// NOTE: VAO functionality is exposed through extensions (OES)
+static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
+static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
+static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
+static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;
 #endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static GLuint LoadDefaultShaders(void);
 static void InitializeBuffers(void);
-static void InitializeVAOs(void);
+static void InitializeBuffersGPU(void);
 static void UpdateBuffers(void);
 
 // Shader files loading (external) - Not used but useful...
@@ -189,7 +196,7 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName);
 static char *TextFileRead(char *fn);
 #endif
 
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
 static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 #endif
@@ -198,7 +205,7 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 // Module Functions Definition - Matrix operations
 //----------------------------------------------------------------------------------
 
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
 
 // Fallback to OpenGL 1.1 function calls
 //---------------------------------------
@@ -231,7 +238,7 @@ void rlRotatef(float angleDeg, float x, float y, float z) { glRotatef(angleDeg, 
 void rlScalef(float x, float y, float z) { glScalef(x, y, z); }
 void rlMultMatrixf(float *mat) { glMultMatrixf(mat); }
 
-#else
+#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 // Choose the current matrix to be transformed
 void rlMatrixMode(int mode)
@@ -343,7 +350,7 @@ void rlOrtho(double left, double right, double bottom, double top, double near, 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vertex level operations
 //----------------------------------------------------------------------------------
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
 
 // Fallback to OpenGL 1.1 function calls
 //---------------------------------------
@@ -358,7 +365,7 @@ void rlBegin(int mode)
     }
 }
 
-void rlEnd(void) { glEnd(); }
+void rlEnd() { glEnd(); }
 void rlVertex2i(int x, int y) { glVertex2i(x, y); }
 void rlVertex2f(float x, float y) { glVertex2f(x, y); }
 void rlVertex3f(float x, float y, float z) { glVertex3f(x, y, z); }
@@ -368,7 +375,7 @@ void rlColor4ub(byte r, byte g, byte b, byte a) { glColor4ub(r, g, b, a); }
 void rlColor3f(float x, float y, float z) { glColor3f(x, y, z); }
 void rlColor4f(float x, float y, float z, float w) { glColor4f(x, y, z, w); }
 
-#else
+#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 // Initialize drawing mode (how to organize vertex)
 void rlBegin(int mode)
@@ -492,31 +499,46 @@ void rlVertex3f(float x, float y, float z)
         {
             case RL_LINES:
             {
-                lines.vertices[3*lines.vCounter] = x;
-                lines.vertices[3*lines.vCounter + 1] = y;
-                lines.vertices[3*lines.vCounter + 2] = z;
+                // Verify that MAX_LINES_BATCH limit not reached
+                if (lines.vCounter / 2 < MAX_LINES_BATCH)
+                {
+                    lines.vertices[3*lines.vCounter] = x;
+                    lines.vertices[3*lines.vCounter + 1] = y;
+                    lines.vertices[3*lines.vCounter + 2] = z;
 
-                lines.vCounter++;
+                    lines.vCounter++;
+                }
+                else TraceLog(ERROR, "MAX_LINES_BATCH overflow");
 
             } break;
             case RL_TRIANGLES:
             {
-                triangles.vertices[3*triangles.vCounter] = x;
-                triangles.vertices[3*triangles.vCounter + 1] = y;
-                triangles.vertices[3*triangles.vCounter + 2] = z;
+                // Verify that MAX_TRIANGLES_BATCH limit not reached
+                if (triangles.vCounter / 3 < MAX_TRIANGLES_BATCH)
+                {
+                    triangles.vertices[3*triangles.vCounter] = x;
+                    triangles.vertices[3*triangles.vCounter + 1] = y;
+                    triangles.vertices[3*triangles.vCounter + 2] = z;
 
-                triangles.vCounter++;
+                    triangles.vCounter++;
+                }
+                else TraceLog(ERROR, "MAX_TRIANGLES_BATCH overflow");
 
             } break;
             case RL_QUADS:
             {
-                quads.vertices[3*quads.vCounter] = x;
-                quads.vertices[3*quads.vCounter + 1] = y;
-                quads.vertices[3*quads.vCounter + 2] = z;
+                // Verify that MAX_QUADS_BATCH limit not reached
+                if (quads.vCounter / 4 < MAX_QUADS_BATCH)
+                {
+                    quads.vertices[3*quads.vCounter] = x;
+                    quads.vertices[3*quads.vCounter + 1] = y;
+                    quads.vertices[3*quads.vCounter + 2] = z;
 
-                quads.vCounter++;
+                    quads.vCounter++;
 
-                draws[drawsCounter - 1].vertexCount++;
+                    draws[drawsCounter - 1].vertexCount++;
+                }
+                else TraceLog(ERROR, "MAX_QUADS_BATCH overflow");
 
             } break;
             default: break;
@@ -527,17 +549,17 @@ void rlVertex3f(float x, float y, float z)
 // Define one vertex (position)
 void rlVertex2f(float x, float y)
 {
-    rlVertex3f(x, y, 0.0);
+    rlVertex3f(x, y, 0.0f);
 }
 
 // Define one vertex (position)
 void rlVertex2i(int x, int y)
 {
-    rlVertex3f((float)x, (float)y, 0.0);
+    rlVertex3f((float)x, (float)y, 0.0f);
 }
 
 // Define one vertex (texture coordinate)
-// NOTE: Texture coordinates are limited to TRIANGLES only
+// NOTE: Texture coordinates are limited to QUADS only
 void rlTexCoord2f(float x, float y)
 {
     if (currentDrawMode == RL_QUADS)
@@ -616,12 +638,12 @@ void rlColor3f(float x, float y, float z)
 // Enable texture usage
 void rlEnableTexture(unsigned int id)
 {
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, id);
 #endif
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (draws[drawsCounter - 1].textureId != id)
     {
         if (draws[drawsCounter - 1].vertexCount > 0) drawsCounter++;
@@ -635,7 +657,7 @@ void rlEnableTexture(unsigned int id)
 // Disable texture usage
 void rlDisableTexture(void)
 {
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif
@@ -647,11 +669,19 @@ void rlDeleteTextures(unsigned int id)
     glDeleteTextures(1, &id);
 }
 
-// Unload vertex data from GPU memory
+// Unload vertex data (VAO) from GPU memory
 void rlDeleteVertexArrays(unsigned int id)
 {
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    glDeleteVertexArrays(1, &id);
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (vaoSupported) glDeleteVertexArrays(1, &id);
+#endif
+}
+
+// Unload vertex data (VBO) from GPU memory
+void rlDeleteBuffers(unsigned int id)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glDeleteBuffers(1, &id);
 #endif
 }
 
@@ -674,40 +704,109 @@ void rlClearScreenBuffers(void)
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     // Stencil buffer not used...
 }
 
+// Returns current OpenGL version
+int rlGetVersion(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    return OPENGL_11;
+#elif defined(GRAPHICS_API_OPENGL_33)
+    return OPENGL_33;
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    return OPENGL_ES_20;
+#endif
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - rlgl Functions
 //----------------------------------------------------------------------------------
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-
 // Init OpenGL 3.3+ required data
 void rlglInit(void)
 {
-    // Initialize GLEW
+#if defined(GRAPHICS_API_OPENGL_33)
+    // Loading extensions the hard way (Example)
+/*
+    GLint numExt;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
+
+    for (int i = 0; i < numExt; i++)
+    {
+        const GLubyte *extensionName = glGetStringi(GL_EXTENSIONS, i);
+        if (strcmp(extensionName, (const GLubyte *)"GL_ARB_vertex_array_object") == 0)
+        {
+            // The extension is supported by our hardware and driver, try to get related functions popinters
+            glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)wglGetProcAddress("glGenVertexArrays");
+            glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)wglGetProcAddress("glBindVertexArray");
+            glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)wglGetProcAddress("glDeleteVertexArrays");
+            glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)wglGetProcAddress("glIsVertexArray");
+        }
+    }
+*/
+
+    // Initialize extensions using GLEW
     glewExperimental = 1;       // Needed for core profile
 
     GLenum error = glewInit();
 
-    if (error != GLEW_OK)
+    if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
+
+    if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 extensions supported");
+
+    // NOTE: GLEW is a big library that loads ALL extensions, using glad we can only load required ones...
+    //if (!gladLoadGL()) TraceLog("ERROR: Failed to initialize glad\n");
+
+    vaoSupported = true;
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
+    glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
+    glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
+    glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");
+
+    if (glGenVertexArrays == NULL) TraceLog(WARNING, "Could not initialize VAO extensions, VAOs not supported");
+    else
     {
-        TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
+        vaoSupported = true;
+        TraceLog(INFO, "VAO extensions initialized successfully");
     }
+#endif
 
-    if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 initialized successfully\n");
+    // Print current OpenGL and GLSL version
+    TraceLog(INFO, "GPU: Vendor:   %s", glGetString(GL_VENDOR));
+    TraceLog(INFO, "GPU: Renderer: %s", glGetString(GL_RENDERER));
+    TraceLog(INFO, "GPU: Version:  %s", glGetString(GL_VERSION));
+    TraceLog(INFO, "GPU: GLSL:     %s", glGetString(0x8B8C));  //GL_SHADING_LANGUAGE_VERSION
 
-    // Print OpenGL and GLSL version
-    TraceLog(INFO, "Vendor:   %s", glGetString(GL_VENDOR));
-    TraceLog(INFO, "Renderer: %s", glGetString(GL_RENDERER));
-    TraceLog(INFO, "Version:  %s", glGetString(GL_VERSION));
-    TraceLog(INFO, "GLSL:     %s\n", glGetString(0x8B8C));  //GL_SHADING_LANGUAGE_VERSION
+    // NOTE: We can get a bunch of extra information about GPU capabilities (glGet*)
+    //int maxTexSize;
+    //glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+    //TraceLog(INFO, "GL_MAX_TEXTURE_SIZE: %i", maxTexSize);
 
+    //int numAuxBuffers;
+    //glGetIntegerv(GL_AUX_BUFFERS, &numAuxBuffers);
+    //TraceLog(INFO, "GL_AUX_BUFFERS: %i", numAuxBuffers);
+
+    // Show supported extensions
+    // NOTE: We don't need that much data on screen... right now...
 /*
-    // TODO: GLEW is a big library that loads ALL extensions, maybe using glad we can only load required ones...
-    if (!gladLoadGL())
+#if defined(GRAPHICS_API_OPENGL_33)
+    GLint numExt;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
+
+    for (int i = 0; i < numExt; i++)
     {
-        TraceLog("ERROR: Failed to initialize glad\n");
+        TraceLog(INFO, "Supported extension: %s", glGetStringi(GL_EXTENSIONS, i));
     }
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big string
+
+    // NOTE: String could be splitted using strtok() function (string.h)
+    TraceLog(INFO, "Supported extension: %s", extensions);
+#endif
 */
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Set default draw mode
     currentDrawMode = RL_TRIANGLES;
 
@@ -735,8 +834,8 @@ void rlglInit(void)
     // Get handles to GLSL uniform vars locations (fragment-shader)
     textureLoc = glGetUniformLocation(shaderProgram, "texture0");
 
-    InitializeBuffers();    // Init vertex arrays
-    InitializeVAOs();       // Init VBO and VAO
+    InitializeBuffers();        // Init vertex arrays
+    InitializeBuffersGPU();     // Init VBO and VAO
 
     // Init temp vertex buffer, used when transformation required (translate, rotate, scale)
     tempBuffer = (Vector3 *)malloc(sizeof(Vector3)*TEMP_VERTEX_BUFFER_SIZE);
@@ -748,7 +847,7 @@ void rlglInit(void)
 
     whiteTexture = rlglLoadTexture(pixels, 1, 1, false);
 
-    if (whiteTexture != 0) TraceLog(INFO, "[ID %i] Base white texture created successfully", whiteTexture);
+    if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture created successfully", whiteTexture);
     else TraceLog(WARNING, "Base white texture could not be created");
 
     // Init draw calls tracking system
@@ -762,13 +861,15 @@ void rlglInit(void)
 
     drawsCounter = 1;
     draws[drawsCounter - 1].textureId = whiteTexture;
+#endif
 }
 
 // Vertex Buffer Object deinitialization (memory free)
 void rlglClose(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Unbind everything
-    glBindVertexArray(0);
+    if (vaoSupported) glBindVertexArray(0);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
@@ -778,7 +879,7 @@ void rlglClose(void)
 
     glUseProgram(0);
 
-    // Delete VAOs and VBOs
+    // Delete VBOs
     glDeleteBuffers(1, &linesBuffer[0]);
     glDeleteBuffers(1, &linesBuffer[1]);
     glDeleteBuffers(1, &trianglesBuffer[0]);
@@ -788,9 +889,13 @@ void rlglClose(void)
     glDeleteBuffers(1, &quadsBuffer[2]);
     glDeleteBuffers(1, &quadsBuffer[3]);
 
-    glDeleteVertexArrays(1, &vaoLines);
-    glDeleteVertexArrays(1, &vaoTriangles);
-    glDeleteVertexArrays(1, &vaoQuads);
+    if (vaoSupported)
+    {
+        // Delete VAOs
+        glDeleteVertexArrays(1, &vaoLines);
+        glDeleteVertexArrays(1, &vaoTriangles);
+        glDeleteVertexArrays(1, &vaoQuads);
+    }
 
     //glDetachShader(shaderProgram, v);
     //glDetachShader(shaderProgram, f);
@@ -808,15 +913,18 @@ void rlglClose(void)
     free(quads.vertices);
     free(quads.texcoords);
     free(quads.colors);
+    free(quads.indices);
 
     // Free GPU texture
     glDeleteTextures(1, &whiteTexture);
 
     free(draws);
+#endif
 }
 
 void rlglDraw(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UpdateBuffers();
 
     glUseProgram(shaderProgram);        // Use our shader
@@ -831,9 +939,24 @@ void rlglDraw(void)
     {
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
 
-        glBindVertexArray(vaoTriangles);
+        if (vaoSupported)
+        {
+            glBindVertexArray(vaoTriangles);
+        }
+        else
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
+            glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(vertexLoc);
+
+            glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
+            glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(colorLoc);
+        }
+
         glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
 
+        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
@@ -843,7 +966,27 @@ void rlglDraw(void)
         int numIndicesToProcess = 0;
         int indicesOffset = 0;
 
-        glBindVertexArray(vaoQuads);
+        if (vaoSupported)
+        {
+            glBindVertexArray(vaoQuads);
+        }
+        else
+        {
+            // Enable vertex attributes
+            glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
+            glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(vertexLoc);
+
+            glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
+            glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(texcoordLoc);
+
+            glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
+            glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(colorLoc);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
+        }
 
         //TraceLog(DEBUG, "Draws required per frame: %i", drawsCounter);
 
@@ -857,9 +1000,21 @@ void rlglDraw(void)
             glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
 
             // NOTE: The final parameter tells the GPU the offset in bytes from the start of the index buffer to the location of the first index to process
+#if defined(GRAPHICS_API_OPENGL_33)
             glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid*) (sizeof(GLuint) * indicesOffset));
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_SHORT, (GLvoid*) (sizeof(GLushort) * indicesOffset));
+#endif
+            //GLenum err;
+            //if ((err = glGetError()) != GL_NO_ERROR) TraceLog(INFO, "OpenGL error: %i", (int)err);    //GL_INVALID_ENUM!
 
             indicesOffset += draws[i].vertexCount/4*6;
+        }
+
+        if (!vaoSupported)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures
@@ -869,13 +1024,28 @@ void rlglDraw(void)
     {
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
 
-        glBindVertexArray(vaoLines);
+        if (vaoSupported)
+        {
+            glBindVertexArray(vaoLines);
+        }
+        else
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
+            glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(vertexLoc);
+
+            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+            glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(colorLoc);
+        }
+
         glDrawArrays(GL_LINES, 0, lines.vCounter);
 
+        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    glBindVertexArray(0);   // Unbind VAO
+    if (vaoSupported) glBindVertexArray(0);   // Unbind VAO
 
     // Reset draws counter
     drawsCounter = 1;
@@ -892,16 +1062,18 @@ void rlglDraw(void)
     quads.vCounter = 0;
     quads.tcCounter = 0;
     quads.cCounter = 0;
+#endif
 }
-
-#endif      // End for OpenGL 3.3+ and ES2 only functions
 
 // Draw a 3d model
 void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires)
 {
+#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
     if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
 
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, model.textureId);
 
@@ -937,7 +1109,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shaderProgram);        // Use our shader
 
     // Get transform matrix (rotation -> scale -> translation)
@@ -964,7 +1136,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
     }
 
     // Update colors buffer in CPU (using Shader)
-    glBindVertexArray(model.vaoId);
+    if (vaoSupported) glBindVertexArray(model.vaoId);
     GLuint colorVboId;
     glGetVertexAttribIuiv(2, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &colorVboId);   // NOTE: Color VBO is buffer index 2
     glBindBuffer(GL_ARRAY_BUFFER, colorVboId);
@@ -977,23 +1149,47 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 
     //TraceLog(DEBUG, "ShaderProgram: %i, VAO ID: %i, VertexCount: %i", shaderProgram, model.vaoId, model.mesh.vertexCount);
 
-    glBindVertexArray(model.vaoId);
+    if (vaoSupported)
+    {
+        glBindVertexArray(model.vaoId);
+    }
+    else
+    {
+        // Bind model VBOs data
+        glBindBuffer(GL_ARRAY_BUFFER, model.vboId[0]);
+        glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(vertexLoc);
+
+        glBindBuffer(GL_ARRAY_BUFFER, model.vboId[1]);
+        glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(texcoordLoc);
+
+        glBindBuffer(GL_ARRAY_BUFFER, model.vboId[2]);
+        glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+        glEnableVertexAttribArray(colorLoc);
+    }
+
     glBindTexture(GL_TEXTURE_2D, model.textureId);
 
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
 
-    glBindTexture(GL_TEXTURE_2D, 0);    // Unbind textures
-    glBindVertexArray(0);               // Unbind VAO
+    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
+
+    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+    else glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
 #endif
 
+#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
     if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
 }
 
 // Initialize Graphics Device (OpenGL stuff)
-void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
+void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 {
-    glViewport(0, 0, fbWidth, fbHeight);  // Set viewport width and height
-                                          // NOTE: Required! viewport must be recalculated if screen resized!
+    // NOTE: Required! viewport must be recalculated if screen resized!
+    glViewport(offsetX/2, offsetY/2, width - offsetX, height - offsetY);    // Set viewport width and height
 
     // NOTE: Don't confuse glViewport with the transformation matrix
     // NOTE: glViewport just defines the area of the context that you will actually draw to.
@@ -1008,7 +1204,7 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
     glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);      // Color blending function (how colors are mixed)
 
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Improve quality of color and texture coordinate interpolation (Deprecated in OGL 3.0)
                                                             // Other options: GL_FASTEST, GL_DONT_CARE (default)
 #endif
@@ -1016,7 +1212,7 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
     rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
     rlLoadIdentity();                           // Reset current matrix (PROJECTION)
 
-    rlOrtho(0, fbWidth, fbHeight, 0, 0, 1);     // Config orthographic mode: top-left corner --> (0,0)
+    rlOrtho(0, width - offsetX, height - offsetY, 0, 0, 1);         // Config orthographic mode: top-left corner --> (0,0)
 
     rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
@@ -1027,12 +1223,12 @@ void rlglInitGraphicsDevice(int fbWidth, int fbHeight)
     //glCullFace(GL_BACK);        // Cull the Back face (default)
     //glFrontFace(GL_CCW);        // Front face are defined counter clockwise (default)
 
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
     glShadeModel(GL_SMOOTH);      // Smooth shading between vertex (vertex colors interpolation) (Deprecated on OpenGL 3.3+)
                                   // Possible options: GL_SMOOTH (Color interpolation) or GL_FLAT (no interpolation)
 #endif
 
-    TraceLog(INFO, "OpenGL Graphics Device initialized successfully");
+    TraceLog(INFO, "OpenGL Graphics initialized successfully");
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
@@ -1057,7 +1253,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
 
     if (genMipmaps && !texIsPOT)
     {
-        TraceLog(WARNING, "[ID %i] Texture is not power-of-two, mipmaps can not be generated", id);
+        TraceLog(WARNING, "[TEX ID %i] Texture is not power-of-two, mipmaps can not be generated", id);
 
         genMipmaps = false;
     }
@@ -1076,10 +1272,10 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
     }
 
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
     if (genMipmaps)
     {
-        TraceLog(WARNING, "[ID %i] Mipmaps generated manually on CPU side", id);
+        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", id);
 
         // Compute required mipmaps
         // NOTE: data size is reallocated to fit mipmaps data
@@ -1106,17 +1302,20 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 #endif
 
-
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-
+#if defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: We define internal (GPU) format as GL_RGBA8 (probably BGRA8 in practice, driver takes care)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: On embedded systems, we let the driver choose the best internal format
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+#endif
 
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (genMipmaps)
     {
         glGenerateMipmap(GL_TEXTURE_2D);  // Generate mipmaps automatically
-        TraceLog(INFO, "[ID %i] Mipmaps generated automatically for new texture", id);
+        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically for new texture", id);
     }
-
 #endif
 
     // At this point we have the image converted to texture and uploaded to GPU
@@ -1124,75 +1323,38 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    TraceLog(INFO, "[ID %i] New texture created (%i x %i)", id, width, height);
+    TraceLog(INFO, "[TEX ID %i] Texture created successfully (%i x %i)", id, width, height);
 
     return id;
 }
 
-
-#ifdef USE_OPENGL_33
-
-// Convert image data to OpenGL texture (returns OpenGL valid Id)
-// NOTE: Expected compressed image data and POT image
-unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compFormat)
+// Load vertex data into a VAO (if supported) and VBO
+Model rlglLoadModel(VertexData mesh)
 {
-    // Create one OpenGL texture
-    GLuint id;
+    Model model;
 
-    glGenTextures(1, &id);
+    model.mesh = mesh;
 
-    TraceLog(DEBUG, "Compressed texture width: %i", width);
-    TraceLog(DEBUG, "Compressed texture height: %i", height);
-    TraceLog(DEBUG, "Compressed texture mipmap levels: %i", mipmapCount);
-    TraceLog(DEBUG, "Compressed texture format: 0x%x", compFormat);
+#if defined(GRAPHICS_API_OPENGL_11)
+    model.textureId = 0;        // No texture required
+    model.vaoId = 0;            // Vertex Array Object
+    model.vboId[0] = 0;         // Vertex position VBO
+    model.vboId[1] = 0;         // Texcoords VBO
+    //model.vboId[2] = 0;       // Normals VBO (not used)
+    model.vboId[2] = 0;         // Colors VBO
 
-    if (compFormat == 0)
-    {
-        TraceLog(WARNING, "[ID %i] Texture compressed format not recognized", id);
-        id = 0;
-    }
-    else
-    {
-        // Bind the texture
-        glBindTexture(GL_TEXTURE_2D, id);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    model.textureId = 1;        // Default whiteTexture
 
-        int blockSize = 0;
-        int offset = 0;
-
-        if (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) blockSize = 8;
-        else blockSize = 16;
-
-        // Load the mipmaps
-        for (int level = 0; level < mipmapCount && (width || height); level++)
-        {
-            // NOTE: size specifies the number of bytes of image data (S3TC/DXTC)
-            unsigned int size = ((width + 3)/4)*((height + 3)/4)*blockSize;
-
-            glCompressedTexImage2D(GL_TEXTURE_2D, level, compFormat, width, height, 0, size, data + offset);
-
-            offset += size;
-            width  /= 2;
-            height /= 2;
-
-            // Security check for NPOT textures
-            if (width < 1) width = 1;
-            if (height < 1) height = 1;
-        }
-    }
-
-    return id;
-}
-
-// Load vertex data into a VAO
-unsigned int rlglLoadModel(VertexData mesh)
-{
     GLuint vaoModel;            // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];     // Vertex Buffer Objects (VBO)
 
-    // Initialize Quads VAO (Buffer A)
-    glGenVertexArrays(1, &vaoModel);
-    glBindVertexArray(vaoModel);
+    if (vaoSupported)
+    {
+        // Initialize Quads VAO (Buffer A)
+        glGenVertexArrays(1, &vaoModel);
+        glBindVertexArray(vaoModel);
+    }
 
     // Create buffers for our vertex data (positions, texcoords, normals)
     glGenBuffers(3, vertexBuffer);
@@ -1209,6 +1371,8 @@ unsigned int rlglLoadModel(VertexData mesh)
     glEnableVertexAttribArray(texcoordLoc);
     glVertexAttribPointer(texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
 
+    // TODO: Normals support -> Lighting
+
     // Enable vertex attributes: normals
     //glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);
@@ -1221,12 +1385,107 @@ unsigned int rlglLoadModel(VertexData mesh)
     glEnableVertexAttribArray(colorLoc);
     glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
-    if (vaoModel > 0) TraceLog(INFO, "[ID %i] Model uploaded successfully to VRAM (GPU)", vaoModel);
-    else TraceLog(WARNING, "Model could not be uploaded to VRAM (GPU)");
+    if (vaoSupported)
+    {
+        if (vaoModel > 0)
+        {
+            model.vaoId = vaoModel;
+            TraceLog(INFO, "[VAO ID %i] Model uploaded successfully to VRAM (GPU)", vaoModel);
+        }
+        else TraceLog(WARNING, "Model could not be uploaded to VRAM (GPU)");
+    }
+    else
+    {
+        model.vboId[0] = vertexBuffer[0];     // Vertex position VBO
+        model.vboId[1] = vertexBuffer[1];     // Texcoords VBO
+        //model.vboId[2] = 0;                 // Normals VBO (not used)
+        model.vboId[2] = vertexBuffer[2];     // Colors VBO
 
-    return vaoModel;
-}
+        TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Model uploaded successfully to VRAM (GPU)", model.vboId[0], model.vboId[1], model.vboId[2]);
+    }
 #endif
+
+    return model;
+}
+
+// Convert image data to OpenGL texture (returns OpenGL valid Id)
+// NOTE: Expected compressed image data and POT image
+unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compFormat)
+{
+    GLuint id;
+
+#if defined(GRAPHICS_API_OPENGL_11)
+    id = 0;
+    TraceLog(WARNING, "GPU compressed textures not supported on OpenGL 1.1");
+
+#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    TraceLog(DEBUG, "Compressed texture width: %i", width);
+    TraceLog(DEBUG, "Compressed texture height: %i", height);
+    TraceLog(DEBUG, "Compressed texture mipmap levels: %i", mipmapCount);
+    TraceLog(DEBUG, "Compressed texture format: 0x%x", compFormat);
+
+    if (compFormat == 0)
+    {
+        id = 0;
+        TraceLog(WARNING, "Texture compressed format not recognized", id);
+    }
+    else
+    {
+        glGenTextures(1, &id);
+
+        // Bind the texture
+        glBindTexture(GL_TEXTURE_2D, id);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        // Set texture parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // If mipmaps are being used, we configure mag-min filters accordingly
+        if (mipmapCount > 1)
+        {
+            // Trilinear filtering with mipmaps
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
+        }
+        else
+        {
+            // Not using mipmappings
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
+        }
+
+        int blockSize = 0;
+        int offset = 0;
+
+        if (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) blockSize = 8;
+        else blockSize = 16;
+
+        // Load the mipmaps
+        for (int level = 0; level < mipmapCount && (width || height); level++)
+        {
+            unsigned int size = 0;
+
+            // NOTE: size specifies the number of bytes of image data (S3TC/DXTC)
+            if (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) size = ((width + 3)/4)*((height + 3)/4)*blockSize;  // S3TC/DXTC
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            else if (compFormat == GL_ETC1_RGB8_OES) size = 8*((width + 3) >> 2)*((height + 3) >> 2);   // ETC1
+#endif
+            glCompressedTexImage2D(GL_TEXTURE_2D, level, compFormat, width, height, 0, size, data + offset);
+
+            offset += size;
+            width  /= 2;
+            height /= 2;
+
+            // Security check for NPOT textures
+            if (width < 1) width = 1;
+            if (height < 1) height = 1;
+        }
+    }
+#endif
+
+    return id;
+}
 
 // Read screen pixel data (color buffer)
 unsigned char *rlglReadScreenPixels(int width, int height)
@@ -1252,14 +1511,14 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     return imgData;     // NOTE: image data should be freed
 }
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
-void PrintProjectionMatrix(void)
+void PrintProjectionMatrix()
 {
     PrintMatrix(projection);
 }
 
-void PrintModelviewMatrix(void)
+void PrintModelviewMatrix()
 {
     PrintMatrix(modelview);
 }
@@ -1270,7 +1529,7 @@ void PrintModelviewMatrix(void)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 // Load Shaders (Vertex and Fragment)
 static GLuint LoadDefaultShaders(void)
@@ -1278,7 +1537,11 @@ static GLuint LoadDefaultShaders(void)
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
 
     // Vertex shader directly defined, no external file required
-    char vShaderStr[] = " #version 110      \n"     // Equivalent to version 100 on ES2
+#if defined(GRAPHICS_API_OPENGL_33)
+    char vShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    char vShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
+#endif
         "uniform mat4 projectionMatrix;     \n"
         "uniform mat4 modelviewMatrix;      \n"
         "attribute vec3 vertexPosition;     \n"
@@ -1294,7 +1557,11 @@ static GLuint LoadDefaultShaders(void)
         "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-    char fShaderStr[] = " #version 110      \n"     // Equivalent to version 100 on ES2
+#if defined(GRAPHICS_API_OPENGL_33)
+    char fShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
+#endif
         "uniform sampler2D texture0;        \n"
         "varying vec2 fragTexCoord;         \n"
         "varying vec4 fragColor;            \n"
@@ -1316,11 +1583,21 @@ static GLuint LoadDefaultShaders(void)
     glShaderSource(vertexShader, 1, &pvs, NULL);
     glShaderSource(fragmentShader, 1, &pfs, NULL);
 
+    GLint success = 0;
+
     glCompileShader(vertexShader);
+
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+    if (success != GL_TRUE)  TraceLog(WARNING, "[VSHDR ID %i] Failed to compile default vertex shader...", vertexShader);
+    else TraceLog(INFO, "[VSHDR ID %i] Default vertex shader compiled successfully", vertexShader);
+
     glCompileShader(fragmentShader);
 
-    TraceLog(INFO, "[ID %i] Default vertex shader compiled successfully", vertexShader);
-    TraceLog(INFO, "[ID %i] Default fragment shader compiled successfully", fragmentShader);
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+    if (success != GL_TRUE)  TraceLog(WARNING, "[FSHDR ID %i] Failed to compile default fragment shader...", fragmentShader);
+    else TraceLog(INFO, "[FSHDR ID %i] Default fragment shader compiled successfully", fragmentShader);
 
     program = glCreateProgram();
 
@@ -1329,10 +1606,25 @@ static GLuint LoadDefaultShaders(void)
 
     glLinkProgram(program);
 
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    if (success == GL_FALSE)
+    {
+        int maxLength;
+        int length;
+
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
+        char log[maxLength];
+
+        glGetProgramInfoLog(program, maxLength, &length, log);
+
+        TraceLog(INFO, "Shader program fail log: %s", log);
+    }
+    else TraceLog(INFO, "[SHDR ID %i] Default shader program loaded successfully", program);
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-
-    TraceLog(INFO, "[ID %i] Default shader program loaded successfully", program);
 
     return program;
 }
@@ -1361,8 +1653,8 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
 
-    TraceLog(INFO, "[ID %i] Vertex shader compiled successfully", vertexShader);
-    TraceLog(INFO, "[ID %i] Fragment shader compiled successfully", fragmentShader);
+    TraceLog(INFO, "[VSHDR ID %i] Vertex shader compiled successfully", vertexShader);
+    TraceLog(INFO, "[FSHDR ID %i] Fragment shader compiled successfully", fragmentShader);
 
     program = glCreateProgram();
 
@@ -1374,7 +1666,7 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    TraceLog(INFO, "[ID %i] Shader program loaded successfully", program);
+    TraceLog(INFO, "[SHDR ID %i] Shader program loaded successfully", program);
 
     return program;
 }
@@ -1417,7 +1709,7 @@ static void InitializeBuffers(void)
     lines.vertices = (float *)malloc(sizeof(float)*3*2*MAX_LINES_BATCH);        // 3 float by vertex, 2 vertex by line
     lines.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*2*MAX_LINES_BATCH);  // 4 float by color, 2 colors by line
 
-    for (int i = 0; i < (3*2*MAX_LINES_BATCH); i++) lines.vertices[i] = 0.0;
+    for (int i = 0; i < (3*2*MAX_LINES_BATCH); i++) lines.vertices[i] = 0.0f;
     for (int i = 0; i < (4*2*MAX_LINES_BATCH); i++) lines.colors[i] = 0;
 
     lines.vCounter = 0;
@@ -1427,7 +1719,7 @@ static void InitializeBuffers(void)
     triangles.vertices = (float *)malloc(sizeof(float)*3*3*MAX_TRIANGLES_BATCH);        // 3 float by vertex, 3 vertex by triangle
     triangles.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*3*MAX_TRIANGLES_BATCH);  // 4 float by color, 3 colors by triangle
 
-    for (int i = 0; i < (3*3*MAX_TRIANGLES_BATCH); i++) triangles.vertices[i] = 0.0;
+    for (int i = 0; i < (3*3*MAX_TRIANGLES_BATCH); i++) triangles.vertices[i] = 0.0f;
     for (int i = 0; i < (4*3*MAX_TRIANGLES_BATCH); i++) triangles.colors[i] = 0;
 
     triangles.vCounter = 0;
@@ -1437,10 +1729,15 @@ static void InitializeBuffers(void)
     quads.vertices = (float *)malloc(sizeof(float)*3*4*MAX_QUADS_BATCH);        // 3 float by vertex, 4 vertex by quad
     quads.texcoords = (float *)malloc(sizeof(float)*2*4*MAX_QUADS_BATCH);       // 2 float by texcoord, 4 texcoord by quad
     quads.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*4*MAX_QUADS_BATCH);  // 4 float by color, 4 colors by quad
+#if defined(GRAPHICS_API_OPENGL_33)
     quads.indices = (unsigned int *)malloc(sizeof(int)*6*MAX_QUADS_BATCH);      // 6 int by quad (indices)
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    quads.indices = (unsigned short *)malloc(sizeof(short)*6*MAX_QUADS_BATCH);  // 6 int by quad (indices)
+#endif
 
-    for (int i = 0; i < (3*4*MAX_QUADS_BATCH); i++) quads.vertices[i] = 0.0;
-    for (int i = 0; i < (2*4*MAX_QUADS_BATCH); i++) quads.texcoords[i] = 0.0;
+
+    for (int i = 0; i < (3*4*MAX_QUADS_BATCH); i++) quads.vertices[i] = 0.0f;
+    for (int i = 0; i < (2*4*MAX_QUADS_BATCH); i++) quads.texcoords[i] = 0.0f;
     for (int i = 0; i < (4*4*MAX_QUADS_BATCH); i++) quads.colors[i] = 0;
 
     int k = 0;
@@ -1461,14 +1758,19 @@ static void InitializeBuffers(void)
     quads.vCounter = 0;
     quads.tcCounter = 0;
     quads.cCounter = 0;
+
+    TraceLog(INFO, "CPU buffers (lines, triangles, quads) initialized successfully");
 }
 
 // Initialize Vertex Array Objects (Contain VBO)
-static void InitializeVAOs(void)
+static void InitializeBuffersGPU(void)
 {
-    // Initialize Lines VAO
-    glGenVertexArrays(1, &vaoLines);
-    glBindVertexArray(vaoLines);
+    if (vaoSupported)
+    {
+        // Initialize Lines VAO
+        glGenVertexArrays(1, &vaoLines);
+        glBindVertexArray(vaoLines);
+    }
 
     // Create buffers for our vertex data
     glGenBuffers(2, linesBuffer);
@@ -1485,12 +1787,16 @@ static void InitializeVAOs(void)
     glEnableVertexAttribArray(colorLoc);
     glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
-    TraceLog(INFO, "[ID %i] Lines VAO initialized successfully", vaoLines);
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Lines VAO initialized successfully", vaoLines);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Lines VBOs initialized successfully", linesBuffer[0], linesBuffer[1]);
     //--------------------------------------------------------------
 
-    // Initialize Triangles VAO
-    glGenVertexArrays(1, &vaoTriangles);
-    glBindVertexArray(vaoTriangles);
+    if (vaoSupported)
+    {
+        // Initialize Triangles VAO
+        glGenVertexArrays(1, &vaoTriangles);
+        glBindVertexArray(vaoTriangles);
+    }
 
     // Create buffers for our vertex data
     glGenBuffers(2, trianglesBuffer);
@@ -1506,12 +1812,16 @@ static void InitializeVAOs(void)
     glEnableVertexAttribArray(colorLoc);
     glVertexAttribPointer(colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
-    TraceLog(INFO, "[ID %i] Triangles VAO initialized successfully", vaoTriangles);
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Triangles VAO initialized successfully", vaoTriangles);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Triangles VBOs initialized successfully", trianglesBuffer[0], trianglesBuffer[1]);
     //--------------------------------------------------------------
 
-    // Initialize Quads VAO (Buffer A)
-    glGenVertexArrays(1, &vaoQuads);
-    glBindVertexArray(vaoQuads);
+    if (vaoSupported)
+    {
+        // Initialize Quads VAO
+        glGenVertexArrays(1, &vaoQuads);
+        glBindVertexArray(vaoQuads);
+    }
 
     // Create buffers for our vertex data
     glGenBuffers(4, quadsBuffer);
@@ -1534,19 +1844,24 @@ static void InitializeVAOs(void)
 
     // Fill index buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
+#if defined(GRAPHICS_API_OPENGL_33)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(short)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
+#endif
 
-    TraceLog(INFO, "[ID %i] Quads VAO initialized successfully", vaoQuads);
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Quads VAO initialized successfully", vaoQuads);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i][VBO ID %i] Quads VBOs initialized successfully", quadsBuffer[0], quadsBuffer[1], quadsBuffer[2], quadsBuffer[3]);
 
     // Unbind the current VAO
-    glBindVertexArray(0);
+    if (vaoSupported) glBindVertexArray(0);
 }
 
 // Update VBOs with vertex array data
 static void UpdateBuffers(void)
 {
     // Activate Lines VAO
-    glBindVertexArray(vaoLines);
+    if (vaoSupported) glBindVertexArray(vaoLines);
 
     // Lines - vertex positions buffer
     glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
@@ -1561,7 +1876,7 @@ static void UpdateBuffers(void)
     //--------------------------------------------------------------
 
     // Activate Triangles VAO
-    glBindVertexArray(vaoTriangles);
+    if (vaoSupported) glBindVertexArray(vaoTriangles);
 
     // Triangles - vertex positions buffer
     glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
@@ -1576,7 +1891,7 @@ static void UpdateBuffers(void)
     //--------------------------------------------------------------
 
     // Activate Quads VAO
-    glBindVertexArray(vaoQuads);
+    if (vaoSupported) glBindVertexArray(vaoQuads);
 
     // Quads - vertex positions buffer
     glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
@@ -1601,12 +1916,12 @@ static void UpdateBuffers(void)
     //--------------------------------------------------------------
 
     // Unbind the current VAO
-    glBindVertexArray(0);
+    if (vaoSupported) glBindVertexArray(0);
 }
 
-#endif //defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+#endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
-#ifdef USE_OPENGL_11
+#if defined(GRAPHICS_API_OPENGL_11)
 
 // Mipmaps data is generated after image data
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
@@ -1735,7 +2050,7 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
 
 #endif
 
-#ifdef RLGL_STANDALONE
+#if defined(RLGL_STANDALONE)
 
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 

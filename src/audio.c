@@ -1,14 +1,14 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raylib.audio
 *
 *   Basic functions to manage Audio: InitAudioDevice, LoadAudioFiles, PlayAudioFiles
 *
 *   Uses external lib:
-*       OpenAL - Audio device management lib
-*       stb_vorbis - Ogg audio files loading
+*       OpenAL Soft - Audio device management lib (http://kcat.strangesoft.net/openal.html)
+*       stb_vorbis - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -29,22 +29,25 @@
 
 #include "raylib.h"
 
-#include <AL/al.h>           // OpenAL basic header
-#include <AL/alc.h>          // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+#include "AL/al.h"          // OpenAL basic header
+#include "AL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
 
-#include <stdlib.h>          // Declares malloc() and free() for memory management
-#include <string.h>          // Required for strcmp()
-#include <stdio.h>           // Used for .WAV loading
+#include <stdlib.h>         // Declares malloc() and free() for memory management
+#include <string.h>         // Required for strcmp()
+#include <stdio.h>          // Used for .WAV loading
 
-#include "utils.h"           // rRES data decompression utility function
+#include "utils.h"          // rRES data decompression utility function
+                            // NOTE: Includes Android fopen function map
 
-#include "stb_vorbis.h"      // OGG loading functions
+#include "stb_vorbis.h"     // OGG loading functions
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define MUSIC_STREAM_BUFFERS        2
-#define MUSIC_BUFFER_SIZE      4096*8   //4096*32
+#define MUSIC_BUFFER_SIZE      4096*2   // PCM data buffer (short) - 16Kb
+                                        // NOTE: Reduced to avoid frame-stalls on RPI
+//#define MUSIC_BUFFER_SIZE    4096*8   // PCM data buffer (short) - 64Kb
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -85,9 +88,9 @@ static Music currentMusic;      // Current music loaded
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Wave LoadWAV(const char *fileName);
-static Wave LoadOGG(char *fileName);
-static void UnloadWave(Wave wave);
+static Wave LoadWAV(const char *fileName);      // Load WAV file
+static Wave LoadOGG(char *fileName);            // Load OGG file
+static void UnloadWave(Wave wave);              // Unload wave data
 
 static bool BufferMusicStream(ALuint buffer);   // Fill music buffers with data
 static void EmptyMusicStream(void);             // Empty music buffers
@@ -116,7 +119,7 @@ void InitAudioDevice(void)
         TraceLog(ERROR, "Could not setup audio context");
     }
 
-    TraceLog(INFO, "Audio device and context initialized successfully: %s\n", alcGetString(device, ALC_DEVICE_SPECIFIER));
+    TraceLog(INFO, "Audio device and context initialized successfully: %s", alcGetString(device, ALC_DEVICE_SPECIFIER));
 
     // Listener definition (just for 2D)
     alListener3f(AL_POSITION, 0, 0, 0);
@@ -150,6 +153,13 @@ Sound LoadSound(char *fileName)
 {
     Sound sound;
     Wave wave;
+
+    // Init some default values for wave...
+    wave.data = NULL;
+    wave.dataSize = 0;
+    wave.sampleRate = 0;
+    wave.bitsPerSample = 0;
+    wave.channels = 0;
 
     // NOTE: The entire file is loaded to memory to play it all at once (no-streaming)
 
@@ -296,7 +306,6 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
                             if (wave.bitsPerSample == 8 ) format = AL_FORMAT_STEREO8;
                             else if (wave.bitsPerSample == 16) format = AL_FORMAT_STEREO16;
                         }
-
 
                         // Create an audio source
                         ALuint source;
@@ -506,8 +515,23 @@ void StopMusicStream(void)
 // Pause music playing
 void PauseMusicStream(void)
 {
-    // TODO: Record music is paused or check if music available!
-    alSourcePause(currentMusic.source);
+    // Pause music stream if music available!
+    if (musicEnabled)
+    {
+        TraceLog(INFO, "Pausing music stream");
+        alSourcePause(currentMusic.source);
+    }
+}
+
+// Resume music playing
+void ResumeMusicStream(void)
+{
+    // Resume music playing... if music available!
+    if (musicEnabled)
+    {
+        TraceLog(INFO, "Resume music stream");
+        alSourcePlay(currentMusic.source);
+    }
 }
 
 // Check if music is playing
@@ -570,7 +594,7 @@ static bool BufferMusicStream(ALuint buffer)
             else break;
         }
 
-        TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
+        //TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
     }
 
     if (size > 0)
@@ -754,6 +778,7 @@ static Wave LoadWAV(const char *fileName)
 }
 
 // Load OGG file into Wave structure
+// NOTE: Using stb_vorbis library
 static Wave LoadOGG(char *fileName)
 {
     Wave wave;

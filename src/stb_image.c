@@ -151,14 +151,15 @@ static stbi_uc *stbi_tga_load(stbi *s, int *x, int *y, int *comp, int req_comp);
 static int      stbi_tga_info(stbi *s, int *x, int *y, int *comp);
 static int      stbi_psd_test(stbi *s);
 static stbi_uc *stbi_psd_load(stbi *s, int *x, int *y, int *comp, int req_comp);
-static int      stbi_hdr_test(stbi *s);
-static float   *stbi_hdr_load(stbi *s, int *x, int *y, int *comp, int req_comp);
 static int      stbi_pic_test(stbi *s);
 static stbi_uc *stbi_pic_load(stbi *s, int *x, int *y, int *comp, int req_comp);
 static int      stbi_gif_test(stbi *s);
 static stbi_uc *stbi_gif_load(stbi *s, int *x, int *y, int *comp, int req_comp);
 static int      stbi_gif_info(stbi *s, int *x, int *y, int *comp);
 
+// RAY: Commented because not used
+//static int      stbi_hdr_test(stbi *s);
+//static float   *stbi_hdr_load(stbi *s, int *x, int *y, int *comp, int req_comp);
 
 // this is not threadsafe
 static const char *failure_reason;
@@ -2619,7 +2620,7 @@ static int shiftsigned(int v, int shift, int bits)
 static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
 {
    uint8 *out;
-   unsigned int mr=0,mg=0,mb=0,ma=0, fake_a=0;
+   unsigned int mr=0,mg=0,mb=0,ma=0; //fake_a=0;
    stbi_uc pal[256][4];
    int psize=0,i,j,compress=0,width;
    int bpp, flip_vertically, pad, target, offset, hsz;
@@ -2668,7 +2669,7 @@ static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
                   mg = 0xffu <<  8;
                   mb = 0xffu <<  0;
                   ma = 0xffu << 24;
-                  fake_a = 1; // @TODO: check for cases like alpha value is all 0 and switch it to 255
+                  //fake_a = 1; // @TODO: check for cases like alpha value is all 0 and switch it to 255
                } else {
                   mr = 31u << 10;
                   mg = 31u <<  5;

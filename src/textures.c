@@ -1,4 +1,4 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raylib.textures
 *
@@ -6,8 +6,9 @@
 *
 *   Uses external lib:
 *       stb_image - Multiple formats image loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
+*                   NOTE: stb_image has been slightly modified, original library: https://github.com/nothings/stb
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -30,15 +31,12 @@
 
 #include <stdlib.h>          // Declares malloc() and free() for memory management
 #include <string.h>          // Required for strcmp(), strrchr(), strncmp()
-#include "stb_image.h"       // Used to read image data (multiple formats support)
-#include "utils.h"           // rRES data decompression utility function
 
 #include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "utils.h"           // rRES data decompression utility function
+                             // NOTE: Includes Android fopen function map
 
-// Security check in case no USE_OPENGL_* defined
-#if !defined(USE_OPENGL_11) && !defined(USE_OPENGL_33) && !defined(USE_OPENGL_ES2)
-    #define USE_OPENGL_11
-#endif
+#include "stb_image.h"       // Used to read image data (multiple formats support)
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -73,7 +71,8 @@ typedef struct {
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static ImageEx LoadDDS(const char *fileName);
+static ImageEx LoadDDS(const char *fileName);   // Load DDS file
+static ImageEx LoadPKM(const char *fileName);   // Load PKM file
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -155,14 +154,18 @@ Image LoadImage(const char *fileName)
 
             free(imageDDS.data);
 
-            TraceLog(INFO, "[%s] Image loaded successfully", fileName);
+            TraceLog(INFO, "[%s] DDS Image loaded successfully (uncompressed, no mipmaps)", fileName);
         }
-        else TraceLog(WARNING, "[%s] Compressed image data could not be loaded", fileName);
+        else TraceLog(WARNING, "[%s] DDS Compressed image data could not be loaded", fileName);
+    }
+    else if (strcmp(GetExtension(fileName),"pkm") == 0)
+    {
+        TraceLog(INFO, "[%s] PKM Compressed image data could not be loaded", fileName);
     }
     else TraceLog(WARNING, "[%s] Image extension not recognized, it can't be loaded", fileName);
 
     // ALTERNATIVE: We can load pixel data directly into Color struct pixels array,
-    // to do that struct data alignment should be the right one (4 byte); it is.
+    // to do that, struct data alignment should be the right one (4 byte); it is.
     //image.pixels = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);
 
     return image;
@@ -302,9 +305,7 @@ Texture2D LoadTexture(const char *fileName)
         }
         else
         {
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
             texture.id = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.compFormat);
-#endif
         }
 
         texture.width = image.width;
@@ -312,6 +313,20 @@ Texture2D LoadTexture(const char *fileName)
 
         if (texture.id == 0) TraceLog(WARNING, "[%s] DDS texture could not be loaded", fileName);
         else TraceLog(INFO, "[%s] DDS texture loaded successfully", fileName);
+
+        free(image.data);
+    }
+    else if (strcmp(GetExtension(fileName),"pkm") == 0)
+    {
+        ImageEx image = LoadPKM(fileName);
+
+        texture.id = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.compFormat);
+
+        texture.width = image.width;
+        texture.height = image.height;
+
+        if (texture.id == 0) TraceLog(WARNING, "[%s] PKM texture could not be loaded", fileName);
+        else TraceLog(INFO, "[%s] PKM texture loaded successfully", fileName);
 
         free(image.data);
     }
@@ -453,8 +468,6 @@ Texture2D CreateTexture(Image image, bool genMipmaps)
         texture.width = image.width;
         texture.height = image.height;
 
-        TraceLog(INFO, "[ID %i] Texture created successfully", texture.id);
-
         free(imgData);
     }
     else TraceLog(WARNING, "Texture could not be created, image data is not valid");
@@ -471,15 +484,15 @@ ImageEx LoadDDS(const char *fileName)
     #define FOURCC_DXT5 0x35545844  // Equivalent to "DXT5" in ASCII
 
     #ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
-    #define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+        #define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
     #endif
 
     #ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
-    #define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+        #define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
     #endif
 
     #ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
-    #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+        #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
     #endif
 
     // DDS Pixel Format
@@ -582,11 +595,9 @@ ImageEx LoadDDS(const char *fileName)
             }
             else if ((header.ddspf.flags == 0x04) && (header.ddspf.fourCC > 0))
             {
-#ifdef USE_OPENGL_11
-                TraceLog(WARNING, "[%s] DDS image uses compression, not supported by current OpenGL version", fileName);
+                TraceLog(WARNING, "[%s] DDS image uses compression, not supported on OpenGL 1.1", fileName);
                 TraceLog(WARNING, "[%s] DDS compressed files require OpenGL 3.2+ or ES 2.0", fileName);
-                fclose(ddsFile);
-#else
+
                 int bufsize;
 
                 // Calculate data size, including all mipmaps
@@ -614,8 +625,94 @@ ImageEx LoadDDS(const char *fileName)
                 // NOTE: Image num color components not required... for now...
                 //if (fourCC == FOURCC_DXT1) image.components = 3;
                 //else image.components = 4;
-#endif
             }
+        }
+    }
+
+    return image;
+}
+
+// Loading PKM image data (ETC1/ETC2 compression)
+// NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
+// PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
+ImageEx LoadPKM(const char *fileName)
+{
+    // If OpenGL ES 2.0. the following format could be supported (ETC1):
+    //GL_ETC1_RGB8_OES
+
+    #ifndef GL_ETC1_RGB8_OES
+        #define GL_ETC1_RGB8_OES 0x8D64
+    #endif
+
+    // If OpenGL ES 3.0, the following formats are supported (ETC2/EAC):
+    //GL_COMPRESSED_RGB8_ETC2
+    //GL_COMPRESSED_RGBA8_ETC2
+    //GL_COMPRESSED_RG11_EAC
+    //...
+
+    // PKM file (ETC1) Header (16 bytes)
+    typedef struct {
+        char id[4];                 // "PKM "
+        char version[2];            // "10"
+        unsigned short format;      // Format = number of mipmaps = 0 (ETC1_RGB_NO_MIPMAPS)
+        unsigned short extWidth;    // Texture width (big-endian)
+        unsigned short extHeight;   // Texture height (big-endian)
+        unsigned short origWidth;   // Original width (big-endian)
+        unsigned short origHeight;  // Original height (big-endian)
+    } pkmHeader;
+
+    // NOTE: The extended width and height are the widths rounded up to a multiple of 4.
+    // NOTE: ETC is always 4bit per pixel (64 bits for each 4x4 block of pixels)
+
+    // Bytes Swap (little-endian <-> big-endian)
+    //unsigned short data;
+    //unsigned short swap = ((data & 0x00FF) << 8) | ((data & 0xFF00) >> 8);
+
+    ImageEx image;
+
+    unsigned short width;
+    unsigned short height;
+    unsigned short useless;
+
+    FILE *pkmFile = fopen(fileName, "rb");
+
+    if (pkmFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] PKM File could not be opened", fileName);
+    }
+    else
+    {
+        // Verify the type of file
+        char filecode[4];
+
+        fread(filecode, 1, 4, pkmFile);
+
+        if (strncmp(filecode, "PKM ", 4) != 0)
+        {
+            TraceLog(WARNING, "[%s] PKM File does not seem to be valid", fileName);
+            fclose(pkmFile);
+        }
+        else
+        {
+            // Get the surface descriptor
+            fread(&useless, sizeof(unsigned short), 1, pkmFile);    // Discard version
+            fread(&useless, sizeof(unsigned short), 1, pkmFile);    // Discard format
+
+            fread(&width, sizeof(unsigned short), 1, pkmFile);      // Read extended width
+            fread(&height, sizeof(unsigned short), 1, pkmFile);     // Read extended height
+
+            int size = (width/4)*(height/4)*8;  // Total data size in bytes
+
+            image.data = (unsigned char*)malloc(size * sizeof(unsigned char));
+
+            fread(image.data, 1, size, pkmFile);
+
+            fclose(pkmFile);    // Close file pointer
+
+            image.width = width;
+            image.height = height;
+            image.mipmaps = 1;
+            image.compFormat = GL_ETC1_RGB8_OES;
         }
     }
 

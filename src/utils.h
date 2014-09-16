@@ -1,10 +1,10 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raylib.utils
 *
 *   Some utility functions: rRES files data decompression
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -26,10 +26,19 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#if defined(PLATFORM_ANDROID)
+    #include <stdio.h>                      // Defines FILE struct
+    #include <android/asset_manager.h>      // defines AAssetManager struct
+#endif
+
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
 #define DO_NOT_TRACE_DEBUG_MSGS   // Use this define to avoid DEBUG tracing
+
+#if defined(PLATFORM_ANDROID)
+    #define fopen(name, mode) android_fopen(name, mode) 
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -61,14 +70,18 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 unsigned char *DecompressData(const unsigned char *data, unsigned long compSize, int uncompSize);
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height);
 void WritePNG(const char *fileName, unsigned char *imgData, int width, int height);
+#endif
 
 void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message
-void TraceLogOpen(const char *logFileName);         // Open a trace log file (if desired)
-void TraceLogClose();                               // Close the trace log file
+const char *GetExtension(const char *fileName);     // Returns extension of a filename
 
-const char *GetExtension(const char *fileName);
+#if defined(PLATFORM_ANDROID)
+void InitAssetManager(AAssetManager *manager);  // Initialize asset manager from android app
+FILE *android_fopen(const char *fileName, const char *mode);   // Replacement for fopen()
+#endif
 
 #ifdef __cplusplus
 }

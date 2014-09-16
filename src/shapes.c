@@ -1,10 +1,10 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raylib.shapes
 *
 *   Basic functions to draw 2d Shapes and check collisions
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -30,11 +30,6 @@
                         // sqrt() and pow() and abs() used on CheckCollision*
 
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-
-// Security check in case no USE_OPENGL_* defined
-#if !defined(USE_OPENGL_11) && !defined(USE_OPENGL_33) && !defined(USE_OPENGL_ES2)
-    #define USE_OPENGL_11
-#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -185,43 +180,44 @@ void DrawRectangleGradient(int posX, int posY, int width, int height, Color colo
 // Draw a color-filled rectangle (Vector version)
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-#ifdef USE_OPENGL_11
-    rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+    if (rlGetVersion() == OPENGL_11)
+    {
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
 
-        rlVertex2i(position.x, position.y);
-        rlVertex2i(position.x, position.y + size.y);
-        rlVertex2i(position.x + size.x, position.y + size.y);
+            rlVertex2i(position.x, position.y);
+            rlVertex2i(position.x, position.y + size.y);
+            rlVertex2i(position.x + size.x, position.y + size.y);
 
-        rlVertex2i(position.x, position.y);
-        rlVertex2i(position.x + size.x, position.y + size.y);
-        rlVertex2i(position.x + size.x, position.y);
-    rlEnd();
-#endif
+            rlVertex2i(position.x, position.y);
+            rlVertex2i(position.x + size.x, position.y + size.y);
+            rlVertex2i(position.x + size.x, position.y);
+        rlEnd();
+    }
+    else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        // NOTE: This shape uses QUADS to avoid drawing order issues (view rlglDraw)
+        rlEnableTexture(1); // Default white texture
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    // NOTE: This shape uses QUADS to avoid drawing order issues (view rlglDraw)
-    rlEnableTexture(1); // Default white texture
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
 
-    rlBegin(RL_QUADS);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex2f(position.x, position.y);
 
-        rlTexCoord2f(0.0f, 0.0f);
-        rlVertex2f(position.x, position.y);
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex2f(position.x, position.y + size.y);
 
-        rlTexCoord2f(0.0f, 1.0f);
-        rlVertex2f(position.x, position.y + size.y);
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex2f(position.x + size.x, position.y + size.y);
 
-        rlTexCoord2f(1.0f, 1.0f);
-        rlVertex2f(position.x + size.x, position.y + size.y);
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex2f(position.x + size.x, position.y);
+        rlEnd();
 
-        rlTexCoord2f(1.0f, 0.0f);
-        rlVertex2f(position.x + size.x, position.y);
-    rlEnd();
-
-    rlDisableTexture();
-#endif
+        rlDisableTexture();
+    }
 }
 
 // Draw rectangle outline

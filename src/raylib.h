@@ -1,6 +1,6 @@
-﻿/*********************************************************************************************
+﻿/**********************************************************************************************
 *
-*   raylib 1.1 (www.raylib.com)
+*   raylib 1.2 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -31,7 +31,7 @@
 *     One custom default font is loaded automatically when InitWindow()
 *     If using OpenGL 3.3+ or ES2, one default shader is loaded automatically (internally defined)
 *
-*   -- LICENSE (raylib v1.1, April 2014) --
+*   -- LICENSE (raylib v1.2, September 2014) --
 *
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
@@ -58,6 +58,15 @@
 #ifndef RAYLIB_H
 #define RAYLIB_H
 
+// Choose your platform here or just define it at compile time: -DPLATFORM_DESKTOP
+//#define PLATFORM_DESKTOP      // Windows, Linux or OSX
+//#define PLATFORM_ANDROID      // Android device
+//#define PLATFORM_RPI          // Raspberry Pi
+
+#if defined(PLATFORM_ANDROID)
+    #include <android_native_app_glue.h>    // Defines android_app struct
+#endif
+
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
@@ -65,10 +74,10 @@
 #define PI 3.14159265358979323846
 #endif
 
-#define DEG2RAD (PI / 180.0)
-#define RAD2DEG (180.0 / PI)
+#define DEG2RAD (PI / 180.0f)
+#define RAD2DEG (180.0f / PI)
 
-// Keyboard Function Keys
+// Keyboard Function Keys 
 #define KEY_SPACE            32
 #define KEY_ESCAPE          256
 #define KEY_ENTER           257
@@ -107,16 +116,16 @@
 
 // Gamepad Buttons
 // NOTE: Adjusted for a PS3 USB Controller
-#define GAMEPAD_BUTTON_A      2
-#define GAMEPAD_BUTTON_B      1
-#define GAMEPAD_BUTTON_X      3
-#define GAMEPAD_BUTTON_Y      4
-#define GAMEPAD_BUTTON_R1     7
-#define GAMEPAD_BUTTON_R2     5
-#define GAMEPAD_BUTTON_L1     6
-#define GAMEPAD_BUTTON_L2     8
-#define GAMEPAD_BUTTON_SELECT 9
-#define GAMEPAD_BUTTON_START 10
+#define GAMEPAD_BUTTON_A        2
+#define GAMEPAD_BUTTON_B        1
+#define GAMEPAD_BUTTON_X        3
+#define GAMEPAD_BUTTON_Y        4
+#define GAMEPAD_BUTTON_R1       7
+#define GAMEPAD_BUTTON_R2       5
+#define GAMEPAD_BUTTON_L1       6
+#define GAMEPAD_BUTTON_L2       8
+#define GAMEPAD_BUTTON_SELECT   9
+#define GAMEPAD_BUTTON_START   10
 
 // TODO: Review Xbox360 USB Controller Buttons
 
@@ -234,6 +243,7 @@ typedef struct VertexData {
 typedef struct Model {
     VertexData mesh;
     unsigned int vaoId;
+    unsigned int vboId[4];
     unsigned int textureId;
     //Matrix transform;
 } Model;
@@ -256,14 +266,21 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
-void InitWindow(int width, int height, const char *title);  // Initialize Window and Graphics Context (OpenGL)
-void InitWindowEx(int width, int height, const char* title, // Initialize Window and Graphics Context (OpenGL),...
-                  bool resizable, const char *cursorImage); // ...define if windows-resizable and custom cursor
+#if defined(PLATFORM_ANDROID)
+void InitWindow(int width, int height, struct android_app *state);  // Init Android activity
+#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
+#endif
+
 void CloseWindow(void);                                     // Close Window and Terminate Context
 bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
-void ToggleFullscreen(void);                                // Fullscreen toggle (by default F11)
+void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
 void SetExitKey(int key);                                   // Set a custom key to exit program (default is ESC)
+#endif
+int GetScreenWidth(void);                                   // Get current screen width
+int GetScreenHeight(void);                                  // Get current screen height
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
@@ -280,13 +297,14 @@ Color GetColor(int hexValue);                               // Returns a Color s
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
-Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0 to 1.0
+Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
 void ShowLogo(void);                                        // Activates raylib logo at startup
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
 bool IsKeyDown(int key);                                // Detect if a key is being pressed
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
@@ -307,6 +325,13 @@ bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad b
 bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
 bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
 bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
+#endif
+
+#if defined(PLATFORM_ANDROID)
+int GetTouchX(void);                                    // Returns touch position X
+int GetTouchY(void);                                    // Returns touch position Y
+Vector2 GetTouchPosition(void);                         // Returns touch position XY
+#endif
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
@@ -427,6 +452,7 @@ void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for
 void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
 void StopMusicStream(void);                                     // Stop music playing (close stream)
 void PauseMusicStream(void);                                    // Pause music playing
+void ResumeMusicStream(void);                                   // Resume playing paused music
 bool MusicIsPlaying(void);                                      // Check if music is playing
 void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)

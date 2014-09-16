@@ -1,4 +1,4 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raymath
 *
@@ -85,17 +85,17 @@ Vector3 VectorPerpendicular(Vector3 v)
     Vector3 result;
 
     float min = fabs(v.x);
-    Vector3 cardinalAxis = {1.0, 0.0, 0.0};
+    Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
     if (fabs(v.y) < min)
     {
         min = fabs(v.y);
-        cardinalAxis = (Vector3){0.0, 1.0, 0.0};
+        cardinalAxis = (Vector3){0.0f, 1.0f, 0.0f};
     }
 
     if(fabs(v.z) < min)
     {
-        cardinalAxis = (Vector3){0.0, 0.0, 1.0};
+        cardinalAxis = (Vector3){0.0f, 0.0f, 1.0f};
     }
 
     result = VectorCrossProduct(v, cardinalAxis);
@@ -216,7 +216,7 @@ void VectorTransform(Vector3 *v, Matrix mat)
 // Return a Vector3 init to zero
 Vector3 VectorZero(void)
 {
-    Vector3 zero = { 0.0, 0.0, 0.0 };
+    Vector3 zero = { 0.0f, 0.0f, 0.0f };
 
     return zero;
 }
@@ -377,7 +377,7 @@ void MatrixNormalize(Matrix *mat)
 }
 
 // Returns identity matrix
-Matrix MatrixIdentity()
+Matrix MatrixIdentity(void)
 {
     Matrix result = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 
@@ -494,6 +494,7 @@ Matrix MatrixRotate(float angleX, float angleY, float angleZ)
 
 // Create rotation matrix from axis and angle
 // TODO: Test this function
+// NOTE: NO prototype defined!
 Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
 {
     Matrix result;
@@ -549,6 +550,7 @@ Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
 
 // Create rotation matrix from axis and angle (version 2)
 // TODO: Test this function
+// NOTE: NO prototype defined!
 Matrix MatrixFromAxisAngle2(Vector3 axis, float angle)
 {
     Matrix result;
@@ -725,21 +727,24 @@ Matrix MatrixFrustum(double left, double right, double bottom, double top, doubl
     float tb = (top - bottom);
     float fn = (far - near);
 
-    result.m0 = (near*2) / rl;
+    result.m0 = (near*2.0f) / rl;
     result.m1 = 0;
     result.m2 = 0;
     result.m3 = 0;
+
     result.m4 = 0;
-    result.m5 = (near*2) / tb;
+    result.m5 = (near*2.0f) / tb;
     result.m6 = 0;
     result.m7 = 0;
+
     result.m8 = (right + left) / rl;
     result.m9 = (top + bottom) / tb;
     result.m10 = -(far + near) / fn;
-    result.m11 = -1;
+    result.m11 = -1.0f;
+
     result.m12 = 0;
     result.m13 = 0;
-    result.m14 = -(far*near*2) / fn;
+    result.m14 = -(far*near*2.0f) / fn;
     result.m15 = 0;
 
     return result;
@@ -748,7 +753,7 @@ Matrix MatrixFrustum(double left, double right, double bottom, double top, doubl
 // Returns perspective projection matrix
 Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
-    double top = near*tan(fovy*PI / 360.0);
+    double top = near*tanf(fovy*PI / 360.0f);
     double right = top*aspect;
 
     return MatrixFrustum(-right, right, -top, top, near, far);
@@ -876,18 +881,18 @@ Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
-    if (abs(cosHalfTheta) >= 1.0) result = q1;
+    if (abs(cosHalfTheta) >= 1.0f) result = q1;
     else
     {
         float halfTheta = acos(cosHalfTheta);
-        float sinHalfTheta = sqrt(1.0 - cosHalfTheta*cosHalfTheta);
+        float sinHalfTheta = sqrt(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (abs(sinHalfTheta) < 0.001)
+        if (abs(sinHalfTheta) < 0.001f)
         {
-            result.x = (q1.x*0.5 + q2.x*0.5);
-            result.y = (q1.y*0.5 + q2.y*0.5);
-            result.z = (q1.z*0.5 + q2.z*0.5);
-            result.w = (q1.w*0.5 + q2.w*0.5);
+            result.x = (q1.x*0.5f + q2.x*0.5f);
+            result.y = (q1.y*0.5f + q2.y*0.5f);
+            result.z = (q1.z*0.5f + q2.z*0.5f);
+            result.w = (q1.w*0.5f + q2.w*0.5f);
         }
         else
         {

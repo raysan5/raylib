@@ -183,7 +183,6 @@
 // The three functions you must define are "read" (reads some bytes of data),
 // "skip" (skips some bytes of data), "eof" (reports if the stream is at the end).
 
-
 #define STBI_NO_HDR		// RaySan: not required by raylib
 
 #ifndef STBI_NO_STDIO
@@ -193,6 +192,11 @@
 #endif
 
 #include <stdio.h>
+#endif
+
+// NOTE: Added to work with raylib on Android
+#if defined(PLATFORM_ANDROID)
+    #include "utils.h"  // Android fopen function map
 #endif
 
 #define STBI_VERSION 1

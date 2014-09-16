@@ -1,13 +1,10 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raylib.text
 *
 *   Basic functions to load SpriteFonts and draw Text
 *
-*   Uses external lib:
-*       stb_image - Multiple formats image loading (JPEG, PNG, BMP, TGA, PSD, GIF, HDR, PIC)
-*
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -31,10 +28,9 @@
 #include <stdlib.h>       // Declares malloc() and free() for memory management
 #include <string.h>       // String management functions (just strlen() is used)
 #include <stdarg.h>       // Used for functions with variable number of parameters (FormatText())
-#include "stb_image.h"    // Used to read image data (multiple formats support)
+#include <stdio.h>        // Standard input / output lib
 
 #include "rlgl.h"         // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-
 #include "utils.h"        // Required for function GetExtendion()
 
 //----------------------------------------------------------------------------------
@@ -78,6 +74,9 @@ static bool PixelIsMagenta(Color p);                // Check if a pixel is magen
 static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Character **charSet);    // Parse image pixel data to obtain character set measures
 static int GetNextPOT(int num);                     // Calculate next power-of-two value for a given value
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
+
+extern void LoadDefaultFont(void);
+extern void UnloadDefaultFont(void);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -188,53 +187,29 @@ extern void UnloadDefaultFont(void)
 }
 
 // Get the default font, useful to be used with extended parameters
-SpriteFont GetDefaultFont(void)
+SpriteFont GetDefaultFont()
 {
     return defaultFont;
 }
 
 // Load a SpriteFont image into GPU memory
-SpriteFont LoadSpriteFont(const char* fileName)
+SpriteFont LoadSpriteFont(const char *fileName)
 {
     SpriteFont spriteFont;
-
-    Image image;
 
     // Check file extension
     if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);
     else
     {
-        // Use stb_image to load image data!
-        int imgWidth;
-        int imgHeight;
-        int imgBpp;
-
-        byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);    // Force loading to 4 components (RGBA)
-
-        // Convert array to pixel array for working convenience
-        Color *imgDataPixel = (Color *)malloc(imgWidth * imgHeight * sizeof(Color));
-        Color *imgDataPixelPOT = NULL;
-
-        int pix = 0;
-
-        for (int i = 0; i < (imgWidth * imgHeight * 4); i += 4)
-        {
-            imgDataPixel[pix].r = imgData[i];
-            imgDataPixel[pix].g = imgData[i+1];
-            imgDataPixel[pix].b = imgData[i+2];
-            imgDataPixel[pix].a = imgData[i+3];
-            pix++;
-        }
-
-        stbi_image_free(imgData);
+        Image image = LoadImage(fileName);
 
         // At this point we have a pixel array with all the data...
 
-        TraceLog(INFO, "[%s] SpriteFont image loaded: %i x %i", fileName, imgWidth, imgHeight);
+        TraceLog(INFO, "[%s] SpriteFont image loaded: %i x %i", fileName, image.width, image.height);
 
         // Process bitmap Font pixel data to get measures (Character array)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
-        int numChars = ParseImageData(imgDataPixel, imgWidth, imgHeight, &spriteFont.charSet);
+        int numChars = ParseImageData(image.pixels, image.width, image.height, &spriteFont.charSet);
 
         TraceLog(INFO, "[%s] SpriteFont data parsed correctly", fileName);
         TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
@@ -242,13 +217,17 @@ SpriteFont LoadSpriteFont(const char* fileName)
         spriteFont.numChars = numChars;
 
         // Convert image font to POT image before conversion to texture
+        // NOTE: Not required, we skip this step
+/*
         // Just add the required amount of pixels at the right and bottom sides of image...
-        int potWidth = GetNextPOT(imgWidth);
-        int potHeight = GetNextPOT(imgHeight);
+        int potWidth = GetNextPOT(image.width);
+        int potHeight = GetNextPOT(image.height);
 
         // Check if POT texture generation is required (if texture is not already POT)
-        if ((potWidth != imgWidth) || (potHeight != imgHeight))
+        if ((potWidth != image.width) || (potHeight != image.height))
         {
+            Color *imgDataPixelPOT = NULL;
+
             // Generate POT array from NPOT data
             imgDataPixelPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
 
@@ -256,20 +235,20 @@ SpriteFont LoadSpriteFont(const char* fileName)
             {
                 for (int i = 0; i < potWidth; i++)
                 {
-                    if ((j < imgHeight) && (i < imgWidth)) imgDataPixelPOT[j*potWidth + i] = imgDataPixel[j*imgWidth + i];
+                    if ((j < image.height) && (i < image.width)) imgDataPixelPOT[j*potWidth + i] = image.pixels[j*image.width + i];
                     else imgDataPixelPOT[j*potWidth + i] = MAGENTA;
                 }
             }
 
             TraceLog(WARNING, "SpriteFont texture converted to POT: %ix%i", potWidth, potHeight);
+
+            free(image.pixels);
+
+            image.pixels = imgDataPixelPOT;
+            image.width = potWidth;
+            image.height = potHeight;
         }
-
-        free(imgDataPixel);
-
-        image.pixels = imgDataPixelPOT;
-        image.width = potWidth;
-        image.height = potHeight;
-
+*/
         spriteFont.texture = CreateTexture(image, false); // Convert loaded image to OpenGL texture
         UnloadImage(image);
     }
@@ -287,7 +266,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 // Draw text (using default font)
 // NOTE: fontSize work like in any drawing program but if fontSize is lower than font-base-size, then font-base-size is used
 // NOTE: chars spacing is proportional to fontSize
-void DrawText(const char* text, int posX, int posY, int fontSize, Color color)
+void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 {
     Vector2 position = { (float)posX, (float)posY };
 
@@ -303,7 +282,7 @@ void DrawText(const char* text, int posX, int posY, int fontSize, Color color)
 // Draw text using SpriteFont
 // NOTE: If font size is lower than base size, base size is used
 // NOTE: chars spacing is NOT proportional to fontSize
-void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position, int fontSize, int spacing, Color tint)
+void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int fontSize, int spacing, Color tint)
 {
     int length = strlen(text);
     int positionX = (int)position.x;
@@ -398,12 +377,14 @@ int GetFontBaseSize(SpriteFont spriteFont)
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    // NOTE: We are rendering fps every second for better viewing on high framerates
-    static float fps;
-    static int counter = 0;
-    static int refreshRate = 0;
-
     char buffer[20];
+
+    // NOTE: We are rendering fps every second for better viewing on high framerates
+    // TODO: Not working properly on ANDROID and RPI
+
+    static float fps = 0.0f;
+    static int counter = 0;
+    static int refreshRate = 20;
 
     if (counter < refreshRate)
     {

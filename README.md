@@ -5,7 +5,7 @@ about
 
 raylib is a simple and easy-to-use library to learn videogames programming.
 
-raylib is highly inspired by Borland BGI graphics lib (more specifically WinBGI) and by XNA framework. 
+raylib is highly inspired by Borland BGI graphics lib and by XNA framework. 
 Allegro and SDL have also been analyzed for reference.
 
 Want to see how easy is making games with raylib? Jump to [code examples!] (http://www.raylib.com/examples.htm)
@@ -55,6 +55,23 @@ Lots of code changes and lot of testing have concluded in this amazing new rayli
 
 Enjoy it.
 
+notes on raylib 1.2
+-------------------
+
+On September 2014, after 5 month of raylib 1.1 release, it comes raylib 1.2. Again, this version presents a
+complete internal redesign of [core] (https://github.com/raysan5/raylib/blob/master/src/core.h) module to support two new platforms: Android and Raspberry Pi.
+
+It's been some month of really hard work to accomodate raylib to those new platforms while keeping it easy for the user.
+On Android, raylib manages internally the activity cicle, as well as the inputs; on Raspberry Pi, a complete raw input
+system has been written from scratch.
+
+A new display initialization system has been created to accomodate to multiple resolutions, adding black bars if required;
+user only defines whatever screen size and it gets properly displayed.
+
+Now raylib can easily deploy games to Android devices and Raspberry Pi (console mode).
+
+Lots of code changes and lot of testing have concluded in this amazing new raylib 1.2.
+
 features
 --------
  
@@ -63,18 +80,27 @@ features
    *  Hardware accelerated with OpenGL (1.1, 3.3+ or ES2)
    *  Unique OpenGL abstraction layer [rlgl]
    *  Powerful fonts module with SpriteFonts support
-   *  Multiple textures support, including DDS and mipmaps generation
+   *  Multiple textures support, including DDS, PKM and mipmaps generation
    *  Basic 3d support for Shapes, Models, Heightmaps and Billboards
    *  Powerful math module for Vector and Matrix operations [raymath]
-   *  Audio loading and playing with streaming support
+   *  Audio loading and playing with streaming support (WAV and OGG)
    *  Custom color palette for fancy visuals on raywhite background
+   *  Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi
 
 raylib uses on its core module the outstanding [GLFW3] (http://www.glfw.org/) library. The best option by far I found for 
-window/context and input management (clean, focused, great license, well documented, modern, ...). 
+multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, ...).
 
-raylib is licensed under a zlib/libpng license like GLFW3. View [LICENSE] (https://github.com/raysan5/raylib/blob/master/LICENSE.md).
+raylib uses on its audio module [OpenAL Soft] (http://kcat.strangesoft.net/openal.html) audio library, in multiple flavours,
+to accomodate to Android and Raspberry Pi.
 
-tool requirements
+On Android, raylib uses native_app_glue module (provided on Android NDK) and native Android libraries to manage window/context, 
+inputs and activity cycle.
+
+On Raspberry Pi, raylib uses Videocore API and EGL for window/context management and raw inputs reading.
+
+raylib is licensed under a zlib/libpng license. View [LICENSE] (https://github.com/raysan5/raylib/blob/master/LICENSE.md).
+
+tools requirements
 ------------------
 
 raylib has been developed using exclusively two tools: 
@@ -90,39 +116,107 @@ to allow writing small-mid size programs with a printf-based debugging. All rayl
 
 Since raylib v1.1, you can download a windows Installer package for easy installation and configuration. Check [raylib Webpage](http://www.raylib.com/)
 
-building
---------
+building source (generate libraylib.a)
+--------------------------------------
 
-raylib could be build with the following command lines (Using GCC compiler):
+Building raylib sources on desktop platforms:
 
-	cd raylib/src
-	gcc -c core.c -std=c99 -Wall
-	gcc -c shapes.c -std=c99 -Wall
-	gcc -c textures.c -std=c99 -Wall
-	gcc -c text.c -std=c99 -Wall
-	gcc -c models.c -std=c99 -Wall
-	gcc -c raymath.c -std=c99 -Wall
-    gcc -c rlgl.c -std=c99 -Wall
-	gcc -c audio.c -std=c99 -Wall
-    gcc -c utils.c -std=c99 -Wall
-    gcc -c stb_image.c -std=c99 -Wall
-    gcc -c stb_vorbis.c -std=c99 -Wall
-    
-	ar rcs libraylib.a core.o shapes.o textures.o stb_image.o text.o models.o raymath.o rlgl.o utils.o stb_vorbis.o audio.o
+Step 1: Using MinGW make tool, just navigate from command line to raylib/src/ folder and type:
 
-To compile examples, make sure raylib.h is placed in the include path and the following libraries are placed in the libraries path:
+    mingw32-make PLATFORM=PLATFORM_DESKTOP
 
-    libraylib.a   - raylib
+* NOTE: By default raylib compiles using OpenGL 1.1 to maximize compatibility; to use OpenGL 3.3 just type:
+
+    mingw32-make PLATFORM=PLATFORM_DESKTOP GRAPHICS=GRAPHICS_API_OPENGL_33
+
+Building raylib sources on Raspberry Pi:
+
+Step 1. Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
+
+    sudo apt-get install openal1
+
+Step 2. Navigate from command line to raylib/src/ folder and type:
+
+    make
+
+Building raylib sources for Android:
+
+Step 1. Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
+
+    - Download and decompress on C: [Android SDK r23] (http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
+    - Download and decompress on C: [Android NDK r10b] (http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
+    - Download and decompress on C: [Apache Ant 1.9.4] (http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
+
+Step 2. Create the following environment variables with the correct paths: 
+
+    ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
+    ANDROID_NDK_ROOT = C:\android-ndk-r10b
+    ANT_HOME = C:\apache-ant-1.9.4
+
+Step 3. Navigate from command line to folder raylib/template_android/ and type:
+
+    %ANDROID_NDK_ROOT%\ndk-build
+
+* NOTE: libraylib.a will be generated in folder raylib/src_android/obj/local/armeabi/, it must be copied
+to Android project; if using raylib/template_android project, copy it to raylib/template_android/jni/libs/.
+
+building examples
+-----------------
+
+Building raylib examples on desktop platforms:
+
+Step 1: Using MinGW make tool, just navigate from command line to raylib/examples/ folder and type:
+
+    mingw32-make PLATFORM=PLATFORM_DESKTOP
+
+* NOTE: Make sure the following libs (and their headers) are placed on their respectibe MinGW folders:
+
     libglfw3.a    - GLFW3 (static version)
     libglew32.a   - GLEW, OpenGL extension loading, only required if using OpenGL 3.3+ or ES2
-    libopenal32.a - OpenAL, audio device management
-    
-It's also recommended to link with file icon.o for fancy raylib icon usage. Linking command:
+    libopenal32.a - OpenAL Soft, audio device management
 
-	cd raylib/examples
-	gcc -o test_code.exe test_code.c icon.o -lraylib -lglfw3 -lglew32 -lopenal32 -lopengl32 -lgdi32 -std=c99 -Wl,--subsystem,windows
-    
-If you have any doubt, [let me know][raysan5].
+Building raylib examples on Raspberry Pi:
+
+Step 1. Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
+
+    sudo apt-get install openal1
+
+Step 2. Navigate from command line to raylib/examples/ folder and type:
+
+    make
+
+Building raylib project for Android (using template):
+
+Step 1. Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
+
+    - Download and decompress on C: [Android SDK r23] (http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
+    - Download and decompress on C: [Android NDK r10b] (http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
+    - Download and decompress on C: [Apache Ant 1.9.4] (http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
+
+Step 2. Create the following environment variables with the correct paths: 
+
+    ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
+    ANDROID_NDK_ROOT = C:\android-ndk-r10b
+    ANT_HOME = C:\apache-ant-1.9.4
+
+Step 3. To compile project, navigate from command line to folder raylib/template_android/ and type:
+
+    %ANDROID_NDK_ROOT%\ndk-build
+
+Step 4. To generate APK, navigate to folder raylib/template_android/ and type:
+
+    %ANT_HOME%\bin\ant debug
+
+Step 5: To install APK into connected device (previously intalled drivers and activated USB debug mode on device):
+
+    %ANT_HOME%\bin\ant installd
+
+Step 6: To view log output from device:
+
+    %ANDROID_SDK_TOOLS%\adb logcat -c
+    %ANDROID_SDK_TOOLS%\adb -d  logcat raylib:V *:S
+
+If you have any doubt, [just let me know][raysan5].
 
 contact
 -------
@@ -140,9 +234,9 @@ acknowledgments
 
 The following people have contributed in some way to make raylib project a reality. Big thanks to them!
 
- - [Zopokx](https://github.com/Zopokx)
- - [Elendow](http://www.elendow.com)
- - Victor Dual
- - Marc Palau
+ - [Zopokx](https://github.com/Zopokx) for testing and hosting the web.
+ - [Elendow](http://www.elendow.com) for testing and helping on web development.
+ - Victor Dual for implementation and testing of 3D shapes functions.
+ - Marc Palau for implementation and testing of 3D shapes functions.
 	
 [raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"

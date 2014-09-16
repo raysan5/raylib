@@ -1,4 +1,4 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raymath
 *
@@ -39,8 +39,8 @@
     #define PI 3.14159265358979323846
 #endif
 
-#define DEG2RAD (PI / 180.0)
-#define RAD2DEG (180.0 / PI)
+#define DEG2RAD (PI / 180.0f)
+#define RAD2DEG (180.0f / PI)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -101,9 +101,9 @@ float *GetMatrixVector(Matrix mat);                     // Returns an OpenGL-rea
 float MatrixDeterminant(Matrix mat);                    // Compute matrix determinant
 float MatrixTrace(Matrix mat);                          // Returns the trace of the matrix (sum of the values along the diagonal)
 void MatrixTranspose(Matrix *mat);                      // Transposes provided matrix
-void MatrixInvert(Matrix *mat);                        // Invert provided matrix
+void MatrixInvert(Matrix *mat);                         // Invert provided matrix
 void MatrixNormalize(Matrix *mat);                      // Normalize provided matrix
-Matrix MatrixIdentity();                                // Returns identity matrix
+Matrix MatrixIdentity(void);                            // Returns identity matrix
 Matrix MatrixAdd(Matrix left, Matrix right);            // Add two matrices
 Matrix MatrixSubstract(Matrix left, Matrix right);      // Substract two matrices (left - right)
 Matrix MatrixTranslate(float x, float y, float z);      // Returns translation matrix

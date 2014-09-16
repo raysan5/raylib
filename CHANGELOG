@@ -1,10 +1,40 @@
 changelog
 ---------
 
-Current Release:    raylib 1.1.1 (22 July 2014)
+Current Release:    raylib 1.2 (16 September 2014)
 
 NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.2 (16 September 2014)
+-----------------------------------------------
+NOTE: 
+  This version supposed a complete redesign of the [core] module to support Android and Raspberry Pi.
+  Multiples modules have also been tweaked to accomodate to the new platforms, specially [rlgl]
+
+[core] Added multiple platforms support: Android and Raspberry Pi
+[core] InitWindow() - Complete rewrite and split for Android
+[core] InitDisplay() - Internal function added to calculate proper display size
+[core] InitGraphics() - Internal function where OpenGL graphics are initialized
+[core] Complete refactoring of input functions to accomodate to new platforms
+[core] Mouse and Keyboard raw data reading functions added for Raspberry Pi
+[core] GetTouchX(), GetTouchY() - Added for Android
+[core] Added Android callbacks to process inputs and Android activity commands
+[rlgl] Adjusted buffers depending on platform
+[rlgl] Added security check in case deployed vertex excess buffer size
+[rlgl] Adjusted indices type depending on GL version (int or short)
+[rlgl] Fallback to VBOs only usage if VAOs not supported on ES2
+[rlgl] rlglLoadModel() stores vbo ids on new Model struct
+[textures] Added support for PKM files (ETC1, ETC2 compression support)
+[shapes] DrawRectangleV() - Modified, depending on OGL version uses TRIANGLES or QUADS
+[text] LoadSpriteFont() - Modified to use LoadImage()
+[models] Minor changes on models loading to accomodate to new Model struct
+[audio] PauseMusicStream(), ResumeMusicStream() - Added
+[audio] Reduced music buffer size to avoid stalls on Raspberry Pi
+[src] Added makefile for Windows and RPI
+[src] Added resources file (raylib icon and executable info)
+[examples] Added makefile for Windows and RPI
 
 -----------------------------------------------
 Release:     raylib 1.1.1 (22 July 2014)

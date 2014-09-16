@@ -1,4 +1,4 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raylib.utils
 *
@@ -8,7 +8,7 @@
 *       tinfl - zlib DEFLATE algorithm decompression lib
 *       stb_image_write - PNG writting functions
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -29,20 +29,40 @@
 
 #include "utils.h"
 
+#if defined(PLATFORM_ANDROID)
+    #include <errno.h>
+    #include <android/log.h>
+    #include <android/asset_manager.h>
+#endif
+
 #include <stdlib.h>             // malloc(), free()
 #include <stdio.h>              // printf(), fprintf()
 #include <stdarg.h>             // Used for functions with variable number of parameters (TraceLog())
 //#include <string.h>           // String management functions: strlen(), strrchr(), strcmp()
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"    // Create PNG file
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+    #define STB_IMAGE_WRITE_IMPLEMENTATION
+    #include "stb_image_write.h"    // Create PNG file
+#endif
 
 #include "tinfl.c"
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static FILE *logstream = NULL;
+#if defined(PLATFORM_ANDROID)
+AAssetManager *assetManager;
+#endif
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Declaration
+//----------------------------------------------------------------------------------
+#if defined(PLATFORM_ANDROID)
+static int android_read(void *cookie, char *buf, int size);
+static int android_write(void *cookie, const char *buf, int size);
+static fpos_t android_seek(void *cookie, fpos_t offset, int whence);
+static int android_close(void *cookie);
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utilities
@@ -87,6 +107,7 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
     return pUncomp;
 }
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 // Creates a bitmap (BMP) file from an array of pixel data
 // NOTE: This function is not explicitly available to raylib users
 void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height)
@@ -148,52 +169,90 @@ void TraceLog(int msgType, const char *text, ...)
     traceDebugMsgs = 0;
 #endif
 
-    // NOTE: If trace log file not set, output redirected to stdout
-    if (logstream == NULL) logstream = stdout;
-
     switch(msgType)
     {
-        case INFO: fprintf(logstream, "INFO: "); break;
-        case ERROR: fprintf(logstream, "ERROR: "); break;
-        case WARNING: fprintf(logstream, "WARNING: "); break;
-        case DEBUG: if (traceDebugMsgs) fprintf(logstream, "DEBUG: "); break;
+        case INFO: fprintf(stdout, "INFO: "); break;
+        case ERROR: fprintf(stdout, "ERROR: "); break;
+        case WARNING: fprintf(stdout, "WARNING: "); break;
+        case DEBUG: if (traceDebugMsgs) fprintf(stdout, "DEBUG: "); break;
         default: break;
     }
 
     if ((msgType != DEBUG) || ((msgType == DEBUG) && (traceDebugMsgs)))
     {
         va_start(args, text);
-        vfprintf(logstream, text, args);
+        vfprintf(stdout, text, args);
         va_end(args);
 
-        fprintf(logstream, "\n");
+        fprintf(stdout, "\n");
     }
 
     if (msgType == ERROR) exit(1);      // If ERROR message, exit program
 }
+#endif
 
-// Open a trace log file (if desired)
-void TraceLogOpen(const char *logFileName)
+#if defined(PLATFORM_ANDROID)
+void TraceLog(int msgType, const char *text, ...)
 {
-    // stdout redirected to stream file
-    FILE *logstream = fopen(logFileName, "w");
+    static char buffer[100];
 
-    if (logstream == NULL) TraceLog(WARNING, "Unable to open log file");
+    switch(msgType)
+    {
+        case INFO: strcpy(buffer, "INFO: "); break;
+        case ERROR: strcpy(buffer, "ERROR: "); break;
+        case WARNING: strcpy(buffer, "WARNING: "); break;
+        case DEBUG: strcpy(buffer, "DEBUG: "); break;
+        default: break;
+    }
+
+    strcat(buffer, text);
+    strcat(buffer, "\n");
+
+    va_list args;
+    va_start(args, buffer);
+
+    switch(msgType)
+    {
+        case INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", buffer, args); break;
+        case ERROR: __android_log_vprint(ANDROID_LOG_ERROR, "raylib", buffer, args); break;
+        case WARNING: __android_log_vprint(ANDROID_LOG_WARN, "raylib", buffer, args); break;
+        case DEBUG: __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", buffer, args); break;
+        default: break;
+    }
+
+    va_end(args);
+
+    if (msgType == ERROR) exit(1);
 }
 
-// Close the trace log file
-void TraceLogClose()
+// Initialize asset manager from android app
+void InitAssetManager(AAssetManager *manager) 
 {
-    if (logstream != NULL) fclose(logstream);
+    assetManager = manager;
 }
+
+// Replacement for fopen
+FILE *android_fopen(const char *fileName, const char *mode) 
+{
+    if (mode[0] == 'w') return NULL;
+
+    AAsset *asset = AAssetManager_open(assetManager, fileName, 0);
+    
+    if(!asset) return NULL;
+
+    return funopen(asset, android_read, android_write, android_seek, android_close);
+}
+#endif
 
 // Keep track of memory allocated
 // NOTE: mallocType defines the type of data allocated
+/*
 void RecordMalloc(int mallocType, int mallocSize, const char *msg)
 {
     // TODO: Investigate how to record memory allocation data...
     // Maybe creating my own malloc function...
 }
+*/
 
 // Get the extension for a filename
 const char *GetExtension(const char *fileName)
@@ -203,3 +262,30 @@ const char *GetExtension(const char *fileName)
     return (dot + 1);
 }
 
+//----------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------
+#if defined(PLATFORM_ANDROID)
+static int android_read(void *cookie, char *buf, int size) 
+{
+    return AAsset_read((AAsset *)cookie, buf, size);
+}
+
+static int android_write(void *cookie, const char *buf, int size) 
+{
+    TraceLog(ERROR, "Can't provide write access to the APK");
+
+    return EACCES;
+}
+
+static fpos_t android_seek(void *cookie, fpos_t offset, int whence) 
+{
+    return AAsset_seek((AAsset *)cookie, offset, whence);
+}
+
+static int android_close(void *cookie) 
+{
+    AAsset_close((AAsset *)cookie);
+    return 0;
+}
+#endif

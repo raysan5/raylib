@@ -1,10 +1,10 @@
-/*********************************************************************************************
+/**********************************************************************************************
 *
 *   raylib.models
 *
 *   Basic functions to draw 3d shapes and load/draw 3d models (.OBJ)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -25,13 +25,17 @@
 
 #include "raylib.h"
 
-#include <stdio.h>       // Standard input/output functions, used to read model files data
-#include <stdlib.h>      // Declares malloc() and free() for memory management
-#include <string.h>      // Required for strcmp()
-#include <math.h>        // Used for sin, cos, tan
+#if defined(PLATFORM_ANDROID)
+    #include "utils.h"  // Android fopen function map
+#endif
 
-#include "raymath.h"     // Required for data type Matrix and Matrix functions
-#include "rlgl.h"        // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include <stdio.h>      // Standard input/output functions, used to read model files data
+#include <stdlib.h>     // Declares malloc() and free() for memory management
+#include <string.h>     // Required for strcmp()
+#include <math.h>       // Used for sin, cos, tan
+
+#include "raymath.h"    // Required for data type Matrix and Matrix functions
+#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -442,9 +446,11 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 }
 
 // Draw a plane
-// TODO: Test this function
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
 {
+    // NOTE: QUADS usage require defining a texture
+    rlEnableTexture(1);    // Default white texture
+
     // NOTE: Plane is always created on XZ ground and then rotated
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
@@ -459,11 +465,13 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 1.0f, 0.0f);
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, -0.5f);
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(0.5f, 0.0f, -0.5f);
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, 0.5f);
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(0.5f, 0.0f, 0.5f);
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(-0.5f, 0.0f, 0.5f);
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(0.5f, 0.0f, -0.5f);
         rlEnd();
     rlPopMatrix();
+
+    rlDisableTexture();
 }
 
 // Draw a plane with divisions
@@ -646,20 +654,15 @@ Model LoadModel(const char *fileName)
     if (strcmp(GetExtension(fileName),"obj") == 0) vData = LoadOBJ(fileName);
     else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
 
-    Model model;
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
 
-    model.mesh = vData;                     // Model mesh is vertex data
-    model.textureId = 0;
-
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
-    model.textureId = 1;                    // Default whiteTexture
+    Model model = rlglLoadModel(vData);     // Upload vertex data to GPU
 
     // Now that vertex data is uploaded to GPU, we can free arrays
+    // NOTE: Despite vertex data is useless on OpenGL 3.3 or ES2, we will keep it...
     //free(vData.vertices);
     //free(vData.texcoords);
     //free(vData.normals);
-#endif
 
     return model;
 }
@@ -764,25 +767,19 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
         }
     }
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
-
     // Fill color data
     for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
 
-    Model model;
 
-    model.mesh = vData;                     // Model mesh is vertex data
-    model.textureId = 0;
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
-    model.textureId = 1;                    // Default whiteTexture
+    Model model = rlglLoadModel(vData);
 
     // Now that vertex data is uploaded to GPU, we can free arrays
+    // NOTE: Despite vertex data is useless on OpenGL 3.3 or ES2, we will keep it...
     //free(vData.vertices);
     //free(vData.texcoords);
     //free(vData.normals);
-#endif
 
     return model;
 }
@@ -1092,20 +1089,13 @@ Model LoadCubesmap(Image cubesmap)
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
 
-    Model model;
-
-    model.mesh = vData;                     // Model mesh is vertex data
-    model.textureId = 0;
-
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
-    model.vaoId = rlglLoadModel(vData);     // Use loaded data to generate VAO
-    model.textureId = 1;                    // Default whiteTexture
+    Model model = rlglLoadModel(vData);
 
     // Now that vertex data is uploaded to GPU, we can free arrays
+    // NOTE: Despite vertex data is useless on OpenGL 3.3 or ES2, we will keep it...
     //free(vData.vertices);
     //free(vData.texcoords);
     //free(vData.normals);
-#endif
 
     return model;
 }
@@ -1117,9 +1107,11 @@ void UnloadModel(Model model)
     free(model.mesh.texcoords);
     free(model.mesh.normals);
 
-#if defined(USE_OPENGL_33) || defined(USE_OPENGL_ES2)
+    rlDeleteBuffers(model.vboId[0]);
+    rlDeleteBuffers(model.vboId[1]);
+    rlDeleteBuffers(model.vboId[2]);
+
     rlDeleteVertexArrays(model.vaoId);
-#endif
 }
 
 void SetModelTexture(Model *model, Texture2D texture)
@@ -1268,7 +1260,7 @@ static VertexData LoadOBJ(const char *fileName)
     int numTexCoords = 0;
     int numTriangles = 0;
 
-    FILE* objFile;
+    FILE *objFile;
 
     objFile = fopen(fileName, "rt");
 
@@ -1326,9 +1318,9 @@ static VertexData LoadOBJ(const char *fileName)
 
     // Once we know the number of vertices to store, we create required arrays
     Vector3 *midVertices = (Vector3 *)malloc(numVertex*sizeof(Vector3));
-    Vector3 *midNormals;
+    Vector3 *midNormals = NULL;
     if (numNormals > 0) midNormals = (Vector3 *)malloc(numNormals*sizeof(Vector3));
-    Vector2 *midTexCoords;
+    Vector2 *midTexCoords = NULL;
     if (numTexCoords > 0) midTexCoords = (Vector2 *)malloc(numTexCoords*sizeof(Vector2));
 
     int countVertex = 0;
