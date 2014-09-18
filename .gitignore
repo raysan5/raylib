@@ -2,17 +2,17 @@
 # ...
 
 # Ignore compiled binaries
-src/core.o
-src/shapes.o
-src/textures.o
-src/text.o
-src/models.o
-src/audio.o
-src/vector3.o
-src/stb_image.o
+src/*.o
 src/*.exe
 examples/*.o
 examples/*.exe
+templates/*.exe
+
+# Ignore Android generated files and folders
+src_android/obj/
+templates/android_project/bin/
+templates/android_project/obj/
+templates/android_project/libs/
 
 # Ignore thumbnails created by windows
 Thumbs.db
