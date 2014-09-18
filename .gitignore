@@ -48,6 +48,8 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 ipch/
 *.opensdf
+*.exe
+!tools/rrem.exe
 
 # Ignore files build by xcode
 *.mode*v*
