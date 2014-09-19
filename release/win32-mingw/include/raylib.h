@@ -13,7 +13,8 @@
 *     Multiple textures support, including DDS and mipmaps generation
 *     Basic 3d support for Shapes, Models, Heightmaps and Billboards
 *     Powerful math module for Vector and Matrix operations [raymath]
-*     Audio loading and playing with streaming support
+*     Audio loading and playing with streaming support (WAV and OGG)
+*     Multiplatform support, including Android devices and Raspberry Pi
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
@@ -328,6 +329,7 @@ bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad b
 #endif
 
 #if defined(PLATFORM_ANDROID)
+bool IsScreenTouched(void);                             // Detect screen touch event
 int GetTouchX(void);                                    // Returns touch position X
 int GetTouchY(void);                                    // Returns touch position Y
 Vector2 GetTouchPosition(void);                         // Returns touch position XY

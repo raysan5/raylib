@@ -108,6 +108,16 @@ static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       
 static bool windowReady = false;                // Used to detect display initialization
+
+// Gestures detection variables
+static float tapTouchX, tapTouchY;
+static bool touchTap = false;
+static int32_t touchId;
+const int32_t DOUBLE_TAP_TIMEOUT = 300*1000000;
+const int32_t DOUBLE_TAP_SLOP = 100;
+const int32_t TAP_TIMEOUT = 180*1000000;
+const int32_t TOUCH_SLOP = 8;
+
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
@@ -816,6 +826,11 @@ bool IsGamepadButtonUp(int gamepad, int button)
 #endif
 
 #if defined(PLATFORM_ANDROID)
+bool IsScreenTouched(void)
+{
+    return touchTap;
+}
+
 // Returns touch position X
 int GetTouchX(void)
 {
@@ -958,12 +973,14 @@ static void InitDisplay(int width, int height)
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    // Type of context support -> Required on RPI?
         //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,         // Don't use it on Android!
-        EGL_BLUE_SIZE, 8,   // Alternative: 5
-        EGL_GREEN_SIZE, 8,  // Alternative: 6
-        EGL_RED_SIZE, 8,    // Alternative: 5
-        //EGL_ALPHA_SIZE, 8,
-        EGL_DEPTH_SIZE, 8,  // NOTE: Required to use Depth testing!
-        //EGL_SAMPLES, 4,   // 4x Antialiasing (Free on MALI GPUs)
+        EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
+        EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
+        EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
+        //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth
+        EGL_DEPTH_SIZE, 8,          // Depth buffer size (Required to use Depth testing!)
+        //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
+        //EGL_SAMPLE_BUFFERS, 1,    // Activate MSAA
+        //EGL_SAMPLES, 4,           // 4x Antialiasing (Free on MALI GPUs)
         EGL_NONE
     };
 
@@ -1153,6 +1170,51 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
         {
             touchX = AMotionEvent_getX(event, 0) * ((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
             touchY = AMotionEvent_getY(event, 0) * ((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
+        }
+
+        // Detect TAP event
+/*
+        if (AMotionEvent_getPointerCount(event) > 1 )
+        {
+            // Only support single touch
+            return false;
+        }
+*/
+        int32_t action = AMotionEvent_getAction(event);
+        unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+
+        switch (flags)
+        {
+            case AMOTION_EVENT_ACTION_DOWN:
+            {
+                touchId = AMotionEvent_getPointerId(event, 0);
+                tapTouchX = AMotionEvent_getX(event, 0);
+                tapTouchY = AMotionEvent_getY(event, 0);
+
+            } break;
+            case AMOTION_EVENT_ACTION_UP:
+            {
+                int64_t eventTime = AMotionEvent_getEventTime(event);
+                int64_t downTime = AMotionEvent_getDownTime(event);
+
+                if (eventTime - downTime <= TAP_TIMEOUT)
+                {
+                    if (touchId == AMotionEvent_getPointerId(event, 0))
+                    {
+                        float x = AMotionEvent_getX(event, 0) - tapTouchX;
+                        float y = AMotionEvent_getY(event, 0) - tapTouchY;
+
+                        float densityFactor = 1.0f;
+
+                        if ( x*x + y*y < TOUCH_SLOP*TOUCH_SLOP * densityFactor)
+                        {
+                            // TAP Detected
+                            touchTap = true;
+                        }
+                    }
+                }
+                break;
+            }
         }
 
         //float AMotionEvent_getX(event, size_t pointer_index);
@@ -1367,6 +1429,9 @@ static void PollInputEvents(void)
 #elif defined(PLATFORM_ANDROID)
 
     // TODO: Check virtual keyboard (?)
+
+    // Reset touchTap event
+    touchTap = false;
 
     // Poll Events (registered events)
     while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
