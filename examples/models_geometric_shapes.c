@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 07b - Draw some basic 3d shapes (cube, sphere, cylinder...)
+*   raylib [models] example - Draw some basic geometric shapes (cube, sphere, cylinder...)
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,10 +18,10 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
+
     // Define the camera to look into our 3d world
     Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
-    
-    InitWindow(screenWidth, screenHeight, "raylib example 07b - 3d shapes");
     
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

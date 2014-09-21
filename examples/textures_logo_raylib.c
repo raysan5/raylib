@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 04a - Texture loading and drawing 
+*   raylib [textures] example - Texture loading and drawing 
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,7 +18,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib example 04a - texture loading and drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing");
     
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D texture = LoadTexture("resources/raylib_logo.png");        // Texture loading

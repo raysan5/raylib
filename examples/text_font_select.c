@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 06c - Font selection...
+*   raylib [text] example - Font selector
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,7 +18,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 150;
 
-    InitWindow(screenWidth, screenHeight, "raylib example 06c - font selection");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - font selector");
     
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     SpriteFont fonts[8];        // SpriteFont array
@@ -52,7 +52,7 @@ int main()
     
     int framesCounter = 0;      // Useful to count frames button is 'active' = clicked
     
-    SetTargetFPS(60);
+    SetTargetFPS(60);           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
     
     // Main game loop

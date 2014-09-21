@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 06b - raylib Logo Animation
+*   raylib [shapes] example - raylib logo animation
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This example has been created using raylib 1.1 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -17,6 +17,8 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
+    
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib logo animation");
     
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
@@ -30,13 +32,12 @@ int main()
     int bottomSideRecWidth = 16;
     int rightSideRecHeight = 16;
     
-    char raylib[8] = "       ";     // raylib text array, max 8 letters
+    char raylib[8] = "       \0";   // raylib text array, max 8 letters
     
     int state = 0;                  // Tracking animation states (State Machine)
-    
+
     float alpha = 1.0;              // Useful for fading
-    
-    InitWindow(screenWidth, screenHeight, "raylib example 06b - raylib logo animation");
+
     
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -115,10 +116,13 @@ int main()
                 bottomSideRecWidth = 16;
                 rightSideRecHeight = 16;
     
-                for (int i = 0; i < 8; i++) raylib[i] = ' ';
+                for (int i = 0; i < 7; i++) raylib[i] = ' ';
+
+                raylib[7] = '\0';   // Last character is end-of-line
+
                 alpha = 1.0;
 
-                state = 0;      // Return to State 0
+                state = 0;          // Return to State 0
             }
         }
         //----------------------------------------------------------------------------------
@@ -148,10 +152,15 @@ int main()
             }
             else if (state == 3)
             {
-                DrawRectangle(logoPositionX, logoPositionY, 256, 256, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
+
+                DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
+                DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
+
                 DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
-                
-                DrawText(raylib, 356, 273, 50, Fade(BLACK, alpha));
+
+                DrawText(raylib, screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
             }
             else if (state == 4)
             {

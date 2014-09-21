@@ -1,13 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib example 08 - Audio loading and playing
+*   raylib [audio] example - Sound loading and playing
 *
-*   NOTE: This example requires OpenAL32 dll installed (or in the same folder)
+*   NOTE: This example requires OpenAL Soft library installed
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -20,11 +20,12 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    InitWindow(screenWidth, screenHeight, "raylib example 08 - audio loading and playing");
+    InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound loading and playing");
     
     InitAudioDevice();      // Initialize audio device
     
-    Sound fx = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
+    Sound fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
+    Sound fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -32,7 +33,9 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_SPACE)) PlaySound(fx);     // Play the sound!    
+        if (IsKeyPressed(KEY_SPACE)) PlaySound(fxWav);      // Play WAV sound
+
+        if (IsKeyPressed(KEY_ENTER)) PlaySound(fxOgg);      // Play OGG sound
         //----------------------------------------------------------------------------------
         
         // Draw
@@ -41,7 +44,9 @@ int main()
         
             ClearBackground(RAYWHITE);
             
-            DrawText("Press SPACE to PLAY the SOUND!", 240, 200, 20, LIGHTGRAY);
+            DrawText("Press SPACE to PLAY the WAV sound!", 200, 180, 20, LIGHTGRAY);
+
+            DrawText("Press ENTER to PLAY the OGG sound!", 200, 220, 20, LIGHTGRAY);
         
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -49,7 +54,8 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadSound(fx);        // Unload sound data
+    UnloadSound(fxWav);     // Unload sound data
+    UnloadSound(fxOgg);     // Unload sound data
     
     CloseAudioDevice();     // Close audio device
     

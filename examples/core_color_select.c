@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 06a - Color selection by mouse (collision detection)
+*   raylib [core] example - Color selection by mouse (collision detection)
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -17,29 +17,29 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 400;
+
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - color selection (collision detection)");
     
     Color colors[21] = { DARKGRAY, MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, DARKBROWN,
                          GRAY, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK, YELLOW,
                          GREEN, SKYBLUE, PURPLE, BEIGE };
     
-    Rectangle recs[21];             // Rectangles array
+    Rectangle colorsRecs[21];             // Rectangles array
     
-    // Fills recs data (for every rectangle)
+    // Fills colorsRecs data (for every rectangle)
     for (int i = 0; i < 21; i++)
     {
-        recs[i].x = 20 + 100*(i%7) + 10*(i%7);
-        recs[i].y = 40 + 100*(i/7) + 10*(i/7);
-        recs[i].width = 100;
-        recs[i].height = 100;
+        colorsRecs[i].x = 20 + 100*(i%7) + 10*(i%7);
+        colorsRecs[i].y = 40 + 100*(i/7) + 10*(i/7);
+        colorsRecs[i].width = 100;
+        colorsRecs[i].height = 100;
     }
     
-    bool selected[21] = { false };   // Selected rectangles indicator
+    bool selected[21] = { false };  // Selected rectangles indicator
     
     Vector2 mousePoint;
     
-    InitWindow(screenWidth, screenHeight, "raylib example 06a - color selection");
-    
-    SetTargetFPS(60);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -51,7 +51,7 @@ int main()
         
         for (int i = 0; i < 21; i++)    // Iterate along all the rectangles
         {
-            if (CheckCollisionPointRec(mousePoint, recs[i]))
+            if (CheckCollisionPointRec(mousePoint, colorsRecs[i]))
             {   
                 colors[i].a = 120;
                 
@@ -69,15 +69,15 @@ int main()
             
             for (int i = 0; i < 21; i++)    // Draw all rectangles
             {
-                DrawRectangleRec(recs[i], colors[i]);
+                DrawRectangleRec(colorsRecs[i], colors[i]);
                 
                 // Draw four rectangles around selected rectangle
                 if (selected[i])
                 {
-                    DrawRectangle(recs[i].x, recs[i].y, 100, 10, RAYWHITE);        // Square top rectangle
-                    DrawRectangle(recs[i].x, recs[i].y, 10, 100, RAYWHITE);        // Square left rectangle
-                    DrawRectangle(recs[i].x + 90, recs[i].y, 10, 100, RAYWHITE);   // Square right rectangle
-                    DrawRectangle(recs[i].x, recs[i].y + 90, 100, 10, RAYWHITE);   // Square bottom rectangle
+                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y, 100, 10, RAYWHITE);        // Square top rectangle
+                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y, 10, 100, RAYWHITE);        // Square left rectangle
+                    DrawRectangle(colorsRecs[i].x + 90, colorsRecs[i].y, 10, 100, RAYWHITE);   // Square right rectangle
+                    DrawRectangle(colorsRecs[i].x, colorsRecs[i].y + 90, 100, 10, RAYWHITE);   // Square bottom rectangle
                 }
             }
        

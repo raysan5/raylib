@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 03a - Keyboard input 
+*   raylib [core] example - Keyboard input 
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,10 +18,10 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    Vector2 ballPosition = { screenWidth/2, screenHeight/2 };
-    
-    InitWindow(screenWidth, screenHeight, "raylib example 05 - keyboard input");
-    
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - keyboard input");
+
+    Vector2 ballPosition = { screenWidth/2, screenHeight/2 };    
+
     SetTargetFPS(60);       // Set target frames-per-second
     //--------------------------------------------------------------------------------------
     

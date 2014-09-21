@@ -1,11 +1,14 @@
 /*******************************************************************************************
 *
-*   raylib example 03c - Gamepad input
+*   raylib [core] example - Gamepad input
+*
+*   NOTE: This example requires a Gamepad connected to the system
+*         raylib is configured to work with Xbox 360 gamepad, check raylib.h for buttons configuration
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,12 +21,12 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - gamepad input");
+    
     Vector2 ballPosition = { screenWidth/2, screenHeight/2 };
-    Vector2 gamepadMove = { 0, 0 };
-    
-    InitWindow(screenWidth, screenHeight, "raylib example 01 - gamepad input");
-    
-    SetTargetFPS(60);       // Set target frames-per-second
+    Vector2 gamepadMovement = { 0, 0 };
+
+    SetTargetFPS(60);               // Set target frames-per-second
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -33,10 +36,10 @@ int main()
         //----------------------------------------------------------------------------------
         if (IsGamepadAvailable(GAMEPAD_PLAYER1))
         {
-            gamepadMove = GetGamepadMovement(GAMEPAD_PLAYER1);
+            gamepadMovement = GetGamepadMovement(GAMEPAD_PLAYER1);
             
-            ballPosition.x += gamepadMove.x;
-            ballPosition.y -= gamepadMove.y;
+            ballPosition.x += gamepadMovement.x;
+            ballPosition.y -= gamepadMovement.y;
         
             if (IsGamepadButtonPressed(GAMEPAD_PLAYER1, GAMEPAD_BUTTON_A))
             {

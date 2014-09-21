@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 05a - SpriteFont loading and drawing some text with it 
+*   raylib [text] example - SpriteFont loading and usage
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -17,13 +17,13 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
+
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite fonts usage");
     
     const char msg1[50] = "THIS IS A custom SPRITE FONT...";
     const char msg2[50] = "...and this is ANOTHER CUSTOM font...";
     const char msg3[50] = "...and a THIRD one! GREAT! :D";
-    
-    InitWindow(screenWidth, screenHeight, "raylib example 05a - sprite fonts");
-    
+
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
     SpriteFont font1 = LoadSpriteFont("resources/fonts/custom_mecha.png");          // SpriteFont loading
     SpriteFont font2 = LoadSpriteFont("resources/fonts/custom_alagard.png");        // SpriteFont loading

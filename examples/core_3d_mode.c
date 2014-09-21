@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 07a - Initialize 3d mode
+*   raylib [core] example - Initialize 3d mode
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,11 +18,14 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    Vector3 position = { 0.0, 0.0, 0.0 };
-    
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d mode");
+
+    // Define the camera to look into our 3d world
     Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
-    
-    InitWindow(screenWidth, screenHeight, "raylib example 07a - 3d mode");
+
+    Vector3 cubePosition = { 0.0, 0.0, 0.0 };
+
+    //SetTargetFPS(60);   // Set our game to run at 60 frames-per-second, but not now...
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -41,7 +44,8 @@ int main()
             
             Begin3dMode(camera);
             
-                DrawCube(position, 2, 2, 2, RED);
+                DrawCube(cubePosition, 2, 2, 2, RED);
+                DrawCubeWires(cubePosition, 2, 2, 2, MAROON);
 
                 DrawGrid(10.0, 1.0);
                 

@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 02c - Draw raylib custom color palette
+*   raylib [shapes] example - Draw raylib custom color palette
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,7 +18,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    InitWindow(screenWidth, screenHeight, "raylib example 02c - raylib color palette");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib color palette");
     //--------------------------------------------------------------------------------------
     
     // Main game loop

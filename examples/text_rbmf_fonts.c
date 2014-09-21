@@ -1,11 +1,14 @@
 /*******************************************************************************************
 *
-*   raylib example 05b - raylib bitmap font (rbmf) loading and using
+*   raylib [text] example - raylib bitmap font (rbmf) loading and usage
+*
+*   NOTE: raylib is distributed with some free to use fonts (even for commercial pourposes!)
+*         To view details and credits for those fonts, check raylib license file
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,17 +21,17 @@ int main()
     int screenWidth = 560;
     int screenHeight = 800;
 
-    InitWindow(screenWidth, screenHeight, "raylib example 05b - rBMF fonts");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - rBMF fonts");
     
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    SpriteFont font1 = LoadSpriteFont("resources/fonts/alagard.rbmf");       // SpriteFont loading
-    SpriteFont font2 = LoadSpriteFont("resources/fonts/pixelplay.rbmf");     // SpriteFont loading
-    SpriteFont font3 = LoadSpriteFont("resources/fonts/mecha.rbmf");         // SpriteFont loading
-    SpriteFont font4 = LoadSpriteFont("resources/fonts/setback.rbmf");       // SpriteFont loading
-    SpriteFont font5 = LoadSpriteFont("resources/fonts/romulus.rbmf");       // SpriteFont loading
-    SpriteFont font6 = LoadSpriteFont("resources/fonts/pixantiqua.rbmf");    // SpriteFont loading
-    SpriteFont font7 = LoadSpriteFont("resources/fonts/alpha_beta.rbmf");    // SpriteFont loading
-    SpriteFont font8 = LoadSpriteFont("resources/fonts/jupiter_crash.rbmf"); // SpriteFont loading
+    SpriteFont font1 = LoadSpriteFont("resources/fonts/alagard.rbmf");       // rBMF font loading
+    SpriteFont font2 = LoadSpriteFont("resources/fonts/pixelplay.rbmf");     // rBMF font loading
+    SpriteFont font3 = LoadSpriteFont("resources/fonts/mecha.rbmf");         // rBMF font loading
+    SpriteFont font4 = LoadSpriteFont("resources/fonts/setback.rbmf");       // rBMF font loading
+    SpriteFont font5 = LoadSpriteFont("resources/fonts/romulus.rbmf");       // rBMF font loading
+    SpriteFont font6 = LoadSpriteFont("resources/fonts/pixantiqua.rbmf");    // rBMF font loading
+    SpriteFont font7 = LoadSpriteFont("resources/fonts/alpha_beta.rbmf");    // rBMF font loading
+    SpriteFont font8 = LoadSpriteFont("resources/fonts/jupiter_crash.rbmf"); // rBMF font loading
     //--------------------------------------------------------------------------------------
     
     // Main game loop

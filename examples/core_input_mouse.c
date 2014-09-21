@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example 03b - Mouse input 
+*   raylib [core] example - Mouse input 
 *
 *   This example has been created using raylib 1.0 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -18,10 +18,10 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    Vector2 ballPosition = { -100.0, -100.0 };
-    int mouseX, mouseY;
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - mouse input");    
     
-    InitWindow(screenWidth, screenHeight, "raylib example 06 - mouse input");
+    int mouseX, mouseY;
+    Vector2 ballPosition = { -100.0, -100.0 };
     //---------------------------------------------------------------------------------------
     
     // Main game loop

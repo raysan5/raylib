@@ -72,24 +72,36 @@ endif
 
 # define all object files required
 EXAMPLES = \
-	ex01_basic_window \
-	ex02a_logo_raylib \
-	ex02b_basic_shapes \
-	ex02c_color_palette \
-	ex03a_input_keys \
-	ex03b_input_mouse \
-	ex04a_textures \
-	ex04b_texture_rectangle \
-	ex05a_sprite_fonts \
-	ex05b_rbmf_fonts \
-	ex06a_color_select \
-	ex06b_logo_anim \
-	ex06c_font_select \
-	ex07a_3d_mode \
-	ex07b_3d_shapes \
-	ex07c_3d_models \
-	ex08_audio
-	#ex03c_input_gamepad \
+	core_basic_window \
+	core_input_keys \
+	core_input_mouse \
+    core_mouse_wheel \
+    core_random_values \
+	core_color_select \
+	core_3d_mode \
+	shapes_logo_raylib \
+	shapes_basic_shapes \
+	shapes_color_palette \
+    shapes_logo_raylib_anim \
+	textures_logo_raylib \
+    textures_image_loading \
+	textures_rectangle \
+    textures_compressed_dds \
+    textures_mipmaps \
+    textures_srcrec_dstrec \
+	text_sprite_fonts \
+	text_rbmf_fonts \
+    text_format_text \
+	text_font_select \
+	models_geometric_shapes \
+    models_planes \
+    models_billboard \
+	models_obj_loading \
+    models_heightmap \
+    models_cubesmap \
+	audio_sound_loading \
+    audio_music_stream \
+	#core_input_gamepad \
 
 
 # typing 'make' will invoke the first target entry in the file,
@@ -99,82 +111,126 @@ default: examples
 # compile all examples
 examples: $(EXAMPLES)
 
-# compile example 01 - basic window
-ex01_basic_window: ex01_basic_window.c
+# compile [core] example - basic window
+core_basic_window: core_basic_window.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex02a_logo_raylib: ex02a_logo_raylib.c
+# compile [core] example - keyboard input
+core_input_keys: core_input_keys.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex02b_basic_shapes: ex02b_basic_shapes.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile example 01 - basic window
-ex02c_color_palette: ex02c_color_palette.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile example 01 - basic window
-ex03a_input_keys: ex03a_input_keys.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile example 01 - basic window
-ex03b_input_mouse: ex03b_input_mouse.c
+# compile [core] example - mouse input
+core_input_mouse: core_input_mouse.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-# compile example 01 - basic window
-ex03c_input_gamepad: ex03c_input_gamepad.c
+# compile [core] example - gamepad input
+core_input_gamepad: core_input_gamepad.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 endif
-    
-# compile example 01 - basic window
-ex04a_textures: ex04a_textures.c
+
+# compile [core] example - mouse wheel
+core_mouse_wheel: core_mouse_wheel.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex04b_texture_rectangle: ex04b_texture_rectangle.c
+# compile [core] example - generate random values
+core_random_values: core_random_values.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex05a_sprite_fonts: ex05a_sprite_fonts.c
+# compile [core] example - color selection (collision detection)
+core_color_select: core_color_select.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex05b_rbmf_fonts: ex05b_rbmf_fonts.c
+# compile [core] example - 3d mode
+core_3d_mode: core_3d_mode.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex06a_color_select: ex06a_color_select.c
+# compile [shapes] example - raylib logo (with basic shapes)
+shapes_logo_raylib: shapes_logo_raylib.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex06b_logo_anim: ex06b_logo_anim.c
+# compile [shapes] example - basic shapes usage (rectangle, circle, ...)
+shapes_basic_shapes: shapes_basic_shapes.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex06b_shape_select: ex06b_shape_select.c
+# compile [shapes] example - raylib color palette
+shapes_color_palette: shapes_color_palette.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex06c_font_select: ex06c_font_select.c
+# compile [shapes] example - raylib logo animation
+shapes_logo_raylib_anim: shapes_logo_raylib_anim.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex07a_3d_mode: ex07a_3d_mode.c
+# compile [textures] example - raylib logo texture loading
+textures_logo_raylib: textures_logo_raylib.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex07b_3d_shapes: ex07b_3d_shapes.c
+# compile [textures] example - image loading and conversion to texture
+textures_image_loading: textures_image_loading.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex07c_3d_models: ex07c_3d_models.c
+# compile [textures] example - texture rectangle drawing
+textures_rectangle: textures_rectangle.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile example 01 - basic window
-ex08_audio: ex08_audio.c
+# compile [textures] example - compressed texture loading (DDS)
+textures_compressed_dds: textures_compressed_dds.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [textures] example - texture mipmaps generation
+textures_mipmaps: textures_mipmaps.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [textures] example - texture source and destination rectangles
+textures_srcrec_dstrec: textures_srcrec_dstrec.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - sprite fonts loading
+text_sprite_fonts: text_sprite_fonts.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - raylib bitmap fonts (rBMF)
+text_rbmf_fonts: text_rbmf_fonts.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - text formatting
+text_format_text: text_format_text.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - font selection program
+text_font_select: text_font_select.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - basic geometric 3d shapes
+models_geometric_shapes: models_geometric_shapes.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - basic window
+models_planes: models_planes.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - billboard usage
+models_billboard: models_billboard.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - OBJ model loading
+models_obj_loading: models_obj_loading.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - heightmap loading
+models_heightmap: models_heightmap.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - cubesmap loading
+models_cubesmap: models_cubesmap.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [audio] example - sound loading and playing (WAV and OGG)
+audio_sound_loading: audio_sound_loading.c
+	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [audio] example - music stream playing (OGG)
+audio_music_stream: audio_music_stream.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # clean everything
