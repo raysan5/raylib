@@ -35,6 +35,7 @@ NOTE:
 [src] Added makefile for Windows and RPI
 [src] Added resources file (raylib icon and executable info)
 [examples] Added makefile for Windows and RPI
+[examples] Renamed and merged with test examples for coherence with module names
 [templates] Added multiple templates to be use as a base-code for games
 
 -----------------------------------------------
