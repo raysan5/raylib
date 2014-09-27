@@ -18,7 +18,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib color palette");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib colors palette");
     //--------------------------------------------------------------------------------------
     
     // Main game loop
