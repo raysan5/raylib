@@ -72,36 +72,36 @@ endif
 
 # define all object files required
 EXAMPLES = \
-	core_basic_window \
-	core_input_keys \
-	core_input_mouse \
+    core_basic_window \
+    core_input_keys \
+    core_input_mouse \
     core_mouse_wheel \
     core_random_values \
-	core_color_select \
-	core_3d_mode \
-	shapes_logo_raylib \
-	shapes_basic_shapes \
-	shapes_color_palette \
+    core_color_select \
+    core_3d_mode \
+    shapes_logo_raylib \
+    shapes_basic_shapes \
+    shapes_colors_palette \
     shapes_logo_raylib_anim \
-	textures_logo_raylib \
+    textures_logo_raylib \
     textures_image_loading \
-	textures_rectangle \
+    textures_rectangle \
     textures_compressed_dds \
     textures_mipmaps \
     textures_srcrec_dstrec \
-	text_sprite_fonts \
-	text_rbmf_fonts \
+    text_sprite_fonts \
+    text_rbmf_fonts \
     text_format_text \
-	text_font_select \
-	models_geometric_shapes \
+    text_font_select \
+    models_geometric_shapes \
     models_planes \
     models_billboard \
-	models_obj_loading \
+    models_obj_loading \
     models_heightmap \
     models_cubesmap \
-	audio_sound_loading \
+    audio_sound_loading \
     audio_music_stream \
-	#core_input_gamepad \
+    #core_input_gamepad \
 
 
 # typing 'make' will invoke the first target entry in the file,
