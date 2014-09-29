@@ -154,7 +154,7 @@ shapes_basic_shapes: shapes_basic_shapes.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib color palette
-shapes_color_palette: shapes_color_palette.c
+shapes_colors_palette: shapes_colors_palette.c
 	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo animation
