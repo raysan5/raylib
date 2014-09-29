@@ -19,7 +19,7 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - sprite fonts usage");
-    
+
     const char msg1[50] = "THIS IS A custom SPRITE FONT...";
     const char msg2[50] = "...and this is ANOTHER CUSTOM font...";
     const char msg3[50] = "...and a THIRD one! GREAT! :D";
@@ -28,20 +28,20 @@ int main()
     SpriteFont font1 = LoadSpriteFont("resources/fonts/custom_mecha.png");          // SpriteFont loading
     SpriteFont font2 = LoadSpriteFont("resources/fonts/custom_alagard.png");        // SpriteFont loading
     SpriteFont font3 = LoadSpriteFont("resources/fonts/custom_jupiter_crash.png");  // SpriteFont loading
-    
+
     Vector2 fontPosition1, fontPosition2, fontPosition3;
-    
+
     fontPosition1.x = screenWidth/2 - MeasureTextEx(font1, msg1, GetFontBaseSize(font1), -3).x/2;
     fontPosition1.y = screenHeight/2 - GetFontBaseSize(font1)/2 - 80;
-    
+
     fontPosition2.x = screenWidth/2 - MeasureTextEx(font2, msg2, GetFontBaseSize(font2), -2).x/2;
     fontPosition2.y = screenHeight/2 - GetFontBaseSize(font2)/2 - 10;
-    
+
     fontPosition3.x = screenWidth/2 - MeasureTextEx(font3, msg3, GetFontBaseSize(font3), 2).x/2;
     fontPosition3.y = screenHeight/2 - GetFontBaseSize(font3)/2 + 50;
-    
+
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -49,17 +49,17 @@ int main()
         //----------------------------------------------------------------------------------
         // TODO: Update variables here...
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             DrawTextEx(font1, msg1, fontPosition1, GetFontBaseSize(font1), -3, WHITE);
-            DrawTextEx(font2, msg2, fontPosition2, GetFontBaseSize(font2), -2, WHITE);     
-            DrawTextEx(font3, msg3, fontPosition3, GetFontBaseSize(font3), 2, WHITE);                 
-      
+            DrawTextEx(font2, msg2, fontPosition2, GetFontBaseSize(font2), -2, WHITE);
+            DrawTextEx(font3, msg3, fontPosition3, GetFontBaseSize(font3), 2, WHITE);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -69,9 +69,9 @@ int main()
     UnloadSpriteFont(font1);      // SpriteFont unloading
     UnloadSpriteFont(font2);      // SpriteFont unloading
     UnloadSpriteFont(font3);      // SpriteFont unloading
-    
+
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

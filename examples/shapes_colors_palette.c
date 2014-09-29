@@ -17,10 +17,10 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
-    
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib colors palette");
+
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib color palette");
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -28,15 +28,15 @@ int main()
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             DrawText("raylib color palette", 28, 42, 20, BLACK);
-            
+
             DrawRectangle(26, 80, 100, 100, DARKGRAY);
             DrawRectangle(26, 188, 100, 100, GRAY);
             DrawRectangle(26, 296, 100, 100, LIGHTGRAY);
@@ -59,7 +59,7 @@ int main()
             DrawRectangle(674, 188, 100, 100, BROWN);
             DrawRectangle(674, 296, 100, 100, BEIGE);
 
-            
+
             DrawText("DARKGRAY", 65, 166, 10, BLACK);
             DrawText("GRAY", 93, 274, 10, BLACK);
             DrawText("LIGHTGRAY", 61, 382, 10, BLACK);
@@ -81,7 +81,7 @@ int main()
             DrawText("DARKBROWN", 705, 166, 10, BLACK);
             DrawText("BROWN", 733, 274, 10, BLACK);
             DrawText("BEIGE", 737, 382, 10, BLACK);
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -90,6 +90,6 @@ int main()
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

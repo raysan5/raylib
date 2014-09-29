@@ -30,10 +30,10 @@ int main()
     Vector3 mapPosition = { -4, 0.0, -4 };              // Set model position
 
     UnloadImage(img);       // Unload heightmap image from RAM, already uploaded to VRAM
-    
+
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -41,25 +41,25 @@ int main()
         //----------------------------------------------------------------------------------
         // ...
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             Begin3dMode(camera);
-            
+
                 DrawModel(map, mapPosition, 0.5f, MAROON);
-                
+
                 DrawGrid(10.0, 1.0);
-                
-                DrawGizmo(mapPosition); 
-                
+
+                DrawGizmo(mapPosition);
+
             End3dMode();
-            
+
             DrawFPS(10, 10);
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -68,9 +68,9 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture);     // Unload texture
     UnloadModel(map);           // Unload model
-    
+
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

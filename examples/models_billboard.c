@@ -19,7 +19,7 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - drawing billboards");
-    
+
     // Define the camera to look into our 3d world
     Camera camera = {{ 10.0, 8.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
 
@@ -29,7 +29,7 @@ int main()
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -40,24 +40,24 @@ int main()
         if (IsKeyDown(KEY_UP)) camera.position.y -= 0.2;
         if (IsKeyDown(KEY_DOWN)) camera.position.y += 0.2;
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             Begin3dMode(camera);
-            
+
                 //DrawBillboard(camera, lena, billPosition, 1.0, WHITE);
                 DrawBillboardRec(camera, lena, eyesRec, billPosition, 4.0, WHITE);
-            
+
                 DrawGrid(10.0, 1.0);        // Draw a grid
-                
+
             End3dMode();
-            
+
             DrawFPS(10, 10);
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -65,9 +65,9 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(lena);        // Unload texture
-    
+
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

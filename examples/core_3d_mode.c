@@ -27,7 +27,7 @@ int main()
 
     //SetTargetFPS(60);   // Set our game to run at 60 frames-per-second, but not now...
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -35,26 +35,26 @@ int main()
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(WHITE);
-            
+
             Begin3dMode(camera);
-            
+
                 DrawCube(cubePosition, 2, 2, 2, RED);
                 DrawCubeWires(cubePosition, 2, 2, 2, MAROON);
 
                 DrawGrid(10.0, 1.0);
-                
+
             End3dMode();
-            
+
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
-            
+
             DrawFPS(10, 10);
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -63,6 +63,6 @@ int main()
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

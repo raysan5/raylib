@@ -31,7 +31,7 @@ int main()
 
     UnloadImage(image);     // Once texture has been created, we can unload image data from RAM
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -39,18 +39,18 @@ int main()
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
-            DrawTexture(texture, screenWidth/2 - texture.width/2, 
+
+            DrawTexture(texture, screenWidth/2 - texture.width/2,
                         screenHeight/2 - texture.height/2 - 30, WHITE);
-            
+
             DrawText("this IS a texture with mipmaps! really!", 210, 360, 20, GRAY);
-       
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -58,9 +58,9 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture);       // Texture unloading
-    
+
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

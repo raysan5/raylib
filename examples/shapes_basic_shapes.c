@@ -20,7 +20,7 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - basic shapes drawing");
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -28,13 +28,13 @@ int main()
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             DrawText("some basic shapes available on raylib", 20, 20, 20, DARKGRAY);
 
             DrawLine(18, 42, screenWidth - 18, 42, BLACK);
@@ -47,16 +47,16 @@ int main()
             DrawRectangleGradient(screenWidth/4*2 - 90, 170, 180, 130, MAROON, GOLD);
             DrawRectangleLines(screenWidth/4*2 - 40, 320, 80, 60, ORANGE);
 
-            DrawTriangle((Vector2){screenWidth/4*3, 80}, 
-                         (Vector2){screenWidth/4*3 - 60, 150}, 
+            DrawTriangle((Vector2){screenWidth/4*3, 80},
+                         (Vector2){screenWidth/4*3 - 60, 150},
                          (Vector2){screenWidth/4*3 + 60, 150}, VIOLET);
-                         
-            DrawTriangleLines((Vector2){screenWidth/4*3, 160}, 
-                              (Vector2){screenWidth/4*3 - 20, 230}, 
+
+            DrawTriangleLines((Vector2){screenWidth/4*3, 160},
+                              (Vector2){screenWidth/4*3 - 20, 230},
                               (Vector2){screenWidth/4*3 + 20, 230}, DARKBLUE);
-                              
+
             DrawPoly((Vector2){screenWidth/4*3, 320}, 6, 80, 0, BROWN);
-                    
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -65,6 +65,6 @@ int main()
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

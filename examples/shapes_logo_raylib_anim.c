@@ -17,31 +17,31 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib logo animation");
-    
+
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
-    
+
     int framesCounter = 0;
     int lettersCount = 0;
-    
+
     int topSideRecWidth = 16;
     int leftSideRecHeight = 16;
-    
+
     int bottomSideRecWidth = 16;
     int rightSideRecHeight = 16;
-    
+
     char raylib[8] = "       \0";   // raylib text array, max 8 letters
-    
+
     int state = 0;                  // Tracking animation states (State Machine)
 
     float alpha = 1.0;              // Useful for fading
 
-    
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -50,9 +50,9 @@ int main()
         if (state == 0)                 // State 0: Small box blinking
         {
             framesCounter++;
-        
+
             if (framesCounter == 120)
-            {                
+            {
                 state = 1;
                 framesCounter = 0;      // Reset counter... will be used later...
             }
@@ -61,26 +61,26 @@ int main()
         {
             topSideRecWidth += 4;
             leftSideRecHeight += 4;
-            
+
             if (topSideRecWidth == 256) state = 2;
         }
         else if (state == 2)            // State 2: Bottom and right bars growing
         {
             bottomSideRecWidth += 4;
             rightSideRecHeight += 4;
-            
+
             if (bottomSideRecWidth == 256) state = 3;
         }
         else if (state == 3)            // State 3: Letters appearing (one by one)
         {
             framesCounter++;
-            
+
             if (framesCounter/12)       // Every 12 frames, one more letter!
-            {    
+            {
                 lettersCount++;
                 framesCounter = 0;
             }
-            
+
             switch (lettersCount)
             {
                 case 1: raylib[0] = 'r'; break;
@@ -91,11 +91,11 @@ int main()
                 case 6: raylib[5] = 'b'; break;
                 default: break;
             }
-            
+
             if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
             {
                 alpha -= 0.02;
-                
+
                 if (alpha <= 0)
                 {
                     alpha = 0;
@@ -109,13 +109,13 @@ int main()
             {
                 framesCounter = 0;
                 lettersCount = 0;
-    
+
                 topSideRecWidth = 16;
                 leftSideRecHeight = 16;
-    
+
                 bottomSideRecWidth = 16;
                 rightSideRecHeight = 16;
-    
+
                 for (int i = 0; i < 7; i++) raylib[i] = ' ';
 
                 raylib[7] = '\0';   // Last character is end-of-line
@@ -126,13 +126,13 @@ int main()
             }
         }
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             if (state == 0)
             {
                 if ((framesCounter/15)%2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
@@ -146,7 +146,7 @@ int main()
             {
                 DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, BLACK);
                 DrawRectangle(logoPositionX, logoPositionY, 16, leftSideRecHeight, BLACK);
-                
+
                 DrawRectangle(logoPositionX + 240, logoPositionY, 16, rightSideRecHeight, BLACK);
                 DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, BLACK);
             }
@@ -166,7 +166,7 @@ int main()
             {
                 DrawText("[R] REPLAY", 340, 200, 20, GRAY);
             }
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -175,6 +175,6 @@ int main()
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

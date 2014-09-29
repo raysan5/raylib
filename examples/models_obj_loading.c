@@ -28,9 +28,9 @@ int main()
     SetModelTexture(&cat, texture);                             // Bind texture to model
     Vector3 catPosition = { 0.0, 0.0, 0.0 };                    // Set model position
 
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second    
+    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -41,25 +41,25 @@ int main()
         if (IsKeyDown(KEY_UP)) catPosition.z -= 0.2;
         if (IsKeyDown(KEY_DOWN)) catPosition.z += 0.2;
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             Begin3dMode(camera);
-            
+
                 DrawModel(cat, catPosition, 0.1f, WHITE);   // Draw 3d model with texture
 
                 DrawGrid(10.0, 1.0);        // Draw a grid
-                
+
                 DrawGizmo(catPosition);     // Draw gizmo
-                
+
             End3dMode();
-            
+
             DrawFPS(10, 10);
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -68,9 +68,9 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture);     // Unload texture
     UnloadModel(cat);           // Unload model
-    
+
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

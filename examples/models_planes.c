@@ -25,7 +25,7 @@ int main()
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -33,24 +33,24 @@ int main()
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             Begin3dMode(camera);
-            
+
                 DrawPlane((Vector3){ 0, 0, 0 }, (Vector2){ 4, 4 }, (Vector3){ 0, 45, 0 }, RED);
                 //DrawPlaneEx((Vector3){ 0, 8, 0 }, (Vector2){ 2, 1 }, (Vector3){ 0, 0, 0 }, 4, 4, SKYBLUE);
 
                 DrawGrid(10.0, 1.0);
-                
+
             End3dMode();
-            
+
             DrawFPS(10, 10);
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -59,6 +59,6 @@ int main()
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

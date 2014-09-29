@@ -17,15 +17,15 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [core] example - mouse wheel");
-    
+
     int boxPositionY = screenHeight/2 - 40;
     int scrollSpeed = 4;            // Scrolling speed in pixels
-    
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -33,16 +33,16 @@ int main()
         //----------------------------------------------------------------------------------
         boxPositionY -= (GetMouseWheelMove()*scrollSpeed);
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             DrawRectangle(screenWidth/2 - 40, boxPositionY, 80, 80, MAROON);
-            
-            DrawText("Use mouse wheel to move the cube up and down!", 10, 10, 20, GRAY);            
+
+            DrawText("Use mouse wheel to move the cube up and down!", 10, 10, 20, GRAY);
             DrawText(FormatText("Box position Y: %03i", boxPositionY), 10, 40, 20, LIGHTGRAY);
 
         EndDrawing();
@@ -53,6 +53,6 @@ int main()
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }

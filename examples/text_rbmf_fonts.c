@@ -22,7 +22,7 @@ int main()
     int screenHeight = 800;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - rBMF fonts");
-    
+
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     SpriteFont font1 = LoadSpriteFont("resources/fonts/alagard.rbmf");       // rBMF font loading
     SpriteFont font2 = LoadSpriteFont("resources/fonts/pixelplay.rbmf");     // rBMF font loading
@@ -33,7 +33,7 @@ int main()
     SpriteFont font7 = LoadSpriteFont("resources/fonts/alpha_beta.rbmf");    // rBMF font loading
     SpriteFont font8 = LoadSpriteFont("resources/fonts/jupiter_crash.rbmf"); // rBMF font loading
     //--------------------------------------------------------------------------------------
-    
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -41,22 +41,22 @@ int main()
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             DrawTextEx(font1, "TESTING ALAGARD FONT", (Vector2){ 100, 100 }, GetFontBaseSize(font1)*2, 2, MAROON);
-            DrawTextEx(font2, "TESTING PIXELPLAY FONT", (Vector2){ 100, 180 }, GetFontBaseSize(font2)*2, 4, ORANGE);  
-            DrawTextEx(font3, "TESTING MECHA FONT", (Vector2){ 100, 260 }, GetFontBaseSize(font3)*2, 8, DARKGREEN);  
-            DrawTextEx(font4, "TESTING SETBACK FONT", (Vector2){ 100, 350 }, GetFontBaseSize(font4)*2, 4, DARKBLUE);  
+            DrawTextEx(font2, "TESTING PIXELPLAY FONT", (Vector2){ 100, 180 }, GetFontBaseSize(font2)*2, 4, ORANGE);
+            DrawTextEx(font3, "TESTING MECHA FONT", (Vector2){ 100, 260 }, GetFontBaseSize(font3)*2, 8, DARKGREEN);
+            DrawTextEx(font4, "TESTING SETBACK FONT", (Vector2){ 100, 350 }, GetFontBaseSize(font4)*2, 4, DARKBLUE);
             DrawTextEx(font5, "TESTING ROMULUS FONT", (Vector2){ 100, 430 }, GetFontBaseSize(font5)*2, 3, DARKPURPLE);
-            DrawTextEx(font6, "TESTING PIXANTIQUA FONT", (Vector2){ 100, 510 }, GetFontBaseSize(font6)*2, 4, LIME);  
-            DrawTextEx(font7, "TESTING ALPHA_BETA FONT", (Vector2){ 100, 590 }, GetFontBaseSize(font7)*2, 4, GOLD);  
-            DrawTextEx(font8, "TESTING JUPITER_CRASH FONT", (Vector2){ 100, 660 }, GetFontBaseSize(font8)*2, 1, RED);               
-       
+            DrawTextEx(font6, "TESTING PIXANTIQUA FONT", (Vector2){ 100, 510 }, GetFontBaseSize(font6)*2, 4, LIME);
+            DrawTextEx(font7, "TESTING ALPHA_BETA FONT", (Vector2){ 100, 590 }, GetFontBaseSize(font7)*2, 4, GOLD);
+            DrawTextEx(font8, "TESTING JUPITER_CRASH FONT", (Vector2){ 100, 660 }, GetFontBaseSize(font8)*2, 1, RED);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -71,9 +71,9 @@ int main()
     UnloadSpriteFont(font6);       // SpriteFont unloading
     UnloadSpriteFont(font7);       // SpriteFont unloading
     UnloadSpriteFont(font8);       // SpriteFont unloading
-    
+
     CloseWindow();                 // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
-    
+
     return 0;
 }
