@@ -106,7 +106,7 @@ static GLFWwindow *window;                      // Native window (graphic device
 #elif defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
-static int ident, events;                       
+static int ident, events;
 static bool windowReady = false;                // Used to detect display initialization
 
 // Gestures detection variables
@@ -965,6 +965,7 @@ static void InitDisplay(int width, int height)
     DISPMANX_ELEMENT_HANDLE_T dispmanElement;
     DISPMANX_DISPLAY_HANDLE_T dispmanDisplay;
     DISPMANX_UPDATE_HANDLE_T dispmanUpdate;
+
     VC_RECT_T dstRect;
     VC_RECT_T srcRect;
 #endif
@@ -1049,11 +1050,16 @@ static void InitDisplay(int width, int height)
     // NOTE: RPI dispmanx windowing system takes care of srcRec scaling to dstRec by hardware (no cost)
     // Take care that renderWidth/renderHeight fit on displayWidth/displayHeight aspect ratio
 
-    dispmanDisplay = vc_dispmanx_display_open(0);
+    VC_DISPMANX_ALPHA_T alpha;
+    alpha.flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
+    alpha.opacity = 255;
+    alpha.mask = 0;
+
+    dispmanDisplay = vc_dispmanx_display_open(0);   // LCD
     dispmanUpdate = vc_dispmanx_update_start(0);
 
     dispmanElement = vc_dispmanx_element_add(dispmanUpdate, dispmanDisplay, 0/*layer*/, &dstRect, 0/*src*/,
-                                            &srcRect, DISPMANX_PROTECTION_NONE, 0/*alpha*/, 0/*clamp*/, 0/*transform*/);
+                                            &srcRect, DISPMANX_PROTECTION_NONE, &alpha, 0/*clamp*/, DISPMANX_NO_ROTATE);
 
     nativeWindow.element = dispmanElement;
     nativeWindow.width = renderWidth;
