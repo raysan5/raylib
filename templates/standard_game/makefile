@@ -52,7 +52,7 @@ LFLAGS = -L. -L../../src -L/opt/vc/lib
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # libraries for Raspberry Pi compiling
     # NOTE: OpenAL Soft library should be installed (libopenal1 package)
-    LIBS = -lraylib -lGLESv2 -lEGL -lm -lbcm_host -lopenal
+    LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 else
     # libraries for Windows desktop compiling
     # NOTE: GLFW3 and OpenAL Soft libraries should be installed
