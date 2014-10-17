@@ -64,6 +64,11 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 
+// Security check in case no PLATFORM_* defined
+#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI)
+    #define PLATFORM_DESKTOP
+#endif
+
 #if defined(PLATFORM_ANDROID)
     #include <android_native_app_glue.h>    // Defines android_app struct
 #endif
@@ -77,6 +82,13 @@
 
 #define DEG2RAD (PI / 180.0f)
 #define RAD2DEG (180.0f / PI)
+
+// raylib Config Flags
+#define FLAG_FULLSCREEN_MODE    1
+#define FLAG_SHOW_LOGO          2
+#define FLAG_SHOW_MOUSE_CURSOR  4
+#define FLAG_CENTERED_MODE      8
+#define FLAG_MSAA_4X_HINT      16
 
 // Keyboard Function Keys 
 #define KEY_SPACE            32
@@ -299,6 +311,8 @@ int GetHexValue(Color color);                               // Returns hexadecim
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
+
+void SetupFlags(char flags);                                // Enable some window configurations
 
 void ShowLogo(void);                                        // Activates raylib logo at startup
 

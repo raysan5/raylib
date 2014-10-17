@@ -33,7 +33,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 else
     # define raylib graphics api to use (on Windows desktop, OpenGL 1.1 by default)
-    GRAPHICS = GRAPHICS_API_OPENGL_11
+    GRAPHICS ?= GRAPHICS_API_OPENGL_11
     #GRAPHICS = GRAPHICS_API_OPENGL_33  # Uncomment to use OpenGL 3.3
 endif
 

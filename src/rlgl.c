@@ -1092,7 +1092,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
         rlScalef(scale.x, scale.y, scale.z);
-        //rlRotatef(rotation, 0, 1, 0);
+        rlRotatef(rotation.y, 0, 1, 0);
 
         // TODO: If rotate in multiple axis, get rotation matrix and use rlMultMatrix()
 

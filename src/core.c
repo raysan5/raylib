@@ -162,9 +162,10 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 static const char *windowTitle;             // Window text title...
+static char configFlags = 0;
 
 static bool customCursor = false;           // Tracks if custom cursor has been set
-static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
+static bool cursorOnScreen = true;          // Tracks if cursor is inside client area
 static Texture2D cursor;                    // Cursor texture
 
 static Vector2 mousePosition;
@@ -592,6 +593,16 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, color.a*alpha};
 }
 
+// Enable some window configurations (SetWindowFlags()?)
+// TODO: Review function name and usage
+void SetupFlags(char flags)
+{
+    configFlags = flags;
+
+    if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
+    if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
+}
+
 // Activates raylib logo at startup
 void ShowLogo(void)
 {
@@ -892,7 +903,7 @@ static void InitDisplay(int width, int height)
     //glfwWindowHint(GLFW_RED_BITS, 8);           // Bit depths of color components for default framebuffer
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);       // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
-    //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
+    //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers
 
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version 
     // with forward compatibility to older OpenGL versions.
@@ -914,7 +925,7 @@ static void InitDisplay(int width, int height)
         // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
         SetupFramebufferSize(displayWidth, displayHeight);
 
-        window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
+        window = glfwCreateWindow(renderWidth, renderHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
     }
     else
     {
@@ -946,7 +957,7 @@ static void InitDisplay(int width, int height)
 
     glfwMakeContextCurrent(window);
 
-    //glfwSwapInterval(0);            // Disables GPU v-sync (if set), so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
+    //glfwSwapInterval(0);          // Disables GPU v-sync (if set), so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
                                     // If not set, swap interval uses GPU v-sync configuration
                                     // Framerate can be setup using SetTargetFPS()
 
@@ -1144,11 +1155,11 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     // If window is resized, graphics device is re-initialized (but only ortho mode)
-    rlglInitGraphics(0, 0, width, height);
+    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
-    screenWidth = width;
-    screenHeight = height;
+    //screenWidth = width;
+    //screenHeight = height;
 
     // TODO: Update render size?
 

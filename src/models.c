@@ -448,7 +448,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
 {
-    // NOTE: QUADS usage require defining a texture
+    // NOTE: QUADS usage require defining a texture on OpenGL 3.3+
     rlEnableTexture(1);    // Default white texture
 
     // NOTE: Plane is always created on XZ ground and then rotated
@@ -1145,6 +1145,7 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 }
 
 // Draw a billboard
+// TODO: Math review...
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
     // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
@@ -1188,6 +1189,7 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
+// TODO: Math review...
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
 {
     // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width

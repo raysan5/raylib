@@ -3,8 +3,16 @@ changelog
 
 Current Release:    raylib 1.2 (16 September 2014)
 
-NOTE: Only versions marked as 'Release' are available on release folder, updates are only available as source.
+NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+---------------------------------------------------------------
+Update:     raylib 1.2.1 (17 October 2014) (Small Fixes Update)
+---------------------------------------------------------------
+[core] Added function SetupFlags() to preconfigure raylib Window
+[core] Corrected bug on fullscreen mode
+[rlgl] rlglDrawmodel() - Added rotation on Y axis
+[text] MeasureTextEx() - Corrected bug on measures for default font
 
 -----------------------------------------------
 Release:     raylib 1.2 (16 September 2014)

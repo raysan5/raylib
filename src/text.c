@@ -340,7 +340,11 @@ int MeasureText(const char *text, int fontSize)
 {
     Vector2 vec;
 
-    vec = MeasureTextEx(defaultFont, text, fontSize, 1);
+    int defaultFontSize = 10;   // Default Font chars height in pixel
+    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+    int spacing = fontSize / defaultFontSize;
+
+    vec = MeasureTextEx(defaultFont, text, fontSize, spacing);
 
     return (int)vec.x;
 }
