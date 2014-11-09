@@ -70,7 +70,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 unsigned char *DecompressData(const unsigned char *data, unsigned long compSize, int uncompSize);
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DESKTOP_LINUX)
 void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height);
 void WritePNG(const char *fileName, unsigned char *imgData, int width, int height);
 #endif

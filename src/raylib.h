@@ -60,12 +60,13 @@
 #define RAYLIB_H
 
 // Choose your platform here or just define it at compile time: -DPLATFORM_DESKTOP
-//#define PLATFORM_DESKTOP      // Windows, Linux or OSX
-//#define PLATFORM_ANDROID      // Android device
-//#define PLATFORM_RPI          // Raspberry Pi
+//#define PLATFORM_DESKTOP          // Windows or OSX
+//#define PLATFORM_DESKTOP_LINUX    // Linux
+//#define PLATFORM_ANDROID          // Android device
+//#define PLATFORM_RPI              // Raspberry Pi
 
 // Security check in case no PLATFORM_* defined
-#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI)
+#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_DESKTOP_LINUX)
     #define PLATFORM_DESKTOP
 #endif
 
@@ -281,14 +282,14 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 void InitWindow(int width, int height, struct android_app *state);  // Init Android activity
-#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DESKTOP_LINUX)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
 
 void CloseWindow(void);                                     // Close Window and Terminate Context
 bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
-void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP_*)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DESKTOP_LINUX)
 void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
 void SetExitKey(int key);                                   // Set a custom key to exit program (default is ESC)
 #endif
@@ -319,7 +320,7 @@ void ShowLogo(void);                                        // Activates raylib 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DESKTOP_LINUX)
 bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
 bool IsKeyDown(int key);                                // Detect if a key is being pressed
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
