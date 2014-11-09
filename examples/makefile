@@ -24,7 +24,7 @@
 #**************************************************************************************************
 
 # define raylib platform (by default, compile for RPI)
-# Other possible platforms: PLATFORM_DESKTOP PLATFORM_LINUX_DESKTOP
+# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
 PLATFORM ?= PLATFORM_RPI
 
 # define compiler: gcc for C program, define as g++ for C++
@@ -49,7 +49,7 @@ else
 endif
 
 # define library paths containing required libs
-ifeq ($(PLATFORM),PLATFORM_LINUX_DESKTOP)
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	LFLAGS = -L. -L../src
 else
 	LFLAGS = -L. -L../src -L/opt/vc/lib
@@ -62,7 +62,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     # NOTE: OpenAL Soft library should be installed (libopenal1 package)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 else
-ifeq ($(PLATFORM),PLATFORM_LINUX_DESKTOP)
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
     # libraries for Debian GNU/Linux desktop compiling
 	# requires the following packages:
 	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
@@ -250,7 +250,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o
 #	find . -executable -delete
 else
-ifeq ($(PLATFORM),PLATFORM_LINUX_DESKTOP)
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	find . -type f -executable -delete
 	rm -f *.o
 else
