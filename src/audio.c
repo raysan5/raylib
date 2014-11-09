@@ -683,24 +683,24 @@ static Wave LoadWAV(const char *fileName)
     // Basic WAV headers structs
     typedef struct {
         char chunkID[4];
-        long chunkSize;
+        int chunkSize;
         char format[4];
     } RiffHeader;
 
     typedef struct {
         char subChunkID[4];
-        long subChunkSize;
+        int subChunkSize;
         short audioFormat;
         short numChannels;
-        long sampleRate;
-        long byteRate;
+        int sampleRate;
+        int byteRate;
         short blockAlign;
         short bitsPerSample;
     } WaveFormat;
 
     typedef struct {
         char subChunkID[4];
-        long subChunkSize;
+        int subChunkSize;
     } WaveData;
 
     RiffHeader riffHeader;
@@ -722,8 +722,8 @@ static Wave LoadWAV(const char *fileName)
         fread(&riffHeader, sizeof(RiffHeader), 1, wavFile);
 
         // Check for RIFF and WAVE tags
-        if (((riffHeader.chunkID[0] != 'R') || (riffHeader.chunkID[1] != 'I') || (riffHeader.chunkID[2] != 'F') || (riffHeader.chunkID[3] != 'F')) ||
-            ((riffHeader.format[0] != 'W') || (riffHeader.format[1] != 'A') || (riffHeader.format[2] != 'V') || (riffHeader.format[3] != 'E')))
+        if (strncmp(riffHeader.chunkID, "RIFF", 4) ||
+            strncmp(riffHeader.format, "WAVE", 4))
         {
                 TraceLog(WARNING, "[%s] Invalid RIFF or WAVE Header", fileName);
         }
