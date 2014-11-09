@@ -28,6 +28,9 @@
 
 
 #include "stb_vorbis.h"
+#ifdef __linux
+#include <alloca.h>
+#endif
 
 #ifndef STB_VORBIS_HEADER_ONLY
 

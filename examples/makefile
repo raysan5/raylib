@@ -24,7 +24,7 @@
 #**************************************************************************************************
 
 # define raylib platform (by default, compile for RPI)
-# Other possible platform: PLATFORM_DESKTOP
+# Other possible platforms: PLATFORM_DESKTOP PLATFORM_LINUX_DESKTOP
 PLATFORM ?= PLATFORM_RPI
 
 # define compiler: gcc for C program, define as g++ for C++
@@ -49,7 +49,11 @@ else
 endif
 
 # define library paths containing required libs
-LFLAGS = -L. -L../src -L/opt/vc/lib
+ifeq ($(PLATFORM),PLATFORM_LINUX_DESKTOP)
+	LFLAGS = -L. -L../src
+else
+	LFLAGS = -L. -L../src -L/opt/vc/lib
+endif
 
 # define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
@@ -58,9 +62,16 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     # NOTE: OpenAL Soft library should be installed (libopenal1 package)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 else
+ifeq ($(PLATFORM),PLATFORM_LINUX_DESKTOP)
+    # libraries for Debian GNU/Linux desktop compiling
+	# requires the following packages:
+	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+    LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
+else
     # libraries for Windows desktop compiling
     # NOTE: GLFW3 and OpenAL Soft libraries should be installed
     LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+endif
 endif
 
 # define additional parameters and flags for windows
@@ -239,7 +250,12 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o
 #	find . -executable -delete
 else
+ifeq ($(PLATFORM),PLATFORM_LINUX_DESKTOP)
+	find . -type f -executable -delete
+	rm -f *.o
+else
 	del *.o *.exe
+endif
 endif
 	@echo Cleaning done
 
