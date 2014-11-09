@@ -24,7 +24,7 @@
 #**************************************************************************************************
 
 # define raylib platform (by default, compile for RPI)
-# Other possible platform: PLATFORM_DESKTOP
+# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
 PLATFORM ?= PLATFORM_RPI
 
 # define raylib graphics api depending on selected platform
@@ -120,7 +120,12 @@ clean:
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o libraylib.a
 else
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
+	find . -type f -executable -delete
+	rm -f *.o libraylib.a
+else
 	del *.o libraylib.a
+endif
 endif
 	@echo Cleaning done
 
