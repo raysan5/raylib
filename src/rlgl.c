@@ -32,13 +32,23 @@
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #include <GL/gl.h>      // Basic OpenGL include
+	#ifdef __APPLE__
+		#include <OpenGL/gl.h>
+		#include <OpenGL/glu.h>
+		#include <GLUT/glut.h>
+	#else
+    	#include <GL/gl.h>      // Basic OpenGL include
+	#endif    	
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
     #define GLEW_STATIC
-    #include <GL/glew.h>    // Extensions loading lib
-    //#include "glad.h"     // TODO: Other extensions loading lib? --> REVIEW
+	#ifdef __APPLE__
+        #include <OpenGL/gl3.h>
+   	#else
+	    #include <GL/glew.h>    // Extensions loading lib
+    	//#include "glad.h"     // TODO: Other extensions loading lib? --> REVIEW
+    #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)

@@ -24,8 +24,8 @@
 #**************************************************************************************************
 
 # define raylib platform (by default, compile for RPI)
-# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
-PLATFORM ?= PLATFORM_RPI
+# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX PLATFORM_DESKTOP_OSX
+PLATFORM ?= PLATFORM_DESKTOP_OSX
 
 # define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -57,7 +57,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I.
+    INCLUDES = -I. -I../external/glfw3/include/ -I../external/openal_soft/include/
 endif
 
 # define all object files required
@@ -124,7 +124,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	find . -type f -executable -delete
 	rm -f *.o libraylib.a
 else
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
+	rm -f *.o libraylib.a
+else
 	del *.o libraylib.a
+endif
 endif
 endif
 	@echo Cleaning done

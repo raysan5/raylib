@@ -24,8 +24,8 @@
 #**************************************************************************************************
 
 # define raylib platform (by default, compile for RPI)
-# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
-PLATFORM ?= PLATFORM_RPI
+# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX PLATFORM_DESKTOP_OSX
+PLATFORM ?= PLATFORM_DESKTOP_OSX
 
 # define compiler: gcc for C program, define as g++ for C++
 CC = gcc
@@ -55,6 +55,14 @@ else
 	LFLAGS = -L. -L../src -L/opt/vc/lib
 endif
 
+# define library paths containing required libs
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
+	LFLAGS = -L. -L../src -L../external/glfw3/lib/ -I../external/openal_soft/lib/
+else
+	LFLAGS = -L. -L../src
+endif
+
+
 # define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -68,9 +76,16 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
     LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
 else
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
+    # libraries for OS X 10.9 desktop compiling
+	# requires the following packages:
+	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+    LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
+else
     # libraries for Windows desktop compiling
     # NOTE: GLFW3 and OpenAL Soft libraries should be installed
     LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+endif
 endif
 endif
 
@@ -254,7 +269,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	find . -type f -executable -delete
 	rm -f *.o
 else
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
+	rm -f *.o
+else
 	del *.o *.exe
+endif
 endif
 endif
 	@echo Cleaning done
