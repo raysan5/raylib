@@ -33,6 +33,7 @@
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #include <GL/gl.h>      // Basic OpenGL include
+	//#include <OpenGL/gl.h>      // Basic OpenGL include (OSX)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
