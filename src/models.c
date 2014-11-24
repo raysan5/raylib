@@ -1145,7 +1145,6 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 }
 
 // Draw a billboard
-// TODO: Math review...
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
     // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
@@ -1157,11 +1156,11 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
     Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
 /*
-    d-------c
+    a-------b
     |       |
     |   *   |
     |       |
-    a-------b
+    d-------c
 */
     VectorScale(&right, sizeRatio.x/2);
     VectorScale(&up, sizeRatio.y/2);
@@ -1178,18 +1177,17 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
 
     rlBegin(RL_QUADS);
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-        rlNormal3f(0.0f, 1.0f, 0.0f);
+
         rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
-        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
-        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
         rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
+        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
+        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
     rlEnd();
 
     rlDisableTexture();
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
-// TODO: Math review...
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
 {
     // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
@@ -1201,11 +1199,11 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
     Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
 /*
-    d-------c
+    a-------b
     |       |
     |   *   |
     |       |
-    a-------b
+    d-------c
 */
     VectorScale(&right, sizeRatio.x/2);
     VectorScale(&up, sizeRatio.y/2);
@@ -1226,18 +1224,18 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
         // Bottom-left corner for texture and quad
         rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
         rlVertex3f(a.x, a.y, a.z);
-
-        // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-        rlVertex3f(b.x, b.y, b.z);
-
+        
+        // Top-left corner for texture and quad
+        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlVertex3f(d.x, d.y, d.z);
+        
         // Top-right corner for texture and quad
         rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
         rlVertex3f(c.x, c.y, c.z);
 
-        // Top-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-        rlVertex3f(d.x, d.y, d.z);
+        // Bottom-right corner for texture and quad
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlVertex3f(b.x, b.y, b.z);
     rlEnd();
 
     rlDisableTexture();
