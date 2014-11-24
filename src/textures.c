@@ -36,6 +36,7 @@
 #include "utils.h"           // rRES data decompression utility function
                              // NOTE: Includes Android fopen function map
 
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"       // Used to read image data (multiple formats support)
 
 //----------------------------------------------------------------------------------
@@ -46,8 +47,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef unsigned char byte;
-
 typedef struct {
     unsigned char *data;    // Image raw data
     int width;              // Image base width
@@ -104,6 +103,8 @@ Image LoadImage(const char *fileName)
         // Force loading to 4 components (RGBA)
         byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);
 
+        // TODO: Check if file could be loaded! (imgData == NULL)?
+
         if (imgData != NULL)
         {
             // Convert array to pixel array for working convenience
@@ -127,7 +128,7 @@ Image LoadImage(const char *fileName)
 
             TraceLog(INFO, "[%s] Image loaded successfully", fileName);
         }
-        else TraceLog(WARNING, "[%s] Image could not be loaded", fileName);
+        else TraceLog(WARNING, "[%s] Image could not be loaded, file format not recognized", fileName);
     }
     else if (strcmp(GetExtension(fileName),"dds") == 0)
     {

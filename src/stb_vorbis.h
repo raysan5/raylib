@@ -1,30 +1,51 @@
-// Ogg Vorbis I audio decoder  -- version 0.99996
+// Ogg Vorbis audio decoder - v1.04 - public domain
+// http://nothings.org/stb_vorbis/
 //
-// Written in April 2007 by Sean Barrett, sponsored by RAD Game Tools.
+// Written by Sean Barrett in 2007, last updated in 2014
+// Sponsored by RAD Game Tools.
 //
-// Placed in the public domain April 2007 by the author: no copyright is
-// claimed, and you may use it for any purpose you like.
+// Placed in the public domain April 2007 by the author: no copyright
+// is claimed, and you may use it for any purpose you like.
 //
 // No warranty for any purpose is expressed or implied by the author (nor
 // by RAD Game Tools). Report bugs and send enhancements to the author.
 //
-// Get the latest version and other information at:
-//     http://nothings.org/stb_vorbis/
-
-
-// Todo:
-//
-//   - seeking (note you can seek yourself using the pushdata API)
-//
 // Limitations:
 //
-//   - floor 0 not supported (used in old ogg vorbis files)
+//   - seeking not supported except manually via PUSHDATA api
+//   - floor 0 not supported (used in old ogg vorbis files pre-2004)
 //   - lossless sample-truncation at beginning ignored
 //   - cannot concatenate multiple vorbis streams
 //   - sample positions are 32-bit, limiting seekable 192Khz
 //       files to around 6 hours (Ogg supports 64-bit)
-// 
-// All of these limitations may be removed in future versions.
+//
+// Bugfix/warning contributors:
+//    Terje Mathisen     Niklas Frykholm     Andy Hill
+//    Casey Muratori     John Bolton         Gargaj
+//    Laurent Gomila     Marc LeBlanc        Ronny Chevalier
+//    Bernhard Wodo      Evan Balster			"alxprd"@github
+//    Tom Beaumont       Ingo Leitgeb
+// (If you reported a bug but do not appear in this list, it is because
+// someone else reported the bug before you. There were too many of you to
+// list them all because I was lax about updating for a long time, sorry.)
+//
+// Partial history:
+//    1.04    - 2014/08/27 - fix missing const-correct case in API
+//    1.03    - 2014/08/07 - warning fixes
+//    1.02    - 2014/07/09 - declare qsort comparison as explicitly _cdecl in Windows
+//    1.01    - 2014/06/18 - fix stb_vorbis_get_samples_float (interleaved was correct)
+//    1.0     - 2014/05/26 - fix memory leaks; fix warnings; fix bugs in >2-channel;
+//                           (API change) report sample rate for decode-full-file funcs
+//    0.99996 -            - bracket #include <malloc.h> for macintosh compilation
+//    0.99995 -            - avoid alias-optimization issue in float-to-int conversion
+//
+// See end of file for full version history.
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//  HEADER BEGINS HERE
+//
 
 #ifndef STB_VORBIS_INCLUDE_STB_VORBIS_H
 #define STB_VORBIS_INCLUDE_STB_VORBIS_H
@@ -37,9 +58,8 @@
 #include <stdio.h>
 #endif
 
-// NOTE: Added to work with raylib on Android
-#if defined(PLATFORM_ANDROID)
-    #include "utils.h"  // Android fopen function map
+#ifdef __linux
+    #include <alloca.h>
 #endif
 
 #ifdef __cplusplus
@@ -152,6 +172,7 @@ extern int stb_vorbis_decode_frame_pushdata(
 // decode a frame of audio sample data if possible from the passed-in data block
 //
 // return value: number of bytes we used from datablock
+//
 // possible cases:
 //     0 bytes used, 0 samples output (need more data)
 //     N bytes used, 0 samples output (resynching the stream, keep going)
@@ -196,21 +217,23 @@ extern void stb_vorbis_flush_pushdata(stb_vorbis *f);
 // just want to go ahead and use pushdata.)
 
 #if !defined(STB_VORBIS_NO_STDIO) && !defined(STB_VORBIS_NO_INTEGER_CONVERSION)
-extern int stb_vorbis_decode_filename(char *filename, int *channels, short **output);
+extern int stb_vorbis_decode_filename(const char *filename, int *channels, int *sample_rate, short **output);
 #endif
-extern int stb_vorbis_decode_memory(unsigned char *mem, int len, int *channels, short **output);
+#if !defined(STB_VORBIS_NO_INTEGER_CONVERSION)
+extern int stb_vorbis_decode_memory(const unsigned char *mem, int len, int *channels, int *sample_rate, short **output);
+#endif
 // decode an entire file and output the data interleaved into a malloc()ed
 // buffer stored in *output. The return value is the number of samples
 // decoded, or -1 if the file could not be opened or was not an ogg vorbis file.
 // When you're done with it, just free() the pointer returned in *output.
 
-extern stb_vorbis * stb_vorbis_open_memory(unsigned char *data, int len,
+extern stb_vorbis * stb_vorbis_open_memory(const unsigned char *data, int len,
                                   int *error, stb_vorbis_alloc *alloc_buffer);
 // create an ogg vorbis decoder from an ogg vorbis stream in memory (note
 // this must be the entire stream!). on failure, returns NULL and sets *error
 
 #ifndef STB_VORBIS_NO_STDIO
-extern stb_vorbis * stb_vorbis_open_filename(char *filename,
+extern stb_vorbis * stb_vorbis_open_filename(const char *filename,
                                   int *error, stb_vorbis_alloc *alloc_buffer);
 // create an ogg vorbis decoder from a filename via fopen(). on failure,
 // returns NULL and sets *error (possibly to VORBIS_file_open_failure).
@@ -350,3 +373,7 @@ enum STBVorbisError
 #endif
 
 #endif // STB_VORBIS_INCLUDE_STB_VORBIS_H
+//
+//  HEADER ENDS HERE
+//
+//////////////////////////////////////////////////////////////////////////////

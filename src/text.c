@@ -45,16 +45,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef unsigned char byte;
-
-// SpriteFont one Character (Glyph) data
-typedef struct Character {
-    int value;        //char value = ' '; (int)value = 32;
-    int x;
-    int y;
-    int w;
-    int h;
-} Character;
+// ...
 
 //----------------------------------------------------------------------------------
 // Global variables
@@ -532,6 +523,8 @@ static SpriteFont LoadRBMF(const char *fileName)
     int charsDivisor = 1;    // Every char is separated from the consecutive by a 1 pixel divisor, horizontally and vertically
 
     FILE *rbmfFile = fopen(fileName, "rb");        // Define a pointer to bitmap file and open it in read-binary mode
+
+    // TODO: Check if file could be loaded! (rbmfFile == NULL)?
 
     fread(&rbmfHeader, sizeof(rbmfInfoHeader), 1, rbmfFile);
 

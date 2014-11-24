@@ -24,7 +24,7 @@
 #**************************************************************************************************
 
 # define raylib platform (by default, compile for RPI)
-# Other possible platform: PLATFORM_DESKTOP
+# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
 PLATFORM ?= PLATFORM_RPI
 
 # define raylib graphics api depending on selected platform
@@ -49,7 +49,7 @@ CC = gcc
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O2 -Wall -std=c99
+    CFLAGS = -O2 -Wall -std=c99 -fgnu89-inline
 endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
@@ -61,7 +61,7 @@ else
 endif
 
 # define all object files required
-OBJS = core.o rlgl.o raymath.o shapes.o text.o textures.o models.o audio.o utils.o stb_image.o stb_vorbis.o
+OBJS = core.o rlgl.o raymath.o shapes.o text.o textures.o models.o audio.o utils.o stb_vorbis.o
 
 # typing 'make' will invoke the first target entry in the file,
 # in this case, the 'default' target entry is raylib
@@ -107,10 +107,6 @@ audio.o: audio.c
 utils.o: utils.c
 	$(CC) -c utils.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-# compile stb_image library
-stb_image.o: stb_image.c
-	$(CC) -c stb_image.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
 # compile stb_vorbis library
 stb_vorbis.o: stb_vorbis.c
 	$(CC) -c stb_vorbis.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
@@ -120,7 +116,12 @@ clean:
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o libraylib.a
 else
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
+	find . -type f -executable -delete
+	rm -f *.o libraylib.a
+else
 	del *.o libraylib.a
+endif
 endif
 	@echo Cleaning done
 

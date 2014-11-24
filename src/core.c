@@ -1459,9 +1459,10 @@ static void PollInputEvents(void)
         // Check if we are exiting
         if (app->destroyRequested != 0)
         {
-            TraceLog(INFO, "Closing Window...");
-            //CloseWindow();
-            windowShouldClose = true;
+            // NOTE: Never close window, native activity is controlled by the system!
+            //TraceLog(INFO, "Closing Window...");
+            //windowShouldClose = true; 
+            
             //ANativeActivity_finish(app->activity);
         }
     }

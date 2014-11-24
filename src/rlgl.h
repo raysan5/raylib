@@ -81,8 +81,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef unsigned char byte;
-
 typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;

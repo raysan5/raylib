@@ -179,6 +179,9 @@
 // Boolean type
 typedef enum { false, true } bool;
 
+// byte type
+typedef unsigned char byte;
+
 // Vector2 type
 typedef struct Vector2 {
     float x;
@@ -225,8 +228,13 @@ typedef struct Texture2D {
 } Texture2D;
 
 // Character type (one font glyph)
-// NOTE: Defined in module: text
-typedef struct Character Character;
+typedef struct Character {
+    int value;        //char value = ' '; (int)value = 32;
+    int x;
+    int y;
+    int w;
+    int h;
+} Character;
 
 // SpriteFont type, includes texture and charSet array data
 typedef struct SpriteFont {
