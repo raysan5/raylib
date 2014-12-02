@@ -43,8 +43,8 @@
 // if OpenGL version is required by any other module, it uses rlGetVersion()
 
 // Choose opengl version here or just define it at compile time: -DGRAPHICS_API_OPENGL_33
-//#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP
-//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP
+//#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP_*
+//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP_*
 //#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined

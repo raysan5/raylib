@@ -40,7 +40,7 @@
 #include <stdarg.h>             // Used for functions with variable number of parameters (TraceLog())
 //#include <string.h>           // String management functions: strlen(), strrchr(), strcmp()
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DESKTOP_LINUX)
     #define STB_IMAGE_WRITE_IMPLEMENTATION
     #include "stb_image_write.h"    // Create PNG file
 #endif
@@ -107,7 +107,7 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
     return pUncomp;
 }
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_DESKTOP_LINUX) 
 // Creates a bitmap (BMP) file from an array of pixel data
 // NOTE: This function is not explicitly available to raylib users
 void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height)
