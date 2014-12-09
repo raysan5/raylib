@@ -340,7 +340,6 @@ bool IsMouseButtonUp(int button);                       // Detect if a mouse but
 int GetMouseX(void);                                    // Returns mouse position X
 int GetMouseY(void);                                    // Returns mouse position Y
 Vector2 GetMousePosition(void);                         // Returns mouse position XY
-void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available

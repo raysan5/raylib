@@ -743,7 +743,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             vData.texcoords[tcCounter + 7] = vData.texcoords[tcCounter + 5];
 
             vData.texcoords[tcCounter + 8] = vData.texcoords[tcCounter + 2];
-            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 3];
+            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 1];
 
             vData.texcoords[tcCounter + 10] = (float)(x+1) / (mapX-1);
             vData.texcoords[tcCounter + 11] = (float)(z+1) / (mapZ-1);

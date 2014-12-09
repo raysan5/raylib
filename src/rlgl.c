@@ -301,10 +301,6 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     if (x == 1) rot = MatrixRotateX(angleDeg*DEG2RAD);
     else if (y == 1) rot = MatrixRotateY(angleDeg*DEG2RAD);
     else if (z == 1) rot = MatrixRotateZ(angleDeg*DEG2RAD);
-	
-	//Vector3 vec = (Vector3){ 0, 0, 1 };
-    //VectorNormalize(&vec);
-    //rot = MatrixFromAxisAngle(vec, angleDeg*DEG2RAD);       // Working
 
     MatrixTranspose(&rot);
 
@@ -1309,8 +1305,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
 
 #if defined(GRAPHICS_API_OPENGL_33)
     // NOTE: We define internal (GPU) format as GL_RGBA8 (probably BGRA8 in practice, driver takes care)
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);	// OpenGL
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);     // WebGL
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: On embedded systems, we let the driver choose the best internal format
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -1567,7 +1562,6 @@ static GLuint LoadDefaultShaders(void)
     char fShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
-	    "precision mediump float;           \n"     // WebGL, required for PLATFORM_WEB
 #endif
         "uniform sampler2D texture0;        \n"
         "varying vec2 fragTexCoord;         \n"

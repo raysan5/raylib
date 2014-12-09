@@ -24,7 +24,7 @@
 #**************************************************************************************************
 
 # define raylib platform (by default, compile for RPI)
-# Other possible platforms: PLATFORM_DESKTOP_WIN PLATFORM_DESKTOP_LINUX PLATFORM_DESKTOP_MAC PLATFORM_WEB
+# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
 PLATFORM ?= PLATFORM_RPI
 
 # define raylib graphics api depending on selected platform
@@ -40,26 +40,16 @@ endif
 # NOTE: makefiles targets require tab indentation
 
 # define compiler: gcc for C program, define as g++ for C++
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    # define emscripten compiler
-    CC = emcc
-else
-    # define default gcc compiler
-    CC = gcc
-endif
+CC = gcc
 
 # define compiler flags:
 #  -O2         defines optimization level
 #  -Wall       turns on most, but not all, compiler warnings
 #  -std=c99    use standard C from 1999 revision
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O3 -s USE_GLFW=3 -s LEGACY_GL_EMULATION=1
-else
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O2 -Wall -std=c99
-endif
+    CFLAGS = -O2 -Wall -std=c99 -fgnu89-inline
 endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
@@ -79,16 +69,11 @@ default: raylib
 
 # compile raylib library
 raylib: $(OBJS)
-ifeq ($(PLATFORM),PLATFORM_WEB)
-	emcc $(OBJS) -o raylib.bc
-else
 	ar rcs libraylib.a $(OBJS)
-endif
 
 # compile core module
-# emcc core.c -o core.bc -DPLATFORM_DESKTOP
 core.o: core.c
-	$(CC) -c core.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c core.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile rlgl module
 rlgl.o: rlgl.c
@@ -100,19 +85,19 @@ raymath.o: raymath.c
 
 # compile shapes module
 shapes.o: shapes.c
-	$(CC) -c shapes.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c shapes.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile textures module
 textures.o: textures.c
-	$(CC) -c textures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c textures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile text module
 text.o: text.c
-	$(CC) -c text.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c text.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile models module
 models.o: models.c
-	$(CC) -c models.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c models.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile audio module
 audio.o: audio.c
