@@ -165,7 +165,7 @@ static const char *windowTitle;             // Window text title...
 static char configFlags = 0;
 
 static bool customCursor = false;           // Tracks if custom cursor has been set
-static bool cursorOnScreen = true;          // Tracks if cursor is inside client area
+static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static Texture2D cursor;                    // Cursor texture
 
 static Vector2 mousePosition;
@@ -725,6 +725,15 @@ int GetMouseY(void)
 Vector2 GetMousePosition(void)
 {
     return mousePosition;
+}
+
+// Set mouse position XY
+void SetMousePosition(Vector2 position)
+{
+    mousePosition = position;
+#if defined(PLATFORM_DESKTOP)    
+    glfwSetCursorPos(window, position.x, position.y);
+#endif
 }
 
 // Returns mouse wheel movement Y
