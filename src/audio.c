@@ -69,15 +69,6 @@ typedef struct Music {
 
 } Music;
 
-// Wave file data
-typedef struct Wave {
-    void *data;                 // Buffer data pointer
-    unsigned int dataSize;      // Data size in bytes
-    unsigned int sampleRate;
-    short bitsPerSample;
-    short channels;
-} Wave;
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -211,6 +202,60 @@ Sound LoadSound(char *fileName)
 
         TraceLog(INFO, "[%s] Sound file loaded successfully", fileName);
         TraceLog(INFO, "[%s] Sample rate: %i - Channels: %i", fileName, wave.sampleRate, wave.channels);
+
+        sound.source = source;
+        sound.buffer = buffer;
+    }
+
+    return sound;
+}
+
+// Load sound from wave data
+Sound LoadSoundFromWave(Wave wave)
+{
+    Sound sound;
+
+    if (wave.data != NULL)
+    {
+        ALenum format = 0;
+        // The OpenAL format is worked out by looking at the number of channels and the bits per sample
+        if (wave.channels == 1)
+        {
+            if (wave.bitsPerSample == 8 ) format = AL_FORMAT_MONO8;
+            else if (wave.bitsPerSample == 16) format = AL_FORMAT_MONO16;
+        }
+        else if (wave.channels == 2)
+        {
+            if (wave.bitsPerSample == 8 ) format = AL_FORMAT_STEREO8;
+            else if (wave.bitsPerSample == 16) format = AL_FORMAT_STEREO16;
+        }
+
+        // Create an audio source
+        ALuint source;
+        alGenSources(1, &source);            // Generate pointer to audio source
+
+        alSourcef(source, AL_PITCH, 1);
+        alSourcef(source, AL_GAIN, 1);
+        alSource3f(source, AL_POSITION, 0, 0, 0);
+        alSource3f(source, AL_VELOCITY, 0, 0, 0);
+        alSourcei(source, AL_LOOPING, AL_FALSE);
+
+        // Convert loaded data to OpenAL buffer
+        //----------------------------------------
+        ALuint buffer;
+        alGenBuffers(1, &buffer);            // Generate pointer to buffer
+
+        // Upload sound data to buffer
+        alBufferData(buffer, format, wave.data, wave.dataSize, wave.sampleRate);
+
+        // Attach sound buffer to source
+        alSourcei(source, AL_BUFFER, buffer);
+
+        // Unallocate WAV data
+        UnloadWave(wave);
+
+        TraceLog(INFO, "[Wave] Sound file loaded successfully");
+        TraceLog(INFO, "[Wave] Sample rate: %i - Channels: %i", wave.sampleRate, wave.channels);
 
         sound.source = source;
         sound.buffer = buffer;

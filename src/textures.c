@@ -175,8 +175,6 @@ Image LoadImage(const char *fileName)
 // Load an image from rRES file (raylib Resource)
 Image LoadImageFromRES(const char *rresName, int resId)
 {
-    // TODO: rresName could be directly a char array with all the data! --> support it! :P
-
     Image image;
     bool found = false;
 
@@ -295,6 +293,11 @@ Image LoadImageFromRES(const char *rresName, int resId)
 Texture2D LoadTexture(const char *fileName)
 {
     Texture2D texture;
+    
+    // Init texture to default values
+    texture.id = 0;
+    texture.width = 0;
+    texture.height = 0;
 
     if (strcmp(GetExtension(fileName),"dds") == 0)
     {
@@ -337,10 +340,63 @@ Texture2D LoadTexture(const char *fileName)
 
         if (image.pixels != NULL)
         {
-            texture = CreateTexture(image, false);
+            texture = LoadTextureFromImage(image, false);
             UnloadImage(image);
         }
     }
+
+    return texture;
+}
+
+// Load a texture from image data
+// NOTE: image is not unloaded, it must be done manually
+Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
+{
+    Texture2D texture;
+
+    // Init texture to default values
+    texture.id = 0;
+    texture.width = 0;
+    texture.height = 0;
+
+    if (image.pixels != NULL)
+    {
+        unsigned char *imgData = malloc(image.width * image.height * 4);
+
+        int j = 0;
+
+        for (int i = 0; i < image.width * image.height * 4; i += 4)
+        {
+            imgData[i] = image.pixels[j].r;
+            imgData[i+1] = image.pixels[j].g;
+            imgData[i+2] = image.pixels[j].b;
+            imgData[i+3] = image.pixels[j].a;
+
+            j++;
+        }
+
+        // NOTE: rlglLoadTexture() can generate mipmaps (POT image required)
+        texture.id = rlglLoadTexture(imgData, image.width, image.height, genMipmaps);
+
+        texture.width = image.width;
+        texture.height = image.height;
+
+        free(imgData);
+    }
+    else TraceLog(WARNING, "Texture could not be created, image data is not valid");
+
+    return texture;
+}
+
+// [DEPRECATED] Load a texture from image data
+// NOTE: Use LoadTextureFromImage() instead
+Texture2D CreateTexture(Image image, bool genMipmaps)
+{
+    Texture2D texture;
+    
+    texture = LoadTextureFromImage(image, genMipmaps);
+    
+    TraceLog(INFO, "Created texture id: %i", texture.id);
 
     return texture;
 }
@@ -351,7 +407,7 @@ Texture2D LoadTextureFromRES(const char *rresName, int resId)
     Texture2D texture;
 
     Image image = LoadImageFromRES(rresName, resId);
-    texture = CreateTexture(image, false);
+    texture = LoadTextureFromImage(image, false);
     UnloadImage(image);
 
     return texture;
@@ -436,49 +492,13 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
     rlDisableTexture();
 }
 
-// Create a texture from an image
-// NOTE: image is not unloaded, iot must be done manually
-Texture2D CreateTexture(Image image, bool genMipmaps)
-{
-    Texture2D texture;
-
-    // Init texture to default values
-    texture.id = 0;
-    texture.width = 0;
-    texture.height = 0;
-
-    if (image.pixels != NULL)
-    {
-        unsigned char *imgData = malloc(image.width * image.height * 4);
-
-        int j = 0;
-
-        for (int i = 0; i < image.width * image.height * 4; i += 4)
-        {
-            imgData[i] = image.pixels[j].r;
-            imgData[i+1] = image.pixels[j].g;
-            imgData[i+2] = image.pixels[j].b;
-            imgData[i+3] = image.pixels[j].a;
-
-            j++;
-        }
-
-        // NOTE: rlglLoadTexture() can generate mipmaps (POT image required)
-        texture.id = rlglLoadTexture(imgData, image.width, image.height, genMipmaps);
-
-        texture.width = image.width;
-        texture.height = image.height;
-
-        free(imgData);
-    }
-    else TraceLog(WARNING, "Texture could not be created, image data is not valid");
-
-    return texture;
-}
+//----------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------
 
 // Loading DDS image data (compressed or uncompressed)
 // NOTE: Compressed data loading not supported on OpenGL 1.1
-ImageEx LoadDDS(const char *fileName)
+static ImageEx LoadDDS(const char *fileName)
 {
     #define FOURCC_DXT1 0x31545844  // Equivalent to "DXT1" in ASCII
     #define FOURCC_DXT3 0x33545844  // Equivalent to "DXT3" in ASCII
@@ -636,7 +656,7 @@ ImageEx LoadDDS(const char *fileName)
 // Loading PKM image data (ETC1/ETC2 compression)
 // NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
-ImageEx LoadPKM(const char *fileName)
+static ImageEx LoadPKM(const char *fileName)
 {
     // If OpenGL ES 2.0. the following format could be supported (ETC1):
     //GL_ETC1_RGB8_OES

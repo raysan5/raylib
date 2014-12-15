@@ -157,7 +157,9 @@ void WritePNG(const char *fileName, unsigned char *imgData, int width, int heigh
 {
     stbi_write_png(fileName, width, height, 4, imgData, width*4); // It WORKS!!!
 }
+#endif
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Outputs a trace log message (INFO, ERROR, WARNING)
 // NOTE: If a file has been init, output log is written there
 void TraceLog(int msgType, const char *text, ...)

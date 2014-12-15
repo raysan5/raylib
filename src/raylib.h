@@ -65,7 +65,7 @@
 //#define PLATFORM_RPI          // Raspberry Pi
 
 // Security check in case no PLATFORM_* defined
-#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI)
+#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
     #define PLATFORM_DESKTOP
 #endif
 
@@ -275,6 +275,15 @@ typedef struct Sound {
     unsigned int buffer;
 } Sound;
 
+// Wave type, defines audio wave data
+typedef struct Wave {
+    void *data;                 // Buffer data pointer
+    unsigned int dataSize;      // Data size in bytes
+    unsigned int sampleRate;
+    short bitsPerSample;
+    short channels;
+} Wave;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -327,7 +336,7 @@ void ShowLogo(void);                                        // Activates raylib 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
 bool IsKeyDown(int key);                                // Detect if a key is being pressed
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
@@ -342,7 +351,9 @@ int GetMouseY(void);                                    // Returns mouse positio
 Vector2 GetMousePosition(void);                         // Returns mouse position XY
 void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
+#endif
 
+#if defined(PLATFORM_DESKTOP)
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
 bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
@@ -395,7 +406,8 @@ Image LoadImage(const char *fileName);                                          
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
-Texture2D CreateTexture(Image image, bool genMipmaps);                                             // Create a Texture2D from Image data (and generate mipmaps)
+Texture2D LoadTextureFromImage(Image image, bool genMipmaps);                                      // Load a texture from image data (and generate mipmaps)
+Texture2D CreateTexture(Image image, bool genMipmaps);                                             // [DEPRECATED] Same as LoadTextureFromImage()
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 
@@ -465,6 +477,7 @@ void InitAudioDevice(void);                                     // Initialize au
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
+Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound

@@ -8,6 +8,7 @@
 *       PLATFORM_DESKTOP - Windows, Linux, Mac (OSX)
 *       PLATFORM_ANDROID - Only OpenGL ES 2.0 devices
 *       PLATFORM_RPI - Rapsberry Pi (tested on Raspbian)
+*       PLATFORM_WEB - Emscripten, HTML5
 *
 *   On PLATFORM_DESKTOP, the external lib GLFW3 (www.glfw.com) is used to manage graphic
 *   device, OpenGL context and input on multiple operating systems (Windows, Linux, OSX).
@@ -49,7 +50,7 @@
 #include <string.h>         // String function definitions, memset()
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     #include <GLFW/glfw3.h>     // GLFW3 library: Windows, OpenGL context and Input management
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
@@ -101,7 +102,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static GLFWwindow *window;                      // Native window (graphic device)
 #elif defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
@@ -160,7 +161,7 @@ static int renderOffsetY = 0;               // Offset Y from render area (must b
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
 static char configFlags = 0;
 
@@ -226,12 +227,15 @@ static void RestoreKeyboard(void);                      // Restore keyboard syst
 static void InitGamepad(void);                          // Init raw gamepad input
 #endif
 
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
+#endif
+
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 static void TakeScreenshot(void);                                                          // Takes a screenshot and saves it in the same folder as executable
 #endif
 
@@ -243,7 +247,7 @@ static void CommandCallback(struct android_app *app, int32_t cmd);           // 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
@@ -348,7 +352,7 @@ void CloseWindow(void)
 
     rlglClose();                // De-init rlgl
 
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwDestroyWindow(window);
     glfwTerminate();
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -380,7 +384,7 @@ void CloseWindow(void)
 // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return (glfwWindowShouldClose(window));
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     return windowShouldClose;
@@ -402,7 +406,7 @@ void ToggleFullscreen(void)
 #endif
 }
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Set a custom cursor icon/image
 void SetCustomCursor(const char *cursorImage)
 {
@@ -411,6 +415,7 @@ void SetCustomCursor(const char *cursorImage)
     cursor = LoadTexture(cursorImage);
 
 #if defined(PLATFORM_DESKTOP)
+	// NOTE: emscripten not implemented
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
     customCursor = true;
@@ -612,7 +617,7 @@ void ShowLogo(void)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Detect if a key has been pressed once
 bool IsKeyPressed(int key)
 {
@@ -731,7 +736,8 @@ Vector2 GetMousePosition(void)
 void SetMousePosition(Vector2 position)
 {
     mousePosition = position;
-#if defined(PLATFORM_DESKTOP)    
+#if defined(PLATFORM_DESKTOP)
+	// NOTE: emscripten not implemented
     glfwSetCursorPos(window, position.x, position.y);
 #endif
 }
@@ -747,7 +753,8 @@ int GetMouseWheelMove(void)
 }
 #endif
 
-// TODO: Enable gamepad usage on Rapsberr Pi
+// TODO: Enable gamepad usage on Rapsberry Pi
+// NOTE: emscripten not implemented
 #if defined(PLATFORM_DESKTOP)
 // Detect if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
@@ -890,11 +897,13 @@ static void InitDisplay(int width, int height)
     // Downscale matrix is required in case desired screen area is bigger than display area
     downscaleView = MatrixIdentity();
 
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 
     if (!glfwInit()) TraceLog(ERROR, "Failed to initialize GLFW");
 
+    // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
+#if defined(PLATFORM_DESKTOP)
     // Find monitor resolution
     const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
@@ -904,7 +913,11 @@ static void InitDisplay(int width, int height)
     // Screen size security check
     if (screenWidth <= 0) screenWidth = displayWidth;
     if (screenHeight <= 0) screenHeight = displayHeight;
-
+#elif defined(PLATFORM_WEB)
+    displayWidth = screenWidth;
+    displayHeight = screenHeight;
+#endif
+    
     glfwDefaultWindowHints();                     // Set default windows hints
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
@@ -953,7 +966,9 @@ static void InitDisplay(int width, int height)
     else
     {
         TraceLog(INFO, "Display device initialized successfully");
+#if defined(PLATFORM_DESKTOP)
         TraceLog(INFO, "Display size: %i x %i", displayWidth, displayHeight);
+#endif
         TraceLog(INFO, "Render size: %i x %i", renderWidth, renderHeight);
         TraceLog(INFO, "Screen size: %i x %i", screenWidth, screenHeight);
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
@@ -1125,7 +1140,7 @@ void InitGraphics(void)
 #endif
 }
 
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
 {
@@ -1147,10 +1162,12 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 
         // NOTE: Before closing window, while loop must be left!
     }
+#if defined(PLATFORM_DESKTOP)
     else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
     {
         TakeScreenshot();
     }
+#endif
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
@@ -1395,7 +1412,7 @@ static void InitTimer(void)
 // Get current time measure since InitTimer()
 static double GetTime(void)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetTime();
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     struct timespec ts;
@@ -1409,7 +1426,7 @@ static double GetTime(void)
 // Get one key state
 static bool GetKeyStatus(int key)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetKey(window, key);
 #elif defined(PLATFORM_ANDROID)
     // TODO: Check virtual keyboard (?)
@@ -1424,7 +1441,7 @@ static bool GetKeyStatus(int key)
 // Get one mouse button state
 static bool GetMouseButtonStatus(int button)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetMouseButton(window, button);
 #elif defined(PLATFORM_ANDROID)
     // TODO: Check virtual keyboard (?)
@@ -1438,7 +1455,7 @@ static bool GetMouseButtonStatus(int button)
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
     double mouseX;
     double mouseY;
@@ -1732,7 +1749,7 @@ static void InitGamepad(void)
 // Copy back buffer to front buffers
 static void SwapBuffers(void)
 {
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSwapBuffers(window);
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     eglSwapBuffers(display, surface);

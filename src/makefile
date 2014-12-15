@@ -25,7 +25,7 @@
 
 # define raylib platform (by default, compile for RPI)
 # Other possible platforms: PLATFORM_DESKTOP_WIN PLATFORM_DESKTOP_LINUX PLATFORM_WEB
-PLATFORM ?= PLATFORM_RPI
+PLATFORM ?= PLATFORM_DESKTOP
 
 # define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -35,6 +35,10 @@ else
     # define raylib graphics api to use (on Windows desktop, OpenGL 1.1 by default)
     GRAPHICS ?= GRAPHICS_API_OPENGL_11
     #GRAPHICS = GRAPHICS_API_OPENGL_33  # Uncomment to use OpenGL 3.3
+endif
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
 # NOTE: makefiles targets require tab indentation
@@ -52,15 +56,12 @@ endif
 #  -O2         defines optimization level
 #  -Wall       turns on most, but not all, compiler warnings
 #  -std=c99    use standard C from 1999 revision
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O3 -s USE_GLFW=3 -s LEGACY_GL_EMULATION=1
-else
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
+    CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O2 -Wall -std=c99
+    CFLAGS = -O1 -Wall -std=c99
 endif
-endif
+
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
@@ -80,7 +81,7 @@ default: raylib
 # compile raylib library
 raylib: $(OBJS)
 ifeq ($(PLATFORM),PLATFORM_WEB)
-	emcc $(OBJS) -o raylib.bc
+	emcc -O1 $(OBJS) -o raylib.bc
 else
 	ar rcs libraylib.a $(OBJS)
 endif
@@ -92,7 +93,7 @@ core.o: core.c
 
 # compile rlgl module
 rlgl.o: rlgl.c
-	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(GRAPHICS)
+	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile raymath module
 raymath.o: raymath.c

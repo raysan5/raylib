@@ -177,6 +177,7 @@ static bool vaoSupported = false;
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
+// emscripten does not support VAOs
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
@@ -764,10 +765,13 @@ void rlglInit(void)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+	// NOTE: emscripten does not support VAOs
+#if !defined(PLATFORM_WEB)
     glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
     glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
     glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
     glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");
+#endif
 
     if (glGenVertexArrays == NULL) TraceLog(WARNING, "Could not initialize VAO extensions, VAOs not supported");
     else
@@ -852,8 +856,8 @@ void rlglInit(void)
 
     whiteTexture = rlglLoadTexture(pixels, 1, 1, false);
 
-    if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture created successfully", whiteTexture);
-    else TraceLog(WARNING, "Base white texture could not be created");
+    if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
+    else TraceLog(WARNING, "Base white texture could not be loaded");
 
     // Init draw calls tracking system
     draws = (DrawCall *)malloc(sizeof(DrawCall)*MAX_DRAWS_BY_TEXTURE);
@@ -1352,7 +1356,7 @@ Model rlglLoadModel(VertexData mesh)
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     model.textureId = 1;        // Default whiteTexture
 
-    GLuint vaoModel;            // Vertex Array Objects (VAO)
+    GLuint vaoModel = 0;        // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];     // Vertex Buffer Objects (VBO)
 
     if (vaoSupported)
@@ -1804,7 +1808,7 @@ static void InitializeBuffersGPU(void)
         glGenVertexArrays(1, &vaoTriangles);
         glBindVertexArray(vaoTriangles);
     }
-
+    
     // Create buffers for our vertex data
     glGenBuffers(2, trianglesBuffer);
 
@@ -1829,7 +1833,7 @@ static void InitializeBuffersGPU(void)
         glGenVertexArrays(1, &vaoQuads);
         glBindVertexArray(vaoQuads);
     }
-
+    
     // Create buffers for our vertex data
     glGenBuffers(4, quadsBuffer);
 
@@ -1865,6 +1869,8 @@ static void InitializeBuffersGPU(void)
 }
 
 // Update VBOs with vertex array data
+// TODO: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
+// TODO: If no data changed on the CPU arrays --> No need to update GPU arrays every frame!
 static void UpdateBuffers(void)
 {
     // Activate Lines VAO

@@ -45,7 +45,7 @@
 // Choose opengl version here or just define it at compile time: -DGRAPHICS_API_OPENGL_33
 //#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP
 //#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP
-//#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI
+//#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI or PLATFORM_WEB
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
 #if !defined(GRAPHICS_API_OPENGL_11) && !defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_ES2)

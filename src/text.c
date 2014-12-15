@@ -135,7 +135,7 @@ extern void LoadDefaultFont(void)
         if (counter > 256) counter = 0;         // Security check...
     }
 
-    defaultFont.texture = CreateTexture(image, false); // Convert loaded image to OpenGL texture
+    defaultFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
     UnloadImage(image);
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, numChars
@@ -168,7 +168,7 @@ extern void LoadDefaultFont(void)
         else currentPosX = testPosX;
     }
 
-    TraceLog(INFO, "Default font loaded successfully");
+    TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
 
 extern void UnloadDefaultFont(void)
@@ -240,7 +240,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
             image.height = potHeight;
         }
 */
-        spriteFont.texture = CreateTexture(image, false); // Convert loaded image to OpenGL texture
+        spriteFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
         UnloadImage(image);
     }
 
@@ -566,7 +566,7 @@ static SpriteFont LoadRBMF(const char *fileName)
 
     TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
-    spriteFont.texture = CreateTexture(image, false);
+    spriteFont.texture = LoadTextureFromImage(image, false);
     UnloadImage(image);     // Unload image data
 
     TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
