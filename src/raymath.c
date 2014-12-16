@@ -559,8 +559,8 @@ Matrix MatrixFromAxisAngle2(Vector3 axis, float angle)
     float axisX = axis.x, axisY = axis.y, axisZ = axis.y;
 
     // Calculate angles
-    float cosres = (float)cos(-angle);
-    float sinres = (float)sin(-angle);
+    float cosres = (float)cos(angle);
+    float sinres = (float)sin(angle);
     float t = 1.0f - cosres;
 
     // Do the conversion math once
@@ -672,6 +672,8 @@ Matrix MatrixTransform(Vector3 translation, Vector3 rotation, Vector3 scale)
 {
     Matrix result = MatrixIdentity();
 
+	// TODO: Review, use DEG2RAD here?
+	//Matrix mRotation = MatrixRotate(rotation.x*DEG2RAD, rotation.y*DEG2RAD, rotation.z*DEG2RAD);
     Matrix mRotation = MatrixRotate(rotation.x, rotation.y, rotation.z);
     Matrix mScale = MatrixScale(scale.x, scale.y, scale.z);
     Matrix mTranslate = MatrixTranslate(translation.x, translation.y, translation.z);

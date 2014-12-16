@@ -66,14 +66,14 @@ static VertexData LoadOBJ(const char *fileName);
 // NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color)
 {
-    float x = position.x;
-    float y = position.y;
-    float z = position.z;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
 
     rlPushMatrix();
 
         // NOTE: Be careful! Function order matters (rotate -> scale -> translate)
-        //rlTranslatef(0.0f, 0.0f, 0.0f);
+        rlTranslatef(position.x, position.y, position.z);
         //rlScalef(2.0f, 2.0f, 2.0f);
         //rlRotatef(45, 0, 1, 0);
 
@@ -146,12 +146,13 @@ void DrawCubeV(Vector3 position, Vector3 size, Color color)
 // Draw cube wires
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color)
 {
-    float x = position.x;
-    float y = position.y;
-    float z = position.z;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
 
     rlPushMatrix();
 
+        rlTranslatef(position.x, position.y, position.z);
         //rlRotatef(45, 0, 1, 0);
 
         rlBegin(RL_LINES);
@@ -445,11 +446,37 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
     rlPopMatrix();
 }
 
+// Draw a quad
+void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Color colors[4])
+{
+    rlBegin(RL_QUADS);
+        rlColor4ub(colors[0].r, colors[0].g, colors[0].b, colors[0].a);
+        rlNormal3f(normals[0].x, normals[0].y, normals[0].z);
+        rlTexCoord2f(textcoords[0].x, textcoords[0].y); 
+        rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+        
+        rlColor4ub(colors[1].r, colors[1].g, colors[1].b, colors[1].a);
+        rlNormal3f(normals[1].x, normals[1].y, normals[1].z);
+        rlTexCoord2f(textcoords[1].x, textcoords[1].y); 
+        rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
+
+        rlColor4ub(colors[2].r, colors[2].g, colors[2].b, colors[2].a);
+        rlNormal3f(normals[2].x, normals[2].y, normals[2].z);
+        rlTexCoord2f(textcoords[2].x, textcoords[2].y); 
+        rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
+
+        rlColor4ub(colors[3].r, colors[3].g, colors[3].b, colors[3].a);
+        rlNormal3f(normals[3].x, normals[3].y, normals[3].z);
+        rlTexCoord2f(textcoords[3].x, textcoords[3].y); 
+        rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+    rlEnd();
+}
+
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
 {
     // NOTE: QUADS usage require defining a texture on OpenGL 3.3+
-    rlEnableTexture(1);    // Default white texture
+    if (rlGetVersion() != OPENGL_11) rlEnableTexture(1);    // Default white texture
 
     // NOTE: Plane is always created on XZ ground and then rotated
     rlPushMatrix();
@@ -471,7 +498,7 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
         rlEnd();
     rlPopMatrix();
 
-    rlDisableTexture();
+    if (rlGetVersion() != OPENGL_11) rlDisableTexture();
 }
 
 // Draw a plane with divisions
@@ -1041,7 +1068,7 @@ Model LoadCubesmap(Image cubesmap)
     // Move data from mapVertices temp arays to vertices float array
     vData.vertexCount = vCounter;
 
-    printf("Vertex count: %i\n", vCounter);
+    //printf("Vertex count: %i\n", vCounter);
 
     vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));

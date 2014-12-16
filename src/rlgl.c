@@ -299,14 +299,21 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     // TODO: Support rotation in multiple axes
     Matrix rot = MatrixIdentity();
 
+	// OPTION 1: It works...
     if (x == 1) rot = MatrixRotateX(angleDeg*DEG2RAD);
     else if (y == 1) rot = MatrixRotateY(angleDeg*DEG2RAD);
     else if (z == 1) rot = MatrixRotateZ(angleDeg*DEG2RAD);
 	
-	//Vector3 vec = (Vector3){ 0, 0, 1 };
+	// OPTION 2: Requires review...
+	//Vector3 vec = (Vector3){ 0, 1, 0 };
     //VectorNormalize(&vec);
-    //rot = MatrixFromAxisAngle(vec, angleDeg*DEG2RAD);       // Working
-
+    //rot = MatrixFromAxisAngle(vec, angleDeg*DEG2RAD);       // Working?
+    
+    // OPTION 3: TODO: Review, it doesn't work!
+    //Vector3 vec = (Vector3){ x, y, z };
+    //VectorNormalize(&vec);
+    //rot = MatrixRotate(angleDeg*vec.x, angleDeg*vec.x, angleDeg*vec.x);
+	
     MatrixTranspose(&rot);
 
     *currentMatrix = MatrixMultiply(*currentMatrix, rot);
