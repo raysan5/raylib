@@ -548,6 +548,12 @@ static ImageEx LoadDDS(const char *fileName)
 
     ImageEx image;
     ddsHeader header;
+    
+    image.data = NULL;
+    image.width = 0;
+    image.height = 0;
+    image.mipmaps = 0;
+    image.compFormat = 0;
 
     FILE *ddsFile = fopen(fileName, "rb");
 
