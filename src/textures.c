@@ -128,7 +128,7 @@ Image LoadImage(const char *fileName)
 
             TraceLog(INFO, "[%s] Image loaded successfully", fileName);
         }
-        else TraceLog(WARNING, "[%s] Image could not be loaded, file format not recognized", fileName);
+        else TraceLog(WARNING, "[%s] Image could not be loaded, file not recognized", fileName);
     }
     else if (strcmp(GetExtension(fileName),"dds") == 0)
     {
@@ -359,7 +359,7 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
     texture.width = 0;
     texture.height = 0;
 
-    if (image.pixels != NULL)
+    if ((image.pixels != NULL) && (image.width > 0) && (image.height > 0))
     {
         unsigned char *imgData = malloc(image.width * image.height * 4);
 
@@ -383,7 +383,7 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
 
         free(imgData);
     }
-    else TraceLog(WARNING, "Texture could not be created, image data is not valid");
+    else TraceLog(WARNING, "Texture could not be loaded, image data is not valid");
 
     return texture;
 }
