@@ -1290,6 +1290,12 @@ static VertexData LoadOBJ(const char *fileName)
     FILE *objFile;
 
     objFile = fopen(fileName, "rt");
+    
+    if (objFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] OBJ file could not be opened", fileName);
+        return vData;
+    }
 
     // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
