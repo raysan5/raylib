@@ -92,7 +92,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// ...
+#define MAX_TOUCH_POINTS 256
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -112,7 +112,14 @@ static bool windowReady = false;                // Used to detect display initia
 
 // Gestures detection variables
 static float tapTouchX, tapTouchY;
+static int64_t lastTapTime = 0;
+static float lastTapX = 0, lastTapY = 0;
 static bool touchTap = false;
+static bool doubleTap = false;
+static bool drag = false;
+static int stdVector[MAX_TOUCH_POINTS];
+static int indexPosition = 0;
+const AInputEvent* eventDrag;
 static int32_t touchId;
 const int32_t DOUBLE_TAP_TIMEOUT = 300*1000000;
 const int32_t DOUBLE_TAP_SLOP = 100;
@@ -184,6 +191,7 @@ static int previousMouseWheelY = 0;         // Required to track mouse wheel var
 static int currentMouseWheelY = 0;          // Required to track mouse wheel variation
 
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
+static int lastKeyPressed = -1;
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -230,6 +238,8 @@ static void InitGamepad(void);                          // Init raw gamepad inpu
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
+static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);     // GLFW3 Mouse Button Callback, runs on mouse button pressed
+static void CharCallback(GLFWwindow *window, unsigned int key);                            // GLFW3 Char Key Callback, runs on key pressed (get char value)
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
@@ -441,6 +451,12 @@ int GetScreenHeight(void)
     return screenHeight;
 }
 
+// Get the last key pressed
+int GetKeyPressed(void)
+{
+    return lastKeyPressed;
+}
+
 // Sets Background Color
 void ClearBackground(Color color)
 {
@@ -623,13 +639,7 @@ bool IsKeyPressed(int key)
 {
     bool pressed = false;
 
-    currentKeyState[key] = IsKeyDown(key);
-
-    if (currentKeyState[key] != previousKeyState[key])
-    {
-        if (currentKeyState[key]) pressed = true;
-        previousKeyState[key] = currentKeyState[key];
-    }
+    if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 1)) pressed = true;
     else pressed = false;
 
     return pressed;
@@ -647,13 +657,7 @@ bool IsKeyReleased(int key)
 {
     bool released = false;
 
-    currentKeyState[key] = IsKeyUp(key);
-
-    if (currentKeyState[key] != previousKeyState[key])
-    {
-        if (currentKeyState[key]) released = true;
-        previousKeyState[key] = currentKeyState[key];
-    }
+    if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
     else released = false;
 
     return released;
@@ -671,13 +675,7 @@ bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
 
-    currentMouseState[button] = IsMouseButtonDown(button);
-
-    if (currentMouseState[button] != previousMouseState[button])
-    {
-        if (currentMouseState[button]) pressed = true;
-        previousMouseState[button] = currentMouseState[button];
-    }
+    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
     else pressed = false;
 
     return pressed;
@@ -695,13 +693,7 @@ bool IsMouseButtonReleased(int button)
 {
     bool released = false;
 
-    currentMouseState[button] = IsMouseButtonUp(button);
-
-    if (currentMouseState[button] != previousMouseState[button])
-    {
-        if (currentMouseState[button]) released = true;
-        previousMouseState[button] = currentMouseState[button];
-    }
+    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 0)) released = true;
     else released = false;
 
     return released;
@@ -858,6 +850,18 @@ bool IsScreenTouched(void)
     return touchTap;
 }
 
+bool IsDoubleTap(void)
+{
+    if (doubleTap) TraceLog(INFO, "DOUBLE TAP gesture detected");
+
+    return doubleTap;
+}
+
+bool IsDragGesture(void)
+{
+    return drag;
+}
+
 // Returns touch position X
 int GetTouchX(void)
 {
@@ -877,6 +881,27 @@ Vector2 GetTouchPosition(void)
 
     return position;
 }
+
+/*bool GetPointer(Vector2 *dragPositions)
+{
+    //static int stdVector[MAX_TOUCH_POINTS];
+    //static int indexPosition = 0;
+    //if (indexPosition == 0) return false;
+    Vector2 vec_pointers_[];
+
+    //eventDrag
+    int32_t iIndex = FindIndex( eventDrag, vec_pointers_[0] );
+    
+    if (iIndex == -1) return false;
+
+    float x = AMotionEvent_getX(eventDrag, iIndex);
+    float y = AMotionEvent_getY(eventDrag, iIndex);
+
+    *dragPositions = Vector2( x, y );
+
+
+    return true;
+}*/
 #endif
 
 //----------------------------------------------------------------------------------
@@ -977,6 +1002,8 @@ static void InitDisplay(int width, int height)
     glfwSetWindowSizeCallback(window, WindowSizeCallback);
     glfwSetCursorEnterCallback(window, CursorEnterCallback);
     glfwSetKeyCallback(window, KeyCallback);
+    glfwSetMouseButtonCallback(window, MouseButtonCallback);
+    glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
 
     glfwMakeContextCurrent(window);
@@ -1168,6 +1195,25 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         TakeScreenshot();
     }
 #endif
+    else currentKeyState[key] = action;
+
+    // HACK for GuiTextBox, to deteck back key
+    // TODO: Review...
+    if ((key == 259) && (action == GLFW_PRESS)) lastKeyPressed = 3;
+}
+
+// GLFW3 Mouse Button Callback, runs on mouse button pressed
+static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
+    currentMouseState[button] = action;
+}
+
+// GLFW3 Char Key Callback, runs on key pressed (get char value)
+static void CharCallback(GLFWwindow *window, unsigned int key)
+{
+    lastKeyPressed = key;
+    
+    //TraceLog(INFO, "Char Callback Key pressed: %i\n", key);
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
@@ -1203,6 +1249,7 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
+        // Detect TOUCH position
         if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
         {
             // TODO: Seems to work ok but... review!
@@ -1266,7 +1313,124 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
         //size_t pointerCount =  AMotionEvent_getPointerCount(event);
         //float AMotionEvent_getPressure(const AInputEvent *motion_event, size_t pointer_index); // 0 to 1
         //float AMotionEvent_getSize(const AInputEvent *motion_event, size_t pointer_index); // Pressed area
+        
+        // Detect DOUBLE TAP event
+        bool tapDetected = touchTap;
 
+        switch (flags)
+        {
+            case AMOTION_EVENT_ACTION_DOWN:
+            {
+                int64_t eventTime = AMotionEvent_getEventTime(event);
+                
+                if (eventTime - lastTapTime <= DOUBLE_TAP_TIMEOUT)
+                {
+                    float x = AMotionEvent_getX(event, 0) - lastTapX;
+                    float y = AMotionEvent_getY(event, 0) - lastTapY;
+                    
+                    float densityFactor = 1.0f;
+                    
+                    if ((x*x + y*y) < (DOUBLE_TAP_SLOP*DOUBLE_TAP_SLOP*densityFactor))
+                    {
+                        // Doubletap detected
+                        doubleTap = true;
+                        
+                    }
+                }
+            } break;
+            case AMOTION_EVENT_ACTION_UP:
+            {
+                if (tapDetected)
+                {
+                    lastTapTime = AMotionEvent_getEventTime(event);
+                    lastTapX = AMotionEvent_getX(event, 0);
+                    lastTapY = AMotionEvent_getY(event, 0);
+                    
+                }
+            } break;
+        }
+        
+        
+        // Detect DRAG event
+        //int32_t action = AMotionEvent_getAction(event);
+
+        int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+        //uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
+        //event_ = event;
+
+        int32_t count = AMotionEvent_getPointerCount(event);
+
+        switch (flags)
+        {
+            case AMOTION_EVENT_ACTION_DOWN:
+            {
+                stdVector[indexPosition] = AMotionEvent_getPointerId(event, 0);
+                indexPosition++;
+                TraceLog(INFO, "ACTION_DOWN");
+                
+                //ret = GESTURE_STATE_START;
+            } break;
+            case AMOTION_EVENT_ACTION_POINTER_DOWN:
+            {
+                stdVector[indexPosition] = AMotionEvent_getPointerId(event, index);
+                indexPosition++;
+                TraceLog(INFO, "ACTION_POINTER_DOWN");
+                
+            } break;
+            case AMOTION_EVENT_ACTION_UP:
+            {
+                //int value = stdVector[indexPosition];
+                indexPosition--;
+                //ret = GESTURE_STATE_END;
+                TraceLog(INFO, "ACTION_UP");
+                
+            } break;
+            case AMOTION_EVENT_ACTION_POINTER_UP:
+            {
+                int32_t releasedPointerId = AMotionEvent_getPointerId(event, index);
+                
+                int i = 0;
+                for (i = 0; i < MAX_TOUCH_POINTS; i++)
+                {
+                    if (stdVector[i] == releasedPointerId)
+                    {
+                        for (int k = i; k < indexPosition - 1; k++)
+                        {
+                            stdVector[k] = stdVector[k + 1];
+                        }
+                        
+                        //indexPosition--;
+                        indexPosition = 0;
+                        break;
+                    }
+                }
+                
+                if (i <= 1)
+                {
+                    // Reset pinch or drag
+                    //if (count == 2) //ret = GESTURE_STATE_START;
+                }
+                TraceLog(INFO, "ACTION_POINTER_UP");
+                
+            } break;
+            case AMOTION_EVENT_ACTION_MOVE:
+            {
+                if (count == 1)
+                {
+                    //TraceLog(INFO, "DRAG gesture detected");
+                
+                    drag = true; //ret = GESTURE_STATE_MOVE;
+                }
+                else break;
+                TraceLog(INFO, "ACTION_MOVE");
+
+            } break;
+            case AMOTION_EVENT_ACTION_CANCEL: break;
+            default: break;
+        }
+
+        //--------------------------------------------------------------------
+        
         return 1;
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
@@ -1467,14 +1631,23 @@ static void PollInputEvents(void)
 
     // Keyboard polling
     // Automatically managed by GLFW3 through callback
-
+    lastKeyPressed = -1;
+    
+    // Register previous keys states
+    for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
+    
+    // Register previous mouse states
+    for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
+    
     glfwPollEvents();       // Register keyboard/mouse events
 #elif defined(PLATFORM_ANDROID)
 
     // TODO: Check virtual keyboard (?)
 
-    // Reset touchTap event
+    // Reset touch events
     touchTap = false;
+    doubleTap = false;
+    drag = false;
 
     // Poll Events (registered events)
     while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
@@ -1623,14 +1796,17 @@ static void PollInputEvents(void)
 static void InitMouse(void)
 {
     // NOTE: We can use /dev/input/mice to read from all available mice
-    if ((mouseStream = open(DEFAULT_MOUSE_DEV, O_RDONLY|O_NONBLOCK)) < 0) TraceLog(WARNING, "Could not open mouse device, no mouse available");
+    if ((mouseStream = open(DEFAULT_MOUSE_DEV, O_RDONLY|O_NONBLOCK)) < 0)
+    {
+        TraceLog(WARNING, "Mouse device could not be opened, no mouse available");
+    }
     else
     {
         mouseReady = true;
 
-        int err = pthread_create(&mouseThreadId, NULL, &MouseThread, NULL);
+        int error = pthread_create(&mouseThreadId, NULL, &MouseThread, NULL);
 
-        if (err != 0) TraceLog(WARNING, "Error creating mouse input event thread");
+        if (error != 0) TraceLog(WARNING, "Error creating mouse input event thread");
         else TraceLog(INFO, "Mouse device initialized successfully");
     }
 }
@@ -1741,7 +1917,7 @@ static void RestoreKeyboard(void)
 static void InitGamepad(void)
 {
     // TODO: Gamepad support
-    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) TraceLog(WARNING, "Could not open gamepad device, no gamepad available");
+    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
     else TraceLog(INFO, "Gamepad device initialized successfully");
 }
 #endif
@@ -1763,7 +1939,7 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
     // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
-        TraceLog(WARNING, "DOWNSCALING: Required screen size (%i x %i) is bigger than display size (%i x %i)", screenWidth, screenHeight, displayWidth, displayHeight);
+        TraceLog(WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
 
         // Downscaling to fit display with border-bars
         float widthRatio = (float)displayWidth/(float)screenWidth;
@@ -1832,6 +2008,7 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)
 {
+#ifndef PLATFORM_WEB
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
 
@@ -1949,6 +2126,8 @@ static void LogoAnimation(void)
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
+#endif
 
     showLogo = false;  // Prevent for repeating when reloading window (Android)
 }
+

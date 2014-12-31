@@ -44,7 +44,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// It's lonely here...
+extern unsigned int whiteTexture;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -197,7 +197,7 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
     else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
         // NOTE: This shape uses QUADS to avoid drawing order issues (view rlglDraw)
-        rlEnableTexture(1); // Default white texture
+        rlEnableTexture(whiteTexture); // Default white texture
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);

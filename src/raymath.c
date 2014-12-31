@@ -329,8 +329,6 @@ void MatrixInvert(Matrix *mat)
     // Calculate the invert determinant (inlined to avoid double-caching)
     float invDet = 1/(b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06);
 
-    printf("%f\n", invDet);
-
     temp.m0 = (a11*b11 - a12*b10 + a13*b09)*invDet;
     temp.m1 = (-a01*b11 + a02*b10 - a03*b09)*invDet;
     temp.m2 = (a31*b05 - a32*b04 + a33*b03)*invDet;
@@ -491,6 +489,48 @@ Matrix MatrixRotate(float angleX, float angleY, float angleZ)
 
     return result;
 }
+
+/*
+Matrix MatrixRotate(float angle, float x, float y, float z)
+{
+    Matrix result = MatrixIdentity();
+
+    float c = cosf(angle*DEG2RAD);    // cosine
+    float s = sinf(angle*DEG2RAD);    // sine
+    float c1 = 1.0f - c;              // 1 - c
+    
+    float m0 = result.m0, m4 = result.m4, m8 = result.m8, m12 = result.m12,
+          m1 = result.m1, m5 = result.m5, m9 = result.m9,  m13 = result.m13,
+          m2 = result.m2, m6 = result.m6, m10 = result.m10, m14 = result.m14;
+
+    // build rotation matrix
+    float r0 = x * x * c1 + c;
+    float r1 = x * y * c1 + z * s;
+    float r2 = x * z * c1 - y * s;
+    float r4 = x * y * c1 - z * s;
+    float r5 = y * y * c1 + c;
+    float r6 = y * z * c1 + x * s;
+    float r8 = x * z * c1 + y * s;
+    float r9 = y * z * c1 - x * s;
+    float r10= z * z * c1 + c;
+
+    // multiply rotation matrix
+    result.m0 = r0*m0 + r4*m1 + r8*m2;
+    result.m1 = r1*m0 + r5*m1 + r9*m2;
+    result.m2 = r2*m0 + r6*m1 + r10*m2;
+    result.m4 = r0*m4 + r4*m5 + r8*m6;
+    result.m5 = r1*m4 + r5*m5 + r9*m6;
+    result.m6 = r2*m4 + r6*m5 + r10*m6;
+    result.m8 = r0*m8 + r4*m9 + r8*m10;
+    result.m9 = r1*m8 + r5*m9 + r9*m10;
+    result.m10 = r2*m8 + r6*m9 + r10*m10;
+    result.m12 = r0*m12+ r4*m13 + r8*m14;
+    result.m13 = r1*m12+ r5*m13 + r9*m14;
+    result.m14 = r2*m12+ r6*m13 + r10*m14;
+
+    return result;
+}
+*/
 
 // Create rotation matrix from axis and angle
 // TODO: Test this function
@@ -668,12 +708,11 @@ Matrix MatrixScale(float x, float y, float z)
 
 // Returns transformation matrix for a given translation, rotation and scale
 // NOTE: Transformation order is rotation -> scale -> translation
+// NOTE: Rotation angles should come in radians
 Matrix MatrixTransform(Vector3 translation, Vector3 rotation, Vector3 scale)
 {
     Matrix result = MatrixIdentity();
 
-	// TODO: Review, use DEG2RAD here?
-	//Matrix mRotation = MatrixRotate(rotation.x*DEG2RAD, rotation.y*DEG2RAD, rotation.z*DEG2RAD);
     Matrix mRotation = MatrixRotate(rotation.x, rotation.y, rotation.z);
     Matrix mScale = MatrixScale(scale.x, scale.y, scale.z);
     Matrix mTranslate = MatrixTranslate(translation.x, translation.y, translation.z);

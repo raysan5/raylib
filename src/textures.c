@@ -126,7 +126,7 @@ Image LoadImage(const char *fileName)
             image.width = imgWidth;
             image.height = imgHeight;
 
-            TraceLog(INFO, "[%s] Image loaded successfully", fileName);
+            TraceLog(INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
         }
         else TraceLog(WARNING, "[%s] Image could not be loaded, file not recognized", fileName);
     }
@@ -187,7 +187,10 @@ Image LoadImageFromRES(const char *rresName, int resId)
 
     FILE *rresFile = fopen(rresName, "rb");
 
-    if (!rresFile) TraceLog(WARNING, "[%s] Could not open raylib resource file", rresName);
+    if (rresFile == NULL) 
+    {
+        TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
+    }
     else
     {
         // Read rres file (basic file check - id)
@@ -337,9 +340,12 @@ Texture2D LoadTexture(const char *fileName)
     else
     {
         Image image = LoadImage(fileName);
-
+        
         if (image.pixels != NULL)
         {
+#if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+            ConvertToPOT(&image, BLANK);
+#endif
             texture = LoadTextureFromImage(image, false);
             UnloadImage(image);
         }
@@ -423,6 +429,41 @@ void UnloadImage(Image image)
 void UnloadTexture(Texture2D texture)
 {
     rlDeleteTextures(texture.id);
+}
+
+// Convert image to POT (power-of-two)
+// NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
+void ConvertToPOT(Image *image, Color fillColor)
+{
+    // Just add the required amount of pixels at the right and bottom sides of image...
+    int potWidth = GetNextPOT(image->width);
+    int potHeight = GetNextPOT(image->height);
+
+    // Check if POT texture generation is required (if texture is not already POT)
+    if ((potWidth != image->width) || (potHeight != image->height))
+    {
+        Color *imgDataPixelPOT = NULL;
+
+        // Generate POT array from NPOT data
+        imgDataPixelPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
+
+        for (int j = 0; j < potHeight; j++)
+        {
+            for (int i = 0; i < potWidth; i++)
+            {
+                if ((j < image->height) && (i < image->width)) imgDataPixelPOT[j*potWidth + i] = image->pixels[j*image->width + i];
+                else imgDataPixelPOT[j*potWidth + i] = fillColor;
+            }
+        }
+
+        TraceLog(WARNING, "Image converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
+
+        free(image->pixels);
+
+        image->pixels = imgDataPixelPOT;
+        image->width = potWidth;
+        image->height = potHeight;
+    }
 }
 
 // Draw a Texture2D
@@ -559,7 +600,7 @@ static ImageEx LoadDDS(const char *fileName)
 
     if (ddsFile == NULL)
     {
-        TraceLog(WARNING, "DDS File could not be opened");
+        TraceLog(WARNING, "[%s] DDS image file could not be opened", fileName);
     }
     else
     {
@@ -570,7 +611,7 @@ static ImageEx LoadDDS(const char *fileName)
 
         if (strncmp(filecode, "DDS ", 4) != 0)
         {
-            TraceLog(WARNING, "DDS File does not seem to be valid");
+            TraceLog(WARNING, "[%s] DDS file does not seem to be a valid image", fileName);
             fclose(ddsFile);
         }
         else
@@ -705,7 +746,7 @@ static ImageEx LoadPKM(const char *fileName)
 
     if (pkmFile == NULL)
     {
-        TraceLog(WARNING, "[%s] PKM File could not be opened", fileName);
+        TraceLog(WARNING, "[%s] PKM image file could not be opened", fileName);
     }
     else
     {
@@ -716,7 +757,7 @@ static ImageEx LoadPKM(const char *fileName)
 
         if (strncmp(filecode, "PKM ", 4) != 0)
         {
-            TraceLog(WARNING, "[%s] PKM File does not seem to be valid", fileName);
+            TraceLog(WARNING, "[%s] PKM file does not seem to be a valid image", fileName);
             fclose(pkmFile);
         }
         else

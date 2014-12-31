@@ -50,7 +50,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// It's lonely here...
+extern unsigned int whiteTexture;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -476,7 +476,7 @@ void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Co
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
 {
     // NOTE: QUADS usage require defining a texture on OpenGL 3.3+
-    if (rlGetVersion() != OPENGL_11) rlEnableTexture(1);    // Default white texture
+    if (rlGetVersion() != OPENGL_11) rlEnableTexture(whiteTexture);    // Default white texture
 
     // NOTE: Plane is always created on XZ ground and then rotated
     rlPushMatrix();
@@ -812,7 +812,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 }
 
 // Load a map image as a 3d model (cubes based)
-Model LoadCubesmap(Image cubesmap)
+Model LoadCubicmap(Image cubesmap)
 {
     VertexData vData;
 
@@ -1067,8 +1067,6 @@ Model LoadCubesmap(Image cubesmap)
 
     // Move data from mapVertices temp arays to vertices float array
     vData.vertexCount = vCounter;
-
-    //printf("Vertex count: %i\n", vCounter);
 
     vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
@@ -1524,3 +1522,35 @@ static VertexData LoadOBJ(const char *fileName)
 
     return vData;
 }
+
+bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
+{
+
+    return false;
+}
+
+bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
+{
+    /*
+    // Get min and max vertex to construct bounds (AABB)
+    Vector3 minVertex = tempVertices[0]; 
+    Vector3 maxVertex = tempVertices[0];
+    
+    for (int i = 1; i < tempVertices.Count; i++)
+    {
+        minVertex = Vector3.Min(minVertex, tempVertices[i]);
+        maxVertex = Vector3.Max(maxVertex, tempVertices[i]);
+    }
+    
+    bounds = new BoundingBox(minVertex, maxVertex);
+    */
+    return false;
+}
+
+bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, Vector3 radiusSphere)
+{
+
+    return false;
+}
+
+//BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)

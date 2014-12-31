@@ -169,7 +169,8 @@ static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
 // White texture useful for plain color polys (required by shader)
-static GLuint whiteTexture;
+// NOTE: It's required in shapes and models modules!
+extern unsigned int whiteTexture;
 
 // Support for VAOs (OpenGL ES2 could not support VAO extensions)
 static bool vaoSupported = false;
@@ -772,7 +773,7 @@ void rlglInit(void)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-	// NOTE: emscripten does not support VAOs
+	// NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
 #if !defined(PLATFORM_WEB)
     glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
     glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
@@ -1128,6 +1129,8 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shaderProgram);        // Use our shader
 
+    VectorScale(&rotation, DEG2RAD);
+    
     // Get transform matrix (rotation -> scale -> translation)
     Matrix transform = MatrixTransform(position, rotation, scale);
     Matrix modelviewworld = MatrixMultiply(transform, modelview);
@@ -1340,7 +1343,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    TraceLog(INFO, "[TEX ID %i] Texture created successfully (%i x %i)", id, width, height);
+    TraceLog(INFO, "[TEX ID %i] Texture created successfully (%ix%i)", id, width, height);
 
     return id;
 }
@@ -1690,33 +1693,35 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
 }
 
 // Read shader text file
-static char *TextFileRead(char *fn)
+static char *TextFileRead(char *fileName)
 {
-    FILE *fp;
+    FILE *textFile;
     char *text = NULL;
 
     int count=0;
 
-    if (fn != NULL)
+    if (fileName != NULL)
     {
-        fp = fopen(fn,"rt");
+        textFile = fopen(fileName,"rt");
 
-        if (fp != NULL)
+        if (textFile != NULL)
         {
-            fseek(fp, 0, SEEK_END);
-            count = ftell(fp);
-            rewind(fp);
+            fseek(textFile, 0, SEEK_END);
+            count = ftell(textFile);
+            rewind(textFile);
 
             if (count > 0)
             {
                 text = (char *)malloc(sizeof(char) * (count+1));
-                count = fread(text, sizeof(char), count, fp);
+                count = fread(text, sizeof(char), count, textFile);
                 text[count] = '\0';
             }
 
-            fclose(fp);
+            fclose(textFile);
         }
+        else TraceLog(WARNING, "[%s] Text file could not be opened", fileName);
     }
+    
     return text;
 }
 
@@ -1992,7 +1997,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
         j++;
     }
 
-    TraceLog(DEBUG, "Mipmap base (%i, %i)", width, height);
+    TraceLog(DEBUG, "Mipmap base (%ix%i)", width, height);
 
     for (int mip = 1; mip < mipmapCount; mip++)
     {
@@ -2063,7 +2068,7 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
         }
     }
 
-    TraceLog(DEBUG, "Mipmap generated successfully (%i, %i)", width, height);
+    TraceLog(DEBUG, "Mipmap generated successfully (%ix%i)", width, height);
 
     return mipmap;
 }

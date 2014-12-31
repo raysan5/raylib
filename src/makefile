@@ -1,8 +1,6 @@
 #**************************************************************************************************
 #
-#   raylib for Raspberry Pi and Windows desktop
-#
-#   makefile for library compilation (raylib.a)
+#   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -23,8 +21,8 @@
 #
 #**************************************************************************************************
 
-# define raylib platform (by default, compile for RPI)
-# Other possible platforms: PLATFORM_DESKTOP_WIN PLATFORM_DESKTOP_LINUX PLATFORM_WEB
+# define raylib platform to compile for
+# possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
 
 # define raylib graphics api depending on selected platform
@@ -81,7 +79,7 @@ default: raylib
 # compile raylib library
 raylib: $(OBJS)
 ifeq ($(PLATFORM),PLATFORM_WEB)
-	emcc -O1 $(OBJS) -o raylib.bc
+	emcc -O1 $(OBJS) -o libraylib.bc
 else
 	ar rcs libraylib.a $(OBJS)
 endif
@@ -136,7 +134,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	find . -type f -executable -delete
 	rm -f *.o libraylib.a
 else
+ifeq ($(PLATFORM),PLATFORM_WEB)
+	del *.o libraylib.bc
+else
 	del *.o libraylib.a
+endif
 endif
 endif
 	@echo Cleaning done

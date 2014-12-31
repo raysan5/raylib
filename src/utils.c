@@ -133,18 +133,25 @@ void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int he
 
     FILE *bmpFile = fopen(fileName, "wb");    // Define a pointer to bitmap file and open it in write-binary mode
 
-    // NOTE: fwrite parameters are: data pointer, size in bytes of each element to be written, number of elements, file-to-write pointer
-    fwrite(bmpFileHeader, sizeof(unsigned char), 14, bmpFile);    // Write BMP file header data
-    fwrite(bmpInfoHeader, sizeof(unsigned char), 40, bmpFile);    // Write BMP info header data
-
-    // Write pixel data to file
-    for (int y = 0; y < height ; y++)
+    if (bmpFile == NULL)
     {
-        for (int x = 0; x < width; x++)
+        TraceLog(WARNING, "[%s] BMP file could not be created", fileName);
+    }
+    else
+    {
+        // NOTE: fwrite parameters are: data pointer, size in bytes of each element to be written, number of elements, file-to-write pointer
+        fwrite(bmpFileHeader, sizeof(unsigned char), 14, bmpFile);    // Write BMP file header data
+        fwrite(bmpInfoHeader, sizeof(unsigned char), 40, bmpFile);    // Write BMP info header data
+
+        // Write pixel data to file
+        for (int y = 0; y < height ; y++)
         {
-            fputc(imgData[(x*4)+2 + (y*width*4)], bmpFile);
-            fputc(imgData[(x*4)+1 + (y*width*4)], bmpFile);
-            fputc(imgData[(x*4) + (y*width*4)], bmpFile);
+            for (int x = 0; x < width; x++)
+            {
+                fputc(imgData[(x*4)+2 + (y*width*4)], bmpFile);
+                fputc(imgData[(x*4)+1 + (y*width*4)], bmpFile);
+                fputc(imgData[(x*4) + (y*width*4)], bmpFile);
+            }
         }
     }
 
@@ -262,6 +269,23 @@ const char *GetExtension(const char *fileName)
     const char *dot = strrchr(fileName, '.');
     if(!dot || dot == fileName) return "";
     return (dot + 1);
+}
+
+// Calculate next power-of-two value for a given num
+int GetNextPOT(int num)
+{
+    if (num != 0)
+    {
+        num--;
+        num |= (num >> 1);     // Or first 2 bits
+        num |= (num >> 2);     // Or next 2 bits
+        num |= (num >> 4);     // Or next 4 bits
+        num |= (num >> 8);     // Or next 8 bits
+        num |= (num >> 16);    // Or next 16 bits
+        num++;
+    }
+
+    return num;
 }
 
 //----------------------------------------------------------------------------------

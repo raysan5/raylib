@@ -63,6 +63,7 @@
 //#define PLATFORM_DESKTOP      // Windows, Linux or OSX
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
+//#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -298,7 +299,7 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 void InitWindow(int width, int height, struct android_app *state);  // Init Android activity
-#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
 
@@ -311,6 +312,7 @@ void SetExitKey(int key);                                   // Set a custom key 
 #endif
 int GetScreenWidth(void);                                   // Get current screen width
 int GetScreenHeight(void);                                  // Get current screen height
+int GetKeyPressed(void);                                    // Get latest key pressed
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
@@ -330,8 +332,7 @@ int GetRandomValue(int min, int max);                       // Returns a random 
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
 void SetupFlags(char flags);                                // Enable some window configurations
-
-void ShowLogo(void);                                        // Activates raylib logo at startup
+void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -410,6 +411,7 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps);                   
 Texture2D CreateTexture(Image image, bool genMipmaps);                                             // [DEPRECATED] Same as LoadTextureFromImage()
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
+void ConvertToPOT(Image *image, Color fillColor);                                                  // Convert image to POT (power-of-two)
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
@@ -460,7 +462,7 @@ void DrawGizmoEx(Vector3 position, Vector3 rotation, float scale);              
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
-Model LoadCubesmap(Image cubesmap);                                                                // Load a map image as a 3d model (cubes based)
+Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
 
@@ -478,7 +480,7 @@ void InitAudioDevice(void);                                     // Initialize au
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
-Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
+Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound

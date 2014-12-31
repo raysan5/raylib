@@ -45,9 +45,14 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define MUSIC_STREAM_BUFFERS        2
-#define MUSIC_BUFFER_SIZE      4096*2   // PCM data buffer (short) - 16Kb
-                                        // NOTE: Reduced to avoid frame-stalls on RPI
-//#define MUSIC_BUFFER_SIZE    4096*8   // PCM data buffer (short) - 64Kb
+
+#if defined(PLATFORM_RPI)
+    // NOTE: On RPI should be lower to avoid frame-stalls
+    #define MUSIC_BUFFER_SIZE      4096*2   // PCM data buffer (short) - 16Kb (RPI)
+#else                            
+    // NOTE: On HTML5 (emscripten) this is allocated on heap, by default it's only 16MB!...just take care...
+    #define MUSIC_BUFFER_SIZE      4096*8   // PCM data buffer (short) - 64Kb
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -97,7 +102,7 @@ void InitAudioDevice(void)
     // Open and initialize a device with default settings
     ALCdevice *device = alcOpenDevice(NULL);
 
-    if(!device) TraceLog(ERROR, "Could not open audio device");
+    if(!device) TraceLog(ERROR, "Audio device could not be opened");
 
     ALCcontext *context = alcCreateContext(device, NULL);
 
@@ -196,12 +201,11 @@ Sound LoadSound(char *fileName)
 
         // Attach sound buffer to source
         alSourcei(source, AL_BUFFER, buffer);
+        
+        TraceLog(INFO, "[%s] Sound file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
 
         // Unallocate WAV data
         UnloadWave(wave);
-
-        TraceLog(INFO, "[%s] Sound file loaded successfully", fileName);
-        TraceLog(INFO, "[%s] Sample rate: %i - Channels: %i", fileName, wave.sampleRate, wave.channels);
 
         sound.source = source;
         sound.buffer = buffer;
@@ -254,8 +258,7 @@ Sound LoadSoundFromWave(Wave wave)
         // Unallocate WAV data
         UnloadWave(wave);
 
-        TraceLog(INFO, "[Wave] Sound file loaded successfully");
-        TraceLog(INFO, "[Wave] Sample rate: %i - Channels: %i", wave.sampleRate, wave.channels);
+        TraceLog(INFO, "[Wave] Sound file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", wave.sampleRate, wave.bitsPerSample, wave.channels);
 
         sound.source = source;
         sound.buffer = buffer;
@@ -280,7 +283,10 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
 
     FILE *rresFile = fopen(rresName, "rb");
 
-    if (!rresFile) TraceLog(WARNING, "[%s] Could not open raylib resource file", rresName);
+    if (rresFile == NULL) 
+    {
+        TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
+    }
     else
     {
         // Read rres file (basic file check - id)
@@ -372,11 +378,11 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
 
                         // Attach sound buffer to source
                         alSourcei(source, AL_BUFFER, buffer);
+                        
+                        TraceLog(INFO, "[%s] Sound loaded successfully from resource (SampleRate: %i, BitRate: %i, Channels: %i)", rresName, wave.sampleRate, wave.bitsPerSample, wave.channels);
 
                         // Unallocate WAV data
                         UnloadWave(wave);
-
-                        TraceLog(INFO, "[%s] Sound loaded successfully from resource, sample rate: %i", rresName, (int)sampleRate);
 
                         sound.source = source;
                         sound.buffer = buffer;
@@ -492,7 +498,10 @@ void PlayMusicStream(char *fileName)
         // Open audio stream
         currentMusic.stream = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (currentMusic.stream == NULL) TraceLog(WARNING, "[%s] Could not open ogg audio file", fileName);
+        if (currentMusic.stream == NULL)
+        {
+            TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
+        }
         else
         {
             // Get file info
@@ -582,11 +591,13 @@ void ResumeMusicStream(void)
 // Check if music is playing
 bool MusicIsPlaying(void)
 {
-    ALenum state;
+    bool playing = false;
+    ALint state;
 
     alGetSourcei(currentMusic.source, AL_SOURCE_STATE, &state);
+    if (state == AL_PLAYING) playing = true;
 
-    return (state == AL_PLAYING);
+    return playing;
 }
 
 // Set volume for music
@@ -757,9 +768,9 @@ static Wave LoadWAV(const char *fileName)
 
     wavFile = fopen(fileName, "rb");
 
-    if (!wavFile)
+    if (wavFile == NULL)
     {
-        TraceLog(WARNING, "[%s] Could not open WAV file", fileName);
+        TraceLog(WARNING, "[%s] WAV file could not be opened", fileName);
     }
     else
     {
@@ -811,7 +822,7 @@ static Wave LoadWAV(const char *fileName)
                     wave.channels = waveFormat.numChannels;
                     wave.bitsPerSample = waveFormat.bitsPerSample;
 
-                    TraceLog(INFO, "[%s] Wave file loaded successfully", fileName);
+                    TraceLog(INFO, "[%s] WAV file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
                 }
             }
         }
@@ -860,6 +871,8 @@ static Wave LoadOGG(char *fileName)
     int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, wave.data, totalSamplesLength);
 
     TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, samplesObtained);
+    
+    TraceLog(INFO, "[%s] OGG file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
 
     stb_vorbis_close(oggFile);
 
