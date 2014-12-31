@@ -1,8 +1,6 @@
 #**************************************************************************************************
 #
-#   raylib for Raspberry Pi and Windows desktop
-#
-#   makefile to compile raylib examples
+#   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -23,12 +21,19 @@
 #
 #**************************************************************************************************
 
-# define raylib platform (by default, compile for RPI)
-# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
-PLATFORM ?= PLATFORM_RPI
+# define raylib platform to compile for
+# possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
+# WARNING: To compile examples to HTML5, they must be redesigned to use emscripten.h and emscripten_set_main_loop()
+PLATFORM ?= PLATFORM_DESKTOP
 
 # define compiler: gcc for C program, define as g++ for C++
-CC = gcc
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # define emscripten compiler
+    CC = emcc
+else
+    # define default gcc compiler
+    CC = gcc
+endif
 
 # define compiler flags:
 #  -O2         defines optimization level
@@ -41,6 +46,12 @@ else
 endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
+    #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
+    #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
+endif
+
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
@@ -49,10 +60,10 @@ else
 endif
 
 # define library paths containing required libs
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
-	LFLAGS = -L. -L../src
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    LFLAGS = -L. -L../src -L/opt/vc/lib
 else
-	LFLAGS = -L. -L../src -L/opt/vc/lib
+    LFLAGS = -L. -L../src
 endif
 
 # define any libraries to link into executable
@@ -74,11 +85,19 @@ else
 endif
 endif
 
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    LIBS = ../src/libraylib.bc
+endif
+
 # define additional parameters and flags for windows
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
     WINFLAGS = ../src/resources -Wl,--subsystem,windows
+endif
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    EXT = .html
 endif
 
 # define all object files required
@@ -109,7 +128,7 @@ EXAMPLES = \
     models_billboard \
     models_obj_loading \
     models_heightmap \
-    models_cubesmap \
+    models_cubicmap \
     audio_sound_loading \
     audio_music_stream \
     #core_input_gamepad \
@@ -124,125 +143,125 @@ examples: $(EXAMPLES)
 
 # compile [core] example - basic window
 core_basic_window: core_basic_window.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - keyboard input
 core_input_keys: core_input_keys.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - mouse input
 core_input_mouse: core_input_mouse.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 # compile [core] example - gamepad input
 core_input_gamepad: core_input_gamepad.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 endif
 
 # compile [core] example - mouse wheel
 core_mouse_wheel: core_mouse_wheel.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - generate random values
 core_random_values: core_random_values.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - color selection (collision detection)
 core_color_select: core_color_select.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 3d mode
 core_3d_mode: core_3d_mode.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo (with basic shapes)
 shapes_logo_raylib: shapes_logo_raylib.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - basic shapes usage (rectangle, circle, ...)
 shapes_basic_shapes: shapes_basic_shapes.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib color palette
 shapes_colors_palette: shapes_colors_palette.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo animation
 shapes_logo_raylib_anim: shapes_logo_raylib_anim.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - raylib logo texture loading
 textures_logo_raylib: textures_logo_raylib.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - image loading and conversion to texture
 textures_image_loading: textures_image_loading.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture rectangle drawing
 textures_rectangle: textures_rectangle.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - compressed texture loading (DDS)
 textures_compressed_dds: textures_compressed_dds.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture mipmaps generation
 textures_mipmaps: textures_mipmaps.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture source and destination rectangles
 textures_srcrec_dstrec: textures_srcrec_dstrec.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - sprite fonts loading
 text_sprite_fonts: text_sprite_fonts.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - raylib bitmap fonts (rBMF)
 text_rbmf_fonts: text_rbmf_fonts.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text formatting
 text_format_text: text_format_text.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - font selection program
 text_font_select: text_font_select.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic geometric 3d shapes
 models_geometric_shapes: models_geometric_shapes.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic window
 models_planes: models_planes.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - billboard usage
 models_billboard: models_billboard.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - OBJ model loading
 models_obj_loading: models_obj_loading.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - heightmap loading
 models_heightmap: models_heightmap.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - cubesmap loading
-models_cubesmap: models_cubesmap.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+models_cubicmap: models_cubicmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - sound loading and playing (WAV and OGG)
 audio_sound_loading: audio_sound_loading.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - music stream playing (OGG)
 audio_music_stream: audio_music_stream.c
-	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # clean everything
 clean:
@@ -254,7 +273,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	find . -type f -executable -delete
 	rm -f *.o
 else
+ifeq ($(PLATFORM),PLATFORM_WEB)
+	del *.o *.html *.js
+else
 	del *.o *.exe
+endif
 endif
 endif
 	@echo Cleaning done
