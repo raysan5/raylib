@@ -63,7 +63,6 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 //----------------------------------------------------------------------------------
 static bool PixelIsMagenta(Color p);                // Check if a pixel is magenta
 static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Character **charSet);    // Parse image pixel data to obtain character set measures
-static int GetNextPOT(int num);                     // Calculate next power-of-two value for a given value
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
 
 extern void LoadDefaultFont(void);
@@ -135,7 +134,7 @@ extern void LoadDefaultFont(void)
         if (counter > 256) counter = 0;         // Security check...
     }
 
-    defaultFont.texture = CreateTexture(image, false); // Convert loaded image to OpenGL texture
+    defaultFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
     UnloadImage(image);
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, numChars
@@ -168,7 +167,7 @@ extern void LoadDefaultFont(void)
         else currentPosX = testPosX;
     }
 
-    TraceLog(INFO, "Default font loaded successfully");
+    TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
 
 extern void UnloadDefaultFont(void)
@@ -195,9 +194,10 @@ SpriteFont LoadSpriteFont(const char *fileName)
         Image image = LoadImage(fileName);
 
         // At this point we have a pixel array with all the data...
-
-        TraceLog(INFO, "[%s] SpriteFont image loaded: %i x %i", fileName, image.width, image.height);
-
+        
+#if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+        ConvertToPOT(&image, MAGENTA);
+#endif
         // Process bitmap Font pixel data to get measures (Character array)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
         int numChars = ParseImageData(image.pixels, image.width, image.height, &spriteFont.charSet);
@@ -207,40 +207,8 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
         spriteFont.numChars = numChars;
 
-        // Convert image font to POT image before conversion to texture
-        // NOTE: Not required, we skip this step
-/*
-        // Just add the required amount of pixels at the right and bottom sides of image...
-        int potWidth = GetNextPOT(image.width);
-        int potHeight = GetNextPOT(image.height);
-
-        // Check if POT texture generation is required (if texture is not already POT)
-        if ((potWidth != image.width) || (potHeight != image.height))
-        {
-            Color *imgDataPixelPOT = NULL;
-
-            // Generate POT array from NPOT data
-            imgDataPixelPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
-
-            for (int j = 0; j < potHeight; j++)
-            {
-                for (int i = 0; i < potWidth; i++)
-                {
-                    if ((j < image.height) && (i < image.width)) imgDataPixelPOT[j*potWidth + i] = image.pixels[j*image.width + i];
-                    else imgDataPixelPOT[j*potWidth + i] = MAGENTA;
-                }
-            }
-
-            TraceLog(WARNING, "SpriteFont texture converted to POT: %ix%i", potWidth, potHeight);
-
-            free(image.pixels);
-
-            image.pixels = imgDataPixelPOT;
-            image.width = potWidth;
-            image.height = potHeight;
-        }
-*/
-        spriteFont.texture = CreateTexture(image, false); // Convert loaded image to OpenGL texture
+        spriteFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
+        
         UnloadImage(image);
     }
 
@@ -475,23 +443,6 @@ static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Char
     return index;
 }
 
-// Calculate next power-of-two value for a given num
-static int GetNextPOT(int num)
-{
-    if (num != 0)
-    {
-        num--;
-        num |= (num >> 1);     // Or first 2 bits
-        num |= (num >> 2);     // Or next 2 bits
-        num |= (num >> 4);     // Or next 4 bits
-        num |= (num >> 8);     // Or next 8 bits
-        num |= (num >> 16);    // Or next 16 bits
-        num++;
-    }
-
-    return num;
-}
-
 // Load a rBMF font file (raylib BitMap Font)
 static SpriteFont LoadRBMF(const char *fileName)
 {
@@ -517,91 +468,96 @@ static SpriteFont LoadRBMF(const char *fileName)
     Image image;
 
     rbmfInfoHeader rbmfHeader;
-    unsigned int *rbmfFileData;
-    unsigned char *rbmfCharWidthData;
+    unsigned int *rbmfFileData = NULL;
+    unsigned char *rbmfCharWidthData = NULL;
 
     int charsDivisor = 1;    // Every char is separated from the consecutive by a 1 pixel divisor, horizontally and vertically
 
     FILE *rbmfFile = fopen(fileName, "rb");        // Define a pointer to bitmap file and open it in read-binary mode
 
-    // TODO: Check if file could be loaded! (rbmfFile == NULL)?
-
-    fread(&rbmfHeader, sizeof(rbmfInfoHeader), 1, rbmfFile);
-
-    TraceLog(INFO, "[%s] Loading rBMF file, size: %ix%i, numChars: %i, charHeight: %i", fileName, rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
-
-    spriteFont.numChars = (int)rbmfHeader.numChars;
-
-    image.width = (int)rbmfHeader.imgWidth;
-    image.height = (int)rbmfHeader.imgHeight;
-
-    int numPixelBits = rbmfHeader.imgWidth * rbmfHeader.imgHeight / 32;
-
-    rbmfFileData = (unsigned int *)malloc(numPixelBits * sizeof(unsigned int));
-
-    for(int i = 0; i < numPixelBits; i++) fread(&rbmfFileData[i], sizeof(unsigned int), 1, rbmfFile);
-
-    rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars * sizeof(unsigned char));
-
-    for(int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
-
-    // Re-construct image from rbmfFileData
-    //-----------------------------------------
-    image.pixels = (Color *)malloc(image.width * image.height * sizeof(Color));
-
-    for (int i = 0; i < image.width * image.height; i++) image.pixels[i] = BLANK;        // Initialize array
-
-    int counter = 0;        // Font data elements counter
-
-    // Fill image data (convert from bit to pixel!)
-    for (int i = 0; i < image.width * image.height; i += 32)
+    if (rbmfFile == NULL)
     {
-        for (int j = 31; j >= 0; j--)
+        TraceLog(WARNING, "[%s] rBMF font file could not be opened", fileName);
+    }
+    else
+    {
+        fread(&rbmfHeader, sizeof(rbmfInfoHeader), 1, rbmfFile);
+
+        TraceLog(INFO, "[%s] Loading rBMF file, size: %ix%i, numChars: %i, charHeight: %i", fileName, rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
+
+        spriteFont.numChars = (int)rbmfHeader.numChars;
+
+        image.width = (int)rbmfHeader.imgWidth;
+        image.height = (int)rbmfHeader.imgHeight;
+
+        int numPixelBits = rbmfHeader.imgWidth * rbmfHeader.imgHeight / 32;
+
+        rbmfFileData = (unsigned int *)malloc(numPixelBits * sizeof(unsigned int));
+
+        for(int i = 0; i < numPixelBits; i++) fread(&rbmfFileData[i], sizeof(unsigned int), 1, rbmfFile);
+
+        rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars * sizeof(unsigned char));
+
+        for(int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
+
+        // Re-construct image from rbmfFileData
+        //-----------------------------------------
+        image.pixels = (Color *)malloc(image.width * image.height * sizeof(Color));
+
+        for (int i = 0; i < image.width * image.height; i++) image.pixels[i] = BLANK;        // Initialize array
+
+        int counter = 0;        // Font data elements counter
+
+        // Fill image data (convert from bit to pixel!)
+        for (int i = 0; i < image.width * image.height; i += 32)
         {
-            if (BIT_CHECK(rbmfFileData[counter], j)) image.pixels[i+j] = WHITE;
+            for (int j = 31; j >= 0; j--)
+            {
+                if (BIT_CHECK(rbmfFileData[counter], j)) image.pixels[i+j] = WHITE;
+            }
+
+            counter++;
         }
 
-        counter++;
-    }
+        TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
-    TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
+        spriteFont.texture = LoadTextureFromImage(image, false);
+        UnloadImage(image);     // Unload image data
 
-    spriteFont.texture = CreateTexture(image, false);
-    UnloadImage(image);     // Unload image data
+        //TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
 
-    TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
+        // Reconstruct charSet using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
+        spriteFont.charSet = (Character *)malloc(spriteFont.numChars * sizeof(Character));     // Allocate space for our character data
 
-    // Reconstruct charSet using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
-    spriteFont.charSet = (Character *)malloc(spriteFont.numChars * sizeof(Character));     // Allocate space for our character data
+        int currentLine = 0;
+        int currentPosX = charsDivisor;
+        int testPosX = charsDivisor;
 
-    int currentLine = 0;
-    int currentPosX = charsDivisor;
-    int testPosX = charsDivisor;
-
-    for (int i = 0; i < spriteFont.numChars; i++)
-    {
-        spriteFont.charSet[i].value = (int)rbmfHeader.firstChar + i;
-        spriteFont.charSet[i].x = currentPosX;
-        spriteFont.charSet[i].y = charsDivisor + currentLine * ((int)rbmfHeader.charHeight + charsDivisor);
-        spriteFont.charSet[i].w = (int)rbmfCharWidthData[i];
-        spriteFont.charSet[i].h = (int)rbmfHeader.charHeight;
-
-        testPosX += (spriteFont.charSet[i].w + charsDivisor);
-
-        if (testPosX > spriteFont.texture.width)
+        for (int i = 0; i < spriteFont.numChars; i++)
         {
-            currentLine++;
-            currentPosX = 2 * charsDivisor + (int)rbmfCharWidthData[i];
-            testPosX = currentPosX;
+            spriteFont.charSet[i].value = (int)rbmfHeader.firstChar + i;
+            spriteFont.charSet[i].x = currentPosX;
+            spriteFont.charSet[i].y = charsDivisor + currentLine * ((int)rbmfHeader.charHeight + charsDivisor);
+            spriteFont.charSet[i].w = (int)rbmfCharWidthData[i];
+            spriteFont.charSet[i].h = (int)rbmfHeader.charHeight;
 
-            spriteFont.charSet[i].x = charsDivisor;
-            spriteFont.charSet[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
+            testPosX += (spriteFont.charSet[i].w + charsDivisor);
+
+            if (testPosX > spriteFont.texture.width)
+            {
+                currentLine++;
+                currentPosX = 2 * charsDivisor + (int)rbmfCharWidthData[i];
+                testPosX = currentPosX;
+
+                spriteFont.charSet[i].x = charsDivisor;
+                spriteFont.charSet[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
+            }
+            else currentPosX = testPosX;
         }
-        else currentPosX = testPosX;
+
+        TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
     }
-
-    TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
-
+    
     fclose(rbmfFile);
 
     free(rbmfFileData);                // Now we can free loaded data from RAM memory

@@ -1,8 +1,6 @@
 #**************************************************************************************************
 #
-#   raylib for Raspberry Pi and Windows desktop
-#
-#   makefile for library compilation (raylib.a)
+#   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -23,9 +21,9 @@
 #
 #**************************************************************************************************
 
-# define raylib platform (by default, compile for RPI)
-# Other possible platforms: PLATFORM_DESKTOP PLATFORM_DESKTOP_LINUX
-PLATFORM ?= PLATFORM_RPI
+# define raylib platform to compile for
+# possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
+PLATFORM ?= PLATFORM_DESKTOP
 
 # define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -37,20 +35,31 @@ else
     #GRAPHICS = GRAPHICS_API_OPENGL_33  # Uncomment to use OpenGL 3.3
 endif
 
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
+
 # NOTE: makefiles targets require tab indentation
 
 # define compiler: gcc for C program, define as g++ for C++
-CC = gcc
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # define emscripten compiler
+    CC = emcc
+else
+    # define default gcc compiler
+    CC = gcc
+endif
 
 # define compiler flags:
 #  -O2         defines optimization level
 #  -Wall       turns on most, but not all, compiler warnings
 #  -std=c99    use standard C from 1999 revision
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
+    CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O2 -Wall -std=c99 -fgnu89-inline
+    CFLAGS = -O1 -Wall -std=c99
 endif
+
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
@@ -69,15 +78,20 @@ default: raylib
 
 # compile raylib library
 raylib: $(OBJS)
+ifeq ($(PLATFORM),PLATFORM_WEB)
+	emcc -O1 $(OBJS) -o libraylib.bc
+else
 	ar rcs libraylib.a $(OBJS)
+endif
 
 # compile core module
+# emcc core.c -o core.bc -DPLATFORM_DESKTOP
 core.o: core.c
-	$(CC) -c core.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c core.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile rlgl module
 rlgl.o: rlgl.c
-	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(GRAPHICS)
+	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile raymath module
 raymath.o: raymath.c
@@ -85,19 +99,19 @@ raymath.o: raymath.c
 
 # compile shapes module
 shapes.o: shapes.c
-	$(CC) -c shapes.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c shapes.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile textures module
 textures.o: textures.c
-	$(CC) -c textures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c textures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile text module
 text.o: text.c
-	$(CC) -c text.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c text.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile models module
 models.o: models.c
-	$(CC) -c models.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c models.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile audio module
 audio.o: audio.c
@@ -120,7 +134,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	find . -type f -executable -delete
 	rm -f *.o libraylib.a
 else
+ifeq ($(PLATFORM),PLATFORM_WEB)
+	del *.o libraylib.bc
+else
 	del *.o libraylib.a
+endif
 endif
 endif
 	@echo Cleaning done

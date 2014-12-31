@@ -50,7 +50,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// It's lonely here...
+extern unsigned int whiteTexture;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -66,14 +66,14 @@ static VertexData LoadOBJ(const char *fileName);
 // NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color)
 {
-    float x = position.x;
-    float y = position.y;
-    float z = position.z;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
 
     rlPushMatrix();
 
         // NOTE: Be careful! Function order matters (rotate -> scale -> translate)
-        //rlTranslatef(0.0f, 0.0f, 0.0f);
+        rlTranslatef(position.x, position.y, position.z);
         //rlScalef(2.0f, 2.0f, 2.0f);
         //rlRotatef(45, 0, 1, 0);
 
@@ -146,12 +146,13 @@ void DrawCubeV(Vector3 position, Vector3 size, Color color)
 // Draw cube wires
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color)
 {
-    float x = position.x;
-    float y = position.y;
-    float z = position.z;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
 
     rlPushMatrix();
 
+        rlTranslatef(position.x, position.y, position.z);
         //rlRotatef(45, 0, 1, 0);
 
         rlBegin(RL_LINES);
@@ -445,11 +446,37 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
     rlPopMatrix();
 }
 
+// Draw a quad
+void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Color colors[4])
+{
+    rlBegin(RL_QUADS);
+        rlColor4ub(colors[0].r, colors[0].g, colors[0].b, colors[0].a);
+        rlNormal3f(normals[0].x, normals[0].y, normals[0].z);
+        rlTexCoord2f(textcoords[0].x, textcoords[0].y); 
+        rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
+        
+        rlColor4ub(colors[1].r, colors[1].g, colors[1].b, colors[1].a);
+        rlNormal3f(normals[1].x, normals[1].y, normals[1].z);
+        rlTexCoord2f(textcoords[1].x, textcoords[1].y); 
+        rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
+
+        rlColor4ub(colors[2].r, colors[2].g, colors[2].b, colors[2].a);
+        rlNormal3f(normals[2].x, normals[2].y, normals[2].z);
+        rlTexCoord2f(textcoords[2].x, textcoords[2].y); 
+        rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
+
+        rlColor4ub(colors[3].r, colors[3].g, colors[3].b, colors[3].a);
+        rlNormal3f(normals[3].x, normals[3].y, normals[3].z);
+        rlTexCoord2f(textcoords[3].x, textcoords[3].y); 
+        rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+    rlEnd();
+}
+
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
 {
     // NOTE: QUADS usage require defining a texture on OpenGL 3.3+
-    rlEnableTexture(1);    // Default white texture
+    if (rlGetVersion() != OPENGL_11) rlEnableTexture(whiteTexture);    // Default white texture
 
     // NOTE: Plane is always created on XZ ground and then rotated
     rlPushMatrix();
@@ -471,7 +498,7 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color)
         rlEnd();
     rlPopMatrix();
 
-    rlDisableTexture();
+    if (rlGetVersion() != OPENGL_11) rlDisableTexture();
 }
 
 // Draw a plane with divisions
@@ -743,7 +770,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             vData.texcoords[tcCounter + 7] = vData.texcoords[tcCounter + 5];
 
             vData.texcoords[tcCounter + 8] = vData.texcoords[tcCounter + 2];
-            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 1];
+            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 3];
 
             vData.texcoords[tcCounter + 10] = (float)(x+1) / (mapX-1);
             vData.texcoords[tcCounter + 11] = (float)(z+1) / (mapZ-1);
@@ -785,7 +812,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 }
 
 // Load a map image as a 3d model (cubes based)
-Model LoadCubesmap(Image cubesmap)
+Model LoadCubicmap(Image cubesmap)
 {
     VertexData vData;
 
@@ -1041,8 +1068,6 @@ Model LoadCubesmap(Image cubesmap)
     // Move data from mapVertices temp arays to vertices float array
     vData.vertexCount = vCounter;
 
-    printf("Vertex count: %i\n", vCounter);
-
     vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
@@ -1263,6 +1288,12 @@ static VertexData LoadOBJ(const char *fileName)
     FILE *objFile;
 
     objFile = fopen(fileName, "rt");
+    
+    if (objFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] OBJ file could not be opened", fileName);
+        return vData;
+    }
 
     // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
@@ -1491,3 +1522,35 @@ static VertexData LoadOBJ(const char *fileName)
 
     return vData;
 }
+
+bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
+{
+
+    return false;
+}
+
+bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
+{
+    /*
+    // Get min and max vertex to construct bounds (AABB)
+    Vector3 minVertex = tempVertices[0]; 
+    Vector3 maxVertex = tempVertices[0];
+    
+    for (int i = 1; i < tempVertices.Count; i++)
+    {
+        minVertex = Vector3.Min(minVertex, tempVertices[i]);
+        maxVertex = Vector3.Max(maxVertex, tempVertices[i]);
+    }
+    
+    bounds = new BoundingBox(minVertex, maxVertex);
+    */
+    return false;
+}
+
+bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, Vector3 radiusSphere)
+{
+
+    return false;
+}
+
+//BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)

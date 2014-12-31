@@ -84,7 +84,7 @@ int main()
                 btnNextInColor = PURPLE;
             }
 
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
             {
                 framesCounter = 20;         // Frames button is 'active'
                 btnNextOutColor = MAROON;
@@ -97,8 +97,8 @@ int main()
             btnNextOutColor = DARKBLUE;
             btnNextInColor = SKYBLUE;
         }
-
-        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && (framesCounter > 0)) framesCounter--;
+        
+        if (framesCounter > 0) framesCounter--;
 
         if (framesCounter == 1)     // We change font on frame 1
         {

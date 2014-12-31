@@ -55,7 +55,7 @@
     } Vector3;
 #endif
 
-// Matrix type (OpenGL style 4x4 - right handed)
+// Matrix type (OpenGL style 4x4 - right handed, column major)
 typedef struct Matrix {
     float m0, m4, m8, m12;
     float m1, m5, m9, m13;
@@ -107,9 +107,9 @@ Matrix MatrixIdentity(void);                            // Returns identity matr
 Matrix MatrixAdd(Matrix left, Matrix right);            // Add two matrices
 Matrix MatrixSubstract(Matrix left, Matrix right);      // Substract two matrices (left - right)
 Matrix MatrixTranslate(float x, float y, float z);      // Returns translation matrix
-Matrix MatrixRotate(float angleX, float angleY, float angleZ); // Returns rotation matrix
-Matrix MatrixRotateAroundAxis(Vector3 axis, float angle);      // Returns rotation matrix for an angle around an specified axis
-Matrix MatrixRotateAroundAxis2(Vector3 axis, float angle);     // Returns rotation matrix for an angle around an specified axis (test another implemntation)
+Matrix MatrixRotate(float axisX, float axisY, float axisZ); // Returns rotation matrix
+Matrix MatrixFromAxisAngle(Vector3 axis, float angle);      // Returns rotation matrix for an angle around an specified axis
+Matrix MatrixFromAxisAngle2(Vector3 axis, float angle);     // Returns rotation matrix for an angle around an specified axis (test another implemntation)
 Matrix MatrixFromQuaternion(Quaternion q);              // Returns rotation matrix for a given quaternion
 Matrix MatrixRotateX(float angle);                      // Returns x-rotation matrix (angle in radians)
 Matrix MatrixRotateY(float angle);                      // Returns y-rotation matrix (angle in radians)

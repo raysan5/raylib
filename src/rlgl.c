@@ -168,20 +168,22 @@ static Vector3 *tempBuffer;
 static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
-// White texture useful for plain color polys (required by shader)
-static GLuint whiteTexture;
-
 // Support for VAOs (OpenGL ES2 could not support VAO extensions)
 static bool vaoSupported = false;
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
+// emscripten does not support VAOs
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;
 #endif
+
+// White texture useful for plain color polys (required by shader)
+// NOTE: It's required in shapes and models modules!
+unsigned int whiteTexture;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -298,10 +300,21 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     // TODO: Support rotation in multiple axes
     Matrix rot = MatrixIdentity();
 
+	// OPTION 1: It works...
     if (x == 1) rot = MatrixRotateX(angleDeg*DEG2RAD);
     else if (y == 1) rot = MatrixRotateY(angleDeg*DEG2RAD);
     else if (z == 1) rot = MatrixRotateZ(angleDeg*DEG2RAD);
-
+	
+	// OPTION 2: Requires review...
+	//Vector3 vec = (Vector3){ 0, 1, 0 };
+    //VectorNormalize(&vec);
+    //rot = MatrixFromAxisAngle(vec, angleDeg*DEG2RAD);       // Working?
+    
+    // OPTION 3: TODO: Review, it doesn't work!
+    //Vector3 vec = (Vector3){ x, y, z };
+    //VectorNormalize(&vec);
+    //rot = MatrixRotate(angleDeg*vec.x, angleDeg*vec.x, angleDeg*vec.x);
+	
     MatrixTranspose(&rot);
 
     *currentMatrix = MatrixMultiply(*currentMatrix, rot);
@@ -760,10 +773,13 @@ void rlglInit(void)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
+	// NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
+#if !defined(PLATFORM_WEB)
     glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
     glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
     glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
     glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");
+#endif
 
     if (glGenVertexArrays == NULL) TraceLog(WARNING, "Could not initialize VAO extensions, VAOs not supported");
     else
@@ -848,8 +864,8 @@ void rlglInit(void)
 
     whiteTexture = rlglLoadTexture(pixels, 1, 1, false);
 
-    if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture created successfully", whiteTexture);
-    else TraceLog(WARNING, "Base white texture could not be created");
+    if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
+    else TraceLog(WARNING, "Base white texture could not be loaded");
 
     // Init draw calls tracking system
     draws = (DrawCall *)malloc(sizeof(DrawCall)*MAX_DRAWS_BY_TEXTURE);
@@ -1113,6 +1129,8 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shaderProgram);        // Use our shader
 
+    VectorScale(&rotation, DEG2RAD);
+    
     // Get transform matrix (rotation -> scale -> translation)
     Matrix transform = MatrixTransform(position, rotation, scale);
     Matrix modelviewworld = MatrixMultiply(transform, modelview);
@@ -1305,7 +1323,8 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
 
 #if defined(GRAPHICS_API_OPENGL_33)
     // NOTE: We define internal (GPU) format as GL_RGBA8 (probably BGRA8 in practice, driver takes care)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);  // OpenGL
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);     // WebGL
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: On embedded systems, we let the driver choose the best internal format
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -1324,7 +1343,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    TraceLog(INFO, "[TEX ID %i] Texture created successfully (%i x %i)", id, width, height);
+    TraceLog(INFO, "[TEX ID %i] Texture created successfully (%ix%i)", id, width, height);
 
     return id;
 }
@@ -1347,7 +1366,7 @@ Model rlglLoadModel(VertexData mesh)
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     model.textureId = 1;        // Default whiteTexture
 
-    GLuint vaoModel;            // Vertex Array Objects (VAO)
+    GLuint vaoModel = 0;        // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];     // Vertex Buffer Objects (VBO)
 
     if (vaoSupported)
@@ -1562,6 +1581,7 @@ static GLuint LoadDefaultShaders(void)
     char fShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
+        "precision mediump float;           \n"     // WebGL, required for emscripten
 #endif
         "uniform sampler2D texture0;        \n"
         "varying vec2 fragTexCoord;         \n"
@@ -1673,33 +1693,35 @@ static GLuint LoadShaders(char *vertexFileName, char *fragmentFileName)
 }
 
 // Read shader text file
-static char *TextFileRead(char *fn)
+static char *TextFileRead(char *fileName)
 {
-    FILE *fp;
+    FILE *textFile;
     char *text = NULL;
 
     int count=0;
 
-    if (fn != NULL)
+    if (fileName != NULL)
     {
-        fp = fopen(fn,"rt");
+        textFile = fopen(fileName,"rt");
 
-        if (fp != NULL)
+        if (textFile != NULL)
         {
-            fseek(fp, 0, SEEK_END);
-            count = ftell(fp);
-            rewind(fp);
+            fseek(textFile, 0, SEEK_END);
+            count = ftell(textFile);
+            rewind(textFile);
 
             if (count > 0)
             {
                 text = (char *)malloc(sizeof(char) * (count+1));
-                count = fread(text, sizeof(char), count, fp);
+                count = fread(text, sizeof(char), count, textFile);
                 text[count] = '\0';
             }
 
-            fclose(fp);
+            fclose(textFile);
         }
+        else TraceLog(WARNING, "[%s] Text file could not be opened", fileName);
     }
+    
     return text;
 }
 
@@ -1798,7 +1820,7 @@ static void InitializeBuffersGPU(void)
         glGenVertexArrays(1, &vaoTriangles);
         glBindVertexArray(vaoTriangles);
     }
-
+    
     // Create buffers for our vertex data
     glGenBuffers(2, trianglesBuffer);
 
@@ -1823,7 +1845,7 @@ static void InitializeBuffersGPU(void)
         glGenVertexArrays(1, &vaoQuads);
         glBindVertexArray(vaoQuads);
     }
-
+    
     // Create buffers for our vertex data
     glGenBuffers(4, quadsBuffer);
 
@@ -1859,6 +1881,8 @@ static void InitializeBuffersGPU(void)
 }
 
 // Update VBOs with vertex array data
+// TODO: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
+// TODO: If no data changed on the CPU arrays --> No need to update GPU arrays every frame!
 static void UpdateBuffers(void)
 {
     // Activate Lines VAO
@@ -1973,7 +1997,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
         j++;
     }
 
-    TraceLog(DEBUG, "Mipmap base (%i, %i)", width, height);
+    TraceLog(DEBUG, "Mipmap base (%ix%i)", width, height);
 
     for (int mip = 1; mip < mipmapCount; mip++)
     {
@@ -2044,7 +2068,7 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
         }
     }
 
-    TraceLog(DEBUG, "Mipmap generated successfully (%i, %i)", width, height);
+    TraceLog(DEBUG, "Mipmap generated successfully (%ix%i)", width, height);
 
     return mipmap;
 }

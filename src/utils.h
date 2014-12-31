@@ -77,6 +77,7 @@ void WritePNG(const char *fileName, unsigned char *imgData, int width, int heigh
 
 void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message
 const char *GetExtension(const char *fileName);     // Returns extension of a filename
+int GetNextPOT(int num);                            // Calculate next power-of-two value for a given num
 
 #if defined(PLATFORM_ANDROID)
 void InitAssetManager(AAssetManager *manager);  // Initialize asset manager from android app

@@ -14,7 +14,7 @@
 *     Basic 3d support for Shapes, Models, Heightmaps and Billboards
 *     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing with streaming support (WAV and OGG)
-*     Multiplatform support, including Android devices and Raspberry Pi
+*     Multiplatform support, including Android devices, Raspberry Pi and HTML5
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
@@ -63,9 +63,10 @@
 //#define PLATFORM_DESKTOP      // Windows, Linux or OSX
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
+//#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
 
 // Security check in case no PLATFORM_* defined
-#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI)
+#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
     #define PLATFORM_DESKTOP
 #endif
 
@@ -179,6 +180,9 @@
 // Boolean type
 typedef enum { false, true } bool;
 
+// byte type
+typedef unsigned char byte;
+
 // Vector2 type
 typedef struct Vector2 {
     float x;
@@ -225,8 +229,13 @@ typedef struct Texture2D {
 } Texture2D;
 
 // Character type (one font glyph)
-// NOTE: Defined in module: text
-typedef struct Character Character;
+typedef struct Character {
+    int value;        //char value = ' '; (int)value = 32;
+    int x;
+    int y;
+    int w;
+    int h;
+} Character;
 
 // SpriteFont type, includes texture and charSet array data
 typedef struct SpriteFont {
@@ -267,6 +276,15 @@ typedef struct Sound {
     unsigned int buffer;
 } Sound;
 
+// Wave type, defines audio wave data
+typedef struct Wave {
+    void *data;                 // Buffer data pointer
+    unsigned int dataSize;      // Data size in bytes
+    unsigned int sampleRate;
+    short bitsPerSample;
+    short channels;
+} Wave;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -281,7 +299,7 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
 void InitWindow(int width, int height, struct android_app *state);  // Init Android activity
-#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
 
@@ -294,6 +312,7 @@ void SetExitKey(int key);                                   // Set a custom key 
 #endif
 int GetScreenWidth(void);                                   // Get current screen width
 int GetScreenHeight(void);                                  // Get current screen height
+int GetKeyPressed(void);                                    // Get latest key pressed
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
@@ -313,13 +332,12 @@ int GetRandomValue(int min, int max);                       // Returns a random 
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
 void SetupFlags(char flags);                                // Enable some window configurations
-
-void ShowLogo(void);                                        // Activates raylib logo at startup
+void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
 bool IsKeyDown(int key);                                // Detect if a key is being pressed
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
@@ -332,8 +350,11 @@ bool IsMouseButtonUp(int button);                       // Detect if a mouse but
 int GetMouseX(void);                                    // Returns mouse position X
 int GetMouseY(void);                                    // Returns mouse position Y
 Vector2 GetMousePosition(void);                         // Returns mouse position XY
+void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
+#endif
 
+#if defined(PLATFORM_DESKTOP)
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
 bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
@@ -386,9 +407,11 @@ Image LoadImage(const char *fileName);                                          
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
-Texture2D CreateTexture(Image image, bool genMipmaps);                                             // Create a Texture2D from Image data (and generate mipmaps)
+Texture2D LoadTextureFromImage(Image image, bool genMipmaps);                                      // Load a texture from image data (and generate mipmaps)
+Texture2D CreateTexture(Image image, bool genMipmaps);                                             // [DEPRECATED] Same as LoadTextureFromImage()
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
+void ConvertToPOT(Image *image, Color fillColor);                                                  // Convert image to POT (power-of-two)
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
@@ -425,6 +448,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color);         // Draw sphere wires
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone wires
+void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Color colors[4]);	   // Draw a quad
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color);                    // Draw a plane
 void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX, int slicesZ, Color color); // Draw a plane with divisions
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
@@ -438,7 +462,7 @@ void DrawGizmoEx(Vector3 position, Vector3 rotation, float scale);              
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
-Model LoadCubesmap(Image cubesmap);                                                                // Load a map image as a 3d model (cubes based)
+Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
 
@@ -456,6 +480,7 @@ void InitAudioDevice(void);                                     // Initialize au
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
+Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
