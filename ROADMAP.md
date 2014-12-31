@@ -6,16 +6,18 @@ Here it is a list of features I would like to add and functions to improve.
 
 Around the source code there are some TODO points with pending revisions/bugs and here it is a list of features I would like to add.
 
+This roadmap is quite outdated... a full list of all the features we are working on should be listed here at some point...
+
 raylib v1.x
 
    - [DONE] Review Billboard Drawing functions
    - [DONE] Review Heightmap Loading and Drawing functions - Load Heightmap directly as a Model
    - Lighting support (only 3d mode)
    - [DONE] Simple Collision Detection functions
-   - Default scene Camera controls (zoom, pan, rotate)   
+   - [IN PROGRESS] Default scene Camera controls (zoom, pan, rotate)   
    - Basic Procedural Image Generation (Gradient, Checked, Spot, Noise, Cellular)
    - [DONE] Software mipmapping generation and POT conversion (custom implementation)
-   - TTF fonts support
+   - [IN PROGRESS] TTF fonts support
    
 Any feature missing? Do you have a request? [Let me know!][raysan5]
 

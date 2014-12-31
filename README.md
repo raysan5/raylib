@@ -10,6 +10,9 @@ Allegro and SDL have also been analyzed for reference.
 
 Want to see how easy is making games with raylib? Jump to [code examples!] (http://www.raylib.com/examples.htm)
 
+Since version 1.2.2 raylib can compile directly for web (html5) using emscripten and asm.js, 
+to see a demo of raylib features working on web, [check here!] (http://www.raylib.com/raylib_demo.html)
+
 history
 -------
 
@@ -83,7 +86,7 @@ features
    *  Powerful math module for Vector and Matrix operations [raymath]
    *  Audio loading and playing with streaming support (WAV and OGG)
    *  Custom color palette for fancy visuals on raywhite background
-   *  Multiple platforms support: Windows, Linux, Mac, **Android** and **Raspberry Pi**
+   *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi** and **HTML5**
 
 raylib uses on its core module the outstanding [GLFW3] (http://www.glfw.org/) library. The best option by far I found for 
 multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, ...).
@@ -159,6 +162,14 @@ _Step 3._ Navigate from command line to folder raylib/template_android/ and type
 
 NOTE: libraylib.a will be generated in folder raylib/src_android/obj/local/armeabi/, it must be copied
 to Android project; if using raylib/template_android project, copy it to raylib/template_android/jni/libs/.
+
+**Building raylib sources for Web (HTML5)**
+
+_Step 1._ Make sure you have installed emscripten SDK:
+
+> Download latest version from [here].(http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) I recommend following the portable version installation instructions.
+
+_Step 2._ TODO
 
 building examples
 -----------------

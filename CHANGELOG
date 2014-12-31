@@ -1,10 +1,25 @@
 changelog
 ---------
 
-Current Release:    raylib 1.2 (16 September 2014)
+Current Release:    raylib 1.2.2 (31 December 2014)
 
 NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.2.2 (31 December 2014)
+-----------------------------------------------
+[*] Added support for HTML5 compiling (emscripten, asm.js)
+[core] Corrected bug on input handling (keyboard and mouse)
+[textures] Renamed function CreateTexture() to LoadTextureFromImage()
+[textures] Added function ConvertToPOT()
+[models] Corrected bug on DrawBillboard()
+[models] Corrected bug on DrawHeightmap()
+[models] Renamed LoadCubesmap() to LoadCubicmap()
+[audio] Added function LoadSoundFromWave()
+[makefile] Added support for Linux compiling
+[stb] Updated to latest headers versions
+[*] Lots of tweaks around
 
 ---------------------------------------------------------------
 Update:     raylib 1.2.1 (17 October 2014) (Small Fixes Update)
