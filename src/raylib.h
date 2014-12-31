@@ -14,7 +14,7 @@
 *     Basic 3d support for Shapes, Models, Heightmaps and Billboards
 *     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing with streaming support (WAV and OGG)
-*     Multiplatform support, including Android devices and Raspberry Pi
+*     Multiplatform support, including Android devices, Raspberry Pi and HTML5
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input

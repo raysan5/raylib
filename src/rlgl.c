@@ -168,10 +168,6 @@ static Vector3 *tempBuffer;
 static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
-// White texture useful for plain color polys (required by shader)
-// NOTE: It's required in shapes and models modules!
-extern unsigned int whiteTexture;
-
 // Support for VAOs (OpenGL ES2 could not support VAO extensions)
 static bool vaoSupported = false;
 #endif
@@ -184,6 +180,10 @@ static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;
 #endif
+
+// White texture useful for plain color polys (required by shader)
+// NOTE: It's required in shapes and models modules!
+unsigned int whiteTexture;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
