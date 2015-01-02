@@ -27,8 +27,8 @@ int main()
     PlayMusicStream("resources/audio/guitar_noodling.ogg");         // Play music stream
 
     int framesCounter = 0;
-    float volume = 1.0;
     float timePlayed = 0;
+    //float volume = 1.0;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

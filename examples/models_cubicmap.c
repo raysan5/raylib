@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Cubesmap loading and drawing
+*   raylib [models] example - Cubicmap loading and drawing
 *
 *   This example has been created using raylib 1.2 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -23,11 +23,11 @@ int main()
     // Define the camera to look into our 3d world
     Camera camera = {{ 7.0, 7.0, 7.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
 
-    Image img = LoadImage("resources/cubesmap.png");    // Load cubesmap image (RAM)
-    Texture2D texture = CreateTexture(img, false);      // Convert image to texture (VRAM)
-    Model map = LoadCubesmap(img);                      // Load cubesmap model
-    SetModelTexture(&map, texture);                     // Bind texture to model
-    Vector3 mapPosition = { -1, 0.0, -1 };              // Set model position
+    Image img = LoadImage("resources/cubicmap.png");        // Load cubesmap image (RAM)
+    Texture2D texture = LoadTextureFromImage(img, false);   // Convert image to texture (VRAM)
+    Model map = LoadCubicmap(img);                          // Load cubicmap model
+    SetModelTexture(&map, texture);                         // Bind texture to model
+    Vector3 mapPosition = { -1, 0.0, -1 };                  // Set model position
 
     UnloadImage(img);       // Unload cubesmap image from RAM, already uploaded to VRAM
 

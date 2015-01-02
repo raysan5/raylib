@@ -23,11 +23,11 @@ int main()
     // Define the camera to look into our 3d world
     Camera camera = {{ 10.0, 12.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
 
-    Image img = LoadImage("resources/heightmap.png");   // Load heightmap image (RAM)
-    Texture2D texture = CreateTexture(img, false);      // Convert image to texture (VRAM)
-    Model map = LoadHeightmap(img, 4);                  // Load heightmap model
-    SetModelTexture(&map, texture);                     // Bind texture to model
-    Vector3 mapPosition = { -4, 0.0, -4 };              // Set model position
+    Image img = LoadImage("resources/heightmap.png");       // Load heightmap image (RAM)
+    Texture2D texture = LoadTextureFromImage(img, false);   // Convert image to texture (VRAM)
+    Model map = LoadHeightmap(img, 4);                      // Load heightmap model
+    SetModelTexture(&map, texture);                         // Bind texture to model
+    Vector3 mapPosition = { -4, 0.0, -4 };                  // Set model position
 
     UnloadImage(img);       // Unload heightmap image from RAM, already uploaded to VRAM
 

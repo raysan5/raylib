@@ -27,7 +27,7 @@ int main()
     // with mipmaps option set to true on CreateTexture()
 
     Image image = LoadImage("resources/raylib_logo.png");   // Load image to CPU memory (RAM)
-    Texture2D texture = CreateTexture(image, true);         // Create texture and generate mipmaps
+    Texture2D texture = LoadTextureFromImage(image, true);  // Create texture and generate mipmaps
 
     UnloadImage(image);     // Once texture has been created, we can unload image data from RAM
     //--------------------------------------------------------------------------------------
