@@ -26,6 +26,23 @@
 # WARNING: To compile examples to HTML5, they must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
+# determine SUBPLATFORM in case PLATFORM_DESKTOP selected
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
+    ifeq ($(OS),Windows_NT)
+        SUBPLATFORM=WINDOWS
+    else
+        UNAMEOS = $(shell uname -s) 
+        ifeq ($(UNAMEOS),Linux)
+            SUBPLATFORM=LINUX
+        else
+        ifeq ($(UNAMEOS),Darwin)
+            SUBPLATFORM=OSX
+        endif
+        endif
+    endif
+endif
+
 # define compiler: gcc for C program, define as g++ for C++
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # define emscripten compiler
@@ -44,13 +61,13 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 else
     CFLAGS = -O2 -Wall -std=c99
 endif
-#CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
-
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
+
+#CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -63,45 +80,37 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -L../src
+    LFLAGS = -L. -L../src -L../external/glfw3/lib/ -I../external/openal_soft/lib/
 endif
-
-# define library paths containing required libs
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
-	LFLAGS = -L. -L../src -L../external/glfw3/lib/ -I../external/openal_soft/lib/
-else
-	LFLAGS = -L. -L../src
-endif
-
 
 # define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(SUBPLATFORM),LINUX)
+        # libraries for Debian GNU/Linux desktop compiling
+        # requires the following packages:
+        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
+    endif
+    ifeq ($(SUBPLATFORM),OSX)
+    	# libraries for OS X 10.9 desktop compiling
+	# requires the following packages:
+	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+	LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
+
+    else
+        # libraries for Windows desktop compiling
+        # NOTE: GLFW3 and OpenAL Soft libraries should be installed
+        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32    
+    endif
+endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # libraries for Raspberry Pi compiling
     # NOTE: OpenAL Soft library should be installed (libopenal1 package)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
-else
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
-    # libraries for Debian GNU/Linux desktop compiling
-	# requires the following packages:
-	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-    LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
-else
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
-    # libraries for OS X 10.9 desktop compiling
-	# requires the following packages:
-	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-    LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
-else
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     LIBS = ../src/libraylib.bc
-else
-    # libraries for Windows desktop compiling
-    # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-    LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
-endif
-endif
-endif
 endif
 
 # define additional parameters and flags for windows
@@ -280,24 +289,22 @@ audio_music_stream: audio_music_stream.c
 
 # clean everything
 clean:
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(SUBPLATFORM),LINUX)
+		find . -type f -executable -delete
+		rm -f *.o
+    endif
+    ifeq ($(SUBPLATFORM),OSX)
+		rm -f *.o
+    else
+		del *.o *.exe
+    endif
+endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o
-#	find . -executable -delete
-else
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
-	find . -type f -executable -delete
-	rm -f *.o
-else
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
-	rm -f *.o
-else
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
-else
-	del *.o *.exe
-endif
-endif
-endif
 endif
 	@echo Cleaning done
 

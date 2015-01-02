@@ -25,6 +25,23 @@
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
 
+# determine SUBPLATFORM in case PLATFORM_DESKTOP selected
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
+    ifeq ($(OS),Windows_NT)
+        SUBPLATFORM=WINDOWS
+    else
+        UNAMEOS = $(shell uname -s) 
+        ifeq ($(UNAMEOS),Linux)
+            SUBPLATFORM=LINUX
+        else
+        ifeq ($(UNAMEOS),Darwin)
+            SUBPLATFORM=OSX
+        endif
+        endif
+    endif
+endif
+
 # define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # define raylib graphics api to use (on RPI, OpenGL ES 2.0 must be used)
@@ -34,7 +51,6 @@ else
     GRAPHICS ?= GRAPHICS_API_OPENGL_11
     #GRAPHICS = GRAPHICS_API_OPENGL_33  # Uncomment to use OpenGL 3.3
 endif
-
 ifeq ($(PLATFORM),PLATFORM_WEB)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
@@ -127,23 +143,22 @@ stb_vorbis.o: stb_vorbis.c
 
 # clean everything
 clean:
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(SUBPLATFORM),LINUX)
+		find . -type f -executable -delete
+		rm -f *.o libraylib.a
+    endif
+    ifeq ($(SUBPLATFORM),OSX)
+		rm -f *.o libraylib.a
+    else
+		del *.o libraylib.a
+    endif
+endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o libraylib.a
-else
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
-	find . -type f -executable -delete
-	rm -f *.o libraylib.a
-else
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
-	rm -f *.o libraylib.a
-else
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o libraylib.bc
-else
-	del *.o libraylib.a
-endif
-endif
-endif
 endif
 	@echo Cleaning done
 
