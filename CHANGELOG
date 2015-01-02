@@ -13,11 +13,13 @@ Release:     raylib 1.2.2 (31 December 2014)
 [core] Corrected bug on input handling (keyboard and mouse)
 [textures] Renamed function CreateTexture() to LoadTextureFromImage()
 [textures] Added function ConvertToPOT()
+[rlgl] Added support for color tint on models on GL 3.3+ and ES2
+[rlgl] Added support for normals on models
 [models] Corrected bug on DrawBillboard()
 [models] Corrected bug on DrawHeightmap()
 [models] Renamed LoadCubesmap() to LoadCubicmap()
 [audio] Added function LoadSoundFromWave()
-[makefile] Added support for Linux compiling
+[makefile] Added support for Linux and OSX compiling
 [stb] Updated to latest headers versions
 [*] Lots of tweaks around
 
