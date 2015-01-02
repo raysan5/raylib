@@ -66,7 +66,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I.
+    INCLUDES = -I. -I../external/glfw3/include/ -I../external/openal_soft/include/
 endif
 
 # define all object files required
@@ -134,10 +134,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
 	find . -type f -executable -delete
 	rm -f *.o libraylib.a
 else
+ifeq ($(PLATFORM),PLATFORM_DESKTOP_OSX)
+	rm -f *.o libraylib.a
+else
 ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o libraylib.bc
 else
 	del *.o libraylib.a
+endif
 endif
 endif
 endif
