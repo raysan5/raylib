@@ -21,9 +21,58 @@
 #
 #**************************************************************************************************
 
+PLATFORM_OS = UNDEFINED
+PLATFORM_ARCH = UNDEFINED
+
+# detect OS and architecture
+ifeq ($(OS),Windows_NT)
+	PLATFORM_OS = WIN
+    ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+        PLATFORM_ARCH = 64
+    endif
+    ifeq ($(PROCESSOR_ARCHITECTURE),x86)
+        PLATFORM_ARCH = 32
+    endif
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+    	UNAME_P := $(shell uname -mp)
+        PLATFORM_OS = LINUX
+    endif
+    ifeq ($(UNAME_S),Darwin)
+    	UNAME_P := $(shell uname -m)
+    	PLATFORM_OS = OSX
+    endif
+
+    ifeq ($(UNAME_P),x86_64)
+    	PLATFORM_ARCH = 64
+    endif
+    ifneq ($(filter %86,$(UNAME_P)),)
+        PLATFORM_ARCH = 32
+    endif
+endif
+
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
+
+# define default targets to compile for
+TARGET_OS ?= $(PLATFORM_OS)
+TARGET_ARCH ?= $(PLATFORM_ARCH)
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+	TARGET_OS = LINUX
+	TARGET_ARCH = ARM
+endif
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+	TARGET_OS = WEB
+	TARGET_ARCH = WEB
+endif
+
+# prompt current target
+$(info **** RUNNING OS = $(PLATFORM_OS), RUNNING ARCH = $(PLATFORM_ARCH))
+$(info **** TARGET PLATFORM = $(PLATFORM), TARGET OS = $(TARGET_OS), TARGET ARCH = $(TARGET_ARCH))
 
 # define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -46,8 +95,13 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # define emscripten compiler
     CC = emcc
 else
-    # define default gcc compiler
-    CC = gcc
+	ifeq ($(PLATFORM_OS),OSX)
+		# define llvm compiler for mac
+		CC = clang
+	else
+	    # define default gcc compiler
+	    CC = gcc
+    endif
 endif
 
 # define compiler flags:
@@ -68,6 +122,14 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 else
     INCLUDES = -I.
 endif
+
+# include external libraries
+#glfw3
+INCLUDES += -I. -I../external/glfw3/include
+#glew
+INCLUDES += -I. -I../external/glew/include
+#Open AL
+INCLUDES += -I. -I../external/openal_soft/include
 
 # define all object files required
 OBJS = core.o rlgl.o raymath.o shapes.o text.o textures.o models.o audio.o utils.o stb_vorbis.o
@@ -130,14 +192,19 @@ clean:
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o libraylib.a
 else
-ifeq ($(PLATFORM),PLATFORM_DESKTOP_LINUX)
+ifeq ($(PLATFORM_OS),LINUX)
 	find . -type f -executable -delete
+	rm -f *.o libraylib.a
+else
+ifeq ($(PLATFORM_OS),OSX)
+	find . -type f -perm +ugo+x -delete
 	rm -f *.o libraylib.a
 else
 ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o libraylib.bc
 else
 	del *.o libraylib.a
+endif
 endif
 endif
 endif
