@@ -31,7 +31,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(OS),Windows_NT)
         SUBPLATFORM=WINDOWS
     else
-        UNAMEOS = $(shell uname -s) 
+        UNAMEOS:=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
             SUBPLATFORM=LINUX
         else
@@ -144,14 +144,15 @@ stb_vorbis.o: stb_vorbis.c
 # clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(SUBPLATFORM),LINUX)
-		find . -type f -executable -delete
-		rm -f *.o libraylib.a
-    endif
     ifeq ($(SUBPLATFORM),OSX)
 		rm -f *.o libraylib.a
     else
+    ifeq ($(SUBPLATFORM),LINUX)
+		find . -type f -executable -delete
+		rm -f *.o libraylib.a
+    else
 		del *.o libraylib.a
+    endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)

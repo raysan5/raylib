@@ -32,7 +32,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(OS),Windows_NT)
         SUBPLATFORM=WINDOWS
     else
-        UNAMEOS = $(shell uname -s) 
+        UNAMEOS:=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
             SUBPLATFORM=LINUX
         else
@@ -290,17 +290,19 @@ audio_music_stream: audio_music_stream.c
 # clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(SUBPLATFORM),OSX)
+		rm -f *.o
+    else
     ifeq ($(SUBPLATFORM),LINUX)
 		find . -type f -executable -delete
-		rm -f *.o
-    endif
-    ifeq ($(SUBPLATFORM),OSX)
 		rm -f *.o
     else
 		del *.o *.exe
     endif
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
+	find . -type f -executable -delete
 	rm -f *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)

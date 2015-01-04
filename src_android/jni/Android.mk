@@ -40,7 +40,6 @@ LOCAL_SRC_FILES  :=\
                     ../../src/core.c \
                     ../../src/rlgl.c \
                     ../../src/raymath.c \
-                    ../../src/stb_image.c \
                     ../../src/textures.c \
                     ../../src/text.c \
                     ../../src/shapes.c \
