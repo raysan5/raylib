@@ -32,8 +32,11 @@
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #include <GL/gl.h>      // Basic OpenGL include
-	//#include <OpenGL/gl.h>      // Basic OpenGL include (OSX)
+    #if defined(__APPLE__) && defined(__MACH__)
+        #include <OpenGL/gl.h>   // Basic OpenGL include (OSX)
+    #else
+        #include <GL/gl.h>      // Basic OpenGL include
+	#endif 
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
