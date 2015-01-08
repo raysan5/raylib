@@ -711,7 +711,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char)); // Not used...
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -795,8 +795,8 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     }
 
     // Fill color data
+    // NOTE: Not used any more... just one plain color defined at DrawModel()
     for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
-
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
 
@@ -1071,9 +1071,10 @@ Model LoadCubicmap(Image cubesmap)
     vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
     vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));  // Not used...
 
     // Fill color data
+    // NOTE: Not used any more... just one plain color defined at DrawModel()
     for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
 
     int fCounter = 0;
@@ -1510,6 +1511,7 @@ static VertexData LoadOBJ(const char *fileName)
     if (numTexCoords == 0) for (int i = 0; i < (2*vData.vertexCount); i++) vData.texcoords[i] = 0.0f;
 
     // NOTE: We set all vertex colors to white
+    // NOTE: Not used any more... just one plain color defined at DrawModel()
     for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
 
     // Now we can free temp mid* arrays

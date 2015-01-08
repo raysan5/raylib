@@ -24,8 +24,8 @@ int main()
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
-    Image img = LoadImage("resources/raylib_logo.png"); // Loaded in CPU memory (RAM)
-    Texture2D texture = CreateTexture(img, false);      // Image converted to texture, GPU memory (VRAM)
+    Image img = LoadImage("resources/raylib_logo.png");     // Loaded in CPU memory (RAM)
+    Texture2D texture = LoadTextureFromImage(img, false);   // Image converted to texture, GPU memory (VRAM)
 
     UnloadImage(img);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
     //---------------------------------------------------------------------------------------

@@ -170,7 +170,6 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
-static char configFlags = 0;
 
 static bool customCursor = false;           // Tracks if custom cursor has been set
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
@@ -204,6 +203,7 @@ static double updateTime, drawTime;         // Time measures for update and draw
 static double frameTime;                    // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
+static char configFlags = 0;
 static bool showLogo = false;
 
 //----------------------------------------------------------------------------------
@@ -261,6 +261,8 @@ static void CommandCallback(struct android_app *app, int32_t cmd);           // 
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
+    TraceLog(INFO, "Initializing raylib...");
+    
     // Store window title (could be useful...)
     windowTitle = title;
 
@@ -298,6 +300,8 @@ void InitWindow(int width, int height, const char *title)
 // Android activity initialization
 void InitWindow(int width, int height, struct android_app *state)
 {
+    TraceLog(INFO, "Initializing raylib...");
+    
     app_dummy();
 
     screenWidth = width;
@@ -449,12 +453,6 @@ int GetScreenWidth(void)
 int GetScreenHeight(void)
 {
     return screenHeight;
-}
-
-// Get the last key pressed
-int GetKeyPressed(void)
-{
-    return lastKeyPressed;
 }
 
 // Sets Background Color
@@ -668,6 +666,12 @@ bool IsKeyUp(int key)
 {
     if (GetKeyStatus(key) == 0) return true;
     else return false;
+}
+
+// Get the last key pressed
+int GetKeyPressed(void)
+{
+    return lastKeyPressed;
 }
 
 // Detect if a mouse button has been pressed once
