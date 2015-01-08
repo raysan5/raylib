@@ -99,10 +99,12 @@ else
 # external libraries to link with
 # GLFW3
     LFLAGS += -L../external/glfw3/lib/$(LIBPATH)
-# GLEW
-    LFLAGS += -L../external/openal_soft/lib/$(LIBPATH)
-# OpenAL Soft
-    LFLAGS += -L../external/glew/lib/$(LIBPATH)
+    ifneq ($(PLATFORM_OS),OSX)
+    # OpenAL Soft
+    	LFLAGS += -L../external/openal_soft/lib/$(LIBPATH)
+	# GLEW
+    	LFLAGS += -L../external/glew/lib/$(LIBPATH)
+    endif
 endif
 
 # define any libraries to link into executable
@@ -177,6 +179,8 @@ EXAMPLES = \
     models_cubicmap \
     audio_sound_loading \
     audio_music_stream \
+    fix_dylib \
+
     #core_input_gamepad \
 
 
@@ -309,11 +313,17 @@ audio_sound_loading: audio_sound_loading.c
 audio_music_stream: audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# fix dylib install path name for each executable (MAC)
+fix_dylib:
+ifeq ($(PLATFORM_OS),OSX)
+	find . -type f -perm +ugo+x -print0 | xargs -t -0 -R 1 -I file install_name_tool -change libglfw.3.0.dylib ../external/glfw3/lib/osx/libglfw.3.0.dylib file
+endif
+
 # clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
-        find . -type f -perm +ugo+x -delete
+		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     else
     ifeq ($(PLATFORM_OS),LINUX)
