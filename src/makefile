@@ -25,18 +25,18 @@
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
 
-# determine SUBPLATFORM in case PLATFORM_DESKTOP selected
+# determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
-        SUBPLATFORM=WINDOWS
+        PLATFORM_OS=WINDOWS
     else
         UNAMEOS:=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            SUBPLATFORM=LINUX
+            PLATFORM_OS=LINUX
         else
         ifeq ($(UNAMEOS),Darwin)
-            SUBPLATFORM=OSX
+            PLATFORM_OS=OSX
         endif
         endif
     endif
@@ -82,7 +82,14 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../external/glfw3/include/ -I../external/openal_soft/include/
+    INCLUDES = -I. -I../src
+# external libraries headers
+# GLFW3
+    INCLUDES += -I../external/glfw3/include
+# GLEW
+    INCLUDES += -I../external/glew/include
+# OpenAL Soft
+    INCLUDES += -I../external/openal_soft/include
 endif
 
 # define all object files required
@@ -144,10 +151,10 @@ stb_vorbis.o: stb_vorbis.c
 # clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(SUBPLATFORM),OSX)
+    ifeq ($(PLATFORM_OS),OSX)
 		rm -f *.o libraylib.a
     else
-    ifeq ($(SUBPLATFORM),LINUX)
+    ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete
 		rm -f *.o libraylib.a
     else

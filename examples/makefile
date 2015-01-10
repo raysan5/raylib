@@ -26,18 +26,21 @@
 # WARNING: To compile examples to HTML5, they must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
-# determine SUBPLATFORM in case PLATFORM_DESKTOP selected
+# determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
-        SUBPLATFORM=WINDOWS
+        PLATFORM_OS=WINDOWS
+        LIBPATH=win32
     else
         UNAMEOS:=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            SUBPLATFORM=LINUX
+            PLATFORM_OS=LINUX
+            LIBPATH=linux
         else
         ifeq ($(UNAMEOS),Darwin)
-            SUBPLATFORM=OSX
+            PLATFORM_OS=OSX
+            LIBPATH=osx
         endif
         endif
     endif
@@ -48,8 +51,13 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # define emscripten compiler
     CC = emcc
 else
+ifeq ($(PLATFORM_OS),OSX)
+    # define llvm compiler for mac
+    CC = clang
+else
     # define default gcc compiler
     CC = gcc
+endif
 endif
 
 # define compiler flags:
@@ -74,25 +82,41 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
     INCLUDES = -I. -I../src
+# external libraries headers
+# GLFW3
+    INCLUDES += -I../external/glfw3/include
+# GLEW
+    INCLUDES += -I../external/glew/include
+# OpenAL Soft
+    INCLUDES += -I../external/openal_soft/include
 endif
 
 # define library paths containing required libs
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -L../src -L../external/glfw3/lib/ -I../external/openal_soft/lib/
+    LFLAGS = -L. -L../src
+# external libraries to link with
+# GLFW3
+    LFLAGS += -L../external/glfw3/lib/$(LIBPATH)
+    ifneq ($(PLATFORM_OS),OSX)
+    # OpenAL Soft
+    	LFLAGS += -L../external/openal_soft/lib/$(LIBPATH)
+	# GLEW
+    	LFLAGS += -L../external/glew/lib/$(LIBPATH)
+    endif
 endif
 
 # define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(SUBPLATFORM),LINUX)
+    ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
     endif
-    ifeq ($(SUBPLATFORM),OSX)
+    ifeq ($(PLATFORM_OS),OSX)
     	# libraries for OS X 10.9 desktop compiling
 	# requires the following packages:
 	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
@@ -101,7 +125,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32    
+        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -114,7 +138,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # define additional parameters and flags for windows
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
     WINFLAGS = ../src/resources -Wl,--subsystem,windows
@@ -155,6 +179,8 @@ EXAMPLES = \
     models_cubicmap \
     audio_sound_loading \
     audio_music_stream \
+    fix_dylib \
+
     #core_input_gamepad \
 
 
@@ -287,13 +313,20 @@ audio_sound_loading: audio_sound_loading.c
 audio_music_stream: audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# fix dylib install path name for each executable (MAC)
+fix_dylib:
+ifeq ($(PLATFORM_OS),OSX)
+	find . -type f -perm +ugo+x -print0 | xargs -t -0 -R 1 -I file install_name_tool -change libglfw.3.0.dylib ../external/glfw3/lib/osx/libglfw.3.0.dylib file
+endif
+
 # clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(SUBPLATFORM),OSX)
+    ifeq ($(PLATFORM_OS),OSX)
+		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     else
-    ifeq ($(SUBPLATFORM),LINUX)
+    ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete
 		rm -f *.o
     else
