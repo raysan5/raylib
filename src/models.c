@@ -686,10 +686,13 @@ Model LoadModel(const char *fileName)
     Model model = rlglLoadModel(vData);     // Upload vertex data to GPU
 
     // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: Despite vertex data is useless on OpenGL 3.3 or ES2, we will keep it...
-    //free(vData.vertices);
-    //free(vData.texcoords);
-    //free(vData.normals);
+    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
+    if (rlGetVersion() != OPENGL_11)
+    {
+        free(vData.vertices);
+        free(vData.texcoords);
+        free(vData.normals);
+    }
 
     return model;
 }
@@ -803,10 +806,13 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     Model model = rlglLoadModel(vData);
 
     // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: Despite vertex data is useless on OpenGL 3.3 or ES2, we will keep it...
-    //free(vData.vertices);
-    //free(vData.texcoords);
-    //free(vData.normals);
+    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
+    if (rlGetVersion() != OPENGL_11)
+    {
+        free(vData.vertices);
+        free(vData.texcoords);
+        free(vData.normals);
+    }
 
     return model;
 }
@@ -1118,10 +1124,13 @@ Model LoadCubicmap(Image cubesmap)
     Model model = rlglLoadModel(vData);
 
     // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: Despite vertex data is useless on OpenGL 3.3 or ES2, we will keep it...
-    //free(vData.vertices);
-    //free(vData.texcoords);
-    //free(vData.normals);
+    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
+    if (rlGetVersion() != OPENGL_11)
+    {
+        free(vData.vertices);
+        free(vData.texcoords);
+        free(vData.normals);
+    }
 
     return model;
 }
@@ -1129,10 +1138,13 @@ Model LoadCubicmap(Image cubesmap)
 // Unload 3d model from memory
 void UnloadModel(Model model)
 {
-    free(model.mesh.vertices);
-    free(model.mesh.texcoords);
-    free(model.mesh.normals);
-
+    if (rlGetVersion() == OPENGL_11)
+    {
+        free(model.mesh.vertices);
+        free(model.mesh.texcoords);
+        free(model.mesh.normals);
+    }
+    
     rlDeleteBuffers(model.vboId[0]);
     rlDeleteBuffers(model.vboId[1]);
     rlDeleteBuffers(model.vboId[2]);

@@ -261,7 +261,7 @@ static void CommandCallback(struct android_app *app, int32_t cmd);           // 
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(INFO, "Initializing raylib...");
+    TraceLog(INFO, "Initializing raylib (v1.2.2)");
     
     // Store window title (could be useful...)
     windowTitle = title;
@@ -300,7 +300,7 @@ void InitWindow(int width, int height, const char *title)
 // Android activity initialization
 void InitWindow(int width, int height, struct android_app *state)
 {
-    TraceLog(INFO, "Initializing raylib...");
+    TraceLog(INFO, "Initializing raylib (v1.2.2)");
     
     app_dummy();
 

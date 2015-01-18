@@ -79,7 +79,7 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
     pUncomp = (mz_uint8 *)malloc((size_t)uncompSize);
 
     // Check correct memory allocation
-    if (!pUncomp)
+    if (pUncomp == NULL)
     {
         TraceLog(WARNING, "Out of memory while decompressing data");
     }

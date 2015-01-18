@@ -865,7 +865,6 @@ static Wave LoadOGG(char *fileName)
 
     TraceLog(DEBUG, "[%s] Total samples calculated: %i", fileName, totalSamples);
 
-    //short *data
     wave.data = malloc(sizeof(short)*totalSamplesLength);
 
     int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, wave.data, totalSamplesLength);

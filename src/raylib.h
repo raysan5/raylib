@@ -312,7 +312,6 @@ void SetExitKey(int key);                                   // Set a custom key 
 #endif
 int GetScreenWidth(void);                                   // Get current screen width
 int GetScreenHeight(void);                                  // Get current screen height
-int GetKeyPressed(void);                                    // Get latest key pressed
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
@@ -342,6 +341,7 @@ bool IsKeyPressed(int key);                             // Detect if a key has b
 bool IsKeyDown(int key);                                // Detect if a key is being pressed
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
 bool IsKeyUp(int key);                                  // Detect if a key is NOT being pressed
+int GetKeyPressed(void);                                // Get latest key pressed
 
 bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
 bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed

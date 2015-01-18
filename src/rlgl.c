@@ -1682,7 +1682,7 @@ static GLuint LoadSimpleShader(void)
     char fShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
-        "precision mediump float;           \n"     // WebGL, required for emscripten
+        "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
 #endif
         "uniform sampler2D texture0;        \n"
         "varying vec2 fragTexCoord;         \n"
