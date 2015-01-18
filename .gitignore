@@ -1,13 +1,6 @@
 # Ignore generated files
 # ...
 
-# Ignore compiled binaries
-src/*.o
-src/*.exe
-examples/*.o
-examples/*.exe
-templates/*.exe
-
 # Ignore Android generated files and folders
 src_android/obj/
 templates/android_project/bin/
@@ -48,6 +41,9 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 ipch/
 *.opensdf
+
+# Ignore compiled binaries
+*.o
 *.exe
 !tools/rrem.exe
 
