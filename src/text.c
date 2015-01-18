@@ -33,6 +33,12 @@
 #include "rlgl.h"         // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 #include "utils.h"        // Required for function GetExtendion()
 
+// Following libs will be used on LoadTTF()
+#define STB_TRUETYPE_IMPLEMENTATION
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "stb_rect_pack.h"
+#include "stb_truetype.h"
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -64,6 +70,7 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 static bool PixelIsMagenta(Color p);                // Check if a pixel is magenta
 static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Character **charSet);    // Parse image pixel data to obtain character set measures
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
+static SpriteFont LoadTTF(const char *fileName, int fontSize); // Generate a sprite font image from TTF data (font size required)
 
 extern void LoadDefaultFont(void);
 extern void UnloadDefaultFont(void);
@@ -189,6 +196,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     // Check file extension
     if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);
+    else if (strcmp(GetExtension(fileName),"ttf") == 0) spriteFont = LoadTTF(fileName, 20);
     else
     {
         Image image = LoadImage(fileName);
@@ -567,11 +575,106 @@ static SpriteFont LoadRBMF(const char *fileName)
 }
 
 // Generate a sprite font from TTF data (font size required)
-static SpriteFont GenerateFromTTF(const char *fileName, int fontSize)
+static SpriteFont LoadTTF(const char *fileName, int fontSize)
 {
     SpriteFont font;
+    
+    Image image;
+    image.width = 512;
+    image.height = 512;
+    image.pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
+    
+    unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
+    
+    // TODO: Load TTF and generate bitmap font and chars data -> REVIEW!
+    
+    stbtt_packedchar chardata[128];  // Num characters: 128 (?) -> REVIEW!
+    
+    unsigned char *tempBitmap = (unsigned char *)malloc(image.width*image.height*sizeof(unsigned char));   // One channel bitmap returned!
+    
+    // REFERENCE
+/*
+    typedef struct
+    {
+       unsigned short x0,y0,x1,y1; // coordinates of bbox in bitmap
+       float xoff,yoff,xadvance;
+       float xoff2,yoff2;
+    } stbtt_packedchar;
+*/
+    
+    stbtt_pack_context pc;
+    
+    FILE *ttfFile = fopen(fileName, "rb");
+    
+    fread(ttfBuffer, 1, 1<<25, ttfFile);
 
-    // TODO: Load TTF and generate bitmap font and chars data
+    stbtt_PackBegin(&pc, tempBitmap, image.width, image.height, 0, 1, NULL);
+    
+    //stbtt_PackSetOversampling(&pc, 1, 1);
+    //stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata[0]+32);
+    stbtt_PackSetOversampling(&pc, 2, 2);   // Better results
+    stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata + 32);
+    //stbtt_PackSetOversampling(&pc, 3, 1);
+    //stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata[2]+32);
 
+    stbtt_PackEnd(&pc);
+    
+    free(ttfBuffer);
+
+    // Now we have image data in tempBitmap and chardata filled...
+    
+    for (int i = 0; i < 512*512; i++)
+    {
+        image.pixels[i].r = tempBitmap[i];
+        image.pixels[i].g = tempBitmap[i];
+        image.pixels[i].b = tempBitmap[i];
+        image.pixels[i].a = 255;
+    }
+    
+    free(tempBitmap);
+    
+    // REFERENCE EXAMPLE
+/*
+    //To draw, provide *text, posX, posY
+    //stbtt_aligned_quad letter;
+    //stbtt_GetPackedQuad(chardata[0], BITMAP_W, BITMAP_H, *text++, &posX, &posY, &letter, font ? 0 : integer_align);
+    
+    void print(float x, float y, int fontNum, char *text)
+    {
+       glEnable(GL_TEXTURE_2D);
+       glBindTexture(GL_TEXTURE_2D, font_tex);
+       glBegin(GL_QUADS);
+       while (*text) {
+          stbtt_aligned_quad q;
+          stbtt_GetPackedQuad(chardata[fontNum], BITMAP_W, BITMAP_H, *text++, &x, &y, &q, fontNum ? 0 : integer_align);
+          drawBoxTC(q.x0,q.y0,q.x1,q.y1, q.s0,q.t0,q.s1,q.t1);
+       }
+       glEnd();
+    }
+    
+    print(100,160, 0, "This is a test");
+*/
+    
+    font.numChars = 95;
+    font.charSet = (Character *)malloc(font.numChars*sizeof(Character));
+    font.texture = LoadTextureFromImage(image, false);
+    
+    //stbtt_aligned_quad letter;
+    //int x = 0, y = 0;
+
+    for (int i = 0; i < font.numChars; i++)
+    {
+        font.charSet[i].value = i + 32;
+
+        //stbtt_GetPackedQuad(chardata[0], 512, 512, i, &x, &y, &letter, 0);
+
+        font.charSet[i].x = chardata[i + 32].x0;
+        font.charSet[i].y = chardata[i + 32].y0;
+        font.charSet[i].w = chardata[i + 32].x1 - chardata[i + 32].x0;
+        font.charSet[i].h = chardata[i + 32].y1 - chardata[i + 32].y0;
+    }
+    
+    UnloadImage(image);
+    
     return font;
 }
