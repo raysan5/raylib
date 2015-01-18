@@ -23,7 +23,7 @@
 
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
-# WARNING: To compile examples to HTML5, they must be redesigned to use emscripten.h and emscripten_set_main_loop()
+# WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
