@@ -104,6 +104,7 @@
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static GLFWwindow *window;                      // Native window (graphic device)
+static bool windowMinimized = false;
 #elif defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
@@ -243,6 +244,7 @@ static void CharCallback(GLFWwindow *window, unsigned int key);                 
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
+static void WindowIconifyCallback(GLFWwindow* window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
@@ -397,8 +399,11 @@ void CloseWindow(void)
 
 // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
-{
+{   
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    // While window minimized, stop loop execution
+    while (windowMinimized) glfwPollEvents();
+
     return (glfwWindowShouldClose(window));
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     return windowShouldClose;
@@ -962,7 +967,12 @@ static void InitDisplay(int width, int height)
 
     if (rlGetVersion() == OPENGL_33)
     {
-        //glfwWindowHint(GLFW_SAMPLES, 4);                    // Enables multisampling x4 (MSAA), default is 0
+        if (configFlags & FLAG_MSAA_4X_HINT)
+        {
+            glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
+            TraceLog(INFO, "Enabled MSAA x4");
+        }
+        
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.2 and above!
@@ -1009,12 +1019,18 @@ static void InitDisplay(int width, int height)
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
+    glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
 
     glfwMakeContextCurrent(window);
 
-    //glfwSwapInterval(0);          // Disables GPU v-sync (if set), so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
-                                    // If not set, swap interval uses GPU v-sync configuration
-                                    // Framerate can be setup using SetTargetFPS()
+    // Enables GPU v-sync, so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
+    // If not set, swap interval uses GPU v-sync configuration
+    // Framerate can be setup using SetTargetFPS()
+    if (configFlags & FLAG_VSYNC_HINT)
+    {
+        glfwSwapInterval(1);
+        TraceLog(INFO, "Trying to enable VSYNC");
+    }
 
     //glfwGetFramebufferSize(window, &renderWidth, &renderHeight);    // Get framebuffer size of current window
 
@@ -1036,6 +1052,7 @@ static void InitDisplay(int width, int height)
     VC_RECT_T srcRect;
 #endif
 
+    // TODO: if (configFlags & FLAG_MSAA_4X_HINT) activate (EGL_SAMPLES, 4)
     const EGLint framebufferAttribs[] =
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    // Type of context support -> Required on RPI?
@@ -1241,6 +1258,25 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 
     // Background must be also re-cleared
     ClearBackground(RAYWHITE);
+}
+
+// GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowIconifyCallback(GLFWwindow* window, int iconified)
+{
+    if (iconified)
+    {
+        // The window was iconified
+        PauseMusicStream();
+        
+        windowMinimized = true;
+    }
+    else
+    {
+        // The window was restored
+        ResumeMusicStream();
+        
+        windowMinimized = false;
+    }
 }
 #endif
 
@@ -1643,7 +1679,7 @@ static void PollInputEvents(void)
     // Register previous mouse states
     for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
     
-    glfwPollEvents();       // Register keyboard/mouse events
+    glfwPollEvents();       // Register keyboard/mouse events... and window events!
 #elif defined(PLATFORM_ANDROID)
 
     // TODO: Check virtual keyboard (?)
@@ -1654,6 +1690,8 @@ static void PollInputEvents(void)
     drag = false;
 
     // Poll Events (registered events)
+    // TODO: Enable/disable activityMinimized to block activity if minimized
+    //while ((ident = ALooper_pollAll(activityMinimized ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
     while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
     {
         // Process this event

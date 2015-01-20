@@ -90,6 +90,7 @@
 #define FLAG_SHOW_MOUSE_CURSOR  4
 #define FLAG_CENTERED_MODE      8
 #define FLAG_MSAA_4X_HINT      16
+#define FLAG_VSYNC_HINT        32
 
 // Keyboard Function Keys 
 #define KEY_SPACE            32
