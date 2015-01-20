@@ -574,6 +574,7 @@ void PauseMusicStream(void)
     {
         TraceLog(INFO, "Pausing music stream");
         alSourcePause(currentMusic.source);
+        musicEnabled = false;
     }
 }
 
@@ -581,10 +582,14 @@ void PauseMusicStream(void)
 void ResumeMusicStream(void)
 {
     // Resume music playing... if music available!
-    if (musicEnabled)
+    ALenum state;
+    alGetSourcei(currentMusic.source, AL_SOURCE_STATE, &state);
+	
+    if (state == AL_PAUSED)
     {
-        TraceLog(INFO, "Resume music stream");
+        TraceLog(INFO, "Resuming music stream");
         alSourcePlay(currentMusic.source);
+        musicEnabled = true;
     }
 }
 
