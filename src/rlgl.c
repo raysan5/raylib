@@ -1259,6 +1259,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
                                   // Possible options: GL_SMOOTH (Color interpolation) or GL_FLAT (no interpolation)
 #endif
 
+    // TODO: Review this comment when called from window resize callback
     TraceLog(INFO, "OpenGL Graphics initialized successfully");
 }
 
