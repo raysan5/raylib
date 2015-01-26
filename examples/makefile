@@ -113,19 +113,19 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
-        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
-    endif
+        # libopenal-dev libglew-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -pthread
+    else
     ifeq ($(PLATFORM_OS),OSX)
-    	# libraries for OS X 10.9 desktop compiling
-	# requires the following packages:
-	# libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-	LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
-
+        # libraries for OS X 10.9 desktop compiling
+        # requires the following packages:
+        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
         LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+    endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -327,8 +327,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find . -type f -executable -delete
-		rm -f *.o
+		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     else
 		del *.o *.exe
     endif
