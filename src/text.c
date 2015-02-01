@@ -202,7 +202,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
         Image image = LoadImage(fileName);
 
         // At this point we have a pixel array with all the data...
-        
+
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
         ConvertToPOT(&image, MAGENTA);
 #endif
@@ -216,7 +216,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
         spriteFont.numChars = numChars;
 
         spriteFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
-        
+
         UnloadImage(image);
     }
 
@@ -565,7 +565,7 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
     }
-    
+
     fclose(rbmfFile);
 
     free(rbmfFileData);                // Now we can free loaded data from RAM memory
@@ -578,20 +578,20 @@ static SpriteFont LoadRBMF(const char *fileName)
 static SpriteFont LoadTTF(const char *fileName, int fontSize)
 {
     SpriteFont font;
-    
+
     Image image;
     image.width = 512;
     image.height = 512;
     image.pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
-    
+
     unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
-    
+
     // TODO: Load TTF and generate bitmap font and chars data -> REVIEW!
-    
+
     stbtt_packedchar chardata[128];  // Num characters: 128 (?) -> REVIEW!
-    
+
     unsigned char *tempBitmap = (unsigned char *)malloc(image.width*image.height*sizeof(unsigned char));   // One channel bitmap returned!
-    
+
     // REFERENCE
 /*
     typedef struct
@@ -601,15 +601,15 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
        float xoff2,yoff2;
     } stbtt_packedchar;
 */
-    
+
     stbtt_pack_context pc;
-    
+
     FILE *ttfFile = fopen(fileName, "rb");
-    
+
     fread(ttfBuffer, 1, 1<<25, ttfFile);
 
     stbtt_PackBegin(&pc, tempBitmap, image.width, image.height, 0, 1, NULL);
-    
+
     //stbtt_PackSetOversampling(&pc, 1, 1);
     //stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata[0]+32);
     stbtt_PackSetOversampling(&pc, 2, 2);   // Better results
@@ -618,11 +618,11 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
     //stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata[2]+32);
 
     stbtt_PackEnd(&pc);
-    
+
     free(ttfBuffer);
 
     // Now we have image data in tempBitmap and chardata filled...
-    
+
     for (int i = 0; i < 512*512; i++)
     {
         image.pixels[i].r = tempBitmap[i];
@@ -630,15 +630,15 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
         image.pixels[i].b = tempBitmap[i];
         image.pixels[i].a = 255;
     }
-    
+
     free(tempBitmap);
-    
+
     // REFERENCE EXAMPLE
 /*
     //To draw, provide *text, posX, posY
     //stbtt_aligned_quad letter;
     //stbtt_GetPackedQuad(chardata[0], BITMAP_W, BITMAP_H, *text++, &posX, &posY, &letter, font ? 0 : integer_align);
-    
+
     void print(float x, float y, int fontNum, char *text)
     {
        glEnable(GL_TEXTURE_2D);
@@ -651,14 +651,14 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
        }
        glEnd();
     }
-    
+
     print(100,160, 0, "This is a test");
 */
-    
+
     font.numChars = 95;
     font.charSet = (Character *)malloc(font.numChars*sizeof(Character));
     font.texture = LoadTextureFromImage(image, false);
-    
+
     //stbtt_aligned_quad letter;
     //int x = 0, y = 0;
 
@@ -673,8 +673,8 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
         font.charSet[i].w = chardata[i + 32].x1 - chardata[i + 32].x0;
         font.charSet[i].h = chardata[i + 32].y1 - chardata[i + 32].y0;
     }
-    
+
     UnloadImage(image);
-    
+
     return font;
 }

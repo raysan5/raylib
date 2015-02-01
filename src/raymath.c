@@ -498,7 +498,7 @@ Matrix MatrixRotate(float angle, float x, float y, float z)
     float c = cosf(angle*DEG2RAD);    // cosine
     float s = sinf(angle*DEG2RAD);    // sine
     float c1 = 1.0f - c;              // 1 - c
-    
+
     float m0 = result.m0, m4 = result.m4, m8 = result.m8, m12 = result.m12,
           m1 = result.m1, m5 = result.m5, m9 = result.m9,  m13 = result.m13,
           m2 = result.m2, m6 = result.m6, m10 = result.m10, m14 = result.m14;

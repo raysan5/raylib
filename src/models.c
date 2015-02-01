@@ -452,22 +452,22 @@ void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Co
     rlBegin(RL_QUADS);
         rlColor4ub(colors[0].r, colors[0].g, colors[0].b, colors[0].a);
         rlNormal3f(normals[0].x, normals[0].y, normals[0].z);
-        rlTexCoord2f(textcoords[0].x, textcoords[0].y); 
+        rlTexCoord2f(textcoords[0].x, textcoords[0].y);
         rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
-        
+
         rlColor4ub(colors[1].r, colors[1].g, colors[1].b, colors[1].a);
         rlNormal3f(normals[1].x, normals[1].y, normals[1].z);
-        rlTexCoord2f(textcoords[1].x, textcoords[1].y); 
+        rlTexCoord2f(textcoords[1].x, textcoords[1].y);
         rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
 
         rlColor4ub(colors[2].r, colors[2].g, colors[2].b, colors[2].a);
         rlNormal3f(normals[2].x, normals[2].y, normals[2].z);
-        rlTexCoord2f(textcoords[2].x, textcoords[2].y); 
+        rlTexCoord2f(textcoords[2].x, textcoords[2].y);
         rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
 
         rlColor4ub(colors[3].r, colors[3].g, colors[3].b, colors[3].a);
         rlNormal3f(normals[3].x, normals[3].y, normals[3].z);
-        rlTexCoord2f(textcoords[3].x, textcoords[3].y); 
+        rlTexCoord2f(textcoords[3].x, textcoords[3].y);
         rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
     rlEnd();
 }
@@ -1144,17 +1144,19 @@ void UnloadModel(Model model)
         free(model.mesh.texcoords);
         free(model.mesh.normals);
     }
-    
+
     rlDeleteBuffers(model.vboId[0]);
     rlDeleteBuffers(model.vboId[1]);
     rlDeleteBuffers(model.vboId[2]);
 
     rlDeleteVertexArrays(model.vaoId);
+    rlDeleteTextures(model.textureId);
+    rlDeleteShader(model.shaderId);
 }
 
 void SetModelTexture(Model *model, Texture2D texture)
 {
-    if (texture.id <= 0) model->textureId = 1;  // Default white texture (use mesh color)
+    if (texture.id <= 0) model->textureId = whiteTexture;  // Default white texture (use mesh color)
     else model->textureId = texture.id;
 }
 
@@ -1170,6 +1172,8 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
 // Draw a model with extended parameters
 void DrawModelEx(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color tint)
 {
+    // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
+    
     rlglDrawModel(model, position, rotation, scale, tint, false);
 }
 
@@ -1262,11 +1266,11 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
         // Bottom-left corner for texture and quad
         rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
         rlVertex3f(a.x, a.y, a.z);
-        
+
         // Top-left corner for texture and quad
         rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
         rlVertex3f(d.x, d.y, d.z);
-        
+
         // Top-right corner for texture and quad
         rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
         rlVertex3f(c.x, c.y, c.z);
@@ -1301,7 +1305,7 @@ static VertexData LoadOBJ(const char *fileName)
     FILE *objFile;
 
     objFile = fopen(fileName, "rt");
-    
+
     if (objFile == NULL)
     {
         TraceLog(WARNING, "[%s] OBJ file could not be opened", fileName);
@@ -1547,15 +1551,15 @@ bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, V
 {
     /*
     // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = tempVertices[0]; 
+    Vector3 minVertex = tempVertices[0];
     Vector3 maxVertex = tempVertices[0];
-    
+
     for (int i = 1; i < tempVertices.Count; i++)
     {
         minVertex = Vector3.Min(minVertex, tempVertices[i]);
         maxVertex = Vector3.Max(maxVertex, tempVertices[i]);
     }
-    
+
     bounds = new BoundingBox(minVertex, maxVertex);
     */
     return false;

@@ -187,7 +187,7 @@ Image LoadImageFromRES(const char *rresName, int resId)
 
     FILE *rresFile = fopen(rresName, "rb");
 
-    if (rresFile == NULL) 
+    if (rresFile == NULL)
     {
         TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
     }
@@ -296,7 +296,7 @@ Image LoadImageFromRES(const char *rresName, int resId)
 Texture2D LoadTexture(const char *fileName)
 {
     Texture2D texture;
-    
+
     // Init texture to default values
     texture.id = 0;
     texture.width = 0;
@@ -340,7 +340,7 @@ Texture2D LoadTexture(const char *fileName)
     else
     {
         Image image = LoadImage(fileName);
-        
+
         if (image.pixels != NULL)
         {
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
@@ -399,9 +399,9 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
 Texture2D CreateTexture(Image image, bool genMipmaps)
 {
     Texture2D texture;
-    
+
     texture = LoadTextureFromImage(image, genMipmaps);
-    
+
     TraceLog(INFO, "Created texture id: %i", texture.id);
 
     return texture;
@@ -589,7 +589,7 @@ static ImageEx LoadDDS(const char *fileName)
 
     ImageEx image;
     ddsHeader header;
-    
+
     image.data = NULL;
     image.width = 0;
     image.height = 0;
