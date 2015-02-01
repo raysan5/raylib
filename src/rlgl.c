@@ -32,20 +32,20 @@
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 
 #if defined(GRAPHICS_API_OPENGL_11)
-	#ifdef __APPLE__            // OpenGL include for OSX
-		#include <OpenGL/gl.h>
-	#else
-    	#include <GL/gl.h>      // Basic OpenGL include
-	#endif
+    #ifdef __APPLE__            // OpenGL include for OSX
+        #include <OpenGL/gl.h>
+    #else
+        #include <GL/gl.h>      // Basic OpenGL include
+    #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
     #define GLEW_STATIC
-	#ifdef __APPLE__            // OpenGL include for OSX
+    #ifdef __APPLE__            // OpenGL include for OSX
         #include <OpenGL/gl3.h>
-   	#else
-	    #include <GL/glew.h>    // Extensions loading lib
-    	//#include "glad.h"     // TODO: Other extensions loading lib? --> REVIEW
+    #else
+        #include <GL/glew.h>    // Extensions loading lib
+        //#include "glad.h"     // TODO: Other extensions loading lib? --> REVIEW
     #endif
 #endif
 
@@ -164,6 +164,12 @@ static GLuint simpleVertexLoc, simpleTexcoordLoc, simpleNormalLoc, simpleColorLo
 static GLuint simpleProjectionMatrixLoc, simpleModelviewMatrixLoc;
 static GLuint simpleTextureLoc;
 
+// Custom Shader program attibutes binding locations
+static GLuint customVertexLoc, customTexcoordLoc, customNormalLoc, customColorLoc;
+static GLuint customProjectionMatrixLoc, customModelviewMatrixLoc;
+static GLuint customTextureLoc;
+static bool customShader = false;
+
 // Vertex Array Objects (VAO)
 static GLuint vaoLines, vaoTriangles, vaoQuads;
 
@@ -182,6 +188,9 @@ static bool useTempBuffer = false;
 
 // Support for VAOs (OpenGL ES2 could not support VAO extensions)
 static bool vaoSupported = false;
+
+// Framebuffer object and texture
+static GLuint fbo, fboColorTexture, fboDepthTexture, fboShader = 0;
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -208,7 +217,6 @@ static void InitializeBuffersGPU(void);
 static void UpdateBuffers(void);
 
 // Custom shader files loading (external)
-static GLuint LoadCustomShader(char *vertexFileName, char *fragmentFileName);
 static char *TextFileRead(char *fn);
 #endif
 
@@ -313,21 +321,21 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     // TODO: Support rotation in multiple axes
     Matrix rot = MatrixIdentity();
 
-	// OPTION 1: It works...
+    // OPTION 1: It works...
     if (x == 1) rot = MatrixRotateX(angleDeg*DEG2RAD);
     else if (y == 1) rot = MatrixRotateY(angleDeg*DEG2RAD);
     else if (z == 1) rot = MatrixRotateZ(angleDeg*DEG2RAD);
-	
-	// OPTION 2: Requires review...
-	//Vector3 vec = (Vector3){ 0, 1, 0 };
+
+    // OPTION 2: Requires review...
+    //Vector3 vec = (Vector3){ 0, 1, 0 };
     //VectorNormalize(&vec);
     //rot = MatrixFromAxisAngle(vec, angleDeg*DEG2RAD);       // Working?
-    
+
     // OPTION 3: TODO: Review, it doesn't work!
     //Vector3 vec = (Vector3){ x, y, z };
     //VectorNormalize(&vec);
     //rot = MatrixRotate(angleDeg*vec.x, angleDeg*vec.x, angleDeg*vec.x);
-	
+
     MatrixTranspose(&rot);
 
     *currentMatrix = MatrixMultiply(*currentMatrix, rot);
@@ -696,6 +704,17 @@ void rlDeleteTextures(unsigned int id)
     glDeleteTextures(1, &id);
 }
 
+// Unload shader from GPU memory
+void rlDeleteShader(unsigned int id)
+{
+    glDeleteProgram(id);
+}
+
+void rlEnableFBO(void)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+}
+
 // Unload vertex data (VAO) from GPU memory
 void rlDeleteVertexArrays(unsigned int id)
 {
@@ -786,7 +805,7 @@ void rlglInit(void)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-	// NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
+    // NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
 #if !defined(PLATFORM_WEB)
     glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
     glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
@@ -851,7 +870,8 @@ void rlglInit(void)
     // Init default Shader (GLSL 110) -> Common for GL 3.3+ and ES2
     defaultShaderProgram = LoadDefaultShader();
     simpleShaderProgram = LoadSimpleShader();
-    //customShaderProgram = LoadShaders("simple150.vert", "simple150.frag");
+    //simpleShaderProgram = LoadCustomShader("custom.vs", "custom.fs");     // Works ok
+    //customShaderProgram = LoadCustomShader("simple150.vert", "simple150.frag");
 
     // Get handles to GLSL input vars locations for defaultShaderProgram
     //-------------------------------------------------------------------
@@ -866,7 +886,7 @@ void rlglInit(void)
     // Get handles to GLSL uniform vars locations (fragment-shader)
     defaultTextureLoc = glGetUniformLocation(defaultShaderProgram, "texture0");
     //--------------------------------------------------------------------
-    
+
     // Get handles to GLSL input vars locations for simpleShaderProgram
     //-------------------------------------------------------------------
     simpleVertexLoc = glGetAttribLocation(simpleShaderProgram, "vertexPosition");
@@ -908,8 +928,51 @@ void rlglInit(void)
     }
 
     drawsCounter = 1;
-    draws[drawsCounter - 1].textureId = whiteTexture;
+    draws[drawsCounter - 1].textureId = whiteTexture;    
 #endif
+}
+
+// Init postpro system
+void rlglInitPostpro(void)
+{
+    // Create the texture that will serve as the color attachment for the framebuffer
+    glGenTextures(1, &fboColorTexture);
+    glBindTexture(GL_TEXTURE_2D, fboColorTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GetScreenWidth(), GetScreenHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    // Create the texture that will serve as the depth attachment for the framebuffer.
+    glGenTextures(1, &fboDepthTexture);
+    glBindTexture(GL_TEXTURE_2D, fboDepthTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GetScreenWidth(), GetScreenHeight(), 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Create the framebuffer object
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    // Attach colort texture and depth texture to FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboColorTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fboDepthTexture, 0);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    
+    if (status != GL_FRAMEBUFFER_COMPLETE) TraceLog(WARNING, "Framebuffer object could not be created...");
+    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    fboShader = 0;
+    
+    // TODO: Init simple quad VAO and data here?
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -950,6 +1013,7 @@ void rlglClose(void)
     //glDeleteShader(v);
     //glDeleteShader(f);
     glDeleteProgram(defaultShaderProgram);
+    glDeleteProgram(simpleShaderProgram);
 
     // Free vertex arrays memory
     free(lines.vertices);
@@ -965,6 +1029,8 @@ void rlglClose(void)
 
     // Free GPU texture
     glDeleteTextures(1, &whiteTexture);
+    
+    if (fbo != 0) glDeleteFramebuffers(1, &fbo);
 
     free(draws);
 #endif
@@ -977,13 +1043,16 @@ void rlglDraw(void)
 
     if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
     {
-        glUseProgram(defaultShaderProgram);        // Use our shader
+        if (fbo == 0) glUseProgram(defaultShaderProgram);   // Use our default shader
+        else glUseProgram(fboShader);                       // Use our postpro shader
 
+        glUseProgram(defaultShaderProgram);
+        
         glUniformMatrix4fv(defaultProjectionMatrixLoc, 1, false, GetMatrixVector(projection));
         glUniformMatrix4fv(defaultModelviewMatrixLoc, 1, false, GetMatrixVector(modelview));
         glUniform1i(defaultTextureLoc, 0);
     }
-	
+
     // NOTE: We draw in this order: triangle shapes, textured quads and lines
 
     if (triangles.vCounter > 0)
@@ -1116,6 +1185,67 @@ void rlglDraw(void)
 #endif
 }
 
+void rlglDrawPostpro(unsigned int shaderId)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // TODO: Draw screen quad with texture
+/*
+    const float quadPositions[] = { 1.0, 1.0, 0.0, -1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 
+                                   -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0,  1.0, 0.0 };
+    const float quadTexcoords[] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
+
+    glBindBuffer(GL_ARRAY_BUFFER, quadVbo);
+
+    glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), quadPositions);
+    glVertexAttribPointer(ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), quadTexcoords);
+
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+    glEnableVertexAttribArray(ATTRIB_TEXCOORD0);
+
+    glBindTexture(GL_TEXTURE_2D, fboColorTexture);
+
+    glDrawArrays(GL_TRIANGLES, 0, 2*3);
+    
+    // Quad render using triangle strip
+    glBindBuffer(GL_ARRAY_BUFFER, uiVBO[1]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); 
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
+*/
+    rlEnableTexture(fboColorTexture);
+
+    rlPushMatrix();
+        rlBegin(RL_QUADS);
+            rlColor4ub(255, 255, 255, 255);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+            // Bottom-left corner for texture and quad
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex2f(0.0f, 0.0f);
+
+            // Bottom-right corner for texture and quad
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex2f(0.0f, GetScreenHeight());
+
+            // Top-right corner for texture and quad
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex2f(GetScreenWidth(), GetScreenHeight());
+
+            // Top-left corner for texture and quad
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex2f(GetScreenWidth(), 0.0f);
+        rlEnd();
+    rlPopMatrix();
+    
+    fboShader = shaderId;
+    
+    rlglDraw();
+}
+
 // Draw a 3d model
 void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires)
 {
@@ -1159,23 +1289,35 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(simpleShaderProgram);        // Use our simple shader
+    if (customShader) glUseProgram(model.shaderId);
+    else glUseProgram(simpleShaderProgram);        // Use our simple shader
 
     VectorScale(&rotation, DEG2RAD);
-    
+
     // Get transform matrix (rotation -> scale -> translation)
     Matrix transform = MatrixTransform(position, rotation, scale);
     Matrix modelviewworld = MatrixMultiply(transform, modelview);
 
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
-    glUniformMatrix4fv(simpleProjectionMatrixLoc, 1, false, GetMatrixVector(projection));
-    glUniformMatrix4fv(simpleModelviewMatrixLoc, 1, false, GetMatrixVector(modelviewworld));
-    glUniform1i(simpleTextureLoc, 0);
+    if (customShader)
+    {
+        glUniformMatrix4fv(customProjectionMatrixLoc, 1, false, GetMatrixVector(projection));
+        glUniformMatrix4fv(customModelviewMatrixLoc, 1, false, GetMatrixVector(modelviewworld));
+        glUniform1i(customTextureLoc, 0);
+    }
+    else
+    {
+        glUniformMatrix4fv(simpleProjectionMatrixLoc, 1, false, GetMatrixVector(projection));
+        glUniformMatrix4fv(simpleModelviewMatrixLoc, 1, false, GetMatrixVector(modelviewworld));
+        glUniform1i(simpleTextureLoc, 0);
+    }
 
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
     float vColor[4] = { (float)color.r/255, (float)color.g/255, (float)color.b/255, (float)color.a/255 };
-    glUniform4fv(simpleColorLoc, 1, vColor);
+
+    if (customShader) glUniform4fv(customColorLoc, 1, vColor);
+    else glUniform4fv(simpleColorLoc, 1, vColor);
 
     if (vaoSupported)
     {
@@ -1206,7 +1348,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
     else glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
-    
+
     glUseProgram(0);
 #endif
 
@@ -1376,7 +1518,7 @@ Model rlglLoadModel(VertexData mesh)
     model.vboId[2] = 0;         // Normals VBO
 
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model.textureId = 1;        // Default whiteTexture
+    model.textureId = whiteTexture;     // Default whiteTexture
 
     GLuint vaoModel = 0;        // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];     // Vertex Buffer Objects (VBO)
@@ -1412,7 +1554,7 @@ Model rlglLoadModel(VertexData mesh)
     model.vboId[0] = vertexBuffer[0];     // Vertex position VBO
     model.vboId[1] = vertexBuffer[1];     // Texcoords VBO
     model.vboId[2] = vertexBuffer[2];     // Normals VBO
-    
+
     if (vaoSupported)
     {
         if (vaoModel > 0)
@@ -1510,6 +1652,102 @@ unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int heigh
     return id;
 }
 
+// Load a shader (vertex shader + fragment shader) from text data
+unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr)
+{
+    unsigned int program;
+    GLuint vertexShader;
+    GLuint fragmentShader;
+
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    const char *pvs = vShaderStr;
+    const char *pfs = fShaderStr;
+
+    glShaderSource(vertexShader, 1, &pvs, NULL);
+    glShaderSource(fragmentShader, 1, &pfs, NULL);
+    
+    GLint success = 0;
+
+    glCompileShader(vertexShader);
+
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+    if (success != GL_TRUE)
+    {
+        TraceLog(WARNING, "[VSHDR ID %i] Failed to compile vertex shader...", vertexShader);
+
+        int maxLength = 0;
+        int length;
+
+        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+        char log[maxLength];
+
+        glGetShaderInfoLog(vertexShader, maxLength, &length, log);
+
+        TraceLog(INFO, "%s", log);
+    }
+    else TraceLog(INFO, "[VSHDR ID %i] Vertex shader compiled successfully", vertexShader);
+
+    glCompileShader(fragmentShader);
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+    if (success != GL_TRUE)
+    {
+        TraceLog(WARNING, "[FSHDR ID %i] Failed to compile fragment shader...", fragmentShader);
+
+        int maxLength = 0;
+        int length;
+
+        glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+        char log[maxLength];
+
+        glGetShaderInfoLog(fragmentShader, maxLength, &length, log);
+
+        TraceLog(INFO, "%s", log);
+    }
+    else TraceLog(INFO, "[FSHDR ID %i] Fragment shader compiled successfully", fragmentShader);
+
+    program = glCreateProgram();
+
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+
+    glLinkProgram(program);
+
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    if (success == GL_FALSE)
+    {
+        TraceLog(WARNING, "[SHDR ID %i] Failed to link shader program...", program);
+
+        int maxLength = 0;
+        int length;
+
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
+        char log[maxLength];
+
+        glGetProgramInfoLog(program, maxLength, &length, log);
+
+        TraceLog(INFO, "%s", log);
+        
+        glDeleteProgram(program);
+        
+        program = 0;
+    }
+    else TraceLog(INFO, "[SHDR ID %i] Shader program loaded successfully", program);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return program;
+}
+
 // Read screen pixel data (color buffer)
 unsigned char *rlglReadScreenPixels(int width, int height)
 {
@@ -1532,6 +1770,66 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     free(screenData);
 
     return imgData;     // NOTE: image data should be freed
+}
+
+unsigned int LoadCustomShader(char *vsFileName, char *fsFileName)
+{
+    // Shaders loading from external text file
+    char *vShaderStr = TextFileRead(vsFileName);
+    char *fShaderStr = TextFileRead(fsFileName);
+
+    unsigned int shaderId = rlglLoadShader(vShaderStr, fShaderStr);
+
+    if (shaderId != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shaderId);
+    else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shaderId);
+
+    return shaderId;
+    
+    // Shader strings must be freed
+    free(vShaderStr);
+    free(fShaderStr);
+    
+    return shaderId;
+}
+
+// Link shader to model
+void SetModelShader(Model *model, unsigned int shader)
+{
+    // Get handles to GLSL input vars locations for simpleShaderProgram
+    customVertexLoc = glGetAttribLocation(shader, "vertexPosition");
+    customTexcoordLoc = glGetAttribLocation(shader, "vertexTexCoord");
+    customNormalLoc = glGetAttribLocation(shader, "vertexNormal");
+
+    // Get handles to GLSL uniform vars locations (vertex-shader)
+    customModelviewMatrixLoc = glGetUniformLocation(shader, "modelviewMatrix");
+    customProjectionMatrixLoc = glGetUniformLocation(shader, "projectionMatrix");
+
+    // Get handles to GLSL uniform vars locations (fragment-shader)
+    customTextureLoc = glGetUniformLocation(shader, "texture0");
+    customColorLoc = glGetUniformLocation(shader, "fragColor");
+
+    if (vaoSupported) glBindVertexArray(model->vaoId);
+
+    // Enable vertex attributes: position
+    glBindBuffer(GL_ARRAY_BUFFER, model->vboId[0]);
+    glEnableVertexAttribArray(customVertexLoc);
+    glVertexAttribPointer(customVertexLoc, 3, GL_FLOAT, 0, 0, 0);
+
+    // Enable vertex attributes: texcoords
+    glBindBuffer(GL_ARRAY_BUFFER, model->vboId[1]);
+    glEnableVertexAttribArray(customTexcoordLoc);
+    glVertexAttribPointer(customTexcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+
+    // Enable vertex attributes: normals
+    glBindBuffer(GL_ARRAY_BUFFER, model->vboId[2]);
+    glEnableVertexAttribArray(customNormalLoc);
+    glVertexAttribPointer(customNormalLoc, 3, GL_FLOAT, 0, 0, 0);
+
+    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+
+    model->shaderId = shader;
+
+    customShader = true;
 }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1559,10 +1857,12 @@ void PrintModelviewMatrix()
 static GLuint LoadDefaultShader(void)
 {
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
+    // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
+    // Just defined #version 330 despite shader is #version 110
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
+    char vShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char vShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
 #endif
@@ -1582,7 +1882,7 @@ static GLuint LoadDefaultShader(void)
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
+    char fShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
         "precision mediump float;           \n"     // WebGL, required for emscripten
@@ -1595,63 +1895,12 @@ static GLuint LoadDefaultShader(void)
         "    gl_FragColor = texture2D(texture0, fragTexCoord) * fragColor; \n"
         "}                                  \n";
 
-    GLuint program;
-    GLuint vertexShader;
-    GLuint fragmentShader;
+    unsigned int shaderId = rlglLoadShader(vShaderStr, fShaderStr);
 
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    if (shaderId != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shaderId);
+    else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shaderId);
 
-    const char *pvs = vShaderStr;
-    const char *pfs = fShaderStr;
-
-    glShaderSource(vertexShader, 1, &pvs, NULL);
-    glShaderSource(fragmentShader, 1, &pfs, NULL);
-
-    GLint success = 0;
-
-    glCompileShader(vertexShader);
-
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-    if (success != GL_TRUE)  TraceLog(WARNING, "[VSHDR ID %i] Failed to compile default vertex shader...", vertexShader);
-    else TraceLog(INFO, "[VSHDR ID %i] Default vertex shader compiled successfully", vertexShader);
-
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-    if (success != GL_TRUE)  TraceLog(WARNING, "[FSHDR ID %i] Failed to compile default fragment shader...", fragmentShader);
-    else TraceLog(INFO, "[FSHDR ID %i] Default fragment shader compiled successfully", fragmentShader);
-
-    program = glCreateProgram();
-
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-
-    glLinkProgram(program);
-
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-    if (success == GL_FALSE)
-    {
-        int maxLength;
-        int length;
-
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-
-        char log[maxLength];
-
-        glGetProgramInfoLog(program, maxLength, &length, log);
-
-        TraceLog(INFO, "Shader program fail log: %s", log);
-    }
-    else TraceLog(INFO, "[SHDR ID %i] Default shader program loaded successfully", program);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return program;
+    return shaderId;
 }
 
 // Load Simple Shader (Vertex and Fragment)
@@ -1659,10 +1908,12 @@ static GLuint LoadDefaultShader(void)
 static GLuint LoadSimpleShader(void)
 {
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
+    // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
+    // Just defined #version 330 despite shader is #version 110
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
+    char vShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char vShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
 #endif
@@ -1680,7 +1931,7 @@ static GLuint LoadSimpleShader(void)
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = " #version 110      \n"     // NOTE: Equivalent to version 100 on ES2
+    char fShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
@@ -1693,117 +1944,22 @@ static GLuint LoadSimpleShader(void)
         "    gl_FragColor = texture2D(texture0, fragTexCoord) * fragColor; \n"
         "}                                  \n";
 
-    GLuint program;
-    GLuint vertexShader;
-    GLuint fragmentShader;
+    unsigned int shaderId = rlglLoadShader(vShaderStr, fShaderStr);
 
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    if (shaderId != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shaderId);
+    else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shaderId);
 
-    const char *pvs = vShaderStr;
-    const char *pfs = fShaderStr;
-
-    glShaderSource(vertexShader, 1, &pvs, NULL);
-    glShaderSource(fragmentShader, 1, &pfs, NULL);
-
-    GLint success = 0;
-
-    glCompileShader(vertexShader);
-
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-    if (success != GL_TRUE)  TraceLog(WARNING, "[VSHDR ID %i] Failed to compile simple vertex shader...", vertexShader);
-    else TraceLog(INFO, "[VSHDR ID %i] Simple vertex shader compiled successfully", vertexShader);
-
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-    if (success != GL_TRUE)  TraceLog(WARNING, "[FSHDR ID %i] Failed to compile simple fragment shader...", fragmentShader);
-    else TraceLog(INFO, "[FSHDR ID %i] Simple fragment shader compiled successfully", fragmentShader);
-
-    program = glCreateProgram();
-
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-
-    glLinkProgram(program);
-
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-    if (success == GL_FALSE)
-    {
-        int maxLength;
-        int length;
-
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-
-        char log[maxLength];
-
-        glGetProgramInfoLog(program, maxLength, &length, log);
-
-        TraceLog(INFO, "Shader program fail log: %s", log);
-    }
-    else TraceLog(INFO, "[SHDR ID %i] Simple shader program loaded successfully", program);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return program;
+    return shaderId;
 }
 
-// Load shaders from text files
-static GLuint LoadCustomShader(char *vertexFileName, char *fragmentFileName)
-{
-    // Shaders loading from external text file
-    char *vShaderStr = TextFileRead(vertexFileName);
-    char *fShaderStr = TextFileRead(fragmentFileName);
-
-    GLuint program;
-    GLuint vertexShader;
-    GLuint fragmentShader;
-
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    const char *pvs = vShaderStr;
-    const char *pfs = fShaderStr;
-
-    glShaderSource(vertexShader, 1, &pvs, NULL);
-    glShaderSource(fragmentShader, 1, &pfs, NULL);
-
-    glCompileShader(vertexShader);
-    glCompileShader(fragmentShader);
-
-    TraceLog(INFO, "[VSHDR ID %i] Vertex shader compiled successfully", vertexShader);
-    TraceLog(INFO, "[FSHDR ID %i] Fragment shader compiled successfully", fragmentShader);
-
-    program = glCreateProgram();
-
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-
-    glLinkProgram(program);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    
-    free(vShaderStr);
-    free(fShaderStr);
-
-    TraceLog(INFO, "[SHDR ID %i] Shader program loaded successfully", program);
-
-    return program;
-}
-
-// Read shader text file
+// Read text file
 // NOTE: text chars array should be freed manually
 static char *TextFileRead(char *fileName)
 {
     FILE *textFile;
     char *text = NULL;
 
-    int count=0;
+    int count = 0;
 
     if (fileName != NULL)
     {
@@ -1817,7 +1973,7 @@ static char *TextFileRead(char *fileName)
 
             if (count > 0)
             {
-                text = (char *)malloc(sizeof(char) * (count+1));
+                text = (char *)malloc(sizeof(char) * (count + 1));
                 count = fread(text, sizeof(char), count, textFile);
                 text[count] = '\0';
             }
@@ -1826,7 +1982,7 @@ static char *TextFileRead(char *fileName)
         }
         else TraceLog(WARNING, "[%s] Text file could not be opened", fileName);
     }
-    
+
     return text;
 }
 
@@ -1925,7 +2081,7 @@ static void InitializeBuffersGPU(void)
         glGenVertexArrays(1, &vaoTriangles);
         glBindVertexArray(vaoTriangles);
     }
-    
+
     // Create buffers for our vertex data
     glGenBuffers(2, trianglesBuffer);
 
@@ -1950,7 +2106,7 @@ static void InitializeBuffersGPU(void)
         glGenVertexArrays(1, &vaoQuads);
         glBindVertexArray(vaoQuads);
     }
-    
+
     // Create buffers for our vertex data
     glGenBuffers(4, quadsBuffer);
 
@@ -1994,7 +2150,7 @@ static void UpdateBuffers(void)
     {
         // Activate Lines VAO
         if (vaoSupported) glBindVertexArray(vaoLines);
-    
+
         // Lines - vertex positions buffer
         glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*2*MAX_LINES_BATCH, lines.vertices, GL_DYNAMIC_DRAW);
@@ -2011,7 +2167,7 @@ static void UpdateBuffers(void)
     {
         // Activate Triangles VAO
         if (vaoSupported) glBindVertexArray(vaoTriangles);
-    
+
         // Triangles - vertex positions buffer
         glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*3*MAX_TRIANGLES_BATCH, triangles.vertices, GL_DYNAMIC_DRAW);

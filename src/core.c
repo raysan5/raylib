@@ -153,8 +153,7 @@ static int gamepadStream = -1;                  // Gamepad device file descripto
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 static EGLDisplay display;          // Native display device (physical screen connection)
 static EGLSurface surface;          // Surface to draw on, framebuffers (connected to context)
-static EGLContext context;          // Graphic context, mode in which drawing can be done 
-
+static EGLContext context;          // Graphic context, mode in which drawing can be done
 static uint64_t baseTime;                   // Base time measure for hi-res timer
 static bool windowShouldClose = false;      // Flag to set window for closing
 #endif
@@ -206,6 +205,12 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 
 static char configFlags = 0;
 static bool showLogo = false;
+
+static bool customCamera = true;
+//static int cameraMode = CUSTOM;     // FREE, FIRST_PERSON, THIRD_PERSON
+
+static bool enabledPostpro = false;
+static unsigned int fboShader = 0;
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
@@ -264,7 +269,7 @@ static void CommandCallback(struct android_app *app, int32_t cmd);           // 
 void InitWindow(int width, int height, const char *title)
 {
     TraceLog(INFO, "Initializing raylib (v1.2.2)");
-    
+
     // Store window title (could be useful...)
     windowTitle = title;
 
@@ -303,7 +308,7 @@ void InitWindow(int width, int height, const char *title)
 void InitWindow(int width, int height, struct android_app *state)
 {
     TraceLog(INFO, "Initializing raylib (v1.2.2)");
-    
+
     app_dummy();
 
     screenWidth = width;
@@ -399,7 +404,7 @@ void CloseWindow(void)
 
 // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
-{   
+{
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // While window minimized, stop loop execution
     while (windowMinimized) glfwPollEvents();
@@ -434,7 +439,7 @@ void SetCustomCursor(const char *cursorImage)
     cursor = LoadTexture(cursorImage);
 
 #if defined(PLATFORM_DESKTOP)
-	// NOTE: emscripten not implemented
+    // NOTE: emscripten not implemented
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
     customCursor = true;
@@ -473,6 +478,8 @@ void BeginDrawing(void)
     currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
+    
+    if (enabledPostpro) rlEnableFBO();
 
     rlClearScreenBuffers();
 
@@ -480,14 +487,17 @@ void BeginDrawing(void)
 
     rlMultMatrixf(GetMatrixVector(downscaleView));       // If downscale required, apply it here
 
-//  rlTranslatef(0.375, 0.375, 0);      // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
+    //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing(void)
 {
-    rlglDraw();                     //  Draw Buffers (Only OpenGL 3+ and ES2)
+    rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+    
+    // TODO: Set postprocessing shader to be passed: SetPostproShader()?
+    if (enabledPostpro) rlglDrawPostpro(fboShader); // Draw postprocessing effect (shader)               
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
@@ -515,7 +525,7 @@ void EndDrawing(void)
 // Initializes 3D mode for drawing (Camera setup)
 void Begin3dMode(Camera camera)
 {
-    rlglDraw();                         //  Draw Buffers (Only OpenGL 3+ and ES2)
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
 
@@ -533,14 +543,21 @@ void Begin3dMode(Camera camera)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     // Setup Camera view
-    Matrix matLookAt = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(GetMatrixVector(matLookAt));      // Multiply MODELVIEW matrix by view matrix (camera)
+    if (customCamera)
+    {
+        Matrix matLookAt = MatrixLookAt(camera.position, camera.target, camera.up);
+        rlMultMatrixf(GetMatrixVector(matLookAt));      // Multiply MODELVIEW matrix by view matrix (camera)
+    }
+    else
+    {
+        // TODO: Add support for multiple automatic camera modes
+    }
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void End3dMode(void)
 {
-    rlglDraw();                         //  Draw Buffers (Only OpenGL 3+ and ES2)
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
@@ -738,7 +755,7 @@ void SetMousePosition(Vector2 position)
 {
     mousePosition = position;
 #if defined(PLATFORM_DESKTOP)
-	// NOTE: emscripten not implemented
+    // NOTE: emscripten not implemented
     glfwSetCursorPos(window, position.x, position.y);
 #endif
 }
@@ -900,7 +917,7 @@ Vector2 GetTouchPosition(void)
 
     //eventDrag
     int32_t iIndex = FindIndex( eventDrag, vec_pointers_[0] );
-    
+
     if (iIndex == -1) return false;
 
     float x = AMotionEvent_getX(eventDrag, iIndex);
@@ -951,7 +968,7 @@ static void InitDisplay(int width, int height)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
 #endif
-    
+
     glfwDefaultWindowHints();                     // Set default windows hints
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
@@ -961,7 +978,7 @@ static void InitDisplay(int width, int height)
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers
 
-    // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version 
+    // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 3.3 context fordward compatible.
 
@@ -972,7 +989,7 @@ static void InitDisplay(int width, int height)
             glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
             TraceLog(INFO, "Enabled MSAA x4");
         }
-        
+
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.2 and above!
@@ -1188,6 +1205,18 @@ void InitGraphics(void)
 #endif
 }
 
+void InitPostShader(void)
+{
+    rlglInitPostpro();
+    
+    enabledPostpro = true;
+}
+
+void SetPostShader(unsigned int shader)
+{
+    fboShader = shader;
+}
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
@@ -1233,7 +1262,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 static void CharCallback(GLFWwindow *window, unsigned int key)
 {
     lastKeyPressed = key;
-    
+
     //TraceLog(INFO, "Char Callback Key pressed: %i\n", key);
 }
 
@@ -1267,14 +1296,14 @@ static void WindowIconifyCallback(GLFWwindow* window, int iconified)
     {
         // The window was iconified
         PauseMusicStream();
-        
+
         windowMinimized = true;
     }
     else
     {
         // The window was restored
         ResumeMusicStream();
-        
+
         windowMinimized = false;
     }
 }
@@ -1353,7 +1382,7 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
         //size_t pointerCount =  AMotionEvent_getPointerCount(event);
         //float AMotionEvent_getPressure(const AInputEvent *motion_event, size_t pointer_index); // 0 to 1
         //float AMotionEvent_getSize(const AInputEvent *motion_event, size_t pointer_index); // Pressed area
-        
+
         // Detect DOUBLE TAP event
         bool tapDetected = touchTap;
 
@@ -1362,19 +1391,19 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
             case AMOTION_EVENT_ACTION_DOWN:
             {
                 int64_t eventTime = AMotionEvent_getEventTime(event);
-                
+
                 if (eventTime - lastTapTime <= DOUBLE_TAP_TIMEOUT)
                 {
                     float x = AMotionEvent_getX(event, 0) - lastTapX;
                     float y = AMotionEvent_getY(event, 0) - lastTapY;
-                    
+
                     float densityFactor = 1.0f;
-                    
+
                     if ((x*x + y*y) < (DOUBLE_TAP_SLOP*DOUBLE_TAP_SLOP*densityFactor))
                     {
                         // Doubletap detected
                         doubleTap = true;
-                        
+
                     }
                 }
             } break;
@@ -1385,12 +1414,12 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
                     lastTapTime = AMotionEvent_getEventTime(event);
                     lastTapX = AMotionEvent_getX(event, 0);
                     lastTapY = AMotionEvent_getY(event, 0);
-                    
+
                 }
             } break;
         }
-        
-        
+
+
         // Detect DRAG event
         //int32_t action = AMotionEvent_getAction(event);
 
@@ -1407,7 +1436,7 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
                 stdVector[indexPosition] = AMotionEvent_getPointerId(event, 0);
                 indexPosition++;
                 TraceLog(INFO, "ACTION_DOWN");
-                
+
                 //ret = GESTURE_STATE_START;
             } break;
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
@@ -1415,7 +1444,7 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
                 stdVector[indexPosition] = AMotionEvent_getPointerId(event, index);
                 indexPosition++;
                 TraceLog(INFO, "ACTION_POINTER_DOWN");
-                
+
             } break;
             case AMOTION_EVENT_ACTION_UP:
             {
@@ -1423,12 +1452,12 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
                 indexPosition--;
                 //ret = GESTURE_STATE_END;
                 TraceLog(INFO, "ACTION_UP");
-                
+
             } break;
             case AMOTION_EVENT_ACTION_POINTER_UP:
             {
                 int32_t releasedPointerId = AMotionEvent_getPointerId(event, index);
-                
+
                 int i = 0;
                 for (i = 0; i < MAX_TOUCH_POINTS; i++)
                 {
@@ -1438,27 +1467,27 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
                         {
                             stdVector[k] = stdVector[k + 1];
                         }
-                        
+
                         //indexPosition--;
                         indexPosition = 0;
                         break;
                     }
                 }
-                
+
                 if (i <= 1)
                 {
                     // Reset pinch or drag
                     //if (count == 2) //ret = GESTURE_STATE_START;
                 }
                 TraceLog(INFO, "ACTION_POINTER_UP");
-                
+
             } break;
             case AMOTION_EVENT_ACTION_MOVE:
             {
                 if (count == 1)
                 {
                     //TraceLog(INFO, "DRAG gesture detected");
-                
+
                     drag = true; //ret = GESTURE_STATE_MOVE;
                 }
                 else break;
@@ -1470,7 +1499,7 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event)
         }
 
         //--------------------------------------------------------------------
-        
+
         return 1;
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
@@ -1672,13 +1701,13 @@ static void PollInputEvents(void)
     // Keyboard polling
     // Automatically managed by GLFW3 through callback
     lastKeyPressed = -1;
-    
+
     // Register previous keys states
     for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
-    
+
     // Register previous mouse states
     for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
-    
+
     glfwPollEvents();       // Register keyboard/mouse events... and window events!
 #elif defined(PLATFORM_ANDROID)
 
@@ -1702,8 +1731,8 @@ static void PollInputEvents(void)
         {
             // NOTE: Never close window, native activity is controlled by the system!
             //TraceLog(INFO, "Closing Window...");
-            //windowShouldClose = true; 
-            
+            //windowShouldClose = true;
+
             //ANativeActivity_finish(app->activity);
         }
     }

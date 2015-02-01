@@ -92,7 +92,7 @@
 #define FLAG_MSAA_4X_HINT      16
 #define FLAG_VSYNC_HINT        32
 
-// Keyboard Function Keys 
+// Keyboard Function Keys
 #define KEY_SPACE            32
 #define KEY_ESCAPE          256
 #define KEY_ENTER           257
@@ -268,8 +268,14 @@ typedef struct Model {
     unsigned int vaoId;
     unsigned int vboId[4];
     unsigned int textureId;
+    unsigned int shaderId;
     //Matrix transform;
 } Model;
+
+// Shader type
+typedef struct Shader {
+    unsigned int id;
+} Shader;
 
 // Sound source type
 typedef struct Sound {
@@ -333,6 +339,9 @@ Color Fade(Color color, float alpha);                       // Color fade-in or 
 
 void SetupFlags(char flags);                                // Enable some window configurations
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
+
+void InitPostShader(void);
+void SetPostShader(unsigned int shader);
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -449,7 +458,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color);         // Draw sphere wires
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone wires
-void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Color colors[4]);	   // Draw a quad
+void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Color colors[4]);    // Draw a quad
 void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color);                    // Draw a plane
 void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX, int slicesZ, Color color); // Draw a plane with divisions
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
@@ -466,6 +475,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight);                          
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
+void SetModelShader(Model *model, unsigned int shader);
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color tint);      // Draw a model with extended parameters
@@ -473,6 +483,8 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color);   
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
+
+unsigned int LoadCustomShader(char *vsFileName, char *fsFileName);                                 // Load a custom shader (vertex shader + fragment shader)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

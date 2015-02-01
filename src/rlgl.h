@@ -145,22 +145,27 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 void rlEnableTexture(unsigned int id);          // Enable texture usage
 void rlDisableTexture(void);                    // Disable texture usage
 void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
+void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
 void rlDeleteVertexArrays(unsigned int id);     // Unload vertex data (VAO) from GPU memory
 void rlDeleteBuffers(unsigned int id);          // Unload vertex data (VBO) from GPU memory
 void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
 void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
 int rlGetVersion(void);                         // Returns current OpenGL version
+void rlEnableFBO(void);
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
 void rlglInit(void);                            // Initialize rlgl (shaders, VAO, VBO...)
+void rlglInitPostpro(void);                     // Initialize postprocessing system
 void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
+void rlglDrawPostpro(unsigned int shaderId);    // Draw with postpro shader
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
 unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool genMipmaps);       // Load in GPU OpenGL texture
 unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format);
+unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr); // Load a shader from text data
 
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires);
