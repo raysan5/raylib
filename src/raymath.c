@@ -131,6 +131,36 @@ void VectorScale(Vector3 *v, float scale)
     v->z *= scale;
 }
 
+// Rotate vector by axis and angle around the pivot point
+void VectorRotate(Vector3 *v, Vector3 pivot, Vector3 axis, float angle)
+{
+    VectorNormalize(&axis);
+    float tx = v->x - pivot.x;
+    float ty = v->y - pivot.y;
+    float tz = v->z - pivot.z;
+
+    float a = (float)(angle * (PI / 180.0));
+    float sina = sin(a);
+    float cosa = cos(a);
+    float cosb = 1.0f - cosa;
+
+    float xrot = tx * (axis.x * axis.x * cosb + cosa)
+               + ty * (axis.x * axis.y * cosb - axis.z * sina)
+               + tz * (axis.x * axis.z * cosb + axis.y * sina);
+
+    float yrot = tx * (axis.y * axis.x * cosb + axis.z * sina)
+               + ty * (axis.y * axis.y * cosb + cosa)
+               + tz * (axis.y * axis.z * cosb - axis.x * sina);
+
+    float zrot = tx * (axis.z * axis.x * cosb - axis.y * sina)
+               + ty * (axis.z * axis.y * cosb + axis.x * sina)
+               + tz * (axis.z * axis.z * cosb + cosa);
+
+    v->x = xrot + pivot.x;
+    v->y = yrot + pivot.y;
+    v->z = zrot + pivot.z;
+}
+
 // Negate provided vector (invert direction)
 void VectorNegate(Vector3 *v)
 {
