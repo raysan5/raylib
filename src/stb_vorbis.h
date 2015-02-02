@@ -58,6 +58,11 @@
 #include <stdio.h>
 #endif
 
+// NOTE: Added to work with raylib on Android
+#if defined(PLATFORM_ANDROID)
+    #include "utils.h"  // Android fopen function map
+#endif
+
 #ifdef __linux
     #include <alloca.h>
 #endif
