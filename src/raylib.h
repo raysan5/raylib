@@ -178,8 +178,10 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
+#ifndef __cplusplus
 // Boolean type
 typedef enum { false, true } bool;
+#endif
 
 // byte type
 typedef unsigned char byte;
