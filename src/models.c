@@ -836,12 +836,43 @@ Model LoadCubicmap(Image cubesmap)
 
     float w = mapCubeSide;
     float h = mapCubeSide;
-    float h2 = mapCubeSide;
+    float h2 = mapCubeSide * 1.5;
 
     Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles * 3 * sizeof(Vector3));
     Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles * 3 * sizeof(Vector2));
     Vector3 *mapNormals = (Vector3 *)malloc(maxTriangles * 3 * sizeof(Vector3));
+    
+    // Define the 6 normals of the cube, we will combine them accordingly later...
+    Vector3 n1 = { 1.0f, 0.0f, 0.0f };
+    Vector3 n2 = { -1.0f, 0.0f, 0.0f };
+    Vector3 n3 = { 0.0f, 1.0f, 0.0f };
+    Vector3 n4 = { 0.0f, -1.0f, 0.0f };
+    Vector3 n5 = { 0.0f, 0.0f, 1.0f };
+    Vector3 n6 = { 0.0f, 0.0f, -1.0f };
 
+    // Define the 4 texture coordinates of the cube, we will combine them accordingly later...
+    // TODO: Use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
+    /*
+    Vector2 vt2 = { 0.0f, 0.0f };
+    Vector2 vt1 = { 0.0f, 1.0f };
+    Vector2 vt4 = { 1.0f, 0.0f };
+    Vector2 vt3 = { 1.0f, 1.0f };
+    */
+    
+    typedef struct RectangleF {
+        float x;
+        float y;
+        float width;
+        float height;
+    } RectangleF;
+    
+    RectangleF rightTexUV = { 0, 0, 0.5, 0.5 };
+    RectangleF leftTexUV = { 0.5, 0, 0.25, 0.25 };
+    RectangleF frontTexUV = { 0.75, 0, 0.25, 0.25 };
+    RectangleF backTexUV = { 0.5, 0.25, 0.25, 0.25 };
+    RectangleF topTexUV = { 0, 0.5, 0.5, 0.5 };
+    RectangleF bottomTexUV = { 0.5, 0.5, 0.5, 0.5 };
+    
     for (int z = 0; z < mapHeight; z += mapCubeSide)
     {
         for (int x = 0; x < mapWidth; x += mapCubeSide)
@@ -855,21 +886,6 @@ Model LoadCubicmap(Image cubesmap)
             Vector3 v6 = { x - w/2, 0, z - h/2 };
             Vector3 v7 = { x - w/2, 0, z + h/2 };
             Vector3 v8 = { x + w/2, 0, z + h/2 };
-
-            // Define the 6 normals of the cube, we will combine them accordingly later...
-            Vector3 n1 = { 1.0f, 0.0f, 0.0f };
-            Vector3 n2 = { -1.0f, 0.0f, 0.0f };
-            Vector3 n3 = { 0.0f, 1.0f, 0.0f };
-            Vector3 n4 = { 0.0f, -1.0f, 0.0f };
-            Vector3 n5 = { 0.0f, 0.0f, 1.0f };
-            Vector3 n6 = { 0.0f, 0.0f, -1.0f };
-
-            // Define the 4 texture coordinates of the cube, we will combine them accordingly later...
-            // TODO: Use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
-            Vector2 vt2 = { 0.0f, 0.0f };
-            Vector2 vt1 = { 0.0f, 1.0f };
-            Vector2 vt4 = { 1.0f, 0.0f };
-            Vector2 vt3 = { 1.0f, 1.0f };
 
             // We check pixel color to be WHITE, we will full cubes
             if ((cubesmap.pixels[z*cubesmap.width + x].r == 255) &&
@@ -896,12 +912,12 @@ Model LoadCubicmap(Image cubesmap)
                 mapNormals[nCounter + 5] = n3;
                 nCounter += 6;
 
-                mapTexcoords[tcCounter] = vt2;
-                mapTexcoords[tcCounter + 1] = vt1;
-                mapTexcoords[tcCounter + 2] = vt3;
-                mapTexcoords[tcCounter + 3] = vt2;
-                mapTexcoords[tcCounter + 4] = vt3;
-                mapTexcoords[tcCounter + 5] = vt4;
+                mapTexcoords[tcCounter] = (Vector2){ topTexUV.x, topTexUV.y };
+                mapTexcoords[tcCounter + 1] = (Vector2){ topTexUV.x, topTexUV.y + topTexUV.height };
+                mapTexcoords[tcCounter + 2] = (Vector2){ topTexUV.x + topTexUV.width, topTexUV.y + topTexUV.height };
+                mapTexcoords[tcCounter + 3] = (Vector2){ topTexUV.x, topTexUV.y };
+                mapTexcoords[tcCounter + 4] = (Vector2){ topTexUV.x + topTexUV.width, topTexUV.y + topTexUV.height };
+                mapTexcoords[tcCounter + 5] = (Vector2){ topTexUV.x + topTexUV.width, topTexUV.y };
                 tcCounter += 6;
 
                 // Define bottom triangles (2 tris, 6 vertex --> v6-v8-v7, v6-v5-v8)
@@ -921,12 +937,12 @@ Model LoadCubicmap(Image cubesmap)
                 mapNormals[nCounter + 5] = n4;
                 nCounter += 6;
 
-                mapTexcoords[tcCounter] = vt4;
-                mapTexcoords[tcCounter + 1] = vt1;
-                mapTexcoords[tcCounter + 2] = vt3;
-                mapTexcoords[tcCounter + 3] = vt4;
-                mapTexcoords[tcCounter + 4] = vt2;
-                mapTexcoords[tcCounter + 5] = vt1;
+                mapTexcoords[tcCounter] = (Vector2){ bottomTexUV.x + bottomTexUV.width, bottomTexUV.y };
+                mapTexcoords[tcCounter + 1] = (Vector2){ bottomTexUV.x, bottomTexUV.y + bottomTexUV.height };
+                mapTexcoords[tcCounter + 2] = (Vector2){ bottomTexUV.x + bottomTexUV.width, bottomTexUV.y + bottomTexUV.height };
+                mapTexcoords[tcCounter + 3] = (Vector2){ bottomTexUV.x + bottomTexUV.width, bottomTexUV.y };
+                mapTexcoords[tcCounter + 4] = (Vector2){ bottomTexUV.x, bottomTexUV.y };
+                mapTexcoords[tcCounter + 5] = (Vector2){ bottomTexUV.x, bottomTexUV.y + bottomTexUV.height };
                 tcCounter += 6;
 
                 if (((z < cubesmap.height - 1) &&
@@ -952,12 +968,12 @@ Model LoadCubicmap(Image cubesmap)
                     mapNormals[nCounter + 5] = n6;
                     nCounter += 6;
 
-                    mapTexcoords[tcCounter] = vt2;
-                    mapTexcoords[tcCounter + 1] = vt1;
-                    mapTexcoords[tcCounter + 2] = vt4;
-                    mapTexcoords[tcCounter + 3] = vt4;
-                    mapTexcoords[tcCounter + 4] = vt1;
-                    mapTexcoords[tcCounter + 5] = vt3;
+                    mapTexcoords[tcCounter] = (Vector2){ frontTexUV.x, frontTexUV.y };
+                    mapTexcoords[tcCounter + 1] = (Vector2){ frontTexUV.x, frontTexUV.y + frontTexUV.height };
+                    mapTexcoords[tcCounter + 2] = (Vector2){ frontTexUV.x + frontTexUV.width, frontTexUV.y };
+                    mapTexcoords[tcCounter + 3] = (Vector2){ frontTexUV.x + frontTexUV.width, frontTexUV.y };
+                    mapTexcoords[tcCounter + 4] = (Vector2){ frontTexUV.x, frontTexUV.y + frontTexUV.height };
+                    mapTexcoords[tcCounter + 5] = (Vector2){ frontTexUV.x + frontTexUV.width, frontTexUV.y + frontTexUV.height };
                     tcCounter += 6;
                 }
 
@@ -984,12 +1000,12 @@ Model LoadCubicmap(Image cubesmap)
                     mapNormals[nCounter + 5] = n5;
                     nCounter += 6;
 
-                    mapTexcoords[tcCounter] = vt4;
-                    mapTexcoords[tcCounter + 1] = vt1;
-                    mapTexcoords[tcCounter + 2] = vt3;
-                    mapTexcoords[tcCounter + 3] = vt4;
-                    mapTexcoords[tcCounter + 4] = vt2;
-                    mapTexcoords[tcCounter + 5] = vt1;
+                    mapTexcoords[tcCounter] = (Vector2){ backTexUV.x + backTexUV.width, backTexUV.y };
+                    mapTexcoords[tcCounter + 1] = (Vector2){ backTexUV.x, backTexUV.y + backTexUV.height };
+                    mapTexcoords[tcCounter + 2] = (Vector2){ backTexUV.x + backTexUV.width, backTexUV.y + backTexUV.height };
+                    mapTexcoords[tcCounter + 3] = (Vector2){ backTexUV.x + backTexUV.width, backTexUV.y };
+                    mapTexcoords[tcCounter + 4] = (Vector2){ backTexUV.x, backTexUV.y };
+                    mapTexcoords[tcCounter + 5] = (Vector2){ backTexUV.x, backTexUV.y + backTexUV.height };
                     tcCounter += 6;
                 }
 
@@ -1016,12 +1032,12 @@ Model LoadCubicmap(Image cubesmap)
                     mapNormals[nCounter + 5] = n1;
                     nCounter += 6;
 
-                    mapTexcoords[tcCounter] = vt2;
-                    mapTexcoords[tcCounter + 1] = vt1;
-                    mapTexcoords[tcCounter + 2] = vt4;
-                    mapTexcoords[tcCounter + 3] = vt4;
-                    mapTexcoords[tcCounter + 4] = vt1;
-                    mapTexcoords[tcCounter + 5] = vt3;
+                    mapTexcoords[tcCounter] = (Vector2){ rightTexUV.x, rightTexUV.y };
+                    mapTexcoords[tcCounter + 1] = (Vector2){ rightTexUV.x, rightTexUV.y + rightTexUV.height };
+                    mapTexcoords[tcCounter + 2] = (Vector2){ rightTexUV.x + rightTexUV.width, rightTexUV.y };
+                    mapTexcoords[tcCounter + 3] = (Vector2){ rightTexUV.x + rightTexUV.width, rightTexUV.y };
+                    mapTexcoords[tcCounter + 4] = (Vector2){ rightTexUV.x, rightTexUV.y + rightTexUV.height };
+                    mapTexcoords[tcCounter + 5] = (Vector2){ rightTexUV.x + rightTexUV.width, rightTexUV.y + rightTexUV.height };
                     tcCounter += 6;
                 }
 
@@ -1048,12 +1064,12 @@ Model LoadCubicmap(Image cubesmap)
                     mapNormals[nCounter + 5] = n2;
                     nCounter += 6;
 
-                    mapTexcoords[tcCounter] = vt2;
-                    mapTexcoords[tcCounter + 1] = vt3;
-                    mapTexcoords[tcCounter + 2] = vt4;
-                    mapTexcoords[tcCounter + 3] = vt2;
-                    mapTexcoords[tcCounter + 4] = vt1;
-                    mapTexcoords[tcCounter + 5] = vt3;
+                    mapTexcoords[tcCounter] = (Vector2){ leftTexUV.x, leftTexUV.y };
+                    mapTexcoords[tcCounter + 1] = (Vector2){ leftTexUV.x + leftTexUV.width, leftTexUV.y + leftTexUV.height };
+                    mapTexcoords[tcCounter + 2] = (Vector2){ leftTexUV.x + leftTexUV.width, leftTexUV.y };
+                    mapTexcoords[tcCounter + 3] = (Vector2){ leftTexUV.x, leftTexUV.y };
+                    mapTexcoords[tcCounter + 4] = (Vector2){ leftTexUV.x, leftTexUV.y + leftTexUV.height };
+                    mapTexcoords[tcCounter + 5] = (Vector2){ leftTexUV.x + leftTexUV.width, leftTexUV.y + leftTexUV.height };
                     tcCounter += 6;
                 }
             }
@@ -1062,11 +1078,55 @@ Model LoadCubicmap(Image cubesmap)
                       (cubesmap.pixels[z*cubesmap.width + x].g == 0) &&
                       (cubesmap.pixels[z*cubesmap.width + x].b == 0))
             {
-                // Define top triangles (2 tris, 6 vertex --> v1-v3-v2, v1-v4-v3)
-                // TODO: ...
+                // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
+                mapVertices[vCounter] = v1;
+                mapVertices[vCounter + 1] = v3;
+                mapVertices[vCounter + 2] = v2;
+                mapVertices[vCounter + 3] = v1;
+                mapVertices[vCounter + 4] = v4;
+                mapVertices[vCounter + 5] = v3;
+                vCounter += 6;
 
-                // Define bottom triangles (2 tris, 6 vertex --> v6-v7-v8, v6-v8-v5)
-                // TODO: ...
+                mapNormals[nCounter] = n4;
+                mapNormals[nCounter + 1] = n4;
+                mapNormals[nCounter + 2] = n4;
+                mapNormals[nCounter + 3] = n4;
+                mapNormals[nCounter + 4] = n4;
+                mapNormals[nCounter + 5] = n4;
+                nCounter += 6;
+
+                mapTexcoords[tcCounter] = (Vector2){ topTexUV.x, topTexUV.y };
+                mapTexcoords[tcCounter + 1] = (Vector2){ topTexUV.x + topTexUV.width, topTexUV.y + topTexUV.height };
+                mapTexcoords[tcCounter + 2] = (Vector2){ topTexUV.x, topTexUV.y + topTexUV.height };
+                mapTexcoords[tcCounter + 3] = (Vector2){ topTexUV.x, topTexUV.y };
+                mapTexcoords[tcCounter + 4] = (Vector2){ topTexUV.x + topTexUV.width, topTexUV.y };
+                mapTexcoords[tcCounter + 5] = (Vector2){ topTexUV.x + topTexUV.width, topTexUV.y + topTexUV.height };
+                tcCounter += 6;
+                
+                // Define bottom triangles (2 tris, 6 vertex --> v6-v8-v7, v6-v5-v8)
+                mapVertices[vCounter] = v6;
+                mapVertices[vCounter + 1] = v7;
+                mapVertices[vCounter + 2] = v8;
+                mapVertices[vCounter + 3] = v6;
+                mapVertices[vCounter + 4] = v8;
+                mapVertices[vCounter + 5] = v5;
+                vCounter += 6;
+
+                mapNormals[nCounter] = n3;
+                mapNormals[nCounter + 1] = n3;
+                mapNormals[nCounter + 2] = n3;
+                mapNormals[nCounter + 3] = n3;
+                mapNormals[nCounter + 4] = n3;
+                mapNormals[nCounter + 5] = n3;
+                nCounter += 6;
+
+                mapTexcoords[tcCounter] = (Vector2){ bottomTexUV.x + bottomTexUV.width, bottomTexUV.y };
+                mapTexcoords[tcCounter + 1] = (Vector2){ bottomTexUV.x + bottomTexUV.width, bottomTexUV.y + bottomTexUV.height };
+                mapTexcoords[tcCounter + 2] = (Vector2){ bottomTexUV.x, bottomTexUV.y + bottomTexUV.height };
+                mapTexcoords[tcCounter + 3] = (Vector2){ bottomTexUV.x + bottomTexUV.width, bottomTexUV.y };
+                mapTexcoords[tcCounter + 4] = (Vector2){ bottomTexUV.x, bottomTexUV.y + bottomTexUV.height };
+                mapTexcoords[tcCounter + 5] = (Vector2){ bottomTexUV.x, bottomTexUV.y };
+                tcCounter += 6;
             }
         }
     }
@@ -1543,8 +1603,17 @@ static VertexData LoadOBJ(const char *fileName)
 
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
 {
+    bool collision = false;
 
-    return false;
+    float dx = centerA.x - centerB.x;      // X distance between centers
+    float dy = centerA.y - centerB.y;      // Y distance between centers
+    float dz = centerA.z - centerB.z;      // Y distance between centers
+
+    float distance = sqrt(dx*dx + dy*dy + dz*dz);  // Distance between centers
+
+    if (distance <= (radiusA + radiusB)) collision = true;
+    
+    return collision;
 }
 
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
@@ -1562,13 +1631,51 @@ bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, V
 
     bounds = new BoundingBox(minVertex, maxVertex);
     */
-    return false;
+    
+    bool collision = true;
+    
+    if ((maxBBox1.x >= minBBox2.x) && (minBBox1.x <= maxBBox2.x))
+    {
+        if ((maxBBox1.y < minBBox2.y) || (minBBox1.y > maxBBox2.y)) collision = false;
+        if ((maxBBox1.z < minBBox2.z) || (minBBox1.z > maxBBox2.z)) collision = false;
+    }
+    else collision = false;
+
+    return collision;
 }
 
-bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, Vector3 radiusSphere)
+bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere)
 {
+    bool collision = false;
+    
+    if ((centerSphere.x - minBBox.x > radiusSphere) && (centerSphere.y - minBBox.y > radiusSphere) && (centerSphere.z - minBBox.z > radiusSphere) &&
+            (maxBBox.x - centerSphere.x > radiusSphere) && (maxBBox.y - centerSphere.y > radiusSphere) && (maxBBox.z - centerSphere.z > radiusSphere))
+    {
+        collision = true;
+    }
+    else
+    {
+        float dmin = 0;
 
-    return false;
+        if (centerSphere.x - minBBox.x <= radiusSphere)
+            dmin += (centerSphere.x - minBBox.x) * (centerSphere.x - minBBox.x);
+        else if (maxBBox.x - centerSphere.x <= radiusSphere)
+            dmin += (centerSphere.x - maxBBox.x) * (centerSphere.x - maxBBox.x);
+
+        if (centerSphere.y - minBBox.y <= radiusSphere)
+            dmin += (centerSphere.y - minBBox.y) * (centerSphere.y - minBBox.y);
+        else if (maxBBox.y - centerSphere.y <= radiusSphere)
+            dmin += (centerSphere.y - maxBBox.y) * (centerSphere.y - maxBBox.y);
+
+        if (centerSphere.z - minBBox.z <= radiusSphere)
+            dmin += (centerSphere.z - minBBox.z) * (centerSphere.z - minBBox.z);
+        else if (maxBBox.z - centerSphere.z <= radiusSphere)
+            dmin += (centerSphere.z - maxBBox.z) * (centerSphere.z - maxBBox.z);
+
+        if (dmin <= radiusSphere * radiusSphere) collision = true;
+    }
+
+    return collision;
 }
 
 //BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
