@@ -131,6 +131,39 @@ void VectorScale(Vector3 *v, float scale)
     v->z *= scale;
 }
 
+// Rotate vector by axis and angle from the global center
+void VectorRotate(Vector3 *v, Vector3 axis, float angle)
+{
+    VectorNormalize(&axis);
+
+    float a = angle * (PI / 180.0f);
+    float sina = sin(a);
+    float cosa = cos(a);
+    float cosb = 1.0f - cosa;
+
+    float xrot = v->x * (axis.x * axis.x * cosb + cosa)
+               + v->y * (axis.x * axis.y * cosb - axis.z * sina)
+               + v->z * (axis.x * axis.z * cosb + axis.y * sina);
+
+    float yrot = v->x * (axis.y * axis.x * cosb + axis.z * sina)
+               + v->y * (axis.y * axis.y * cosb + cosa)
+               + v->z * (axis.y * axis.z * cosb - axis.x * sina);
+
+    float zrot = v->x * (axis.z * axis.x * cosb - axis.y * sina)
+               + v->y * (axis.z * axis.y * cosb + axis.x * sina)
+               + v->z * (axis.z * axis.z * cosb + cosa);
+
+    *v = (Vector3){ xrot, yrot, zrot };
+}
+
+// Rotate vector by axis and angle around the pivot point
+void VectorRotateAround(Vector3 *v, Vector3 pivot, Vector3 axis, float angle)
+{
+  *v = VectorSubtract(*v, pivot);
+  VectorRotate(v, axis, angle);
+  *v = VectorAdd(*v, pivot);
+}
+
 // Negate provided vector (invert direction)
 void VectorNegate(Vector3 *v)
 {
