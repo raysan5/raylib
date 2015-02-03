@@ -86,7 +86,8 @@ Vector3 VectorPerpendicular(Vector3 v);                 // Calculate one vector 
 float VectorDotProduct(Vector3 v1, Vector3 v2);         // Calculate two vectors dot product
 float VectorLength(const Vector3 v);                    // Calculate vector lenght
 void VectorScale(Vector3 *v, float scale);              // Scale provided vector
-void VectorRotate(Vector3 *v, Vector3 pivot, Vector3 axis, float angle); // Rotate vector by axis and angle around the pivot point
+void VectorRotate(Vector3 *v, Vector3 axis, float angle); // Rotate vector by axis and angle from the global center
+void VectorRotateAround(Vector3 *v, Vector3 pivot, Vector3 axis, float angle); // Rotate vector by axis and angle around the pivot point
 void VectorNegate(Vector3 *v);                          // Negate provided vector (invert direction)
 void VectorNormalize(Vector3 *v);                       // Normalize provided vector
 float VectorDistance(Vector3 v1, Vector3 v2);           // Calculate distance between two points

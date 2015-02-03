@@ -131,34 +131,37 @@ void VectorScale(Vector3 *v, float scale)
     v->z *= scale;
 }
 
-// Rotate vector by axis and angle around the pivot point
-void VectorRotate(Vector3 *v, Vector3 pivot, Vector3 axis, float angle)
+// Rotate vector by axis and angle from the global center
+void VectorRotate(Vector3 *v, Vector3 axis, float angle)
 {
     VectorNormalize(&axis);
-    float tx = v->x - pivot.x;
-    float ty = v->y - pivot.y;
-    float tz = v->z - pivot.z;
 
     float a = angle * (PI / 180.0f);
     float sina = sin(a);
     float cosa = cos(a);
     float cosb = 1.0f - cosa;
 
-    float xrot = tx * (axis.x * axis.x * cosb + cosa)
-               + ty * (axis.x * axis.y * cosb - axis.z * sina)
-               + tz * (axis.x * axis.z * cosb + axis.y * sina);
+    float xrot = v->x * (axis.x * axis.x * cosb + cosa)
+               + v->y * (axis.x * axis.y * cosb - axis.z * sina)
+               + v->z * (axis.x * axis.z * cosb + axis.y * sina);
 
-    float yrot = tx * (axis.y * axis.x * cosb + axis.z * sina)
-               + ty * (axis.y * axis.y * cosb + cosa)
-               + tz * (axis.y * axis.z * cosb - axis.x * sina);
+    float yrot = v->x * (axis.y * axis.x * cosb + axis.z * sina)
+               + v->y * (axis.y * axis.y * cosb + cosa)
+               + v->z * (axis.y * axis.z * cosb - axis.x * sina);
 
-    float zrot = tx * (axis.z * axis.x * cosb - axis.y * sina)
-               + ty * (axis.z * axis.y * cosb + axis.x * sina)
-               + tz * (axis.z * axis.z * cosb + cosa);
+    float zrot = v->x * (axis.z * axis.x * cosb - axis.y * sina)
+               + v->y * (axis.z * axis.y * cosb + axis.x * sina)
+               + v->z * (axis.z * axis.z * cosb + cosa);
 
-    v->x = xrot + pivot.x;
-    v->y = yrot + pivot.y;
-    v->z = zrot + pivot.z;
+    *v = (Vector3){ xrot, yrot, zrot };
+}
+
+// Rotate vector by axis and angle around the pivot point
+void VectorRotateAround(Vector3 *v, Vector3 pivot, Vector3 axis, float angle)
+{
+  *v = VectorSubtract(*v, pivot);
+  VectorRotate(v, axis, angle);
+  *v = VectorAdd(*v, pivot);
 }
 
 // Negate provided vector (invert direction)
