@@ -139,7 +139,7 @@ void VectorRotate(Vector3 *v, Vector3 pivot, Vector3 axis, float angle)
     float ty = v->y - pivot.y;
     float tz = v->z - pivot.z;
 
-    float a = (float)(angle * (PI / 180.0));
+    float a = angle * (PI / 180.0f);
     float sina = sin(a);
     float cosa = cos(a);
     float cosb = 1.0f - cosa;
