@@ -362,6 +362,9 @@ int GetMouseY(void);                                    // Returns mouse positio
 Vector2 GetMousePosition(void);                         // Returns mouse position XY
 void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
+void ShowMouse(void);                                   // Shows mouse cursor
+void HideMouse(void);                                   // Hides mouse cursor
+bool IsMouseHidden(void);                               // Returns true if mouse cursor is not visible
 #endif
 
 #if defined(PLATFORM_DESKTOP)

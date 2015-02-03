@@ -52,6 +52,11 @@
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     #include <GLFW/glfw3.h>     // GLFW3 library: Windows, OpenGL context and Input management
+    #ifdef __linux
+        #define GLFW_EXPOSE_NATIVE_X11 // Linux specific definitions for getting
+        #define GLFW_EXPOSE_NATIVE_GLX // native functions like glfwGetX11Window
+        #include <GLFW/glfw3native.h>  // which are required for hiding mouse
+    #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
 #endif
@@ -176,6 +181,7 @@ static bool cursorOnScreen = false;         // Tracks if cursor is inside client
 static Texture2D cursor;                    // Cursor texture
 
 static Vector2 mousePosition;
+static bool mouseHidden;
 
 static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
 static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
@@ -770,6 +776,42 @@ int GetMouseWheelMove(void)
     return previousMouseWheelY;
 }
 #endif
+
+void HideMouse()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XColor Col;
+        const char Nil[] = {0};
+
+        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
+        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
+
+        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
+        XFreeCursor(glfwGetX11Display(), Cur);
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    #endif
+#endif
+    mouseHidden = true;
+}
+
+void ShowMouse()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    #endif
+#endif
+    mouseHidden = false;
+}
+
+bool IsMouseHidden()
+{
+    return mouseHidden;
+}
 
 // TODO: Enable gamepad usage on Rapsberry Pi
 // NOTE: emscripten not implemented
