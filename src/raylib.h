@@ -252,6 +252,9 @@ typedef struct Camera {
     Vector3 up;
 } Camera;
 
+// Camera modes
+typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
+
 // Vertex data definning a mesh
 typedef struct VertexData {
     int vertexCount;
@@ -337,7 +340,8 @@ int GetHexValue(Color color);                               // Returns hexadecim
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-void SetupFlags(char flags);                                // Enable some window configurations
+void SetCameraMode(int mode);                               // Multiple camera modes available
+void SetConfigFlags(char flags);                            // Enable some window configurations
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
 void InitPostShader(void);
@@ -489,6 +493,7 @@ unsigned int LoadCustomShader(char *vsFileName, char *fsFileName);              
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);
 bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere);
+//void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition);
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
