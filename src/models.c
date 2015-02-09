@@ -1335,6 +1335,242 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     rlDisableTexture();
 }
 
+
+bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
+{
+    bool collision = false;
+
+    float dx = centerA.x - centerB.x;      // X distance between centers
+    float dy = centerA.y - centerB.y;      // Y distance between centers
+    float dz = centerA.z - centerB.z;      // Y distance between centers
+
+    float distance = sqrt(dx*dx + dy*dy + dz*dz);  // Distance between centers
+
+    if (distance <= (radiusA + radiusB)) collision = true;
+    
+    return collision;
+}
+
+bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
+{
+    /*
+    // Get min and max vertex to construct bounds (AABB)
+    Vector3 minVertex = tempVertices[0];
+    Vector3 maxVertex = tempVertices[0];
+
+    for (int i = 1; i < tempVertices.Count; i++)
+    {
+        minVertex = Vector3.Min(minVertex, tempVertices[i]);
+        maxVertex = Vector3.Max(maxVertex, tempVertices[i]);
+    }
+
+    bounds = new BoundingBox(minVertex, maxVertex);
+    */
+    
+    bool collision = true;
+    
+    if ((maxBBox1.x >= minBBox2.x) && (minBBox1.x <= maxBBox2.x))
+    {
+        if ((maxBBox1.y < minBBox2.y) || (minBBox1.y > maxBBox2.y)) collision = false;
+        if ((maxBBox1.z < minBBox2.z) || (minBBox1.z > maxBBox2.z)) collision = false;
+    }
+    else collision = false;
+
+    return collision;
+}
+
+bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere)
+{
+    bool collision = false;
+    
+    if ((centerSphere.x - minBBox.x > radiusSphere) && (centerSphere.y - minBBox.y > radiusSphere) && (centerSphere.z - minBBox.z > radiusSphere) &&
+            (maxBBox.x - centerSphere.x > radiusSphere) && (maxBBox.y - centerSphere.y > radiusSphere) && (maxBBox.z - centerSphere.z > radiusSphere))
+    {
+        collision = true;
+    }
+    else
+    {
+        float dmin = 0;
+
+        if (centerSphere.x - minBBox.x <= radiusSphere)
+            dmin += (centerSphere.x - minBBox.x) * (centerSphere.x - minBBox.x);
+        else if (maxBBox.x - centerSphere.x <= radiusSphere)
+            dmin += (centerSphere.x - maxBBox.x) * (centerSphere.x - maxBBox.x);
+
+        if (centerSphere.y - minBBox.y <= radiusSphere)
+            dmin += (centerSphere.y - minBBox.y) * (centerSphere.y - minBBox.y);
+        else if (maxBBox.y - centerSphere.y <= radiusSphere)
+            dmin += (centerSphere.y - maxBBox.y) * (centerSphere.y - maxBBox.y);
+
+        if (centerSphere.z - minBBox.z <= radiusSphere)
+            dmin += (centerSphere.z - minBBox.z) * (centerSphere.z - minBBox.z);
+        else if (maxBBox.z - centerSphere.z <= radiusSphere)
+            dmin += (centerSphere.z - maxBBox.z) * (centerSphere.z - maxBBox.z);
+
+        if (dmin <= radiusSphere * radiusSphere) collision = true;
+    }
+
+    return collision;
+}
+
+// TODO
+//BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
+
+// Detect and resolve cubicmap collisions
+// NOTE: player position (or camera) is modified inside this function
+void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition)
+{
+    // Detect the cell where the player is located
+    int locationCellX = 0;
+    int locationCellY = 0;
+    
+    locationCellX = floor(playerPosition->x + mapPosition.x + 0.5);
+    locationCellY = floor(playerPosition->z + mapPosition.z + 0.5);
+    
+    // Multiple Axis --------------------------------------------------------------------------------------------
+    
+    // Axis x-, y-
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
+        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
+            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        {
+            playerPosition->x = locationCellX - 0.2;
+            playerPosition->z = locationCellY - 0.2;
+        }
+    }
+    
+    // Axis x-, y+
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
+        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
+            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        {
+            playerPosition->x = locationCellX - 0.2;
+            playerPosition->z = locationCellY + 0.2;
+        }
+    }
+    
+    // Axis x+, y-
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
+        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
+            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        {
+            playerPosition->x = locationCellX + 0.2;
+            playerPosition->z = locationCellY - 0.2;
+        }
+    }
+    
+    // Axis x+, y+
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
+        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
+            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        {
+            playerPosition->x = locationCellX + 0.2f;
+            playerPosition->z = locationCellY + 0.2f;
+        }
+    }
+    
+    // Single Axis ---------------------------------------------------------------------------------------------------
+    
+    // Axis x-
+    if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
+    {
+        if ((playerPosition->x + 0.5f) - locationCellX < 0.3)
+        {
+            playerPosition->x = locationCellX - 0.2;
+        }
+    }
+    // Axis x+
+    if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
+    {
+        if ((playerPosition->x + 0.5f) - locationCellX > 0.7)
+        {
+            playerPosition->x = locationCellX + 0.2;
+        }
+    }
+    // Axis y-
+    if (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
+    {
+        if ((playerPosition->z + 0.5f) - locationCellY < 0.3)
+        {
+            playerPosition->z = locationCellY - 0.2;
+        }
+    }
+    // Axis y+
+    if (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
+    {
+        if ((playerPosition->z + 0.5f) - locationCellY > 0.7)
+        {
+            playerPosition->z = locationCellY + 0.2;
+        }
+    }
+    
+    // Diagonals -------------------------------------------------------------------------------------------------------
+    
+    // Axis x-, y-
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
+        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
+            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        {
+            if (((playerPosition->x + 0.5f) - locationCellX) > ((playerPosition->z + 0.5f) - locationCellY)) playerPosition->x = locationCellX - 0.2;
+            else playerPosition->z = locationCellY - 0.2;
+        }
+    }
+    
+    // Axis x-, y+
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
+        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
+            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        {
+            if (((playerPosition->x + 0.5f) - locationCellX) > (1 - ((playerPosition->z + 0.5f) - locationCellY))) playerPosition->x = locationCellX - 0.2;
+            else playerPosition->z = locationCellY + 0.2;
+        }
+    }
+    
+    // Axis x+, y-
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
+        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
+            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        {
+            if (((playerPosition->x + 0.5f) - locationCellX) < (1 - ((playerPosition->z + 0.5f) - locationCellY))) playerPosition->x = locationCellX + 0.2;
+            else playerPosition->z = locationCellY - 0.2;
+        }
+    }
+    
+    // Axis x+, y+
+    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
+        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+    {
+        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
+            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        {
+            if (((playerPosition->x + 0.5f) - locationCellX) < ((playerPosition->z + 0.5f) - locationCellY)) playerPosition->x = locationCellX + 0.2;
+            else playerPosition->z = locationCellY + 0.2;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------
+
 // Get current vertex y altitude (proportional to pixel colors in grayscale)
 static float GetHeightValue(Color pixel)
 {
@@ -1591,235 +1827,4 @@ static VertexData LoadOBJ(const char *fileName)
     TraceLog(INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return vData;
-}
-
-bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
-{
-    bool collision = false;
-
-    float dx = centerA.x - centerB.x;      // X distance between centers
-    float dy = centerA.y - centerB.y;      // Y distance between centers
-    float dz = centerA.z - centerB.z;      // Y distance between centers
-
-    float distance = sqrt(dx*dx + dy*dy + dz*dz);  // Distance between centers
-
-    if (distance <= (radiusA + radiusB)) collision = true;
-    
-    return collision;
-}
-
-bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
-{
-    /*
-    // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = tempVertices[0];
-    Vector3 maxVertex = tempVertices[0];
-
-    for (int i = 1; i < tempVertices.Count; i++)
-    {
-        minVertex = Vector3.Min(minVertex, tempVertices[i]);
-        maxVertex = Vector3.Max(maxVertex, tempVertices[i]);
-    }
-
-    bounds = new BoundingBox(minVertex, maxVertex);
-    */
-    
-    bool collision = true;
-    
-    if ((maxBBox1.x >= minBBox2.x) && (minBBox1.x <= maxBBox2.x))
-    {
-        if ((maxBBox1.y < minBBox2.y) || (minBBox1.y > maxBBox2.y)) collision = false;
-        if ((maxBBox1.z < minBBox2.z) || (minBBox1.z > maxBBox2.z)) collision = false;
-    }
-    else collision = false;
-
-    return collision;
-}
-
-bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere)
-{
-    bool collision = false;
-    
-    if ((centerSphere.x - minBBox.x > radiusSphere) && (centerSphere.y - minBBox.y > radiusSphere) && (centerSphere.z - minBBox.z > radiusSphere) &&
-            (maxBBox.x - centerSphere.x > radiusSphere) && (maxBBox.y - centerSphere.y > radiusSphere) && (maxBBox.z - centerSphere.z > radiusSphere))
-    {
-        collision = true;
-    }
-    else
-    {
-        float dmin = 0;
-
-        if (centerSphere.x - minBBox.x <= radiusSphere)
-            dmin += (centerSphere.x - minBBox.x) * (centerSphere.x - minBBox.x);
-        else if (maxBBox.x - centerSphere.x <= radiusSphere)
-            dmin += (centerSphere.x - maxBBox.x) * (centerSphere.x - maxBBox.x);
-
-        if (centerSphere.y - minBBox.y <= radiusSphere)
-            dmin += (centerSphere.y - minBBox.y) * (centerSphere.y - minBBox.y);
-        else if (maxBBox.y - centerSphere.y <= radiusSphere)
-            dmin += (centerSphere.y - maxBBox.y) * (centerSphere.y - maxBBox.y);
-
-        if (centerSphere.z - minBBox.z <= radiusSphere)
-            dmin += (centerSphere.z - minBBox.z) * (centerSphere.z - minBBox.z);
-        else if (maxBBox.z - centerSphere.z <= radiusSphere)
-            dmin += (centerSphere.z - maxBBox.z) * (centerSphere.z - maxBBox.z);
-
-        if (dmin <= radiusSphere * radiusSphere) collision = true;
-    }
-
-    return collision;
-}
-
-// TODO
-//BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
-
-// Detect and resolve cubicmap collisions
-// NOTE: player position (or camera) is modified inside this function
-void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition)
-{
-    // Detect the cell where the player is located
-    int locationCellX = 0;
-    int locationCellY = 0;
-    
-    locationCellX = floor(playerPosition->x + mapPosition.x + 0.5);
-    locationCellY = floor(playerPosition->z + mapPosition.z + 0.5);
-    
-    // Multiple Axis --------------------------------------------------------------------------------------------
-    
-    // Axis x-, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
-        {
-            playerPosition->x = locationCellX - 0.2;
-            playerPosition->z = locationCellY - 0.2;
-        }
-    }
-    
-    // Axis x-, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
-        {
-            playerPosition->x = locationCellX - 0.2;
-            playerPosition->z = locationCellY + 0.2;
-        }
-    }
-    
-    // Axis x+, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
-        {
-            playerPosition->x = locationCellX + 0.2;
-            playerPosition->z = locationCellY - 0.2;
-        }
-    }
-    
-    // Axis x+, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
-        {
-            playerPosition->x = locationCellX + 0.2f;
-            playerPosition->z = locationCellY + 0.2f;
-        }
-    }
-    
-    // Single Axis ---------------------------------------------------------------------------------------------------
-    
-    // Axis x-
-    if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
-    {
-        if ((playerPosition->x + 0.5f) - locationCellX < 0.3)
-        {
-            playerPosition->x = locationCellX - 0.2;
-        }
-    }
-    // Axis x+
-    if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
-    {
-        if ((playerPosition->x + 0.5f) - locationCellX > 0.7)
-        {
-            playerPosition->x = locationCellX + 0.2;
-        }
-    }
-    // Axis y-
-    if (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
-    {
-        if ((playerPosition->z + 0.5f) - locationCellY < 0.3)
-        {
-            playerPosition->z = locationCellY - 0.2;
-        }
-    }
-    // Axis y+
-    if (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
-    {
-        if ((playerPosition->z + 0.5f) - locationCellY > 0.7)
-        {
-            playerPosition->z = locationCellY + 0.2;
-        }
-    }
-    
-    // Diagonals -------------------------------------------------------------------------------------------------------
-    
-    // Axis x-, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
-        {
-            if (((playerPosition->x + 0.5f) - locationCellX) > ((playerPosition->z + 0.5f) - locationCellY)) playerPosition->x = locationCellX - 0.2;
-            else playerPosition->z = locationCellY - 0.2;
-        }
-    }
-    
-    // Axis x-, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
-        {
-            if (((playerPosition->x + 0.5f) - locationCellX) > (1 - ((playerPosition->z + 0.5f) - locationCellY))) playerPosition->x = locationCellX - 0.2;
-            else playerPosition->z = locationCellY + 0.2;
-        }
-    }
-    
-    // Axis x+, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
-        {
-            if (((playerPosition->x + 0.5f) - locationCellX) < (1 - ((playerPosition->z + 0.5f) - locationCellY))) playerPosition->x = locationCellX + 0.2;
-            else playerPosition->z = locationCellY - 0.2;
-        }
-    }
-    
-    // Axis x+, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
-    {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
-        {
-            if (((playerPosition->x + 0.5f) - locationCellX) < ((playerPosition->z + 0.5f) - locationCellY)) playerPosition->x = locationCellX + 0.2;
-            else playerPosition->z = locationCellY + 0.2;
-        }
-    }
 }

@@ -261,7 +261,6 @@ static Vector2 cameraMousePosition = { 0, 0 };
 static Vector2 cameraMouseVariation = { 0, 0 };
 static int cameraMovementCounter = 0;
 static bool cameraUseGravity = true;
-static Vector3 cameraPosition = { 2, 0, 2 };  // Player
 
 // Shaders variables
 static bool enabledPostpro = false;
@@ -316,7 +315,7 @@ static int32_t InputCallback(struct android_app *app, AInputEvent *event);   // 
 static void CommandCallback(struct android_app *app, int32_t cmd);           // Process Android activity lifecycle commands
 #endif
 
-static void ProcessCamera(Camera *camera);
+static void ProcessCamera(Camera *camera, Vector3 *playerPosition);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
@@ -535,10 +534,7 @@ void BeginDrawing(void)
     currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
-    
-    // Calculate camera
-    if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera);
-    
+
     if (enabledPostpro) rlEnableFBO();
 
     rlClearScreenBuffers();
@@ -707,7 +703,44 @@ void ShowLogo(void)
 
 void SetCameraMode(int mode)
 {
+    if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_FREE))
+    {
+        cameraMode = CAMERA_THIRD_PERSON;
+        cameraTargetDistance = 5;
+        cameraAngle.y = -40 * DEG2RAD;
+        ProcessCamera(&internalCamera, &internalCamera.position);
+    }
+    else if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_ORBITAL))
+    {
+        cameraMode = CAMERA_THIRD_PERSON;
+        cameraTargetDistance = 5;
+        cameraAngle.y = -40 * DEG2RAD;
+        ProcessCamera(&internalCamera, &internalCamera.position);
+    }
+    else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_FREE))
+    {
+        cameraMode = CAMERA_THIRD_PERSON;
+        cameraTargetDistance = 5;
+        internalCamera.position = (Vector3){ -1, 1, -1 };
+        internalCamera.target = (Vector3){ 3, 0, 3};
+        ProcessCamera(&internalCamera, &internalCamera.position);
+    }
+    else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_ORBITAL))
+    {
+        cameraMode = CAMERA_THIRD_PERSON;
+        cameraTargetDistance = 5;
+        cameraAngle.x = 45 * DEG2RAD;
+        cameraAngle.y = -20 * DEG2RAD;
+        ProcessCamera(&internalCamera, &internalCamera.position);
+    }
+    
     cameraMode = mode;
+}
+
+void UpdateCamera(Vector3 *playerPosition)
+{
+    // Calculate camera
+    if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, playerPosition);
 }
 
 //----------------------------------------------------------------------------------
@@ -1026,6 +1059,32 @@ Vector2 GetTouchPosition(void)
 }*/
 #endif
 
+// Initialize OpenGL graphics
+void InitGraphics(void)
+{
+    rlglInit();                     // Init rlgl
+
+    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
+
+    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
+
+#if defined(PLATFORM_ANDROID)
+    windowReady = true;     // IMPORTANT!
+#endif
+}
+
+void InitPostShader(void)
+{
+    rlglInitPostpro();
+    
+    enabledPostpro = true;
+}
+
+void SetPostShader(unsigned int shader)
+{
+    fboShader = shader;
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -1285,32 +1344,6 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 #endif
-}
-
-// Initialize OpenGL graphics
-void InitGraphics(void)
-{
-    rlglInit();                     // Init rlgl
-
-    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
-
-    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
-
-#if defined(PLATFORM_ANDROID)
-    windowReady = true;     // IMPORTANT!
-#endif
-}
-
-void InitPostShader(void)
-{
-    rlglInitPostpro();
-    
-    enabledPostpro = true;
-}
-
-void SetPostShader(unsigned int shader)
-{
-    fboShader = shader;
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -2299,8 +2332,8 @@ static void LogoAnimation(void)
 }
 
 // Process desired camera mode and controls
-static void ProcessCamera(Camera *camera)
-{    
+static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
+{
     // Mouse movement detection
     if (fullscreen)
     {
@@ -2408,16 +2441,16 @@ static void ProcessCamera(Camera *camera)
             // Keyboard inputs
             if (IsKeyDown('W'))
             {
-                cameraPosition.x -= sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                cameraPosition.z -= cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x -= sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z -= cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
                 if (!cameraUseGravity) camera->position.y += sin(cameraAngle.y) / PLAYER_MOVEMENT_DIVIDER;
                 
                 isMoving = true;
             }
             else if (IsKeyDown('S'))
             {
-                cameraPosition.x += sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                cameraPosition.z += cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x += sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z += cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
                 if (!cameraUseGravity) camera->position.y -= sin(cameraAngle.y) / PLAYER_MOVEMENT_DIVIDER;
                 
                 isMoving = true;
@@ -2425,26 +2458,26 @@ static void ProcessCamera(Camera *camera)
             
             if (IsKeyDown('A'))
             {
-                cameraPosition.x -= cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                cameraPosition.z += sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x -= cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z += sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
                 
                 isMoving = true;
             }
             else if (IsKeyDown('D'))
             {
-                cameraPosition.x += cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                cameraPosition.z -= sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x += cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z -= sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
                 
                 isMoving = true;
             }
             
             if (IsKeyDown('E'))
             {
-                if (!cameraUseGravity) cameraPosition.y += 1 / PLAYER_MOVEMENT_DIVIDER;
+                if (!cameraUseGravity) playerPosition->y += 1 / PLAYER_MOVEMENT_DIVIDER;
             }
             else if (IsKeyDown('Q'))
             {
-                if (!cameraUseGravity) cameraPosition.y -= 1 / PLAYER_MOVEMENT_DIVIDER;
+                if (!cameraUseGravity) playerPosition->y -= 1 / PLAYER_MOVEMENT_DIVIDER;
             }
             
             if (cameraMode == CAMERA_THIRD_PERSON)
@@ -2465,9 +2498,9 @@ static void ProcessCamera(Camera *camera)
                 if (cameraTargetDistance < THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = THIRD_PERSON_DISTANCE_CLAMP;
                 
                 // Camera is always looking at player
-                camera->target.x = cameraPosition.x + THIRD_PERSON_OFFSET.x * cos(cameraAngle.x) + THIRD_PERSON_OFFSET.z * sin(cameraAngle.x);
-                camera->target.y = cameraPosition.y + PLAYER_HEIGHT * FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION + THIRD_PERSON_OFFSET.y;
-                camera->target.z = cameraPosition.z + THIRD_PERSON_OFFSET.z * sin(cameraAngle.x) - THIRD_PERSON_OFFSET.x * sin(cameraAngle.x);
+                camera->target.x = playerPosition->x + THIRD_PERSON_OFFSET.x * cos(cameraAngle.x) + THIRD_PERSON_OFFSET.z * sin(cameraAngle.x);
+                camera->target.y = playerPosition->y + PLAYER_HEIGHT * FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION + THIRD_PERSON_OFFSET.y;
+                camera->target.z = playerPosition->z + THIRD_PERSON_OFFSET.z * sin(cameraAngle.x) - THIRD_PERSON_OFFSET.x * sin(cameraAngle.x);
                 
                 // Camera position update
                 camera->position.x = sin(cameraAngle.x) * cameraTargetDistance * cos(cameraAngle.y) + camera->target.x;
@@ -2495,9 +2528,9 @@ static void ProcessCamera(Camera *camera)
                 camera->target.y = camera->position.y + sin(cameraAngle.y) * FIRST_PERSON_FOCUS_DISTANCE;
                 camera->target.z = camera->position.z - cos(cameraAngle.x) * FIRST_PERSON_FOCUS_DISTANCE;
                 
-                camera->position.x = cameraPosition.x;
-                camera->position.y = (cameraPosition.y + PLAYER_HEIGHT * FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION) - sin(cameraMovementCounter / FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / FIRST_PERSON_STEP_DIVIDER;
-                camera->position.z = cameraPosition.z;
+                camera->position.x = playerPosition->x;
+                camera->position.y = (playerPosition->y + PLAYER_HEIGHT * FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION) - sin(cameraMovementCounter / FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / FIRST_PERSON_STEP_DIVIDER;
+                camera->position.z = playerPosition->z;
                 
                 camera->up.x = sin(cameraMovementCounter / (FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER * 2)) / FIRST_PERSON_WAVING_DIVIDER;
                 camera->up.z = -sin(cameraMovementCounter / (FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER * 2)) / FIRST_PERSON_WAVING_DIVIDER;
