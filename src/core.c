@@ -690,8 +690,7 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, color.a*alpha};
 }
 
-// Enable some window configurations (SetWindowFlags()?)
-// TODO: Review function name and usage
+// Enable some window/system configurations
 void SetConfigFlags(char flags)
 {
     configFlags = flags;

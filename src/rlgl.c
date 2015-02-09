@@ -353,7 +353,7 @@ void rlScalef(float x, float y, float z)
 // Multiply the current matrix by another matrix
 void rlMultMatrixf(float *m)
 {
-    // TODO: review Matrix creation from array
+    // Matrix creation from array
     Matrix mat = { m[0], m[1], m[2], m[3],
                    m[4], m[5], m[6], m[7],
                    m[8], m[9], m[10], m[11],
@@ -511,7 +511,7 @@ void rlEnd(void)
                 }
             }
 
-            // TODO: Make sure normals count match vertex count
+            // TODO: Make sure normals count match vertex count... if normals support is added in a future... :P
 
         } break;
         default: break;
@@ -1417,6 +1417,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     glBindTexture(GL_TEXTURE_2D, id);
 
     // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used!
+    // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so CLAMP_TO_EDGE must be used
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repead on x-axis
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repead on y-axis
 
@@ -1433,6 +1434,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     }
 
     // If mipmaps are being used, we configure mag-min filters accordingly
+    // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so only GL_LINEAR or GL_NEAREST can be used
     if (genMipmaps)
     {
         // Trilinear filtering with mipmaps
@@ -1476,16 +1478,23 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: We define internal (GPU) format as GL_RGBA8 (probably BGRA8 in practice, driver takes care)
+    // NOTE: On embedded systems, we let the driver choose the best internal format
     //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);  // OpenGL
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);     // WebGL
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: On embedded systems, we let the driver choose the best internal format
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-#endif
+    
+    // TODO: Add support for multiple color modes (16bit color modes and grayscale)
+    // Ref: https://www.khronos.org/opengles/sdk/docs/man3/html/glTexImage2D.xhtml
+    // On WebGL, internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
+    // (sized)internalFormat    format          type 
+    // GL_R                     GL_RED      GL_UNSIGNED_BYTE
+    // GL_RGB565                GL_RGB      GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5
+    // GL_RGB5_A1               GL_RGBA	    GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_5_5_1
+    // GL_RGBA4                 GL_RGBA     GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_4_4_4_4
+    // GL_RGBA8	                GL_RGBA	    GL_UNSIGNED_BYTE
+    // GL_RGB8	                GL_RGB	    GL_UNSIGNED_BYTE
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (genMipmaps)
     {
         glGenerateMipmap(GL_TEXTURE_2D);  // Generate mipmaps automatically
@@ -2142,7 +2151,7 @@ static void InitializeBuffersGPU(void)
 }
 
 // Update VBOs with vertex array data
-// TODO: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
+// NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
 // TODO: If no data changed on the CPU arrays --> No need to update GPU arrays every frame!
 static void UpdateBuffers(void)
 {

@@ -850,15 +850,7 @@ Model LoadCubicmap(Image cubesmap)
     Vector3 n5 = { 0.0f, 0.0f, 1.0f };
     Vector3 n6 = { 0.0f, 0.0f, -1.0f };
 
-    // Define the 4 texture coordinates of the cube, we will combine them accordingly later...
-    // TODO: Use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
-    /*
-    Vector2 vt2 = { 0.0f, 0.0f };
-    Vector2 vt1 = { 0.0f, 1.0f };
-    Vector2 vt4 = { 1.0f, 0.0f };
-    Vector2 vt3 = { 1.0f, 1.0f };
-    */
-    
+    // NOTE: We use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
     typedef struct RectangleF {
         float x;
         float y;

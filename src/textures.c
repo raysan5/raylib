@@ -103,8 +103,6 @@ Image LoadImage(const char *fileName)
         // Force loading to 4 components (RGBA)
         byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);
 
-        // TODO: Check if file could be loaded! (imgData == NULL)?
-
         if (imgData != NULL)
         {
             // Convert array to pixel array for working convenience
