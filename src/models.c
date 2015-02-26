@@ -836,7 +836,7 @@ Model LoadCubicmap(Image cubesmap)
 
     float w = mapCubeSide;
     float h = mapCubeSide;
-    float h2 = mapCubeSide * 1.5;
+    float h2 = mapCubeSide * 1.5;	// TODO: Review walls height...
 
     Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles * 3 * sizeof(Vector3));
     Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles * 3 * sizeof(Vector2));

@@ -99,6 +99,8 @@
 //----------------------------------------------------------------------------------
 #define MAX_TOUCH_POINTS 256
 
+// Camera System configuration
+//----------------------------------------------------------------------------------
 // CAMERA_GENERIC
 #define CAMERA_SCROLL_SENSITIVITY               1.5
 
@@ -220,7 +222,7 @@ static bool cursorOnScreen = false;         // Tracks if cursor is inside client
 static Texture2D cursor;                    // Cursor texture
 
 static Vector2 mousePosition;
-static bool mouseHidden;
+static bool cursorHidden;
 
 static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
 static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
@@ -864,7 +866,7 @@ int GetMouseWheelMove(void)
 }
 #endif
 
-void HideMouse()
+void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #ifdef __linux
@@ -880,10 +882,10 @@ void HideMouse()
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     #endif
 #endif
-    mouseHidden = true;
+    cursorHidden = true;
 }
 
-void ShowMouse()
+void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #ifdef __linux
@@ -892,12 +894,12 @@ void ShowMouse()
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     #endif
 #endif
-    mouseHidden = false;
+    cursorHidden = false;
 }
 
-bool IsMouseHidden()
+bool IsCursorHidden()
 {
-    return mouseHidden;
+    return cursorHidden;
 }
 
 // TODO: Enable gamepad usage on Rapsberry Pi
@@ -1058,20 +1060,6 @@ Vector2 GetTouchPosition(void)
     return true;
 }*/
 #endif
-
-// Initialize OpenGL graphics
-void InitGraphics(void)
-{
-    rlglInit();                     // Init rlgl
-
-    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
-
-    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
-
-#if defined(PLATFORM_ANDROID)
-    windowReady = true;     // IMPORTANT!
-#endif
-}
 
 void InitPostShader(void)
 {
@@ -1346,6 +1334,19 @@ static void InitDisplay(int width, int height)
 #endif
 }
 
+// Initialize OpenGL graphics
+static void InitGraphics(void)
+{
+    rlglInit();                     // Init rlgl
+
+    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
+
+    ClearBackground(RAYWHITE);      // Default background color for raylib games :P
+
+#if defined(PLATFORM_ANDROID)
+    windowReady = true;     // IMPORTANT!
+#endif
+}
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
