@@ -32,7 +32,7 @@
 //#define RLGL_STANDALONE       // NOTE: To use rlgl as standalone lib, just uncomment this line
 
 #ifndef RLGL_STANDALONE
-    #include "raylib.h"         // Required for typedef: Model
+    #include "raylib.h"         // Required for typedef(s): Model, Shader, Texture2D
     #include "utils.h"          // Required for function TraceLog()
 #endif
 
@@ -88,20 +88,50 @@ typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
 typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
+typedef enum { GRAYSCALE = 0, R5G6B5, R8G8B8, R5G5B5A1, R4G4B4A4, R8G8B8A8 } ColorMode;
+
 #ifdef RLGL_STANDALONE
-    typedef struct {
+    // VertexData type
+    typedef struct VertexData {
         int vertexCount;
         float *vertices;            // 3 components per vertex
         float *texcoords;           // 2 components per vertex
         float *normals;             // 3 components per vertex
         unsigned char *colors;
     } VertexData;
+    
+    // Texture2D type
+    typedef struct Texture2D {
+        unsigned int id;            // Texture id
+        int width;
+        int height;
+    } Texture2D;
 
+    // Shader type
+    typedef struct Shader {
+        unsigned int id;            // Shader program id
+        
+        // Variable attributes
+        unsigned int vertexLoc;     // Vertex attribute location point (vertex shader)
+        unsigned int texcoordLoc;   // Texcoord attribute location point (vertex shader)
+        unsigned int normalLoc;     // Normal attribute location point (vertex shader)
+        unsigned int colorLoc;      // Color attibute location point (vertex shader)
+        
+        // Uniforms
+        unsigned int projectionLoc; // Projection matrix uniform location point (vertex shader)
+        unsigned int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
+        unsigned int textureLoc;    // Texture uniform location point (fragment shader)
+        unsigned int tintColorLoc;  // Color uniform location point (fragment shader)
+    } Shader;
+
+    // 3d Model type
+    // NOTE: If using OpenGL 1.1, loaded in CPU (mesh); if OpenGL 3.3+ loaded in GPU (vaoId)
     typedef struct Model {
         VertexData mesh;
         unsigned int vaoId;
         unsigned int vboId[4];
-        unsigned int textureId;
+        Texture2D texture;
+        Shader shader;
         //Matrix transform;
     } Model;
 #endif
@@ -163,9 +193,11 @@ void rlglDraw(void);                            // Draw VAO/VBO
 void rlglDrawPostpro(unsigned int shaderId);    // Draw with postpro shader
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
-unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool genMipmaps);       // Load in GPU OpenGL texture
+unsigned int rlglLoadTexture(unsigned char *data, int width, int height, int colorMode, bool genMipmaps);       // Load in GPU OpenGL texture
 unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format);
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr); // Load a shader from text data
+#endif
 
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires);

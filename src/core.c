@@ -1347,6 +1347,7 @@ static void InitGraphics(void)
     windowReady = true;     // IMPORTANT!
 #endif
 }
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)

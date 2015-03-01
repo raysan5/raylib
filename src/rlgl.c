@@ -151,24 +151,8 @@ static VertexPositionColorBuffer lines;         // No texture support
 static VertexPositionColorBuffer triangles;     // No texture support
 static VertexPositionColorTextureIndexBuffer quads;
 
-// Vetex-Fragment Shader Program ID
-static GLuint defaultShaderProgram, simpleShaderProgram;
-
-// Default Shader program attibutes binding locations
-static GLuint defaultVertexLoc, defaultTexcoordLoc, defaultColorLoc;
-static GLuint defaultProjectionMatrixLoc, defaultModelviewMatrixLoc;
-static GLuint defaultTextureLoc;
-
-// Simple Shader program attibutes binding locations
-static GLuint simpleVertexLoc, simpleTexcoordLoc, simpleNormalLoc, simpleColorLoc;
-static GLuint simpleProjectionMatrixLoc, simpleModelviewMatrixLoc;
-static GLuint simpleTextureLoc;
-
-// Custom Shader program attibutes binding locations
-static GLuint customVertexLoc, customTexcoordLoc, customNormalLoc, customColorLoc;
-static GLuint customProjectionMatrixLoc, customModelviewMatrixLoc;
-static GLuint customTextureLoc;
-static bool customShader = false;
+// Shader Programs
+static Shader defaultShader, simpleShader;
 
 // Vertex Array Objects (VAO)
 static GLuint vaoLines, vaoTriangles, vaoQuads;
@@ -210,8 +194,8 @@ unsigned int whiteTexture;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-static GLuint LoadDefaultShader(void);
-static GLuint LoadSimpleShader(void);
+static Shader LoadDefaultShader(void);
+static Shader LoadSimpleShader(void);
 static void InitializeBuffers(void);
 static void InitializeBuffersGPU(void);
 static void UpdateBuffers(void);
@@ -704,6 +688,7 @@ void rlDeleteTextures(unsigned int id)
     glDeleteTextures(1, &id);
 }
 
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Unload shader from GPU memory
 void rlDeleteShader(unsigned int id)
 {
@@ -714,6 +699,7 @@ void rlEnableFBO(void)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 }
+#endif
 
 // Unload vertex data (VAO) from GPU memory
 void rlDeleteVertexArrays(unsigned int id)
@@ -868,39 +854,9 @@ void rlglInit(void)
     for (int i = 0; i < MATRIX_STACK_SIZE; i++) stack[i] = MatrixIdentity();
 
     // Init default Shader (GLSL 110) -> Common for GL 3.3+ and ES2
-    defaultShaderProgram = LoadDefaultShader();
-    simpleShaderProgram = LoadSimpleShader();
-    //simpleShaderProgram = LoadCustomShader("custom.vs", "custom.fs");     // Works ok
-    //customShaderProgram = LoadCustomShader("simple150.vert", "simple150.frag");
-
-    // Get handles to GLSL input vars locations for defaultShaderProgram
-    //-------------------------------------------------------------------
-    defaultVertexLoc = glGetAttribLocation(defaultShaderProgram, "vertexPosition");
-    defaultTexcoordLoc = glGetAttribLocation(defaultShaderProgram, "vertexTexCoord");
-    defaultColorLoc = glGetAttribLocation(defaultShaderProgram, "vertexColor");
-
-    // Get handles to GLSL uniform vars locations (vertex-shader)
-    defaultModelviewMatrixLoc = glGetUniformLocation(defaultShaderProgram, "modelviewMatrix");
-    defaultProjectionMatrixLoc = glGetUniformLocation(defaultShaderProgram, "projectionMatrix");
-
-    // Get handles to GLSL uniform vars locations (fragment-shader)
-    defaultTextureLoc = glGetUniformLocation(defaultShaderProgram, "texture0");
-    //--------------------------------------------------------------------
-
-    // Get handles to GLSL input vars locations for simpleShaderProgram
-    //-------------------------------------------------------------------
-    simpleVertexLoc = glGetAttribLocation(simpleShaderProgram, "vertexPosition");
-    simpleTexcoordLoc = glGetAttribLocation(simpleShaderProgram, "vertexTexCoord");
-    simpleNormalLoc = glGetAttribLocation(defaultShaderProgram, "vertexNormal");
-
-    // Get handles to GLSL uniform vars locations (vertex-shader)
-    simpleModelviewMatrixLoc = glGetUniformLocation(simpleShaderProgram, "modelviewMatrix");
-    simpleProjectionMatrixLoc = glGetUniformLocation(simpleShaderProgram, "projectionMatrix");
-
-    // Get handles to GLSL uniform vars locations (fragment-shader)
-    simpleTextureLoc = glGetUniformLocation(simpleShaderProgram, "texture0");
-    simpleColorLoc = glGetUniformLocation(simpleShaderProgram, "fragColor");
-    //--------------------------------------------------------------------
+    defaultShader = LoadDefaultShader();
+    simpleShader = LoadSimpleShader();
+    //customShader = LoadShader("custom.vs", "custom.fs");     // Works ok
 
     InitializeBuffers();        // Init vertex arrays
     InitializeBuffersGPU();     // Init VBO and VAO
@@ -913,7 +869,7 @@ void rlglInit(void)
     // Create default white texture for plain colors (required by shader)
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
 
-    whiteTexture = rlglLoadTexture(pixels, 1, 1, false);
+    whiteTexture = rlglLoadTexture(pixels, 1, 1, R8G8B8A8, false);
 
     if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
     else TraceLog(WARNING, "Base white texture could not be loaded");
@@ -932,6 +888,7 @@ void rlglInit(void)
 #endif
 }
 
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Init postpro system
 void rlglInitPostpro(void)
 {
@@ -959,7 +916,7 @@ void rlglInitPostpro(void)
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    // Attach colort texture and depth texture to FBO
+    // Attach color texture and depth texture to FBO
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboColorTexture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fboDepthTexture, 0);
 
@@ -974,6 +931,7 @@ void rlglInitPostpro(void)
     
     // TODO: Init simple quad VAO and data here?
 }
+#endif
 
 // Vertex Buffer Object deinitialization (memory free)
 void rlglClose(void)
@@ -1012,8 +970,8 @@ void rlglClose(void)
     //glDetachShader(defaultShaderProgram, f);
     //glDeleteShader(v);
     //glDeleteShader(f);
-    glDeleteProgram(defaultShaderProgram);
-    glDeleteProgram(simpleShaderProgram);
+    glDeleteProgram(defaultShader.id);
+    glDeleteProgram(simpleShader.id);
 
     // Free vertex arrays memory
     free(lines.vertices);
@@ -1043,14 +1001,11 @@ void rlglDraw(void)
 
     if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
     {
-        if (fbo == 0) glUseProgram(defaultShaderProgram);   // Use our default shader
-        else glUseProgram(fboShader);                       // Use our postpro shader
-
-        glUseProgram(defaultShaderProgram);
+        glUseProgram(defaultShader.id);
         
-        glUniformMatrix4fv(defaultProjectionMatrixLoc, 1, false, GetMatrixVector(projection));
-        glUniformMatrix4fv(defaultModelviewMatrixLoc, 1, false, GetMatrixVector(modelview));
-        glUniform1i(defaultTextureLoc, 0);
+        glUniformMatrix4fv(defaultShader.projectionLoc, 1, false, GetMatrixVector(projection));
+        glUniformMatrix4fv(defaultShader.modelviewLoc, 1, false, GetMatrixVector(modelview));
+        glUniform1i(defaultShader.textureLoc, 0);
     }
 
     // NOTE: We draw in this order: triangle shapes, textured quads and lines
@@ -1066,12 +1021,12 @@ void rlglDraw(void)
         else
         {
             glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
-            glVertexAttribPointer(defaultVertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(defaultVertexLoc);
+            glVertexAttribPointer(defaultShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(defaultShader.vertexLoc);
 
             glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
-            glVertexAttribPointer(defaultColorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(defaultColorLoc);
+            glVertexAttribPointer(defaultShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(defaultShader.colorLoc);
         }
 
         glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
@@ -1094,16 +1049,16 @@ void rlglDraw(void)
         {
             // Enable vertex attributes
             glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
-            glVertexAttribPointer(defaultVertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(defaultVertexLoc);
+            glVertexAttribPointer(defaultShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(defaultShader.vertexLoc);
 
             glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
-            glVertexAttribPointer(defaultTexcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(defaultTexcoordLoc);
+            glVertexAttribPointer(defaultShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(defaultShader.texcoordLoc);
 
             glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
-            glVertexAttribPointer(defaultColorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(defaultColorLoc);
+            glVertexAttribPointer(defaultShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(defaultShader.colorLoc);
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
         }
@@ -1151,12 +1106,12 @@ void rlglDraw(void)
         else
         {
             glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
-            glVertexAttribPointer(defaultVertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(defaultVertexLoc);
+            glVertexAttribPointer(defaultShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(defaultShader.vertexLoc);
 
             glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
-            glVertexAttribPointer(defaultColorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(defaultColorLoc);
+            glVertexAttribPointer(defaultShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(defaultShader.colorLoc);
         }
 
         glDrawArrays(GL_LINES, 0, lines.vCounter);
@@ -1166,6 +1121,8 @@ void rlglDraw(void)
     }
 
     if (vaoSupported) glBindVertexArray(0);   // Unbind VAO
+
+    glUseProgram(0);    // Unbind shader program
 
     // Reset draws counter
     drawsCounter = 1;
@@ -1185,6 +1142,7 @@ void rlglDraw(void)
 #endif
 }
 
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 void rlglDrawPostpro(unsigned int shaderId)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1245,6 +1203,7 @@ void rlglDrawPostpro(unsigned int shaderId)
     
     rlglDraw();
 }
+#endif
 
 // Draw a 3d model
 void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires)
@@ -1289,35 +1248,26 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (customShader) glUseProgram(model.shaderId);
-    else glUseProgram(simpleShaderProgram);        // Use our simple shader
+    glUseProgram(model.shader.id);
 
     VectorScale(&rotation, DEG2RAD);
 
     // Get transform matrix (rotation -> scale -> translation)
-    Matrix transform = MatrixTransform(position, rotation, scale);
-    Matrix modelviewworld = MatrixMultiply(transform, modelview);
+    Matrix transform = MatrixTransform(position, rotation, scale);  // Object-space transformation
+    Matrix modelviewworld = MatrixMultiply(transform, modelview);   // World-space transformation
+    
+    // Projection: Screen-space transformation
 
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
-    if (customShader)
-    {
-        glUniformMatrix4fv(customProjectionMatrixLoc, 1, false, GetMatrixVector(projection));
-        glUniformMatrix4fv(customModelviewMatrixLoc, 1, false, GetMatrixVector(modelviewworld));
-        glUniform1i(customTextureLoc, 0);
-    }
-    else
-    {
-        glUniformMatrix4fv(simpleProjectionMatrixLoc, 1, false, GetMatrixVector(projection));
-        glUniformMatrix4fv(simpleModelviewMatrixLoc, 1, false, GetMatrixVector(modelviewworld));
-        glUniform1i(simpleTextureLoc, 0);
-    }
+    glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(projection));
+    glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(modelviewworld));
+    glUniform1i(model.shader.textureLoc, 0);
 
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
     float vColor[4] = { (float)color.r/255, (float)color.g/255, (float)color.b/255, (float)color.a/255 };
 
-    if (customShader) glUniform4fv(customColorLoc, 1, vColor);
-    else glUniform4fv(simpleColorLoc, 1, vColor);
+    glUniform4fv(model.shader.tintColorLoc, 1, vColor);
 
     if (vaoSupported)
     {
@@ -1327,20 +1277,20 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
     {
         // Bind model VBOs data
         glBindBuffer(GL_ARRAY_BUFFER, model.vboId[0]);
-        glVertexAttribPointer(simpleVertexLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(simpleVertexLoc);
+        glVertexAttribPointer(model.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(model.shader.vertexLoc);
 
         glBindBuffer(GL_ARRAY_BUFFER, model.vboId[1]);
-        glVertexAttribPointer(simpleTexcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(simpleTexcoordLoc);
+        glVertexAttribPointer(model.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(model.shader.texcoordLoc);
 
         // Add normals support
         glBindBuffer(GL_ARRAY_BUFFER, model.vboId[2]);
-        glVertexAttribPointer(simpleNormalLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(simpleNormalLoc);
+        glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(model.shader.normalLoc);
     }
 
-    glBindTexture(GL_TEXTURE_2D, model.textureId);
+    glBindTexture(GL_TEXTURE_2D, model.texture.id);
 
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
 
@@ -1406,7 +1356,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool genMipmaps)
+unsigned int rlglLoadTexture(unsigned char *data, int width, int height, int colorMode, bool genMipmaps)
 {
     glBindTexture(GL_TEXTURE_2D,0); // Free any old binding
 
@@ -1482,7 +1432,7 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     // NOTE: We define internal (GPU) format as GL_RGBA8 (probably BGRA8 in practice, driver takes care)
     // NOTE: On embedded systems, we let the driver choose the best internal format
     //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);  // OpenGL
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);     // WebGL
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);     // WebGL
     
     // TODO: Add support for multiple color modes (16bit color modes and grayscale)
     // Ref: https://www.khronos.org/opengles/sdk/docs/man3/html/glTexImage2D.xhtml
@@ -1494,6 +1444,17 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool ge
     // GL_RGBA4                 GL_RGBA     GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_4_4_4_4
     // GL_RGBA8	                GL_RGBA	    GL_UNSIGNED_BYTE
     // GL_RGB8	                GL_RGB	    GL_UNSIGNED_BYTE
+    
+    switch (colorMode)
+    {
+        case GRAYSCALE: glTexImage2D(GL_TEXTURE_2D, 0, GL_R, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data); break;
+        case R5G6B5: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, data); break;
+        case R8G8B8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); break;
+        case R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, data); break;
+        case R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, data); break;
+        case R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); break;
+		default: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); break;
+    }
 
     if (genMipmaps)
     {
@@ -1520,17 +1481,19 @@ Model rlglLoadModel(VertexData mesh)
     model.mesh = mesh;
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    model.textureId = 0;        // No texture required
+    model.texture.id = 0;       // No texture required
     model.vaoId = 0;            // Vertex Array Object
     model.vboId[0] = 0;         // Vertex position VBO
     model.vboId[1] = 0;         // Texcoords VBO
     model.vboId[2] = 0;         // Normals VBO
 
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model.textureId = whiteTexture;     // Default whiteTexture
+    model.texture.id = whiteTexture;     // Default whiteTexture
+    model.texture.width = 1;     // Default whiteTexture width
+    model.texture.height = 1;    // Default whiteTexture height
 
-    GLuint vaoModel = 0;        // Vertex Array Objects (VAO)
-    GLuint vertexBuffer[3];     // Vertex Buffer Objects (VBO)
+    GLuint vaoModel = 0;         // Vertex Array Objects (VAO)
+    GLuint vertexBuffer[3];      // Vertex Buffer Objects (VBO)
 
     if (vaoSupported)
     {
@@ -1545,20 +1508,22 @@ Model rlglLoadModel(VertexData mesh)
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleVertexLoc);
-    glVertexAttribPointer(simpleVertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(simpleShader.vertexLoc);
+    glVertexAttribPointer(simpleShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     // Enable vertex attributes: texcoords
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.vertexCount, mesh.texcoords, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleTexcoordLoc);
-    glVertexAttribPointer(simpleTexcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(simpleShader.texcoordLoc);
+    glVertexAttribPointer(simpleShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
 
     // Enable vertex attributes: normals
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleNormalLoc);
-    glVertexAttribPointer(simpleNormalLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(simpleShader.normalLoc);
+    glVertexAttribPointer(simpleShader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+    
+    model.shader = simpleShader;    // By default, simple shader will be used
 
     model.vboId[0] = vertexBuffer[0];     // Vertex position VBO
     model.vboId[1] = vertexBuffer[1];     // Texcoords VBO
@@ -1661,6 +1626,7 @@ unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int heigh
     return id;
 }
 
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Load a shader (vertex shader + fragment shader) from text data
 unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr)
 {
@@ -1756,6 +1722,7 @@ unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr)
 
     return program;
 }
+#endif
 
 // Read screen pixel data (color buffer)
 unsigned char *rlglReadScreenPixels(int width, int height)
@@ -1781,67 +1748,68 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     return imgData;     // NOTE: image data should be freed
 }
 
-unsigned int LoadCustomShader(char *vsFileName, char *fsFileName)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+// Load a shader (vertex shader + fragment shader) from text data
+Shader LoadShader(char *vsFileName, char *fsFileName)
 {
+    Shader shader;
+    
     // Shaders loading from external text file
     char *vShaderStr = TextFileRead(vsFileName);
     char *fShaderStr = TextFileRead(fsFileName);
 
-    unsigned int shaderId = rlglLoadShader(vShaderStr, fShaderStr);
+    shader.id = rlglLoadShader(vShaderStr, fShaderStr);
 
-    if (shaderId != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shaderId);
-    else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shaderId);
+    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
+    else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shader.id);
 
-    return shaderId;
-    
     // Shader strings must be freed
     free(vShaderStr);
     free(fShaderStr);
+
+    // Get handles to GLSL input attibute locations
+    //-------------------------------------------------------------------
+    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
+    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
+    shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
+    // NOTE: custom shader does not use colorLoc
     
-    return shaderId;
+    // Get handles to GLSL uniform locations (vertex shader)
+    shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
+
+    // Get handles to GLSL uniform locations (fragment shader)
+    shader.textureLoc = glGetUniformLocation(shader.id, "texture0");
+    shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+    //--------------------------------------------------------------------
+    
+    return shader;
 }
 
 // Link shader to model
-void SetModelShader(Model *model, unsigned int shader)
+void SetModelShader(Model *model, Shader shader)
 {
-    // Get handles to GLSL input vars locations for simpleShaderProgram
-    customVertexLoc = glGetAttribLocation(shader, "vertexPosition");
-    customTexcoordLoc = glGetAttribLocation(shader, "vertexTexCoord");
-    customNormalLoc = glGetAttribLocation(shader, "vertexNormal");
-
-    // Get handles to GLSL uniform vars locations (vertex-shader)
-    customModelviewMatrixLoc = glGetUniformLocation(shader, "modelviewMatrix");
-    customProjectionMatrixLoc = glGetUniformLocation(shader, "projectionMatrix");
-
-    // Get handles to GLSL uniform vars locations (fragment-shader)
-    customTextureLoc = glGetUniformLocation(shader, "texture0");
-    customColorLoc = glGetUniformLocation(shader, "fragColor");
-
+    model->shader = shader;
+    
     if (vaoSupported) glBindVertexArray(model->vaoId);
 
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, model->vboId[0]);
-    glEnableVertexAttribArray(customVertexLoc);
-    glVertexAttribPointer(customVertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(shader.vertexLoc);
+    glVertexAttribPointer(shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     // Enable vertex attributes: texcoords
     glBindBuffer(GL_ARRAY_BUFFER, model->vboId[1]);
-    glEnableVertexAttribArray(customTexcoordLoc);
-    glVertexAttribPointer(customTexcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(shader.texcoordLoc);
+    glVertexAttribPointer(shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
 
     // Enable vertex attributes: normals
     glBindBuffer(GL_ARRAY_BUFFER, model->vboId[2]);
-    glEnableVertexAttribArray(customNormalLoc);
-    glVertexAttribPointer(customNormalLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(shader.normalLoc);
+    glVertexAttribPointer(shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-
-    model->shaderId = shader;
-
-    customShader = true;
 }
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 void PrintProjectionMatrix()
 {
@@ -1863,8 +1831,10 @@ void PrintModelviewMatrix()
 
 // Load Shader (Vertex and Fragment)
 // NOTE: This shader program is used only for batch buffers (lines, triangles, quads)
-static GLuint LoadDefaultShader(void)
+static Shader LoadDefaultShader(void)
 {
+    Shader shader;
+    
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
     // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
     // Just defined #version 330 despite shader is #version 110
@@ -1904,18 +1874,35 @@ static GLuint LoadDefaultShader(void)
         "    gl_FragColor = texture2D(texture0, fragTexCoord) * fragColor; \n"
         "}                                  \n";
 
-    unsigned int shaderId = rlglLoadShader(vShaderStr, fShaderStr);
+    shader.id = rlglLoadShader(vShaderStr, fShaderStr);
 
-    if (shaderId != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shaderId);
-    else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shaderId);
+    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
+    else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
+    
+    // Get handles to GLSL input attibute locations
+    //-------------------------------------------------------------------
+    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
+    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
+    shader.colorLoc = glGetAttribLocation(shader.id, "vertexColor");
+    // NOTE: default shader does not use normalLoc
+    
+    // Get handles to GLSL uniform locations (vertex shader)
+    shader.modelviewLoc = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
-    return shaderId;
+    // Get handles to GLSL uniform locations (fragment shader)
+    shader.textureLoc = glGetUniformLocation(shader.id, "texture0");
+    //--------------------------------------------------------------------
+
+    return shader;
 }
 
 // Load Simple Shader (Vertex and Fragment)
 // NOTE: This shader program is used to render models
-static GLuint LoadSimpleShader(void)
+static Shader LoadSimpleShader(void)
 {
+    Shader shader;
+    
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
     // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
     // Just defined #version 330 despite shader is #version 110
@@ -1947,18 +1934,34 @@ static GLuint LoadSimpleShader(void)
 #endif
         "uniform sampler2D texture0;        \n"
         "varying vec2 fragTexCoord;         \n"
-        "uniform vec4 fragColor;            \n"
+        "uniform vec4 tintColor;            \n"
         "void main()                        \n"
         "{                                  \n"
-        "    gl_FragColor = texture2D(texture0, fragTexCoord) * fragColor; \n"
+        "    gl_FragColor = texture2D(texture0, fragTexCoord) * tintColor; \n"
         "}                                  \n";
 
-    unsigned int shaderId = rlglLoadShader(vShaderStr, fShaderStr);
+    shader.id = rlglLoadShader(vShaderStr, fShaderStr);
 
-    if (shaderId != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shaderId);
-    else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shaderId);
+    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shader.id);
+    else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shader.id);
+    
+    // Get handles to GLSL input attibute locations
+    //-------------------------------------------------------------------
+    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
+    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
+    shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
+    // NOTE: simple shader does not use colorLoc
+    
+    // Get handles to GLSL uniform locations (vertex shader)
+    shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
-    return shaderId;
+    // Get handles to GLSL uniform locations (fragment shader)
+    shader.textureLoc = glGetUniformLocation(shader.id, "texture0");
+    shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+    //--------------------------------------------------------------------
+
+    return shader;
 }
 
 // Read text file
@@ -2056,6 +2059,7 @@ static void InitializeBuffers(void)
 }
 
 // Initialize Vertex Array Objects (Contain VBO)
+// NOTE: lines, triangles and quads buffers use defaultShader
 static void InitializeBuffersGPU(void)
 {
     if (vaoSupported)
@@ -2071,14 +2075,14 @@ static void InitializeBuffersGPU(void)
     // Lines - Vertex positions buffer binding and attributes enable
     glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*2*MAX_LINES_BATCH, lines.vertices, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(defaultVertexLoc);
-    glVertexAttribPointer(defaultVertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(defaultShader.vertexLoc);
+    glVertexAttribPointer(defaultShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     // Lines - colors buffer
     glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(defaultColorLoc);
-    glVertexAttribPointer(defaultColorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glEnableVertexAttribArray(defaultShader.colorLoc);
+    glVertexAttribPointer(defaultShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Lines VAO initialized successfully", vaoLines);
     else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Lines VBOs initialized successfully", linesBuffer[0], linesBuffer[1]);
@@ -2097,13 +2101,13 @@ static void InitializeBuffersGPU(void)
     // Enable vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*3*MAX_TRIANGLES_BATCH, triangles.vertices, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(defaultVertexLoc);
-    glVertexAttribPointer(defaultVertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(defaultShader.vertexLoc);
+    glVertexAttribPointer(defaultShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(defaultColorLoc);
-    glVertexAttribPointer(defaultColorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glEnableVertexAttribArray(defaultShader.colorLoc);
+    glVertexAttribPointer(defaultShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Triangles VAO initialized successfully", vaoTriangles);
     else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Triangles VBOs initialized successfully", trianglesBuffer[0], trianglesBuffer[1]);
@@ -2122,18 +2126,18 @@ static void InitializeBuffersGPU(void)
     // Enable vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(defaultVertexLoc);
-    glVertexAttribPointer(defaultVertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(defaultShader.vertexLoc);
+    glVertexAttribPointer(defaultShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(defaultTexcoordLoc);
-    glVertexAttribPointer(defaultTexcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(defaultShader.texcoordLoc);
+    glVertexAttribPointer(defaultShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(defaultColorLoc);
-    glVertexAttribPointer(defaultColorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glEnableVertexAttribArray(defaultShader.colorLoc);
+    glVertexAttribPointer(defaultShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     // Fill index buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);

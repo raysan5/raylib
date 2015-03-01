@@ -266,21 +266,33 @@ typedef struct VertexData {
     unsigned char *colors;      // 4 components per vertex
 } VertexData;
 
+// Shader type
+typedef struct Shader {
+    unsigned int id;            // Shader program id
+    
+    // Variable attributes
+    unsigned int vertexLoc;     // Vertex attribute location point (vertex shader)
+    unsigned int texcoordLoc;   // Texcoord attribute location point (vertex shader)
+    unsigned int normalLoc;     // Normal attribute location point (vertex shader)
+    unsigned int colorLoc;      // Color attibute location point (vertex shader)
+    
+    // Uniforms
+    unsigned int projectionLoc; // Projection matrix uniform location point (vertex shader)
+    unsigned int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
+    unsigned int textureLoc;    // Texture uniform location point (fragment shader)
+    unsigned int tintColorLoc;  // Color uniform location point (fragment shader)
+} Shader;
+
 // 3d Model type
 // NOTE: If using OpenGL 1.1, loaded in CPU (mesh); if OpenGL 3.3+ loaded in GPU (vaoId)
 typedef struct Model {
     VertexData mesh;
     unsigned int vaoId;
     unsigned int vboId[4];
-    unsigned int textureId;
-    unsigned int shaderId;
+    Texture2D texture;
+    Shader shader;
     //Matrix transform;
 } Model;
-
-// Shader type
-typedef struct Shader {
-    unsigned int id;
-} Shader;
 
 // Sound source type
 typedef struct Sound {
@@ -343,13 +355,13 @@ int GetRandomValue(int min, int max);                       // Returns a random 
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
 void SetCameraMode(int mode);                               // Multiple camera modes available
-void UpdateCamera(Vector3 *playerPosition);
+void UpdateCamera(Vector3 *playerPosition);                 // Update camera with player position (when using internal camera)
 
 void SetConfigFlags(char flags);                            // Enable some window configurations
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
-void InitPostShader(void);
-void SetPostShader(unsigned int shader);
+void InitPostShader(void);                                  // Initialize fullscreen postproduction shaders system
+void SetPostShader(unsigned int shader);                    // Set fullscreen postproduction shader
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -487,7 +499,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight);                          
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
-void SetModelShader(Model *model, unsigned int shader);
+void SetModelShader(Model *model, Shader shader);                                                  // Link a shader to a model (not available on OpenGL 1.1)
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color tint);      // Draw a model with extended parameters
@@ -496,7 +508,7 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color);   
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
-unsigned int LoadCustomShader(char *vsFileName, char *fsFileName);                                 // Load a custom shader (vertex shader + fragment shader)
+Shader LoadShader(char *vsFileName, char *fsFileName);                                 // Load a custom shader (vertex shader + fragment shader)
 
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);

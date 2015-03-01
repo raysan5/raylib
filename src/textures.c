@@ -306,7 +306,7 @@ Texture2D LoadTexture(const char *fileName)
 
         if (image.compFormat == 0)
         {
-            texture.id = rlglLoadTexture(image.data, image.width, image.height, false);
+            texture.id = rlglLoadTexture(image.data, image.width, image.height, R8G8B8A8, false);
         }
         else
         {
@@ -352,6 +352,8 @@ Texture2D LoadTexture(const char *fileName)
     return texture;
 }
 
+// TODO: Texture2D LoadTextureEx(const char *imageData, int width, int height, int colorMode)
+
 // Load a texture from image data
 // NOTE: image is not unloaded, it must be done manually
 Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
@@ -380,7 +382,7 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
         }
 
         // NOTE: rlglLoadTexture() can generate mipmaps (POT image required)
-        texture.id = rlglLoadTexture(imgData, image.width, image.height, genMipmaps);
+        texture.id = rlglLoadTexture(imgData, image.width, image.height, R8G8B8A8, genMipmaps);
 
         texture.width = image.width;
         texture.height = image.height;

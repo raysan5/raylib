@@ -1202,14 +1202,14 @@ void UnloadModel(Model model)
     rlDeleteBuffers(model.vboId[2]);
 
     rlDeleteVertexArrays(model.vaoId);
-    rlDeleteTextures(model.textureId);
-    rlDeleteShader(model.shaderId);
+    rlDeleteTextures(model.texture.id);
+    rlDeleteShader(model.shader.id);
 }
 
 void SetModelTexture(Model *model, Texture2D texture)
 {
-    if (texture.id <= 0) model->textureId = whiteTexture;  // Default white texture (use mesh color)
-    else model->textureId = texture.id;
+    if (texture.id <= 0) model->texture.id = whiteTexture;  // Default white texture (use mesh color)
+    else model->texture = texture;
 }
 
 // Draw a model (with texture if set)
