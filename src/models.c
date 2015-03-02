@@ -40,7 +40,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// Nop...
+#define CUBIC_MAP_HALF_BLOCK_SIZE           0.5
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -285,7 +285,6 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
-        //rlRotatef(rotation, 0, 1, 0);
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -325,8 +324,7 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
-        //rlRotatef(rotation, 0, 1, 0);
-
+        
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -546,6 +544,19 @@ void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX,
         rlEnd();
 
     rlPopMatrix();
+}
+
+void DrawRay(Ray ray, Color color)
+{
+    float scale = 10000;
+    
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        rlVertex3f(ray.position.x, ray.position.y, ray.position.z);
+        rlVertex3f(ray.position.x + ray.direction.x*scale, ray.position.y + ray.direction.y*scale, ray.position.z + ray.direction.z*scale);
+    rlEnd();
 }
 
 // Draw a grid centered at (0, 0, 0)
@@ -1216,26 +1227,28 @@ void SetModelTexture(Model *model, Texture2D texture)
 void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
     Vector3 vScale = { scale, scale, scale };
-    Vector3 rotation = { 0, 0, 0 };
+    float rotAngle = 0.0f;
+    Vector3 rotAxis = { 0, 0, 0 };
 
-    rlglDrawModel(model, position, rotation, vScale, tint, false);
+    rlglDrawModel(model, position, rotAngle, rotAxis, vScale, tint, false);
 }
 
 // Draw a model with extended parameters
-void DrawModelEx(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color tint)
+void DrawModelEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint)
 {
     // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
     
-    rlglDrawModel(model, position, rotation, scale, tint, false);
+    rlglDrawModel(model, position, rotationAngle, rotationAxis, scale, tint, false);
 }
 
 // Draw a model wires (with texture if set)
 void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 {
     Vector3 vScale = { scale, scale, scale };
-    Vector3 rotation = { 0, 0, 0 };
+    float rotAngle = 0.0f;
+    Vector3 rotAxis = { 0, 0, 0 };
 
-    rlglDrawModel(model, position, rotation, vScale, color, true);
+    rlglDrawModel(model, position, rotAngle, rotAxis, vScale, color, true);
 }
 
 // Draw a billboard
@@ -1418,14 +1431,16 @@ bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSph
 
 // Detect and resolve cubicmap collisions
 // NOTE: player position (or camera) is modified inside this function
-void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition)
+Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius)
 {
     // Detect the cell where the player is located
+    Vector3 impactDirection = { 0, 0, 0 };
+    
     int locationCellX = 0;
     int locationCellY = 0;
     
-    locationCellX = floor(playerPosition->x + mapPosition.x + 0.5);
-    locationCellY = floor(playerPosition->z + mapPosition.z + 0.5);
+    locationCellX = floor(playerPosition->x + mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE);
+    locationCellY = floor(playerPosition->z + mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE);
     
     // Multiple Axis --------------------------------------------------------------------------------------------
     
@@ -1433,11 +1448,12 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
     if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
         (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
         {
-            playerPosition->x = locationCellX - 0.2;
-            playerPosition->z = locationCellY - 0.2;
+            playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 1, 0, 1};
         }
     }
     
@@ -1445,11 +1461,12 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
     if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
         (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
         {
-            playerPosition->x = locationCellX - 0.2;
-            playerPosition->z = locationCellY + 0.2;
+            playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 1, 0, 1};
         }
     }
     
@@ -1457,11 +1474,12 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
     if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
         (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
         {
-            playerPosition->x = locationCellX + 0.2;
-            playerPosition->z = locationCellY - 0.2;
+            playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 1, 0, 1};
         }
     }
     
@@ -1469,11 +1487,12 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
     if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
         (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
         {
-            playerPosition->x = locationCellX + 0.2f;
-            playerPosition->z = locationCellY + 0.2f;
+            playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 1, 0, 1};
         }
     }
     
@@ -1482,33 +1501,37 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
     // Axis x-
     if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
     {
-        if ((playerPosition->x + 0.5f) - locationCellX < 0.3)
+        if ((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius)
         {
-            playerPosition->x = locationCellX - 0.2;
+            playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 1, 0, 0};
         }
     }
     // Axis x+
     if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
     {
-        if ((playerPosition->x + 0.5f) - locationCellX > 0.7)
+        if ((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius)
         {
-            playerPosition->x = locationCellX + 0.2;
+            playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 1, 0, 0};
         }
     }
     // Axis y-
     if (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
     {
-        if ((playerPosition->z + 0.5f) - locationCellY < 0.3)
+        if ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius)
         {
-            playerPosition->z = locationCellY - 0.2;
+            playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 0, 0, 1};
         }
     }
     // Axis y+
     if (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
     {
-        if ((playerPosition->z + 0.5f) - locationCellY > 0.7)
+        if ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius)
         {
-            playerPosition->z = locationCellY + 0.2;
+            playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            impactDirection = (Vector3) { 0, 0, 1};
         }
     }
     
@@ -1519,11 +1542,18 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
         (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
         (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
         {
-            if (((playerPosition->x + 0.5f) - locationCellX) > ((playerPosition->z + 0.5f) - locationCellY)) playerPosition->x = locationCellX - 0.2;
-            else playerPosition->z = locationCellY - 0.2;
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            else playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            
+            // Return ricochet
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) && 
+                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+            {
+                impactDirection = (Vector3) { 1, 0, 1};
+            }
         }
     }
     
@@ -1532,11 +1562,18 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
         (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
         (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX < 0.3) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
         {
-            if (((playerPosition->x + 0.5f) - locationCellX) > (1 - ((playerPosition->z + 0.5f) - locationCellY))) playerPosition->x = locationCellX - 0.2;
-            else playerPosition->z = locationCellY + 0.2;
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            else playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            
+            // Return ricochet
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) && 
+                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+            {
+                impactDirection = (Vector3) { 1, 0, 1};
+            }
         }
     }
     
@@ -1545,11 +1582,18 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
         (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
         (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY < 0.3))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
         {
-            if (((playerPosition->x + 0.5f) - locationCellX) < (1 - ((playerPosition->z + 0.5f) - locationCellY))) playerPosition->x = locationCellX + 0.2;
-            else playerPosition->z = locationCellY - 0.2;
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            else playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            
+            // Return ricochet
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) && 
+                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+            {
+                impactDirection = (Vector3) { 1, 0, 1};
+            }
         }
     }
     
@@ -1558,13 +1602,35 @@ void ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *play
         (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
         (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
     {
-        if (((playerPosition->x + 0.5f) - locationCellX > 0.7) && 
-            ((playerPosition->z + 0.5f) - locationCellY > 0.7))
+        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) && 
+            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
         {
-            if (((playerPosition->x + 0.5f) - locationCellX) < ((playerPosition->z + 0.5f) - locationCellY)) playerPosition->x = locationCellX + 0.2;
-            else playerPosition->z = locationCellY + 0.2;
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            else playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+            
+            // Return ricochet
+            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) && 
+                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+            {
+                impactDirection = (Vector3) { 1, 0, 1};
+            }
         }
     }
+    
+    // Floor collision
+    if (playerPosition->y <= radius)
+    {
+        playerPosition->y = radius + 0.01;
+        impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
+    }
+    // Roof collision
+    else if (playerPosition->y >= 1.5 - radius)
+    {
+        playerPosition->y = (1.5 - radius) - 0.01;
+        impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
+    }
+    
+    return impactDirection;
 }
 
 //----------------------------------------------------------------------------------

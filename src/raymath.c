@@ -346,8 +346,6 @@ void MatrixInvert(Matrix *mat)
     temp.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
     temp.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
 
-    PrintMatrix(temp);
-
     *mat = temp;
 }
 
@@ -671,8 +669,8 @@ Matrix MatrixRotateY(float angle)
 {
     Matrix result = MatrixIdentity();
 
-    float cosres = (float)cos(angle);
-    float sinres = (float)sin(angle);
+    float cosres = cosf(angle);
+    float sinres = sinf(angle);
 
     result.m0 = cosres;
     result.m2 = sinres;
@@ -1097,4 +1095,18 @@ void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 
     *outAxis = resAxis;
     *outAngle = resAngle;
+}
+
+// Transform a quaternion given a transformation matrix
+void QuaternionTransform(Quaternion *q, Matrix mat)
+{
+    float x = q->x;
+    float y = q->y;
+    float z = q->z;
+    float w = q->w;
+
+    q->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12*w;
+    q->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13*w;
+    q->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14*w;
+    q->w = mat.m3*x + mat.m7*y + mat.m11*z + mat.m15*w;
 }

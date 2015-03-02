@@ -303,26 +303,26 @@ void rlTranslatef(float x, float y, float z)
 void rlRotatef(float angleDeg, float x, float y, float z)
 {
     // TODO: Support rotation in multiple axes
-    Matrix rot = MatrixIdentity();
+    Matrix rotation = MatrixIdentity();
 
     // OPTION 1: It works...
-    if (x == 1) rot = MatrixRotateX(angleDeg*DEG2RAD);
-    else if (y == 1) rot = MatrixRotateY(angleDeg*DEG2RAD);
-    else if (z == 1) rot = MatrixRotateZ(angleDeg*DEG2RAD);
+    //if (x == 1) rot = MatrixRotateX(angleDeg*DEG2RAD);
+    //else if (y == 1) rot = MatrixRotateY(angleDeg*DEG2RAD);
+    //else if (z == 1) rot = MatrixRotateZ(angleDeg*DEG2RAD);
 
     // OPTION 2: Requires review...
-    //Vector3 vec = (Vector3){ 0, 1, 0 };
-    //VectorNormalize(&vec);
-    //rot = MatrixFromAxisAngle(vec, angleDeg*DEG2RAD);       // Working?
+    Vector3 axis = (Vector3){ x, y, z };
+    VectorNormalize(&axis);
+    rotation = MatrixRotateY(angleDeg*DEG2RAD); //MatrixFromAxisAngle(axis, angleDeg*DEG2RAD);
 
     // OPTION 3: TODO: Review, it doesn't work!
     //Vector3 vec = (Vector3){ x, y, z };
     //VectorNormalize(&vec);
     //rot = MatrixRotate(angleDeg*vec.x, angleDeg*vec.x, angleDeg*vec.x);
 
-    MatrixTranspose(&rot);
+    MatrixTranspose(&rotation);
 
-    *currentMatrix = MatrixMultiply(*currentMatrix, rot);
+    *currentMatrix = MatrixMultiply(*currentMatrix, rotation);
 }
 
 // Multiply the current matrix by a scaling matrix
@@ -1206,7 +1206,7 @@ void rlglDrawPostpro(unsigned int shaderId)
 #endif
 
 // Draw a 3d model
-void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires)
+void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires)
 {
 #if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glPolygonMode() not available on OpenGL ES
@@ -1215,7 +1215,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 
 #if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, model.textureId);
+    glBindTexture(GL_TEXTURE_2D, model.texture.id);
 
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
@@ -1230,7 +1230,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
         rlScalef(scale.x, scale.y, scale.z);
-        rlRotatef(rotation.y, 0, 1, 0);
+        rlRotatef(rotationAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
 
         // TODO: If rotate in multiple axis, get rotation matrix and use rlMultMatrix()
 
@@ -1250,7 +1250,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scal
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(model.shader.id);
 
-    VectorScale(&rotation, DEG2RAD);
+	Vector3 rotation = { 0.0f, 0.0f, 0.0f };
 
     // Get transform matrix (rotation -> scale -> translation)
     Matrix transform = MatrixTransform(position, rotation, scale);  // Object-space transformation
@@ -1335,7 +1335,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
     rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
     rlLoadIdentity();                           // Reset current matrix (PROJECTION)
 
-    rlOrtho(0, width - offsetX, height - offsetY, 0, 0, 1);         // Config orthographic mode: top-left corner --> (0,0)
+    rlOrtho(0, width - offsetX, height - offsetY, 0, 0, 1); // Config orthographic mode: top-left corner --> (0,0)
 
     rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
@@ -1353,6 +1353,165 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 
     // TODO: Review this comment when called from window resize callback
     TraceLog(INFO, "OpenGL Graphics initialized successfully");
+}
+
+// Get world coordinates from screen coordinates
+Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
+{   
+    //GLint viewport[4];
+    //glGetIntegerv(GL_VIEWPORT, viewport);
+    
+    // Viewport data
+    int x = 0;
+    int y = 0;
+    int width = GetScreenWidth();
+    int height = GetScreenHeight();
+    float minDepth = 0.0f;
+    float maxDepth = 1.0f;
+/*  
+    Matrix modelviewprojection = MatrixMultiply(modelview, projection);
+    MatrixInvert(&modelviewprojection);
+
+    Vector3 vector;
+
+    vector.x = (((source.x - x) / ((float)width)) * 2.0f) - 1.0f;
+    vector.y = -((((source.y - y) / ((float)height)) * 2.0f) - 1.0f);
+    vector.z = (source.z - minDepth) / (maxDepth - minDepth);
+
+    //float a = (((vector.x * matrix.M14) + (vector.y * matrix.M24)) + (vector.z * matrix.M34)) + matrix.M44;
+    //float a = (((vector.x * modelviewprojection.m3) + (vector.y * modelviewprojection.m7)) + (vector.z * modelviewprojection.m11)) + modelviewprojection.m15;
+    VectorTransform(&vector, modelviewprojection);
+
+    //if (!MathUtil.IsOne(a)) vector = (vector / a);
+    //VectorScale(&vector, 1/a);
+    
+    return vector;
+*/
+/*
+    Vector3 worldPoint;
+
+    // Transformation matrices
+    Matrix modelviewprojection = MatrixIdentity();
+    Quaternion quat;
+
+    // Calculation for inverting a matrix, compute projection x modelview
+    modelviewprojection = MatrixMultiply(proj, view);
+    MatrixInvert(&modelviewprojection);
+
+    // Transformation of normalized coordinates between -1 and 1
+    quat.x = ((source.x - (float)x)/(float)width*2.0) - 1.0f;
+    quat.y = ((source.y - (float)y)/(float)height*2.0) - 1.0f;
+    quat.z = 2.0*source.z - 1.0;
+    quat.w = 1.0;
+
+    // Objects coordinates
+    QuaternionTransform(&quat, modelviewprojection);
+
+    //if (quat.w == 0.0) return 0;
+
+    worldPoint.x = quat.x/quat.w;
+    worldPoint.y = quat.y/quat.w;
+    worldPoint.z = quat.z/quat.w;
+
+    return worldPoint;
+    */
+/*
+    Quaternion quat;
+    Vector3 vec;
+    
+    quat.x = 2.0f * GetMousePosition().x / (float)width - 1;
+    quat.y = -(2.0f * GetMousePosition().y / (float)height - 1);
+    quat.z = 0;
+    quat.w = 1;
+    
+    Matrix invView; 
+    MatrixInvert(&view);
+    Matrix invProj;
+    MatrixInvert(&proj);
+    
+    quat.x = invProj.m0 * quat.x + invProj.m4 * quat.y + invProj.m8 * quat.z + invProj.m12 * quat.w;
+    quat.y = invProj.m1 * quat.x + invProj.m5 * quat.y + invProj.m9 * quat.z + invProj.m13 * quat.w;
+    quat.z = invProj.m2 * quat.x + invProj.m6 * quat.y + invProj.m10 * quat.z + invProj.m14 * quat.w;
+    quat.w = invProj.m3 * quat.x + invProj.m7 * quat.y + invProj.m11 * quat.z + invProj.m15 * quat.w;
+    
+    quat.x = invView.m0 * quat.x + invView.m4 * quat.y + invView.m8 * quat.z + invView.m12 * quat.w;
+    quat.y = invView.m1 * quat.x + invView.m5 * quat.y + invView.m9 * quat.z + invView.m13 * quat.w;
+    quat.z = invView.m2 * quat.x + invView.m6 * quat.y + invView.m10 * quat.z + invView.m14 * quat.w;
+    quat.w = invView.m3 * quat.x + invView.m7 * quat.y + invView.m11 * quat.z + invView.m15 * quat.w;
+    
+    vec.x /= quat.w;
+    vec.y /= quat.w;
+    vec.z /= quat.w;
+    
+    return vec;
+    */
+/*
+    Vector3 worldPoint;
+
+    // Transformation matrices
+    Matrix modelviewprojection;
+    Quaternion quat;
+
+    // Calculation for inverting a matrix, compute projection x modelview
+    modelviewprojection = MatrixMultiply(view, proj);
+
+    // Now compute the inverse of matrix A
+    MatrixInvert(&modelviewprojection);
+
+    // Transformation of normalized coordinates between -1 and 1
+    quat.x = ((source.x - (float)x)/(float)width*2.0) - 1.0f;
+    quat.y = ((source.y - (float)y)/(float)height*2.0) - 1.0f;
+    quat.z = 2.0*source.z - 1.0;
+    quat.w = 1.0;
+    
+    // Traspose quaternion and multiply
+    Quaternion result;
+    result.x = modelviewprojection.m0 * quad.x + modelviewprojection.m4 * quad.y + modelviewprojection.m8 * quad.z + modelviewprojection.m12 * quad.w;
+    result.y = modelviewprojection.m1 * quad.x + modelviewprojection.m5 * quad.y + modelviewprojection.m9 * quad.z + modelviewprojection.m13 * quad.w;
+    result.z = modelviewprojection.m2 * quad.x + modelviewprojection.m6 * quad.y + modelviewprojection.m10 * quad.z + modelviewprojection.m14 * quad.w;
+    result.w = modelviewprojection.m3 * quad.x + modelviewprojection.m7 * quad.y + modelviewprojection.m11 * quad.z + modelviewprojection.m15 * quad.w;
+    
+    // Invert
+    result.w = 1.0f / result.w;
+
+    //if (quat.w == 0.0) return 0;
+
+    worldPoint.x = quat.x * quat.w;
+    worldPoint.y = quat.y * quat.w;
+    worldPoint.z = quat.z * quat.w;
+
+    return worldPoint;
+    */
+/*
+    // Needed Vectors
+    Vector3 normalDeviceCoordinates;
+    Quaternion rayClip;
+    Quaternion rayEye;
+    Vector3 rayWorld;
+    
+    // Getting normal device coordinates
+    float x = (2.0 * mousePosition.x) / GetScreenWidth() - 1.0;
+    float y = 1.0 - (2.0 * mousePosition.y) / GetScreenHeight();
+    float z = 1.0;
+    normalDeviceCoordinates = (Vector3){ x, y, z };
+    
+    // Getting clip vector
+    rayClip = (Quaternion){ normalDeviceCoordinates.x, normalDeviceCoordinates.y, -1, 1 };
+    
+    Matrix invProjection = projection;
+    MatrixInvert(&invProjection);
+    
+    rayEye = MatrixQuaternionMultiply(invProjection, rayClip);
+    rayEye = (Quaternion){ rayEye.x, rayEye.y, -1, 0 };
+    
+    Matrix invModelview = modelview;
+    MatrixInvert(&invModelview);
+    
+    rayWorld = MatrixVector3Multiply(invModelview, (Vector3){rayEye.x, rayEye.y, rayEye.z} );
+    VectorNormalize(&rayWorld);
+    
+    return rayWorld;
+*/
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
@@ -2352,7 +2511,6 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
 
     return mipmap;
 }
-
 #endif
 
 #if defined(RLGL_STANDALONE)

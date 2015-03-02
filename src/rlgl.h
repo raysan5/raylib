@@ -192,6 +192,7 @@ void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglDrawPostpro(unsigned int shaderId);    // Draw with postpro shader
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
+Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);         // Get world coordinates from screen coordinates
 
 unsigned int rlglLoadTexture(unsigned char *data, int width, int height, int colorMode, bool genMipmaps);       // Load in GPU OpenGL texture
 unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format);
@@ -200,7 +201,7 @@ unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr); // Load a shade
 #endif
 
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires);
+void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);
 
 byte *rlglReadScreenPixels(int width, int height);    // Read screen pixel data (color buffer)
 

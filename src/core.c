@@ -106,7 +106,8 @@
 
 // FREE_CAMERA
 #define FREE_CAMERA_MOUSE_SENSITIVITY           0.01
-#define FREE_CAMERA_DISTANCE_CLAMP              0.3
+#define FREE_CAMERA_DISTANCE_MIN_CLAMP          0.3
+#define FREE_CAMERA_DISTANCE_MAX_CLAMP          12
 #define FREE_CAMERA_MIN_CLAMP                   85
 #define FREE_CAMERA_MAX_CLAMP                  -85
 #define FREE_CAMERA_SMOOTH_ZOOM_SENSITIVITY     0.05
@@ -118,7 +119,7 @@
 // FIRST_PERSON
 #define FIRST_PERSON_MOUSE_SENSITIVITY          0.003
 #define FIRST_PERSON_FOCUS_DISTANCE             25
-#define FIRST_PERSON_MIN_CLAMP                  5
+#define FIRST_PERSON_MIN_CLAMP                  85
 #define FIRST_PERSON_MAX_CLAMP                  -85
 
 #define FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER 5.0
@@ -604,8 +605,8 @@ void Begin3dMode(Camera camera)
     if (cameraMode == CAMERA_CUSTOM) currentCamera = camera;
     else currentCamera = internalCamera;
     
-    Matrix matLookAt = MatrixLookAt(currentCamera.position, currentCamera.target, currentCamera.up);
-    rlMultMatrixf(GetMatrixVector(matLookAt));      // Multiply MODELVIEW matrix by view matrix (camera)
+    Matrix view = MatrixLookAt(currentCamera.position, currentCamera.target, currentCamera.up);
+    rlMultMatrixf(GetMatrixVector(view));      // Multiply MODELVIEW matrix by view matrix (camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -703,6 +704,60 @@ void ShowLogo(void)
     showLogo = true;
 }
 
+Ray GetMouseRay(Vector2 mousePosition, Camera camera)
+{
+    Ray ray;
+    
+    Matrix proj = MatrixIdentity();
+    Matrix view = MatrixLookAt(currentCamera.position, currentCamera.target, currentCamera.up);
+    
+    float aspect = (GLfloat)GetScreenWidth()/(GLfloat)GetScreenHeight();
+    double top = 0.1f*tanf(45.0f*PI / 360.0f);
+    double right = top*aspect;
+    
+    proj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
+    MatrixTranspose(&proj);
+
+    float realy = (float)GetScreenHeight() - mousePosition.y;
+    
+    float z;
+    // glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+    //http://www.bfilipek.com/2012/06/select-mouse-opengl.html
+
+    Vector3 nearPoint = { mousePosition.x, realy, 0.0f };
+    Vector3 farPoint = { mousePosition.x, realy, 1.0f };
+ 
+    nearPoint = internalCamera.position;
+    farPoint = rlglUnproject(farPoint, proj, view);
+ 
+    Vector3 direction = VectorSubtract(farPoint, nearPoint);
+    VectorNormalize(&direction);
+    
+    ray.position = nearPoint; 
+    ray.direction = direction;
+    
+    // Test
+    Vector2 screenPos;
+    screenPos.x = (mousePosition.x / (float)GetScreenWidth() * 2.0) - 1.0f;
+    screenPos.y = (mousePosition.y / (float)GetScreenHeight() * 2.0) - 1.0f;
+    
+    direction = VectorSubtract(internalCamera.target, internalCamera.position);
+    
+    printf("/nScreenPos %f, %f", screenPos.x, screenPos.y);
+    
+    Matrix rotate;
+    rotate = MatrixIdentity();
+    rotate = MatrixRotate(0, 45*DEG2RAD*screenPos.y, 0);
+    VectorTransform(&direction, rotate);
+    
+    VectorNormalize(&direction);
+    
+    ray.position = internalCamera.position; 
+    ray.direction = direction;
+    
+    return ray;
+}
+
 void SetCameraMode(int mode)
 {
     if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_FREE))
@@ -721,28 +776,30 @@ void SetCameraMode(int mode)
     }
     else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_FREE))
     {
-        cameraMode = CAMERA_THIRD_PERSON;
-        cameraTargetDistance = 5;
-        internalCamera.position = (Vector3){ -1, 1, -1 };
-        internalCamera.target = (Vector3){ 3, 0, 3};
+        cameraTargetDistance = 10;
+        cameraAngle.x = 45 * DEG2RAD;
+        cameraAngle.y = -40 * DEG2RAD;
+        internalCamera.target = (Vector3){ 0, 0, 0};
         ProcessCamera(&internalCamera, &internalCamera.position);
     }
     else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_ORBITAL))
     {
-        cameraMode = CAMERA_THIRD_PERSON;
-        cameraTargetDistance = 5;
-        cameraAngle.x = 45 * DEG2RAD;
-        cameraAngle.y = -20 * DEG2RAD;
+        cameraTargetDistance = 10;
+        cameraAngle.x = 225 * DEG2RAD;
+        cameraAngle.y = -40 * DEG2RAD;
+        internalCamera.target = (Vector3){ 3, 0, 3};
         ProcessCamera(&internalCamera, &internalCamera.position);
     }
     
     cameraMode = mode;
 }
 
-void UpdateCamera(Vector3 *playerPosition)
+Camera UpdateCamera(Vector3 *position)
 {
     // Calculate camera
-    if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, playerPosition);
+    if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, position);
+	
+    return internalCamera;
 }
 
 //----------------------------------------------------------------------------------
@@ -858,10 +915,6 @@ void SetMousePosition(Vector2 position)
 // Returns mouse wheel movement Y
 int GetMouseWheelMove(void)
 {
-    previousMouseWheelY = currentMouseWheelY;
-
-    currentMouseWheelY = 0;
-
     return previousMouseWheelY;
 }
 #endif
@@ -1839,6 +1892,9 @@ static void PollInputEvents(void)
     // Register previous mouse states
     for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
 
+    previousMouseWheelY = currentMouseWheelY;
+    currentMouseWheelY = 0;
+    
     glfwPollEvents();       // Register keyboard/mouse events... and window events!
 #elif defined(PLATFORM_ANDROID)
 
@@ -2337,12 +2393,13 @@ static void LogoAnimation(void)
 static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
 {
     // Mouse movement detection
-    if (fullscreen)
+    if (cameraMode != CAMERA_FREE)
     {
-        if (GetMousePosition().x < 100) SetMousePosition((Vector2){ screenWidth - 100, GetMousePosition().y});
-        else if (GetMousePosition().y < 100) SetMousePosition((Vector2){ GetMousePosition().x, screenHeight - 100});
-        else if (GetMousePosition().x > screenWidth - 100) SetMousePosition((Vector2) { 100, GetMousePosition().y});
-        else if (GetMousePosition().y > screenHeight - 100) SetMousePosition((Vector2){ GetMousePosition().x, 100});
+        HideCursor();
+        if (GetMousePosition().x < GetScreenHeight() / 3) SetMousePosition((Vector2){ screenWidth - GetScreenHeight() / 3, GetMousePosition().y});
+        else if (GetMousePosition().y < GetScreenHeight() / 3) SetMousePosition((Vector2){ GetMousePosition().x, screenHeight - GetScreenHeight() / 3});
+        else if (GetMousePosition().x > screenWidth - GetScreenHeight() / 3) SetMousePosition((Vector2) { GetScreenHeight() / 3, GetMousePosition().y});
+        else if (GetMousePosition().y > screenHeight - GetScreenHeight() / 3) SetMousePosition((Vector2){ GetMousePosition().x, GetScreenHeight() / 3});
         else
         {
             cameraMouseVariation.x = GetMousePosition().x - cameraMousePosition.x;
@@ -2351,6 +2408,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
     }
     else
     {
+        ShowCursor();
         cameraMouseVariation.x = GetMousePosition().x - cameraMousePosition.x;
         cameraMouseVariation.y = GetMousePosition().y - cameraMousePosition.y;
     }
@@ -2366,11 +2424,55 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
             if (IsKeyPressed('O')) cameraMode = CAMERA_ORBITAL;
             
             // Camera zoom
-            cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+            if ((cameraTargetDistance < FREE_CAMERA_DISTANCE_MAX_CLAMP) && (GetMouseWheelMove() < 0))
+            {
+                cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+                
+                if (cameraTargetDistance > FREE_CAMERA_DISTANCE_MAX_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_MAX_CLAMP;
+            }
+            // Camera looking down
+            else if ((camera->position.y > camera->target.y) && (cameraTargetDistance == FREE_CAMERA_DISTANCE_MAX_CLAMP) && (GetMouseWheelMove() < 0))
+            {
+                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+            }
+            else if ((camera->position.y > camera->target.y) && (camera->target.y >= 0))
+            {
+                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                
+                if (camera->target.y < 0) camera->target.y = -0.001;
+            }
+            else if ((camera->position.y > camera->target.y) && (camera->target.y < 0) && (GetMouseWheelMove() > 0))
+            {
+                cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+                if (cameraTargetDistance < FREE_CAMERA_DISTANCE_MIN_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_MIN_CLAMP;
+            }
+            // Camera looking up
+            else if ((camera->position.y < camera->target.y) && (cameraTargetDistance == FREE_CAMERA_DISTANCE_MAX_CLAMP) && (GetMouseWheelMove() < 0))
+            {
+                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+            }
+            else if ((camera->position.y < camera->target.y) && (camera->target.y <= 0))
+            {
+                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                
+                if (camera->target.y > 0) camera->target.y = 0.001;
+            }
+            else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (GetMouseWheelMove() > 0))
+            {
+                cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+                if (cameraTargetDistance < FREE_CAMERA_DISTANCE_MIN_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_MIN_CLAMP;
+            }
             
-            // Camera distance clamp
-            if (cameraTargetDistance < FREE_CAMERA_DISTANCE_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_CLAMP;
             
+            // Inputs
             if (IsKeyDown(KEY_LEFT_ALT))
             {
                 if (IsKeyDown(KEY_LEFT_CONTROL))

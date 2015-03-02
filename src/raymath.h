@@ -91,7 +91,7 @@ void VectorNormalize(Vector3 *v);                       // Normalize provided ve
 float VectorDistance(Vector3 v1, Vector3 v2);           // Calculate distance between two points
 Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount); // Calculate linear interpolation between two vectors
 Vector3 VectorReflect(Vector3 vector, Vector3 normal);  // Calculate reflected vector to normal
-void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Vector3 with a given Matrix
+void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Vector3 by a given Matrix
 Vector3 VectorZero(void);                               // Return a Vector3 init to zero
 
 //------------------------------------------------------------------------------------
@@ -134,6 +134,7 @@ Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a qua
 Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns rotation quaternion for an angle around an axis
 Matrix QuaternionToMatrix(Quaternion q);                        // Calculates the matrix from the given quaternion
 void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle); // Returns the axis and the angle for a given quaternion
+void QuaternionTransform(Quaternion *q, Matrix mat);            // Transform a quaternion given a transformation matrix
 
 #ifdef __cplusplus
 }
