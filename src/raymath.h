@@ -53,15 +53,15 @@
         float y;
         float z;
     } Vector3;
-#endif
 
-// Matrix type (OpenGL style 4x4 - right handed, column major)
-typedef struct Matrix {
-    float m0, m4, m8, m12;
-    float m1, m5, m9, m13;
-    float m2, m6, m10, m14;
-    float m3, m7, m11, m15;
-} Matrix;
+    // Matrix type (OpenGL style 4x4 - right handed, column major)
+    typedef struct Matrix {
+        float m0, m4, m8, m12;
+        float m1, m5, m9, m13;
+        float m2, m6, m10, m14;
+        float m3, m7, m11, m15;
+    } Matrix;
+#endif
 
 // Quaternion type
 typedef struct Quaternion {

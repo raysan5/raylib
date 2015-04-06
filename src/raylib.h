@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.2 (www.raylib.com)
+*   raylib 1.3.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -199,6 +199,14 @@ typedef struct Vector3 {
     float z;
 } Vector3;
 
+// Matrix type (OpenGL style 4x4 - right handed, column major)
+typedef struct Matrix {
+    float m0, m4, m8, m12;
+    float m1, m5, m9, m13;
+    float m2, m6, m10, m14;
+    float m3, m7, m11, m15;
+} Matrix;
+
 // Color type, RGBA (32bit)
 typedef struct Color {
     unsigned char r;
@@ -258,24 +266,27 @@ typedef struct Camera {
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
 // Vertex data definning a mesh
+// NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
 typedef struct VertexData {
     int vertexCount;
     float *vertices;            // 3 components per vertex
     float *texcoords;           // 2 components per vertex
     float *normals;             // 3 components per vertex
     unsigned char *colors;      // 4 components per vertex
+    unsigned int vaoId;
+    unsigned int vboId[4];
 } VertexData;
 
 // Shader type
 typedef struct Shader {
     unsigned int id;            // Shader program id
-    
+
     // Variable attributes
     unsigned int vertexLoc;     // Vertex attribute location point (vertex shader)
     unsigned int texcoordLoc;   // Texcoord attribute location point (vertex shader)
     unsigned int normalLoc;     // Normal attribute location point (vertex shader)
     unsigned int colorLoc;      // Color attibute location point (vertex shader)
-    
+
     // Uniforms
     unsigned int projectionLoc; // Projection matrix uniform location point (vertex shader)
     unsigned int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
@@ -284,14 +295,11 @@ typedef struct Shader {
 } Shader;
 
 // 3d Model type
-// NOTE: If using OpenGL 1.1, loaded in CPU (mesh); if OpenGL 3.3+ loaded in GPU (vaoId)
 typedef struct Model {
     VertexData mesh;
-    unsigned int vaoId;
-    unsigned int vboId[4];
+    Matrix transform;
     Texture2D texture;
     Shader shader;
-    //Matrix transform;
 } Model;
 
 // Ray type (useful for raycast)
@@ -314,6 +322,24 @@ typedef struct Wave {
     short bitsPerSample;
     short channels;
 } Wave;
+
+// Texture formats (support depends on OpenGL version)
+typedef enum {
+    UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+    UNCOMPRESSED_R5G6B5,            // 16 bpp
+    UNCOMPRESSED_R8G8B8,            // 24 bpp
+    UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
+    UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
+    UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+    COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
+    COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
+    COMPRESSED_DXT3_RGBA,           // 8 bpp
+    COMPRESSED_DXT5_RGBA,           // 8 bpp
+    COMPRESSED_ETC1_RGB,            // 4 bpp
+    COMPRESSED_ETC2_RGB,            // 4 bpp
+    COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+    /*COMPRESSED_ASTC_RGBA_4x4*/    // 8 bpp
+} TextureFormat;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -366,8 +392,7 @@ Camera UpdateCamera(Vector3 *position);                     // Update camera wit
 void SetConfigFlags(char flags);                            // Enable some window configurations
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
-void InitPostShader(void);                                  // Initialize fullscreen postproduction shaders system
-void SetPostShader(unsigned int shader);                    // Set fullscreen postproduction shader
+void SetPostproShader(Shader shader);                       // Set fullscreen postproduction shader
 
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Gives the rayTrace from mouse position
 
@@ -448,6 +473,7 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 Image LoadImage(const char *fileName);                                                             // Load an image into CPU memory (RAM)
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
+Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps);    // Load a texture from raw data into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
 Texture2D LoadTextureFromImage(Image image, bool genMipmaps);                                      // Load a texture from image data (and generate mipmaps)
 Texture2D CreateTexture(Image image, bool genMipmaps);                                             // [DEPRECATED] Same as LoadTextureFromImage()
@@ -490,19 +516,18 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color);         // Draw sphere wires
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone wires
-void DrawQuad(Vector3 vertices[4], Vector2 textcoords[4], Vector3 normals[4], Color colors[4]);    // Draw a quad
-void DrawPlane(Vector3 centerPos, Vector2 size, Vector3 rotation, Color color);                    // Draw a plane
-void DrawPlaneEx(Vector3 centerPos, Vector2 size, Vector3 rotation, int slicesX, int slicesZ, Color color); // Draw a plane with divisions
-void DrawRay(Ray ray, Color color);
+void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XZ
+void DrawQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Color color);                        // Draw a quad
+void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
-void DrawGizmoEx(Vector3 position, Vector3 rotation, float scale);                                 // Draw gizmo with extended parameters
 //DrawTorus(), DrawTeapot() are useless...
 
 //------------------------------------------------------------------------------------
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
+Model LoadModelEx(VertexData data);                                                                // Load a 3d model (from vertex data)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
@@ -517,7 +542,7 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color);   
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
-Shader LoadShader(char *vsFileName, char *fsFileName);                                 // Load a custom shader (vertex shader + fragment shader)
+Shader LoadShader(char *vsFileName, char *fsFileName);                                             // Load a custom shader (vertex shader + fragment shader)
 
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);

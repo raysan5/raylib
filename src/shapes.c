@@ -98,7 +98,7 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw a color-filled circle
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
-    DrawPoly((Vector2){centerX, centerY}, 360, radius, 0, color);
+    DrawPoly((Vector2){ centerX, centerY }, 36, radius, 0, color);
 }
 
 // Draw a gradient-filled circle
@@ -106,14 +106,14 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2)
 {
     rlBegin(RL_TRIANGLES);
-        for (int i=0; i < 360; i += 2)
+        for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
             rlVertex2i(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
+            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*(i+2)) * radius, centerY + cos(DEG2RAD*(i+2)) * radius);
+            rlVertex2f(centerX + sin(DEG2RAD*(i + 10)) * radius, centerY + cos(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
@@ -122,12 +122,12 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
 void DrawCircleV(Vector2 center, float radius, Color color)
 {
     rlBegin(RL_TRIANGLES);
-        for (int i=0; i < 360; i += 2)
+        for (int i = 0; i < 360; i += 10)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2i(center.x, center.y);
-            rlVertex2f(center.x + sin(DEG2RAD*i) * radius, center.y + cos(DEG2RAD*i) * radius);
-            rlVertex2f(center.x + sin(DEG2RAD*(i+2)) * radius, center.y + cos(DEG2RAD*(i+2)) * radius);
+            rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
+            rlVertex2f(center.x + sin(DEG2RAD*(i + 10)) * radius, center.y + cos(DEG2RAD*(i + 10)) * radius);
         }
     rlEnd();
 }
@@ -139,10 +139,10 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
         rlColor4ub(color.r, color.g, color.b, color.a);
 
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
-        for (int i=0; i < 360; i++)
+        for (int i = 0; i < 360; i += 10)
         {
-            rlVertex2f(centerX + sin(DEG2RAD*i) * radius, centerY + cos(DEG2RAD*i) * radius);
-            rlVertex2f(centerX + sin(DEG2RAD*(i+1)) * radius, centerY + cos(DEG2RAD*(i+1)) * radius);
+            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sin(DEG2RAD*(i + 10)) * radius, centerY + cos(DEG2RAD*(i + 10))*radius);
         }
    rlEnd();
 }
@@ -201,7 +201,7 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
+            rlNormal3f(0.0f, 0.0f, 1.0f);
 
             rlTexCoord2f(0.0f, 0.0f);
             rlVertex2f(position.x, position.y);
@@ -275,13 +275,13 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
         rlRotatef(rotation, 0, 0, 1);
 
         rlBegin(RL_TRIANGLES);
-            for (int i=0; i < 360; i += 360/sides)
+            for (int i = 0; i < 360; i += 360/sides)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
                 rlVertex2i(0, 0);
-                rlVertex2f(sin(DEG2RAD*i) * radius, cos(DEG2RAD*i) * radius);
-                rlVertex2f(sin(DEG2RAD*(i+360/sides)) * radius, cos(DEG2RAD*(i+360/sides)) * radius);
+                rlVertex2f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius);
+                rlVertex2f(sin(DEG2RAD*(i + 360/sides))*radius, cos(DEG2RAD*(i + 360/sides))*radius);
             }
         rlEnd();
     rlPopMatrix();
@@ -299,8 +299,8 @@ void DrawPolyEx(Vector2 *points, int numPoints, Color color)
             for (int i = 0; i < numPoints - 2; i++)
             {
                 rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i+1].x, points[i+1].y);
-                rlVertex2f(points[i+2].x, points[i+2].y);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
+                rlVertex2f(points[i + 2].x, points[i + 2].y);
             }
         rlEnd();
     }
@@ -318,7 +318,7 @@ void DrawPolyExLines(Vector2 *points, int numPoints, Color color)
             for (int i = 0; i < numPoints - 1; i++)
             {
                 rlVertex2f(points[i].x, points[i].y);
-                rlVertex2f(points[i+1].x, points[i+1].y);
+                rlVertex2f(points[i + 1].x, points[i + 1].y);
             }
         rlEnd();
     }
@@ -367,10 +367,10 @@ bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
     bool collision = false;
 
-    int dx = abs((rec1.x + rec1.width / 2) - (rec2.x + rec2.width / 2));
-    int dy = abs((rec1.y + rec1.height / 2) - (rec2.y + rec2.height / 2));
+    int dx = abs((rec1.x + rec1.width/2) - (rec2.x + rec2.width/2));
+    int dy = abs((rec1.y + rec1.height/2) - (rec2.y + rec2.height/2));
 
-    if ((dx <= (rec1.width / 2 + rec2.width / 2)) && ((dy <= (rec1.height / 2 + rec2.height / 2)))) collision = true;
+    if ((dx <= (rec1.width/2 + rec2.width/2)) && ((dy <= (rec1.height/2 + rec2.height/2)))) collision = true;
 
     return collision;
 }
@@ -395,10 +395,10 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 {
     bool collision = false;
 
-    float dx = abs((rec.x + rec.width / 2) - center.x);
-    float dy = abs((rec.y + rec.height / 2) - center.y);
+    float dx = abs((rec.x + rec.width/2) - center.x);
+    float dy = abs((rec.y + rec.height/2) - center.y);
 
-    if ((dx <= (rec.width / 2 + radius)) && (dy <= (rec.height / 2 + radius))) collision = true;
+    if ((dx <= (rec.width/2 + radius)) && (dy <= (rec.height/2 + radius))) collision = true;
 
     return collision;
 }

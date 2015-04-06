@@ -63,6 +63,28 @@
 #define TEMP_VERTEX_BUFFER_SIZE  4096   // Temporal Vertex Buffer (required for vertex-transformations)
                                         // NOTE: Every vertex are 3 floats (12 bytes)
 
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+    #define GL_COMPRESSED_RGB_S3TC_DXT1_EXT  0x83F0
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+    #define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+    #define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+    #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#endif
+#ifndef GL_ETC1_RGB8_OES
+    #define GL_ETC1_RGB8_OES                 0x8D64
+#endif
+#ifndef GL_COMPRESSED_RGB8_ETC2
+    #define GL_COMPRESSED_RGB8_ETC2          0x9274
+#endif
+#ifndef GL_COMPRESSED_RGBA8_ETC2_EAC
+    #define GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -174,7 +196,8 @@ static bool useTempBuffer = false;
 static bool vaoSupported = false;
 
 // Framebuffer object and texture
-static GLuint fbo, fboColorTexture, fboDepthTexture, fboShader = 0;
+static GLuint fbo, fboColorTexture, fboDepthTexture;
+static Model postproQuad;
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -199,6 +222,7 @@ static Shader LoadSimpleShader(void);
 static void InitializeBuffers(void);
 static void InitializeBuffersGPU(void);
 static void UpdateBuffers(void);
+static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
 
 // Custom shader files loading (external)
 static char *TextFileRead(char *fn);
@@ -688,18 +712,21 @@ void rlDeleteTextures(unsigned int id)
     glDeleteTextures(1, &id);
 }
 
+// Enable rendering to postprocessing FBO
+void rlEnableFBO(void)
+{
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+#endif
+}
+
 // Unload shader from GPU memory
 void rlDeleteShader(unsigned int id)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDeleteProgram(id);
-}
-
-void rlEnableFBO(void)
-{
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-}
 #endif
+}
 
 // Unload vertex data (VAO) from GPU memory
 void rlDeleteVertexArrays(unsigned int id)
@@ -840,7 +867,18 @@ void rlglInit(void)
     TraceLog(INFO, "Supported extension: %s", extensions);
 #endif
 */
+/*
+    GLint numComp = 0;
+    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numComp);
+    
+    GLint format[32] = { 0 };
+    glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, format);
 
+    for (int i = 0; i < numComp; i++)
+    {
+        TraceLog(INFO, "Supported compressed format: 0x%x", format[i]);
+    }
+*/
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Set default draw mode
     currentDrawMode = RL_TRIANGLES;
@@ -869,7 +907,7 @@ void rlglInit(void)
     // Create default white texture for plain colors (required by shader)
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
 
-    whiteTexture = rlglLoadTexture(pixels, 1, 1, R8G8B8A8, false);
+    whiteTexture = rlglLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1, false);
 
     if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
     else TraceLog(WARNING, "Base white texture could not be loaded");
@@ -884,14 +922,14 @@ void rlglInit(void)
     }
 
     drawsCounter = 1;
-    draws[drawsCounter - 1].textureId = whiteTexture;    
+    draws[drawsCounter - 1].textureId = whiteTexture;
 #endif
 }
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Init postpro system
 void rlglInitPostpro(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Create the texture that will serve as the color attachment for the framebuffer
     glGenTextures(1, &fboColorTexture);
     glBindTexture(GL_TEXTURE_2D, fboColorTexture);
@@ -901,7 +939,7 @@ void rlglInitPostpro(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GetScreenWidth(), GetScreenHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
-    
+
     // Create the texture that will serve as the depth attachment for the framebuffer.
     glGenTextures(1, &fboDepthTexture);
     glBindTexture(GL_TEXTURE_2D, fboDepthTexture);
@@ -921,17 +959,48 @@ void rlglInitPostpro(void)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fboDepthTexture, 0);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    
+
     if (status != GL_FRAMEBUFFER_COMPLETE) TraceLog(WARNING, "Framebuffer object could not be created...");
     else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Create a simple quad model to render fbo texture
+    VertexData quadData;
     
-    fboShader = 0;
+    quadData.vertexCount = 6;
     
-    // TODO: Init simple quad VAO and data here?
-}
+    float w = GetScreenWidth();
+    float h = GetScreenHeight();
+    
+    float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
+    float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
+    float quadNormals[6*3] = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
+    unsigned char quadColors[6*4] = { 255 };
+    
+    quadData.vertices = quadPositions;
+    quadData.texcoords = quadTexcoords;
+    quadData.normals = quadNormals;
+    quadData.colors = quadColors;
+    
+    postproQuad = rlglLoadModel(quadData);
+    
+    Texture2D texture;
+    texture.id = fboColorTexture;
+    texture.width = w;
+    texture.height = h;
+    
+    SetModelTexture(&postproQuad, texture);
 #endif
+}
+
+// Set postprocessing shader
+void rlglSetPostproShader(Shader shader)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    SetModelShader(&postproQuad, shader);
+#endif
+}
 
 // Vertex Buffer Object deinitialization (memory free)
 void rlglClose(void)
@@ -987,8 +1056,13 @@ void rlglClose(void)
 
     // Free GPU texture
     glDeleteTextures(1, &whiteTexture);
-    
-    if (fbo != 0) glDeleteFramebuffers(1, &fbo);
+
+    if (fbo != 0)
+    {
+        glDeleteFramebuffers(1, &fbo);
+        
+        UnloadModel(postproQuad);
+    }
 
     free(draws);
 #endif
@@ -1002,7 +1076,7 @@ void rlglDraw(void)
     if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
     {
         glUseProgram(defaultShader.id);
-        
+
         glUniformMatrix4fv(defaultShader.projectionLoc, 1, false, GetMatrixVector(projection));
         glUniformMatrix4fv(defaultShader.modelviewLoc, 1, false, GetMatrixVector(modelview));
         glUniform1i(defaultShader.textureLoc, 0);
@@ -1142,68 +1216,15 @@ void rlglDraw(void)
 #endif
 }
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-void rlglDrawPostpro(unsigned int shaderId)
+// Draw with postprocessing shader
+void rlglDrawPostpro(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    // TODO: Draw screen quad with texture
-/*
-    const float quadPositions[] = { 1.0, 1.0, 0.0, -1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 
-                                   -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0,  1.0, 0.0 };
-    const float quadTexcoords[] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
 
-    glBindBuffer(GL_ARRAY_BUFFER, quadVbo);
-
-    glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), quadPositions);
-    glVertexAttribPointer(ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), quadTexcoords);
-
-    glEnableVertexAttribArray(ATTRIB_VERTEX);
-    glEnableVertexAttribArray(ATTRIB_TEXCOORD0);
-
-    glBindTexture(GL_TEXTURE_2D, fboColorTexture);
-
-    glDrawArrays(GL_TRIANGLES, 0, 2*3);
-    
-    // Quad render using triangle strip
-    glBindBuffer(GL_ARRAY_BUFFER, uiVBO[1]);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glUseProgram(0);
-*/
-    rlEnableTexture(fboColorTexture);
-
-    rlPushMatrix();
-        rlBegin(RL_QUADS);
-            rlColor4ub(255, 255, 255, 255);
-            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-
-            // Bottom-left corner for texture and quad
-            rlTexCoord2f(0.0f, 1.0f);
-            rlVertex2f(0.0f, 0.0f);
-
-            // Bottom-right corner for texture and quad
-            rlTexCoord2f(0.0f, 0.0f);
-            rlVertex2f(0.0f, GetScreenHeight());
-
-            // Top-right corner for texture and quad
-            rlTexCoord2f(1.0f, 0.0f);
-            rlVertex2f(GetScreenWidth(), GetScreenHeight());
-
-            // Top-left corner for texture and quad
-            rlTexCoord2f(1.0f, 1.0f);
-            rlVertex2f(GetScreenWidth(), 0.0f);
-        rlEnd();
-    rlPopMatrix();
-    
-    fboShader = shaderId;
-    
-    rlglDraw();
-}
+    rlglDrawModel(postproQuad, (Vector3){0,0,0}, 0.0f, (Vector3){0,0,0}, (Vector3){1.0f, 1.0f, 1.0f}, WHITE, false);
 #endif
+}
 
 // Draw a 3d model
 void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires)
@@ -1250,12 +1271,14 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(model.shader.id);
 
-	Vector3 rotation = { 0.0f, 0.0f, 0.0f };
+    // TODO: Use model.transform matrix
+
+    Vector3 rotation = { 0.0f, 0.0f, 0.0f };
 
     // Get transform matrix (rotation -> scale -> translation)
     Matrix transform = MatrixTransform(position, rotation, scale);  // Object-space transformation
     Matrix modelviewworld = MatrixMultiply(transform, modelview);   // World-space transformation
-    
+
     // Projection: Screen-space transformation
 
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
@@ -1271,21 +1294,21 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 
     if (vaoSupported)
     {
-        glBindVertexArray(model.vaoId);
+        glBindVertexArray(model.mesh.vaoId);
     }
     else
     {
         // Bind model VBOs data
-        glBindBuffer(GL_ARRAY_BUFFER, model.vboId[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[0]);
         glVertexAttribPointer(model.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(model.shader.vertexLoc);
 
-        glBindBuffer(GL_ARRAY_BUFFER, model.vboId[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[1]);
         glVertexAttribPointer(model.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(model.shader.texcoordLoc);
 
         // Add normals support
-        glBindBuffer(GL_ARRAY_BUFFER, model.vboId[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[2]);
         glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(model.shader.normalLoc);
     }
@@ -1357,10 +1380,10 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 
 // Get world coordinates from screen coordinates
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
-{   
+{
     //GLint viewport[4];
     //glGetIntegerv(GL_VIEWPORT, viewport);
-    
+
     // Viewport data
     int x = 0;
     int y = 0;
@@ -1368,7 +1391,7 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
     int height = GetScreenHeight();
     float minDepth = 0.0f;
     float maxDepth = 1.0f;
-/*  
+/*
     Matrix modelviewprojection = MatrixMultiply(modelview, projection);
     MatrixInvert(&modelviewprojection);
 
@@ -1384,7 +1407,7 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 
     //if (!MathUtil.IsOne(a)) vector = (vector / a);
     //VectorScale(&vector, 1/a);
-    
+
     return vector;
 */
 /*
@@ -1418,31 +1441,31 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 /*
     Quaternion quat;
     Vector3 vec;
-    
+
     quat.x = 2.0f * GetMousePosition().x / (float)width - 1;
     quat.y = -(2.0f * GetMousePosition().y / (float)height - 1);
     quat.z = 0;
     quat.w = 1;
-    
-    Matrix invView; 
+
+    Matrix invView;
     MatrixInvert(&view);
     Matrix invProj;
     MatrixInvert(&proj);
-    
+
     quat.x = invProj.m0 * quat.x + invProj.m4 * quat.y + invProj.m8 * quat.z + invProj.m12 * quat.w;
     quat.y = invProj.m1 * quat.x + invProj.m5 * quat.y + invProj.m9 * quat.z + invProj.m13 * quat.w;
     quat.z = invProj.m2 * quat.x + invProj.m6 * quat.y + invProj.m10 * quat.z + invProj.m14 * quat.w;
     quat.w = invProj.m3 * quat.x + invProj.m7 * quat.y + invProj.m11 * quat.z + invProj.m15 * quat.w;
-    
+
     quat.x = invView.m0 * quat.x + invView.m4 * quat.y + invView.m8 * quat.z + invView.m12 * quat.w;
     quat.y = invView.m1 * quat.x + invView.m5 * quat.y + invView.m9 * quat.z + invView.m13 * quat.w;
     quat.z = invView.m2 * quat.x + invView.m6 * quat.y + invView.m10 * quat.z + invView.m14 * quat.w;
     quat.w = invView.m3 * quat.x + invView.m7 * quat.y + invView.m11 * quat.z + invView.m15 * quat.w;
-    
+
     vec.x /= quat.w;
     vec.y /= quat.w;
     vec.z /= quat.w;
-    
+
     return vec;
     */
 /*
@@ -1463,14 +1486,14 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
     quat.y = ((source.y - (float)y)/(float)height*2.0) - 1.0f;
     quat.z = 2.0*source.z - 1.0;
     quat.w = 1.0;
-    
+
     // Traspose quaternion and multiply
     Quaternion result;
     result.x = modelviewprojection.m0 * quad.x + modelviewprojection.m4 * quad.y + modelviewprojection.m8 * quad.z + modelviewprojection.m12 * quad.w;
     result.y = modelviewprojection.m1 * quad.x + modelviewprojection.m5 * quad.y + modelviewprojection.m9 * quad.z + modelviewprojection.m13 * quad.w;
     result.z = modelviewprojection.m2 * quad.x + modelviewprojection.m6 * quad.y + modelviewprojection.m10 * quad.z + modelviewprojection.m14 * quad.w;
     result.w = modelviewprojection.m3 * quad.x + modelviewprojection.m7 * quad.y + modelviewprojection.m11 * quad.z + modelviewprojection.m15 * quad.w;
-    
+
     // Invert
     result.w = 1.0f / result.w;
 
@@ -1488,47 +1511,65 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
     Quaternion rayClip;
     Quaternion rayEye;
     Vector3 rayWorld;
-    
+
     // Getting normal device coordinates
     float x = (2.0 * mousePosition.x) / GetScreenWidth() - 1.0;
     float y = 1.0 - (2.0 * mousePosition.y) / GetScreenHeight();
     float z = 1.0;
     normalDeviceCoordinates = (Vector3){ x, y, z };
-    
+
     // Getting clip vector
     rayClip = (Quaternion){ normalDeviceCoordinates.x, normalDeviceCoordinates.y, -1, 1 };
-    
+
     Matrix invProjection = projection;
     MatrixInvert(&invProjection);
-    
+
     rayEye = MatrixQuaternionMultiply(invProjection, rayClip);
     rayEye = (Quaternion){ rayEye.x, rayEye.y, -1, 0 };
-    
+
     Matrix invModelview = modelview;
     MatrixInvert(&invModelview);
-    
+
     rayWorld = MatrixVector3Multiply(invModelview, (Vector3){rayEye.x, rayEye.y, rayEye.z} );
     VectorNormalize(&rayWorld);
-    
+
     return rayWorld;
 */
+    return (Vector3){ 0, 0, 0 };
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-unsigned int rlglLoadTexture(unsigned char *data, int width, int height, int colorMode, bool genMipmaps)
+unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps)
 {
-    glBindTexture(GL_TEXTURE_2D,0); // Free any old binding
+    glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
     GLuint id;
-    glGenTextures(1, &id);         // Generate Pointer to the texture
+    
+    // TODO: Review compressed textures support by OpenGL version
+    /* (rlGetVersion() == OPENGL_11)
+    if ((textureFormat == COMPRESSED_DXT1_RGB) || (textureFormat == COMPRESSED_DXT3_RGBA) || (textureFormat == COMPRESSED_DXT5_RGBA) ||
+        (textureFormat == COMPRESSED_ETC1_RGB8) || (textureFormat == COMPRESSED_ETC2_RGB8) || (textureFormat == COMPRESSED_ETC2_EAC_RGBA8))
+    {
+        id = 0;
+        TraceLog(WARNING, "GPU compressed textures not supported on OpenGL 1.1");
+        return id;
+    }
+    */
+    
+    glGenTextures(1, &id);              // Generate Pointer to the texture
 
     //glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
 
     // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used!
+#if defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so CLAMP_TO_EDGE must be used
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repead on x-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repead on y-axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);       // Set texture to clamp on x-axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);       // Set texture to clamp on y-axis
+#else
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repeat on x-axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repeat on y-axis
+#endif
 
     bool texIsPOT = false;
 
@@ -1542,6 +1583,8 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, int col
         genMipmaps = false;
     }
 
+    // TODO: Support mipmaps --> if (mipmapCount > 1)
+    
     // If mipmaps are being used, we configure mag-min filters accordingly
     // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so only GL_LINEAR or GL_NEAREST can be used
     if (genMipmaps)
@@ -1587,35 +1630,76 @@ unsigned int rlglLoadTexture(unsigned char *data, int width, int height, int col
     else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33)
     // NOTE: We define internal (GPU) format as GL_RGBA8 (probably BGRA8 in practice, driver takes care)
     // NOTE: On embedded systems, we let the driver choose the best internal format
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);  // OpenGL
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);     // WebGL
-    
-    // TODO: Add support for multiple color modes (16bit color modes and grayscale)
-    // Ref: https://www.khronos.org/opengles/sdk/docs/man3/html/glTexImage2D.xhtml
-    // On WebGL, internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
-    // (sized)internalFormat    format          type 
+
+    // Support for multiple color modes (16bit color modes and grayscale)
+    // (sized)internalFormat    format          type
     // GL_R                     GL_RED      GL_UNSIGNED_BYTE
     // GL_RGB565                GL_RGB      GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5
-    // GL_RGB5_A1               GL_RGBA	    GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_5_5_1
+    // GL_RGB5_A1               GL_RGBA     GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_5_5_1
     // GL_RGBA4                 GL_RGBA     GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_4_4_4_4
-    // GL_RGBA8	                GL_RGBA	    GL_UNSIGNED_BYTE
-    // GL_RGB8	                GL_RGB	    GL_UNSIGNED_BYTE
+    // GL_RGBA8                 GL_RGBA     GL_UNSIGNED_BYTE
+    // GL_RGB8                  GL_RGB      GL_UNSIGNED_BYTE
     
-    switch (colorMode)
+    switch (textureFormat)
     {
-        case GRAYSCALE: glTexImage2D(GL_TEXTURE_2D, 0, GL_R, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data); break;
-        case R5G6B5: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, data); break;
-        case R8G8B8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); break;
-        case R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, data); break;
-        case R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, data); break;
-        case R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); break;
-		default: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); break;
+        case UNCOMPRESSED_GRAYSCALE:
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, (unsigned char *)data);
+            
+            // With swizzleMask we define how a one channel texture will be mapped to RGBA
+            // Required GL >= 3.3 or EXT_texture_swizzle/ARB_texture_swizzle
+            GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, 1.0f };
+            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+            
+            TraceLog(INFO, "Grayscale texture loaded and swizzled!");
+        } break;
+        case UNCOMPRESSED_R5G6B5: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
+        case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case COMPRESSED_DXT1_RGB: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT1_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT3_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;
+        case COMPRESSED_DXT5_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;
+        case COMPRESSED_ETC1_RGB: TraceLog(WARNING, "ETC compression not supported"); break;   // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_RGB: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;//TraceLog(WARNING, "ETC compression not supported"); break;   // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_EAC_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;//TraceLog(WARNING, "ETC compression not supported"); break;  // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        //case COMPRESSED_ASTC_RGBA_4x4: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        default: TraceLog(WARNING, "Texture format not recognized"); break;
     }
 
-    if (genMipmaps)
+    if ((mipmapCount == 1) && (genMipmaps))
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);  // Generate mipmaps automatically
+        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically for new texture", id);
+    }
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+
+    // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
+    switch (textureFormat)
+    {
+        case UNCOMPRESSED_GRAYSCALE: glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G6B5: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
+        case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case COMPRESSED_DXT1_RGB: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT1_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT3_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;     // NOTE: Not supported by WebGL
+        case COMPRESSED_DXT5_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;     // NOTE: Not supported by WebGL
+        case COMPRESSED_ETC1_RGB: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_ETC1_RGB8_OES); break;
+        case COMPRESSED_ETC2_RGB: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;   // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_EAC_RGBA: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;  // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        //case COMPRESSED_ASTC_RGBA_4x4: LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        default: TraceLog(WARNING, "Texture format not recognized"); break;
+    }
+
+    if ((mipmapCount == 1) && (genMipmaps))
     {
         glGenerateMipmap(GL_TEXTURE_2D);  // Generate mipmaps automatically
         TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically for new texture", id);
@@ -1638,13 +1722,15 @@ Model rlglLoadModel(VertexData mesh)
     Model model;
 
     model.mesh = mesh;
+    model.transform = MatrixIdentity();
 
 #if defined(GRAPHICS_API_OPENGL_11)
+    model.mesh.vaoId = 0;       // Vertex Array Object
+    model.mesh.vboId[0] = 0;    // Vertex position VBO
+    model.mesh.vboId[1] = 0;    // Texcoords VBO
+    model.mesh.vboId[2] = 0;    // Normals VBO
     model.texture.id = 0;       // No texture required
-    model.vaoId = 0;            // Vertex Array Object
-    model.vboId[0] = 0;         // Vertex position VBO
-    model.vboId[1] = 0;         // Texcoords VBO
-    model.vboId[2] = 0;         // Normals VBO
+    model.shader.id = 0;        // No shader used
 
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     model.texture.id = whiteTexture;     // Default whiteTexture
@@ -1681,109 +1767,31 @@ Model rlglLoadModel(VertexData mesh)
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);
     glEnableVertexAttribArray(simpleShader.normalLoc);
     glVertexAttribPointer(simpleShader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-    
+
     model.shader = simpleShader;    // By default, simple shader will be used
 
-    model.vboId[0] = vertexBuffer[0];     // Vertex position VBO
-    model.vboId[1] = vertexBuffer[1];     // Texcoords VBO
-    model.vboId[2] = vertexBuffer[2];     // Normals VBO
+    model.mesh.vboId[0] = vertexBuffer[0];     // Vertex position VBO
+    model.mesh.vboId[1] = vertexBuffer[1];     // Texcoords VBO
+    model.mesh.vboId[2] = vertexBuffer[2];     // Normals VBO
 
     if (vaoSupported)
     {
         if (vaoModel > 0)
         {
-            model.vaoId = vaoModel;
+            model.mesh.vaoId = vaoModel;
             TraceLog(INFO, "[VAO ID %i] Model uploaded successfully to VRAM (GPU)", vaoModel);
         }
         else TraceLog(WARNING, "Model could not be uploaded to VRAM (GPU)");
     }
     else
     {
-        TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Model uploaded successfully to VRAM (GPU)", model.vboId[0], model.vboId[1], model.vboId[2]);
+        TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Model uploaded successfully to VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
     }
 #endif
 
     return model;
 }
 
-// Convert image data to OpenGL texture (returns OpenGL valid Id)
-// NOTE: Expected compressed image data and POT image
-unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compFormat)
-{
-    GLuint id;
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    id = 0;
-    TraceLog(WARNING, "GPU compressed textures not supported on OpenGL 1.1");
-
-#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    TraceLog(DEBUG, "Compressed texture width: %i", width);
-    TraceLog(DEBUG, "Compressed texture height: %i", height);
-    TraceLog(DEBUG, "Compressed texture mipmap levels: %i", mipmapCount);
-    TraceLog(DEBUG, "Compressed texture format: 0x%x", compFormat);
-
-    if (compFormat == 0)
-    {
-        id = 0;
-        TraceLog(WARNING, "Texture compressed format not recognized", id);
-    }
-    else
-    {
-        glGenTextures(1, &id);
-
-        // Bind the texture
-        glBindTexture(GL_TEXTURE_2D, id);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-        // Set texture parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        // If mipmaps are being used, we configure mag-min filters accordingly
-        if (mipmapCount > 1)
-        {
-            // Trilinear filtering with mipmaps
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate use of mipmaps (must be available)
-        }
-        else
-        {
-            // Not using mipmappings
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-        }
-
-        int blockSize = 0;
-        int offset = 0;
-
-        if (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) blockSize = 8;
-        else blockSize = 16;
-
-        // Load the mipmaps
-        for (int level = 0; level < mipmapCount && (width || height); level++)
-        {
-            unsigned int size = 0;
-
-            // NOTE: size specifies the number of bytes of image data (S3TC/DXTC)
-            if (compFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) size = ((width + 3)/4)*((height + 3)/4)*blockSize;  // S3TC/DXTC
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            else if (compFormat == GL_ETC1_RGB8_OES) size = 8*((width + 3) >> 2)*((height + 3) >> 2);   // ETC1
-#endif
-            glCompressedTexImage2D(GL_TEXTURE_2D, level, compFormat, width, height, 0, size, data + offset);
-
-            offset += size;
-            width  /= 2;
-            height /= 2;
-
-            // Security check for NPOT textures
-            if (width < 1) width = 1;
-            if (height < 1) height = 1;
-        }
-    }
-#endif
-
-    return id;
-}
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Load a shader (vertex shader + fragment shader) from text data
@@ -1801,7 +1809,7 @@ unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr)
 
     glShaderSource(vertexShader, 1, &pvs, NULL);
     glShaderSource(fragmentShader, 1, &pfs, NULL);
-    
+
     GLint success = 0;
 
     glCompileShader(vertexShader);
@@ -1869,9 +1877,9 @@ unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr)
         glGetProgramInfoLog(program, maxLength, &length, log);
 
         TraceLog(INFO, "%s", log);
-        
+
         glDeleteProgram(program);
-        
+
         program = 0;
     }
     else TraceLog(INFO, "[SHDR ID %i] Shader program loaded successfully", program);
@@ -1907,12 +1915,12 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     return imgData;     // NOTE: image data should be freed
 }
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Load a shader (vertex shader + fragment shader) from text data
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
     Shader shader;
     
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
     char *vShaderStr = TextFileRead(vsFileName);
     char *fShaderStr = TextFileRead(fsFileName);
@@ -1932,7 +1940,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
     shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
     // NOTE: custom shader does not use colorLoc
-    
+
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
@@ -1941,35 +1949,39 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     shader.textureLoc = glGetUniformLocation(shader.id, "texture0");
     shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
     //--------------------------------------------------------------------
-    
+#endif
+
     return shader;
 }
 
 // Link shader to model
 void SetModelShader(Model *model, Shader shader)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     model->shader = shader;
-    
-    if (vaoSupported) glBindVertexArray(model->vaoId);
+
+    if (vaoSupported) glBindVertexArray(model->mesh.vaoId);
 
     // Enable vertex attributes: position
-    glBindBuffer(GL_ARRAY_BUFFER, model->vboId[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[0]);
     glEnableVertexAttribArray(shader.vertexLoc);
     glVertexAttribPointer(shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     // Enable vertex attributes: texcoords
-    glBindBuffer(GL_ARRAY_BUFFER, model->vboId[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[1]);
     glEnableVertexAttribArray(shader.texcoordLoc);
     glVertexAttribPointer(shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
 
     // Enable vertex attributes: normals
-    glBindBuffer(GL_ARRAY_BUFFER, model->vboId[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[2]);
     glEnableVertexAttribArray(shader.normalLoc);
     glVertexAttribPointer(shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+#endif
 }
 
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 void PrintProjectionMatrix()
 {
     PrintMatrix(projection);
@@ -1979,7 +1991,6 @@ void PrintModelviewMatrix()
 {
     PrintMatrix(modelview);
 }
-
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1987,20 +1998,55 @@ void PrintModelviewMatrix()
 //----------------------------------------------------------------------------------
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+// Convert image data to OpenGL texture (returns OpenGL valid Id)
+// NOTE: Expected compressed image data and POT image
+static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat)
+{
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    int blockSize = 0;      // Bytes every block
+    int offset = 0;
+
+    if ((compressedFormat == GL_COMPRESSED_RGB_S3TC_DXT1_EXT) ||
+        (compressedFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ||
+#if defined(GRAPHICS_API_OPENGL_ES2)
+        (compressedFormat == GL_ETC1_RGB8_OES) ||
+#endif
+        (compressedFormat == GL_COMPRESSED_RGB8_ETC2)) blockSize = 8;
+    else blockSize = 16;
+
+    // Load the mipmap levels
+    for (int level = 0; level < mipmapCount && (width || height); level++)
+    {
+        unsigned int size = 0;
+        
+        size = ((width + 3)/4)*((height + 3)/4)*blockSize;
+
+        glCompressedTexImage2D(GL_TEXTURE_2D, level, compressedFormat, width, height, 0, size, data + offset);
+
+        offset += size;
+        width  /= 2;
+        height /= 2;
+
+        // Security check for NPOT textures
+        if (width < 1) width = 1;
+        if (height < 1) height = 1;
+    }
+}
 
 // Load Shader (Vertex and Fragment)
 // NOTE: This shader program is used only for batch buffers (lines, triangles, quads)
 static Shader LoadDefaultShader(void)
 {
     Shader shader;
-    
+
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
     // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
     // Just defined #version 330 despite shader is #version 110
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
+    char vShaderStr[] = " #version 110      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char vShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
 #endif
@@ -2020,7 +2066,7 @@ static Shader LoadDefaultShader(void)
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
+    char fShaderStr[] = " #version 110      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
         "precision mediump float;           \n"     // WebGL, required for emscripten
@@ -2037,14 +2083,14 @@ static Shader LoadDefaultShader(void)
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
-    
+
     // Get handles to GLSL input attibute locations
     //-------------------------------------------------------------------
     shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
     shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
     shader.colorLoc = glGetAttribLocation(shader.id, "vertexColor");
     // NOTE: default shader does not use normalLoc
-    
+
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc = glGetUniformLocation(shader.id, "modelviewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
@@ -2061,7 +2107,7 @@ static Shader LoadDefaultShader(void)
 static Shader LoadSimpleShader(void)
 {
     Shader shader;
-    
+
     // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
     // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
     // Just defined #version 330 despite shader is #version 110
@@ -2103,14 +2149,14 @@ static Shader LoadSimpleShader(void)
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shader.id);
-    
+
     // Get handles to GLSL input attibute locations
     //-------------------------------------------------------------------
     shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
     shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
     shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
     // NOTE: simple shader does not use colorLoc
-    
+
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");

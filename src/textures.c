@@ -51,10 +51,8 @@ typedef struct {
     unsigned char *data;    // Image raw data
     int width;              // Image base width
     int height;             // Image base height
-    //int bpp;              // bytes per pixel
-    //int components;       // num color components
     int mipmaps;            // Mipmap levels, 1 by default
-    int compFormat;         // Compressed data format, 0 if no compression
+    int format;             // Data format
 } ImageEx;
 
 //----------------------------------------------------------------------------------
@@ -134,7 +132,7 @@ Image LoadImage(const char *fileName)
 
         ImageEx imageDDS = LoadDDS(fileName);
 
-        if (imageDDS.compFormat == 0)
+        if (imageDDS.format == 0)
         {
             image.pixels = (Color *)malloc(imageDDS.width * imageDDS.height * sizeof(Color));
             image.width = imageDDS.width;
@@ -304,14 +302,7 @@ Texture2D LoadTexture(const char *fileName)
     {
         ImageEx image = LoadDDS(fileName);
 
-        if (image.compFormat == 0)
-        {
-            texture.id = rlglLoadTexture(image.data, image.width, image.height, R8G8B8A8, false);
-        }
-        else
-        {
-            texture.id = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.compFormat);
-        }
+        texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
 
         texture.width = image.width;
         texture.height = image.height;
@@ -325,7 +316,7 @@ Texture2D LoadTexture(const char *fileName)
     {
         ImageEx image = LoadPKM(fileName);
 
-        texture.id = rlglLoadCompressedTexture(image.data, image.width, image.height, image.mipmaps, image.compFormat);
+        texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
 
         texture.width = image.width;
         texture.height = image.height;
@@ -352,7 +343,17 @@ Texture2D LoadTexture(const char *fileName)
     return texture;
 }
 
-// TODO: Texture2D LoadTextureEx(const char *imageData, int width, int height, int colorMode)
+Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps)
+{
+    Texture2D texture;
+
+    texture.width = width;
+    texture.height = height;
+    
+    texture.id = rlglLoadTexture(data, width, height, textureFormat, mipmapCount, genMipmaps);
+    
+    return texture;
+}
 
 // Load a texture from image data
 // NOTE: image is not unloaded, it must be done manually
@@ -382,7 +383,7 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
         }
 
         // NOTE: rlglLoadTexture() can generate mipmaps (POT image required)
-        texture.id = rlglLoadTexture(imgData, image.width, image.height, R8G8B8A8, genMipmaps);
+        texture.id = rlglLoadTexture(imgData, image.width, image.height, UNCOMPRESSED_R8G8B8A8, 1, genMipmaps);
 
         texture.width = image.width;
         texture.height = image.height;
@@ -494,7 +495,7 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Co
     Rectangle destRec = { (int)position.x, (int)position.y, sourceRec.width, sourceRec.height };
     Vector2 origin = { 0, 0 };
 
-    DrawTexturePro(texture, sourceRec, destRec, origin, 0, tint);
+    DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
 }
 
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
@@ -545,18 +546,6 @@ static ImageEx LoadDDS(const char *fileName)
     #define FOURCC_DXT3 0x33545844  // Equivalent to "DXT3" in ASCII
     #define FOURCC_DXT5 0x35545844  // Equivalent to "DXT5" in ASCII
 
-    #ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
-        #define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
-    #endif
-
-    #ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
-        #define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
-    #endif
-
-    #ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
-        #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
-    #endif
-
     // DDS Pixel Format
     typedef struct {
         unsigned int size;
@@ -594,7 +583,7 @@ static ImageEx LoadDDS(const char *fileName)
     image.width = 0;
     image.height = 0;
     image.mipmaps = 0;
-    image.compFormat = 0;
+    image.format = 0;
 
     FILE *ddsFile = fopen(fileName, "rb");
 
@@ -626,8 +615,6 @@ static ImageEx LoadDDS(const char *fileName)
 
             image.width = header.width;
             image.height = header.height;
-            image.mipmaps = 1;
-            image.compFormat = 0;
 
             if (header.ddspf.flags == 0x40 && header.ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
             {
@@ -649,8 +636,11 @@ static ImageEx LoadDDS(const char *fileName)
                         *dest++ = 255;
                     }
                 }
-
+                
                 free(buffer);
+                
+                image.mipmaps = 1;
+                image.format = UNCOMPRESSED_R8G8B8;
             }
             else if (header.ddspf.flags == 0x41 && header.ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
             {
@@ -659,18 +649,20 @@ static ImageEx LoadDDS(const char *fileName)
                 fread(image.data, image.width*image.height*4, 1, ddsFile);
 
                 image.mipmaps = 1;
-                image.compFormat = 0;
+                image.format = UNCOMPRESSED_R8G8B8A8;
             }
-            else if ((header.ddspf.flags == 0x04) && (header.ddspf.fourCC > 0))
+            else if (((header.ddspf.flags == 0x04) || (header.ddspf.flags == 0x05)) && (header.ddspf.fourCC > 0))
             {
-                TraceLog(WARNING, "[%s] DDS image uses compression, not supported on OpenGL 1.1", fileName);
-                TraceLog(WARNING, "[%s] DDS compressed files require OpenGL 3.2+ or ES 2.0", fileName);
+                //TraceLog(WARNING, "[%s] DDS image uses compression, not supported on OpenGL 1.1", fileName);
+                //TraceLog(WARNING, "[%s] DDS compressed files require OpenGL 3.2+ or ES 2.0", fileName);
 
                 int bufsize;
 
                 // Calculate data size, including all mipmaps
                 if (header.mipMapCount > 1) bufsize = header.pitchOrLinearSize * 2;
                 else bufsize = header.pitchOrLinearSize;
+                
+                TraceLog(DEBUG, "Pitch or linear size: %i", header.pitchOrLinearSize);
 
                 image.data = (unsigned char*)malloc(bufsize * sizeof(unsigned char));
 
@@ -680,19 +672,18 @@ static ImageEx LoadDDS(const char *fileName)
                 fclose(ddsFile);
 
                 image.mipmaps = header.mipMapCount;
-                image.compFormat = 0;
 
                 switch(header.ddspf.fourCC)
                 {
-                    case FOURCC_DXT1: image.compFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
-                    case FOURCC_DXT3: image.compFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
-                    case FOURCC_DXT5: image.compFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+                    case FOURCC_DXT1:
+                    {
+                        if (header.ddspf.flags == 0x04) image.format = COMPRESSED_DXT1_RGB;
+                        else image.format = COMPRESSED_DXT1_RGBA;
+                    } break;
+                    case FOURCC_DXT3: image.format = COMPRESSED_DXT3_RGBA; break;
+                    case FOURCC_DXT5: image.format = COMPRESSED_DXT5_RGBA; break;
                     default: break;
                 }
-
-                // NOTE: Image num color components not required... for now...
-                //if (fourCC == FOURCC_DXT1) image.components = 3;
-                //else image.components = 4;
             }
         }
     }
@@ -707,10 +698,6 @@ static ImageEx LoadPKM(const char *fileName)
 {
     // If OpenGL ES 2.0. the following format could be supported (ETC1):
     //GL_ETC1_RGB8_OES
-
-    #ifndef GL_ETC1_RGB8_OES
-        #define GL_ETC1_RGB8_OES 0x8D64
-    #endif
 
     // If OpenGL ES 3.0, the following formats are supported (ETC2/EAC):
     //GL_COMPRESSED_RGB8_ETC2
@@ -780,7 +767,7 @@ static ImageEx LoadPKM(const char *fileName)
             image.width = width;
             image.height = height;
             image.mipmaps = 1;
-            image.compFormat = GL_ETC1_RGB8_OES;
+            image.format = COMPRESSED_ETC1_RGB;
         }
     }
 
