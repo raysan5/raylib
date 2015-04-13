@@ -70,6 +70,7 @@ typedef struct {
 //----------------------------------------------------------------------------------
 static ImageEx LoadDDS(const char *fileName);   // Load DDS file
 static ImageEx LoadPKM(const char *fileName);   // Load PKM file
+static ImageEx LoadPVR(const char *fileName);   // Load PVR file
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -323,6 +324,20 @@ Texture2D LoadTexture(const char *fileName)
 
         if (texture.id == 0) TraceLog(WARNING, "[%s] PKM texture could not be loaded", fileName);
         else TraceLog(INFO, "[%s] PKM texture loaded successfully", fileName);
+
+        free(image.data);
+    }
+    else if (strcmp(GetExtension(fileName),"pvr") == 0)
+    {
+        ImageEx image = LoadPVR(fileName);
+        
+        texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
+
+        texture.width = image.width;
+        texture.height = image.height;
+
+        if (texture.id == 0) TraceLog(WARNING, "[%s] PVR texture could not be loaded", fileName);
+        else TraceLog(INFO, "[%s] PVR texture loaded successfully", fileName);
 
         free(image.data);
     }
@@ -694,6 +709,7 @@ static ImageEx LoadDDS(const char *fileName)
 // Loading PKM image data (ETC1/ETC2 compression)
 // NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
+// ETC1 compression support requires extension GL_OES_compressed_ETC1_RGB8_texture
 static ImageEx LoadPKM(const char *fileName)
 {
     // If OpenGL ES 2.0. the following format could be supported (ETC1):
@@ -769,6 +785,111 @@ static ImageEx LoadPKM(const char *fileName)
             image.mipmaps = 1;
             image.format = COMPRESSED_ETC1_RGB;
         }
+    }
+
+    return image;
+}
+
+// Loading PVR image data (uncompressed or PVRT compression)
+// NOTE: PVR compression requires extension GL_IMG_texture_compression_pvrtc (PowerVR GPUs)
+static ImageEx LoadPVR(const char *fileName)
+{
+    // If supported in OpenGL ES 2.0. the following formats could be defined:
+    // GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG      (RGB)
+    // GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG     (RGBA)
+    
+    // PVR file v2 Header (52 bytes)
+    typedef struct {
+        unsigned int headerLength;
+        unsigned int height;
+        unsigned int width;
+        unsigned int numMipmaps;
+        unsigned int flags;
+        unsigned int dataLength;
+        unsigned int bpp;
+        unsigned int bitmaskRed;
+        unsigned int bitmaskGreen;
+        unsigned int bitmaskBlue;
+        unsigned int bitmaskAlpha;
+        unsigned int pvrTag;
+        unsigned int numSurfs;
+    } pvrHeaderV2;
+
+    // PVR file v3 Header (52 bytes)
+    // NOTE: After it could be metadata (15 bytes?)
+    typedef struct {
+        unsigned int version;            
+        unsigned int flags;          
+        unsigned long long pixelFormat;        
+        unsigned int colourSpace;        
+        unsigned int channelType;        
+        unsigned int height;         
+        unsigned int width;          
+        unsigned int depth;          
+        unsigned int numSurfaces;        
+        unsigned int numFaces;       
+        unsigned int numMipmaps;     
+        unsigned int metaDataSize;   
+    } pvrHeaderV3;
+    
+    // Bytes Swap (little-endian <-> big-endian)
+    //unsigned short data;
+    //unsigned short swap = ((data & 0x00FF) << 8) | ((data & 0xFF00) >> 8);
+
+    ImageEx image;
+
+    image.data = NULL;
+    image.width = 0;
+    image.height = 0;
+    image.mipmaps = 0;
+    image.format = 0;
+
+    FILE *pvrFile = fopen(fileName, "rb");
+
+    if (pvrFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] PVR image file could not be opened", fileName);
+    }
+    else
+    {
+        // Check PVR image version
+        unsigned int pvrVersion = 0;
+        fread(&pvrVersion, sizeof(unsigned int), 1, pvrFile);
+        fsetpos(pvrFile, 0);
+        
+        if (pvrVersion == 52)
+        {
+            pvrHeaderV2 header;
+            
+            fread(&header, sizeof(pvrHeaderV2), 1, pvrFile);
+            
+            image.width = header.width;
+            image.height = header.height;
+            image.mipmaps = header.numMipmaps;
+            image.format = COMPRESSED_PVRT_RGB; //COMPRESSED_PVRT_RGBA
+        }
+        else if (pvrVersion == 3)
+        {
+            pvrHeaderV3 header;
+            
+            fread(&header, sizeof(pvrHeaderV3), 1, pvrFile);
+            
+            image.width = header.width;
+            image.height = header.height;
+            image.mipmaps = header.numMipmaps;
+            
+            // TODO: Skip metaDataSize
+            
+            image.format = COMPRESSED_PVRT_RGB; //COMPRESSED_PVRT_RGBA
+        }
+
+        int size = (image.width/4)*(image.height/4)*8;  // Total data size in bytes
+
+        image.data = (unsigned char*)malloc(size * sizeof(unsigned char));
+
+        fread(image.data, 1, size, pvrFile);
+
+        fclose(pvrFile);    // Close file pointer
     }
 
     return image;

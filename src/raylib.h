@@ -338,6 +338,8 @@ typedef enum {
     COMPRESSED_ETC1_RGB,            // 4 bpp
     COMPRESSED_ETC2_RGB,            // 4 bpp
     COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+    COMPRESSED_PVRT_RGB,            // 4 bpp
+    COMPRESSED_PVRT_RGBA,           // 4 bpp
     /*COMPRESSED_ASTC_RGBA_4x4*/    // 8 bpp
 } TextureFormat;
 
@@ -543,6 +545,7 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
 Shader LoadShader(char *vsFileName, char *fsFileName);                                             // Load a custom shader (vertex shader + fragment shader)
+void UnloadShader(Shader shader);                                                                  // Unload a custom shader from memory
 
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);

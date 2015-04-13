@@ -793,7 +793,7 @@ void rlglInit(void)
         const GLubyte *extensionName = glGetStringi(GL_EXTENSIONS, i);
         if (strcmp(extensionName, (const GLubyte *)"GL_ARB_vertex_array_object") == 0)
         {
-            // The extension is supported by our hardware and driver, try to get related functions popinters
+            // The extension is supported by our hardware and driver, try to get related functions pointers
             glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)wglGetProcAddress("glGenVertexArrays");
             glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)wglGetProcAddress("glBindVertexArray");
             glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)wglGetProcAddress("glDeleteVertexArrays");
@@ -851,14 +851,40 @@ void rlglInit(void)
 
     // Show supported extensions
     // NOTE: We don't need that much data on screen... right now...
-/*
+
 #if defined(GRAPHICS_API_OPENGL_33)
     GLint numExt;
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
 
     for (int i = 0; i < numExt; i++)
     {
-        TraceLog(INFO, "Supported extension: %s", glGetStringi(GL_EXTENSIONS, i));
+        //TraceLog(INFO, "Supported extension: %s", glGetStringi(GL_EXTENSIONS, i));
+        /*
+        if (strcmp(glGetStringi(GL_EXTENSIONS, i),"GL_EXT_texture_compression_s3tc") == 0)
+        {
+            // DDS texture compression support
+            
+            // TODO: Check required tokens
+        }
+        else if (strcmp(glGetStringi(GL_EXTENSIONS, i),"GL_OES_compressed_ETC1_RGB8_texture") == 0)
+        {
+            // ETC1 texture compression support
+        }
+        else if (strcmp(glGetStringi(GL_EXTENSIONS, i),"GL_ARB_ES3_compatibility") == 0)
+        {
+            //OES_compressed_ETC2_RGB8_texture,
+            //OES_compressed_ETC2_RGBA8_texture,
+            // ETC2/EAC texture compression support
+        }
+        else if (strcmp(glGetStringi(GL_EXTENSIONS, i),"GL_IMG_texture_compression_pvrtc") == 0)
+        {
+            // PVR texture compression support
+        }
+        else if (strcmp(glGetStringi(GL_EXTENSIONS, i),"GL_KHR_texture_compression_astc_hdr") == 0)
+        {
+            // ASTC texture compression support
+        }
+        */
     }
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big string
@@ -866,7 +892,7 @@ void rlglInit(void)
     // NOTE: String could be splitted using strtok() function (string.h)
     TraceLog(INFO, "Supported extension: %s", extensions);
 #endif
-*/
+
 /*
     GLint numComp = 0;
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numComp);
@@ -894,7 +920,7 @@ void rlglInit(void)
     // Init default Shader (GLSL 110) -> Common for GL 3.3+ and ES2
     defaultShader = LoadDefaultShader();
     simpleShader = LoadSimpleShader();
-    //customShader = LoadShader("custom.vs", "custom.fs");     // Works ok
+    //customShader = rlglLoadShader("custom.vs", "custom.fs");     // Works ok
 
     InitializeBuffers();        // Init vertex arrays
     InitializeBuffersGPU();     // Init VBO and VAO
@@ -1795,7 +1821,7 @@ Model rlglLoadModel(VertexData mesh)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Load a shader (vertex shader + fragment shader) from text data
-unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr)
+unsigned int rlglLoadShaderFromText(char *vShaderStr, char *fShaderStr)
 {
     unsigned int program;
     GLuint vertexShader;
@@ -1915,17 +1941,17 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     return imgData;     // NOTE: image data should be freed
 }
 
-// Load a shader (vertex shader + fragment shader) from text data
-Shader LoadShader(char *vsFileName, char *fsFileName)
+// Load a shader (vertex shader + fragment shader) from files
+Shader rlglLoadShader(char *vsFileName, char *fsFileName)
 {
     Shader shader;
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
     char *vShaderStr = TextFileRead(vsFileName);
     char *fShaderStr = TextFileRead(fsFileName);
 
-    shader.id = rlglLoadShader(vShaderStr, fShaderStr);
+    shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shader.id);
@@ -1955,7 +1981,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 }
 
 // Link shader to model
-void SetModelShader(Model *model, Shader shader)
+void rlglSetModelShader(Model *model, Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     model->shader = shader;
@@ -2079,7 +2105,7 @@ static Shader LoadDefaultShader(void)
         "    gl_FragColor = texture2D(texture0, fragTexCoord) * fragColor; \n"
         "}                                  \n";
 
-    shader.id = rlglLoadShader(vShaderStr, fShaderStr);
+    shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
@@ -2145,7 +2171,7 @@ static Shader LoadSimpleShader(void)
         "    gl_FragColor = texture2D(texture0, fragTexCoord) * tintColor; \n"
         "}                                  \n";
 
-    shader.id = rlglLoadShader(vShaderStr, fShaderStr);
+    shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shader.id);

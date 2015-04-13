@@ -1101,10 +1101,31 @@ void UnloadModel(Model model)
     rlDeleteShader(model.shader.id);
 }
 
+// Link a texture to a model
 void SetModelTexture(Model *model, Texture2D texture)
 {
     if (texture.id <= 0) model->texture.id = whiteTexture;  // Default white texture (use mesh color)
     else model->texture = texture;
+}
+
+// Load a custom shader (vertex shader + fragment shader)
+Shader LoadShader(char *vsFileName, char *fsFileName)
+{
+    Shader shader = rlglLoadShader(vsFileName, fsFileName); 
+    
+    return shader;
+}
+
+// Unload a custom shader from memory
+void UnloadShader(Shader shader)
+{
+    rlDeleteShader(shader.id);
+}
+
+// Set shader for a model
+void SetModelShader(Model *model, Shader shader)
+{
+    rlglSetModelShader(model, shader);
 }
 
 // Draw a model (with texture if set)

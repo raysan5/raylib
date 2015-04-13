@@ -104,6 +104,8 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         COMPRESSED_ETC1_RGB,            // 4 bpp
         COMPRESSED_ETC2_RGB,            // 4 bpp
         COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+        COMPRESSED_PVRT_RGB,            // 4 bpp
+        COMPRESSED_PVRT_RGBA,           // 4 bpp
         /*COMPRESSED_ASTC_RGBA_4x4*/    // 8 bpp
     } TextureFormat;
 
@@ -208,10 +210,12 @@ void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps);       // Load in GPU OpenGL texture
-unsigned int rlglLoadShader(char *vShaderStr, char *fShaderStr);        // Load a shader from text data
+Shader rlglLoadShader(char *vsFileName, char *fsFileName);                  // Load a shader (vertex shader + fragment shader) from files
+unsigned int rlglLoadShaderFromText(char *vShaderStr, char *fShaderStr);    // Load a shader from text data
 void rlglInitPostpro(void);                     // Initialize postprocessing system
 void rlglDrawPostpro(void);                     // Draw with postprocessing shader
 void rlglSetPostproShader(Shader shader);       // Set postprocessing shader
+void rlglSetModelShader(Model *model, Shader shader);   // Set shader for a model
 
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);
