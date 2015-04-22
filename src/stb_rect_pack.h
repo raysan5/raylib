@@ -1,4 +1,4 @@
-// stb_rect_pack.h - v0.05 - public domain - rectangle packing
+// stb_rect_pack.h - v0.06 - public domain - rectangle packing
 // Sean Barrett 2014
 //
 // Useful for e.g. packing rectangular textures into an atlas.
@@ -13,6 +13,7 @@
 // More docs to come.
 //
 // No memory allocations; uses qsort() and assert() from stdlib.
+// Can override those by defining STBRP_SORT and STBRP_ASSERT.
 //
 // This library currently uses the Skyline Bottom-Left algorithm.
 //
@@ -20,8 +21,18 @@
 // implement them to the same API, but with a different init
 // function.
 //
+// Credits
+//
+//  Library
+//    Sean Barrett
+//  Minor features
+//    Martins Mozeiko
+//  Bugfixes / warning fixes
+//    [your name could be here]
+//
 // Version history:
 //
+//     0.06  (2015-04-15)  added STBRP_SORT to allow replacing qsort
 //     0.05:  added STBRP_ASSERT to allow replacing assert
 //     0.04:  fixed minor bug in STBRP_LARGE_RECTS support
 //     0.01:  initial release
@@ -169,7 +180,10 @@ struct stbrp_context
 //
 
 #ifdef STB_RECT_PACK_IMPLEMENTATION
+#ifndef STBRP_SORT
 #include <stdlib.h>
+#define STBRP_SORT qsort
+#endif
 
 #ifndef STBRP_ASSERT
 #include <assert.h>
@@ -524,7 +538,7 @@ STBRP_DEF void stbrp_pack_rects(stbrp_context *context, stbrp_rect *rects, int n
    }
 
    // sort according to heuristic
-   qsort(rects, num_rects, sizeof(rects[0]), rect_height_compare);
+   STBRP_SORT(rects, num_rects, sizeof(rects[0]), rect_height_compare);
 
    for (i=0; i < num_rects; ++i) {
       stbrp__findresult fr = stbrp__skyline_pack_rectangle(context, rects[i].w, rects[i].h);
@@ -537,7 +551,7 @@ STBRP_DEF void stbrp_pack_rects(stbrp_context *context, stbrp_rect *rects, int n
    }
 
    // unsort
-   qsort(rects, num_rects, sizeof(rects[0]), rect_original_order);
+   STBRP_SORT(rects, num_rects, sizeof(rects[0]), rect_original_order);
 
    // set was_packed flags
    for (i=0; i < num_rects; ++i)
