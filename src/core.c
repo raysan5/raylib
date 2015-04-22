@@ -1052,7 +1052,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 }
 #endif
 
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 // Returns touch position X
 int GetTouchX(void)
 {

@@ -446,7 +446,7 @@ bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad b
 bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
 #endif
 
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 int GetTouchX(void);                                    // Returns touch position X
 int GetTouchY(void);                                    // Returns touch position Y
 Vector2 GetTouchPosition(void);                         // Returns touch position XY
