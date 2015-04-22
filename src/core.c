@@ -158,22 +158,6 @@ static struct android_poll_source *source;      // Android events polling source
 static int ident, events;
 static bool windowReady = false;                // Used to detect display initialization
 
-// Gestures detection variables
-static float tapTouchX, tapTouchY;
-static int64_t lastTapTime = 0;
-static float lastTapX = 0, lastTapY = 0;
-static bool touchTap = false;
-static bool doubleTap = false;
-static bool drag = false;
-static int stdVector[MAX_TOUCH_POINTS];
-static int indexPosition = 0;
-const AInputEvent* eventDrag;
-static int32_t touchId;
-const int32_t DOUBLE_TAP_TIMEOUT = 300*1000000;
-const int32_t DOUBLE_TAP_SLOP = 100;
-const int32_t TAP_TIMEOUT = 180*1000000;
-const int32_t TOUCH_SLOP = 8;
-
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
@@ -241,11 +225,6 @@ static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
 static int lastKeyPressed = -1;
 #endif
 
-#if defined(PLATFORM_ANDROID)
-static float touchX;                        // Touch position X
-static float touchY;                        // Touch position Y
-#endif
-
 static double currentTime, previousTime;    // Used to track timmings
 static double updateTime, drawTime;         // Time measures for update and draw
 static double frameTime;                    // Time measure for one frame
@@ -275,6 +254,17 @@ extern void LoadDefaultFont(void);              // [Module: text] Loads default 
 extern void UnloadDefaultFont(void);            // [Module: text] Unloads default font from GPU memory
 
 extern void UpdateMusicStream(void);            // [Module: audio] Updates buffers for music streaming
+
+extern Vector2 GetRawPosition(void);
+extern void ResetGestures(void);
+
+#if defined(PLATFORM_ANDROID)
+extern void InitAndroidGestures(struct android_app *app);
+#endif
+
+#if defined(PLATFORM_WEB)
+extern void InitWebGestures(void);
+#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -313,8 +303,7 @@ static void TakeScreenshot(void);                                               
 #endif
 
 #if defined(PLATFORM_ANDROID)
-static int32_t InputCallback(struct android_app *app, AInputEvent *event);   // Process Android activity input events
-static void CommandCallback(struct android_app *app, int32_t cmd);           // Process Android activity lifecycle commands
+static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
 #endif
 
 static void ProcessCamera(Camera *camera, Vector3 *playerPosition);
@@ -350,6 +339,11 @@ void InitWindow(int width, int height, const char *title)
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
 #endif
+
+#if defined(PLATFORM_WEB)
+    InitWebGestures();  // Init touch input events for web
+#endif
+
     mousePosition.x = screenWidth/2;
     mousePosition.y = screenHeight/2;
 
@@ -401,8 +395,9 @@ void InitWindow(int width, int height, struct android_app *state)
     //AConfiguration_getScreenLong(app->config);
 
     //state->userData = &engine;
-    app->onAppCmd = CommandCallback;
-    app->onInputEvent = InputCallback;
+    app->onAppCmd = AndroidCommandCallback;
+    
+    InitAndroidGestures(app);
 
     InitAssetManager(app->activity->assetManager);
 
@@ -557,6 +552,11 @@ void EndDrawing(void)
     if (enabledPostpro) rlglDrawPostpro(); // Draw postprocessing effect (shader)
 
     SwapBuffers();                  // Copy back buffer to front buffer
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    ResetGestures();
+#endif
+
     PollInputEvents();              // Poll user events
 
     UpdateMusicStream();            // NOTE: Function checks if music is enabled
@@ -1053,63 +1053,37 @@ bool IsGamepadButtonUp(int gamepad, int button)
 #endif
 
 #if defined(PLATFORM_ANDROID)
-bool IsScreenTouched(void)
-{
-    return touchTap;
-}
-
-bool IsDoubleTap(void)
-{
-    if (doubleTap) TraceLog(INFO, "DOUBLE TAP gesture detected");
-
-    return doubleTap;
-}
-
-bool IsDragGesture(void)
-{
-    return drag;
-}
-
 // Returns touch position X
 int GetTouchX(void)
 {
-    return (int)touchX;
+    return (int)GetRawPosition().x;
 }
 
 // Returns touch position Y
 int GetTouchY(void)
 {
-    return (int)touchY;
+    return (int)GetRawPosition().y;
 }
 
 // Returns touch position XY
 Vector2 GetTouchPosition(void)
 {
-    Vector2 position = { touchX, touchY };
+    Vector2 position = GetRawPosition();
+    
+    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
+    {
+        // TODO: Seems to work ok but... review!
+        position.x = position.x*((float)screenWidth / (float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
+        position.y = position.y*((float)screenHeight / (float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
+    }
+    else
+    {
+        position.x = position.x*((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
+        position.y = position.y*((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
+    }
 
     return position;
 }
-
-/*bool GetPointer(Vector2 *dragPositions)
-{
-    //static int stdVector[MAX_TOUCH_POINTS];
-    //static int indexPosition = 0;
-    //if (indexPosition == 0) return false;
-    Vector2 vec_pointers_[];
-
-    //eventDrag
-    int32_t iIndex = FindIndex( eventDrag, vec_pointers_[0] );
-
-    if (iIndex == -1) return false;
-
-    float x = AMotionEvent_getX(eventDrag, iIndex);
-    float y = AMotionEvent_getY(eventDrag, iIndex);
-
-    *dragPositions = Vector2( x, y );
-
-
-    return true;
-}*/
 #endif
 
 // Set postprocessing shader
@@ -1499,209 +1473,8 @@ static void WindowIconifyCallback(GLFWwindow* window, int iconified)
 #endif
 
 #if defined(PLATFORM_ANDROID)
-// Android: Process activity input events
-static int32_t InputCallback(struct android_app *app, AInputEvent *event)
-{
-    int type = AInputEvent_getType(event);
-    //int32_t key = 0;
-
-    if (type == AINPUT_EVENT_TYPE_MOTION)
-    {
-        // Detect TOUCH position
-        if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
-        {
-            // TODO: Seems to work ok but... review!
-            touchX = AMotionEvent_getX(event, 0) * ((float)screenWidth / (float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
-            touchY = AMotionEvent_getY(event, 0) * ((float)screenHeight / (float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
-        }
-        else
-        {
-            touchX = AMotionEvent_getX(event, 0) * ((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
-            touchY = AMotionEvent_getY(event, 0) * ((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
-        }
-
-        // Detect TAP event
-/*
-        if (AMotionEvent_getPointerCount(event) > 1 )
-        {
-            // Only support single touch
-            return false;
-        }
-*/
-        int32_t action = AMotionEvent_getAction(event);
-        unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
-
-        switch (flags)
-        {
-            case AMOTION_EVENT_ACTION_DOWN:
-            {
-                touchId = AMotionEvent_getPointerId(event, 0);
-                tapTouchX = AMotionEvent_getX(event, 0);
-                tapTouchY = AMotionEvent_getY(event, 0);
-
-            } break;
-            case AMOTION_EVENT_ACTION_UP:
-            {
-                int64_t eventTime = AMotionEvent_getEventTime(event);
-                int64_t downTime = AMotionEvent_getDownTime(event);
-
-                if (eventTime - downTime <= TAP_TIMEOUT)
-                {
-                    if (touchId == AMotionEvent_getPointerId(event, 0))
-                    {
-                        float x = AMotionEvent_getX(event, 0) - tapTouchX;
-                        float y = AMotionEvent_getY(event, 0) - tapTouchY;
-
-                        float densityFactor = 1.0f;
-
-                        if ( x*x + y*y < TOUCH_SLOP*TOUCH_SLOP * densityFactor)
-                        {
-                            // TAP Detected
-                            touchTap = true;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-
-        //float AMotionEvent_getX(event, size_t pointer_index);
-        //int32_t AMotionEvent_getButtonState(event); // Pressed buttons
-        //int32_t AMotionEvent_getPointerId(event, size_t pointer_index);
-        //size_t pointerCount =  AMotionEvent_getPointerCount(event);
-        //float AMotionEvent_getPressure(const AInputEvent *motion_event, size_t pointer_index); // 0 to 1
-        //float AMotionEvent_getSize(const AInputEvent *motion_event, size_t pointer_index); // Pressed area
-
-        // Detect DOUBLE TAP event
-        bool tapDetected = touchTap;
-
-        switch (flags)
-        {
-            case AMOTION_EVENT_ACTION_DOWN:
-            {
-                int64_t eventTime = AMotionEvent_getEventTime(event);
-
-                if (eventTime - lastTapTime <= DOUBLE_TAP_TIMEOUT)
-                {
-                    float x = AMotionEvent_getX(event, 0) - lastTapX;
-                    float y = AMotionEvent_getY(event, 0) - lastTapY;
-
-                    float densityFactor = 1.0f;
-
-                    if ((x*x + y*y) < (DOUBLE_TAP_SLOP*DOUBLE_TAP_SLOP*densityFactor))
-                    {
-                        // Doubletap detected
-                        doubleTap = true;
-
-                    }
-                }
-            } break;
-            case AMOTION_EVENT_ACTION_UP:
-            {
-                if (tapDetected)
-                {
-                    lastTapTime = AMotionEvent_getEventTime(event);
-                    lastTapX = AMotionEvent_getX(event, 0);
-                    lastTapY = AMotionEvent_getY(event, 0);
-
-                }
-            } break;
-        }
-
-
-        // Detect DRAG event
-        //int32_t action = AMotionEvent_getAction(event);
-
-        int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-        //uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
-        //event_ = event;
-
-        int32_t count = AMotionEvent_getPointerCount(event);
-
-        switch (flags)
-        {
-            case AMOTION_EVENT_ACTION_DOWN:
-            {
-                stdVector[indexPosition] = AMotionEvent_getPointerId(event, 0);
-                indexPosition++;
-                TraceLog(INFO, "ACTION_DOWN");
-
-                //ret = GESTURE_STATE_START;
-            } break;
-            case AMOTION_EVENT_ACTION_POINTER_DOWN:
-            {
-                stdVector[indexPosition] = AMotionEvent_getPointerId(event, index);
-                indexPosition++;
-                TraceLog(INFO, "ACTION_POINTER_DOWN");
-
-            } break;
-            case AMOTION_EVENT_ACTION_UP:
-            {
-                //int value = stdVector[indexPosition];
-                indexPosition--;
-                //ret = GESTURE_STATE_END;
-                TraceLog(INFO, "ACTION_UP");
-
-            } break;
-            case AMOTION_EVENT_ACTION_POINTER_UP:
-            {
-                int32_t releasedPointerId = AMotionEvent_getPointerId(event, index);
-
-                int i = 0;
-                for (i = 0; i < MAX_TOUCH_POINTS; i++)
-                {
-                    if (stdVector[i] == releasedPointerId)
-                    {
-                        for (int k = i; k < indexPosition - 1; k++)
-                        {
-                            stdVector[k] = stdVector[k + 1];
-                        }
-
-                        //indexPosition--;
-                        indexPosition = 0;
-                        break;
-                    }
-                }
-
-                if (i <= 1)
-                {
-                    // Reset pinch or drag
-                    //if (count == 2) //ret = GESTURE_STATE_START;
-                }
-                TraceLog(INFO, "ACTION_POINTER_UP");
-
-            } break;
-            case AMOTION_EVENT_ACTION_MOVE:
-            {
-                if (count == 1)
-                {
-                    //TraceLog(INFO, "DRAG gesture detected");
-
-                    drag = true; //ret = GESTURE_STATE_MOVE;
-                }
-                else break;
-                TraceLog(INFO, "ACTION_MOVE");
-
-            } break;
-            case AMOTION_EVENT_ACTION_CANCEL: break;
-            default: break;
-        }
-
-        //--------------------------------------------------------------------
-
-        return 1;
-    }
-    else if (type == AINPUT_EVENT_TYPE_KEY)
-    {
-        //key = AKeyEvent_getKeyCode(event);
-        //int32_t AKeyEvent_getMetaState(event);
-    }
-
-    return 0;
-}
-
 // Android: Process activity lifecycle commands
-static void CommandCallback(struct android_app *app, int32_t cmd)
+static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 {
     switch (cmd)
     {
@@ -1904,11 +1677,6 @@ static void PollInputEvents(void)
 #elif defined(PLATFORM_ANDROID)
 
     // TODO: Check virtual keyboard (?)
-
-    // Reset touch events
-    touchTap = false;
-    doubleTap = false;
-    drag = false;
 
     // Poll Events (registered events)
     // TODO: Enable/disable activityMinimized to block activity if minimized
@@ -2397,6 +2165,7 @@ static void LogoAnimation(void)
 // Process desired camera mode and controls
 static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
 {
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI)
     // Mouse movement detection
     if (cameraMode != CAMERA_FREE)
     {
@@ -2647,4 +2416,5 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
         } break;
         default: break;
     }
+#endif
 }

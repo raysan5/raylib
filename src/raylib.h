@@ -183,6 +183,20 @@
 typedef enum { false, true } bool;
 #endif
 
+typedef enum {
+    GESTURE_NONE = 0,
+    GESTURE_TAP,
+    GESTURE_DOUBLETAP,
+    GESTURE_HOLD,
+    GESTURE_DRAG,
+    GESTURE_SWIPE_RIGHT,
+    GESTURE_SWIPE_LEFT,
+    GESTURE_SWIPE_UP,
+    GESTURE_SWIPE_DOWN,
+    GESTURE_PINCH_IN,
+    GESTURE_PINCH_OUT
+} Gestures;
+
 // byte type
 typedef unsigned char byte;
 
@@ -433,10 +447,18 @@ bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad b
 #endif
 
 #if defined(PLATFORM_ANDROID)
-bool IsScreenTouched(void);                             // Detect screen touch event
 int GetTouchX(void);                                    // Returns touch position X
 int GetTouchY(void);                                    // Returns touch position Y
 Vector2 GetTouchPosition(void);                         // Returns touch position XY
+
+bool IsGestureDetected(void);
+int GetGestureType(void);
+float GetDragIntensity(void);
+float GetDragAngle(void);
+Vector2 GetDragVector(void);
+int GetHoldDuration(void);                              // Hold time in frames
+float GetPinchDelta(void);
+float GetPinchAngle(void);
 #endif
 
 //------------------------------------------------------------------------------------
