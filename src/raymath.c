@@ -920,13 +920,13 @@ Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
-    if (abs(cosHalfTheta) >= 1.0f) result = q1;
+    if (fabs(cosHalfTheta) >= 1.0f) result = q1;
     else
     {
         float halfTheta = acos(cosHalfTheta);
         float sinHalfTheta = sqrt(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (abs(sinHalfTheta) < 0.001f)
+        if (fabs(sinHalfTheta) < 0.001f)
         {
             result.x = (q1.x*0.5f + q2.x*0.5f);
             result.y = (q1.y*0.5f + q2.y*0.5f);
@@ -1072,7 +1072,7 @@ Matrix QuaternionToMatrix(Quaternion q)
 // Returns the axis and the angle for a given quaternion
 void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 {
-    if (abs(q.w) > 1.0f) QuaternionNormalize(&q);
+    if (fabs(q.w) > 1.0f) QuaternionNormalize(&q);
 
     Vector3 resAxis = { 0, 0, 0 };
     float resAngle = 0;

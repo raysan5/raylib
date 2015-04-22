@@ -718,7 +718,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 
     float realy = (float)GetScreenHeight() - mousePosition.y;
 
-    float z;
+    //float z;
     // glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
     //http://www.bfilipek.com/2012/06/select-mouse-opengl.html
 
@@ -955,7 +955,7 @@ bool IsCursorHidden()
 
 // TODO: Enable gamepad usage on Rapsberry Pi
 // NOTE: emscripten not implemented
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // Detect if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {

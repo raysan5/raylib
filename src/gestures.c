@@ -30,7 +30,8 @@
 #include <stdlib.h>             // malloc(), free()
 #include <stdio.h>              // printf(), fprintf()
 #include <math.h>               // Used for ...
-#include <time.h>
+#include <time.h>               // Used for clock functions
+#include <stdint.h>             // Defines int32_t, int64_t
 
 #if defined(PLATFORM_ANDROID)
     #include <jni.h>                        // Java native interface
@@ -40,7 +41,7 @@
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
-    #include <emscripten/emscripten/html5.h>
+    #include <emscripten/html5.h>
 #endif
 
 //----------------------------------------------------------------------------------
@@ -78,7 +79,7 @@ typedef struct {
 static GestureType gestureType = TYPE_MOTIONLESS;
 
 // Gestures detection variables
-static int32_t touchId;
+//static int32_t touchId;         // Not used...
 
 // Event
 static int64_t eventTime = 0;
@@ -616,12 +617,11 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.action = MOVE;
     
     // Points
-    gestureEvent.pointCount = event->numTouches;
+    gestureEvent.pointCount = touchEvent->numTouches;
     
     // Position
     gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
     gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
-    
     
     ProcessMotionEvent(gestureEvent);
 

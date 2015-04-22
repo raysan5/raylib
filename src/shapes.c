@@ -395,8 +395,8 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 {
     bool collision = false;
 
-    float dx = abs((rec.x + rec.width/2) - center.x);
-    float dy = abs((rec.y + rec.height/2) - center.y);
+    float dx = fabs((rec.x + rec.width/2) - center.x);
+    float dy = fabs((rec.y + rec.height/2) - center.y);
 
     if ((dx <= (rec.width/2 + radius)) && (dy <= (rec.height/2 + radius))) collision = true;
 

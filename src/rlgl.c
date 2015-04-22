@@ -1411,12 +1411,14 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
     //glGetIntegerv(GL_VIEWPORT, viewport);
 
     // Viewport data
+/*
     int x = 0;
     int y = 0;
     int width = GetScreenWidth();
     int height = GetScreenHeight();
     float minDepth = 0.0f;
     float maxDepth = 1.0f;
+*/
 /*
     Matrix modelviewprojection = MatrixMultiply(modelview, projection);
     MatrixInvert(&modelviewprojection);
