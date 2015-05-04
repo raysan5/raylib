@@ -47,13 +47,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef struct {
-    unsigned char *data;    // Image raw data
-    int width;              // Image base width
-    int height;             // Image base height
-    int mipmaps;            // Mipmap levels, 1 by default
-    int format;             // Data format
-} ImageEx;
+// ...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -63,14 +57,16 @@ typedef struct {
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
 //----------------------------------------------------------------------------------
-//...
+// ...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static ImageEx LoadDDS(const char *fileName);   // Load DDS file
-static ImageEx LoadPKM(const char *fileName);   // Load PKM file
-static ImageEx LoadPVR(const char *fileName);   // Load PVR file
+static Image LoadDDS(const char *fileName);   // Load DDS file
+static Image LoadPKM(const char *fileName);   // Load PKM file
+static Image LoadKTX(const char *fileName);   // Load KTX file
+static Image LoadPVR(const char *fileName);   // Load PVR file
+static Image LoadASTC(const char *fileName);  // Load ASTC file
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -81,10 +77,12 @@ Image LoadImage(const char *fileName)
 {
     Image image;
 
-    // Initial values
-    image.pixels = NULL;
+    // Initialize image default values
+    image.data = NULL;
     image.width = 0;
     image.height = 0;
+    image.mipmaps = 0;
+    image.format = 0;
 
     if ((strcmp(GetExtension(fileName),"png") == 0) ||
         (strcmp(GetExtension(fileName),"bmp") == 0) ||
@@ -94,82 +92,39 @@ Image LoadImage(const char *fileName)
         (strcmp(GetExtension(fileName),"psd") == 0) ||
         (strcmp(GetExtension(fileName),"pic") == 0))
     {
-        int imgWidth;
-        int imgHeight;
-        int imgBpp;
-
+        int imgWidth = 0;
+        int imgHeight = 0;
+        int imgBpp = 0;
+        
         // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-        // Force loading to 4 components (RGBA)
-        byte *imgData = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);
+        image.data = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 0);
 
-        if (imgData != NULL)
-        {
-            // Convert array to pixel array for working convenience
-            image.pixels = (Color *)malloc(imgWidth * imgHeight * sizeof(Color));
-
-            int pix = 0;
-
-            for (int i = 0; i < (imgWidth * imgHeight * 4); i += 4)
-            {
-                image.pixels[pix].r = imgData[i];
-                image.pixels[pix].g = imgData[i+1];
-                image.pixels[pix].b = imgData[i+2];
-                image.pixels[pix].a = imgData[i+3];
-                pix++;
-            }
-
-            stbi_image_free(imgData);
-
-            image.width = imgWidth;
-            image.height = imgHeight;
-
-            TraceLog(INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
-        }
-        else TraceLog(WARNING, "[%s] Image could not be loaded, file not recognized", fileName);
+        image.width = imgWidth;
+        image.height = imgHeight;
+        image.mipmaps = 1;
+        
+        if (imgBpp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
+        else if (imgBpp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
+        else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
+        else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
     }
-    else if (strcmp(GetExtension(fileName),"dds") == 0)
-    {
-        // NOTE: DDS uncompressed images can also be loaded (discarding mipmaps...)
-
-        ImageEx imageDDS = LoadDDS(fileName);
-
-        if (imageDDS.format == 0)
-        {
-            image.pixels = (Color *)malloc(imageDDS.width * imageDDS.height * sizeof(Color));
-            image.width = imageDDS.width;
-            image.height = imageDDS.height;
-
-            int pix = 0;
-
-            for (int i = 0; i < (image.width * image.height * 4); i += 4)
-            {
-                image.pixels[pix].r = imageDDS.data[i];
-                image.pixels[pix].g = imageDDS.data[i+1];
-                image.pixels[pix].b = imageDDS.data[i+2];
-                image.pixels[pix].a = imageDDS.data[i+3];
-                pix++;
-            }
-
-            free(imageDDS.data);
-
-            TraceLog(INFO, "[%s] DDS Image loaded successfully (uncompressed, no mipmaps)", fileName);
-        }
-        else TraceLog(WARNING, "[%s] DDS Compressed image data could not be loaded", fileName);
+    else if (strcmp(GetExtension(fileName),"dds") == 0) image = LoadDDS(fileName);
+    else if (strcmp(GetExtension(fileName),"pkm") == 0) image = LoadPKM(fileName);
+    else if (strcmp(GetExtension(fileName),"ktx") == 0) image = LoadKTX(fileName);
+    else if (strcmp(GetExtension(fileName),"pvr") == 0) image = LoadPVR(fileName);
+    else if (strcmp(GetExtension(fileName),"astc") == 0) image = LoadASTC(fileName);
+    
+    if (image.data != NULL)
+    {     
+        TraceLog(INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
     }
-    else if (strcmp(GetExtension(fileName),"pkm") == 0)
-    {
-        TraceLog(INFO, "[%s] PKM Compressed image data could not be loaded", fileName);
-    }
-    else TraceLog(WARNING, "[%s] Image extension not recognized, it can't be loaded", fileName);
-
-    // ALTERNATIVE: We can load pixel data directly into Color struct pixels array,
-    // to do that, struct data alignment should be the right one (4 byte); it is.
-    //image.pixels = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 4);
+    else TraceLog(WARNING, "[%s] Image could not be loaded, file not recognized", fileName); 
 
     return image;
 }
 
 // Load an image from rRES file (raylib Resource)
+// TODO: Review function to support multiple color modes
 Image LoadImageFromRES(const char *rresName, int resId)
 {
     Image image;
@@ -232,28 +187,19 @@ Image LoadImageFromRES(const char *rresName, int resId)
                         image.width = (int)imgWidth;
                         image.height = (int)imgHeight;
 
-                        unsigned char *data = malloc(infoHeader.size);
+                        unsigned char *compData = malloc(infoHeader.size);
 
-                        fread(data, infoHeader.size, 1, rresFile);
+                        fread(compData, infoHeader.size, 1, rresFile);
 
-                        unsigned char *imgData = DecompressData(data, infoHeader.size, infoHeader.srcSize);
+                        unsigned char *imgData = DecompressData(compData, infoHeader.size, infoHeader.srcSize);
 
-                        image.pixels = (Color *)malloc(sizeof(Color)*imgWidth*imgHeight);
+                        // TODO: Review color mode
+                        //image.data = (unsigned char *)malloc(sizeof(unsigned char)*imgWidth*imgHeight*4);
+                        image.data = imgData;
 
-                        int pix = 0;
+                        //free(imgData);
 
-                        for (int i = 0; i < (imgWidth*imgHeight*4); i += 4)
-                        {
-                            image.pixels[pix].r = imgData[i];
-                            image.pixels[pix].g = imgData[i+1];
-                            image.pixels[pix].b = imgData[i+2];
-                            image.pixels[pix].a = imgData[i+3];
-                            pix++;
-                        }
-
-                        free(imgData);
-
-                        free(data);
+                        free(compData);
 
                         TraceLog(INFO, "[%s] Image loaded successfully from resource, size: %ix%i", rresName, image.width, image.height);
                     }
@@ -294,66 +240,14 @@ Texture2D LoadTexture(const char *fileName)
 {
     Texture2D texture;
 
-    // Init texture to default values
-    texture.id = 0;
-    texture.width = 0;
-    texture.height = 0;
-
-    if (strcmp(GetExtension(fileName),"dds") == 0)
-    {
-        ImageEx image = LoadDDS(fileName);
-
-        texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
-
-        texture.width = image.width;
-        texture.height = image.height;
-
-        if (texture.id == 0) TraceLog(WARNING, "[%s] DDS texture could not be loaded", fileName);
-        else TraceLog(INFO, "[%s] DDS texture loaded successfully", fileName);
-
-        free(image.data);
-    }
-    else if (strcmp(GetExtension(fileName),"pkm") == 0)
-    {
-        ImageEx image = LoadPKM(fileName);
-
-        texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
-
-        texture.width = image.width;
-        texture.height = image.height;
-
-        if (texture.id == 0) TraceLog(WARNING, "[%s] PKM texture could not be loaded", fileName);
-        else TraceLog(INFO, "[%s] PKM texture loaded successfully", fileName);
-
-        free(image.data);
-    }
-    else if (strcmp(GetExtension(fileName),"pvr") == 0)
-    {
-        ImageEx image = LoadPVR(fileName);
-        
-        texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
-
-        texture.width = image.width;
-        texture.height = image.height;
-
-        if (texture.id == 0) TraceLog(WARNING, "[%s] PVR texture could not be loaded", fileName);
-        else TraceLog(INFO, "[%s] PVR texture loaded successfully", fileName);
-
-        free(image.data);
-    }
-    else
-    {
-        Image image = LoadImage(fileName);
-
-        if (image.pixels != NULL)
-        {
+    Image image = LoadImage(fileName);
+    
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-            ConvertToPOT(&image, BLANK);
+    ConvertToPOT(&image, BLANK);
 #endif
-            texture = LoadTextureFromImage(image, false);
-            UnloadImage(image);
-        }
-    }
+
+    texture = LoadTextureFromImage(image, false);
+    UnloadImage(image);
 
     return texture;
 }
@@ -364,6 +258,8 @@ Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, in
 
     texture.width = width;
     texture.height = height;
+    texture.mipmaps = mipmapCount;
+    texture.format = textureFormat;
     
     texture.id = rlglLoadTexture(data, width, height, textureFormat, mipmapCount, genMipmaps);
     
@@ -380,45 +276,15 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
     texture.id = 0;
     texture.width = 0;
     texture.height = 0;
-
-    if ((image.pixels != NULL) && (image.width > 0) && (image.height > 0))
-    {
-        unsigned char *imgData = malloc(image.width * image.height * 4);
-
-        int j = 0;
-
-        for (int i = 0; i < image.width * image.height * 4; i += 4)
-        {
-            imgData[i] = image.pixels[j].r;
-            imgData[i+1] = image.pixels[j].g;
-            imgData[i+2] = image.pixels[j].b;
-            imgData[i+3] = image.pixels[j].a;
-
-            j++;
-        }
-
-        // NOTE: rlglLoadTexture() can generate mipmaps (POT image required)
-        texture.id = rlglLoadTexture(imgData, image.width, image.height, UNCOMPRESSED_R8G8B8A8, 1, genMipmaps);
-
-        texture.width = image.width;
-        texture.height = image.height;
-
-        free(imgData);
-    }
-    else TraceLog(WARNING, "Texture could not be loaded, image data is not valid");
-
-    return texture;
-}
-
-// [DEPRECATED] Load a texture from image data
-// NOTE: Use LoadTextureFromImage() instead
-Texture2D CreateTexture(Image image, bool genMipmaps)
-{
-    Texture2D texture;
-
-    texture = LoadTextureFromImage(image, genMipmaps);
-
-    TraceLog(INFO, "Created texture id: %i", texture.id);
+    texture.mipmaps = 0;
+    texture.format = 0;
+    
+    texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
+    
+    texture.width = image.width;
+    texture.height = image.height;
+    texture.mipmaps = image.mipmaps;
+    texture.format = image.format;
 
     return texture;
 }
@@ -438,7 +304,7 @@ Texture2D LoadTextureFromRES(const char *rresName, int resId)
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
-    free(image.pixels);
+    free(image.data);
 }
 
 // Unload texture from GPU memory
@@ -451,6 +317,8 @@ void UnloadTexture(Texture2D texture)
 // NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
 void ConvertToPOT(Image *image, Color fillColor)
 {
+    // TODO: Review for new image struct
+    /*
     // Just add the required amount of pixels at the right and bottom sides of image...
     int potWidth = GetNextPOT(image->width);
     int potHeight = GetNextPOT(image->height);
@@ -467,7 +335,7 @@ void ConvertToPOT(Image *image, Color fillColor)
         {
             for (int i = 0; i < potWidth; i++)
             {
-                if ((j < image->height) && (i < image->width)) imgDataPixelPOT[j*potWidth + i] = image->pixels[j*image->width + i];
+                if ((j < image->height) && (i < image->width)) imgDataPixelPOT[j*potWidth + i] = image->data[j*image->width + i];
                 else imgDataPixelPOT[j*potWidth + i] = fillColor;
             }
         }
@@ -479,6 +347,115 @@ void ConvertToPOT(Image *image, Color fillColor)
         image->pixels = imgDataPixelPOT;
         image->width = potWidth;
         image->height = potHeight;
+    }
+    */
+}
+
+// Get pixel data from image in the form of Color struct array
+Color *GetPixelData(Image image)
+{
+    Color *pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
+    
+    int k = 0;
+
+    for (int i = 0; i < image.width*image.height; i++)
+    {
+        switch (image.format)
+        {
+            case UNCOMPRESSED_GRAYSCALE:
+            {
+                pixels[i].r = ((unsigned char *)image.data)[k];
+                pixels[i].g = ((unsigned char *)image.data)[k];
+                pixels[i].b = ((unsigned char *)image.data)[k];
+                pixels[i].a = 255;
+        
+                k++;
+            } break;
+            case UNCOMPRESSED_GRAY_ALPHA:
+            {
+                pixels[i].r = ((unsigned char *)image.data)[k];
+                pixels[i].g = ((unsigned char *)image.data)[k];
+                pixels[i].b = ((unsigned char *)image.data)[k];
+                pixels[i].a = ((unsigned char *)image.data)[k + 1];
+        
+                k += 2;
+            } break;
+            case UNCOMPRESSED_R5G5B5A1:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[k];
+
+                pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
+                pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
+        
+                k++;
+            } break;
+            case UNCOMPRESSED_R5G6B5:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[k];
+
+                pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
+                pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
+                pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                pixels[i].a = 255;
+        
+                k++;
+            } break;
+            case UNCOMPRESSED_R4G4B4A4:
+            {
+                unsigned short pixel = ((unsigned short *)image.data)[k];
+                
+                pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
+                pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
+                pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
+                pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
+        
+                k++;
+            } break;
+            case UNCOMPRESSED_R8G8B8A8:
+            {
+                pixels[i].r = ((unsigned char *)image.data)[k];
+                pixels[i].g = ((unsigned char *)image.data)[k + 1];
+                pixels[i].b = ((unsigned char *)image.data)[k + 2];
+                pixels[i].a = ((unsigned char *)image.data)[k + 3];
+        
+                k += 4;
+            } break;
+            case UNCOMPRESSED_R8G8B8:
+            {
+                pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
+                pixels[i].g = (unsigned char)((unsigned char *)image.data)[k + 1];
+                pixels[i].b = (unsigned char)((unsigned char *)image.data)[k + 2];
+                pixels[i].a = 255;
+        
+                k += 3;
+            } break;
+            default: TraceLog(WARNING, "Format not supported for pixel data retrieval"); break;
+        }      
+    }
+
+    return pixels;
+}
+
+// Fill image data with pixels Color data (RGBA - 32bit)
+// NOTE: Pixels color array size must be coherent with image size
+// TODO: Review to support different color modes (TextureFormat)
+void SetPixelData(Image *image, Color *pixels, int format)
+{
+    free(image->data);
+    image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
+    
+    int k = 0;
+    
+    for (int i = 0; i < image->width*image->height*4; i += 4)
+    {
+        ((unsigned char *)image->data)[i] = pixels[k].r;
+        ((unsigned char *)image->data)[i + 1] = pixels[k].g;
+        ((unsigned char *)image->data)[i + 2] = pixels[k].b;
+        ((unsigned char *)image->data)[i + 3] = pixels[k].a;
+        
+        k++;
     }
 }
 
@@ -554,9 +531,17 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
 //----------------------------------------------------------------------------------
 
 // Loading DDS image data (compressed or uncompressed)
-// NOTE: Compressed data loading not supported on OpenGL 1.1
-static ImageEx LoadDDS(const char *fileName)
+static Image LoadDDS(const char *fileName)
 {
+    // Required extension:
+    // GL_EXT_texture_compression_s3tc
+    
+    // Supported tokens (defined by extensions)
+    // GL_COMPRESSED_RGB_S3TC_DXT1_EXT      0x83F0
+    // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT     0x83F1
+    // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT     0x83F2
+    // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT     0x83F3
+    
     #define FOURCC_DXT1 0x31545844  // Equivalent to "DXT1" in ASCII
     #define FOURCC_DXT3 0x33545844  // Equivalent to "DXT3" in ASCII
     #define FOURCC_DXT5 0x35545844  // Equivalent to "DXT5" in ASCII
@@ -569,7 +554,7 @@ static ImageEx LoadDDS(const char *fileName)
         unsigned int rgbBitCount;
         unsigned int rBitMask;
         unsigned int gBitMask;
-        unsigned int bitMask;
+        unsigned int bBitMask;
         unsigned int aBitMask;
     } ddsPixelFormat;
 
@@ -581,7 +566,7 @@ static ImageEx LoadDDS(const char *fileName)
         unsigned int width;
         unsigned int pitchOrLinearSize;
         unsigned int depth;
-        unsigned int mipMapCount;
+        unsigned int mipmapCount;
         unsigned int reserved1[11];
         ddsPixelFormat ddspf;
         unsigned int caps;
@@ -591,8 +576,7 @@ static ImageEx LoadDDS(const char *fileName)
         unsigned int reserved2;
     } ddsHeader;
 
-    ImageEx image;
-    ddsHeader header;
+    Image image;
 
     image.data = NULL;
     image.width = 0;
@@ -604,7 +588,7 @@ static ImageEx LoadDDS(const char *fileName)
 
     if (ddsFile == NULL)
     {
-        TraceLog(WARNING, "[%s] DDS image file could not be opened", fileName);
+        TraceLog(WARNING, "[%s] DDS file could not be opened", fileName);
     }
     else
     {
@@ -616,11 +600,12 @@ static ImageEx LoadDDS(const char *fileName)
         if (strncmp(filecode, "DDS ", 4) != 0)
         {
             TraceLog(WARNING, "[%s] DDS file does not seem to be a valid image", fileName);
-            fclose(ddsFile);
         }
         else
         {
-            // Get the surface descriptor
+            ddsHeader header;
+            
+            // Get the image header
             fread(&header, sizeof(ddsHeader), 1, ddsFile);
 
             TraceLog(DEBUG, "[%s] DDS file header size: %i", fileName, sizeof(ddsHeader));
@@ -630,63 +615,85 @@ static ImageEx LoadDDS(const char *fileName)
 
             image.width = header.width;
             image.height = header.height;
+            image.mipmaps = 1;  // Default value, could be changed (header.mipmapCount)
 
-            if (header.ddspf.flags == 0x40 && header.ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
+            if (header.ddspf.rgbBitCount == 16)     // 16bit mode, no compressed
             {
-                image.data = (unsigned char *)malloc(header.width * header.height * 4);
-                unsigned char *buffer = (unsigned char *)malloc(header.width * header.height * 3);
-
-                fread(buffer, image.width*image.height*3, 1, ddsFile);
-
-                unsigned char *src = buffer;
-                unsigned char *dest = image.data;
-
-                for(int y = 0; y < image.height; y++)
+                if (header.ddspf.flags == 0x40)         // no alpha channel
                 {
-                    for(int x = 0; x < image.width; x++)
+                    image.data = (unsigned short *)malloc(image.width*image.height*sizeof(unsigned short));
+                    fread(image.data, image.width*image.height*sizeof(unsigned short), 1, ddsFile);
+
+                    image.format = UNCOMPRESSED_R5G6B5;
+                }
+                else if (header.ddspf.flags == 0x41)        // with alpha channel
+                {
+                    if (header.ddspf.aBitMask == 0x8000)    // 1bit alpha
                     {
-                        *dest++ = *src++;
-                        *dest++ = *src++;
-                        *dest++ = *src++;
-                        *dest++ = 255;
+                        image.data = (unsigned short *)malloc(image.width*image.height*sizeof(unsigned short));
+                        fread(image.data, image.width*image.height*sizeof(unsigned short), 1, ddsFile);
+                        
+                        unsigned char alpha = 0;
+                        
+                        // NOTE: Data comes as A1R5G5B5, it must be reordered to R5G5B5A1
+                        for (int i = 0; i < image.width*image.height; i++)
+                        {
+                            alpha = ((unsigned short *)image.data)[i] >> 15;
+                            ((unsigned short *)image.data)[i] = ((unsigned short *)image.data)[i] << 1;
+                            ((unsigned short *)image.data)[i] += alpha;
+                        }
+
+                        image.format = UNCOMPRESSED_R5G5B5A1;
+                    }
+                    else if (header.ddspf.aBitMask == 0xf000)   // 4bit alpha
+                    {
+                        image.data = (unsigned short *)malloc(image.width*image.height*sizeof(unsigned short));
+                        fread(image.data, image.width*image.height*sizeof(unsigned short), 1, ddsFile);
+                        
+                        unsigned char alpha = 0;
+                        
+                        // NOTE: Data comes as A4R4G4B4, it must be reordered R4G4B4A4
+                        for (int i = 0; i < image.width*image.height; i++)
+                        {
+                            alpha = ((unsigned short *)image.data)[i] >> 12;
+                            ((unsigned short *)image.data)[i] = ((unsigned short *)image.data)[i] << 4;
+                            ((unsigned short *)image.data)[i] += alpha;
+                        }
+                        
+                        image.format = UNCOMPRESSED_R4G4B4A4;
                     }
                 }
+            }
+            if (header.ddspf.flags == 0x40 && header.ddspf.rgbBitCount == 24)   // DDS_RGB, no compressed
+            {
+                // NOTE: not sure if this case exists...
+                image.data = (unsigned char *)malloc(image.width*image.height*3*sizeof(unsigned char));
+                fread(image.data, image.width*image.height*3, 1, ddsFile);
                 
-                free(buffer);
-                
-                image.mipmaps = 1;
                 image.format = UNCOMPRESSED_R8G8B8;
             }
             else if (header.ddspf.flags == 0x41 && header.ddspf.rgbBitCount == 32) // DDS_RGBA, no compressed
             {
-                image.data = (unsigned char *)malloc(header.width * header.height * 4);
-
+                image.data = (unsigned char *)malloc(image.width*image.height*4*sizeof(unsigned char));
                 fread(image.data, image.width*image.height*4, 1, ddsFile);
 
-                image.mipmaps = 1;
                 image.format = UNCOMPRESSED_R8G8B8A8;
             }
             else if (((header.ddspf.flags == 0x04) || (header.ddspf.flags == 0x05)) && (header.ddspf.fourCC > 0))
             {
-                //TraceLog(WARNING, "[%s] DDS image uses compression, not supported on OpenGL 1.1", fileName);
-                //TraceLog(WARNING, "[%s] DDS compressed files require OpenGL 3.2+ or ES 2.0", fileName);
-
                 int bufsize;
 
                 // Calculate data size, including all mipmaps
-                if (header.mipMapCount > 1) bufsize = header.pitchOrLinearSize * 2;
+                if (header.mipmapCount > 1) bufsize = header.pitchOrLinearSize*2;
                 else bufsize = header.pitchOrLinearSize;
                 
                 TraceLog(DEBUG, "Pitch or linear size: %i", header.pitchOrLinearSize);
 
-                image.data = (unsigned char*)malloc(bufsize * sizeof(unsigned char));
+                image.data = (unsigned char*)malloc(bufsize*sizeof(unsigned char));
 
                 fread(image.data, 1, bufsize, ddsFile);
 
-                // Close file pointer
-                fclose(ddsFile);
-
-                image.mipmaps = header.mipMapCount;
+                image.mipmaps = header.mipmapCount;
 
                 switch(header.ddspf.fourCC)
                 {
@@ -701,6 +708,8 @@ static ImageEx LoadDDS(const char *fileName)
                 }
             }
         }
+        
+        fclose(ddsFile);    // Close file pointer
     }
 
     return image;
@@ -709,94 +718,195 @@ static ImageEx LoadDDS(const char *fileName)
 // Loading PKM image data (ETC1/ETC2 compression)
 // NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
-// ETC1 compression support requires extension GL_OES_compressed_ETC1_RGB8_texture
-static ImageEx LoadPKM(const char *fileName)
+static Image LoadPKM(const char *fileName)
 {
-    // If OpenGL ES 2.0. the following format could be supported (ETC1):
-    //GL_ETC1_RGB8_OES
-
-    // If OpenGL ES 3.0, the following formats are supported (ETC2/EAC):
-    //GL_COMPRESSED_RGB8_ETC2
-    //GL_COMPRESSED_RGBA8_ETC2
-    //GL_COMPRESSED_RG11_EAC
-    //...
+    // Required extensions:
+    // GL_OES_compressed_ETC1_RGB8_texture  (ETC1) (OpenGL ES 2.0)
+    // GL_ARB_ES3_compatibility  (ETC2/EAC) (OpenGL ES 3.0)
+    
+    // Supported tokens (defined by extensions)
+    // GL_ETC1_RGB8_OES                 0x8D64  
+    // GL_COMPRESSED_RGB8_ETC2          0x9274
+    // GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
 
     // PKM file (ETC1) Header (16 bytes)
     typedef struct {
         char id[4];                 // "PKM "
-        char version[2];            // "10"
-        unsigned short format;      // Format = number of mipmaps = 0 (ETC1_RGB_NO_MIPMAPS)
-        unsigned short extWidth;    // Texture width (big-endian)
-        unsigned short extHeight;   // Texture height (big-endian)
+        char version[2];            // "10" or "20"
+        unsigned short format;      // Data format (big-endian) (Check list below)
+        unsigned short width;       // Texture width (big-endian) (origWidth rounded to multiple of 4)
+        unsigned short height;      // Texture height (big-endian) (origHeight rounded to multiple of 4)
         unsigned short origWidth;   // Original width (big-endian)
         unsigned short origHeight;  // Original height (big-endian)
     } pkmHeader;
+    
+    // Formats list
+    // version 10: format: 0=ETC1_RGB, [1=ETC1_RGBA, 2=ETC1_RGB_MIP, 3=ETC1_RGBA_MIP] (not used)
+    // version 20: format: 0=ETC1_RGB, 1=ETC2_RGB, 2=ETC2_RGBA_OLD, 3=ETC2_RGBA, 4=ETC2_RGBA1, 5=ETC2_R, 6=ETC2_RG, 7=ETC2_SIGNED_R, 8=ETC2_SIGNED_R
 
     // NOTE: The extended width and height are the widths rounded up to a multiple of 4.
-    // NOTE: ETC is always 4bit per pixel (64 bits for each 4x4 block of pixels)
+    // NOTE: ETC is always 4bit per pixel (64 bit for each 4x4 block of pixels)
 
-    // Bytes Swap (little-endian <-> big-endian)
-    //unsigned short data;
-    //unsigned short swap = ((data & 0x00FF) << 8) | ((data & 0xFF00) >> 8);
-
-    ImageEx image;
-
-    unsigned short width;
-    unsigned short height;
-    unsigned short useless;
+    Image image;
+    
+    image.data = NULL;
+    image.width = 0;
+    image.height = 0;
+    image.mipmaps = 0;
+    image.format = 0;
 
     FILE *pkmFile = fopen(fileName, "rb");
 
     if (pkmFile == NULL)
     {
-        TraceLog(WARNING, "[%s] PKM image file could not be opened", fileName);
+        TraceLog(WARNING, "[%s] PKM file could not be opened", fileName);
     }
     else
     {
-        // Verify the type of file
-        char filecode[4];
+        pkmHeader header;
 
-        fread(filecode, 1, 4, pkmFile);
+        // Get the image header
+        fread(&header, sizeof(pkmHeader), 1, pkmFile);
 
-        if (strncmp(filecode, "PKM ", 4) != 0)
+        if (strncmp(header.id, "PKM ", 4) != 0)
         {
             TraceLog(WARNING, "[%s] PKM file does not seem to be a valid image", fileName);
-            fclose(pkmFile);
         }
         else
         {
-            // Get the surface descriptor
-            fread(&useless, sizeof(unsigned short), 1, pkmFile);    // Discard version
-            fread(&useless, sizeof(unsigned short), 1, pkmFile);    // Discard format
-
-            fread(&width, sizeof(unsigned short), 1, pkmFile);      // Read extended width
-            fread(&height, sizeof(unsigned short), 1, pkmFile);     // Read extended height
-
-            int size = (width/4)*(height/4)*8;  // Total data size in bytes
+            // NOTE: format, width and height come as big-endian, data must be swapped to little-endian
+            header.format = ((header.format & 0x00FF) << 8) | ((header.format & 0xFF00) >> 8);
+            header.width = ((header.width & 0x00FF) << 8) | ((header.width & 0xFF00) >> 8);
+            header.height = ((header.height & 0x00FF) << 8) | ((header.height & 0xFF00) >> 8);
+            
+            TraceLog(INFO, "PKM (ETC) image width: %i", header.width);
+            TraceLog(INFO, "PKM (ETC) image height: %i", header.height);
+            TraceLog(INFO, "PKM (ETC) image format: %i", header.format);
+            
+            image.width = header.width;
+            image.height = header.height;
+            image.mipmaps = 1;
+            
+            int size = image.width*image.height*4/8;  // Total data size in bytes
 
             image.data = (unsigned char*)malloc(size * sizeof(unsigned char));
 
             fread(image.data, 1, size, pkmFile);
 
-            fclose(pkmFile);    // Close file pointer
-
-            image.width = width;
-            image.height = height;
-            image.mipmaps = 1;
-            image.format = COMPRESSED_ETC1_RGB;
+            if (header.format == 0) image.format = COMPRESSED_ETC1_RGB;
+            else if (header.format == 1) image.format = COMPRESSED_ETC2_RGB;
+            else if (header.format == 3) image.format = COMPRESSED_ETC2_EAC_RGBA;
         }
+        
+        fclose(pkmFile);    // Close file pointer
     }
 
     return image;
 }
 
-// Loading PVR image data (uncompressed or PVRT compression)
-// NOTE: PVR compression requires extension GL_IMG_texture_compression_pvrtc (PowerVR GPUs)
-static ImageEx LoadPVR(const char *fileName)
+// Load KTX compressed image data (ETC1/ETC2 compression)
+static Image LoadKTX(const char *fileName)
 {
-    // If supported in OpenGL ES 2.0. the following formats could be defined:
-    // GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG      (RGB)
-    // GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG     (RGBA)
+    // Required extensions:
+    // GL_OES_compressed_ETC1_RGB8_texture  (ETC1)
+    // GL_ARB_ES3_compatibility  (ETC2/EAC)
+    
+    // Supported tokens (defined by extensions)
+    // GL_ETC1_RGB8_OES                 0x8D64
+    // GL_COMPRESSED_RGB8_ETC2          0x9274
+    // GL_COMPRESSED_RGBA8_ETC2_EAC     0x9278
+    
+    // KTX file Header (64 bytes)
+    // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    typedef struct {
+        char id[12];                        // Identifier: "«KTX 11»\r\n\x1A\n"
+        unsigned int endianness;            // Little endian: 0x01 0x02 0x03 0x04
+        unsigned int glType;                // For compressed textures, glType must equal 0
+        unsigned int glTypeSize;            // For compressed texture data, usually 1
+        unsigned int glFormat;              // For compressed textures is 0
+        unsigned int glInternalFormat;      // Compressed internal format
+        unsigned int glBaseInternalFormat;  // Same as glFormat (RGB, RGBA, ALPHA...)
+        unsigned int width;                 // Texture image width in pixels
+        unsigned int height;                // Texture image height in pixels
+        unsigned int depth;                 // For 2D textures is 0
+        unsigned int elements;              // Number of array elements, usually 0
+        unsigned int faces;                 // Cubemap faces, for no-cubemap = 1
+        unsigned int mipmapLevels;          // Non-mipmapped textures = 1
+        unsigned int keyValueDataSize;      // Used to encode any arbitrary data...
+    } ktxHeader;
+    
+    // NOTE: Before start of every mipmap data block, we have: unsigned int dataSize
+    
+    Image image;
+
+    image.width = 0;
+    image.height = 0;
+    image.mipmaps = 0;
+    image.format = 0;
+    
+    FILE *ktxFile = fopen(fileName, "rb");
+
+    if (ktxFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] KTX image file could not be opened", fileName);
+    }
+    else
+    {
+        ktxHeader header;
+
+        // Get the image header
+        fread(&header, sizeof(ktxHeader), 1, ktxFile);
+
+        if ((header.id[1] != 'K') || (header.id[2] != 'T') || (header.id[3] != 'X') ||
+            (header.id[4] != ' ') || (header.id[5] != '1') || (header.id[6] != '1'))
+        {
+            TraceLog(WARNING, "[%s] KTX file does not seem to be a valid file", fileName);
+        }
+        else
+        {           
+            image.width = header.width;
+            image.height = header.height;
+            image.mipmaps = header.mipmapLevels;
+            
+            TraceLog(INFO, "KTX (ETC) image width: %i", header.width);
+            TraceLog(INFO, "KTX (ETC) image height: %i", header.height);
+            TraceLog(INFO, "KTX (ETC) image format: 0x%x", header.glInternalFormat);
+            
+            unsigned char unused;
+            
+            if (header.keyValueDataSize > 0)
+            {
+                for (int i = 0; i < header.keyValueDataSize; i++) fread(&unused, 1, 1, ktxFile);
+            }
+            
+            int dataSize;
+            fread(&dataSize, sizeof(unsigned int), 1, ktxFile);
+
+            image.data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+
+            fread(image.data, 1, dataSize, ktxFile);
+
+            if (header.glInternalFormat == 0x8D64) image.format = COMPRESSED_ETC1_RGB;
+            else if (header.glInternalFormat == 0x9274) image.format = COMPRESSED_ETC2_RGB;
+            else if (header.glInternalFormat == 0x9278) image.format = COMPRESSED_ETC2_EAC_RGBA;
+        }
+        
+        fclose(ktxFile);    // Close file pointer
+    }
+    
+    return image;
+}
+
+// Loading PVR image data (uncompressed or PVRT compression)
+// NOTE: PVR v2 not supported, use PVR v3 instead
+static Image LoadPVR(const char *fileName)
+{
+    // Required extension:
+    // GL_IMG_texture_compression_pvrtc
+    
+    // Supported tokens (defined by extensions)
+    // GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG       0x8C00
+    // GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG      0x8C02
     
     // PVR file v2 Header (52 bytes)
     typedef struct {
@@ -818,25 +928,30 @@ static ImageEx LoadPVR(const char *fileName)
     // PVR file v3 Header (52 bytes)
     // NOTE: After it could be metadata (15 bytes?)
     typedef struct {
-        unsigned int version;            
-        unsigned int flags;          
-        unsigned long long pixelFormat;        
-        unsigned int colourSpace;        
-        unsigned int channelType;        
-        unsigned int height;         
-        unsigned int width;          
-        unsigned int depth;          
-        unsigned int numSurfaces;        
-        unsigned int numFaces;       
-        unsigned int numMipmaps;     
-        unsigned int metaDataSize;   
+        char id[4];
+        unsigned int flags;
+        unsigned char channels[4];      // pixelFormat high part
+        unsigned char channelDepth[4];  // pixelFormat low part
+        unsigned int colourSpace;
+        unsigned int channelType;
+        unsigned int height;
+        unsigned int width;
+        unsigned int depth;
+        unsigned int numSurfaces;
+        unsigned int numFaces;
+        unsigned int numMipmaps;
+        unsigned int metaDataSize;
     } pvrHeaderV3;
     
-    // Bytes Swap (little-endian <-> big-endian)
-    //unsigned short data;
-    //unsigned short swap = ((data & 0x00FF) << 8) | ((data & 0xFF00) >> 8);
+    // Metadata (usually 15 bytes)
+    typedef struct {
+        unsigned int devFOURCC;
+        unsigned int key;
+        unsigned int dataSize;      // Not used?
+        unsigned char *data;        // Not used?
+    } pvrMetadata; 
 
-    ImageEx image;
+    Image image;
 
     image.data = NULL;
     image.width = 0;
@@ -848,48 +963,164 @@ static ImageEx LoadPVR(const char *fileName)
 
     if (pvrFile == NULL)
     {
-        TraceLog(WARNING, "[%s] PVR image file could not be opened", fileName);
+        TraceLog(WARNING, "[%s] PVR file could not be opened", fileName);
     }
     else
     {
         // Check PVR image version
-        unsigned int pvrVersion = 0;
-        fread(&pvrVersion, sizeof(unsigned int), 1, pvrFile);
-        fsetpos(pvrFile, 0);
+        unsigned char pvrVersion = 0;
+        fread(&pvrVersion, sizeof(unsigned char), 1, pvrFile);
+        fseek(pvrFile, 0, SEEK_SET);
         
-        if (pvrVersion == 52)
-        {
-            pvrHeaderV2 header;
-            
-            fread(&header, sizeof(pvrHeaderV2), 1, pvrFile);
-            
-            image.width = header.width;
-            image.height = header.height;
-            image.mipmaps = header.numMipmaps;
-            image.format = COMPRESSED_PVRT_RGB; //COMPRESSED_PVRT_RGBA
-        }
-        else if (pvrVersion == 3)
+        // Load different PVR data formats
+        if (pvrVersion == 0x50)
         {
             pvrHeaderV3 header;
             
+            // Get PVR image header
             fread(&header, sizeof(pvrHeaderV3), 1, pvrFile);
             
-            image.width = header.width;
-            image.height = header.height;
-            image.mipmaps = header.numMipmaps;
-            
-            // TODO: Skip metaDataSize
-            
-            image.format = COMPRESSED_PVRT_RGB; //COMPRESSED_PVRT_RGBA
+            if ((header.id[0] != 'P') || (header.id[1] != 'V') || (header.id[2] != 'R') || (header.id[3] != 3))
+            {
+                TraceLog(WARNING, "[%s] PVR file does not seem to be a valid image", fileName);
+            }
+            else
+            {
+                image.width = header.width;
+                image.height = header.height;
+                image.mipmaps = header.numMipmaps + 1;
+                
+                // Check data format
+                if (((header.channels[0] == 'l') && (header.channels[1] == 0)) && (header.channelDepth[0] == 8)) image.format = UNCOMPRESSED_GRAYSCALE;
+                else if (((header.channels[0] == 'l') && (header.channels[1] == 'a')) && ((header.channelDepth[0] == 8) && (header.channelDepth[1] == 8))) image.format = UNCOMPRESSED_GRAY_ALPHA;
+                else if ((header.channels[0] == 'r') && (header.channels[1] == 'g') && (header.channels[2] == 'b'))
+                {
+                    if (header.channels[3] == 'a')
+                    {
+                        if ((header.channelDepth[0] == 5) && (header.channelDepth[1] == 5) && (header.channelDepth[2] == 5) && (header.channelDepth[3] == 1)) image.format = UNCOMPRESSED_R5G5B5A1;
+                        else if ((header.channelDepth[0] == 4) && (header.channelDepth[1] == 4) && (header.channelDepth[2] == 4) && (header.channelDepth[3] == 4)) image.format = UNCOMPRESSED_R4G4B4A4;
+                        else if ((header.channelDepth[0] == 8) && (header.channelDepth[1] == 8) && (header.channelDepth[2] == 8) && (header.channelDepth[3] == 8)) image.format = UNCOMPRESSED_R8G8B8A8;
+                    }
+                    else if (header.channels[3] == 0)
+                    {
+                        if ((header.channelDepth[0] == 5) && (header.channelDepth[1] == 6) && (header.channelDepth[2] == 5)) image.format = UNCOMPRESSED_R5G6B5;
+                        else if ((header.channelDepth[0] == 8) && (header.channelDepth[1] == 8) && (header.channelDepth[2] == 8)) image.format = UNCOMPRESSED_R8G8B8;
+                    }
+                }
+                else if (header.channels[0] == 2) image.format = COMPRESSED_PVRT_RGB;
+                else if (header.channels[0] == 3) image.format = COMPRESSED_PVRT_RGBA;
+                
+                // Skip meta data header
+                unsigned char unused = 0;
+                for (int i = 0; i < header.metaDataSize; i++) fread(&unused, sizeof(unsigned char), 1, pvrFile);
+                
+                // Calculate data size (depends on format)
+                int bpp = 0;
+                
+                switch (image.format)
+                {
+                    case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+                    case UNCOMPRESSED_GRAY_ALPHA:
+                    case UNCOMPRESSED_R5G5B5A1:
+                    case UNCOMPRESSED_R5G6B5:
+                    case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+                    case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+                    case UNCOMPRESSED_R8G8B8: bpp = 24; break;
+                    case COMPRESSED_PVRT_RGB:
+                    case COMPRESSED_PVRT_RGBA: bpp = 4; break;
+                    default: break;
+                }
+                
+                int dataSize = image.width*image.height*bpp/8;  // Total data size in bytes
+                image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
+
+                // Read data from file
+                fread(image.data, dataSize, 1, pvrFile);
+            }
         }
-
-        int size = (image.width/4)*(image.height/4)*8;  // Total data size in bytes
-
-        image.data = (unsigned char*)malloc(size * sizeof(unsigned char));
-
-        fread(image.data, 1, size, pvrFile);
+        else if (pvrVersion == 52) TraceLog(INFO, "PVR v2 not supported, update your files to PVR v3");
 
         fclose(pvrFile);    // Close file pointer
+    }
+
+    return image;
+}
+
+// Load ASTC compressed image data (ASTC compression)
+static Image LoadASTC(const char *fileName)
+{
+    // Required extensions:
+    // GL_KHR_texture_compression_astc_hdr
+    // GL_KHR_texture_compression_astc_ldr
+    
+    // Supported tokens (defined by extensions)
+    // GL_COMPRESSED_RGBA_ASTC_4x4_KHR      0x93b0
+    // GL_COMPRESSED_RGBA_ASTC_8x8_KHR      0x93b7
+    
+    // ASTC file Header (16 bytes)
+    typedef struct {
+        unsigned char id[4];        // Signature: 0x13 0xAB 0xA1 0x5C
+        unsigned char blockX;       // Block X dimensions
+        unsigned char blockY;       // Block Y dimensions
+        unsigned char blockZ;       // Block Z dimensions (1 for 2D images)
+        unsigned char width[3];     // Image width in pixels (24bit value)
+        unsigned char height[3];    // Image height in pixels (24bit value)
+        unsigned char lenght[3];    // Image Z-size (1 for 2D images)
+    } astcHeader;
+
+    Image image;
+
+    image.data = NULL;
+    image.width = 0;
+    image.height = 0;
+    image.mipmaps = 0;
+    image.format = 0;
+    
+    FILE *astcFile = fopen(fileName, "rb");
+
+    if (astcFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] ASTC file could not be opened", fileName);
+    }
+    else
+    {
+        astcHeader header;
+
+        // Get ASTC image header
+        fread(&header, sizeof(astcHeader), 1, astcFile);
+        
+        if ((header.id[3] != 0x5c) || (header.id[2] != 0xa1) || (header.id[1] != 0xab) || (header.id[0] != 0x13))
+        {
+            TraceLog(WARNING, "[%s] ASTC file does not seem to be a valid image", fileName);
+        }
+        else
+        {
+            image.width = 0x00000000 | ((int)header.width[0] << 16) | ((int)header.width[1] << 8) | ((int)header.width[2]);
+            image.height = 0x00000000 | ((int)header.height[0] << 16) | ((int)header.height[1] << 8) | ((int)header.height[2]);
+            image.mipmaps = 1;
+            
+            TraceLog(DEBUG, "ASTC image width: %i", image.width);
+            TraceLog(DEBUG, "ASTC image height: %i", image.height);
+            TraceLog(DEBUG, "ASTC image blocks: %ix%i", header.blockX, header.blockY);
+            
+            // NOTE: Each block is always stored in 128bit so we can calculate the bpp
+            int bpp = 128/(header.blockX*header.blockY);
+
+            // NOTE: Currently we only support 2 blocks configurations: 4x4 and 8x8
+            if ((bpp == 8) || (bpp == 2)) 
+            {
+                int dataSize = image.width*image.height*bpp/8;  // Data size in bytes
+                
+                image.data = (unsigned char *)malloc(dataSize*sizeof(unsigned char));
+                fread(image.data, dataSize, 1, astcFile);
+                
+                if (bpp == 8) image.format = COMPRESSED_ASTC_4x4_RGBA;
+                else if (bpp == 2) image.format = COMPRESSED_ASTC_4x4_RGBA;
+            }
+            else TraceLog(WARNING, "[%s] ASTC block size configuration not supported", fileName);
+        }
+        
+        fclose(astcFile);
     }
 
     return image;

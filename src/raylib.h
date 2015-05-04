@@ -27,7 +27,6 @@
 *
 *   Some design decisions:
 *     32bit Colors - All defined color are always RGBA
-*     32bit Textures - All loaded images are converted automatically to RGBA textures
 *     SpriteFonts - All loaded sprite-font images are converted to RGBA and POT textures
 *     One custom default font is loaded automatically when InitWindow()
 *     If using OpenGL 3.3+ or ES2, one default shader is loaded automatically (internally defined)
@@ -78,7 +77,7 @@
 // Some basic Defines
 //----------------------------------------------------------------------------------
 #ifndef PI
-#define PI 3.14159265358979323846
+    #define PI 3.14159265358979323846
 #endif
 
 #define DEG2RAD (PI / 180.0f)
@@ -183,20 +182,6 @@
 typedef enum { false, true } bool;
 #endif
 
-typedef enum {
-    GESTURE_NONE = 0,
-    GESTURE_TAP,
-    GESTURE_DOUBLETAP,
-    GESTURE_HOLD,
-    GESTURE_DRAG,
-    GESTURE_SWIPE_RIGHT,
-    GESTURE_SWIPE_LEFT,
-    GESTURE_SWIPE_UP,
-    GESTURE_SWIPE_DOWN,
-    GESTURE_PINCH_IN,
-    GESTURE_PINCH_OUT
-} Gestures;
-
 // byte type
 typedef unsigned char byte;
 
@@ -240,17 +225,21 @@ typedef struct Rectangle {
 // Image type, bpp always RGBA (32bit)
 // NOTE: Data stored in CPU memory (RAM)
 typedef struct Image {
-    Color *pixels;
-    int width;
-    int height;
+    void *data;             // Image raw data
+    int width;              // Image base width
+    int height;             // Image base height
+    int mipmaps;            // Mipmap levels, 1 by default
+    int format;             // Data format (TextureFormat)
 } Image;
 
 // Texture2D type, bpp always RGBA (32bit)
 // NOTE: Data stored in GPU memory
 typedef struct Texture2D {
-    unsigned int id;        // OpenGL id
-    int width;
-    int height;
+    unsigned int id;        // OpenGL texture id
+    int width;              // Texture base width
+    int height;             // Texture base height
+    int mipmaps;            // Mipmap levels, 1 by default
+    int format;             // Data format (TextureFormat)
 } Texture2D;
 
 // Character type (one font glyph)
@@ -337,9 +326,11 @@ typedef struct Wave {
     short channels;
 } Wave;
 
-// Texture formats (support depends on OpenGL version)
+// Texture formats
+// NOTE: Support depends on OpenGL version and platform
 typedef enum {
     UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+    UNCOMPRESSED_GRAY_ALPHA,        // 16 bpp (2 channels)
     UNCOMPRESSED_R5G6B5,            // 16 bpp
     UNCOMPRESSED_R8G8B8,            // 24 bpp
     UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
@@ -354,8 +345,24 @@ typedef enum {
     COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
     COMPRESSED_PVRT_RGB,            // 4 bpp
     COMPRESSED_PVRT_RGBA,           // 4 bpp
-    /*COMPRESSED_ASTC_RGBA_4x4*/    // 8 bpp
+    COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
+    COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } TextureFormat;
+
+// Gestures type
+typedef enum {
+    GESTURE_NONE = 0,
+    GESTURE_TAP,
+    GESTURE_DOUBLETAP,
+    GESTURE_HOLD,
+    GESTURE_DRAG,
+    GESTURE_SWIPE_RIGHT,
+    GESTURE_SWIPE_LEFT,
+    GESTURE_SWIPE_UP,
+    GESTURE_SWIPE_DOWN,
+    GESTURE_PINCH_IN,
+    GESTURE_PINCH_OUT
+} Gestures;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -402,15 +409,26 @@ int GetHexValue(Color color);                               // Returns hexadecim
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-void SetCameraMode(int mode);                               // Multiple camera modes available
-Camera UpdateCamera(Vector3 *position);                     // Update camera with position (when using internal camera)
-
 void SetConfigFlags(char flags);                            // Enable some window configurations
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
 void SetPostproShader(Shader shader);                       // Set fullscreen postproduction shader
+void SetCustomShader(Shader shader);                        // Set custom shader to be used in batch draw
+void SetDefaultShader(void);                                // Set default shader to be used in batch draw
 
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Gives the rayTrace from mouse position
+
+// Camera modes setup and control functions (module: camera)
+void SetCameraMode(int mode);                               // Select camera mode (multiple camera modes available)
+Camera UpdateCamera(Vector3 *position);                     // Update camera with position
+
+void SetCameraControls(int front, int left, int back, int right, int up, int down);
+void SetMouseSensitivity(float sensitivity);
+void SetResetPosition(Vector3 resetPosition);
+void SetResetControl(int resetKey);
+void SetPawnControl(int pawnControlKey);
+void SetFnControl(int fnControlKey);
+void SetSmoothZoomControl(int smoothZoomControlKey);
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -451,6 +469,7 @@ int GetTouchX(void);                                    // Returns touch positio
 int GetTouchY(void);                                    // Returns touch position Y
 Vector2 GetTouchPosition(void);                         // Returns touch position XY
 
+// Gestures System (module: gestures)
 bool IsGestureDetected(void);
 int GetGestureType(void);
 float GetDragIntensity(void);
@@ -504,6 +523,8 @@ Texture2D CreateTexture(Image image, bool genMipmaps);                          
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 void ConvertToPOT(Image *image, Color fillColor);                                                  // Convert image to POT (power-of-two)
+Color *GetPixelData(Image image);                                                                  // Get pixel data from image as a Color struct array
+void SetPixelData(Image *image, Color *pixels, int format);                                        // Set image data from Color struct array
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2

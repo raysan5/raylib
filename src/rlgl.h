@@ -216,6 +216,8 @@ void rlglInitPostpro(void);                     // Initialize postprocessing sys
 void rlglDrawPostpro(void);                     // Draw with postprocessing shader
 void rlglSetPostproShader(Shader shader);       // Set postprocessing shader
 void rlglSetModelShader(Model *model, Shader shader);   // Set shader for a model
+void rlglSetCustomShader(Shader shader);        // Set custom shader to be used on batch draw
+void rlglSetDefaultShader(void);                // Set default shader to be used on batch draw
 
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);

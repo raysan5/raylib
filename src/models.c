@@ -599,6 +599,8 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
+    
+    Color *heightmapPixels = GetPixelData(heightmap);
 
     // NOTE: One vertex per pixel
     // TODO: Consider resolution when generating model data?
@@ -628,15 +630,15 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 
             // one triangle - 3 vertex
             vData.vertices[vCounter] = x;
-            vData.vertices[vCounter + 1] = GetHeightValue(heightmap.pixels[x + z*mapX])*scaleFactor;
+            vData.vertices[vCounter + 1] = GetHeightValue(heightmapPixels[x + z*mapX])*scaleFactor;
             vData.vertices[vCounter + 2] = z;
 
             vData.vertices[vCounter + 3] = x;
-            vData.vertices[vCounter + 4] = GetHeightValue(heightmap.pixels[x + (z+1)*mapX])*scaleFactor;
+            vData.vertices[vCounter + 4] = GetHeightValue(heightmapPixels[x + (z+1)*mapX])*scaleFactor;
             vData.vertices[vCounter + 5] = z+1;
 
             vData.vertices[vCounter + 6] = x+1;
-            vData.vertices[vCounter + 7] = GetHeightValue(heightmap.pixels[(x+1) + z*mapX])*scaleFactor;
+            vData.vertices[vCounter + 7] = GetHeightValue(heightmapPixels[(x+1) + z*mapX])*scaleFactor;
             vData.vertices[vCounter + 8] = z;
 
             // another triangle - 3 vertex
@@ -649,7 +651,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             vData.vertices[vCounter + 14] = vData.vertices[vCounter + 5];
 
             vData.vertices[vCounter + 15] = x+1;
-            vData.vertices[vCounter + 16] = GetHeightValue(heightmap.pixels[(x+1) + (z+1)*mapX])*scaleFactor;
+            vData.vertices[vCounter + 16] = GetHeightValue(heightmapPixels[(x+1) + (z+1)*mapX])*scaleFactor;
             vData.vertices[vCounter + 17] = z+1;
             vCounter += 18;     // 6 vertex, 18 floats
 
@@ -691,6 +693,8 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             trisCounter += 2;
         }
     }
+    
+    free(heightmapPixels);
 
     // Fill color data
     // NOTE: Not used any more... just one plain color defined at DrawModel()
@@ -713,17 +717,19 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 }
 
 // Load a map image as a 3d model (cubes based)
-Model LoadCubicmap(Image cubesmap)
+Model LoadCubicmap(Image cubicmap)
 {
     VertexData vData;
 
+    Color *cubicmapPixels = GetPixelData(cubicmap);
+    
     // Map cube size will be 1.0
     float mapCubeSide = 1.0f;
-    int mapWidth = cubesmap.width * (int)mapCubeSide;
-    int mapHeight = cubesmap.height * (int)mapCubeSide;
+    int mapWidth = cubicmap.width * (int)mapCubeSide;
+    int mapHeight = cubicmap.height * (int)mapCubeSide;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
-    int maxTriangles = cubesmap.width*cubesmap.height*12;
+    int maxTriangles = cubicmap.width*cubicmap.height*12;
 
     int vCounter = 0;       // Used to count vertices
     int tcCounter = 0;      // Used to count texcoords
@@ -775,9 +781,9 @@ Model LoadCubicmap(Image cubesmap)
             Vector3 v8 = { x + w/2, 0, z + h/2 };
 
             // We check pixel color to be WHITE, we will full cubes
-            if ((cubesmap.pixels[z*cubesmap.width + x].r == 255) &&
-                (cubesmap.pixels[z*cubesmap.width + x].g == 255) &&
-                (cubesmap.pixels[z*cubesmap.width + x].b == 255))
+            if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
+                (cubicmapPixels[z*cubicmap.width + x].g == 255) &&
+                (cubicmapPixels[z*cubicmap.width + x].b == 255))
             {
                 // Define triangles (Checking Collateral Cubes!)
                 //----------------------------------------------
@@ -832,10 +838,10 @@ Model LoadCubicmap(Image cubesmap)
                 mapTexcoords[tcCounter + 5] = (Vector2){ bottomTexUV.x, bottomTexUV.y + bottomTexUV.height };
                 tcCounter += 6;
 
-                if (((z < cubesmap.height - 1) &&
-                (cubesmap.pixels[(z + 1)*cubesmap.width + x].r == 0) &&
-                (cubesmap.pixels[(z + 1)*cubesmap.width + x].g == 0) &&
-                (cubesmap.pixels[(z + 1)*cubesmap.width + x].b == 0)) || (z == cubesmap.height - 1))
+                if (((z < cubicmap.height - 1) &&
+                (cubicmapPixels[(z + 1)*cubicmap.width + x].r == 0) &&
+                (cubicmapPixels[(z + 1)*cubicmap.width + x].g == 0) &&
+                (cubicmapPixels[(z + 1)*cubicmap.width + x].b == 0)) || (z == cubicmap.height - 1))
                 {
                     // Define front triangles (2 tris, 6 vertex) --> v2 v7 v3, v3 v7 v8
                     // NOTE: Collateral occluded faces are not generated
@@ -865,9 +871,9 @@ Model LoadCubicmap(Image cubesmap)
                 }
 
                 if (((z > 0) &&
-                (cubesmap.pixels[(z - 1)*cubesmap.width + x].r == 0) &&
-                (cubesmap.pixels[(z - 1)*cubesmap.width + x].g == 0) &&
-                (cubesmap.pixels[(z - 1)*cubesmap.width + x].b == 0)) || (z == 0))
+                (cubicmapPixels[(z - 1)*cubicmap.width + x].r == 0) &&
+                (cubicmapPixels[(z - 1)*cubicmap.width + x].g == 0) &&
+                (cubicmapPixels[(z - 1)*cubicmap.width + x].b == 0)) || (z == 0))
                 {
                     // Define back triangles (2 tris, 6 vertex) --> v1 v5 v6, v1 v4 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -896,10 +902,10 @@ Model LoadCubicmap(Image cubesmap)
                     tcCounter += 6;
                 }
 
-                if (((x < cubesmap.width - 1) &&
-                (cubesmap.pixels[z*cubesmap.width + (x + 1)].r == 0) &&
-                (cubesmap.pixels[z*cubesmap.width + (x + 1)].g == 0) &&
-                (cubesmap.pixels[z*cubesmap.width + (x + 1)].b == 0)) || (x == cubesmap.width - 1))
+                if (((x < cubicmap.width - 1) &&
+                (cubicmapPixels[z*cubicmap.width + (x + 1)].r == 0) &&
+                (cubicmapPixels[z*cubicmap.width + (x + 1)].g == 0) &&
+                (cubicmapPixels[z*cubicmap.width + (x + 1)].b == 0)) || (x == cubicmap.width - 1))
                 {
                     // Define right triangles (2 tris, 6 vertex) --> v3 v8 v4, v4 v8 v5
                     // NOTE: Collateral occluded faces are not generated
@@ -929,9 +935,9 @@ Model LoadCubicmap(Image cubesmap)
                 }
 
                 if (((x > 0) &&
-                (cubesmap.pixels[z*cubesmap.width + (x - 1)].r == 0) &&
-                (cubesmap.pixels[z*cubesmap.width + (x - 1)].g == 0) &&
-                (cubesmap.pixels[z*cubesmap.width + (x - 1)].b == 0)) || (x == 0))
+                (cubicmapPixels[z*cubicmap.width + (x - 1)].r == 0) &&
+                (cubicmapPixels[z*cubicmap.width + (x - 1)].g == 0) &&
+                (cubicmapPixels[z*cubicmap.width + (x - 1)].b == 0)) || (x == 0))
                 {
                     // Define left triangles (2 tris, 6 vertex) --> v1 v7 v2, v1 v6 v7
                     // NOTE: Collateral occluded faces are not generated
@@ -961,9 +967,9 @@ Model LoadCubicmap(Image cubesmap)
                 }
             }
             // We check pixel color to be BLACK, we will only draw floor and roof
-            else if  ((cubesmap.pixels[z*cubesmap.width + x].r == 0) &&
-                      (cubesmap.pixels[z*cubesmap.width + x].g == 0) &&
-                      (cubesmap.pixels[z*cubesmap.width + x].b == 0))
+            else if  ((cubicmapPixels[z*cubicmap.width + x].r == 0) &&
+                      (cubicmapPixels[z*cubicmap.width + x].g == 0) &&
+                      (cubicmapPixels[z*cubicmap.width + x].b == 0))
             {
                 // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
                 mapVertices[vCounter] = v1;
@@ -1065,6 +1071,8 @@ Model LoadCubicmap(Image cubesmap)
     free(mapVertices);
     free(mapNormals);
     free(mapTexcoords);
+    
+    free(cubicmapPixels);
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
 
@@ -1335,6 +1343,8 @@ bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSph
 // NOTE: player position (or camera) is modified inside this function
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius)
 {
+    Color *cubicmapPixels = GetPixelData(cubicmap);
+    
     // Detect the cell where the player is located
     Vector3 impactDirection = { 0, 0, 0 };
 
@@ -1347,8 +1357,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     // Multiple Axis --------------------------------------------------------------------------------------------
 
     // Axis x-, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
+        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1360,8 +1370,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     }
 
     // Axis x-, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
+        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
@@ -1373,8 +1383,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     }
 
     // Axis x+, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
+        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1386,8 +1396,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     }
 
     // Axis x+, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
+        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
@@ -1401,7 +1411,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     // Single Axis ---------------------------------------------------------------------------------------------------
 
     // Axis x-
-    if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
+    if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
     {
         if ((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius)
         {
@@ -1410,7 +1420,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
     }
     // Axis x+
-    if (cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
+    if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
     {
         if ((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius)
         {
@@ -1419,7 +1429,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
     }
     // Axis y-
-    if (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
+    if (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
     {
         if ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius)
         {
@@ -1428,7 +1438,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
     }
     // Axis y+
-    if (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
+    if (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
     {
         if ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius)
         {
@@ -1440,9 +1450,9 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     // Diagonals -------------------------------------------------------------------------------------------------------
 
     // Axis x-, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
+        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1460,9 +1470,9 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     }
 
     // Axis x-, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
+        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
@@ -1480,9 +1490,9 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     }
 
     // Axis x+, y-
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
+        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1500,9 +1510,9 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     }
 
     // Axis x+, y+
-    if ((cubicmap.pixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmap.pixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
+        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
+        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
     {
         if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
             ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
@@ -1531,6 +1541,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         playerPosition->y = (1.5 - radius) - 0.01;
         impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
     }
+    
+    free(cubicmapPixels);
 
     return impactDirection;
 }

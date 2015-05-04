@@ -87,6 +87,8 @@ extern void LoadDefaultFont(void)
     Image image;
     image.width = 128;                      // We know our default font image is 128 pixels width
     image.height = 128;                     // We know our default font image is 128 pixels height
+    image.mipmaps = 1;
+    image.format = UNCOMPRESSED_R8G8B8A8;
 
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct SpriteFont without creating large global variables
@@ -149,9 +151,9 @@ extern void LoadDefaultFont(void)
 
     // Re-construct image from defaultFontData and generate OpenGL texture
     //----------------------------------------------------------------------
-    image.pixels = (Color *)malloc(image.width * image.height * sizeof(Color));
+    Color *imagePixels = (Color *)malloc(image.width*image.height*sizeof(Color));
 
-    for (int i = 0; i < image.width * image.height; i++) image.pixels[i] = BLANK;        // Initialize array
+    for (int i = 0; i < image.width*image.height; i++) imagePixels[i] = BLANK;        // Initialize array
 
     int counter = 0;        // Font data elements counter
 
@@ -160,7 +162,7 @@ extern void LoadDefaultFont(void)
     {
         for (int j = 31; j >= 0; j--)
         {
-            if (BIT_CHECK(defaultFontData[counter], j)) image.pixels[i+j] = WHITE;
+            if (BIT_CHECK(defaultFontData[counter], j)) imagePixels[i+j] = WHITE;
         }
 
         counter++;
@@ -171,6 +173,10 @@ extern void LoadDefaultFont(void)
     //FILE *myimage = fopen("default_font.raw", "wb");
     //fwrite(image.pixels, 1, 128*128*4, myimage);
     //fclose(myimage);
+    
+    SetPixelData(&image, imagePixels, 0);
+
+    free(imagePixels);
 
     defaultFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
     UnloadImage(image);
@@ -232,14 +238,16 @@ SpriteFont LoadSpriteFont(const char *fileName)
     {
         Image image = LoadImage(fileName);
 
-        // At this point we have a pixel array with all the data...
+        // At this point we have a data array...
+        
+        Color *imagePixels = GetPixelData(image);
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
         ConvertToPOT(&image, MAGENTA);
 #endif
         // Process bitmap Font pixel data to get measures (Character array)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
-        int numChars = ParseImageData(image.pixels, image.width, image.height, &spriteFont.charSet);
+        int numChars = ParseImageData(imagePixels, image.width, image.height, &spriteFont.charSet);
 
         TraceLog(INFO, "[%s] SpriteFont data parsed correctly", fileName);
         TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
@@ -248,6 +256,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
         spriteFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
 
+        free(imagePixels);
         UnloadImage(image);
     }
 
@@ -522,6 +531,8 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         image.width = (int)rbmfHeader.imgWidth;
         image.height = (int)rbmfHeader.imgHeight;
+        image.mipmaps = 1;
+        image.format = UNCOMPRESSED_R8G8B8A8;
 
         int numPixelBits = rbmfHeader.imgWidth * rbmfHeader.imgHeight / 32;
 
@@ -535,9 +546,9 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         // Re-construct image from rbmfFileData
         //-----------------------------------------
-        image.pixels = (Color *)malloc(image.width * image.height * sizeof(Color));
+        Color *imagePixels = (Color *)malloc(image.width*image.height*sizeof(Color));
 
-        for (int i = 0; i < image.width * image.height; i++) image.pixels[i] = BLANK;        // Initialize array
+        for (int i = 0; i < image.width*image.height; i++) imagePixels[i] = BLANK;        // Initialize array
 
         int counter = 0;        // Font data elements counter
 
@@ -546,11 +557,15 @@ static SpriteFont LoadRBMF(const char *fileName)
         {
             for (int j = 31; j >= 0; j--)
             {
-                if (BIT_CHECK(rbmfFileData[counter], j)) image.pixels[i+j] = WHITE;
+                if (BIT_CHECK(rbmfFileData[counter], j)) imagePixels[i+j] = WHITE;
             }
 
             counter++;
         }
+        
+        SetPixelData(&image, imagePixels, 0);
+        
+        free(imagePixels);
 
         TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
@@ -607,7 +622,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
     Image image;
     image.width = 512;
     image.height = 512;
-    image.pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
+    //image.pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
 
     unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
 
@@ -647,7 +662,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
     free(ttfBuffer);
 
     // Now we have image data in tempBitmap and chardata filled...
-
+/*
     for (int i = 0; i < 512*512; i++)
     {
         image.pixels[i].r = tempBitmap[i];
@@ -655,7 +670,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
         image.pixels[i].b = tempBitmap[i];
         image.pixels[i].a = 255;
     }
-
+*/
     free(tempBitmap);
 
     // REFERENCE EXAMPLE

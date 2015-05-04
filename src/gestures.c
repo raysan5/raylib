@@ -30,8 +30,13 @@
 #include <stdlib.h>             // malloc(), free()
 #include <stdio.h>              // printf(), fprintf()
 #include <math.h>               // Used for ...
-#include <time.h>               // Used for clock functions
 #include <stdint.h>             // Defines int32_t, int64_t
+
+#if defined(_WIN32)
+    //#include <Windows.h>
+#elif defined(__linux)
+    #include <time.h>           // Used for clock functions
+#endif
 
 #if defined(PLATFORM_ANDROID)
     #include <jni.h>                        // Java native interface
@@ -75,14 +80,9 @@ typedef struct {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
-// typedef
 static GestureType gestureType = TYPE_MOTIONLESS;
-
-// Gestures detection variables
+static double eventTime = 0;
 //static int32_t touchId;         // Not used...
-
-// Event
-static int64_t eventTime = 0;
 
 // Tap
 // Our initial press position on tap
@@ -127,7 +127,7 @@ static float pinchDelta = 0;
 // Detected gesture
 static int currentGesture = GESTURE_NONE;
 
-static float touchX, touchY;
+static Vector2 touchPosition;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -141,7 +141,7 @@ static float OnPinch();
 static void SetDualInput(GestureEvent event);
 static float Distance(Vector2 v1, Vector2 v2);
 static float DotProduct(Vector2 v1, Vector2 v2);
-static int GetCurrentTime();
+static double GetCurrentTime();
 
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
@@ -158,9 +158,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 // Returns tap position XY
 extern Vector2 GetRawPosition(void)
 {
-    Vector2 position = { touchX, touchY };
-
-    return position;
+    return touchPosition;
 }
 
 // Check if a gesture have been detected
@@ -531,13 +529,27 @@ static float DotProduct(Vector2 v1, Vector2 v2)
     return result;
 }
 
-static int GetCurrentTime()
+static double GetCurrentTime()
 {
+#if defined(_WIN32)
+/*
+    // NOTE: Requires Windows.h
+	FILETIME tm;
+	GetSystemTimePreciseAsFileTime(&tm);
+	ULONGLONG nowTime = ((ULONGLONG)tm.dwHighDateTime << 32) | (ULONGLONG)tm.dwLowDateTime;   // Time provided in 100-nanosecond intervals
+    
+	return ((double)nowTime/10000000.0);    // Return time in seconds
+*/
+#endif
+
+#if defined(__linux)
+    // NOTE: Only for Linux-based systems
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time provided in nanoseconds
     
-    return nowTime / 1000000; // Return time in miliseconds
+    return ((double)nowTime/1000000.0);     // Return time in miliseconds
+#endif
 }
 
 #if defined(PLATFORM_ANDROID)
@@ -545,23 +557,21 @@ static int GetCurrentTime()
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 {
     int type = AInputEvent_getType(event);
-    //int32_t key = 0;
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        touchX = AMotionEvent_getX(event, 0);
-        touchY = AMotionEvent_getY(event, 0);
+        touchPosition.x = AMotionEvent_getX(event, 0);
+        touchPosition.y = AMotionEvent_getY(event, 0);
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
-        //key = AKeyEvent_getKeyCode(event);
+        //int32_t key = AKeyEvent_getKeyCode(event);
         //int32_t AKeyEvent_getMetaState(event);
     }
     
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
     
-  
     GestureEvent gestureEvent;
     
     // Action
@@ -608,6 +618,8 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
           t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
     }
     */
+    
+    touchPosition = gestureEvent.position[0];
     
     GestureEvent gestureEvent;
     
