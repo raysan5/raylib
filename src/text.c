@@ -84,12 +84,6 @@ extern void LoadDefaultFont(void)
 
     defaultFont.numChars = 224;             // Number of chars included in our default font
 
-    Image image;
-    image.width = 128;                      // We know our default font image is 128 pixels width
-    image.height = 128;                     // We know our default font image is 128 pixels height
-    image.mipmaps = 1;
-    image.format = UNCOMPRESSED_R8G8B8A8;
-
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct SpriteFont without creating large global variables
     // This data is automatically allocated to Stack and automatically deallocated at the end of this function
@@ -151,14 +145,17 @@ extern void LoadDefaultFont(void)
 
     // Re-construct image from defaultFontData and generate OpenGL texture
     //----------------------------------------------------------------------
-    Color *imagePixels = (Color *)malloc(image.width*image.height*sizeof(Color));
+    int imWidth = 128;
+    int imHeight = 128;
+    
+    Color *imagePixels = (Color *)malloc(imWidth*imHeight*sizeof(Color));
 
-    for (int i = 0; i < image.width*image.height; i++) imagePixels[i] = BLANK;        // Initialize array
+    for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = BLANK;        // Initialize array
 
     int counter = 0;        // Font data elements counter
 
     // Fill imgData with defaultFontData (convert from bit to pixel!)
-    for (int i = 0; i < image.width * image.height; i += 32)
+    for (int i = 0; i < imWidth*imHeight; i += 32)
     {
         for (int j = 31; j >= 0; j--)
         {
@@ -174,7 +171,7 @@ extern void LoadDefaultFont(void)
     //fwrite(image.pixels, 1, 128*128*4, myimage);
     //fclose(myimage);
     
-    SetPixelData(&image, imagePixels, 0);
+    Image image = LoadImageFromData(imagePixels, imWidth, imHeight, UNCOMPRESSED_GRAY_ALPHA);
 
     free(imagePixels);
 
@@ -507,7 +504,6 @@ static SpriteFont LoadRBMF(const char *fileName)
     } rbmfInfoHeader;
 
     SpriteFont spriteFont;
-    Image image;
 
     rbmfInfoHeader rbmfHeader;
     unsigned int *rbmfFileData = NULL;
@@ -529,11 +525,6 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         spriteFont.numChars = (int)rbmfHeader.numChars;
 
-        image.width = (int)rbmfHeader.imgWidth;
-        image.height = (int)rbmfHeader.imgHeight;
-        image.mipmaps = 1;
-        image.format = UNCOMPRESSED_R8G8B8A8;
-
         int numPixelBits = rbmfHeader.imgWidth * rbmfHeader.imgHeight / 32;
 
         rbmfFileData = (unsigned int *)malloc(numPixelBits * sizeof(unsigned int));
@@ -546,14 +537,14 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         // Re-construct image from rbmfFileData
         //-----------------------------------------
-        Color *imagePixels = (Color *)malloc(image.width*image.height*sizeof(Color));
+        Color *imagePixels = (Color *)malloc(rbmfHeader.imgWidth*rbmfHeader.imgHeight*sizeof(Color));
 
-        for (int i = 0; i < image.width*image.height; i++) imagePixels[i] = BLANK;        // Initialize array
+        for (int i = 0; i < rbmfHeader.imgWidth*rbmfHeader.imgHeight; i++) imagePixels[i] = BLANK;        // Initialize array
 
         int counter = 0;        // Font data elements counter
 
         // Fill image data (convert from bit to pixel!)
-        for (int i = 0; i < image.width * image.height; i += 32)
+        for (int i = 0; i < rbmfHeader.imgWidth*rbmfHeader.imgHeight; i += 32)
         {
             for (int j = 31; j >= 0; j--)
             {
@@ -563,7 +554,7 @@ static SpriteFont LoadRBMF(const char *fileName)
             counter++;
         }
         
-        SetPixelData(&image, imagePixels, 0);
+        Image image = LoadImageFromData(imagePixels, rbmfHeader.imgWidth, rbmfHeader.imgHeight, UNCOMPRESSED_GRAY_ALPHA);
         
         free(imagePixels);
 
@@ -694,7 +685,6 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
 
     print(100,160, 0, "This is a test");
 */
-
     font.numChars = 95;
     font.charSet = (Character *)malloc(font.numChars*sizeof(Character));
     font.texture = LoadTextureFromImage(image, false);

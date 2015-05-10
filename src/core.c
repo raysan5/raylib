@@ -180,9 +180,9 @@ static int currentMouseWheelY = 0;          // Required to track mouse wheel var
 
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
 static int lastKeyPressed = -1;
-#endif
 
 static bool cursorHidden;
+#endif
 
 static double currentTime, previousTime;    // Used to track timmings
 static double updateTime, drawTime;         // Time measures for update and draw
@@ -227,6 +227,7 @@ static void SwapBuffers(void);                          // Copy back buffer to f
 static void PollInputEvents(void);                      // Register user events
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
+
 #if defined(PLATFORM_RPI)
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
 static void *MouseThread(void *arg);                    // Mouse reading thread

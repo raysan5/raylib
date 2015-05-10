@@ -280,7 +280,7 @@ Texture2D LoadTextureFromImage(Image image, bool genMipmaps)
     texture.format = 0;
     
     texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps, false);
-    
+
     texture.width = image.width;
     texture.height = image.height;
     texture.mipmaps = image.mipmaps;
@@ -439,24 +439,141 @@ Color *GetPixelData(Image image)
 }
 
 // Fill image data with pixels Color data (RGBA - 32bit)
-// NOTE: Pixels color array size must be coherent with image size
-// TODO: Review to support different color modes (TextureFormat)
-void SetPixelData(Image *image, Color *pixels, int format)
+// NOTE: Data is transformed to desired format
+Image LoadImageFromData(Color *pixels, int width, int height, int format)
 {
-    free(image->data);
-    image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
-    
+    Image image;
+    image.data = NULL;
+    image.width = width;
+    image.height = height;
+    image.mipmaps = 1;
+    image.format = format;
+
     int k = 0;
     
-    for (int i = 0; i < image->width*image->height*4; i += 4)
+    switch (format)
     {
-        ((unsigned char *)image->data)[i] = pixels[k].r;
-        ((unsigned char *)image->data)[i + 1] = pixels[k].g;
-        ((unsigned char *)image->data)[i + 2] = pixels[k].b;
-        ((unsigned char *)image->data)[i + 3] = pixels[k].a;
-        
-        k++;
+        case UNCOMPRESSED_GRAYSCALE:
+        {
+            image.data = (unsigned char *)malloc(image.width*image.height*sizeof(unsigned char));
+            
+            for (int i = 0; i < image.width*image.height; i++)
+            {
+                ((unsigned char *)image.data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
+                k++;
+            }
+    
+        } break;
+        case UNCOMPRESSED_GRAY_ALPHA:
+        {
+           image.data = (unsigned char *)malloc(image.width*image.height*2*sizeof(unsigned char));
+            
+           for (int i = 0; i < image.width*image.height*2; i += 2)
+            {
+                ((unsigned char *)image.data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
+                ((unsigned char *)image.data)[i + 1] = pixels[k].a;
+                k++;
+            }
+
+        } break;
+        case UNCOMPRESSED_R5G6B5:
+        {
+            image.data = (unsigned short *)malloc(image.width*image.height*sizeof(unsigned short));
+            
+            unsigned char r;
+            unsigned char g;
+            unsigned char b;
+            
+            for (int i = 0; i < image.width*image.height; i++)
+            {
+                r = (unsigned char)(round((float)pixels[k].r*31/255));
+                g = (unsigned char)(round((float)pixels[k].g*63/255));
+                b = (unsigned char)(round((float)pixels[k].b*31/255));
+                
+                ((unsigned short *)image.data)[i] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
+
+                k++;
+            }
+
+        } break;
+        case UNCOMPRESSED_R8G8B8:
+        {
+            image.data = (unsigned char *)malloc(image.width*image.height*3*sizeof(unsigned char));
+            
+            for (int i = 0; i < image.width*image.height*3; i += 3)
+            {
+                ((unsigned char *)image.data)[i] = pixels[k].r;
+                ((unsigned char *)image.data)[i + 1] = pixels[k].g;
+                ((unsigned char *)image.data)[i + 2] = pixels[k].b;
+                k++;
+            }
+        } break;
+        case UNCOMPRESSED_R5G5B5A1:
+        {
+            image.data = (unsigned short *)malloc(image.width*image.height*sizeof(unsigned short));
+            
+            unsigned char r;
+            unsigned char g;
+            unsigned char b;
+            unsigned char a = 1;
+            
+            for (int i = 0; i < image.width*image.height; i++)
+            {
+                r = (unsigned char)(round((float)pixels[k].r*31/255));
+                g = (unsigned char)(round((float)pixels[k].g*31/255));
+                b = (unsigned char)(round((float)pixels[k].b*31/255));
+                a = (pixels[k].a > 50) ? 1 : 0;
+                
+                ((unsigned short *)image.data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1| (unsigned short)a;
+
+                k++;
+            }
+
+        } break;
+        case UNCOMPRESSED_R4G4B4A4:
+        {
+            image.data = (unsigned short *)malloc(image.width*image.height*sizeof(unsigned short));
+            
+            unsigned char r;
+            unsigned char g;
+            unsigned char b;
+            unsigned char a;
+            
+            for (int i = 0; i < image.width*image.height; i++)
+            {
+                r = (unsigned char)(round((float)pixels[k].r*15/255));
+                g = (unsigned char)(round((float)pixels[k].g*15/255));
+                b = (unsigned char)(round((float)pixels[k].b*15/255));
+                a = (unsigned char)(round((float)pixels[k].a*15/255));
+                
+                ((unsigned short *)image.data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8| (unsigned short)b << 4| (unsigned short)a;
+
+                k++;
+            }
+            
+        } break;
+        case UNCOMPRESSED_R8G8B8A8:
+        {
+            image.data = (unsigned char *)malloc(image.width*image.height*4*sizeof(unsigned char));
+            
+            for (int i = 0; i < image.width*image.height*4; i += 4)
+            {
+                ((unsigned char *)image.data)[i] = pixels[k].r;
+                ((unsigned char *)image.data)[i + 1] = pixels[k].g;
+                ((unsigned char *)image.data)[i + 2] = pixels[k].b;
+                ((unsigned char *)image.data)[i + 3] = pixels[k].a;
+                k++;
+            }
+        } break;
+        default: 
+        {
+            TraceLog(WARNING, "Format not recognized, image could not be loaded");
+            
+            return image;
+        } break;
     }
+
+    return image;
 }
 
 // Draw a Texture2D
