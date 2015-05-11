@@ -93,7 +93,7 @@ else
 endif
 
 # define all object files required
-OBJS = core.o rlgl.o raymath.o shapes.o text.o textures.o models.o audio.o utils.o stb_vorbis.o camera.o gestures.o
+OBJS = core.o rlgl.o raymath.o shapes.o text.o textures.o models.o audio.o utils.o camera.o gestures.o
 
 # typing 'make' will invoke the first target entry in the file,
 # in this case, the 'default' target entry is raylib
@@ -143,10 +143,6 @@ audio.o: audio.c
 # compile utils module
 utils.o: utils.c
 	$(CC) -c utils.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
-# compile stb_vorbis library
-stb_vorbis.o: stb_vorbis.c
-	$(CC) -c stb_vorbis.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile camera module
 camera.o: camera.c
