@@ -1105,7 +1105,7 @@ static Image LoadPVR(const char *fileName)
             {
                 image.width = header.width;
                 image.height = header.height;
-                image.mipmaps = header.numMipmaps + 1;
+                image.mipmaps = header.numMipmaps;
                 
                 // Check data format
                 if (((header.channels[0] == 'l') && (header.channels[1] == 0)) && (header.channelDepth[0] == 8)) image.format = UNCOMPRESSED_GRAYSCALE;
