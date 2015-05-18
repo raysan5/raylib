@@ -1618,7 +1618,10 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     
     glGenTextures(1, &id);              // Generate Pointer to the texture
 
-    //glActiveTexture(GL_TEXTURE0);
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    //glActiveTexture(GL_TEXTURE0);       // If not defined, using GL_TEXTURE0 by default (shader texture)
+#endif
+
     glBindTexture(GL_TEXTURE_2D, id);
 
 #if defined(GRAPHICS_API_OPENGL_33)
