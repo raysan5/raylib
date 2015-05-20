@@ -531,6 +531,7 @@ static float DotProduct(Vector2 v1, Vector2 v2)
 
 static double GetCurrentTime()
 {
+    double time = 0;
 #if defined(_WIN32)
 /*
     // NOTE: Requires Windows.h
@@ -538,7 +539,7 @@ static double GetCurrentTime()
 	GetSystemTimePreciseAsFileTime(&tm);
 	ULONGLONG nowTime = ((ULONGLONG)tm.dwHighDateTime << 32) | (ULONGLONG)tm.dwLowDateTime;   // Time provided in 100-nanosecond intervals
     
-	return ((double)nowTime/10000000.0);    // Return time in seconds
+	time = ((double)nowTime/10000000.0);    // time in seconds
 */
 #endif
 
@@ -548,8 +549,10 @@ static double GetCurrentTime()
     clock_gettime(CLOCK_MONOTONIC, &now);
     uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time provided in nanoseconds
     
-    return ((double)nowTime/1000000.0);     // Return time in miliseconds
+    time = ((double)nowTime/1000000.0);     // time in miliseconds
 #endif
+
+    return time;
 }
 
 #if defined(PLATFORM_ANDROID)
@@ -618,9 +621,6 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
           t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
     }
     */
-    
-    touchPosition = gestureEvent.position[0];
-    
     GestureEvent gestureEvent;
     
     // Action
@@ -634,6 +634,8 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     // Position
     gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
     gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
+    
+    touchPosition = gestureEvent.position[0];
     
     ProcessMotionEvent(gestureEvent);
 

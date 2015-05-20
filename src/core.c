@@ -211,7 +211,7 @@ extern void InitAndroidGestures(struct android_app *app);
 #endif
 
 #if defined(PLATFORM_WEB)
-extern void InitWebGestures(void);
+extern void InitWebGestures(void);              // [Module: gestures] Initializes emscripten gestures for web
 #endif
 
 //----------------------------------------------------------------------------------

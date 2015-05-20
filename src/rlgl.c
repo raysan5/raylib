@@ -30,7 +30,7 @@
 
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
-#include <string.h>         // Declares strcmp(), strlen(), strtok(), strdup()
+#include <string.h>         // Declares strcmp(), strlen(), strtok()
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #ifdef __APPLE__            // OpenGL include for OSX
@@ -216,8 +216,16 @@ static Vector3 *tempBuffer;
 static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
-// Support for VAOs (OpenGL ES2 could not support VAO extensions)
-static bool vaoSupported = false;
+// Flags for supported extensions
+static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support VAO extension)
+static bool npotSupported = false;  // NPOT textures full support
+
+// Compressed textures support flags
+static bool texCompDXTSupported = false;     // DDS texture compression support
+static bool texCompETC1Supported = false;    // ETC1 texture compression support
+static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
+static bool texCompPVRTSupported = false;    // PVR texture compression support
+static bool texCompASTCSupported = false;    // ASTC texture compression support
 
 // Framebuffer object and texture
 static GLuint fbo, fboColorTexture, fboDepthTexture;
@@ -226,18 +234,15 @@ static Model postproQuad;
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
-// emscripten does not support VAOs
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays;
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
-static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;
+//static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
 
 // White texture useful for plain color polys (required by shader)
 // NOTE: It's required in shapes and models modules!
 unsigned int whiteTexture;
-
-static bool supportedTextureFormat[32];
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -249,6 +254,8 @@ static void InitializeBuffers(void);
 static void InitializeBuffersGPU(void);
 static void UpdateBuffers(void);
 static char *TextFileRead(char *fn);
+
+static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -256,7 +263,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
 static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 #endif
 
-static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
+static char** StringSplit(char *baseString, const char delimiter, int *numExt);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix operations
@@ -795,58 +802,9 @@ int rlGetVersion(void)
 // Init OpenGL 3.3+ required data
 void rlglInit(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33)
-    // Loading extensions the hard way (Example)
-/*
-    GLint numExt;
-    glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
-
-    for (int i = 0; i < numExt; i++)
-    {
-        const GLubyte *extensionName = glGetStringi(GL_EXTENSIONS, i);
-        if (strcmp(extensionName, (const GLubyte *)"GL_ARB_vertex_array_object") == 0)
-        {
-            // The extension is supported by our hardware and driver, try to get related functions pointers
-            glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)wglGetProcAddress("glGenVertexArrays");
-            glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)wglGetProcAddress("glBindVertexArray");
-            glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)wglGetProcAddress("glDeleteVertexArrays");
-            glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)wglGetProcAddress("glIsVertexArray");
-        }
-    }
-*/
-
-    // Initialize extensions using GLEW
-    glewExperimental = 1;       // Needed for core profile
-
-    GLenum error = glewInit();
-
-    if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
-
-    if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 extensions supported");
-
-    // NOTE: GLEW is a big library that loads ALL extensions, using glad we can only load required ones...
-    //if (!gladLoadGL()) TraceLog("ERROR: Failed to initialize glad\n");
-
-    vaoSupported = true;
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
-#if !defined(PLATFORM_WEB)
-    glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
-    glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
-    glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
-    glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");
-#endif
-
-    if (glGenVertexArrays == NULL) TraceLog(WARNING, "Could not initialize VAO extensions, VAOs not supported");
-    else
-    {
-        vaoSupported = true;
-        TraceLog(INFO, "VAO extensions initialized successfully");
-    }
-#endif
-
+    // Check OpenGL information and capabilities
+    //------------------------------------------------------------------------------
+    
     // Print current OpenGL and GLSL version
     TraceLog(INFO, "GPU: Vendor:   %s", glGetString(GL_VENDOR));
     TraceLog(INFO, "GPU: Renderer: %s", glGetString(GL_RENDERER));
@@ -857,80 +815,129 @@ void rlglInit(void)
     //int maxTexSize;
     //glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
     //TraceLog(INFO, "GL_MAX_TEXTURE_SIZE: %i", maxTexSize);
+    
+    //GL_MAX_TEXTURE_IMAGE_UNITS
+    //GL_MAX_VIEWPORT_DIMS
 
     //int numAuxBuffers;
     //glGetIntegerv(GL_AUX_BUFFERS, &numAuxBuffers);
     //TraceLog(INFO, "GL_AUX_BUFFERS: %i", numAuxBuffers);
-
-    // Show supported extensions
-    // NOTE: We don't need that much data on screen... right now...
     
-    // Check available extensions for compressed textures support
-    for (int i = 0; i < 32; i++) supportedTextureFormat[i] = false;
+    //GLint numComp = 0;
+    //GLint format[32] = { 0 };
+    //glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numComp);
+    //glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, format);
+    //for (int i = 0; i < numComp; i++) TraceLog(INFO, "Supported compressed format: 0x%x", format[i]);
 
-#if defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: We don't need that much data on screen... right now...
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Get supported extensions list
     GLint numExt;
-    glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
+    
+#if defined(GRAPHICS_API_OPENGL_33)
+    // Initialize extensions using GLEW
+    glewExperimental = 1;       // Needed for core profile
+    
+    GLenum error = glewInit();
+    
+    if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
 
-    for (int i = 0; i < numExt; i++)
+    if (glewIsSupported("GL_VERSION_3_3"))
     {
-        //TraceLog(INFO, "Supported extension: %s", glGetStringi(GL_EXTENSIONS, i));
-
-        if (strcmp((char *)glGetStringi(GL_EXTENSIONS, i), "GL_EXT_texture_compression_s3tc") == 0)
-        {
-            // DDS texture compression support
-            supportedTextureFormat[COMPRESSED_DXT1_RGB] = true;
-            supportedTextureFormat[COMPRESSED_DXT1_RGBA] = true;
-            supportedTextureFormat[COMPRESSED_DXT3_RGBA] = true;
-            supportedTextureFormat[COMPRESSED_DXT5_RGBA] = true;
-        }
-        else if (strcmp((char *)glGetStringi(GL_EXTENSIONS, i), "GL_OES_compressed_ETC1_RGB8_texture") == 0)
-        {
-            // ETC1 texture compression support
-            supportedTextureFormat[COMPRESSED_ETC1_RGB] = true;
-        }
-        else if (strcmp((char *)glGetStringi(GL_EXTENSIONS, i),"GL_ARB_ES3_compatibility") == 0)
-        {
-            // ETC2/EAC texture compression support
-            supportedTextureFormat[COMPRESSED_ETC2_RGB] = true;
-            supportedTextureFormat[COMPRESSED_ETC2_EAC_RGBA] = true;
-        }
-        else if (strcmp((char *)glGetStringi(GL_EXTENSIONS, i),"GL_IMG_texture_compression_pvrtc") == 0)
-        {
-            // PVR texture compression support
-            supportedTextureFormat[COMPRESSED_PVRT_RGB] = true;
-            supportedTextureFormat[COMPRESSED_PVRT_RGBA] = true;
-        }
-        else if (strcmp((char *)glGetStringi(GL_EXTENSIONS, i),"GL_KHR_texture_compression_astc_hdr") == 0)
-        {
-            // ASTC texture compression support
-            supportedTextureFormat[COMPRESSED_ASTC_4x4_RGBA] = true;
-            supportedTextureFormat[COMPRESSED_ASTC_8x8_RGBA] = true;
-        }
+        TraceLog(INFO, "OpenGL 3.3 Core profile");
+        
+        vaoSupported = true;
+        npotSupported = true;
     }
+
+    // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
+    // Alternatives: glLoadGen, glad, libepoxy
+    //if (!gladLoadGL()) TraceLog("ERROR: Failed to initialize glad\n");
+
+    // With GLEW we can check if an extension has been loaded in two ways:
+    //if (GLEW_ARB_vertex_array_object) { } 
+    //if (glewIsSupported("GL_ARB_vertex_array_object")) { }
+
+    
+    // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
+    // We get a list of available extensions and we check for some of them (compressed textures)
+    glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
+    const char *ext[numExt];
+    
+    for (int i = 0; i < numExt; i++) ext[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
+    
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big string
-
+    
     // NOTE: String could be splitted using strtok() function (string.h)
-    TraceLog(INFO, "Supported extension: %s", extensions);
-    
-    //char** ext = StringSplit(extensions, ' ');
-    //for (int i = 0; i < numExt; i++) printf("%s", ext[i]);
-    
+    char **ext = StringSplit(extensions, ' ', &numExt);
 #endif
-/*
-    GLint numComp = 0;
-    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numComp);
-    
-    GLint format[32] = { 0 };
-    glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, format);
 
-    for (int i = 0; i < numComp; i++)
+    TraceLog(INFO, "Number of supported extensions: %i", numExt);
+
+    // Show supported extensions
+    for (int i = 0; i < numExt; i++)  TraceLog(INFO, "Supported extension: %s", ext[i]);
+
+    // Check required extensions
+    for (int i = 0; i < numExt; i++)
     {
-        TraceLog(INFO, "Supported compressed format: 0x%x", format[i]);
+#if defined(GRAPHICS_API_OPENGL_ES2)
+        // Check VAO support
+        // NOTE: Only check on OpenGL ES, OpenGL 3.3 has VAO support as core feature
+        if (strcmp(ext[i], (const char *)"GL_OES_vertex_array_object") == 0)
+        {
+            vaoSupported = true;
+            
+            // The extension is supported by our hardware and driver, try to get related functions pointers           
+            // NOTE: emscripten does not support VAOs natively, it uses emulation and it reduces overall performance...
+            glGenVertexArrays = (PFNGLGENVERTEXARRAYSOESPROC)eglGetProcAddress("glGenVertexArraysOES");
+            glBindVertexArray = (PFNGLBINDVERTEXARRAYOESPROC)eglGetProcAddress("glBindVertexArrayOES");
+            glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSOESPROC)eglGetProcAddress("glDeleteVertexArraysOES");
+            //glIsVertexArray = (PFNGLISVERTEXARRAYOESPROC)eglGetProcAddress("glIsVertexArrayOES");     // NOTE: Fails in WebGL, omitted
+        }
+        
+        // Check NPOT textures support
+        // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
+        if (strcmp(ext[i], (const char *)"GL_OES_texture_npot") == 0) npotSupported = true;
+#endif   
+        
+        // DDS texture compression support
+        if (strcmp(ext[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) texCompDXTSupported = true; 
+        
+        // ETC1 texture compression support
+        if (strcmp(ext[i], (const char *)"GL_OES_compressed_ETC1_RGB8_texture") == 0) texCompETC1Supported = true;
+
+        // ETC2/EAC texture compression support
+        if (strcmp(ext[i], (const char *)"GL_ARB_ES3_compatibility") == 0) texCompETC2Supported = true;
+
+        // PVR texture compression support
+        if (strcmp(ext[i], (const char *)"GL_IMG_texture_compression_pvrtc") == 0) texCompPVRTSupported = true;
+
+        // ASTC texture compression support
+        if (strcmp(ext[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) texCompASTCSupported = true;
     }
-*/
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    if (vaoSupported) TraceLog(INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
+    else TraceLog(WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
+    
+    if (npotSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
+    else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, NPOT textures not supported");
+    
+    // Once supported extensions have been checked, we should free strings memory
+    free(ext);
+#endif
+
+    if (texCompDXTSupported) TraceLog(INFO, "[EXTENSION] DXT compressed textures supported");
+    if (texCompETC1Supported) TraceLog(INFO, "[EXTENSION] ETC1 compressed textures supported");
+    if (texCompETC2Supported) TraceLog(INFO, "[EXTENSION] ETC2/EAC compressed textures supported");
+    if (texCompPVRTSupported) TraceLog(INFO, "[EXTENSION] PVRT compressed textures supported");
+    if (texCompASTCSupported) TraceLog(INFO, "[EXTENSION] ASTC compressed textures supported");
+
+    // Initialize buffers, default shaders and default textures
+    //----------------------------------------------------------
+    
     // Set default draw mode
     currentDrawMode = RL_TRIANGLES;
 
@@ -1435,6 +1442,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 }
 
 // Get world coordinates from screen coordinates
+// TODO: It doesn't work! It drives me crazy!
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {
     //GLint viewport[4];
@@ -1601,19 +1609,13 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 {
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
-    GLuint id;
+    GLuint id = 0;
     
-    // Check compressed textures support by OpenGL 1.1
-    if (rlGetVersion() == OPENGL_11)
+    // Check texture format support by OpenGL 1.1 (compressed textures not supported)
+    if ((rlGetVersion() == OPENGL_11) && (textureFormat >= 8))
     {
-        if ((textureFormat == COMPRESSED_ETC1_RGB) || (textureFormat == COMPRESSED_ETC2_RGB) || (textureFormat == COMPRESSED_ETC2_EAC_RGBA) ||
-            (textureFormat == COMPRESSED_PVRT_RGB) || (textureFormat == COMPRESSED_PVRT_RGBA) || 
-            (textureFormat == COMPRESSED_ASTC_4x4_RGBA) || (textureFormat == COMPRESSED_ASTC_8x8_RGBA)) 
-        {
-            id = 0;
-            TraceLog(WARNING, "Required GPU compressed texture format not supported");
-            return id;
-        }
+        TraceLog(WARNING, "OpenGL 1.1 does not support GPU compressed texture formats");
+        return id;
     }
     
     glGenTextures(1, &id);              // Generate Pointer to the texture
@@ -1657,22 +1659,23 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
             GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
             glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
         } break;
+
         case UNCOMPRESSED_R5G6B5: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
         case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case COMPRESSED_DXT1_RGB: if (supportedTextureFormat[COMPRESSED_DXT1_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT1_RGBA: if (supportedTextureFormat[COMPRESSED_DXT1_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT3_RGBA: if (supportedTextureFormat[COMPRESSED_DXT3_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;
-        case COMPRESSED_DXT5_RGBA: if (supportedTextureFormat[COMPRESSED_DXT5_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;
-        case COMPRESSED_ETC1_RGB: if (supportedTextureFormat[COMPRESSED_ETC1_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_ETC1_RGB8_OES); break;           // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_RGB: if (supportedTextureFormat[COMPRESSED_ETC2_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_EAC_RGBA: if (supportedTextureFormat[COMPRESSED_ETC2_EAC_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_PVRT_RGB: if (supportedTextureFormat[COMPRESSED_PVRT_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG); break;        // NOTE: Requires PowerVR GPU
-        case COMPRESSED_PVRT_RGBA: if (supportedTextureFormat[COMPRESSED_PVRT_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG); break;     // NOTE: Requires PowerVR GPU
-        case COMPRESSED_ASTC_4x4_RGBA: if (supportedTextureFormat[COMPRESSED_ASTC_4x4_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-        case COMPRESSED_ASTC_8x8_RGBA: if (supportedTextureFormat[COMPRESSED_ASTC_8x8_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_8x8_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;
+        case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;
+        case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_ETC1_RGB8_OES); break;           // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG); break;        // NOTE: Requires PowerVR GPU
+        case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG); break;     // NOTE: Requires PowerVR GPU
+        case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_8x8_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
         default: TraceLog(WARNING, "Texture format not recognized"); break;
     }
 #elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1686,17 +1689,19 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
         case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case COMPRESSED_DXT1_RGB: if (supportedTextureFormat[COMPRESSED_DXT1_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT1_RGBA: if (supportedTextureFormat[COMPRESSED_DXT1_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT3_RGBA: if (supportedTextureFormat[COMPRESSED_DXT3_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;     // NOTE: Not supported by WebGL
-        case COMPRESSED_DXT5_RGBA: if (supportedTextureFormat[COMPRESSED_DXT5_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;     // NOTE: Not supported by WebGL
-        case COMPRESSED_ETC1_RGB: if (supportedTextureFormat[COMPRESSED_ETC1_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_ETC1_RGB8_OES); break;           // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_RGB: if (supportedTextureFormat[COMPRESSED_ETC2_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_EAC_RGBA: if (supportedTextureFormat[COMPRESSED_ETC2_EAC_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_PVRT_RGB: if (supportedTextureFormat[COMPRESSED_PVRT_RGB]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG); break;        // NOTE: Requires PowerVR GPU
-        case COMPRESSED_PVRT_RGBA: if (supportedTextureFormat[COMPRESSED_PVRT_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG); break;     // NOTE: Requires PowerVR GPU
-        case COMPRESSED_ASTC_4x4_RGBA: if (supportedTextureFormat[COMPRESSED_ASTC_4x4_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-        case COMPRESSED_ASTC_8x8_RGBA: if (supportedTextureFormat[COMPRESSED_ASTC_8x8_RGBA]) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_8x8_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+#if defined(GRAPHICS_API_OPENGL_ES2)
+        case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
+        case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;     // NOTE: Not supported by WebGL
+        case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;     // NOTE: Not supported by WebGL
+        case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_ETC1_RGB8_OES); break;           // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG); break;        // NOTE: Requires PowerVR GPU
+        case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG); break;     // NOTE: Requires PowerVR GPU
+        case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_8x8_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+#endif
         default: TraceLog(WARNING, "Texture format not supported"); break;
     }
 #endif
@@ -1778,7 +1783,8 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    TraceLog(INFO, "[TEX ID %i] Texture created successfully (%ix%i)", id, width, height);
+    if (id > 0) TraceLog(INFO, "[TEX ID %i] Texture created successfully (%ix%i)", id, width, height);
+    else TraceLog(WARNING, "Texture could not be created");
 
     return id;
 }
@@ -2154,37 +2160,45 @@ static Shader LoadDefaultShader(void)
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = " #version 110      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
+    char vShaderStr[] = " #version 330      \n"
+        "in vec3 vertexPosition;            \n"
+        "in vec2 vertexTexCoord;            \n"
+        "in vec4 vertexColor;               \n"
+        "out vec2 fragTexCoord;             \n"
+        "out vec4 tintColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char vShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
-#endif
-        "uniform mat4 projectionMatrix;     \n"
-        "uniform mat4 modelviewMatrix;      \n"
+    char vShaderStr[] = " #version 100      \n"
         "attribute vec3 vertexPosition;     \n"
         "attribute vec2 vertexTexCoord;     \n"
         "attribute vec4 vertexColor;        \n"
         "varying vec2 fragTexCoord;         \n"
-        "varying vec4 fragColor;            \n"
+        "varying vec4 tintColor;            \n"
+#endif
+        "uniform mat4 projectionMatrix;     \n"
+        "uniform mat4 modelviewMatrix;      \n"
         "void main()                        \n"
         "{                                  \n"
         "    fragTexCoord = vertexTexCoord; \n"
-        "    fragColor = vertexColor;       \n"
-        "    gl_Position = projectionMatrix * modelviewMatrix * vec4(vertexPosition, 1.0); \n"
+        "    tintColor = vertexColor;       \n"
+        "    gl_Position = projectionMatrix*modelviewMatrix*vec4(vertexPosition, 1.0); \n"
         "}                                  \n";
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = " #version 110      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
+    char fShaderStr[] = " #version 330      \n"
+        "in vec2 fragTexCoord;              \n"
+        "in vec4 tintColor;                 \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
-        "precision mediump float;           \n"     // WebGL, required for emscripten
+    char fShaderStr[] = " #version 100      \n"
+        "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
+        "varying vec2 fragTexCoord;         \n"
+        "varying vec4 tintColor;            \n"
 #endif
         "uniform sampler2D texture0;        \n"
-        "varying vec2 fragTexCoord;         \n"
-        "varying vec4 fragColor;            \n"
         "void main()                        \n"
         "{                                  \n"
-        "    gl_FragColor = texture2D(texture0, fragTexCoord) * fragColor; \n"
+        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
+        "    gl_FragColor = texelColor*tintColor; \n"    
         "}                                  \n";
 
     shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
@@ -2222,35 +2236,41 @@ static Shader LoadSimpleShader(void)
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
+    char vShaderStr[] = " #version 330      \n"
+        "in vec3 vertexPosition;            \n"
+        "in vec2 vertexTexCoord;            \n"
+        "in vec3 vertexNormal;              \n"
+        "out vec2 fragTexCoord;             \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char vShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
-#endif
-        "uniform mat4 projectionMatrix;     \n"
-        "uniform mat4 modelviewMatrix;      \n"
+    char vShaderStr[] = " #version 100      \n"
         "attribute vec3 vertexPosition;     \n"
         "attribute vec2 vertexTexCoord;     \n"
         "attribute vec3 vertexNormal;       \n"
         "varying vec2 fragTexCoord;         \n"
+#endif
+        "uniform mat4 projectionMatrix;     \n"
+        "uniform mat4 modelviewMatrix;      \n"
         "void main()                        \n"
         "{                                  \n"
         "    fragTexCoord = vertexTexCoord; \n"
-        "    gl_Position = projectionMatrix * modelviewMatrix * vec4(vertexPosition, 1.0); \n"
+        "    gl_Position = projectionMatrix*modelviewMatrix*vec4(vertexPosition, 1.0); \n"
         "}                                  \n";
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = " #version 330      \n"     // NOTE: Actually, #version 110 (quivalent to #version 100 on ES2)
+    char fShaderStr[] = " #version 330      \n"
+        "in vec2 fragTexCoord;         \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char fShaderStr[] = " #version 100      \n"     // NOTE: Must be defined this way! 110 doesn't work!
+    char fShaderStr[] = " #version 100      \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
+        "varying vec2 fragTexCoord;         \n"
 #endif
         "uniform sampler2D texture0;        \n"
-        "varying vec2 fragTexCoord;         \n"
         "uniform vec4 tintColor;            \n"
         "void main()                        \n"
         "{                                  \n"
-        "    gl_FragColor = texture2D(texture0, fragTexCoord) * tintColor; \n"
+        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
+        "    gl_FragColor = texelColor*tintColor; \n"
         "}                                  \n";
 
     shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
@@ -2693,3 +2713,53 @@ void TraceLog(int msgType, const char *text, ...)
     if (msgType == ERROR) exit(1);
 }
 #endif
+
+static char **StringSplit(char *baseString, const char delimiter, int *numExt)
+{
+    char **result = 0;
+    int count = 0;
+    char *tmp = baseString;
+    char *lastComma = 0;
+    char delim[2];
+    
+    delim[0] = delimiter;
+    delim[1] = 0;
+
+    // Count how many elements will be extracted
+    while (*tmp)
+    {
+        if (delimiter == *tmp)
+        {
+            count++;
+            lastComma = tmp;
+        }
+        
+        tmp++;
+    }
+
+    // Add space for trailing token
+    count += lastComma < (baseString + strlen(baseString) - 1);
+
+    // Add space for terminating null string
+    count++;
+
+    result = malloc(sizeof(char *)*count);
+
+    if (result)
+    {
+        int idx = 0;
+        char *token = strtok(baseString, delim);
+
+        while (token)
+        {
+            *(result + idx++) = token;
+            token = strtok(0, delim);
+        }
+
+        *(result + idx) = 0;
+    }
+    
+    *numExt = (count - 1);
+
+    return result;
+}
