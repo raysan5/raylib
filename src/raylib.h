@@ -430,6 +430,10 @@ void SetPawnControl(int pawnControlKey);
 void SetFnControl(int fnControlKey);
 void SetSmoothZoomControl(int smoothZoomControlKey);
 
+int GetShaderLocation(Shader shader, const char *uniformName);
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);
+void SetShaderTexture(Shader shader, int  uniformLoc, Texture2D texture);
+
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------

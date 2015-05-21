@@ -1618,10 +1618,41 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
         return id;
     }
     
+    if ((!texCompDXTSupported) && ((textureFormat == COMPRESSED_DXT1_RGB) || (textureFormat == COMPRESSED_DXT1_RGBA) ||
+        (textureFormat == COMPRESSED_DXT3_RGBA) || (textureFormat == COMPRESSED_DXT5_RGBA)))
+    {
+        TraceLog(WARNING, "DXT compressed texture format not supported");
+        return id;
+    }
+    
+    if ((!texCompETC1Supported) && (textureFormat == COMPRESSED_ETC1_RGB))
+    {
+        TraceLog(WARNING, "ETC1 compressed texture format not supported");
+        return id;
+    }
+    
+    if ((!texCompETC2Supported) && ((textureFormat == COMPRESSED_ETC2_RGB) || (textureFormat == COMPRESSED_ETC2_EAC_RGBA)))
+    {
+        TraceLog(WARNING, "ETC2 compressed texture format not supported");
+        return id;
+    }
+    
+    if ((!texCompPVRTSupported) && ((textureFormat == COMPRESSED_PVRT_RGB) || (textureFormat == COMPRESSED_PVRT_RGBA)))
+    {
+        TraceLog(WARNING, "PVRT compressed texture format not supported");
+        return id;
+    }
+    
+    if ((!texCompASTCSupported) && ((textureFormat == COMPRESSED_ASTC_4x4_RGBA) || (textureFormat == COMPRESSED_ASTC_8x8_RGBA)))
+    {
+        TraceLog(WARNING, "ASTC compressed texture format not supported");
+        return id;
+    }
+    
     glGenTextures(1, &id);              // Generate Pointer to the texture
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    //glActiveTexture(GL_TEXTURE0);       // If not defined, using GL_TEXTURE0 by default (shader texture)
+    //glActiveTexture(GL_TEXTURE0);     // If not defined, using GL_TEXTURE0 by default (shader texture)
 #endif
 
     glBindTexture(GL_TEXTURE_2D, id);
@@ -2093,6 +2124,42 @@ void rlglSetDefaultShader(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlglSetCustomShader(defaultShader);
 #endif
+}
+
+int GetShaderLocation(Shader shader, const char *uniformName)
+{
+    int location = 0;
+    
+    location = glGetUniformLocation(shader.id, uniformName);
+    
+    if (location == 0) TraceLog(WARNING, "[SHDR %i] Shader location for %s could not be found", shader.id, uniformName);
+    
+    return location;
+}
+
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
+{
+    glUseProgram(shader.id);
+
+    if (size == 1) glUniform1fv(uniformLoc, 1, value);          // Shader uniform type: float
+    else if (size == 2) glUniform2fv(uniformLoc, 1, value);     // Shader uniform type: vec2
+    else if (size == 3) glUniform3fv(uniformLoc, 1, value);     // Shader uniform type: vec3
+    else if (size == 4) glUniform4fv(uniformLoc, 1, value);     // Shader uniform type: vec4
+    else TraceLog(WARNING, "Shader value float array size not recognized");
+    
+    glUseProgram(0);
+}
+
+void SetShaderTexture(Shader shader, int  uniformLoc, Texture2D texture)
+{
+    glUseProgram(shader.id);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture.id);
+    
+    glUniform1i(uniformLoc, 1);    // Texture fits in texture unit 1 (Check glActiveTexture())
+    
+    glActiveTexture(GL_TEXTURE0);
+    glUseProgram(0);
 }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)

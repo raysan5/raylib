@@ -39,8 +39,8 @@
 #include "utils.h"          // rRES data decompression utility function
                             // NOTE: Includes Android fopen function map
 
-#define STB_VORBIS_HEADER_ONLY
-#include "stb_vorbis.c"     // OGG loading functions 
+//#define STB_VORBIS_HEADER_ONLY
+#include "stb_vorbis.h"     // OGG loading functions 
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

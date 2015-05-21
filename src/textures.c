@@ -246,8 +246,17 @@ Texture2D LoadTexture(const char *fileName)
     ConvertToPOT(&image, BLANK);
 #endif
 
-    texture = LoadTextureFromImage(image, false);
-    UnloadImage(image);
+    if (image.data != NULL)
+    { 
+        texture = LoadTextureFromImage(image, false);
+        UnloadImage(image);
+    }
+    else
+    {
+        TraceLog(WARNING, "Texture could not be created");
+        
+        texture.id = 0;
+    }
 
     return texture;
 }
@@ -985,9 +994,9 @@ static Image LoadKTX(const char *fileName)
             image.height = header.height;
             image.mipmaps = header.mipmapLevels;
             
-            TraceLog(INFO, "KTX (ETC) image width: %i", header.width);
-            TraceLog(INFO, "KTX (ETC) image height: %i", header.height);
-            TraceLog(INFO, "KTX (ETC) image format: 0x%x", header.glInternalFormat);
+            TraceLog(DEBUG, "KTX (ETC) image width: %i", header.width);
+            TraceLog(DEBUG, "KTX (ETC) image height: %i", header.height);
+            TraceLog(DEBUG, "KTX (ETC) image format: 0x%x", header.glInternalFormat);
             
             unsigned char unused;
             
@@ -1212,8 +1221,9 @@ static Image LoadASTC(const char *fileName)
         }
         else
         {
-            image.width = 0x00000000 | ((int)header.width[0] << 16) | ((int)header.width[1] << 8) | ((int)header.width[2]);
-            image.height = 0x00000000 | ((int)header.height[0] << 16) | ((int)header.height[1] << 8) | ((int)header.height[2]);
+            // NOTE: Assuming Little Endian (could it be wrong?)
+            image.width = 0x00000000 | ((int)header.width[2] << 16) | ((int)header.width[1] << 8) | ((int)header.width[0]);
+            image.height = 0x00000000 | ((int)header.height[2] << 16) | ((int)header.height[1] << 8) | ((int)header.height[0]);
             image.mipmaps = 1;
             
             TraceLog(DEBUG, "ASTC image width: %i", image.width);
