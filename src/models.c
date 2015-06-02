@@ -1171,7 +1171,10 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     MatrixTranspose(&viewMatrix);
 
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+    //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+    
+    // NOTE: Billboard locked to axis-Y
+    Vector3 up = { 0, 1, 0 };
 /*
     a-------b
     |       |
@@ -1351,180 +1354,219 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     int locationCellX = 0;
     int locationCellY = 0;
 
-    locationCellX = floor(playerPosition->x + mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE);
-    locationCellY = floor(playerPosition->z + mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE);
+    locationCellX = floor(playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE);
+    locationCellY = floor(playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE);
 
-    // Multiple Axis --------------------------------------------------------------------------------------------
-
-    // Axis x-, y-
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
+    if (locationCellX >= 0 && locationCellY >= 0 && locationCellX < cubicmap.width && locationCellY < cubicmap.height)
     {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
-        {
-            playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 1, 0, 1};
-        }
-    }
+        // Multiple Axis --------------------------------------------------------------------------------------------
 
-    // Axis x-, y+
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
-    {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
+        // Axis x-, y-
+        if (locationCellX > 0 && locationCellY > 0)
         {
-            playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 1, 0, 1};
-        }
-    }
-
-    // Axis x+, y-
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
-    {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
-        {
-            playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 1, 0, 1};
-        }
-    }
-
-    // Axis x+, y+
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
-    {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
-        {
-            playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 1, 0, 1};
-        }
-    }
-
-    // Single Axis ---------------------------------------------------------------------------------------------------
-
-    // Axis x-
-    if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
-    {
-        if ((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius)
-        {
-            playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 1, 0, 0};
-        }
-    }
-    // Axis x+
-    if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
-    {
-        if ((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius)
-        {
-            playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 1, 0, 0};
-        }
-    }
-    // Axis y-
-    if (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
-    {
-        if ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius)
-        {
-            playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 0, 0, 1};
-        }
-    }
-    // Axis y+
-    if (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
-    {
-        if ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius)
-        {
-            playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            impactDirection = (Vector3) { 0, 0, 1};
-        }
-    }
-
-    // Diagonals -------------------------------------------------------------------------------------------------------
-
-    // Axis x-, y-
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
-    {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
-        {
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            else playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-            // Return ricochet
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
-                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
             {
-                impactDirection = (Vector3) { 1, 0, 1};
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
+                {
+                    playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 1, 0, 1};
+                }
             }
         }
-    }
 
-    // Axis x-, y+
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
-    {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
+        // Axis x-, y+
+        if (locationCellX > 0 && locationCellY < cubicmap.height - 1)
         {
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            else playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-            // Return ricochet
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
-                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
             {
-                impactDirection = (Vector3) { 1, 0, 1};
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
+                {
+                    playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 1, 0, 1};
+                }
             }
         }
-    }
 
-    // Axis x+, y-
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
-    {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
+        // Axis x+, y-
+        if (locationCellX < cubicmap.width - 1 && locationCellY > 0)
         {
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            else playerPosition->z = locationCellY - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-            // Return ricochet
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
-                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
             {
-                impactDirection = (Vector3) { 1, 0, 1};
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
+                {
+                    playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 1, 0, 1};
+                }
             }
         }
-    }
 
-    // Axis x+, y+
-    if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-        (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
-    {
-        if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-            ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
+        // Axis x+, y+
+        if (locationCellX < cubicmap.width - 1 && locationCellY < cubicmap.height - 1)
         {
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-            else playerPosition->z = locationCellY + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-            // Return ricochet
-            if (((playerPosition->x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
-                ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
             {
-                impactDirection = (Vector3) { 1, 0, 1};
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
+                {
+                    playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 1, 0, 1};
+                }
+            }
+        }
+
+        // Single Axis ---------------------------------------------------------------------------------------------------
+
+        // Axis x-
+        if (locationCellX > 0)
+        {
+            if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
+            {
+                if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius)
+                {
+                    playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 1, 0, 0};
+                }
+            }
+        }
+        // Axis x+
+        if (locationCellX < cubicmap.width - 1)
+        {
+            if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
+            {
+                if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius)
+                {
+                    playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 1, 0, 0};
+                }
+            }
+        }
+        // Axis y-
+        if (locationCellY > 0)
+        {
+            if (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
+            {
+                if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius)
+                {
+                    playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 0, 0, 1};
+                }
+            }
+        }
+        // Axis y+
+        if (locationCellY < cubicmap.height - 1)
+        {
+            if (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
+            {
+                if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius)
+                {
+                    playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    impactDirection = (Vector3) { 0, 0, 1};
+                }
+            }
+        }
+
+        // Diagonals -------------------------------------------------------------------------------------------------------
+
+        // Axis x-, y-
+        if (locationCellX > 0 && locationCellY > 0)
+        {
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+            {
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
+                {
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    else playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+
+                    // Return ricochet
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+                    {
+                        impactDirection = (Vector3) { 1, 0, 1};
+                    }
+                }
+            }
+        }
+
+        // Axis x-, y+
+        if (locationCellX > 0 && locationCellY < cubicmap.height - 1)
+        {
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+            {
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
+                {
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    else playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+
+                    // Return ricochet
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+                    {
+                        impactDirection = (Vector3) { 1, 0, 1};
+                    }
+                }
+            }
+        }
+
+        // Axis x+, y-
+        if (locationCellX < cubicmap.width - 1 && locationCellY > 0)
+        {
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+            {
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
+                {
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    else playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+
+                    // Return ricochet
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+                    {
+                        impactDirection = (Vector3) { 1, 0, 1};
+                    }
+                }
+            }
+        }
+
+        // Axis x+, y+
+        if (locationCellX < cubicmap.width - 1 && locationCellY < cubicmap.height - 1)
+        {
+            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+            {
+                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
+                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
+                {
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+                    else playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
+
+                    // Return ricochet
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+                    {
+                        impactDirection = (Vector3) { 1, 0, 1};
+                    }
+                }
             }
         }
     }

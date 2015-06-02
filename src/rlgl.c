@@ -877,7 +877,7 @@ void rlglInit(void)
     TraceLog(INFO, "Number of supported extensions: %i", numExt);
 
     // Show supported extensions
-    for (int i = 0; i < numExt; i++)  TraceLog(INFO, "Supported extension: %s", ext[i]);
+    //for (int i = 0; i < numExt; i++)  TraceLog(INFO, "Supported extension: %s", ext[i]);
 
     // Check required extensions
     for (int i = 0; i < numExt; i++)
@@ -1377,12 +1377,16 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
         glEnableVertexAttribArray(model.shader.normalLoc);
     }
 
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, model.texture.id);
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, 4);
 
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
 
     glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
-
+    glActiveTexture(GL_TEXTURE0);
+    
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
     else glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
 
@@ -2128,11 +2132,9 @@ void rlglSetDefaultShader(void)
 
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
-    int location = 0;
+    int location = glGetUniformLocation(shader.id, uniformName);
     
-    location = glGetUniformLocation(shader.id, uniformName);
-    
-    if (location == 0) TraceLog(WARNING, "[SHDR %i] Shader location for %s could not be found", shader.id, uniformName);
+    if (location == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader.id, uniformName);
     
     return location;
 }
