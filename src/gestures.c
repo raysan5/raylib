@@ -175,8 +175,8 @@ bool IsGestureDetected(void)
     else if (currentGesture == GESTURE_PINCH_IN)        TraceLog(INFO, "PINCH IN");
     else if (currentGesture == GESTURE_PINCH_OUT)       TraceLog(INFO, "PINCH OUT");
 
-    if (currentGesture != GESTURE_NONE) return false;
-    else return true;
+    if (currentGesture != GESTURE_NONE) return true;
+    else return false;
 }
 
 // Check gesture type
@@ -225,7 +225,8 @@ float GetPinchAngle(void)
 
 extern void ResetGestures(void)
 {
-    if (currentGesture != GESTURE_HOLD) currentGesture = GESTURE_NONE;
+    if (currentGesture == GESTURE_TAP) currentGesture = GESTURE_HOLD;
+    else if (currentGesture != GESTURE_HOLD) currentGesture = GESTURE_NONE;
 }
 
 #if defined(PLATFORM_WEB)
@@ -287,31 +288,24 @@ extern void ProcessMotionEvent(GestureEvent event)
                     eventTime = GetCurrentTime();
                     
                     // Set hold
-                    currentGesture = GESTURE_HOLD;
+                    if (doubleTapping) currentGesture = GESTURE_DOUBLETAP;
+                    else currentGesture = GESTURE_TAP;
                 }
             }
             else if (event.action == UP)
             {
+			    currentGesture = GESTURE_NONE;
+
                 // Detect that we are tapping instead of holding
                 if (GetCurrentTime() - eventTime < TAP_TIMEOUT)
                 {
-                    if (doubleTapping)
-                    {
-                        // If we tapped before we define it as double tap
-                        currentGesture = GESTURE_DOUBLETAP;
-                        untap = false;
-                    }
-                    else 
-                    {
-                        // Simple tap
-                        currentGesture = GESTURE_TAP;
-                        untap = true;
-                    }
+                    if (doubleTapping) untap = false;
+                    else untap = true;
                 }
-                else currentGesture = GESTURE_NONE;
                 
                 // Tap finished
                 doubleTapping = false;
+
                 // Update our event time
                 eventTime = GetCurrentTime();
             }
@@ -556,7 +550,7 @@ static double GetCurrentTime()
 }
 
 #if defined(PLATFORM_ANDROID)
-// Android: Process activity input events
+// Android: Get input events
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 {
     int type = AInputEvent_getType(event);
@@ -596,6 +590,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
+// Web: Get input events
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
     /*

@@ -295,8 +295,10 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int f
 
     Character c;
 
-    if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
-    else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
+    //if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
+    //else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
+    
+    scaleFactor = (float)fontSize/spriteFont.charSet[0].h;
 
     for(int i = 0; i < length; i++)
     {
