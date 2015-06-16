@@ -999,6 +999,8 @@ void SetCustomShader(Shader shader)
 void SetDefaultShader(void)
 {
     rlglSetDefaultShader();
+    
+    enabledPostpro = false;
 }
 
 //----------------------------------------------------------------------------------

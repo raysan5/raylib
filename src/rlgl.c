@@ -1058,7 +1058,11 @@ void rlglInitPostpro(void)
 void rlglSetPostproShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    SetModelShader(&postproQuad, shader);
+    rlglSetModelShader(&postproQuad, shader);
+    
+    //TraceLog(INFO, "Postproquad texture id: %i", postproQuad.texture.id);
+    //TraceLog(INFO, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
+    //TraceLog(INFO, "Shader diffuse map id: %i", shader.texDiffuseId);
 #endif
 }
 
@@ -1365,7 +1369,8 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
+    glBindTexture(GL_TEXTURE_2D, model.texture.id);
+    //glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
     //glUniform1i(model.shader.mapDiffuseLoc, 0);   // Diffuse texture fits in texture unit 0
 
     if (vaoSupported)
@@ -2104,6 +2109,8 @@ void rlglSetModelShader(Model *model, Shader shader)
     glVertexAttribPointer(shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+    
+    //if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
 #endif
 }
 
@@ -2144,7 +2151,8 @@ void rlglSetCustomShader(Shader shader)
 void rlglSetDefaultShader(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    rlglSetCustomShader(defaultShader);
+    //rlglSetCustomShader(defaultShader);
+    rlglSetPostproShader(defaultShader);
 #endif
 }
 

@@ -1112,8 +1112,16 @@ void UnloadModel(Model model)
 // Link a texture to a model
 void SetModelTexture(Model *model, Texture2D texture)
 {
-    if (texture.id <= 0) model->texture.id = whiteTexture;  // Default white texture (use mesh color)
-    else model->texture = texture;
+    if (texture.id <= 0)
+    {
+        model->texture.id = whiteTexture;  // Default white texture (use mesh color)
+        model->shader.texDiffuseId = whiteTexture;
+    }
+    else
+    {
+        model->texture = texture;
+        model->shader.texDiffuseId = texture.id;
+    }
 }
 
 // Load a custom shader (vertex shader + fragment shader)
