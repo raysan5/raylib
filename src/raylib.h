@@ -282,26 +282,34 @@ typedef struct VertexData {
 
 // Shader type
 typedef struct Shader {
-    unsigned int id;            // Shader program id
+    unsigned int id;                // Shader program id
 
+    unsigned int texDiffuseId;      // Diffuse texture id
+    unsigned int texNormalId;       // Normal texture id
+    unsigned int texSpecularId;     // Specular texture id
+    
     // Variable attributes
-    unsigned int vertexLoc;     // Vertex attribute location point (vertex shader)
-    unsigned int texcoordLoc;   // Texcoord attribute location point (vertex shader)
-    unsigned int normalLoc;     // Normal attribute location point (vertex shader)
-    unsigned int colorLoc;      // Color attibute location point (vertex shader)
+    int vertexLoc;     // Vertex attribute location point (vertex shader)
+    int texcoordLoc;   // Texcoord attribute location point (vertex shader)
+    int normalLoc;     // Normal attribute location point (vertex shader)
+    int colorLoc;      // Color attibute location point (vertex shader)
 
     // Uniforms
-    unsigned int projectionLoc; // Projection matrix uniform location point (vertex shader)
-    unsigned int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
-    unsigned int textureLoc;    // Texture uniform location point (fragment shader)
-    unsigned int tintColorLoc;  // Color uniform location point (fragment shader)
+    int projectionLoc; // Projection matrix uniform location point (vertex shader)
+    int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
+    
+    int tintColorLoc;  // Color uniform location point (fragment shader)
+    
+    int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
+    int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
+    int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
 } Shader;
 
 // 3d Model type
 typedef struct Model {
     VertexData mesh;
     Matrix transform;
-    Texture2D texture;
+    Texture2D texture;    // Only for OpenGL 1.1, on newer versions this should be in the shader
     Shader shader;
 } Model;
 
@@ -432,7 +440,10 @@ void SetSmoothZoomControl(int smoothZoomControlKey);
 
 int GetShaderLocation(Shader shader, const char *uniformName);
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);
-void SetShaderTexture(Shader shader, int  uniformLoc, Texture2D texture);
+
+void SetShaderMapDiffuse(Shader *shader, Texture2D texture);
+void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);
+void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)

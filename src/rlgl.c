@@ -1140,7 +1140,7 @@ void rlglDraw(void)
 
         glUniformMatrix4fv(currentShader.projectionLoc, 1, false, GetMatrixVector(projection));
         glUniformMatrix4fv(currentShader.modelviewLoc, 1, false, GetMatrixVector(modelview));
-        glUniform1i(currentShader.textureLoc, 0);
+        glUniform1i(currentShader.mapDiffuseLoc, 0);
     }
 
     // NOTE: We draw in this order: triangle shapes, textured quads and lines
@@ -1159,9 +1159,12 @@ void rlglDraw(void)
             glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(currentShader.vertexLoc);
 
-            glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
-            glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(currentShader.colorLoc);
+            if (currentShader.colorLoc != -1)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+            }
         }
 
         glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
@@ -1191,10 +1194,13 @@ void rlglDraw(void)
             glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(currentShader.texcoordLoc);
 
-            glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
-            glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(currentShader.colorLoc);
-
+            if (currentShader.colorLoc != -1)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+            }
+            
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
         }
 
@@ -1244,9 +1250,12 @@ void rlglDraw(void)
             glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(currentShader.vertexLoc);
 
-            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
-            glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(currentShader.colorLoc);
+            if (currentShader.colorLoc != -1)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+            }
         }
 
         glDrawArrays(GL_LINES, 0, lines.vCounter);
@@ -1348,13 +1357,16 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
     glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(projection));
     glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(modelviewworld));
-    glUniform1i(model.shader.textureLoc, 0);    // Texture fits in texture unit 0 (Check glActiveTexture())
-
+    
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
     float vColor[4] = { (float)color.r/255, (float)color.g/255, (float)color.b/255, (float)color.a/255 };
-
     glUniform4fv(model.shader.tintColorLoc, 1, vColor);
+    
+    // Set shader textures (diffuse, normal, specular)
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
+    //glUniform1i(model.shader.mapDiffuseLoc, 0);   // Diffuse texture fits in texture unit 0
 
     if (vaoSupported)
     {
@@ -1377,20 +1389,16 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
         glEnableVertexAttribArray(model.shader.normalLoc);
     }
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, model.texture.id);
-    //glActiveTexture(GL_TEXTURE1);
-    //glBindTexture(GL_TEXTURE_2D, 4);
-
+    // Draw call!
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
 
     glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
-    glActiveTexture(GL_TEXTURE0);
-    
+    glActiveTexture(GL_TEXTURE0);               // Set shader active texture to default 0
+
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
     else glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
 
-    glUseProgram(0);
+    glUseProgram(0);        // Unbind shader program
 #endif
 
 #if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
@@ -1968,6 +1976,8 @@ unsigned int rlglLoadShaderFromText(char *vShaderStr, char *fShaderStr)
     glAttachShader(program, fragmentShader);
 
     glLinkProgram(program);
+    
+    // NOTE: All uniform variables are intitialised to 0 when a program links
 
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
@@ -2041,6 +2051,11 @@ Shader rlglLoadShader(char *vsFileName, char *fsFileName)
     // Shader strings must be freed
     free(vShaderStr);
     free(fShaderStr);
+    
+    // Set shader textures ids (all 0 by default)
+    shader.texDiffuseId = 0;
+    shader.texNormalId = 0;
+    shader.texSpecularId = 0;
 
     // Get handles to GLSL input attibute locations
     //-------------------------------------------------------------------
@@ -2048,14 +2063,17 @@ Shader rlglLoadShader(char *vsFileName, char *fsFileName)
     shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
     shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
     // NOTE: custom shader does not use colorLoc
+    shader.colorLoc = -1;
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader.textureLoc = glGetUniformLocation(shader.id, "texture0");
     shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
+    shader.mapNormalLoc = -1;       // It can be set later
+    shader.mapSpecularLoc = -1;     // It can be set later
     //--------------------------------------------------------------------
 #endif
 
@@ -2152,16 +2170,64 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
     glUseProgram(0);
 }
 
-void SetShaderTexture(Shader shader, int  uniformLoc, Texture2D texture)
+void SetShaderMapDiffuse(Shader *shader, Texture2D texture)
 {
-    glUseProgram(shader.id);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture.id);
+    shader->texDiffuseId = texture.id;
     
-    glUniform1i(uniformLoc, 1);    // Texture fits in texture unit 1 (Check glActiveTexture())
+    glUseProgram(shader->id);
     
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, shader->texDiffuseId);
+    
+    glUniform1i(shader->mapDiffuseLoc, 0);    // Texture fits in active texture unit 0
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
     glUseProgram(0);
+}
+
+void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture)
+{
+    shader->mapNormalLoc = glGetUniformLocation(shader->id, uniformName);
+
+    if (shader->mapNormalLoc == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader->id, uniformName);
+    else
+    {
+        shader->texNormalId = texture.id;
+        
+        glUseProgram(shader->id);
+        
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, shader->texNormalId);
+        
+        glUniform1i(shader->mapNormalLoc, 1);    // Texture fits in active texture unit 1
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE0);
+        glUseProgram(0);
+    }
+}
+
+void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture)
+{
+    shader->mapSpecularLoc = glGetUniformLocation(shader->id, uniformName);
+
+    if (shader->mapSpecularLoc == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader->id, uniformName);
+    else
+    {
+        shader->texSpecularId = texture.id;
+        
+        glUseProgram(shader->id);
+        
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, shader->texSpecularId);
+        
+        glUniform1i(shader->mapSpecularLoc, 2);    // Texture fits in active texture unit 0
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE0);
+        glUseProgram(0);
+    }
 }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2281,13 +2347,17 @@ static Shader LoadDefaultShader(void)
     shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
     shader.colorLoc = glGetAttribLocation(shader.id, "vertexColor");
     // NOTE: default shader does not use normalLoc
+    shader.normalLoc = -1;
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc = glGetUniformLocation(shader.id, "modelviewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader.textureLoc = glGetUniformLocation(shader.id, "texture0");
+    shader.tintColorLoc = -1;
+    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
+    shader.mapNormalLoc = -1;       // It can be set later
+    shader.mapSpecularLoc = -1;     // It can be set later
     //--------------------------------------------------------------------
 
     return shader;
@@ -2353,14 +2423,17 @@ static Shader LoadSimpleShader(void)
     shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
     shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
     // NOTE: simple shader does not use colorLoc
+    shader.colorLoc = -1;
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader.textureLoc = glGetUniformLocation(shader.id, "texture0");
     shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
+    shader.mapNormalLoc = -1;       // It can be set later
+    shader.mapSpecularLoc = -1;     // It can be set later
     //--------------------------------------------------------------------
 
     return shader;
