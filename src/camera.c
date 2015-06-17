@@ -162,7 +162,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI)
     // Mouse movement detection
-    if (cameraMode != CAMERA_FREE)
+    if ((cameraMode != CAMERA_FREE) && (cameraMode != CAMERA_ORBITAL))
     {
         HideCursor();
         
@@ -449,28 +449,7 @@ void SetSmoothZoomControl(int smoothZoomControlKey)
     smoothZoomControllingKey = smoothZoomControlKey;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void SetOrbitalTarget(Vector3 target)
+{
+    internalCamera.target = target;
+}

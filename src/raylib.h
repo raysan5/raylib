@@ -437,6 +437,7 @@ void SetResetControl(int resetKey);
 void SetPawnControl(int pawnControlKey);
 void SetFnControl(int fnControlKey);
 void SetSmoothZoomControl(int smoothZoomControlKey);
+void SetOrbitalTarget(Vector3 target);
 
 int GetShaderLocation(Shader shader, const char *uniformName);
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);
