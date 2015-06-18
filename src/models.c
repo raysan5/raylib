@@ -1105,8 +1105,8 @@ void UnloadModel(Model model)
     rlDeleteBuffers(model.mesh.vboId[2]);
 
     rlDeleteVertexArrays(model.mesh.vaoId);
-    rlDeleteTextures(model.texture.id);
-    rlDeleteShader(model.shader.id);
+    //rlDeleteTextures(model.texture.id);
+    //rlDeleteShader(model.shader.id);
 }
 
 // Link a texture to a model
