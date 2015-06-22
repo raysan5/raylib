@@ -1045,12 +1045,7 @@ void rlglInitPostpro(void)
     
     postproQuad = rlglLoadModel(quadData);
     
-    Texture2D texture;
-    texture.id = fboColorTexture;
-    texture.width = w;
-    texture.height = h;
-    
-    SetModelTexture(&postproQuad, texture);
+    // NOTE: fboColorTexture id must be assigned to postproQuad model shader
 #endif
 }
 
@@ -1059,6 +1054,13 @@ void rlglSetPostproShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     rlglSetModelShader(&postproQuad, shader);
+    
+    Texture2D texture;
+    texture.id = fboColorTexture;
+    texture.width = GetScreenWidth();
+    texture.height = GetScreenHeight();
+
+    SetShaderMapDiffuse(&postproQuad.shader, texture);
     
     //TraceLog(INFO, "Postproquad texture id: %i", postproQuad.texture.id);
     //TraceLog(INFO, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
@@ -1369,8 +1371,7 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, model.texture.id);
-    //glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
+    glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
     //glUniform1i(model.shader.mapDiffuseLoc, 0);   // Diffuse texture fits in texture unit 0
 
     if (vaoSupported)
