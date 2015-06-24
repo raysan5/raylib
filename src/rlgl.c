@@ -2152,7 +2152,7 @@ void rlglSetCustomShader(Shader shader)
 void rlglSetDefaultShader(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    //rlglSetCustomShader(defaultShader);
+    rlglSetCustomShader(defaultShader);
     rlglSetPostproShader(defaultShader);
 #endif
 }
