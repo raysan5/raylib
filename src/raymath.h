@@ -53,15 +53,15 @@
         float y;
         float z;
     } Vector3;
-#endif
 
-// Matrix type (OpenGL style 4x4 - right handed, column major)
-typedef struct Matrix {
-    float m0, m4, m8, m12;
-    float m1, m5, m9, m13;
-    float m2, m6, m10, m14;
-    float m3, m7, m11, m15;
-} Matrix;
+    // Matrix type (OpenGL style 4x4 - right handed, column major)
+    typedef struct Matrix {
+        float m0, m4, m8, m12;
+        float m1, m5, m9, m13;
+        float m2, m6, m10, m14;
+        float m3, m7, m11, m15;
+    } Matrix;
+#endif
 
 // Quaternion type
 typedef struct Quaternion {
@@ -91,7 +91,7 @@ void VectorNormalize(Vector3 *v);                       // Normalize provided ve
 float VectorDistance(Vector3 v1, Vector3 v2);           // Calculate distance between two points
 Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount); // Calculate linear interpolation between two vectors
 Vector3 VectorReflect(Vector3 vector, Vector3 normal);  // Calculate reflected vector to normal
-void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Vector3 with a given Matrix
+void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Vector3 by a given Matrix
 Vector3 VectorZero(void);                               // Return a Vector3 init to zero
 
 //------------------------------------------------------------------------------------
@@ -107,15 +107,11 @@ Matrix MatrixIdentity(void);                            // Returns identity matr
 Matrix MatrixAdd(Matrix left, Matrix right);            // Add two matrices
 Matrix MatrixSubstract(Matrix left, Matrix right);      // Substract two matrices (left - right)
 Matrix MatrixTranslate(float x, float y, float z);      // Returns translation matrix
-Matrix MatrixRotate(float axisX, float axisY, float axisZ); // Returns rotation matrix
-Matrix MatrixFromAxisAngle(Vector3 axis, float angle);      // Returns rotation matrix for an angle around an specified axis
-Matrix MatrixFromAxisAngle2(Vector3 axis, float angle);     // Returns rotation matrix for an angle around an specified axis (test another implemntation)
-Matrix MatrixFromQuaternion(Quaternion q);              // Returns rotation matrix for a given quaternion
+Matrix MatrixRotate(float angle, Vector3 axis);         // Returns rotation matrix for an angle around an specified axis (angle in radians)
 Matrix MatrixRotateX(float angle);                      // Returns x-rotation matrix (angle in radians)
 Matrix MatrixRotateY(float angle);                      // Returns y-rotation matrix (angle in radians)
 Matrix MatrixRotateZ(float angle);                      // Returns z-rotation matrix (angle in radians)
 Matrix MatrixScale(float x, float y, float z);          // Returns scaling matrix
-Matrix MatrixTransform(Vector3 translation, Vector3 rotation, Vector3 scale);   // Returns transformation matrix for a given translation, rotation and scale
 Matrix MatrixMultiply(Matrix left, Matrix right);       // Returns two matrix multiplication
 Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far);  // Returns perspective projection matrix
 Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
@@ -126,14 +122,15 @@ void PrintMatrix(Matrix m);                             // Print matrix utility
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
 //------------------------------------------------------------------------------------
-float QuaternionLength(Quaternion quat);                // Calculates the length of a quaternion
+float QuaternionLength(Quaternion quat);                // Compute the length of a quaternion
 void QuaternionNormalize(Quaternion *q);                // Normalize provided quaternion
 Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
 Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // Calculates spherical linear interpolation between two quaternions
-Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion from a given rotation matrix
-Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns rotation quaternion for an angle around an axis
-Matrix QuaternionToMatrix(Quaternion q);                        // Calculates the matrix from the given quaternion
-void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle); // Returns the axis and the angle for a given quaternion
+Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
+Matrix QuaternionToMatrix(Quaternion q);                        // Returns a matrix for a given quaternion
+Quaternion QuaternionFromAxisAngle(float angle, Vector3 axis);  // Returns rotation quaternion for an angle and axis
+void QuaternionToAxisAngle(Quaternion q, float *outAngle, Vector3 *outAxis); // Returns the rotation angle and axis for a given quaternion
+void QuaternionTransform(Quaternion *q, Matrix mat);            // Transform a quaternion given a transformation matrix
 
 #ifdef __cplusplus
 }

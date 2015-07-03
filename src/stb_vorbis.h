@@ -1,4 +1,4 @@
-// Ogg Vorbis audio decoder - v1.04 - public domain
+// Ogg Vorbis audio decoder - v1.05 - public domain
 // http://nothings.org/stb_vorbis/
 //
 // Written by Sean Barrett in 2007, last updated in 2014
@@ -24,12 +24,13 @@
 //    Casey Muratori     John Bolton         Gargaj
 //    Laurent Gomila     Marc LeBlanc        Ronny Chevalier
 //    Bernhard Wodo      Evan Balster			"alxprd"@github
-//    Tom Beaumont       Ingo Leitgeb
+//    Tom Beaumont       Ingo Leitgeb        Nicolas Guillemot
 // (If you reported a bug but do not appear in this list, it is because
 // someone else reported the bug before you. There were too many of you to
 // list them all because I was lax about updating for a long time, sorry.)
 //
 // Partial history:
+//    1.05    - 2015/04/19 - don't define __forceinline if it's redundant
 //    1.04    - 2014/08/27 - fix missing const-correct case in API
 //    1.03    - 2014/08/07 - warning fixes
 //    1.02    - 2014/07/09 - declare qsort comparison as explicitly _cdecl in Windows
@@ -58,6 +59,12 @@
 #include <stdio.h>
 #endif
 
+// NOTE: Added to work with raylib on Android
+#if defined(PLATFORM_ANDROID)
+    #include "utils.h"  // Android fopen function map
+#endif
+
+// RaySan: Added for Linux
 #ifdef __linux
     #include <alloca.h>
 #endif

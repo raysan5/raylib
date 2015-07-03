@@ -32,7 +32,7 @@
 //#define RLGL_STANDALONE       // NOTE: To use rlgl as standalone lib, just uncomment this line
 
 #ifndef RLGL_STANDALONE
-    #include "raylib.h"         // Required for typedef: Model
+    #include "raylib.h"         // Required for typedef(s): Model, Shader, Texture2D
     #include "utils.h"          // Required for function TraceLog()
 #endif
 
@@ -89,21 +89,69 @@ typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
 #ifdef RLGL_STANDALONE
-    typedef struct {
+    // Texture formats (support depends on OpenGL version)
+    typedef enum { 
+        UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+        UNCOMPRESSED_R5G6B5,            // 16 bpp
+        UNCOMPRESSED_R8G8B8,            // 24 bpp
+        UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
+        UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
+        UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+        COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
+        COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
+        COMPRESSED_DXT3_RGBA,           // 8 bpp
+        COMPRESSED_DXT5_RGBA,           // 8 bpp
+        COMPRESSED_ETC1_RGB,            // 4 bpp
+        COMPRESSED_ETC2_RGB,            // 4 bpp
+        COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+        COMPRESSED_PVRT_RGB,            // 4 bpp
+        COMPRESSED_PVRT_RGBA,           // 4 bpp
+        /*COMPRESSED_ASTC_RGBA_4x4*/    // 8 bpp
+    } TextureFormat;
+
+    // VertexData type
+    // NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
+    typedef struct VertexData {
         int vertexCount;
         float *vertices;            // 3 components per vertex
         float *texcoords;           // 2 components per vertex
         float *normals;             // 3 components per vertex
         unsigned char *colors;
-    } VertexData;
-
-    typedef struct Model {
-        VertexData mesh;
         unsigned int vaoId;
         unsigned int vboId[4];
-        unsigned int textureId;
-        //Matrix transform;
+    } VertexData;
+
+    // Shader type
+    typedef struct Shader {
+        unsigned int id;            // Shader program id
+
+        // Variable attributes
+        unsigned int vertexLoc;     // Vertex attribute location point (vertex shader)
+        unsigned int texcoordLoc;   // Texcoord attribute location point (vertex shader)
+        unsigned int normalLoc;     // Normal attribute location point (vertex shader)
+        unsigned int colorLoc;      // Color attibute location point (vertex shader)
+
+        // Uniforms
+        unsigned int projectionLoc; // Projection matrix uniform location point (vertex shader)
+        unsigned int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
+        unsigned int textureLoc;    // Texture uniform location point (fragment shader)
+        unsigned int tintColorLoc;  // Color uniform location point (fragment shader)
+    } Shader;
+
+    // 3d Model type
+    typedef struct Model {
+        VertexData mesh;
+        Matrix transform;
+        Texture2D texture;
+        Shader shader;
     } Model;
+
+    // Texture2D type
+    typedef struct Texture2D {
+        unsigned int id;            // Texture id
+        int width;
+        int height;
+    } Texture2D;
 #endif
 
 #ifdef __cplusplus
@@ -145,11 +193,13 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 void rlEnableTexture(unsigned int id);          // Enable texture usage
 void rlDisableTexture(void);                    // Disable texture usage
 void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
+void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
 void rlDeleteVertexArrays(unsigned int id);     // Unload vertex data (VAO) from GPU memory
 void rlDeleteBuffers(unsigned int id);          // Unload vertex data (VBO) from GPU memory
 void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
 void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
 int rlGetVersion(void);                         // Returns current OpenGL version
+void rlEnableFBO(void);                         // Enable rendering to postprocessing FBO
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
@@ -159,11 +209,20 @@ void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
-unsigned int rlglLoadTexture(unsigned char *data, int width, int height, bool genMipmaps);       // Load in GPU OpenGL texture
-unsigned int rlglLoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int format);
+unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps);       // Load in GPU OpenGL texture
+Shader rlglLoadShader(char *vsFileName, char *fsFileName);                  // Load a shader (vertex shader + fragment shader) from files
+unsigned int rlglLoadShaderFromText(char *vShaderStr, char *fShaderStr);    // Load a shader from text data
+void rlglInitPostpro(void);                     // Initialize postprocessing system
+void rlglDrawPostpro(void);                     // Draw with postprocessing shader
+void rlglSetPostproShader(Shader shader);       // Set postprocessing shader
+void rlglSetModelShader(Model *model, Shader shader);   // Set shader for a model
+void rlglSetCustomShader(Shader shader);        // Set custom shader to be used on batch draw
+void rlglSetDefaultShader(void);                // Set default shader to be used on batch draw
 
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglDrawModel(Model model, Vector3 position, Vector3 rotation, Vector3 scale, Color color, bool wires);
+void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);
+
+Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);         // Get world coordinates from screen coordinates
 
 byte *rlglReadScreenPixels(int width, int height);    // Read screen pixel data (color buffer)
 

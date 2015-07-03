@@ -1,8 +1,8 @@
 #**************************************************************************************************
 #
-#   raylib - Simple Game
+#   raylib - Advance Game
 #
-#   makefile to compile simple game for desktop platforms, Raspberry Pi and HTML5 (emscripten)
+#   makefile to compile advance game for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -72,7 +72,8 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
+    CFLAGS = -O2 -Wall -std=c99 -s USE_GLFW=3 
+    #-s ASSERTIONS=1 --preload-file resources
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
@@ -83,7 +84,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../../src
+    INCLUDES = -I. -I../../src -I../../../src
 # external libraries headers
 # GLFW3
     INCLUDES += -I../../external/glfw3/include
@@ -97,7 +98,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -L../../src
+    LFLAGS = -L. -L../../src -L../../../src
     # external libraries to link with
     # GLFW3
     LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
@@ -115,11 +116,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
-        # libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -pthread
-    else
+        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
+    endif
     ifeq ($(PLATFORM_OS),OSX)
-        # libraries for OS X 10.9 desktop compiling
+    	# libraries for OS X 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
@@ -127,7 +128,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
         LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
-    endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -150,17 +150,71 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
 
+# define all screen object files required
+SCREENS = \
+	screens/screen_logo.o \
+	screens/screen_level00.o \
+	screens/screen_level01.o \
+	screens/screen_level02.o \
+	screens/screen_level03.o \
+	screens/screen_level04.o \
+	screens/screen_level05.o \
+	screens/screen_level06.o \
+	screens/screen_level07.o \
+	screens/screen_level08.o \
+	screens/screen_level09.o \
+
 # typing 'make' will invoke the first target entry in the file,
-# in this case, the 'default' target entry is simple_game
-default: simple_game
+# in this case, the 'default' target entry is just_do
+default: just_do
 
-# compile template - simple_game
-simple_game: simple_game.c screens.o
-	$(CC) -o $@$(EXT) $< screens.o $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+# compile just_do
+just_do: just_do.c $(SCREENS)
+	$(CC) -o $@$(EXT) $< $(SCREENS) $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile screens
-screens.o: screens.c
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+# compile screen LOGO
+screens/screen_logo.o: screens/screen_logo.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+    
+# compile screen LEVEL00
+screens/screen_level00.o: screens/screen_level00.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile screen LEVEL01
+screens/screen_level01.o: screens/screen_level01.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile screen LEVEL02
+screens/screen_level02.o: screens/screen_level02.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile screen LEVEL03
+screens/screen_level03.o: screens/screen_level03.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile screen LEVEL04
+screens/screen_level04.o: screens/screen_level04.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile screen LEVEL05
+screens/screen_level05.o: screens/screen_level05.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile screen LEVEL06
+screens/screen_level06.o: screens/screen_level06.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+    
+# compile screen LEVEL07
+screens/screen_level07.o: screens/screen_level07.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+    
+# compile screen LEVEL08
+screens/screen_level08.o: screens/screen_level08.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile screen LEVEL09
+screens/screen_level09.o: screens/screen_level09.c
+	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # clean everything
 clean:
@@ -170,7 +224,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
+		find . -type f -executable -delete
+		rm -f *.o
     else
 		del *.o *.exe
     endif

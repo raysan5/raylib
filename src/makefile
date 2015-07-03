@@ -93,7 +93,7 @@ else
 endif
 
 # define all object files required
-OBJS = core.o rlgl.o raymath.o shapes.o text.o textures.o models.o audio.o utils.o stb_vorbis.o
+OBJS = core.o rlgl.o raymath.o shapes.o text.o textures.o models.o audio.o utils.o camera.o gestures.o
 
 # typing 'make' will invoke the first target entry in the file,
 # in this case, the 'default' target entry is raylib
@@ -144,9 +144,13 @@ audio.o: audio.c
 utils.o: utils.c
 	$(CC) -c utils.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-# compile stb_vorbis library
-stb_vorbis.o: stb_vorbis.c
-	$(CC) -c stb_vorbis.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+# compile camera module
+camera.o: camera.c
+	$(CC) -c camera.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile gestures module
+gestures.o: gestures.c
+	$(CC) -c gestures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # clean everything
 clean:
@@ -155,8 +159,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o libraylib.a
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find . -type f -executable -delete
-		rm -f *.o libraylib.a
+		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     else
 		del *.o libraylib.a
     endif

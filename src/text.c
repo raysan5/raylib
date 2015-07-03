@@ -30,15 +30,20 @@
 #include <stdarg.h>       // Used for functions with variable number of parameters (FormatText())
 #include <stdio.h>        // Standard input / output lib
 
-#include "rlgl.h"         // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"        // Required for function GetExtendion()
+#include "utils.h"        // Required for function GetExtension()
+
+// Following libs are used on LoadTTF()
+#define STB_TRUETYPE_IMPLEMENTATION
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "stb_rect_pack.h"
+#include "stb_truetype.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define FONT_FIRST_CHAR         32
 #define MAX_FONTCHARS          128
-#define MAX_FORMATTEXT_LENGTH   50
+#define MAX_FORMATTEXT_LENGTH   64
 
 #define BIT_CHECK(a,b) ((a) & (1<<(b)))
 
@@ -64,6 +69,7 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 static bool PixelIsMagenta(Color p);                // Check if a pixel is magenta
 static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Character **charSet);    // Parse image pixel data to obtain character set measures
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
+static SpriteFont LoadTTF(const char *fileName, int fontSize); // Generate a sprite font image from TTF data (font size required)
 
 extern void LoadDefaultFont(void);
 extern void UnloadDefaultFont(void);
@@ -73,16 +79,15 @@ extern void UnloadDefaultFont(void);
 //----------------------------------------------------------------------------------
 extern void LoadDefaultFont(void)
 {
-    defaultFont.numChars = 96;              // We know our default font has 94 chars
+    // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
+    // http://www.utf8-chartable.de/unicode-utf8-table.pl
 
-    Image image;
-    image.width = 128;                      // We know our default font image is 128 pixels width
-    image.height = 64;                      // We know our default font image is 64 pixels height
+    defaultFont.numChars = 224;             // Number of chars included in our default font
 
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct SpriteFont without creating large global variables
     // This data is automatically allocated to Stack and automatically deallocated at the end of this function
-    int defaultFontData[256] = {
+    int defaultFontData[512] = {
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00200020, 0x0001b000, 0x00000000, 0x00000000, 0x8ef92520, 0x00020a00, 0x7dbe8000, 0x1f7df45f,
         0x4a2bf2a0, 0x0852091e, 0x41224000, 0x10041450, 0x2e292020, 0x08220812, 0x41222000, 0x10041450, 0x10f92020, 0x3efa084c, 0x7d22103c, 0x107df7de,
         0xe8a12020, 0x08220832, 0x05220800, 0x10450410, 0xa4a3f000, 0x08520832, 0x05220400, 0x10450410, 0xe2f92020, 0x0002085e, 0x7d3e0281, 0x107df41f,
@@ -98,41 +103,77 @@ extern void LoadDefaultFont(void)
         0x04000404, 0x4100203c, 0x00000000, 0x00000800, 0xf7df7df0, 0x514bef85, 0xbefbefbe, 0x04513bef, 0x14414500, 0x494a2885, 0xa28a28aa, 0x04510820,
         0xf44145f0, 0x474a289d, 0xa28a28aa, 0x04510be0, 0x14414510, 0x494a2884, 0xa28a28aa, 0x02910a00, 0xf7df7df0, 0xd14a2f85, 0xbefbe8aa, 0x011f7be0,
         0x00000000, 0x00400804, 0x20080000, 0x00000000, 0x00000000, 0x00600f84, 0x20080000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0xac000000, 0x00000f01, 0x00000000, 0x00000000, 0x24000000, 0x00000901, 0x00000000, 0x00000000, 0x24000000, 0x00000901, 0x00000000, 0x00000000,
-        0x24fa28a2, 0x00000901, 0x00000000, 0x00000000, 0x2242252a, 0x00000952, 0x00000000, 0x00000000, 0x2422222a, 0x00000929, 0x00000000, 0x00000000,
-        0x2412252a, 0x00000901, 0x00000000, 0x00000000, 0x24fbe8be, 0x00000901, 0x00000000, 0x00000000, 0xac020000, 0x00000f01, 0x00000000, 0x00000000,
-        0x0003e000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0xac000000, 0x00000f01, 0x00000000, 0x00000000, 0x24000000, 0x00000901, 0x00000000, 0x06000000, 0x24000000, 0x00000901, 0x00000000, 0x09108000,
+        0x24fa28a2, 0x00000901, 0x00000000, 0x013e0000, 0x2242252a, 0x00000952, 0x00000000, 0x038a8000, 0x2422222a, 0x00000929, 0x00000000, 0x010a8000,
+        0x2412252a, 0x00000901, 0x00000000, 0x010a8000, 0x24fbe8be, 0x00000901, 0x00000000, 0x0ebe8000, 0xac020000, 0x00000f01, 0x00000000, 0x00048000,
+        0x0003e000, 0x00000000, 0x00000000, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000038, 0x8443b80e, 0x00203a03,
+        0x02bea080, 0xf0000020, 0xc452208a, 0x04202b02, 0xf8029122, 0x07f0003b, 0xe44b388e, 0x02203a02, 0x081e8a1c, 0x0411e92a, 0xf4420be0, 0x01248202,
+        0xe8140414, 0x05d104ba, 0xe7c3b880, 0x00893a0a, 0x283c0e1c, 0x04500902, 0xc4400080, 0x00448002, 0xe8208422, 0x04500002, 0x80400000, 0x05200002,
+        0x083e8e00, 0x04100002, 0x804003e0, 0x07000042, 0xf8008400, 0x07f00003, 0x80400000, 0x04000022, 0x00000000, 0x00000000, 0x80400000, 0x04000002,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00800702, 0x1848a0c2, 0x84010000, 0x02920921, 0x01042642, 0x00005121, 0x42023f7f, 0x00291002,
+        0xefc01422, 0x7efdfbf7, 0xefdfa109, 0x03bbbbf7, 0x28440f12, 0x42850a14, 0x20408109, 0x01111010, 0x28440408, 0x42850a14, 0x2040817f, 0x01111010,
+        0xefc78204, 0x7efdfbf7, 0xe7cf8109, 0x011111f3, 0x2850a932, 0x42850a14, 0x2040a109, 0x01111010, 0x2850b840, 0x42850a14, 0xefdfbf79, 0x03bbbbf7,
+        0x001fa020, 0x00000000, 0x00001000, 0x00000000, 0x00002070, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x08022800, 0x00012283, 0x02430802, 0x01010001, 0x8404147c, 0x20000144, 0x80048404, 0x00823f08, 0xdfbf4284, 0x7e03f7ef, 0x142850a1, 0x0000210a,
+        0x50a14684, 0x528a1428, 0x142850a1, 0x03efa17a, 0x50a14a9e, 0x52521428, 0x142850a1, 0x02081f4a, 0x50a15284, 0x4a221428, 0xf42850a1, 0x03efa14b,
+        0x50a16284, 0x4a521428, 0x042850a1, 0x0228a17a, 0xdfbf427c, 0x7e8bf7ef, 0xf7efdfbf, 0x03efbd0b, 0x00000000, 0x04000000, 0x00000000, 0x00000008,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00200508, 0x00840400, 0x11458122, 0x00014210,
+        0x00514294, 0x51420800, 0x20a22a94, 0x0050a508, 0x00200000, 0x00000000, 0x00050000, 0x08000000, 0xfefbefbe, 0xfbefbefb, 0xfbeb9114, 0x00fbefbe,
+        0x20820820, 0x8a28a20a, 0x8a289114, 0x3e8a28a2, 0xfefbefbe, 0xfbefbe0b, 0x8a289114, 0x008a28a2, 0x228a28a2, 0x08208208, 0x8a289114, 0x088a28a2,
+        0xfefbefbe, 0xfbefbefb, 0xfa2f9114, 0x00fbefbe, 0x00000000, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000020, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00210100, 0x00000004, 0x00000000, 0x00000000, 0x14508200, 0x00001402, 0x00000000, 0x00000000,
+        0x00000010, 0x00000020, 0x00000000, 0x00000000, 0xa28a28be, 0x00002228, 0x00000000, 0x00000000, 0xa28a28aa, 0x000022e8, 0x00000000, 0x00000000,
+        0xa28a28aa, 0x000022a8, 0x00000000, 0x00000000, 0xa28a28aa, 0x000022e8, 0x00000000, 0x00000000, 0xbefbefbe, 0x00003e2f, 0x00000000, 0x00000000,
+        0x00000004, 0x00002028, 0x00000000, 0x00000000, 0x80000000, 0x00003e0f, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000 };
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
 
     int charsHeight = 10;
     int charsDivisor = 1;    // Every char is separated from the consecutive by a 1 pixel divisor, horizontally and vertically
 
-    int charsWidth[96] = { 3, 1, 4, 6, 5, 7, 6, 2, 3, 3, 5, 5, 2, 4, 1, 7, 5, 2, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 3, 4, 3, 6,
-                           7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 5, 6, 5, 7, 6, 6, 6, 6, 6, 6, 7, 6, 7, 7, 6, 6, 6, 2, 7, 2, 3, 5,
-                           2, 5, 5, 5, 5, 5, 4, 5, 5, 1, 2, 5, 2, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 3, 1, 3, 4, 4 };
+    int charsWidth[224] = { 3, 1, 4, 6, 5, 7, 6, 2, 3, 3, 5, 5, 2, 4, 1, 7, 5, 2, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 3, 4, 3, 6,
+                            7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 5, 6, 5, 7, 6, 6, 6, 6, 6, 6, 7, 6, 7, 7, 6, 6, 6, 2, 7, 2, 3, 5,
+                            2, 5, 5, 5, 5, 5, 4, 5, 5, 1, 2, 5, 2, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 3, 1, 3, 4, 4,
+                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                            1, 1, 5, 5, 5, 7, 1, 5, 3, 7, 3, 5, 4, 1, 7, 4, 3, 5, 3, 3, 2, 5, 6, 1, 2, 2, 3, 5, 6, 6, 6, 6,
+                            6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 6, 3, 3, 3, 3, 7, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 4, 6,
+                            5, 5, 5, 5, 5, 5, 9, 5, 5, 5, 5, 5, 2, 2, 3, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 5 };
 
     // Re-construct image from defaultFontData and generate OpenGL texture
     //----------------------------------------------------------------------
-    image.pixels = (Color *)malloc(image.width * image.height * sizeof(Color));
+    int imWidth = 128;
+    int imHeight = 128;
+    
+    Color *imagePixels = (Color *)malloc(imWidth*imHeight*sizeof(Color));
 
-    for (int i = 0; i < image.width * image.height; i++) image.pixels[i] = BLANK;        // Initialize array
+    for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = BLANK;        // Initialize array
 
     int counter = 0;        // Font data elements counter
 
     // Fill imgData with defaultFontData (convert from bit to pixel!)
-    for (int i = 0; i < image.width * image.height; i += 32)
+    for (int i = 0; i < imWidth*imHeight; i += 32)
     {
         for (int j = 31; j >= 0; j--)
         {
-            if (BIT_CHECK(defaultFontData[counter], j)) image.pixels[i+j] = WHITE;
+            if (BIT_CHECK(defaultFontData[counter], j)) imagePixels[i+j] = WHITE;
         }
 
         counter++;
 
-        if (counter > 256) counter = 0;         // Security check...
+        if (counter > 512) counter = 0;         // Security check...
     }
+
+    //FILE *myimage = fopen("default_font.raw", "wb");
+    //fwrite(image.pixels, 1, 128*128*4, myimage);
+    //fclose(myimage);
+    
+    Image image = LoadImageFromData(imagePixels, imWidth, imHeight, UNCOMPRESSED_GRAY_ALPHA);
+
+    free(imagePixels);
 
     defaultFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
     UnloadImage(image);
@@ -172,7 +213,7 @@ extern void LoadDefaultFont(void)
 
 extern void UnloadDefaultFont(void)
 {
-    rlDeleteTextures(defaultFont.texture.id);
+    UnloadTexture(defaultFont.texture);
     free(defaultFont.charSet);
 }
 
@@ -189,18 +230,21 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     // Check file extension
     if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);
+    else if (strcmp(GetExtension(fileName),"ttf") == 0) spriteFont = LoadTTF(fileName, 20);
     else
     {
         Image image = LoadImage(fileName);
 
-        // At this point we have a pixel array with all the data...
+        // At this point we have a data array...
         
+        Color *imagePixels = GetPixelData(image);
+
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
         ConvertToPOT(&image, MAGENTA);
 #endif
         // Process bitmap Font pixel data to get measures (Character array)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
-        int numChars = ParseImageData(image.pixels, image.width, image.height, &spriteFont.charSet);
+        int numChars = ParseImageData(imagePixels, image.width, image.height, &spriteFont.charSet);
 
         TraceLog(INFO, "[%s] SpriteFont data parsed correctly", fileName);
         TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
@@ -208,7 +252,8 @@ SpriteFont LoadSpriteFont(const char *fileName)
         spriteFont.numChars = numChars;
 
         spriteFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
-        
+
+        free(imagePixels);
         UnloadImage(image);
     }
 
@@ -218,7 +263,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 // Unload SpriteFont from GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
-    rlDeleteTextures(spriteFont.texture.id);
+    UnloadTexture(spriteFont.texture);
     free(spriteFont.charSet);
 }
 
@@ -244,41 +289,37 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int fontSize, int spacing, Color tint)
 {
     int length = strlen(text);
-    int positionX = (int)position.x;
+    int offsetX = 0;
     float scaleFactor;
+    unsigned char letter;
 
     Character c;
 
-    if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
-    else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
+    //if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
+    //else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
+    
+    scaleFactor = (float)fontSize/spriteFont.charSet[0].h;
 
-    rlEnableTexture(spriteFont.texture.id);
-
-    rlBegin(RL_QUADS);
-        for(int i = 0; i < length; i++)
+    for(int i = 0; i < length; i++)
+    {
+        if ((unsigned char)text[i] == 0xc2)
         {
-            c = spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR];
-
-            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
-
-            rlTexCoord2f((float)c.x / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);
-            rlVertex2f(positionX, position.y);
-
-            rlTexCoord2f((float)c.x / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);
-            rlVertex2f(positionX, position.y + (c.h) * scaleFactor);
-
-            rlTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)(c.y + c.h) / spriteFont.texture.height);
-            rlVertex2f(positionX + (c.w) * scaleFactor, position.y + (c.h) * scaleFactor);
-
-            rlTexCoord2f((float)(c.x + c.w) / spriteFont.texture.width, (float)c.y / spriteFont.texture.height);
-            rlVertex2f(positionX + (c.w) * scaleFactor, position.y);
-
-            positionX += ((spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR].w) * scaleFactor + spacing);
+            letter = (unsigned char)text[i + 1];
+            c = spriteFont.charSet[letter - FONT_FIRST_CHAR];
+            i++;
         }
-    rlEnd();
+        else if ((unsigned char)text[i] == 0xc3)
+        {
+            letter = (unsigned char)text[i + 1];
+            c = spriteFont.charSet[letter - FONT_FIRST_CHAR + 64];
+            i++;
+        }
+        else c = spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR];
 
-    rlDisableTexture();
+        DrawTexturePro(spriteFont.texture, (Rectangle){ c.x, c.y, c.w, c.h }, (Rectangle){ position.x + offsetX, position.y, c.w*scaleFactor, c.h*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
+
+        offsetX += (c.w*scaleFactor + spacing);
+    }
 }
 
 // Formatting of text with variables to 'embed'
@@ -465,7 +506,6 @@ static SpriteFont LoadRBMF(const char *fileName)
     } rbmfInfoHeader;
 
     SpriteFont spriteFont;
-    Image image;
 
     rbmfInfoHeader rbmfHeader;
     unsigned int *rbmfFileData = NULL;
@@ -487,9 +527,6 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         spriteFont.numChars = (int)rbmfHeader.numChars;
 
-        image.width = (int)rbmfHeader.imgWidth;
-        image.height = (int)rbmfHeader.imgHeight;
-
         int numPixelBits = rbmfHeader.imgWidth * rbmfHeader.imgHeight / 32;
 
         rbmfFileData = (unsigned int *)malloc(numPixelBits * sizeof(unsigned int));
@@ -502,22 +539,26 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         // Re-construct image from rbmfFileData
         //-----------------------------------------
-        image.pixels = (Color *)malloc(image.width * image.height * sizeof(Color));
+        Color *imagePixels = (Color *)malloc(rbmfHeader.imgWidth*rbmfHeader.imgHeight*sizeof(Color));
 
-        for (int i = 0; i < image.width * image.height; i++) image.pixels[i] = BLANK;        // Initialize array
+        for (int i = 0; i < rbmfHeader.imgWidth*rbmfHeader.imgHeight; i++) imagePixels[i] = BLANK;        // Initialize array
 
         int counter = 0;        // Font data elements counter
 
         // Fill image data (convert from bit to pixel!)
-        for (int i = 0; i < image.width * image.height; i += 32)
+        for (int i = 0; i < rbmfHeader.imgWidth*rbmfHeader.imgHeight; i += 32)
         {
             for (int j = 31; j >= 0; j--)
             {
-                if (BIT_CHECK(rbmfFileData[counter], j)) image.pixels[i+j] = WHITE;
+                if (BIT_CHECK(rbmfFileData[counter], j)) imagePixels[i+j] = WHITE;
             }
 
             counter++;
         }
+        
+        Image image = LoadImageFromData(imagePixels, rbmfHeader.imgWidth, rbmfHeader.imgHeight, UNCOMPRESSED_GRAY_ALPHA);
+        
+        free(imagePixels);
 
         TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
@@ -557,7 +598,7 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
     }
-    
+
     fclose(rbmfFile);
 
     free(rbmfFileData);                // Now we can free loaded data from RAM memory
@@ -567,11 +608,105 @@ static SpriteFont LoadRBMF(const char *fileName)
 }
 
 // Generate a sprite font from TTF data (font size required)
-static SpriteFont GenerateFromTTF(const char *fileName, int fontSize)
+static SpriteFont LoadTTF(const char *fileName, int fontSize)
 {
     SpriteFont font;
 
-    // TODO: Load TTF and generate bitmap font and chars data
+    Image image;
+    image.width = 512;
+    image.height = 512;
+    //image.pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
+
+    unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
+
+    // TODO: Load TTF and generate bitmap font and chars data -> REVIEW!
+
+    stbtt_packedchar chardata[128];  // Num characters: 128 (?) -> REVIEW!
+
+    unsigned char *tempBitmap = (unsigned char *)malloc(image.width*image.height*sizeof(unsigned char));   // One channel bitmap returned!
+
+    // REFERENCE
+/*
+    typedef struct
+    {
+       unsigned short x0,y0,x1,y1; // coordinates of bbox in bitmap
+       float xoff,yoff,xadvance;
+       float xoff2,yoff2;
+    } stbtt_packedchar;
+*/
+
+    stbtt_pack_context pc;
+
+    FILE *ttfFile = fopen(fileName, "rb");
+
+    fread(ttfBuffer, 1, 1<<25, ttfFile);
+
+    stbtt_PackBegin(&pc, tempBitmap, image.width, image.height, 0, 1, NULL);
+
+    //stbtt_PackSetOversampling(&pc, 1, 1);
+    //stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata[0]+32);
+    stbtt_PackSetOversampling(&pc, 2, 2);   // Better results
+    stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata + 32);
+    //stbtt_PackSetOversampling(&pc, 3, 1);
+    //stbtt_PackFontRange(&pc, ttfBuffer, 0, fontSize, 32, 95, chardata[2]+32);
+
+    stbtt_PackEnd(&pc);
+
+    free(ttfBuffer);
+
+    // Now we have image data in tempBitmap and chardata filled...
+/*
+    for (int i = 0; i < 512*512; i++)
+    {
+        image.pixels[i].r = tempBitmap[i];
+        image.pixels[i].g = tempBitmap[i];
+        image.pixels[i].b = tempBitmap[i];
+        image.pixels[i].a = 255;
+    }
+*/
+    free(tempBitmap);
+
+    // REFERENCE EXAMPLE
+/*
+    //To draw, provide *text, posX, posY
+    //stbtt_aligned_quad letter;
+    //stbtt_GetPackedQuad(chardata[0], BITMAP_W, BITMAP_H, *text++, &posX, &posY, &letter, font ? 0 : integer_align);
+
+    void print(float x, float y, int fontNum, char *text)
+    {
+       glEnable(GL_TEXTURE_2D);
+       glBindTexture(GL_TEXTURE_2D, font_tex);
+       glBegin(GL_QUADS);
+       while (*text) {
+          stbtt_aligned_quad q;
+          stbtt_GetPackedQuad(chardata[fontNum], BITMAP_W, BITMAP_H, *text++, &x, &y, &q, fontNum ? 0 : integer_align);
+          drawBoxTC(q.x0,q.y0,q.x1,q.y1, q.s0,q.t0,q.s1,q.t1);
+       }
+       glEnd();
+    }
+
+    print(100,160, 0, "This is a test");
+*/
+    font.numChars = 95;
+    font.charSet = (Character *)malloc(font.numChars*sizeof(Character));
+    font.texture = LoadTextureFromImage(image, false);
+
+    //stbtt_aligned_quad letter;
+    //int x = 0, y = 0;
+
+    for (int i = 0; i < font.numChars; i++)
+    {
+        font.charSet[i].value = i + 32;
+
+        //stbtt_GetPackedQuad(chardata[0], 512, 512, i, &x, &y, &letter, 0);
+
+        font.charSet[i].x = chardata[i + 32].x0;
+        font.charSet[i].y = chardata[i + 32].y0;
+        font.charSet[i].w = chardata[i + 32].x1 - chardata[i + 32].x0;
+        font.charSet[i].h = chardata[i + 32].y1 - chardata[i + 32].y0;
+    }
+
+    UnloadImage(image);
 
     return font;
 }

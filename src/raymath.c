@@ -346,8 +346,6 @@ void MatrixInvert(Matrix *mat)
     temp.m14 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
     temp.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
 
-    PrintMatrix(temp);
-
     *mat = temp;
 }
 
@@ -433,72 +431,78 @@ Matrix MatrixSubstract(Matrix left, Matrix right)
 }
 
 // Returns translation matrix
-// TODO: Review this function
 Matrix MatrixTranslate(float x, float y, float z)
 {
-/*
-    For OpenGL
-        1, 0, 0, 0
-        0, 1, 0, 0
-        0, 0, 1, 0
-        x, y, z, 1
-    Is the correct Translation Matrix. Why? Opengl Uses column-major matrix ordering.
-    Which is the Transpose of the Matrix you initially presented, which is in row-major ordering.
-    Row major is used in most math text-books and also DirectX, so it is a common
-    point of confusion for those new to OpenGL.
-
-    * matrix notation used in opengl documentation does not describe in-memory layout for OpenGL matrices
-
-    Translation matrix should be laid out in memory like this:
-    { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, trabsX, transY, transZ, 1 }
-
-
-    9.005 Are OpenGL matrices column-major or row-major?
-
-    For programming purposes, OpenGL matrices are 16-value arrays with base vectors laid out
-    contiguously in memory. The translation components occupy the 13th, 14th, and 15th elements
-    of the 16-element matrix, where indices are numbered from 1 to 16 as described in section
-    2.11.2 of the OpenGL 2.1 Specification.
-
-    Column-major versus row-major is purely a notational convention. Note that post-multiplying
-    with column-major matrices produces the same result as pre-multiplying with row-major matrices.
-    The OpenGL Specification and the OpenGL Reference Manual both use column-major notation.
-    You can use any notation, as long as it's clearly stated.
-
-    Sadly, the use of column-major format in the spec and blue book has resulted in endless confusion
-    in the OpenGL programming community. Column-major notation suggests that matrices
-    are not laid out in memory as a programmer would expect.
-*/
-
     Matrix result = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1 };
 
     return result;
 }
 
-// Returns rotation matrix
-// TODO: Review this function
-Matrix MatrixRotate(float angleX, float angleY, float angleZ)
+// Create rotation matrix from axis and angle
+// NOTE: Angle should be provided in radians
+Matrix MatrixRotate(float angle, Vector3 axis)
 {
     Matrix result;
 
-    Matrix rotX = MatrixRotateX(angleX);
-    Matrix rotY = MatrixRotateY(angleY);
-    Matrix rotZ = MatrixRotateZ(angleZ);
+    Matrix mat = MatrixIdentity();
 
-    result = MatrixMultiply(MatrixMultiply(rotX, rotY), rotZ);
+    float x = axis.x, y = axis.y, z = axis.z;
+
+    float length = sqrt(x*x + y*y + z*z);
+
+    if ((length != 1) && (length != 0))
+    {
+        length = 1/length;
+        x *= length;
+        y *= length;
+        z *= length;
+    }
+
+    float s = sinf(angle);
+    float c = cosf(angle);
+    float t = 1.0f - c;
+
+    // Cache some matrix values (speed optimization)
+    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
+    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
+    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
+
+    // Construct the elements of the rotation matrix
+    float b00 = x*x*t + c, b01 = y*x*t + z*s, b02 = z*x*t - y*s;
+    float b10 = x*y*t - z*s, b11 = y*y*t + c, b12 = z*y*t + x*s;
+    float b20 = x*z*t + y*s, b21 = y*z*t - x*s, b22 = z*z*t + c;
+
+    // Perform rotation-specific matrix multiplication
+    result.m0 = a00*b00 + a10*b01 + a20*b02;
+    result.m1 = a01*b00 + a11*b01 + a21*b02;
+    result.m2 = a02*b00 + a12*b01 + a22*b02;
+    result.m3 = a03*b00 + a13*b01 + a23*b02;
+    result.m4 = a00*b10 + a10*b11 + a20*b12;
+    result.m5 = a01*b10 + a11*b11 + a21*b12;
+    result.m6 = a02*b10 + a12*b11 + a22*b12;
+    result.m7 = a03*b10 + a13*b11 + a23*b12;
+    result.m8 = a00*b20 + a10*b21 + a20*b22;
+    result.m9 = a01*b20 + a11*b21 + a21*b22;
+    result.m10 = a02*b20 + a12*b21 + a22*b22;
+    result.m11 = a03*b20 + a13*b21 + a23*b22;
+    result.m12 = mat.m12;
+    result.m13 = mat.m13;
+    result.m14 = mat.m14;
+    result.m15 = mat.m15;
 
     return result;
 }
 
 /*
+// Another implementation for MatrixRotate...
 Matrix MatrixRotate(float angle, float x, float y, float z)
 {
     Matrix result = MatrixIdentity();
 
-    float c = cosf(angle*DEG2RAD);    // cosine
-    float s = sinf(angle*DEG2RAD);    // sine
-    float c1 = 1.0f - c;              // 1 - c
-    
+    float c = cosf(angle);      // cosine
+    float s = sinf(angle);      // sine
+    float c1 = 1.0f - c;        // 1 - c
+
     float m0 = result.m0, m4 = result.m4, m8 = result.m8, m12 = result.m12,
           m1 = result.m1, m5 = result.m5, m9 = result.m9,  m13 = result.m13,
           m2 = result.m2, m6 = result.m6, m10 = result.m10, m14 = result.m14;
@@ -532,124 +536,6 @@ Matrix MatrixRotate(float angle, float x, float y, float z)
 }
 */
 
-// Create rotation matrix from axis and angle
-// TODO: Test this function
-// NOTE: NO prototype defined!
-Matrix MatrixFromAxisAngle(Vector3 axis, float angle)
-{
-    Matrix result;
-
-    Matrix mat = MatrixIdentity();
-
-    float x = axis.x, y = axis.y, z = axis.z;
-
-    float length = sqrt(x*x + y*y + z*z);
-
-    if ((length != 1) && (length != 0))
-    {
-        length = 1 / length;
-        x *= length;
-        y *= length;
-        z *= length;
-    }
-
-    float s = sin(angle);
-    float c = cos(angle);
-    float t = 1-c;
-
-    // Cache some matrix values (speed optimization)
-    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
-    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
-    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
-
-    // Construct the elements of the rotation matrix
-    float b00 = x*x*t + c, b01 = y*x*t + z*s, b02 = z*x*t - y*s;
-    float b10 = x*y*t - z*s, b11 = y*y*t + c, b12 = z*y*t + x*s;
-    float b20 = x*z*t + y*s, b21 = y*z*t - x*s, b22 = z*z*t + c;
-
-    // Perform rotation-specific matrix multiplication
-    result.m0 = a00*b00 + a10*b01 + a20*b02;
-    result.m1 = a01*b00 + a11*b01 + a21*b02;
-    result.m2 = a02*b00 + a12*b01 + a22*b02;
-    result.m3 = a03*b00 + a13*b01 + a23*b02;
-    result.m4 = a00*b10 + a10*b11 + a20*b12;
-    result.m5 = a01*b10 + a11*b11 + a21*b12;
-    result.m6 = a02*b10 + a12*b11 + a22*b12;
-    result.m7 = a03*b10 + a13*b11 + a23*b12;
-    result.m8 = a00*b20 + a10*b21 + a20*b22;
-    result.m9 = a01*b20 + a11*b21 + a21*b22;
-    result.m10 = a02*b20 + a12*b21 + a22*b22;
-    result.m11 = a03*b20 + a13*b21 + a23*b22;
-    result.m12 = mat.m12;
-    result.m13 = mat.m13;
-    result.m14 = mat.m14;
-    result.m15 = mat.m15;
-
-    return result;
-};
-
-// Create rotation matrix from axis and angle (version 2)
-// TODO: Test this function
-// NOTE: NO prototype defined!
-Matrix MatrixFromAxisAngle2(Vector3 axis, float angle)
-{
-    Matrix result;
-
-    VectorNormalize(&axis);
-    float axisX = axis.x, axisY = axis.y, axisZ = axis.y;
-
-    // Calculate angles
-    float cosres = (float)cos(angle);
-    float sinres = (float)sin(angle);
-    float t = 1.0f - cosres;
-
-    // Do the conversion math once
-    float tXX = t * axisX * axisX;
-    float tXY = t * axisX * axisY;
-    float tXZ = t * axisX * axisZ;
-    float tYY = t * axisY * axisY;
-    float tYZ = t * axisY * axisZ;
-    float tZZ = t * axisZ * axisZ;
-
-    float sinX = sinres * axisX;
-    float sinY = sinres * axisY;
-    float sinZ = sinres * axisZ;
-
-    result.m0 = tXX + cosres;
-    result.m1 = tXY + sinZ;
-    result.m2 = tXZ - sinY;
-    result.m3 = 0;
-    result.m4 = tXY - sinZ;
-    result.m5 = tYY + cosres;
-    result.m6 = tYZ + sinX;
-    result.m7 = 0;
-    result.m8 = tXZ + sinY;
-    result.m9 = tYZ - sinX;
-    result.m10 = tZZ + cosres;
-    result.m11 = 0;
-    result.m12 = 0;
-    result.m13 = 0;
-    result.m14 = 0;
-    result.m15 = 1;
-
-    return result;
-}
-
-// Returns rotation matrix for a given quaternion
-Matrix MatrixFromQuaternion(Quaternion q)
-{
-    Matrix result = MatrixIdentity();
-
-    Vector3 axis;
-    float angle;
-
-    QuaternionToAxisAngle(q, &axis, &angle);
-
-    result = MatrixFromAxisAngle2(axis, angle);
-
-    return result;
-}
-
 // Returns x-rotation matrix (angle in radians)
 Matrix MatrixRotateX(float angle)
 {
@@ -671,8 +557,8 @@ Matrix MatrixRotateY(float angle)
 {
     Matrix result = MatrixIdentity();
 
-    float cosres = (float)cos(angle);
-    float sinres = (float)sin(angle);
+    float cosres = cosf(angle);
+    float sinres = sinf(angle);
 
     result.m0 = cosres;
     result.m2 = sinres;
@@ -702,22 +588,6 @@ Matrix MatrixRotateZ(float angle)
 Matrix MatrixScale(float x, float y, float z)
 {
     Matrix result = { x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1 };
-
-    return result;
-}
-
-// Returns transformation matrix for a given translation, rotation and scale
-// NOTE: Transformation order is rotation -> scale -> translation
-// NOTE: Rotation angles should come in radians
-Matrix MatrixTransform(Vector3 translation, Vector3 rotation, Vector3 scale)
-{
-    Matrix result = MatrixIdentity();
-
-    Matrix mRotation = MatrixRotate(rotation.x, rotation.y, rotation.z);
-    Matrix mScale = MatrixScale(scale.x, scale.y, scale.z);
-    Matrix mTranslate = MatrixTranslate(translation.x, translation.y, translation.z);
-
-    result = MatrixMultiply(MatrixMultiply(mRotation, mScale), mTranslate);
 
     return result;
 }
@@ -876,7 +746,7 @@ void PrintMatrix(Matrix m)
 // Module Functions Definition - Quaternion math
 //----------------------------------------------------------------------------------
 
-// Calculates the length of a quaternion
+// Computes the length of a quaternion
 float QuaternionLength(Quaternion quat)
 {
     return sqrt(quat.x*quat.x + quat.y*quat.y + quat.z*quat.z + quat.w*quat.w);
@@ -922,13 +792,13 @@ Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
-    if (abs(cosHalfTheta) >= 1.0f) result = q1;
+    if (fabs(cosHalfTheta) >= 1.0f) result = q1;
     else
     {
         float halfTheta = acos(cosHalfTheta);
         float sinHalfTheta = sqrt(1.0f - cosHalfTheta*cosHalfTheta);
 
-        if (abs(sinHalfTheta) < 0.001f)
+        if (fabs(sinHalfTheta) < 0.001f)
         {
             result.x = (q1.x*0.5f + q2.x*0.5f);
             result.y = (q1.y*0.5f + q2.y*0.5f);
@@ -950,7 +820,7 @@ Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     return result;
 }
 
-// Returns a quaternion from a given rotation matrix
+// Returns a quaternion for a given rotation matrix
 Quaternion QuaternionFromMatrix(Matrix matrix)
 {
     Quaternion result;
@@ -1006,29 +876,7 @@ Quaternion QuaternionFromMatrix(Matrix matrix)
     return result;
 }
 
-// Returns rotation quaternion for an angle around an axis
-// NOTE: angle must be provided in radians
-Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
-{
-    Quaternion result = { 0, 0, 0, 1 };
-
-    if (VectorLength(axis) != 0.0)
-
-    angle *= 0.5;
-
-    VectorNormalize(&axis);
-
-    result.x = axis.x * (float)sin(angle);
-    result.y = axis.y * (float)sin(angle);
-    result.z = axis.z * (float)sin(angle);
-    result.w = (float)cos(angle);
-
-    QuaternionNormalize(&result);
-
-    return result;
-}
-
-// Calculates the matrix from the given quaternion
+// Returns a matrix for a given quaternion
 Matrix QuaternionToMatrix(Quaternion q)
 {
     Matrix result;
@@ -1067,14 +915,36 @@ Matrix QuaternionToMatrix(Quaternion q)
     result.m13 = 0;
     result.m14 = 0;
     result.m15 = 1;
+    
+    return result;
+}
+
+// Returns rotation quaternion for an angle and axis
+// NOTE: angle must be provided in radians
+Quaternion QuaternionFromAxisAngle(float angle, Vector3 axis)
+{
+    Quaternion result = { 0, 0, 0, 1 };
+
+    if (VectorLength(axis) != 0.0)
+
+    angle *= 0.5;
+
+    VectorNormalize(&axis);
+
+    result.x = axis.x * (float)sin(angle);
+    result.y = axis.y * (float)sin(angle);
+    result.z = axis.z * (float)sin(angle);
+    result.w = (float)cos(angle);
+
+    QuaternionNormalize(&result);
 
     return result;
 }
 
-// Returns the axis and the angle for a given quaternion
-void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
+// Returns the rotation angle and axis for a given quaternion
+void QuaternionToAxisAngle(Quaternion q, float *outAngle, Vector3 *outAxis)
 {
-    if (abs(q.w) > 1.0f) QuaternionNormalize(&q);
+    if (fabs(q.w) > 1.0f) QuaternionNormalize(&q);
 
     Vector3 resAxis = { 0, 0, 0 };
     float resAngle = 0;
@@ -1097,4 +967,18 @@ void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 
     *outAxis = resAxis;
     *outAngle = resAngle;
+}
+
+// Transform a quaternion given a transformation matrix
+void QuaternionTransform(Quaternion *q, Matrix mat)
+{
+    float x = q->x;
+    float y = q->y;
+    float z = q->z;
+    float w = q->w;
+
+    q->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12*w;
+    q->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13*w;
+    q->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14*w;
+    q->w = mat.m3*x + mat.m7*y + mat.m11*z + mat.m15*w;
 }

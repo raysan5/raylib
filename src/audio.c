@@ -39,7 +39,8 @@
 #include "utils.h"          // rRES data decompression utility function
                             // NOTE: Includes Android fopen function map
 
-#include "stb_vorbis.h"     // OGG loading functions
+//#define STB_VORBIS_HEADER_ONLY
+#include "stb_vorbis.h"     // OGG loading functions 
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -49,7 +50,7 @@
 #if defined(PLATFORM_RPI)
     // NOTE: On RPI should be lower to avoid frame-stalls
     #define MUSIC_BUFFER_SIZE      4096*2   // PCM data buffer (short) - 16Kb (RPI)
-#else                            
+#else
     // NOTE: On HTML5 (emscripten) this is allocated on heap, by default it's only 16MB!...just take care...
     #define MUSIC_BUFFER_SIZE      4096*8   // PCM data buffer (short) - 64Kb
 #endif
@@ -201,7 +202,7 @@ Sound LoadSound(char *fileName)
 
         // Attach sound buffer to source
         alSourcei(source, AL_BUFFER, buffer);
-        
+
         TraceLog(INFO, "[%s] Sound file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
 
         // Unallocate WAV data
@@ -283,7 +284,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
 
     FILE *rresFile = fopen(rresName, "rb");
 
-    if (rresFile == NULL) 
+    if (rresFile == NULL)
     {
         TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
     }
@@ -378,7 +379,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
 
                         // Attach sound buffer to source
                         alSourcei(source, AL_BUFFER, buffer);
-                        
+
                         TraceLog(INFO, "[%s] Sound loaded successfully from resource (SampleRate: %i, BitRate: %i, Channels: %i)", rresName, wave.sampleRate, wave.bitsPerSample, wave.channels);
 
                         // Unallocate WAV data
@@ -574,6 +575,7 @@ void PauseMusicStream(void)
     {
         TraceLog(INFO, "Pausing music stream");
         alSourcePause(currentMusic.source);
+        musicEnabled = false;
     }
 }
 
@@ -581,10 +583,14 @@ void PauseMusicStream(void)
 void ResumeMusicStream(void)
 {
     // Resume music playing... if music available!
-    if (musicEnabled)
+    ALenum state;
+    alGetSourcei(currentMusic.source, AL_SOURCE_STATE, &state);
+
+    if (state == AL_PAUSED)
     {
-        TraceLog(INFO, "Resume music stream");
+        TraceLog(INFO, "Resuming music stream");
         alSourcePlay(currentMusic.source);
+        musicEnabled = true;
     }
 }
 
@@ -865,13 +871,12 @@ static Wave LoadOGG(char *fileName)
 
     TraceLog(DEBUG, "[%s] Total samples calculated: %i", fileName, totalSamples);
 
-    //short *data
     wave.data = malloc(sizeof(short)*totalSamplesLength);
 
     int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, wave.data, totalSamplesLength);
 
     TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, samplesObtained);
-    
+
     TraceLog(INFO, "[%s] OGG file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
 
     stb_vorbis_close(oggFile);

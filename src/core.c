@@ -45,13 +45,18 @@
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand(), atexit()
 #include <stdint.h>         // Required for typedef unsigned long long int uint64_t, used by hi-res timer
-#include <time.h>           // Useful to initialize random seed - Android/RPI hi-res timer
+#include <time.h>           // Useful to initialize random seed - Android/RPI hi-res timer (NOTE: Linux only!)
 #include <math.h>           // Math related functions, tan() used to set perspective
 #include <string.h>         // String function definitions, memset()
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     #include <GLFW/glfw3.h>     // GLFW3 library: Windows, OpenGL context and Input management
+    #ifdef __linux
+        #define GLFW_EXPOSE_NATIVE_X11 // Linux specific definitions for getting
+        #define GLFW_EXPOSE_NATIVE_GLX // native functions like glfwGetX11Window
+        #include <GLFW/glfw3native.h>  // which are required for hiding mouse
+    #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
 #endif
@@ -104,27 +109,12 @@
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static GLFWwindow *window;                      // Native window (graphic device)
+static bool windowMinimized = false;
 #elif defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;
 static bool windowReady = false;                // Used to detect display initialization
-
-// Gestures detection variables
-static float tapTouchX, tapTouchY;
-static int64_t lastTapTime = 0;
-static float lastTapX = 0, lastTapY = 0;
-static bool touchTap = false;
-static bool doubleTap = false;
-static bool drag = false;
-static int stdVector[MAX_TOUCH_POINTS];
-static int indexPosition = 0;
-const AInputEvent* eventDrag;
-static int32_t touchId;
-const int32_t DOUBLE_TAP_TIMEOUT = 300*1000000;
-const int32_t DOUBLE_TAP_SLOP = 100;
-const int32_t TAP_TIMEOUT = 180*1000000;
-const int32_t TOUCH_SLOP = 8;
 
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
@@ -152,8 +142,7 @@ static int gamepadStream = -1;                  // Gamepad device file descripto
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 static EGLDisplay display;          // Native display device (physical screen connection)
 static EGLSurface surface;          // Surface to draw on, framebuffers (connected to context)
-static EGLContext context;          // Graphic context, mode in which drawing can be done 
-
+static EGLContext context;          // Graphic context, mode in which drawing can be done
 static uint64_t baseTime;                   // Base time measure for hi-res timer
 static bool windowShouldClose = false;      // Flag to set window for closing
 #endif
@@ -191,11 +180,8 @@ static int currentMouseWheelY = 0;          // Required to track mouse wheel var
 
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
 static int lastKeyPressed = -1;
-#endif
 
-#if defined(PLATFORM_ANDROID)
-static float touchX;                        // Touch position X
-static float touchY;                        // Touch position Y
+static bool cursorHidden;
 #endif
 
 static double currentTime, previousTime;    // Used to track timmings
@@ -206,6 +192,9 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 static char configFlags = 0;
 static bool showLogo = false;
 
+// Shaders variables
+static bool enabledPostpro = false;
+
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
@@ -213,6 +202,17 @@ extern void LoadDefaultFont(void);              // [Module: text] Loads default 
 extern void UnloadDefaultFont(void);            // [Module: text] Unloads default font from GPU memory
 
 extern void UpdateMusicStream(void);            // [Module: audio] Updates buffers for music streaming
+
+extern Vector2 GetRawPosition(void);
+extern void ResetGestures(void);
+
+#if defined(PLATFORM_ANDROID)
+extern void InitAndroidGestures(struct android_app *app);
+#endif
+
+#if defined(PLATFORM_WEB)
+extern void InitWebGestures(void);              // [Module: gestures] Initializes emscripten gestures for web
+#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -227,6 +227,7 @@ static void SwapBuffers(void);                          // Copy back buffer to f
 static void PollInputEvents(void);                      // Register user events
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
+
 #if defined(PLATFORM_RPI)
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
 static void *MouseThread(void *arg);                    // Mouse reading thread
@@ -243,6 +244,7 @@ static void CharCallback(GLFWwindow *window, unsigned int key);                 
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
+static void WindowIconifyCallback(GLFWwindow* window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
@@ -250,8 +252,7 @@ static void TakeScreenshot(void);                                               
 #endif
 
 #if defined(PLATFORM_ANDROID)
-static int32_t InputCallback(struct android_app *app, AInputEvent *event);   // Process Android activity input events
-static void CommandCallback(struct android_app *app, int32_t cmd);           // Process Android activity lifecycle commands
+static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
 #endif
 
 //----------------------------------------------------------------------------------
@@ -261,8 +262,8 @@ static void CommandCallback(struct android_app *app, int32_t cmd);           // 
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(INFO, "Initializing raylib...");
-    
+    TraceLog(INFO, "Initializing raylib (v1.3.0)");
+
     // Store window title (could be useful...)
     windowTitle = title;
 
@@ -285,6 +286,11 @@ void InitWindow(int width, int height, const char *title)
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
 #endif
+
+#if defined(PLATFORM_WEB)
+    InitWebGestures();  // Init touch input events for web
+#endif
+
     mousePosition.x = screenWidth/2;
     mousePosition.y = screenHeight/2;
 
@@ -300,8 +306,8 @@ void InitWindow(int width, int height, const char *title)
 // Android activity initialization
 void InitWindow(int width, int height, struct android_app *state)
 {
-    TraceLog(INFO, "Initializing raylib...");
-    
+    TraceLog(INFO, "Initializing raylib (v1.3.0)");
+
     app_dummy();
 
     screenWidth = width;
@@ -336,8 +342,9 @@ void InitWindow(int width, int height, struct android_app *state)
     //AConfiguration_getScreenLong(app->config);
 
     //state->userData = &engine;
-    app->onAppCmd = CommandCallback;
-    app->onInputEvent = InputCallback;
+    app->onAppCmd = AndroidCommandCallback;
+    
+    InitAndroidGestures(app);
 
     InitAssetManager(app->activity->assetManager);
 
@@ -399,6 +406,9 @@ void CloseWindow(void)
 bool WindowShouldClose(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    // While window minimized, stop loop execution
+    while (windowMinimized) glfwPollEvents();
+
     return (glfwWindowShouldClose(window));
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     return windowShouldClose;
@@ -429,7 +439,7 @@ void SetCustomCursor(const char *cursorImage)
     cursor = LoadTexture(cursorImage);
 
 #if defined(PLATFORM_DESKTOP)
-	// NOTE: emscripten not implemented
+    // NOTE: emscripten not implemented
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
     customCursor = true;
@@ -469,22 +479,31 @@ void BeginDrawing(void)
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
+    if (enabledPostpro) rlEnableFBO();
+
     rlClearScreenBuffers();
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     rlMultMatrixf(GetMatrixVector(downscaleView));       // If downscale required, apply it here
 
-//  rlTranslatef(0.375, 0.375, 0);      // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
+    //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing(void)
 {
-    rlglDraw();                     //  Draw Buffers (Only OpenGL 3+ and ES2)
+    rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    if (enabledPostpro) rlglDrawPostpro(); // Draw postprocessing effect (shader)
 
     SwapBuffers();                  // Copy back buffer to front buffer
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    ResetGestures();
+#endif
+
     PollInputEvents();              // Poll user events
 
     UpdateMusicStream();            // NOTE: Function checks if music is enabled
@@ -510,7 +529,7 @@ void EndDrawing(void)
 // Initializes 3D mode for drawing (Camera setup)
 void Begin3dMode(Camera camera)
 {
-    rlglDraw();                         //  Draw Buffers (Only OpenGL 3+ and ES2)
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
 
@@ -528,14 +547,14 @@ void Begin3dMode(Camera camera)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     // Setup Camera view
-    Matrix matLookAt = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(GetMatrixVector(matLookAt));      // Multiply MODELVIEW matrix by view matrix (camera)
+    Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
+    rlMultMatrixf(GetMatrixVector(view));      // Multiply MODELVIEW matrix by view matrix (camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void End3dMode(void)
 {
-    rlglDraw();                         //  Draw Buffers (Only OpenGL 3+ and ES2)
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
@@ -612,9 +631,8 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, color.a*alpha};
 }
 
-// Enable some window configurations (SetWindowFlags()?)
-// TODO: Review function name and usage
-void SetupFlags(char flags)
+// Enable some window/system configurations
+void SetConfigFlags(char flags)
 {
     configFlags = flags;
 
@@ -626,6 +644,41 @@ void SetupFlags(char flags)
 void ShowLogo(void)
 {
     showLogo = true;
+}
+
+Ray GetMouseRay(Vector2 mousePosition, Camera camera)
+{
+    Ray ray;
+
+    Matrix proj = MatrixIdentity();
+    Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
+
+    float aspect = (GLfloat)GetScreenWidth()/(GLfloat)GetScreenHeight();
+    double top = 0.1f*tanf(45.0f*PI / 360.0f);
+    double right = top*aspect;
+
+    proj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
+    MatrixTranspose(&proj);
+
+    float realy = (float)GetScreenHeight() - mousePosition.y;
+
+    //float z;
+    // glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+    //http://www.bfilipek.com/2012/06/select-mouse-opengl.html
+
+    Vector3 nearPoint = { mousePosition.x, realy, 0.0f };
+    Vector3 farPoint = { mousePosition.x, realy, 1.0f };
+
+    //nearPoint = internalCamera.position;
+    farPoint = rlglUnproject(farPoint, proj, view);
+
+    Vector3 direction = VectorSubtract(farPoint, nearPoint);
+    VectorNormalize(&direction);
+
+    ray.position = nearPoint;
+    ray.direction = direction;
+
+    return ray;
 }
 
 //----------------------------------------------------------------------------------
@@ -733,7 +786,7 @@ void SetMousePosition(Vector2 position)
 {
     mousePosition = position;
 #if defined(PLATFORM_DESKTOP)
-	// NOTE: emscripten not implemented
+    // NOTE: emscripten not implemented
     glfwSetCursorPos(window, position.x, position.y);
 #endif
 }
@@ -741,17 +794,52 @@ void SetMousePosition(Vector2 position)
 // Returns mouse wheel movement Y
 int GetMouseWheelMove(void)
 {
-    previousMouseWheelY = currentMouseWheelY;
-
-    currentMouseWheelY = 0;
-
     return previousMouseWheelY;
+}
+
+// Hide mouse cursor
+void HideCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XColor Col;
+        const char Nil[] = {0};
+
+        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
+        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
+
+        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
+        XFreeCursor(glfwGetX11Display(), Cur);
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    #endif
+#endif
+    cursorHidden = true;
+}
+
+// Show mouse cursor
+void ShowCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    #endif
+#endif
+    cursorHidden = false;
+}
+
+// Check if mouse cursor is hidden
+bool IsCursorHidden()
+{
+    return cursorHidden;
 }
 #endif
 
 // TODO: Enable gamepad usage on Rapsberry Pi
 // NOTE: emscripten not implemented
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // Detect if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
@@ -848,65 +936,72 @@ bool IsGamepadButtonUp(int gamepad, int button)
 }
 #endif
 
-#if defined(PLATFORM_ANDROID)
-bool IsScreenTouched(void)
-{
-    return touchTap;
-}
-
-bool IsDoubleTap(void)
-{
-    if (doubleTap) TraceLog(INFO, "DOUBLE TAP gesture detected");
-
-    return doubleTap;
-}
-
-bool IsDragGesture(void)
-{
-    return drag;
-}
-
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 // Returns touch position X
 int GetTouchX(void)
 {
-    return (int)touchX;
+    return (int)GetRawPosition().x;
 }
 
 // Returns touch position Y
 int GetTouchY(void)
 {
-    return (int)touchY;
+    return (int)GetRawPosition().y;
 }
 
 // Returns touch position XY
 Vector2 GetTouchPosition(void)
 {
-    Vector2 position = { touchX, touchY };
+    Vector2 position = GetRawPosition();
+    
+    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
+    {
+        // TODO: Seems to work ok but... review!
+        position.x = position.x*((float)screenWidth / (float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
+        position.y = position.y*((float)screenHeight / (float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
+    }
+    else
+    {
+        position.x = position.x*((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
+        position.y = position.y*((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
+    }
 
     return position;
 }
-
-/*bool GetPointer(Vector2 *dragPositions)
-{
-    //static int stdVector[MAX_TOUCH_POINTS];
-    //static int indexPosition = 0;
-    //if (indexPosition == 0) return false;
-    Vector2 vec_pointers_[];
-
-    //eventDrag
-    int32_t iIndex = FindIndex( eventDrag, vec_pointers_[0] );
-    
-    if (iIndex == -1) return false;
-
-    float x = AMotionEvent_getX(eventDrag, iIndex);
-    float y = AMotionEvent_getY(eventDrag, iIndex);
-
-    *dragPositions = Vector2( x, y );
-
-
-    return true;
-}*/
 #endif
+
+// Set postprocessing shader
+void SetPostproShader(Shader shader)
+{
+    if (rlGetVersion() == OPENGL_11) TraceLog(WARNING, "Postprocessing shaders not supported on OpenGL 1.1");
+    else
+    {
+        if (!enabledPostpro)
+        {
+            enabledPostpro = true;
+            rlglInitPostpro();
+            rlglSetPostproShader(shader);
+        }
+        else
+        {
+            rlglSetPostproShader(shader);
+        }
+    }
+}
+
+// Set custom shader to be used in batch draw
+void SetCustomShader(Shader shader)
+{
+    rlglSetCustomShader(shader);
+}
+
+// Set default shader to be used in batch draw
+void SetDefaultShader(void)
+{
+    rlglSetDefaultShader();
+    
+    enabledPostpro = false;
+}
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -946,7 +1041,7 @@ static void InitDisplay(int width, int height)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
 #endif
-    
+
     glfwDefaultWindowHints();                     // Set default windows hints
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
@@ -956,13 +1051,18 @@ static void InitDisplay(int width, int height)
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers
 
-    // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version 
+    // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 3.3 context fordward compatible.
 
     if (rlGetVersion() == OPENGL_33)
     {
-        //glfwWindowHint(GLFW_SAMPLES, 4);                    // Enables multisampling x4 (MSAA), default is 0
+        if (configFlags & FLAG_MSAA_4X_HINT)
+        {
+            glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
+            TraceLog(INFO, "Enabled MSAA x4");
+        }
+
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.2 and above!
@@ -1009,12 +1109,18 @@ static void InitDisplay(int width, int height)
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
+    glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
 
     glfwMakeContextCurrent(window);
 
-    //glfwSwapInterval(0);          // Disables GPU v-sync (if set), so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
-                                    // If not set, swap interval uses GPU v-sync configuration
-                                    // Framerate can be setup using SetTargetFPS()
+    // Enables GPU v-sync, so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
+    // If not set, swap interval uses GPU v-sync configuration
+    // Framerate can be setup using SetTargetFPS()
+    if (configFlags & FLAG_VSYNC_HINT)
+    {
+        glfwSwapInterval(1);
+        TraceLog(INFO, "Trying to enable VSYNC");
+    }
 
     //glfwGetFramebufferSize(window, &renderWidth, &renderHeight);    // Get framebuffer size of current window
 
@@ -1036,6 +1142,7 @@ static void InitDisplay(int width, int height)
     VC_RECT_T srcRect;
 #endif
 
+    // TODO: if (configFlags & FLAG_MSAA_4X_HINT) activate (EGL_SAMPLES, 4)
     const EGLint framebufferAttribs[] =
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    // Type of context support -> Required on RPI?
@@ -1158,7 +1265,7 @@ static void InitDisplay(int width, int height)
 }
 
 // Initialize OpenGL graphics
-void InitGraphics(void)
+static void InitGraphics(void)
 {
     rlglInit();                     // Init rlgl
 
@@ -1216,7 +1323,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 static void CharCallback(GLFWwindow *window, unsigned int key)
 {
     lastKeyPressed = key;
-    
+
     //TraceLog(INFO, "Char Callback Key pressed: %i\n", key);
 }
 
@@ -1242,212 +1349,30 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     // Background must be also re-cleared
     ClearBackground(RAYWHITE);
 }
+
+// GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowIconifyCallback(GLFWwindow* window, int iconified)
+{
+    if (iconified)
+    {
+        // The window was iconified
+        PauseMusicStream();
+
+        windowMinimized = true;
+    }
+    else
+    {
+        // The window was restored
+        ResumeMusicStream();
+
+        windowMinimized = false;
+    }
+}
 #endif
 
 #if defined(PLATFORM_ANDROID)
-// Android: Process activity input events
-static int32_t InputCallback(struct android_app *app, AInputEvent *event)
-{
-    int type = AInputEvent_getType(event);
-    //int32_t key = 0;
-
-    if (type == AINPUT_EVENT_TYPE_MOTION)
-    {
-        // Detect TOUCH position
-        if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
-        {
-            // TODO: Seems to work ok but... review!
-            touchX = AMotionEvent_getX(event, 0) * ((float)screenWidth / (float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
-            touchY = AMotionEvent_getY(event, 0) * ((float)screenHeight / (float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
-        }
-        else
-        {
-            touchX = AMotionEvent_getX(event, 0) * ((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
-            touchY = AMotionEvent_getY(event, 0) * ((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
-        }
-
-        // Detect TAP event
-/*
-        if (AMotionEvent_getPointerCount(event) > 1 )
-        {
-            // Only support single touch
-            return false;
-        }
-*/
-        int32_t action = AMotionEvent_getAction(event);
-        unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
-
-        switch (flags)
-        {
-            case AMOTION_EVENT_ACTION_DOWN:
-            {
-                touchId = AMotionEvent_getPointerId(event, 0);
-                tapTouchX = AMotionEvent_getX(event, 0);
-                tapTouchY = AMotionEvent_getY(event, 0);
-
-            } break;
-            case AMOTION_EVENT_ACTION_UP:
-            {
-                int64_t eventTime = AMotionEvent_getEventTime(event);
-                int64_t downTime = AMotionEvent_getDownTime(event);
-
-                if (eventTime - downTime <= TAP_TIMEOUT)
-                {
-                    if (touchId == AMotionEvent_getPointerId(event, 0))
-                    {
-                        float x = AMotionEvent_getX(event, 0) - tapTouchX;
-                        float y = AMotionEvent_getY(event, 0) - tapTouchY;
-
-                        float densityFactor = 1.0f;
-
-                        if ( x*x + y*y < TOUCH_SLOP*TOUCH_SLOP * densityFactor)
-                        {
-                            // TAP Detected
-                            touchTap = true;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-
-        //float AMotionEvent_getX(event, size_t pointer_index);
-        //int32_t AMotionEvent_getButtonState(event); // Pressed buttons
-        //int32_t AMotionEvent_getPointerId(event, size_t pointer_index);
-        //size_t pointerCount =  AMotionEvent_getPointerCount(event);
-        //float AMotionEvent_getPressure(const AInputEvent *motion_event, size_t pointer_index); // 0 to 1
-        //float AMotionEvent_getSize(const AInputEvent *motion_event, size_t pointer_index); // Pressed area
-        
-        // Detect DOUBLE TAP event
-        bool tapDetected = touchTap;
-
-        switch (flags)
-        {
-            case AMOTION_EVENT_ACTION_DOWN:
-            {
-                int64_t eventTime = AMotionEvent_getEventTime(event);
-                
-                if (eventTime - lastTapTime <= DOUBLE_TAP_TIMEOUT)
-                {
-                    float x = AMotionEvent_getX(event, 0) - lastTapX;
-                    float y = AMotionEvent_getY(event, 0) - lastTapY;
-                    
-                    float densityFactor = 1.0f;
-                    
-                    if ((x*x + y*y) < (DOUBLE_TAP_SLOP*DOUBLE_TAP_SLOP*densityFactor))
-                    {
-                        // Doubletap detected
-                        doubleTap = true;
-                        
-                    }
-                }
-            } break;
-            case AMOTION_EVENT_ACTION_UP:
-            {
-                if (tapDetected)
-                {
-                    lastTapTime = AMotionEvent_getEventTime(event);
-                    lastTapX = AMotionEvent_getX(event, 0);
-                    lastTapY = AMotionEvent_getY(event, 0);
-                    
-                }
-            } break;
-        }
-        
-        
-        // Detect DRAG event
-        //int32_t action = AMotionEvent_getAction(event);
-
-        int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-        //uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
-        //event_ = event;
-
-        int32_t count = AMotionEvent_getPointerCount(event);
-
-        switch (flags)
-        {
-            case AMOTION_EVENT_ACTION_DOWN:
-            {
-                stdVector[indexPosition] = AMotionEvent_getPointerId(event, 0);
-                indexPosition++;
-                TraceLog(INFO, "ACTION_DOWN");
-                
-                //ret = GESTURE_STATE_START;
-            } break;
-            case AMOTION_EVENT_ACTION_POINTER_DOWN:
-            {
-                stdVector[indexPosition] = AMotionEvent_getPointerId(event, index);
-                indexPosition++;
-                TraceLog(INFO, "ACTION_POINTER_DOWN");
-                
-            } break;
-            case AMOTION_EVENT_ACTION_UP:
-            {
-                //int value = stdVector[indexPosition];
-                indexPosition--;
-                //ret = GESTURE_STATE_END;
-                TraceLog(INFO, "ACTION_UP");
-                
-            } break;
-            case AMOTION_EVENT_ACTION_POINTER_UP:
-            {
-                int32_t releasedPointerId = AMotionEvent_getPointerId(event, index);
-                
-                int i = 0;
-                for (i = 0; i < MAX_TOUCH_POINTS; i++)
-                {
-                    if (stdVector[i] == releasedPointerId)
-                    {
-                        for (int k = i; k < indexPosition - 1; k++)
-                        {
-                            stdVector[k] = stdVector[k + 1];
-                        }
-                        
-                        //indexPosition--;
-                        indexPosition = 0;
-                        break;
-                    }
-                }
-                
-                if (i <= 1)
-                {
-                    // Reset pinch or drag
-                    //if (count == 2) //ret = GESTURE_STATE_START;
-                }
-                TraceLog(INFO, "ACTION_POINTER_UP");
-                
-            } break;
-            case AMOTION_EVENT_ACTION_MOVE:
-            {
-                if (count == 1)
-                {
-                    //TraceLog(INFO, "DRAG gesture detected");
-                
-                    drag = true; //ret = GESTURE_STATE_MOVE;
-                }
-                else break;
-                TraceLog(INFO, "ACTION_MOVE");
-
-            } break;
-            case AMOTION_EVENT_ACTION_CANCEL: break;
-            default: break;
-        }
-
-        //--------------------------------------------------------------------
-        
-        return 1;
-    }
-    else if (type == AINPUT_EVENT_TYPE_KEY)
-    {
-        //key = AKeyEvent_getKeyCode(event);
-        //int32_t AKeyEvent_getMetaState(event);
-    }
-
-    return 0;
-}
-
 // Android: Process activity lifecycle commands
-static void CommandCallback(struct android_app *app, int32_t cmd)
+static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 {
     switch (cmd)
     {
@@ -1636,24 +1561,24 @@ static void PollInputEvents(void)
     // Keyboard polling
     // Automatically managed by GLFW3 through callback
     lastKeyPressed = -1;
-    
+
     // Register previous keys states
     for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
-    
+
     // Register previous mouse states
     for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
-    
-    glfwPollEvents();       // Register keyboard/mouse events
+
+    previousMouseWheelY = currentMouseWheelY;
+    currentMouseWheelY = 0;
+
+    glfwPollEvents();       // Register keyboard/mouse events... and window events!
 #elif defined(PLATFORM_ANDROID)
 
     // TODO: Check virtual keyboard (?)
 
-    // Reset touch events
-    touchTap = false;
-    doubleTap = false;
-    drag = false;
-
     // Poll Events (registered events)
+    // TODO: Enable/disable activityMinimized to block activity if minimized
+    //while ((ident = ALooper_pollAll(activityMinimized ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
     while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
     {
         // Process this event
@@ -1664,8 +1589,8 @@ static void PollInputEvents(void)
         {
             // NOTE: Never close window, native activity is controlled by the system!
             //TraceLog(INFO, "Closing Window...");
-            //windowShouldClose = true; 
-            
+            //windowShouldClose = true;
+
             //ANativeActivity_finish(app->activity);
         }
     }
@@ -1952,13 +1877,13 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
         if (widthRatio <= heightRatio)
         {
             renderWidth = displayWidth;
-            renderHeight = (int)((float)screenHeight*widthRatio);
+            renderHeight = (int)round((float)screenHeight*widthRatio);
             renderOffsetX = 0;
             renderOffsetY = (displayHeight - renderHeight);
         }
         else
         {
-            renderWidth = (int)((float)screenWidth*heightRatio);
+            renderWidth = (int)round((float)screenWidth*heightRatio);
             renderHeight = displayHeight;
             renderOffsetX = (displayWidth - renderWidth);
             renderOffsetY = 0;
@@ -1988,13 +1913,13 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
         if (displayRatio <= screenRatio)
         {
             renderWidth = screenWidth;
-            renderHeight = (int)((float)screenWidth/displayRatio);
+            renderHeight = (int)round((float)screenWidth/displayRatio);
             renderOffsetX = 0;
             renderOffsetY = (renderHeight - screenHeight);
         }
         else
         {
-            renderWidth = (int)((float)screenHeight*displayRatio);
+            renderWidth = (int)round((float)screenHeight*displayRatio);
             renderHeight = screenHeight;
             renderOffsetX = (renderWidth - screenWidth);
             renderOffsetY = 0;
@@ -2134,4 +2059,3 @@ static void LogoAnimation(void)
 
     showLogo = false;  // Prevent for repeating when reloading window (Android)
 }
-

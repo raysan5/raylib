@@ -1,4 +1,3 @@
-
 #include "stb_vorbis.h"
 
 #ifndef STB_VORBIS_HEADER_ONLY
@@ -180,7 +179,7 @@
 #define NULL 0
 #endif
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !(defined(__MINGW32__) && defined(__forceinline))
    #if __GNUC__
       #define __forceinline inline
    #else
@@ -3562,7 +3561,7 @@ static int start_decoder(vorb *f)
             g->sorted_order[j] = (uint8) p[j].y;
          // precompute the neighbors
          for (j=2; j < g->values; ++j) {
-            int low = 0,hi = 0;
+            int low,hi;
             neighbors(g->Xlist, j, &low,&hi);
             g->neighbors[j][0] = low;
             g->neighbors[j][1] = hi;
@@ -5024,6 +5023,7 @@ int stb_vorbis_get_samples_float(stb_vorbis *f, int channels, float **buffer, in
 #endif // STB_VORBIS_NO_PULLDATA_API
 
 /* Version history
+    1.05    - 2015/04/19 - don't define __forceinline if it's redundant
     1.04    - 2014/08/27 - fix missing const-correct case in API
     1.03    - 2014/08/07 - Warning fixes
     1.02    - 2014/07/09 - Declare qsort compare function _cdecl on windows
