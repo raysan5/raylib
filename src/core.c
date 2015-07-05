@@ -606,7 +606,7 @@ Color GetColor(int hexValue)
 // Returns hexadecimal value for a Color
 int GetHexValue(Color color)
 {
-    return ((color.a << 24) + (color.r << 16) + (color.g << 8) + color.b);
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
 }
 
 // Returns a random value between min and max (both included)
