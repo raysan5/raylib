@@ -93,15 +93,6 @@ static int cameraMode = CAMERA_CUSTOM;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static void ProcessCamera(Camera *camera, Vector3 *playerPosition);
-/*
-static void SetCameraControls(int front, int left, int back, right, up, down);
-static void SetMouseSensitivity(int sensitivity);
-static void SetResetPosition(Vector3 resetPosition);
-static void SetResetControl(int resetKey);
-static void SetPawnControl(int pawnControlKey);
-static void SetFnControl(int fnControlKey);
-static void SetSmoothZoomControl(int smoothZoomControlKey);
-*/
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -152,6 +143,53 @@ Camera UpdateCamera(Vector3 *position)
 
     return internalCamera;
 }
+
+
+void SetCameraControls(int frontKey, int leftKey, int backKey, int rightKey, int upKey, int downKey)
+{
+    cameraMovementController[0] = frontKey;
+    cameraMovementController[1] = leftKey;
+    cameraMovementController[2] = backKey;
+    cameraMovementController[3] = rightKey;
+    cameraMovementController[4] = upKey;
+    cameraMovementController[5] = downKey;
+}
+
+void SetCameraMouseSensitivity(float sensitivity)
+{
+    mouseSensitivity = (sensitivity / 10000.0);
+}
+ 
+void SetCameraResetPosition(Vector3 resetPosition)
+{
+    resetingPosition = resetPosition;
+}
+
+void SetCameraResetControl(int resetKey)
+{
+    resetingKey = resetKey;
+}
+
+void SetCameraPawnControl(int pawnControlKey)
+{
+    pawnControllingKey = pawnControlKey;
+}
+
+void SetCameraFnControl(int fnControlKey)
+{
+    fnControllingKey = fnControlKey;
+}
+
+void SetCameraSmoothZoomControl(int smoothZoomControlKey)
+{
+    smoothZoomControllingKey = smoothZoomControlKey;
+}
+
+void SetCameraOrbitalTarget(Vector3 target)
+{
+    internalCamera.target = target;
+}
+
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -407,49 +445,4 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
         default: break;
     }
 #endif
-}
-
-void SetCameraControls(int frontKey, int leftKey, int backKey, int rightKey, int upKey, int downKey)
-{
-    cameraMovementController[0] = frontKey;
-    cameraMovementController[1] = leftKey;
-    cameraMovementController[2] = backKey;
-    cameraMovementController[3] = rightKey;
-    cameraMovementController[4] = upKey;
-    cameraMovementController[5] = downKey;
-}
-
-void SetMouseSensitivity(float sensitivity)
-{
-    mouseSensitivity = (sensitivity / 10000.0);
-}
- 
-void SetResetPosition(Vector3 resetPosition)
-{
-    resetingPosition = resetPosition;
-}
-
-void SetResetControl(int resetKey)
-{
-    resetingKey = resetKey;
-}
-
-void SetPawnControl(int pawnControlKey)
-{
-    pawnControllingKey = pawnControlKey;
-}
-
-void SetFnControl(int fnControlKey)
-{
-    fnControllingKey = fnControlKey;
-}
-
-void SetSmoothZoomControl(int smoothZoomControlKey)
-{
-    smoothZoomControllingKey = smoothZoomControlKey;
-}
-
-void SetOrbitalTarget(Vector3 target)
-{
-    internalCamera.target = target;
 }

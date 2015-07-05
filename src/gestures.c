@@ -24,7 +24,6 @@
 **********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
 #include "utils.h"
 
 #include <stdlib.h>             // malloc(), free()
@@ -126,6 +125,7 @@ static float pinchDelta = 0;
 
 // Detected gesture
 static int currentGesture = GESTURE_NONE;
+unsigned int enabledGestures = 0;           // TODO: Currently not in use...
 
 static Vector2 touchPosition;
 
@@ -185,40 +185,45 @@ int GetGestureType(void)
     return currentGesture;
 }
 
+void SetGesturesEnabled(unsigned int gestureFlags)
+{
+    enabledGestures = gestureFlags;
+}
+
 // Get drag intensity (pixels per frame)
-float GetDragIntensity(void)
+float GetGestureDragIntensity(void)
 {
     return intensity;
 }
 
 // Get drag angle
 // NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
-float GetDragAngle(void)
+float GetGestureDragAngle(void)
 {
     return angle;
 }
 
 // Get drag vector (between initial and final position)
-Vector2 GetDragVector(void)
+Vector2 GetGestureDragVector(void)
 {
     return dragVector;
 }
 
 // Hold time measured in frames
-int GetHoldDuration(void)
+int GetGestureHoldDuration(void)
 {
     return 0;
 }
 
 // Get magnitude between two pinch points
-float GetPinchDelta(void)
+float GetGesturePinchDelta(void)
 {
     return pinchDelta;
 }
 
-// Get angle beween two  pinch points
+// Get angle beween two pinch points
 // NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
-float GetPinchAngle(void)
+float GetGesturePinchAngle(void)
 {
     return 0;
 }
@@ -416,7 +421,6 @@ extern void ProcessMotionEvent(GestureEvent event)
     }
     //--------------------------------------------------------------------
 }
-
 
 static float CalculateAngle(Vector2 initialPosition, Vector2 actualPosition, float magnitude)
 {
