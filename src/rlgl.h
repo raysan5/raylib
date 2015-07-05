@@ -209,7 +209,9 @@ void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
-unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps);       // Load in GPU OpenGL texture
+unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);       // Load in GPU OpenGL texture
+void rlglGenerateMipmaps(unsigned int textureId);                           // Generate mipmap data for selected texture
+
 Shader rlglLoadShader(char *vsFileName, char *fsFileName);                  // Load a shader (vertex shader + fragment shader) from files
 unsigned int rlglLoadShaderFromText(char *vShaderStr, char *fShaderStr);    // Load a shader from text data
 void rlglInitPostpro(void);                     // Initialize postprocessing system
@@ -222,9 +224,10 @@ void rlglSetDefaultShader(void);                // Set default shader to be used
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);
 
-Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);         // Get world coordinates from screen coordinates
+Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);            // Get world coordinates from screen coordinates
 
-byte *rlglReadScreenPixels(int width, int height);    // Read screen pixel data (color buffer)
+unsigned char *rlglReadScreenPixels(int width, int height);                 // Read screen pixel data (color buffer)
+void *rlglReadTexturePixels(unsigned int textureId, unsigned int format);   // Read texture pixel data
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 void PrintProjectionMatrix(void);       // DEBUG: Print projection matrix

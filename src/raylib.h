@@ -358,18 +358,19 @@ typedef enum {
 } TextureFormat;
 
 // Gestures type
+// NOTE: It could be used as flags to enable only some gestures
 typedef enum {
-    GESTURE_NONE = 0,
-    GESTURE_TAP,
-    GESTURE_DOUBLETAP,
-    GESTURE_HOLD,
-    GESTURE_DRAG,
-    GESTURE_SWIPE_RIGHT,
-    GESTURE_SWIPE_LEFT,
-    GESTURE_SWIPE_UP,
-    GESTURE_SWIPE_DOWN,
-    GESTURE_PINCH_IN,
-    GESTURE_PINCH_OUT
+    GESTURE_NONE        = 1,
+    GESTURE_TAP         = 2,
+    GESTURE_DOUBLETAP   = 4,
+    GESTURE_HOLD        = 8,
+    GESTURE_DRAG        = 16,
+    GESTURE_SWIPE_RIGHT = 32,
+    GESTURE_SWIPE_LEFT  = 64,
+    GESTURE_SWIPE_UP    = 128,
+    GESTURE_SWIPE_DOWN  = 256,
+    GESTURE_PINCH_IN    = 512,
+    GESTURE_PINCH_OUT   = 1024
 } Gestures;
 
 #ifdef __cplusplus
@@ -431,14 +432,15 @@ void SetCameraMode(int mode);                               // Select camera mod
 Camera UpdateCamera(Vector3 *position);                     // Update camera with position
 
 void SetCameraControls(int front, int left, int back, int right, int up, int down);
-void SetMouseSensitivity(float sensitivity);
-void SetResetPosition(Vector3 resetPosition);
-void SetResetControl(int resetKey);
-void SetPawnControl(int pawnControlKey);
-void SetFnControl(int fnControlKey);
-void SetSmoothZoomControl(int smoothZoomControlKey);
-void SetOrbitalTarget(Vector3 target);
+void SetCameraMouseSensitivity(float sensitivity);
+void SetCameraResetPosition(Vector3 resetPosition);
+void SetCameraResetControl(int resetKey);
+void SetCameraPawnControl(int pawnControlKey);
+void SetCameraFnControl(int fnControlKey);
+void SetCameraSmoothZoomControl(int smoothZoomControlKey);
+void SetCameraOrbitalTarget(Vector3 target);
 
+// Shaders control functions
 int GetShaderLocation(Shader shader, const char *uniformName);
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);
 
@@ -488,12 +490,14 @@ Vector2 GetTouchPosition(void);                         // Returns touch positio
 // Gestures System (module: gestures)
 bool IsGestureDetected(void);
 int GetGestureType(void);
-float GetDragIntensity(void);
-float GetDragAngle(void);
-Vector2 GetDragVector(void);
-int GetHoldDuration(void);                              // Hold time in frames
-float GetPinchDelta(void);
-float GetPinchAngle(void);
+void SetGesturesEnabled(unsigned int gestureFlags);
+
+float GetGestureDragIntensity(void);
+float GetGestureDragAngle(void);
+Vector2 GetGestureDragVector(void);
+int GetGestureHoldDuration(void);                       // Hold time in frames
+float GetGesturePinchDelta(void);
+float GetGesturePinchAngle(void);
 #endif
 
 //------------------------------------------------------------------------------------
@@ -530,16 +534,19 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 // Texture Loading and Drawing Functions (Module: textures)
 //------------------------------------------------------------------------------------
 Image LoadImage(const char *fileName);                                                             // Load an image into CPU memory (RAM)
+Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image data from Color array data (RGBA - 32bit)
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
-Image LoadImageFromData(Color *pixels, int width, int height, int format);                         // Load image from Color array data
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
-Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps);    // Load a texture from raw data into GPU memory
+Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load a texture from raw data into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
-Texture2D LoadTextureFromImage(Image image, bool genMipmaps);                                      // Load a texture from image data (and generate mipmaps)
+Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data (and generate mipmaps)
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
-void ConvertToPOT(Image *image, Color fillColor);                                                  // Convert image to POT (power-of-two)
+void ImageConvertToPOT(Image *image, Color fillColor);                                             // Convert image to POT (power-of-two)
+void ImageConvertFormat(Image *image, int newFormat);                                              // Convert image data to desired format
 Color *GetPixelData(Image image);                                                                  // Get pixel data from image as a Color struct array
+Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
+void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2

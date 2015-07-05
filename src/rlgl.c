@@ -221,7 +221,7 @@ static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support
 static bool npotSupported = false;  // NPOT textures full support
 
 // Compressed textures support flags
-static bool texCompDXTSupported = false;     // DDS texture compression support
+//static bool texCompDXTSupported = false;     // DDS texture compression support
 static bool texCompETC1Supported = false;    // ETC1 texture compression support
 static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;    // PVR texture compression support
@@ -231,6 +231,9 @@ static bool texCompASTCSupported = false;    // ASTC texture compression support
 static GLuint fbo, fboColorTexture, fboDepthTexture;
 static Model postproQuad;
 #endif
+
+// Compressed textures support flags
+static bool texCompDXTSupported = false;     // DDS texture compression support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -263,7 +266,9 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
 static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_ES2)
 static char** StringSplit(char *baseString, const char delimiter, int *numExt);
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix operations
@@ -967,7 +972,7 @@ void rlglInit(void)
     // Create default white texture for plain colors (required by shader)
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
 
-    whiteTexture = rlglLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1, false);
+    whiteTexture = rlglLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
 
     if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
     else TraceLog(WARNING, "Base white texture could not be loaded");
@@ -1623,7 +1628,7 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps)
+unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount)
 {
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
@@ -1642,7 +1647,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
         TraceLog(WARNING, "DXT compressed texture format not supported");
         return id;
     }
-    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)    
     if ((!texCompETC1Supported) && (textureFormat == COMPRESSED_ETC1_RGB))
     {
         TraceLog(WARNING, "ETC1 compressed texture format not supported");
@@ -1666,7 +1671,8 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
         TraceLog(WARNING, "ASTC compressed texture format not supported");
         return id;
     }
-    
+#endif
+
     glGenTextures(1, &id);              // Generate Pointer to the texture
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1755,23 +1761,63 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     }
 #endif
 
+    // Texture parameters configuration
+    // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so CLAMP_TO_EDGE must be used
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);       // Set texture to clamp on x-axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);       // Set texture to clamp on y-axis
+#else
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repeat on x-axis
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repeat on y-axis
+#endif
+
+    // Magnification and minification filters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
+    
+#if defined(GRAPHICS_API_OPENGL_33)
+    if (mipmapCount > 1)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps (must be available)
+    }
+#endif
+
+    // At this point we have the texture loaded in GPU and texture parameters configured
+    
+    // NOTE: If mipmaps were not in data, they are not generated automatically
+
+    // Unbind current texture
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    if (id > 0) TraceLog(INFO, "[TEX ID %i] Texture created successfully (%ix%i)", id, width, height);
+    else TraceLog(WARNING, "Texture could not be created");
+
+    return id;
+}
+
+// Generate mipmap data for selected texture
+void rlglGenerateMipmaps(unsigned int textureId)
+{
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    
+    int width, height;
+    
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+    
     // Check if texture is power-of-two (POT) to enable mipmap generation
     bool texIsPOT = false;
 
     if (((width > 0) && ((width & (width - 1)) == 0)) && ((height > 0) && ((height & (height - 1)) == 0))) texIsPOT = true;
 
-    if (genMipmaps && !texIsPOT)
+    if (texIsPOT)
     {
-        TraceLog(WARNING, "[TEX ID %i] Texture is not power-of-two, mipmaps can not be generated", id);
-        genMipmaps = false;
-    }
-
-    // Generate mipmaps if required
-    // TODO: Improve mipmaps support
 #if defined(GRAPHICS_API_OPENGL_11)
-    if (genMipmaps)
-    {
         // Compute required mipmaps
+        void *data = rlglReadTexturePixels(textureId, UNCOMPRESSED_R8G8B8A8);   // TODO: Detect internal format 
+        
         // NOTE: data size is reallocated to fit mipmaps data
         int mipmapCount = GenerateMipmaps(data, width, height);
 
@@ -1794,48 +1840,21 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
             mipHeight /= 2;
         }
         
-        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", id);
-    }
+        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", textureId);
+        
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((mipmapCount == 1) && (genMipmaps))
-    {
-        glGenerateMipmap(GL_TEXTURE_2D);  // Generate mipmaps automatically
-        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically for new texture", id);
-    }
+        glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
+        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", textureId);
 #endif
 
-    // Texture parameters configuration
-    // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so CLAMP_TO_EDGE must be used
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);       // Set texture to clamp on x-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);       // Set texture to clamp on y-axis
-#else
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repeat on x-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repeat on y-axis
-#endif
-
-    // Magnification and minification filters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    
 #if defined(GRAPHICS_API_OPENGL_33)
-    if ((mipmapCount > 1) || (genMipmaps))
-    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps (must be available)
-    }
 #endif
-
-    // At this point we have the texture loaded in GPU, with mipmaps generated (if desired) and texture parameters configured
-
-    // Unbind current texture
+    }
+    else TraceLog(WARNING, "[TEX ID %i] Texture is not power-of-two, mipmaps can not be generated", textureId);
+        
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    if (id > 0) TraceLog(INFO, "[TEX ID %i] Texture created successfully (%ix%i)", id, width, height);
-    else TraceLog(WARNING, "Texture could not be created");
-
-    return id;
 }
 
 // Load vertex data into a VAO (if supported) and VBO
@@ -2039,6 +2058,47 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     return imgData;     // NOTE: image data should be freed
 }
 
+// Read texture pixel data
+void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
+{
+    int width, height;
+    
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+    //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
+    //GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
+    
+    int glFormat, glType;
+    void *pixels = NULL;
+    unsigned int size = width*height;
+
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_LUMINANCE; glType = GL_UNSIGNED_BYTE;            // 8 bit per pixel (no alpha)
+        case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_LUMINANCE_ALPHA; glType = GL_UNSIGNED_BYTE;   // 16 bpp (2 channels)
+        case UNCOMPRESSED_R5G6B5: pixels = (unsigned short *)malloc(size); glFormat = GL_RGB; glType = GL_UNSIGNED_SHORT_5_6_5;             // 16 bpp
+        case UNCOMPRESSED_R8G8B8: pixels = (unsigned char *)malloc(size*3); glFormat = GL_RGB; glType = GL_UNSIGNED_BYTE;                   // 24 bpp
+        case UNCOMPRESSED_R5G5B5A1: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_5_5_5_1;        // 16 bpp (1 bit alpha)
+        case UNCOMPRESSED_R4G4B4A4: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_4_4_4_4;        // 16 bpp (4 bit alpha)
+        case UNCOMPRESSED_R8G8B8A8: pixels = (unsigned char *)malloc(size*4); glFormat = GL_RGBA; glType = GL_UNSIGNED_BYTE;                // 32 bpp
+        default: TraceLog(WARNING, "Texture format not suported"); break;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    
+    // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
+    // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting. 
+    // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.) 
+    // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    
+    glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    return pixels;
+}
+
 // Load a shader (vertex shader + fragment shader) from files
 Shader rlglLoadShader(char *vsFileName, char *fsFileName)
 {
@@ -2159,15 +2219,18 @@ void rlglSetDefaultShader(void)
 
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
-    int location = glGetUniformLocation(shader.id, uniformName);
+    int location = -1;
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)   
+    location = glGetUniformLocation(shader.id, uniformName);
     
     if (location == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader.id, uniformName);
-    
+#endif
     return location;
 }
 
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
 
     if (size == 1) glUniform1fv(uniformLoc, 1, value);          // Shader uniform type: float
@@ -2177,10 +2240,12 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
     else TraceLog(WARNING, "Shader value float array size not recognized");
     
     glUseProgram(0);
+#endif
 }
 
 void SetShaderMapDiffuse(Shader *shader, Texture2D texture)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     shader->texDiffuseId = texture.id;
     
     glUseProgram(shader->id);
@@ -2193,10 +2258,12 @@ void SetShaderMapDiffuse(Shader *shader, Texture2D texture)
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
     glUseProgram(0);
+#endif
 }
 
 void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     shader->mapNormalLoc = glGetUniformLocation(shader->id, uniformName);
 
     if (shader->mapNormalLoc == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader->id, uniformName);
@@ -2215,10 +2282,12 @@ void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D textu
         glActiveTexture(GL_TEXTURE0);
         glUseProgram(0);
     }
+#endif
 }
 
 void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     shader->mapSpecularLoc = glGetUniformLocation(shader->id, uniformName);
 
     if (shader->mapSpecularLoc == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader->id, uniformName);
@@ -2237,6 +2306,7 @@ void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D tex
         glActiveTexture(GL_TEXTURE0);
         glUseProgram(0);
     }
+#endif
 }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2865,6 +2935,7 @@ void TraceLog(int msgType, const char *text, ...)
 }
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_ES2)
 static char **StringSplit(char *baseString, const char delimiter, int *numExt)
 {
     char **result = 0;
@@ -2914,3 +2985,4 @@ static char **StringSplit(char *baseString, const char delimiter, int *numExt)
 
     return result;
 }
+#endif
