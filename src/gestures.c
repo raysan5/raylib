@@ -132,10 +132,10 @@ static Vector2 touchPosition;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-extern void ProcessMotionEvent(GestureEvent event);
 extern void ResetGestures(void);
 extern Vector2 GetRawPosition(void);
 
+static void ProcessMotionEvent(GestureEvent event);
 static float CalculateAngle(Vector2 initialPosition, Vector2 actualPosition, float magnitude);
 static float OnPinch();
 static void SetDualInput(GestureEvent event);
@@ -265,7 +265,7 @@ extern void InitAndroidGestures(struct android_app *app)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-extern void ProcessMotionEvent(GestureEvent event)
+static void ProcessMotionEvent(GestureEvent event)
 {
     // Resets
     dragVector = (Vector2){ 0, 0 };
@@ -359,7 +359,7 @@ extern void ProcessMotionEvent(GestureEvent event)
                 {
                     lastDragPosition = endDragPosition;
                     
-                    endDragPosition = GetRawPosition();
+                    endDragPosition = touchPosition;
                     
                     //endDragPosition.x = AMotionEvent_getX(event, 0);
                     //endDragPosition.y = AMotionEvent_getY(event, 0);
@@ -568,6 +568,18 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     {
         //int32_t key = AKeyEvent_getKeyCode(event);
         //int32_t AKeyEvent_getMetaState(event);
+        
+        int32_t code = AKeyEvent_getKeyCode((const AInputEvent *)event);
+        
+        // If we are in active mode, we eat the back button and move into pause mode.  
+        // If we are already in pause mode, we allow the back button to be handled by the OS, which means we'll be shut down.
+        /*
+        if ((code == AKEYCODE_BACK) && mActiveMode)
+        {
+            setActiveMode(false);
+            return 1;
+        }
+        */
     }
     
     int32_t action = AMotionEvent_getAction(event);
@@ -589,7 +601,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     
     ProcessMotionEvent(gestureEvent);
 
-    return 0;
+    return 0;   // return 1;
 }
 #endif
 
