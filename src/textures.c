@@ -149,6 +149,56 @@ Image LoadImageEx(Color *pixels, int width, int height)
     return image;
 }
 
+// Load an image from RAW file
+Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
+{
+    Image image;
+
+    image.data = NULL;
+    image.width = 0;
+    image.height = 0;
+    image.mipmaps = 0;
+    image.format = 0;
+
+    FILE *rawFile = fopen(fileName, "rb");
+
+    if (rawFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] RAW image file could not be opened", fileName);
+    }
+    else
+    {
+        if (headerSize > 0) fseek(rawFile, headerSize, SEEK_SET);
+
+        unsigned int size = width*height;
+        
+        switch (format)
+        {
+            case UNCOMPRESSED_GRAYSCALE: image.data = (unsigned char *)malloc(size); break;               // 8 bit per pixel (no alpha)
+            case UNCOMPRESSED_GRAY_ALPHA: image.data = (unsigned char *)malloc(size*2); size *= 2; break; // 16 bpp (2 channels)
+            case UNCOMPRESSED_R5G6B5: image.data = (unsigned short *)malloc(size); break;                 // 16 bpp
+            case UNCOMPRESSED_R8G8B8: image.data = (unsigned char *)malloc(size*3); size *= 3; break;     // 24 bpp
+            case UNCOMPRESSED_R5G5B5A1: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (1 bit alpha)
+            case UNCOMPRESSED_R4G4B4A4: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (4 bit alpha)
+            case UNCOMPRESSED_R8G8B8A8: image.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
+            default: TraceLog(WARNING, "Image format not suported"); break;
+        }
+        
+        fread(image.data, size, 1, rawFile);
+        
+        // TODO: Check if data have been read
+        
+        image.width = width;
+        image.height = height;
+        image.mipmaps = 0;
+        image.format = format;
+        
+        fclose(rawFile);
+    }
+
+    return image;
+}
+
 // Load an image from rRES file (raylib Resource)
 // TODO: Review function to support multiple color modes
 Image LoadImageFromRES(const char *rresName, int resId)
@@ -301,6 +351,18 @@ Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, in
     return texture;
 }
 
+// Load an image as texture from rRES file (raylib Resource)
+Texture2D LoadTextureFromRES(const char *rresName, int resId)
+{
+    Texture2D texture;
+
+    Image image = LoadImageFromRES(rresName, resId);
+    texture = LoadTextureFromImage(image);
+    UnloadImage(image);
+
+    return texture;
+}
+
 // Load a texture from image data
 // NOTE: image is not unloaded, it must be done manually
 Texture2D LoadTextureFromImage(Image image)
@@ -324,18 +386,6 @@ Texture2D LoadTextureFromImage(Image image)
     return texture;
 }
 
-// Load an image as texture from rRES file (raylib Resource)
-Texture2D LoadTextureFromRES(const char *rresName, int resId)
-{
-    Texture2D texture;
-
-    Image image = LoadImageFromRES(rresName, resId);
-    texture = LoadTextureFromImage(image);
-    UnloadImage(image);
-
-    return texture;
-}
-
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
@@ -348,46 +398,8 @@ void UnloadTexture(Texture2D texture)
     rlDeleteTextures(texture.id);
 }
 
-// Convert image to POT (power-of-two)
-// NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
-void ImageConvertToPOT(Image *image, Color fillColor)
-{
-    // TODO: Review for new image struct
-    /*
-    // Just add the required amount of pixels at the right and bottom sides of image...
-    int potWidth = GetNextPOT(image->width);
-    int potHeight = GetNextPOT(image->height);
-
-    // Check if POT texture generation is required (if texture is not already POT)
-    if ((potWidth != image->width) || (potHeight != image->height))
-    {
-        Color *imgDataPixelPOT = NULL;
-
-        // Generate POT array from NPOT data
-        imgDataPixelPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
-
-        for (int j = 0; j < potHeight; j++)
-        {
-            for (int i = 0; i < potWidth; i++)
-            {
-                if ((j < image->height) && (i < image->width)) imgDataPixelPOT[j*potWidth + i] = image->data[j*image->width + i];
-                else imgDataPixelPOT[j*potWidth + i] = fillColor;
-            }
-        }
-
-        TraceLog(WARNING, "Image converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
-
-        free(image->pixels);
-
-        image->pixels = imgDataPixelPOT;
-        image->width = potWidth;
-        image->height = potHeight;
-    }
-    */
-}
-
 // Get pixel data from image in the form of Color struct array
-Color *GetPixelData(Image image)
+Color *GetImageData(Image image)
 {
     Color *pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
     
@@ -497,7 +509,7 @@ void ImageConvertFormat(Image *image, int newFormat)
 {
     if ((image->format != newFormat) && (image->format < 8) && (newFormat < 8))
     {
-        Color *pixels = GetPixelData(*image);
+        Color *pixels = GetImageData(*image);
         
         free(image->data);
         
@@ -627,13 +639,83 @@ void ImageConvertFormat(Image *image, int newFormat)
     else TraceLog(WARNING, "Image data format is compressed, can not be converted");
 }
 
-/*
-Image ImageCopy(Image image);
-void ImageCrop(Image *image, Rectangle crop);
-void ImageResize(Image *image, int newWidth, int newHeight);
-void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);
-void ImageDrawText(Image *dst, const char *text, Vector2 position, int size, Color color);
-*/
+
+// Convert image to POT (power-of-two)
+// NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
+void ImageConvertToPOT(Image *image, Color fillColor)
+{
+    // TODO: Review for new image struct
+    /*
+    // Just add the required amount of pixels at the right and bottom sides of image...
+    int potWidth = GetNextPOT(image->width);
+    int potHeight = GetNextPOT(image->height);
+
+    // Check if POT texture generation is required (if texture is not already POT)
+    if ((potWidth != image->width) || (potHeight != image->height))
+    {
+        Color *imgDataPixelPOT = NULL;
+
+        // Generate POT array from NPOT data
+        imgDataPixelPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
+
+        for (int j = 0; j < potHeight; j++)
+        {
+            for (int i = 0; i < potWidth; i++)
+            {
+                if ((j < image->height) && (i < image->width)) imgDataPixelPOT[j*potWidth + i] = image->data[j*image->width + i];
+                else imgDataPixelPOT[j*potWidth + i] = fillColor;
+            }
+        }
+
+        TraceLog(WARNING, "Image converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
+
+        free(image->pixels);
+
+        image->pixels = imgDataPixelPOT;
+        image->width = potWidth;
+        image->height = potHeight;
+    }
+    */
+}
+
+// Copy an image to a new image
+Image ImageCopy(Image image)
+{
+    Image newImage;
+    
+    int size = image.width*image.height;
+    
+    switch (image.format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: newImage.data = (unsigned char *)malloc(size); break;               // 8 bit per pixel (no alpha)
+        case UNCOMPRESSED_GRAY_ALPHA: newImage.data = (unsigned char *)malloc(size*2); size *= 2; break; // 16 bpp (2 channels)
+        case UNCOMPRESSED_R5G6B5: newImage.data = (unsigned short *)malloc(size); size *= 2; break;      // 16 bpp
+        case UNCOMPRESSED_R8G8B8: newImage.data = (unsigned char *)malloc(size*3); size *= 3; break;     // 24 bpp
+        case UNCOMPRESSED_R5G5B5A1: newImage.data = (unsigned short *)malloc(size); size *= 2; break;    // 16 bpp (1 bit alpha)
+        case UNCOMPRESSED_R4G4B4A4: newImage.data = (unsigned short *)malloc(size); size *= 2; break;    // 16 bpp (4 bit alpha)
+        case UNCOMPRESSED_R8G8B8A8: newImage.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
+        default: TraceLog(WARNING, "Image format not suported for copy"); break;
+    }
+    
+    if (newImage.data != NULL)
+    {
+        // NOTE: Size must be provided in bytes
+        memcpy(newImage.data, image.data, size);
+        
+        newImage.width = image.width;
+        newImage.height = image.height;
+        newImage.mipmaps = image.mipmaps;
+        newImage.format = image.format;
+    }
+    
+    return newImage;
+}
+
+// TODO: Some useful functions to deal with images
+//void ImageCrop(Image *image, Rectangle crop) {}
+//void ImageResize(Image *image, int newWidth, int newHeight) {}
+//void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec) {}
+//void ImageDrawText(Image *dst, const char *text, Vector2 position, int size, Color color) {}
 
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D texture)
@@ -1306,50 +1388,6 @@ static Image LoadASTC(const char *fileName)
         }
         
         fclose(astcFile);
-    }
-
-    return image;
-}
-
-// Load RAW image file
-static Image LoadRAW(const char *fileName, int width, int height, int format, int headerSize)
-{
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
-
-    FILE *rawFile = fopen(fileName, "rb");
-
-    if (rawFile == NULL)
-    {
-        TraceLog(WARNING, "[%s] RAW image file could not be opened", fileName);
-    }
-    else
-    {
-        if (headerSize > 0) fseek(rawFile, headerSize, SEEK_SET);
-
-        int dataSize = 0;
-        
-        // TODO: Calculate data size and allocate memory
-        switch (format)
-        {
-            
-        }
-        
-        fread(image.data, dataSize, 1, rawFile);
-        
-        // TODO: Check if data have been read
-        
-        image.width = width;
-        image.height = height;
-        image.mipmaps = 0;
-        image.format = format;
-        
-        fclose(rawFile);
     }
 
     return image;

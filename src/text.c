@@ -238,7 +238,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
         // At this point we have a data array...
         
-        Color *imagePixels = GetPixelData(image);
+        Color *imagePixels = GetImageData(image);
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
         ImageConvertToPOT(&image, MAGENTA);
