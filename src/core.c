@@ -192,9 +192,6 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 static char configFlags = 0;
 static bool showLogo = false;
 
-// Shaders variables
-static bool enabledPostpro = false;
-
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
@@ -468,7 +465,7 @@ int GetScreenHeight(void)
 // Sets Background Color
 void ClearBackground(Color color)
 {
-    // TODO: Review "clearing area", full framebuffer vs render area
+    // Clear full framebuffer (not only render area) to color
     rlClearColor(color.r, color.g, color.b, color.a);
 }
 
@@ -479,7 +476,7 @@ void BeginDrawing(void)
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
-    if (enabledPostpro) rlEnableFBO();
+    if (IsPosproShaderEnabled()) rlEnableFBO();
 
     rlClearScreenBuffers();
 
@@ -496,7 +493,7 @@ void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    if (enabledPostpro) rlglDrawPostpro(); // Draw postprocessing effect (shader)
+    if (IsPosproShaderEnabled()) rlglDrawPostpro(); // Draw postprocessing effect (shader)
 
     SwapBuffers();                  // Copy back buffer to front buffer
 
@@ -969,39 +966,6 @@ Vector2 GetTouchPosition(void)
     return position;
 }
 #endif
-
-// Set postprocessing shader
-void SetPostproShader(Shader shader)
-{
-    if (rlGetVersion() == OPENGL_11) TraceLog(WARNING, "Postprocessing shaders not supported on OpenGL 1.1");
-    else
-    {
-        if (!enabledPostpro)
-        {
-            enabledPostpro = true;
-            rlglInitPostpro();
-            rlglSetPostproShader(shader);
-        }
-        else
-        {
-            rlglSetPostproShader(shader);
-        }
-    }
-}
-
-// Set custom shader to be used in batch draw
-void SetCustomShader(Shader shader)
-{
-    rlglSetCustomShader(shader);
-}
-
-// Set default shader to be used in batch draw
-void SetDefaultShader(void)
-{
-    rlglSetDefaultShader();
-    
-    enabledPostpro = false;
-}
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -1579,7 +1543,7 @@ static void PollInputEvents(void)
     // Poll Events (registered events)
     // TODO: Enable/disable activityMinimized to block activity if minimized
     //while ((ident = ALooper_pollAll(activityMinimized ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
-    while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
+    while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
     {
         // Process this event
         if (source != NULL) source->process(app, source);

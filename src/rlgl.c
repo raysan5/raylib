@@ -230,6 +230,9 @@ static bool texCompASTCSupported = false;    // ASTC texture compression support
 // Framebuffer object and texture
 static GLuint fbo, fboColorTexture, fboDepthTexture;
 static Model postproQuad;
+
+// Shaders related variables
+static bool enabledPostpro = false;
 #endif
 
 // Compressed textures support flags
@@ -957,7 +960,7 @@ void rlglInit(void)
     // Init default Shader (GLSL 110) -> Common for GL 3.3+ and ES2
     defaultShader = LoadDefaultShader();
     simpleShader = LoadSimpleShader();
-    //customShader = rlglLoadShader("custom.vs", "custom.fs");     // Works ok
+    //customShader = LoadShader("custom.vs", "custom.fs");     // Works ok
     
     currentShader = defaultShader;
 
@@ -1051,25 +1054,6 @@ void rlglInitPostpro(void)
     postproQuad = rlglLoadModel(quadData);
     
     // NOTE: fboColorTexture id must be assigned to postproQuad model shader
-#endif
-}
-
-// Set postprocessing shader
-void rlglSetPostproShader(Shader shader)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    rlglSetModelShader(&postproQuad, shader);
-    
-    Texture2D texture;
-    texture.id = fboColorTexture;
-    texture.width = GetScreenWidth();
-    texture.height = GetScreenHeight();
-
-    SetShaderMapDiffuse(&postproQuad.shader, texture);
-    
-    //TraceLog(INFO, "Postproquad texture id: %i", postproQuad.texture.id);
-    //TraceLog(INFO, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
-    //TraceLog(INFO, "Shader diffuse map id: %i", shader.texDiffuseId);
 #endif
 }
 
@@ -1377,7 +1361,18 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
-    //glUniform1i(model.shader.mapDiffuseLoc, 0);   // Diffuse texture fits in texture unit 0
+
+    if (model.shader.texNormalId != 0)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, model.shader.texNormalId);
+    }
+    
+    if (model.shader.texSpecularId != 0)
+    {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, model.shader.texSpecularId);
+    }
 
     if (vaoSupported)
     {
@@ -1402,9 +1397,21 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 
     // Draw call!
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
+    
+    if (model.shader.texNormalId != 0)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    
+    if (model.shader.texSpecularId != 0)
+    {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
-    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
     glActiveTexture(GL_TEXTURE0);               // Set shader active texture to default 0
+    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
     else glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
@@ -1933,12 +1940,130 @@ Model rlglLoadModel(VertexData mesh)
     return model;
 }
 
+// Read screen pixel data (color buffer)
+unsigned char *rlglReadScreenPixels(int width, int height)
+{
+    unsigned char *screenData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
+
+    // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
+
+    // Flip image vertically!
+    unsigned char *imgData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
+
+    for (int y = height-1; y >= 0; y--)
+    {
+        for (int x = 0; x < (width*4); x++)
+        {
+            imgData[x + (height - y - 1)*width*4] = screenData[x + (y*width*4)];
+        }
+    }
+
+    free(screenData);
+
+    return imgData;     // NOTE: image data should be freed
+}
+
+// Read texture pixel data
+void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
+{
+    int width, height;
+    
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+    //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
+    //GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
+    
+    int glFormat = 0, glType = 0;
+    void *pixels = NULL;
+    unsigned int size = width*height;
+
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_LUMINANCE; glType = GL_UNSIGNED_BYTE; break;            // 8 bit per pixel (no alpha)
+        case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_LUMINANCE_ALPHA; glType = GL_UNSIGNED_BYTE; break;   // 16 bpp (2 channels)
+        case UNCOMPRESSED_R5G6B5: pixels = (unsigned short *)malloc(size); glFormat = GL_RGB; glType = GL_UNSIGNED_SHORT_5_6_5; break;             // 16 bpp
+        case UNCOMPRESSED_R8G8B8: pixels = (unsigned char *)malloc(size*3); glFormat = GL_RGB; glType = GL_UNSIGNED_BYTE; break;                   // 24 bpp
+        case UNCOMPRESSED_R5G5B5A1: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_5_5_5_1; break;        // 16 bpp (1 bit alpha)
+        case UNCOMPRESSED_R4G4B4A4: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_4_4_4_4; break;        // 16 bpp (4 bit alpha)
+        case UNCOMPRESSED_R8G8B8A8: pixels = (unsigned char *)malloc(size*4); glFormat = GL_RGBA; glType = GL_UNSIGNED_BYTE; break;                // 32 bpp
+        default: TraceLog(WARNING, "Texture format not suported"); break;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    
+    // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
+    // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting. 
+    // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.) 
+    // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    
+    glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    return pixels;
+}
+
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Shaders Functions
+// NOTE: Those functions are exposed directly to the user in raylib.h
+//----------------------------------------------------------------------------------
+
+// Load a custom shader and bind default locations
+Shader LoadShader(char *vsFileName, char *fsFileName)
+{
+    Shader shader;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-// Load a shader (vertex shader + fragment shader) from text data
-unsigned int rlglLoadShaderFromText(char *vShaderStr, char *fShaderStr)
+    // Shaders loading from external text file
+    char *vShaderStr = TextFileRead(vsFileName);
+    char *fShaderStr = TextFileRead(fsFileName);
+
+    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
+
+    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
+    else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shader.id);
+
+    // Shader strings must be freed
+    free(vShaderStr);
+    free(fShaderStr);
+    
+    // Set shader textures ids (all 0 by default)
+    shader.texDiffuseId = 0;
+    shader.texNormalId = 0;
+    shader.texSpecularId = 0;
+
+    // Get handles to GLSL input attibute locations
+    //-------------------------------------------------------------------
+    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
+    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
+    shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
+    // NOTE: custom shader does not use colorLoc
+    shader.colorLoc = -1;
+
+    // Get handles to GLSL uniform locations (vertex shader)
+    shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
+
+    // Get handles to GLSL uniform locations (fragment shader)
+    shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
+    shader.mapNormalLoc = -1;       // It can be set later
+    shader.mapSpecularLoc = -1;     // It can be set later
+    //--------------------------------------------------------------------
+#endif
+
+    return shader;
+}
+
+// Load a custom shader and return program id
+unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 {
-    unsigned int program;
+    unsigned int program = 0;
+	
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vertexShader;
     GLuint fragmentShader;
 
@@ -2029,154 +2154,18 @@ unsigned int rlglLoadShaderFromText(char *vShaderStr, char *fShaderStr)
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-
+#endif
     return program;
 }
-#endif
 
-// Read screen pixel data (color buffer)
-unsigned char *rlglReadScreenPixels(int width, int height)
+// Unload a custom shader from memory
+void UnloadShader(Shader shader)
 {
-    unsigned char *screenData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
-
-    // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
-
-    // Flip image vertically!
-    unsigned char *imgData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
-
-    for (int y = height-1; y >= 0; y--)
-    {
-        for (int x = 0; x < (width*4); x++)
-        {
-            imgData[x + (height - y - 1)*width*4] = screenData[x + (y*width*4)];
-        }
-    }
-
-    free(screenData);
-
-    return imgData;     // NOTE: image data should be freed
-}
-
-// Read texture pixel data
-void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
-{
-    int width, height;
-    
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-    //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
-    //GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
-    
-    int glFormat, glType;
-    void *pixels = NULL;
-    unsigned int size = width*height;
-
-    switch (format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_LUMINANCE; glType = GL_UNSIGNED_BYTE;            // 8 bit per pixel (no alpha)
-        case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_LUMINANCE_ALPHA; glType = GL_UNSIGNED_BYTE;   // 16 bpp (2 channels)
-        case UNCOMPRESSED_R5G6B5: pixels = (unsigned short *)malloc(size); glFormat = GL_RGB; glType = GL_UNSIGNED_SHORT_5_6_5;             // 16 bpp
-        case UNCOMPRESSED_R8G8B8: pixels = (unsigned char *)malloc(size*3); glFormat = GL_RGB; glType = GL_UNSIGNED_BYTE;                   // 24 bpp
-        case UNCOMPRESSED_R5G5B5A1: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_5_5_5_1;        // 16 bpp (1 bit alpha)
-        case UNCOMPRESSED_R4G4B4A4: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_4_4_4_4;        // 16 bpp (4 bit alpha)
-        case UNCOMPRESSED_R8G8B8A8: pixels = (unsigned char *)malloc(size*4); glFormat = GL_RGBA; glType = GL_UNSIGNED_BYTE;                // 32 bpp
-        default: TraceLog(WARNING, "Texture format not suported"); break;
-    }
-
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    
-    // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
-    // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting. 
-    // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.) 
-    // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    
-    glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
-    
-    glBindTexture(GL_TEXTURE_2D, 0);
-    
-    return pixels;
-}
-
-// Load a shader (vertex shader + fragment shader) from files
-Shader rlglLoadShader(char *vsFileName, char *fsFileName)
-{
-    Shader shader;
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Shaders loading from external text file
-    char *vShaderStr = TextFileRead(vsFileName);
-    char *fShaderStr = TextFileRead(fsFileName);
-
-    shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
-
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shader.id);
-
-    // Shader strings must be freed
-    free(vShaderStr);
-    free(fShaderStr);
-    
-    // Set shader textures ids (all 0 by default)
-    shader.texDiffuseId = 0;
-    shader.texNormalId = 0;
-    shader.texSpecularId = 0;
-
-    // Get handles to GLSL input attibute locations
-    //-------------------------------------------------------------------
-    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
-    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
-    shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
-    // NOTE: custom shader does not use colorLoc
-    shader.colorLoc = -1;
-
-    // Get handles to GLSL uniform locations (vertex shader)
-    shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
-    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
-
-    // Get handles to GLSL uniform locations (fragment shader)
-    shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
-    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
-    shader.mapNormalLoc = -1;       // It can be set later
-    shader.mapSpecularLoc = -1;     // It can be set later
-    //--------------------------------------------------------------------
-#endif
-
-    return shader;
-}
-
-// Link shader to model
-void rlglSetModelShader(Model *model, Shader shader)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model->shader = shader;
-
-    if (vaoSupported) glBindVertexArray(model->mesh.vaoId);
-
-    // Enable vertex attributes: position
-    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[0]);
-    glEnableVertexAttribArray(shader.vertexLoc);
-    glVertexAttribPointer(shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-
-    // Enable vertex attributes: texcoords
-    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[1]);
-    glEnableVertexAttribArray(shader.texcoordLoc);
-    glVertexAttribPointer(shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-
-    // Enable vertex attributes: normals
-    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[2]);
-    glEnableVertexAttribArray(shader.normalLoc);
-    glVertexAttribPointer(shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-
-    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-    
-    //if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
-#endif
+    rlDeleteShader(shader.id);
 }
 
 // Set custom shader to be used on batch draw
-void rlglSetCustomShader(Shader shader)
+void SetCustomShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (currentShader.id != shader.id)
@@ -2208,15 +2197,84 @@ void rlglSetCustomShader(Shader shader)
 #endif
 }
 
-// Set default shader to be used on batch draw
-void rlglSetDefaultShader(void)
+// Set postprocessing shader
+void SetPostproShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    rlglSetCustomShader(defaultShader);
-    rlglSetPostproShader(defaultShader);
+    if (!enabledPostpro)
+    {
+        enabledPostpro = true;
+        rlglInitPostpro();
+    }
+
+    SetModelShader(&postproQuad, shader);
+    
+    Texture2D texture;
+    texture.id = fboColorTexture;
+    texture.width = GetScreenWidth();
+    texture.height = GetScreenHeight();
+
+    SetShaderMapDiffuse(&postproQuad.shader, texture);
+    
+    //TraceLog(DEBUG, "Postproquad texture id: %i", postproQuad.texture.id);
+    //TraceLog(DEBUG, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
+    //TraceLog(DEBUG, "Shader diffuse map id: %i", shader.texDiffuseId);
+#elif defined(GRAPHICS_API_OPENGL_11)
+    TraceLog(WARNING, "Postprocessing shaders not supported on OpenGL 1.1");
 #endif
 }
 
+// Set default shader to be used in batch draw
+void SetDefaultShader(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    SetCustomShader(defaultShader);
+    SetPostproShader(defaultShader);
+    
+    enabledPostpro = false;
+#endif
+}
+
+// Link shader to model
+void SetModelShader(Model *model, Shader shader)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    model->shader = shader;
+
+    if (vaoSupported) glBindVertexArray(model->mesh.vaoId);
+
+    // Enable vertex attributes: position
+    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[0]);
+    glEnableVertexAttribArray(shader.vertexLoc);
+    glVertexAttribPointer(shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+
+    // Enable vertex attributes: texcoords
+    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[1]);
+    glEnableVertexAttribArray(shader.texcoordLoc);
+    glVertexAttribPointer(shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+
+    // Enable vertex attributes: normals
+    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vboId[2]);
+    glEnableVertexAttribArray(shader.normalLoc);
+    glVertexAttribPointer(shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+
+    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+    
+    //if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
+#endif
+}
+
+// Check if postprocessing is enabled (used in module: core)
+bool IsPosproShaderEnabled(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return enabledPostpro;
+#elif defined(GRAPHICS_API_OPENGL_11)
+    return false;
+#endif
+}
+
+// Get shader uniform location
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
     int location = -1;
@@ -2228,6 +2286,7 @@ int GetShaderLocation(Shader shader, const char *uniformName)
     return location;
 }
 
+// Set shader uniform value (float)
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2237,12 +2296,29 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
     else if (size == 2) glUniform2fv(uniformLoc, 1, value);     // Shader uniform type: vec2
     else if (size == 3) glUniform3fv(uniformLoc, 1, value);     // Shader uniform type: vec3
     else if (size == 4) glUniform4fv(uniformLoc, 1, value);     // Shader uniform type: vec4
-    else TraceLog(WARNING, "Shader value float array size not recognized");
+    else TraceLog(WARNING, "Shader value float array size not supported");
     
     glUseProgram(0);
 #endif
 }
 
+// Set shader uniform value (int)
+void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glUseProgram(shader.id);
+
+    if (size == 1) glUniform1iv(uniformLoc, 1, value);          // Shader uniform type: int
+    else if (size == 2) glUniform2iv(uniformLoc, 1, value);     // Shader uniform type: ivec2
+    else if (size == 3) glUniform3iv(uniformLoc, 1, value);     // Shader uniform type: ivec3
+    else if (size == 4) glUniform4iv(uniformLoc, 1, value);     // Shader uniform type: ivec4
+    else TraceLog(WARNING, "Shader value int array size not supported");
+    
+    glUseProgram(0);
+#endif
+}
+
+// Default diffuse shader map texture assignment
 void SetShaderMapDiffuse(Shader *shader, Texture2D texture)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2261,6 +2337,7 @@ void SetShaderMapDiffuse(Shader *shader, Texture2D texture)
 #endif
 }
 
+// Normal map texture shader assignment
 void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2285,6 +2362,7 @@ void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D textu
 #endif
 }
 
+// Specular map texture shader assignment
 void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2300,13 +2378,42 @@ void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D tex
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, shader->texSpecularId);
         
-        glUniform1i(shader->mapSpecularLoc, 2);    // Texture fits in active texture unit 0
+        glUniform1i(shader->mapSpecularLoc, 2);    // Texture fits in active texture unit 2
         
         glBindTexture(GL_TEXTURE_2D, 0);
         glActiveTexture(GL_TEXTURE0);
         glUseProgram(0);
     }
 #endif
+}
+
+// Generic shader maps assignment
+// TODO: Trying to find a generic shader to allow any kind of map
+// NOTE: mapLocation should be retrieved by user with GetShaderLocation()
+// ISSUE: mapTextureId: Shader should contain a reference to map texture and corresponding textureUnit,
+//        so it can be automatically checked and used in rlglDrawModel()
+void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit)
+{
+/*
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (mapLocation == -1) TraceLog(WARNING, "[SHDR ID %i] Map location could not be found", shader->id);
+    else
+    {
+        shader->mapTextureId = texture.id;
+        
+        glUseProgram(shader->id);
+        
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+        glBindTexture(GL_TEXTURE_2D, shader->mapTextureId);
+        
+        glUniform1i(mapLocation, textureUnit);    // Texture fits in active textureUnit
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE0);
+        glUseProgram(0);
+    }
+#endif
+*/
 }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2415,7 +2522,7 @@ static Shader LoadDefaultShader(void)
         "    gl_FragColor = texelColor*tintColor; \n"    
         "}                                  \n";
 
-    shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
+    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
@@ -2491,7 +2598,7 @@ static Shader LoadSimpleShader(void)
         "    gl_FragColor = texelColor*tintColor; \n"
         "}                                  \n";
 
-    shader.id = rlglLoadShaderFromText(vShaderStr, fShaderStr);
+    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shader.id);
@@ -2710,7 +2817,7 @@ static void InitializeBuffersGPU(void)
 
 // Update VBOs with vertex array data
 // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
-// TODO: If no data changed on the CPU arrays --> No need to update GPU arrays
+// TODO: If no data changed on the CPU arrays --> No need to update GPU arrays (change flag required)
 static void UpdateBuffers(void)
 {
     if (lines.vCounter > 0)
