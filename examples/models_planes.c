@@ -42,8 +42,7 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawPlane((Vector3){ 0, 0, 0 }, (Vector2){ 4, 4 }, (Vector3){ 0, 45, 0 }, RED);
-                //DrawPlaneEx((Vector3){ 0, 8, 0 }, (Vector2){ 2, 1 }, (Vector3){ 0, 0, 0 }, 4, 4, SKYBLUE);
+                DrawPlane((Vector3){ 0, 0, 0 }, (Vector2){ 4, 4 }, RED);    // Draw a plane XZ
 
                 DrawGrid(10.0, 1.0);
 
