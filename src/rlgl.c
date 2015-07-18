@@ -1809,17 +1809,21 @@ void rlglGenerateMipmaps(unsigned int textureId)
 {
     glBindTexture(GL_TEXTURE_2D, textureId);
     
+    // Check if texture is power-of-two (POT)
+    bool texIsPOT = false;
+   
+    // NOTE: In OpenGL ES 2.0 we have no way to retrieve texture size from id
+    
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     int width, height;
     
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
     
-    // Check if texture is power-of-two (POT) to enable mipmap generation
-    bool texIsPOT = false;
-
     if (((width > 0) && ((width & (width - 1)) == 0)) && ((height > 0) && ((height & (height - 1)) == 0))) texIsPOT = true;
+#endif
 
-    if (texIsPOT)
+    if ((texIsPOT) || (npotSupported))
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
@@ -1852,14 +1856,12 @@ void rlglGenerateMipmaps(unsigned int textureId)
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
         TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", textureId);
-#endif
 
-#if defined(GRAPHICS_API_OPENGL_33)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps (must be available)
 #endif
     }
-    else TraceLog(WARNING, "[TEX ID %i] Texture is not power-of-two, mipmaps can not be generated", textureId);
+    else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", textureId);
         
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -1965,8 +1967,12 @@ unsigned char *rlglReadScreenPixels(int width, int height)
 }
 
 // Read texture pixel data
+// NOTE: Retrieving pixel data from GPU not supported on OpenGL ES 2.0
 void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 {
+    void *pixels = NULL;
+    
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     int width, height;
     
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
@@ -1975,7 +1981,7 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
     //GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
     
     int glFormat = 0, glType = 0;
-    void *pixels = NULL;
+
     unsigned int size = width*height;
 
     switch (format)
@@ -2001,7 +2007,8 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
     glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     
     glBindTexture(GL_TEXTURE_2D, 0);
-    
+#endif
+
     return pixels;
 }
 
