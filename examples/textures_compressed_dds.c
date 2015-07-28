@@ -24,8 +24,8 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - DDS texture loading and drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    //Texture2D texture = LoadTexture("resources/raylib_logo.dds");             // Texture loading (compressed)
-    Texture2D texture = LoadTexture("resources/raylib_logo_uncompressed.dds");  // Texture loading (uncompressed)
+    
+    Texture2D texture = LoadTexture("resources/raylib_logo.dds");             // Texture loading (compressed)
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------

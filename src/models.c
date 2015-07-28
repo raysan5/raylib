@@ -600,7 +600,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
     
-    Color *heightmapPixels = GetPixelData(heightmap);
+    Color *heightmapPixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
     // TODO: Consider resolution when generating model data?
@@ -721,7 +721,7 @@ Model LoadCubicmap(Image cubicmap)
 {
     VertexData vData;
 
-    Color *cubicmapPixels = GetPixelData(cubicmap);
+    Color *cubicmapPixels = GetImageData(cubicmap);
     
     // Map cube size will be 1.0
     float mapCubeSide = 1.0f;
@@ -1105,8 +1105,6 @@ void UnloadModel(Model model)
     rlDeleteBuffers(model.mesh.vboId[2]);
 
     rlDeleteVertexArrays(model.mesh.vaoId);
-    //rlDeleteTextures(model.texture.id);
-    //rlDeleteShader(model.shader.id);
 }
 
 // Link a texture to a model
@@ -1114,34 +1112,15 @@ void SetModelTexture(Model *model, Texture2D texture)
 {
     if (texture.id <= 0)
     {
-        model->texture.id = whiteTexture;  // Default white texture (use mesh color)
-        model->shader.texDiffuseId = whiteTexture;
+        // Use default white texture (use mesh color)
+        model->texture.id = whiteTexture;               // OpenGL 1.1
+        model->shader.texDiffuseId = whiteTexture;      // OpenGL 3.3 / ES 2.0
     }
     else
     {
         model->texture = texture;
         model->shader.texDiffuseId = texture.id;
     }
-}
-
-// Load a custom shader (vertex shader + fragment shader)
-Shader LoadShader(char *vsFileName, char *fsFileName)
-{
-    Shader shader = rlglLoadShader(vsFileName, fsFileName); 
-    
-    return shader;
-}
-
-// Unload a custom shader from memory
-void UnloadShader(Shader shader)
-{
-    rlDeleteShader(shader.id);
-}
-
-// Set shader for a model
-void SetModelShader(Model *model, Shader shader)
-{
-    rlglSetModelShader(model, shader);
 }
 
 // Draw a model (with texture if set)
@@ -1269,7 +1248,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     rlDisableTexture();
 }
 
-
+// Detect collision between two spheres
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
 {
     bool collision = false;
@@ -1285,22 +1264,10 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
     return collision;
 }
 
+// Detect collision between two boxes
+// NOTE: Boxes are defined by two points minimum and maximum
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
 {
-    /*
-    // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = tempVertices[0];
-    Vector3 maxVertex = tempVertices[0];
-
-    for (int i = 1; i < tempVertices.Count; i++)
-    {
-        minVertex = Vector3.Min(minVertex, tempVertices[i]);
-        maxVertex = Vector3.Max(maxVertex, tempVertices[i]);
-    }
-
-    bounds = new BoundingBox(minVertex, maxVertex);
-    */
-
     bool collision = true;
 
     if ((maxBBox1.x >= minBBox2.x) && (minBBox1.x <= maxBBox2.x))
@@ -1313,6 +1280,7 @@ bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, V
     return collision;
 }
 
+// Detect collision between box and sphere
 bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere)
 {
     bool collision = false;
@@ -1326,35 +1294,29 @@ bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSph
     {
         float dmin = 0;
 
-        if (centerSphere.x - minBBox.x <= radiusSphere)
-            dmin += (centerSphere.x - minBBox.x) * (centerSphere.x - minBBox.x);
-        else if (maxBBox.x - centerSphere.x <= radiusSphere)
-            dmin += (centerSphere.x - maxBBox.x) * (centerSphere.x - maxBBox.x);
+        if (centerSphere.x - minBBox.x <= radiusSphere) dmin += (centerSphere.x - minBBox.x)*(centerSphere.x - minBBox.x);
+        else if (maxBBox.x - centerSphere.x <= radiusSphere) dmin += (centerSphere.x - maxBBox.x)*(centerSphere.x - maxBBox.x);
 
-        if (centerSphere.y - minBBox.y <= radiusSphere)
-            dmin += (centerSphere.y - minBBox.y) * (centerSphere.y - minBBox.y);
-        else if (maxBBox.y - centerSphere.y <= radiusSphere)
-            dmin += (centerSphere.y - maxBBox.y) * (centerSphere.y - maxBBox.y);
+        if (centerSphere.y - minBBox.y <= radiusSphere) dmin += (centerSphere.y - minBBox.y)*(centerSphere.y - minBBox.y);
+        else if (maxBBox.y - centerSphere.y <= radiusSphere) dmin += (centerSphere.y - maxBBox.y)*(centerSphere.y - maxBBox.y);
 
-        if (centerSphere.z - minBBox.z <= radiusSphere)
-            dmin += (centerSphere.z - minBBox.z) * (centerSphere.z - minBBox.z);
-        else if (maxBBox.z - centerSphere.z <= radiusSphere)
-            dmin += (centerSphere.z - maxBBox.z) * (centerSphere.z - maxBBox.z);
+        if (centerSphere.z - minBBox.z <= radiusSphere) dmin += (centerSphere.z - minBBox.z)*(centerSphere.z - minBBox.z);
+        else if (maxBBox.z - centerSphere.z <= radiusSphere) dmin += (centerSphere.z - maxBBox.z)*(centerSphere.z - maxBBox.z);
 
-        if (dmin <= radiusSphere * radiusSphere) collision = true;
+        if (dmin <= radiusSphere*radiusSphere) collision = true;
     }
 
     return collision;
 }
 
-// TODO
+// TODO: Useful function to check collision area?
 //BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
 
 // Detect and resolve cubicmap collisions
 // NOTE: player position (or camera) is modified inside this function
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius)
 {
-    Color *cubicmapPixels = GetPixelData(cubicmap);
+    Color *cubicmapPixels = GetImageData(cubicmap);
     
     // Detect the cell where the player is located
     Vector3 impactDirection = { 0, 0, 0 };
@@ -1697,7 +1659,7 @@ static VertexData LoadOBJ(const char *fileName)
 
     // Second reading pass: Get vertex data to fill intermediate arrays
     // NOTE: This second pass is required in case of multiple meshes defined in same OBJ
-    // TODO: Consider that diferent meshes can have different vertex data available (position, texcoords, normals)
+    // TODO: Consider that different meshes can have different vertex data available (position, texcoords, normals)
     while(!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);

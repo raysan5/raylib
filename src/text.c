@@ -171,11 +171,12 @@ extern void LoadDefaultFont(void)
     //fwrite(image.pixels, 1, 128*128*4, myimage);
     //fclose(myimage);
     
-    Image image = LoadImageFromData(imagePixels, imWidth, imHeight, UNCOMPRESSED_GRAY_ALPHA);
+    Image image = LoadImageEx(imagePixels, imWidth, imHeight);
+    ImageConvertFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
 
     free(imagePixels);
 
-    defaultFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
+    defaultFont.texture = LoadTextureFromImage(image);
     UnloadImage(image);
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, numChars
@@ -237,10 +238,10 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
         // At this point we have a data array...
         
-        Color *imagePixels = GetPixelData(image);
+        Color *imagePixels = GetImageData(image);
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-        ConvertToPOT(&image, MAGENTA);
+        ImageConvertToPOT(&image, MAGENTA);
 #endif
         // Process bitmap Font pixel data to get measures (Character array)
         // spriteFont.charSet data is filled inside the function and memory is allocated!
@@ -251,7 +252,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
         spriteFont.numChars = numChars;
 
-        spriteFont.texture = LoadTextureFromImage(image, false); // Convert loaded image to OpenGL texture
+        spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
 
         free(imagePixels);
         UnloadImage(image);
@@ -556,13 +557,14 @@ static SpriteFont LoadRBMF(const char *fileName)
             counter++;
         }
         
-        Image image = LoadImageFromData(imagePixels, rbmfHeader.imgWidth, rbmfHeader.imgHeight, UNCOMPRESSED_GRAY_ALPHA);
+        Image image = LoadImageEx(imagePixels, rbmfHeader.imgWidth, rbmfHeader.imgHeight);
+        ImageConvertFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
         
         free(imagePixels);
 
         TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
-        spriteFont.texture = LoadTextureFromImage(image, false);
+        spriteFont.texture = LoadTextureFromImage(image);
         UnloadImage(image);     // Unload image data
 
         //TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
@@ -689,7 +691,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
 */
     font.numChars = 95;
     font.charSet = (Character *)malloc(font.numChars*sizeof(Character));
-    font.texture = LoadTextureFromImage(image, false);
+    font.texture = LoadTextureFromImage(image);
 
     //stbtt_aligned_quad letter;
     //int x = 0, y = 0;

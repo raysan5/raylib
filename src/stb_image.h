@@ -1,4 +1,4 @@
-/* stb_image - v2.05 - public domain image loader - http://nothings.org/stb_image.h
+/* stb_image - v2.06 - public domain image loader - http://nothings.org/stb_image.h
                                      no warranty implied; use at your own risk
 
    Do this:
@@ -143,6 +143,7 @@
 
 
    Latest revision history:
+      2.06  (2015-04-19) fix bug where PSD returns wrong '*comp' value
       2.05  (2015-04-19) fix bug in progressive JPEG handling, fix warning
       2.04  (2015-04-15) try to re-enable SIMD on MinGW 64-bit
       2.03  (2015-04-12) additional corruption checking
@@ -5147,7 +5148,8 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
          p = out+channel;
          if (channel >= channelCount) {
             // Fill this channel with default data.
-            for (i = 0; i < pixelCount; i++) *p = (channel == 3 ? 255 : 0), p += 4;
+            for (i = 0; i < pixelCount; i++, p += 4)
+               *p = (channel == 3 ? 255 : 0);
          } else {
             // Read the RLE data.
             count = 0;
@@ -5193,11 +5195,12 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
          p = out + channel;
          if (channel > channelCount) {
             // Fill this channel with default data.
-            for (i = 0; i < pixelCount; i++) *p = channel == 3 ? 255 : 0, p += 4;
+            for (i = 0; i < pixelCount; i++, p += 4)
+               *p = channel == 3 ? 255 : 0;
          } else {
             // Read the data.
-            for (i = 0; i < pixelCount; i++)
-               *p = stbi__get8(s), p += 4;
+            for (i = 0; i < pixelCount; i++, p += 4)
+               *p = stbi__get8(s);
          }
       }
    }
@@ -5207,7 +5210,7 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
       if (out == NULL) return out; // stbi__convert_format frees input on failure
    }
 
-   if (comp) *comp = channelCount;
+   if (comp) *comp = 4;
    *y = h;
    *x = w;
 
@@ -6300,6 +6303,7 @@ STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int
 
 /*
    revision history:
+      2.06  (2015-04-19) fix bug where PSD returns wrong '*comp' value
       2.05  (2015-04-19) fix bug in progressive JPEG handling, fix warning
       2.04  (2015-04-15) try to re-enable SIMD on MinGW 64-bit
       2.03  (2015-04-12) extra corruption checking (mmozeiko)

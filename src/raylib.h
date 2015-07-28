@@ -265,9 +265,6 @@ typedef struct Camera {
     Vector3 up;
 } Camera;
 
-// Camera modes
-typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
-
 // Vertex data definning a mesh
 // NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
 typedef struct VertexData {
@@ -284,21 +281,21 @@ typedef struct VertexData {
 typedef struct Shader {
     unsigned int id;                // Shader program id
 
+    // TODO: This should be Texture2D objects
     unsigned int texDiffuseId;      // Diffuse texture id
     unsigned int texNormalId;       // Normal texture id
     unsigned int texSpecularId;     // Specular texture id
     
     // Variable attributes
-    int vertexLoc;     // Vertex attribute location point (vertex shader)
-    int texcoordLoc;   // Texcoord attribute location point (vertex shader)
-    int normalLoc;     // Normal attribute location point (vertex shader)
-    int colorLoc;      // Color attibute location point (vertex shader)
+    int vertexLoc;        // Vertex attribute location point (vertex shader)
+    int texcoordLoc;      // Texcoord attribute location point (vertex shader)
+    int normalLoc;        // Normal attribute location point (vertex shader)
+    int colorLoc;         // Color attibute location point (vertex shader)
 
     // Uniforms
-    int projectionLoc; // Projection matrix uniform location point (vertex shader)
-    int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
-    
-    int tintColorLoc;  // Color uniform location point (fragment shader)
+    int projectionLoc;    // Projection matrix uniform location point (vertex shader)
+    int modelviewLoc;     // ModeView matrix uniform location point (vertex shader)
+    int tintColorLoc;     // Color uniform location point (fragment shader)
     
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
     int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
@@ -358,18 +355,19 @@ typedef enum {
 } TextureFormat;
 
 // Gestures type
+// NOTE: It could be used as flags to enable only some gestures
 typedef enum {
-    GESTURE_NONE = 0,
-    GESTURE_TAP,
-    GESTURE_DOUBLETAP,
-    GESTURE_HOLD,
-    GESTURE_DRAG,
-    GESTURE_SWIPE_RIGHT,
-    GESTURE_SWIPE_LEFT,
-    GESTURE_SWIPE_UP,
-    GESTURE_SWIPE_DOWN,
-    GESTURE_PINCH_IN,
-    GESTURE_PINCH_OUT
+    GESTURE_NONE        = 1,
+    GESTURE_TAP         = 2,
+    GESTURE_DOUBLETAP   = 4,
+    GESTURE_HOLD        = 8,
+    GESTURE_DRAG        = 16,
+    GESTURE_SWIPE_RIGHT = 32,
+    GESTURE_SWIPE_LEFT  = 64,
+    GESTURE_SWIPE_UP    = 128,
+    GESTURE_SWIPE_DOWN  = 256,
+    GESTURE_PINCH_IN    = 512,
+    GESTURE_PINCH_OUT   = 1024
 } Gestures;
 
 #ifdef __cplusplus
@@ -420,31 +418,28 @@ Color Fade(Color color, float alpha);                       // Color fade-in or 
 void SetConfigFlags(char flags);                            // Enable some window configurations
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
-void SetPostproShader(Shader shader);                       // Set fullscreen postproduction shader
-void SetCustomShader(Shader shader);                        // Set custom shader to be used in batch draw
-void SetDefaultShader(void);                                // Set default shader to be used in batch draw
+Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // TODO: Gives the ray trace from mouse position
 
-Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Gives the rayTrace from mouse position
+//------------------------------------------------------------------------------------
+// Shaders System Functions (Module: rlgl)
+// NOTE: This functions are useless when using OpenGL 1.1
+//------------------------------------------------------------------------------------
+Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
+unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load a custom shader and return program id
+void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
+void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
+void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
+void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
+void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
+bool IsPosproShaderEnabled(void);                                   // Check if postprocessing shader is enabled
 
-// Camera modes setup and control functions (module: camera)
-void SetCameraMode(int mode);                               // Select camera mode (multiple camera modes available)
-Camera UpdateCamera(Vector3 *position);                     // Update camera with position
-
-void SetCameraControls(int front, int left, int back, int right, int up, int down);
-void SetMouseSensitivity(float sensitivity);
-void SetResetPosition(Vector3 resetPosition);
-void SetResetControl(int resetKey);
-void SetPawnControl(int pawnControlKey);
-void SetFnControl(int fnControlKey);
-void SetSmoothZoomControl(int smoothZoomControlKey);
-void SetOrbitalTarget(Vector3 target);
-
-int GetShaderLocation(Shader shader, const char *uniformName);
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);
-
-void SetShaderMapDiffuse(Shader *shader, Texture2D texture);
-void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);
-void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);
+int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
+void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
+void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
+void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
+void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -488,12 +483,14 @@ Vector2 GetTouchPosition(void);                         // Returns touch positio
 // Gestures System (module: gestures)
 bool IsGestureDetected(void);
 int GetGestureType(void);
-float GetDragIntensity(void);
-float GetDragAngle(void);
-Vector2 GetDragVector(void);
-int GetHoldDuration(void);                              // Hold time in frames
-float GetPinchDelta(void);
-float GetPinchAngle(void);
+void SetGesturesEnabled(unsigned int gestureFlags);
+
+float GetGestureDragIntensity(void);
+float GetGestureDragAngle(void);
+Vector2 GetGestureDragVector(void);
+int GetGestureHoldDuration(void);                       // Hold time in frames
+float GetGesturePinchDelta(void);
+float GetGesturePinchAngle(void);
 #endif
 
 //------------------------------------------------------------------------------------
@@ -530,16 +527,20 @@ bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 
 // Texture Loading and Drawing Functions (Module: textures)
 //------------------------------------------------------------------------------------
 Image LoadImage(const char *fileName);                                                             // Load an image into CPU memory (RAM)
+Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image data from Color array data (RGBA - 32bit)
+Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image data from RAW file
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
-Image LoadImageFromData(Color *pixels, int width, int height, int format);                         // Load image from Color array data
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
-Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount, bool genMipmaps);    // Load a texture from raw data into GPU memory
+Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load a texture from raw data into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
-Texture2D LoadTextureFromImage(Image image, bool genMipmaps);                                      // Load a texture from image data (and generate mipmaps)
+Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data (and generate mipmaps)
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
-void ConvertToPOT(Image *image, Color fillColor);                                                  // Convert image to POT (power-of-two)
-Color *GetPixelData(Image image);                                                                  // Get pixel data from image as a Color struct array
+Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
+Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
+void ImageConvertToPOT(Image *image, Color fillColor);                                             // Convert image to POT (power-of-two)
+void ImageConvertFormat(Image *image, int newFormat);                                              // Convert image data to desired format
+void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
@@ -593,7 +594,6 @@ Model LoadHeightmap(Image heightmap, float maxHeight);                          
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
-void SetModelShader(Model *model, Shader shader);                                                  // Link a shader to a model (not available on OpenGL 1.1)
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint);      // Draw a model with extended parameters
@@ -602,12 +602,9 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color);   
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
-Shader LoadShader(char *vsFileName, char *fsFileName);                                             // Load a custom shader (vertex shader + fragment shader)
-void UnloadShader(Shader shader);                                                                  // Unload a custom shader from memory
-
-bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);
-bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);
-bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere);
+bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);                     // Detect collision between two spheres
+bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);               // Detect collision between two boxes
+bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere);       // Detect collision between box and sphere
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Return the normal vector of the impacted surface
 
 //------------------------------------------------------------------------------------

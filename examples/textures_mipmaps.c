@@ -24,10 +24,10 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture mipmaps generation");
 
     // NOTE: To generate mipmaps for an image, image must be loaded first and converted to texture
-    // with mipmaps option set to true on CreateTexture()
 
     Image image = LoadImage("resources/raylib_logo.png");   // Load image to CPU memory (RAM)
-    Texture2D texture = LoadTextureFromImage(image, true);  // Create texture and generate mipmaps
+    Texture2D texture = LoadTextureFromImage(image);        // Load texture into GPU memory (VRAM)
+    GenTextureMipmaps(texture);                             // Generate mipmaps for texture
 
     UnloadImage(image);     // Once texture has been created, we can unload image data from RAM
     //--------------------------------------------------------------------------------------
