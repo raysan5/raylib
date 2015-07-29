@@ -1,8 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.gestures
-*
-*   Gestures Detection and Usage Functions Definitions
+*   raylib Gestures System - Gestures Detection and Usage Functions (Android and HTML5)
 *
 *   Copyright (c) 2015 Marc Palau and Ramon Santamaria
 *
@@ -23,8 +21,13 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"
-#include "utils.h"
+//#define GESTURES_STANDALONE     // NOTE: To use the gestures module as standalone lib, just uncomment this line
+
+#if defined(GESTURES_STANDALONE)
+    #include "gestures.h"
+#else
+    #include "raylib.h"         // Required for typedef(s): Vector2, Gestures
+#endif
 
 #include <stdlib.h>             // malloc(), free()
 #include <stdio.h>              // printf(), fprintf()
@@ -53,9 +56,11 @@
 //----------------------------------------------------------------------------------
 #define FORCE_TO_SWIPE          20
 #define TAP_TIMEOUT             300
-
 #define MAX_TOUCH_POINTS        4
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef enum {
     TYPE_MOTIONLESS,
     TYPE_DRAG,
@@ -75,72 +80,56 @@ typedef struct {
     Vector2 position[MAX_TOUCH_POINTS];
 } GestureEvent;
 
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-
 static GestureType gestureType = TYPE_MOTIONLESS;
 static double eventTime = 0;
-//static int32_t touchId;         // Not used...
+//static int32_t touchId;               // Not used...
 
-// Tap
-// Our initial press position on tap
+// Tap gesture variables
 static Vector2 initialTapPosition = { 0, 0 };
 
-// Double tap
-// If we are double tapping or not
+// Double Tap gesture variables
 static bool doubleTapping = false;
-// If we recently made a tap
-static bool untap = false;
+static bool untap = false;              // Check if recently done a tap
 
-// Drag
-// Our initial press position on drag
+// Drag gesture variables
 static Vector2 initialDragPosition = { 0, 0 };
-// Position that will compare itself with the mouse one
 static Vector2 endDragPosition = { 0, 0 };
-// Position of the last event detection
 static Vector2 lastDragPosition = { 0, 0 };
-// The total drag vector
 static Vector2 dragVector = { 0, 0 };
-// The distance traveled dragging
-static float magnitude = 0;
-// The angle direction of the drag
-static float angle = 0;
-// A magnitude to calculate how fast we did the drag ( pixels per frame )
-static float intensity = 0;
-// Time that have passed while dragging
-static int draggingTimeCounter = 0;
 
-// Pinch
-// First initial pinch position
+static float magnitude = 0;             // Distance traveled dragging
+static float angle = 0;                 // Angle direction of the drag
+static float intensity = 0;             // How fast we did the drag (pixels per frame)
+static int draggingTimeCounter = 0;     // Time that have passed while dragging
+
+// Pinch gesture variables
 static Vector2 firstInitialPinchPosition = { 0, 0 };
-// Second initial pinch position
 static Vector2 secondInitialPinchPosition = { 0, 0 };
-// First end pinch position
 static Vector2 firstEndPinchPosition = { 0, 0 };
-// Second end pinch position
 static Vector2 secondEndPinchPosition = { 0, 0 };
-// Delta Displacement
-static float pinchDelta = 0;
+static float pinchDelta = 0;            // Pinch delta displacement
 
-// Detected gesture
+// Detected gestures
+static int previousGesture = GESTURE_NONE;
 static int currentGesture = GESTURE_NONE;
-unsigned int enabledGestures = 0;           // TODO: Currently not in use...
+
+static unsigned int enabledGestures = 0;       // TODO: Currently not in use...
 
 static Vector2 touchPosition;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-extern void ResetGestures(void);
-extern Vector2 GetRawPosition(void);
-
 static void ProcessMotionEvent(GestureEvent event);
+
+static void InitPinchGesture(Vector2 posA, Vector2 posB);
 static float CalculateAngle(Vector2 initialPosition, Vector2 actualPosition, float magnitude);
-static float OnPinch();
-static void SetDualInput(GestureEvent event);
-static float Distance(Vector2 v1, Vector2 v2);
-static float DotProduct(Vector2 v1, Vector2 v2);
+static float VectorDistance(Vector2 v1, Vector2 v2);
+static float VectorDotProduct(Vector2 v1, Vector2 v2);
 static double GetCurrentTime();
 
 #if defined(PLATFORM_WEB)
@@ -155,15 +144,43 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
-// Returns tap position XY
-extern Vector2 GetRawPosition(void)
+// Returns touch position X
+int GetTouchX(void)
 {
-    return touchPosition;
+    return (int)touchPosition.x;
+}
+
+// Returns touch position Y
+int GetTouchY(void)
+{
+    return (int)touchPosition.y;
+}
+
+// Returns touch position XY
+// TODO: touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(void)
+{
+    Vector2 position = touchPosition;
+/*
+    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
+    {
+        // TODO: Seems to work ok but... review!
+        position.x = position.x*((float)screenWidth / (float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
+        position.y = position.y*((float)screenHeight / (float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
+    }
+    else
+    {
+        position.x = position.x*((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
+        position.y = position.y*((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
+    }
+*/
+    return position;
 }
 
 // Check if a gesture have been detected
 bool IsGestureDetected(void)
 {
+/*
     if (currentGesture == GESTURE_DRAG)                 TraceLog(INFO, "DRAG");
     else if (currentGesture == GESTURE_TAP)             TraceLog(INFO, "TAP");
     else if (currentGesture == GESTURE_DOUBLETAP)       TraceLog(INFO, "DOUBLE");
@@ -174,6 +191,7 @@ bool IsGestureDetected(void)
     else if (currentGesture == GESTURE_SWIPE_DOWN)      TraceLog(INFO, "DOWN");
     else if (currentGesture == GESTURE_PINCH_IN)        TraceLog(INFO, "PINCH IN");
     else if (currentGesture == GESTURE_PINCH_OUT)       TraceLog(INFO, "PINCH OUT");
+*/
 
     if (currentGesture != GESTURE_NONE) return true;
     else return false;
@@ -228,39 +246,39 @@ float GetGesturePinchAngle(void)
     return 0;
 }
 
-extern void ResetGestures(void)
-{
-    if (currentGesture == GESTURE_TAP) currentGesture = GESTURE_HOLD;
-    else if (currentGesture != GESTURE_HOLD) currentGesture = GESTURE_NONE;
-}
-
 #if defined(PLATFORM_WEB)
-extern void InitWebGestures(void)
+// Init gestures system (web)
+void InitGesturesSystem(void)
 {
-    /*
-    emscripten_set_touchstart_callback("#canvas", data, 0, Emscripten_HandleTouch);
-    emscripten_set_touchend_callback("#canvas", data, 0, Emscripten_HandleTouch);
-    emscripten_set_touchmove_callback("#canvas", data, 0, Emscripten_HandleTouch);
-    emscripten_set_touchcancel_callback("#canvas", data, 0, Emscripten_HandleTouch);
-    */
-
+    // Init gestures system web (emscripten)
+    
+    // NOTE: Some code examples
     //emscripten_set_touchstart_callback(0, NULL, 1, Emscripten_HandleTouch);
+    //emscripten_set_touchend_callback("#canvas", data, 0, Emscripten_HandleTouch);
     
     emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
 }
-#endif
-
-#if defined(PLATFORM_ANDROID)
-extern void InitAndroidGestures(struct android_app *app)
+#elif defined(PLATFORM_ANDROID)
+// Init gestures system (android)
+void InitGesturesSystem(struct android_app *app)
 {
     app->onInputEvent = AndroidInputCallback;
     
     // TODO: Receive frameBuffer data: displayWidth/displayHeight, renderWidth/renderHeight, screenWidth/screenHeight
 }
 #endif
+
+// Update gestures detected (must be called every frame)
+void UpdateGestures(void)
+{
+    // NOTE: Gestures are processed through system callbacks on touch events
+    
+    if ((previousGesture == GESTURE_TAP) && (currentGesture == GESTURE_TAP)) currentGesture = GESTURE_HOLD;
+    else if (currentGesture != GESTURE_HOLD) currentGesture = GESTURE_NONE;
+}
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -271,13 +289,15 @@ static void ProcessMotionEvent(GestureEvent event)
     dragVector = (Vector2){ 0, 0 };
     pinchDelta = 0;
     
+    previousGesture = currentGesture;
+    
     switch (gestureType)
     {
         case TYPE_MOTIONLESS: // Detect TAP, DOUBLE_TAP and HOLD events
         {
             if (event.action == DOWN)
             {
-                if (event.pointCount > 1) SetDualInput(event);
+                if (event.pointCount > 1) InitPinchGesture(event.position[0], event.position[1]);
                 else
                 {
                     // Set the press position
@@ -317,7 +337,7 @@ static void ProcessMotionEvent(GestureEvent event)
             // Begin dragging
             else if (event.action == MOVE)
             {
-                if (event.pointCount > 1) SetDualInput(event);
+                if (event.pointCount > 1) InitPinchGesture(event.position[0], event.position[1]);
                 else
                 {
                     // Set the drag starting position
@@ -354,7 +374,7 @@ static void ProcessMotionEvent(GestureEvent event)
             // Update while we are dragging
             else if (event.action == MOVE)
             {
-                if (event.pointCount > 1) SetDualInput(event);
+                if (event.pointCount > 1) InitPinchGesture(event.position[0], event.position[1]);
                 else
                 {
                     lastDragPosition = endDragPosition;
@@ -395,8 +415,17 @@ static void ProcessMotionEvent(GestureEvent event)
                 // If there is no more than two inputs
                 if (event.pointCount == 2)
                 {
-                    // Detect pinch delta
-                    pinchDelta = OnPinch();
+                    // Calculate distances
+                    float initialDistance = VectorDistance(firstInitialPinchPosition, secondInitialPinchPosition);
+                    float endDistance = VectorDistance(firstEndPinchPosition, secondEndPinchPosition);
+
+                    // Calculate Vectors
+                    Vector2 firstTouchVector = { firstEndPinchPosition.x - firstInitialPinchPosition.x, firstEndPinchPosition.y - firstInitialPinchPosition.y };
+                    Vector2 secondTouchVector = { secondEndPinchPosition.x - secondInitialPinchPosition.x, secondEndPinchPosition.y - secondInitialPinchPosition.y };
+
+                    // Detect the pinch gesture
+                    if (VectorDotProduct(firstTouchVector, secondTouchVector) < -0.5) pinchDelta = initialDistance - endDistance;
+                    else pinchDelta = 0;
                     
                     // Pinch gesture resolution
                     if (pinchDelta != 0)
@@ -422,36 +451,30 @@ static void ProcessMotionEvent(GestureEvent event)
     //--------------------------------------------------------------------
 }
 
-static float CalculateAngle(Vector2 initialPosition, Vector2 actualPosition, float magnitude)
+static float CalculateAngle(Vector2 initialPosition, Vector2 finalPosition, float magnitude)
 {
     float angle;
     
-    // Calculate arcsinus of the movement ( Our sinus is (actualPosition.y - initialPosition.y) / magnitude)
-    angle = asin((actualPosition.y - initialPosition.y) / magnitude);
+    // Calculate arcsinus of the movement
+    angle = asin((finalPosition.y - initialPosition.y)/magnitude);
     angle *= RAD2DEG;
     
     // Calculate angle depending on the sector
-    if (actualPosition.x - initialPosition.x >= 0)
+    if ((finalPosition.x - initialPosition.x) >= 0)
     {
         // Sector 4
-        if (actualPosition.y - initialPosition.y >= 0)
+        if ((finalPosition.y - initialPosition.y) >= 0)
         {
             angle *= -1;
             angle += 360;
         }
         // Sector 1
-        else
-        {
-            angle *= -1;
-        }
+        else angle *= -1;
     }
     else
     {
         // Sector 3
-        if (actualPosition.y - initialPosition.y >= 0)
-        {
-            angle += 180;
-        }
+        if ((finalPosition.y - initialPosition.y) >= 0) angle += 180;
         // Sector 2
         else
         {
@@ -463,31 +486,15 @@ static float CalculateAngle(Vector2 initialPosition, Vector2 actualPosition, flo
     return angle;
 }
 
-static float OnPinch()
-{
-    // Calculate distances
-    float initialDistance = Distance(firstInitialPinchPosition, secondInitialPinchPosition);
-    float endDistance = Distance(firstEndPinchPosition, secondEndPinchPosition);
-    
-    // Calculate Vectors
-    Vector2 firstTouchVector = { firstEndPinchPosition.x - firstInitialPinchPosition.x, firstEndPinchPosition.y - firstInitialPinchPosition.y };
-    Vector2 secondTouchVector = { secondEndPinchPosition.x - secondInitialPinchPosition.x, secondEndPinchPosition.y - secondInitialPinchPosition.y };
-    
-    // Detect the pinch gesture
-    // Calculate Distances
-    if (DotProduct(firstTouchVector, secondTouchVector) < -0.5) return initialDistance - endDistance;
-    else return 0;
-}
-
-static void SetDualInput(GestureEvent event)
+static void InitPinchGesture(Vector2 posA, Vector2 posB)
 {
     initialDragPosition = (Vector2){ 0, 0 };
     endDragPosition = (Vector2){ 0, 0 };
     lastDragPosition = (Vector2){ 0, 0 };
 
     // Initialize positions
-    firstInitialPinchPosition = event.position[0];
-    secondInitialPinchPosition = event.position[1];
+    firstInitialPinchPosition = posA;
+    secondInitialPinchPosition = posB;
     
     firstEndPinchPosition = firstInitialPinchPosition;
     secondEndPinchPosition = secondInitialPinchPosition;
@@ -500,7 +507,7 @@ static void SetDualInput(GestureEvent event)
     gestureType = TYPE_DUAL_INPUT;
 }
 
-static float Distance(Vector2 v1, Vector2 v2)
+static float VectorDistance(Vector2 v1, Vector2 v2)
 {
     float result;
 
@@ -512,7 +519,7 @@ static float Distance(Vector2 v1, Vector2 v2)
     return result;
 }
 
-static float DotProduct(Vector2 v1, Vector2 v2)
+static float VectorDotProduct(Vector2 v1, Vector2 v2)
 {
     float result;
 
@@ -569,7 +576,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         //int32_t key = AKeyEvent_getKeyCode(event);
         //int32_t AKeyEvent_getMetaState(event);
         
-        int32_t code = AKeyEvent_getKeyCode((const AInputEvent *)event);
+        //int32_t code = AKeyEvent_getKeyCode((const AInputEvent *)event);
         
         // If we are in active mode, we eat the back button and move into pause mode.  
         // If we are already in pause mode, we allow the back button to be handled by the OS, which means we'll be shut down.
@@ -653,9 +660,3 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     return 1;
 }
 #endif
-
-
-
-
-
-
