@@ -8,7 +8,7 @@
 *       OpenAL Soft - Audio device management lib (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -27,7 +27,13 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"
+//#define AUDIO_STANDALONE     // NOTE: To use the audio module as standalone lib, just uncomment this line
+
+#if defined(AUDIO_STANDALONE)
+    #include "audio.h"
+#else
+    #include "raylib.h"
+#endif
 
 #include "AL/al.h"          // OpenAL basic header
 #include "AL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
