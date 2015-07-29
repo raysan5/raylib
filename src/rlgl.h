@@ -7,7 +7,7 @@
 *       OpenGL 3.3+ - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

@@ -8,7 +8,7 @@
 *       stb_image - Multiple formats image loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                   NOTE: stb_image has been slightly modified, original library: https://github.com/nothings/stb
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
