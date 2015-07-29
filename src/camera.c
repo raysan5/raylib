@@ -1,8 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib.camera
-*
-*   Camera Modes Setup and Control Functions
+*   raylib Camera System - Camera Modes Setup and Control Functions
 *
 *   Copyright (c) 2015 Marc Palau and Ramon Santamaria
 *
@@ -23,7 +21,14 @@
 *
 **********************************************************************************************/
 
-#include "camera.h"
+//#define CAMERA_STANDALONE     // NOTE: To use the camera module as standalone lib, just uncomment this line
+                                // NOTE: ProcessCamera() should be reviewed to adapt inputs to other systems
+
+#if defined(CAMERA_STANDALONE)
+    #include "camera.h"
+#else
+    #include "raylib.h"
+#endif
 
 #include <math.h>
 
@@ -49,7 +54,7 @@
 //#define FIRST_PERSON_MOUSE_SENSITIVITY          0.003
 #define FIRST_PERSON_FOCUS_DISTANCE             25
 #define FIRST_PERSON_MIN_CLAMP                  85
-#define FIRST_PERSON_MAX_CLAMP                  -85
+#define FIRST_PERSON_MAX_CLAMP                 -85
 
 #define FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER 5.0
 #define FIRST_PERSON_STEP_DIVIDER               30.0
@@ -61,7 +66,7 @@
 //#define THIRD_PERSON_MOUSE_SENSITIVITY          0.003
 #define THIRD_PERSON_DISTANCE_CLAMP             1.2
 #define THIRD_PERSON_MIN_CLAMP                  5
-#define THIRD_PERSON_MAX_CLAMP                  -85
+#define THIRD_PERSON_MAX_CLAMP                 -85
 #define THIRD_PERSON_OFFSET                     (Vector3){ 0.4, 0, 0 }
 
 // PLAYER (used by camera)
@@ -71,22 +76,26 @@
 #define PLAYER_MOVEMENT_DIVIDER     20.0
 
 //----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Camera move modes (first person and third person cameras)
+typedef enum { MOVE_FRONT = 0, MOVE_LEFT, MOVE_BACK, MOVE_RIGHT, MOVE_UP, MOVE_DOWN } CameraMove;
+
+//----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 static Camera internalCamera = {{2,0,2},{0,0,0},{0,1,0}};
 static Vector2 cameraAngle = { 0, 0 };
 static float cameraTargetDistance = 5;
-static Vector3 resetingPosition = { 0, 0, 0 };
-static int resetingKey = 'Z';
 static Vector2 cameraMousePosition = { 0, 0 };
 static Vector2 cameraMouseVariation = { 0, 0 };
 static float mouseSensitivity = 0.003;
-static int cameraMovementController[6]  = { 'W', 'A', 'S', 'D', 'E', 'Q' };
-static int cameraMovementCounter = 0;
-static bool cameraUseGravity = true;
-static int pawnControllingKey = MOUSE_MIDDLE_BUTTON;
-static int fnControllingKey = KEY_LEFT_ALT;
-static int smoothZoomControllingKey = KEY_LEFT_CONTROL;
+static int cameraMoveControl[6]  = { 'W', 'A', 'S', 'D', 'E', 'Q' };
+static int cameraMoveCounter = 0;
+static int cameraUseGravity = 1;
+static int panControlKey = 2;                   // raylib: MOUSE_MIDDLE_BUTTON
+static int altControlKey = 342;                 // raylib: KEY_LEFT_ALT
+static int smoothZoomControlKey = 341;          // raylib: KEY_LEFT_CONTROL
 
 static int cameraMode = CAMERA_CUSTOM;
 
@@ -94,6 +103,20 @@ static int cameraMode = CAMERA_CUSTOM;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static void ProcessCamera(Camera *camera, Vector3 *playerPosition);
+
+#if defined(CAMERA_STANDALONE)
+// NOTE: Camera controls depend on some raylib input functions
+// TODO: Set your own input functions (used in ProcessCamera())
+static Vector2 GetMousePosition() { return (Vector2){ 0, 0}; }
+static void SetMousePosition(Vector2 pos) {} 
+static int IsMouseButtonDown(int button) { return 0;}
+static int GetMouseWheelMove() { return 0; }
+static int GetScreenWidth() { return 1280; }
+static int GetScreenHeight() { return 720; }
+static void ShowCursor() {}
+static void HideCursor() {}
+static int IsKeyDown(int key) { return 0; }
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -145,48 +168,37 @@ Camera UpdateCamera(Vector3 *position)
     return internalCamera;
 }
 
-
-void SetCameraControls(int frontKey, int leftKey, int backKey, int rightKey, int upKey, int downKey)
+void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey, int upKey, int downKey)
 {
-    cameraMovementController[0] = frontKey;
-    cameraMovementController[1] = leftKey;
-    cameraMovementController[2] = backKey;
-    cameraMovementController[3] = rightKey;
-    cameraMovementController[4] = upKey;
-    cameraMovementController[5] = downKey;
+    cameraMoveControl[MOVE_FRONT] = frontKey;
+    cameraMoveControl[MOVE_LEFT] = leftKey;
+    cameraMoveControl[MOVE_BACK] = backKey;
+    cameraMoveControl[MOVE_RIGHT] = rightKey;
+    cameraMoveControl[MOVE_UP] = upKey;
+    cameraMoveControl[MOVE_DOWN] = downKey;
 }
 
 void SetCameraMouseSensitivity(float sensitivity)
 {
     mouseSensitivity = (sensitivity / 10000.0);
 }
- 
-void SetCameraResetPosition(Vector3 resetPosition)
+
+void SetCameraPanControl(int panKey)
 {
-    resetingPosition = resetPosition;
+    panControlKey = panKey;
 }
 
-void SetCameraResetControl(int resetKey)
+void SetCameraAltControl(int altKey)
 {
-    resetingKey = resetKey;
+    altControlKey = altKey;
 }
 
-void SetCameraPawnControl(int pawnControlKey)
+void SetCameraSmoothZoomControl(int szKey)
 {
-    pawnControllingKey = pawnControlKey;
+    smoothZoomControlKey = szKey;
 }
 
-void SetCameraFnControl(int fnControlKey)
-{
-    fnControllingKey = fnControlKey;
-}
-
-void SetCameraSmoothZoomControl(int smoothZoomControlKey)
-{
-    smoothZoomControllingKey = smoothZoomControlKey;
-}
-
-void SetCameraOrbitalTarget(Vector3 target)
+void SetCameraTarget(Vector3 target)
 {
     internalCamera.target = target;
 }
@@ -197,33 +209,43 @@ void SetCameraOrbitalTarget(Vector3 target)
 //----------------------------------------------------------------------------------
 
 // Process desired camera mode and controls
+// NOTE: Camera controls depend on some raylib functions:
+//       Mouse: GetMousePosition(), SetMousePosition(), IsMouseButtonDown(), GetMouseWheelMove()
+//       System: GetScreenWidth(), GetScreenHeight(), ShowCursor(), HideCursor()
+//       Keys:  IsKeyDown()
 static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_RPI)
     // Mouse movement detection
+    Vector2 mousePosition = GetMousePosition();
+    int mouseWheelMove = GetMouseWheelMove();
+    int panKey = IsMouseButtonDown(panControlKey);    // bool value
+    
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    
     if ((cameraMode != CAMERA_FREE) && (cameraMode != CAMERA_ORBITAL))
     {
         HideCursor();
-        
-        if (GetMousePosition().x < GetScreenHeight() / 3) SetMousePosition((Vector2){ GetScreenWidth() - GetScreenHeight() / 3, GetMousePosition().y});
-        else if (GetMousePosition().y < GetScreenHeight() / 3) SetMousePosition((Vector2){ GetMousePosition().x, GetScreenHeight() - GetScreenHeight() / 3});
-        else if (GetMousePosition().x > GetScreenWidth() - GetScreenHeight() / 3) SetMousePosition((Vector2) { GetScreenHeight() / 3, GetMousePosition().y});
-        else if (GetMousePosition().y > GetScreenHeight() - GetScreenHeight() / 3) SetMousePosition((Vector2){ GetMousePosition().x, GetScreenHeight() / 3});
+
+        if (mousePosition.x < screenHeight/3) SetMousePosition((Vector2){ screenWidth - screenHeight/3, mousePosition.y});
+        else if (mousePosition.y < screenHeight/3) SetMousePosition((Vector2){ mousePosition.x, screenHeight - screenHeight/3});
+        else if (mousePosition.x > screenWidth - screenHeight/3) SetMousePosition((Vector2) { screenHeight/3, mousePosition.y});
+        else if (mousePosition.y > screenHeight - screenHeight/3) SetMousePosition((Vector2){ mousePosition.x, screenHeight/3});
         else
         {
-            cameraMouseVariation.x = GetMousePosition().x - cameraMousePosition.x;
-            cameraMouseVariation.y = GetMousePosition().y - cameraMousePosition.y;
+            cameraMouseVariation.x = mousePosition.x - cameraMousePosition.x;
+            cameraMouseVariation.y = mousePosition.y - cameraMousePosition.y;
         }
     }
     else
     {
         ShowCursor();
-        
-        cameraMouseVariation.x = GetMousePosition().x - cameraMousePosition.x;
-        cameraMouseVariation.y = GetMousePosition().y - cameraMousePosition.y;
+
+        cameraMouseVariation.x = mousePosition.x - cameraMousePosition.x;
+        cameraMouseVariation.y = mousePosition.y - cameraMousePosition.y;
     }
 
-    cameraMousePosition = GetMousePosition();
+    cameraMousePosition = mousePosition;
 
     // Support for multiple automatic camera modes
     switch (cameraMode)
@@ -231,92 +253,93 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
         case CAMERA_FREE:
         {
             // Camera zoom
-            if ((cameraTargetDistance < FREE_CAMERA_DISTANCE_MAX_CLAMP) && (GetMouseWheelMove() < 0))
+            if ((cameraTargetDistance < FREE_CAMERA_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
-                cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+                cameraTargetDistance -= (mouseWheelMove*CAMERA_SCROLL_SENSITIVITY);
 
                 if (cameraTargetDistance > FREE_CAMERA_DISTANCE_MAX_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_MAX_CLAMP;
             }
             // Camera looking down
-            else if ((camera->position.y > camera->target.y) && (cameraTargetDistance == FREE_CAMERA_DISTANCE_MAX_CLAMP) && (GetMouseWheelMove() < 0))
+            else if ((camera->position.y > camera->target.y) && (cameraTargetDistance == FREE_CAMERA_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
-                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
             }
             else if ((camera->position.y > camera->target.y) && (camera->target.y >= 0))
             {
-                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
 
                 if (camera->target.y < 0) camera->target.y = -0.001;
             }
-            else if ((camera->position.y > camera->target.y) && (camera->target.y < 0) && (GetMouseWheelMove() > 0))
+            else if ((camera->position.y > camera->target.y) && (camera->target.y < 0) && (mouseWheelMove > 0))
             {
-                cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+                cameraTargetDistance -= (mouseWheelMove*CAMERA_SCROLL_SENSITIVITY);
                 if (cameraTargetDistance < FREE_CAMERA_DISTANCE_MIN_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_MIN_CLAMP;
             }
             // Camera looking up
-            else if ((camera->position.y < camera->target.y) && (cameraTargetDistance == FREE_CAMERA_DISTANCE_MAX_CLAMP) && (GetMouseWheelMove() < 0))
+            else if ((camera->position.y < camera->target.y) && (cameraTargetDistance == FREE_CAMERA_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
-                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
             }
             else if ((camera->position.y < camera->target.y) && (camera->target.y <= 0))
             {
-                camera->target.x += GetMouseWheelMove() * (camera->target.x - camera->position.x) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.y += GetMouseWheelMove() * (camera->target.y - camera->position.y) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
-                camera->target.z += GetMouseWheelMove() * (camera->target.z - camera->position.z) * CAMERA_SCROLL_SENSITIVITY / cameraTargetDistance;
+                camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
+                camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
 
                 if (camera->target.y > 0) camera->target.y = 0.001;
             }
-            else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (GetMouseWheelMove() > 0))
+            else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (mouseWheelMove > 0))
             {
-                cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+                cameraTargetDistance -= (mouseWheelMove * CAMERA_SCROLL_SENSITIVITY);
                 if (cameraTargetDistance < FREE_CAMERA_DISTANCE_MIN_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_MIN_CLAMP;
             }
 
             // Inputs
-            if (IsKeyDown(fnControllingKey))
+            if (IsKeyDown(altControlKey))
             {
-                if (IsKeyDown(smoothZoomControllingKey))
+                if (IsKeyDown(smoothZoomControlKey))
                 {
                     // Camera smooth zoom
-                    if (IsMouseButtonDown(pawnControllingKey)) cameraTargetDistance += (cameraMouseVariation.y * FREE_CAMERA_SMOOTH_ZOOM_SENSITIVITY);
+                    if (panKey) cameraTargetDistance += (cameraMouseVariation.y*FREE_CAMERA_SMOOTH_ZOOM_SENSITIVITY);
                 }
                 // Camera orientation calculation
-                else if (IsMouseButtonDown(pawnControllingKey))
+                else if (panKey)
                 {
                     // Camera orientation calculation
                     // Get the mouse sensitivity
-                    cameraAngle.x += cameraMouseVariation.x * -FREE_CAMERA_MOUSE_SENSITIVITY;
-                    cameraAngle.y += cameraMouseVariation.y * -FREE_CAMERA_MOUSE_SENSITIVITY;
+                    cameraAngle.x += cameraMouseVariation.x*-FREE_CAMERA_MOUSE_SENSITIVITY;
+                    cameraAngle.y += cameraMouseVariation.y*-FREE_CAMERA_MOUSE_SENSITIVITY;
 
                     // Angle clamp
-                    if (cameraAngle.y > FREE_CAMERA_MIN_CLAMP * DEG2RAD) cameraAngle.y = FREE_CAMERA_MIN_CLAMP * DEG2RAD;
-                    else if (cameraAngle.y < FREE_CAMERA_MAX_CLAMP * DEG2RAD) cameraAngle.y = FREE_CAMERA_MAX_CLAMP * DEG2RAD;
+                    if (cameraAngle.y > FREE_CAMERA_MIN_CLAMP*DEG2RAD) cameraAngle.y = FREE_CAMERA_MIN_CLAMP*DEG2RAD;
+                    else if (cameraAngle.y < FREE_CAMERA_MAX_CLAMP*DEG2RAD) cameraAngle.y = FREE_CAMERA_MAX_CLAMP*DEG2RAD;
                 }
             }
             // Paning
-            else if (IsMouseButtonDown(pawnControllingKey))
+            else if (panKey)
             {
-                camera->target.x += ((cameraMouseVariation.x * -FREE_CAMERA_MOUSE_SENSITIVITY) * cos(cameraAngle.x) + (cameraMouseVariation.y * FREE_CAMERA_MOUSE_SENSITIVITY) * sin(cameraAngle.x) * sin(cameraAngle.y)) * (cameraTargetDistance / FREE_CAMERA_PANNING_DIVIDER);
-                camera->target.y += ((cameraMouseVariation.y * FREE_CAMERA_MOUSE_SENSITIVITY) * cos(cameraAngle.y)) * (cameraTargetDistance / FREE_CAMERA_PANNING_DIVIDER);
-                camera->target.z += ((cameraMouseVariation.x * FREE_CAMERA_MOUSE_SENSITIVITY) * sin(cameraAngle.x) + (cameraMouseVariation.y * FREE_CAMERA_MOUSE_SENSITIVITY) * cos(cameraAngle.x) * sin(cameraAngle.y)) * (cameraTargetDistance / FREE_CAMERA_PANNING_DIVIDER);
+                camera->target.x += ((cameraMouseVariation.x*-FREE_CAMERA_MOUSE_SENSITIVITY)*cos(cameraAngle.x) + (cameraMouseVariation.y*FREE_CAMERA_MOUSE_SENSITIVITY)*sin(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/FREE_CAMERA_PANNING_DIVIDER);
+                camera->target.y += ((cameraMouseVariation.y*FREE_CAMERA_MOUSE_SENSITIVITY)*cos(cameraAngle.y))*(cameraTargetDistance/FREE_CAMERA_PANNING_DIVIDER);
+                camera->target.z += ((cameraMouseVariation.x*FREE_CAMERA_MOUSE_SENSITIVITY)*sin(cameraAngle.x) + (cameraMouseVariation.y*FREE_CAMERA_MOUSE_SENSITIVITY)*cos(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/FREE_CAMERA_PANNING_DIVIDER);
             }
 
             // Focus to center
-            if (IsKeyDown(resetingKey)) camera->target = resetingPosition;
+            // TODO: Move this function out of the module?
+            if (IsKeyDown('Z')) camera->target = (Vector3){ 0, 0, 0 };
 
             // Camera position update
-            camera->position.x = sin(cameraAngle.x) * cameraTargetDistance * cos(cameraAngle.y) + camera->target.x;
+            camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
 
-            if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y) * cameraTargetDistance * sin(cameraAngle.y) + camera->target.y;
-            else camera->position.y = -sin(cameraAngle.y) * cameraTargetDistance * sin(cameraAngle.y) + camera->target.y;
+            if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
+            else camera->position.y = -sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
 
-            camera->position.z = cos(cameraAngle.x) * cameraTargetDistance * cos(cameraAngle.y) + camera->target.z;
+            camera->position.z = cos(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.z;
 
         } break;
         case CAMERA_ORBITAL:
@@ -324,126 +347,126 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
             cameraAngle.x += ORBITAL_CAMERA_SPEED;
 
             // Camera zoom
-            cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+            cameraTargetDistance -= (mouseWheelMove*CAMERA_SCROLL_SENSITIVITY);
+            
             // Camera distance clamp
             if (cameraTargetDistance < THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = THIRD_PERSON_DISTANCE_CLAMP;
 
             // Focus to center
-            if (IsKeyDown('Z')) camera->target = (Vector3) { 0, 0, 0 };
+            if (IsKeyDown('Z')) camera->target = (Vector3){ 0, 0, 0 };
 
             // Camera position update
-            camera->position.x = sin(cameraAngle.x) * cameraTargetDistance * cos(cameraAngle.y) + camera->target.x;
+            camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
 
-            if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y) * cameraTargetDistance * sin(cameraAngle.y) + camera->target.y;
-            else camera->position.y = -sin(cameraAngle.y) * cameraTargetDistance * sin(cameraAngle.y) + camera->target.y;
+            if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
+            else camera->position.y = -sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
 
-            camera->position.z = cos(cameraAngle.x) * cameraTargetDistance * cos(cameraAngle.y) + camera->target.z;
+            camera->position.z = cos(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.z;
 
         } break;
         case CAMERA_FIRST_PERSON:
         case CAMERA_THIRD_PERSON:
         {
-            bool isMoving = false;
+            int isMoving = 0;
 
             // Keyboard inputs
-            if (IsKeyDown(cameraMovementController[0]))
+            if (IsKeyDown(cameraMoveControl[MOVE_FRONT]))
             {
-                playerPosition->x -= sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z -= cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                if (!cameraUseGravity) camera->position.y += sin(cameraAngle.y) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x -= sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z -= cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                
+                if (!cameraUseGravity) camera->position.y += sin(cameraAngle.y)/PLAYER_MOVEMENT_DIVIDER;
 
-                isMoving = true;
+                isMoving = 1;
             }
-            else if (IsKeyDown(cameraMovementController[2]))
+            else if (IsKeyDown(cameraMoveControl[MOVE_BACK]))
             {
-                playerPosition->x += sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z += cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                if (!cameraUseGravity) camera->position.y -= sin(cameraAngle.y) / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x += sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z += cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                
+                if (!cameraUseGravity) camera->position.y -= sin(cameraAngle.y)/PLAYER_MOVEMENT_DIVIDER;
 
-                isMoving = true;
-            }
-
-            if (IsKeyDown(cameraMovementController[1]))
-            {
-                playerPosition->x -= cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z += sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-
-                isMoving = true;
-            }
-            else if (IsKeyDown(cameraMovementController[3]))
-            {
-                playerPosition->x += cos(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z -= sin(cameraAngle.x) / PLAYER_MOVEMENT_DIVIDER;
-
-                isMoving = true;
+                isMoving = 1;
             }
 
-            if (IsKeyDown(cameraMovementController[4]))
+            if (IsKeyDown(cameraMoveControl[MOVE_LEFT]))
             {
-                if (!cameraUseGravity) playerPosition->y += 1 / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x -= cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z += sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+
+                isMoving = 1;
             }
-            else if (IsKeyDown(cameraMovementController[5]))
+            else if (IsKeyDown(cameraMoveControl[MOVE_RIGHT]))
             {
-                if (!cameraUseGravity) playerPosition->y -= 1 / PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->x += cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                playerPosition->z -= sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+
+                isMoving = 1;
+            }
+
+            if (IsKeyDown(cameraMoveControl[MOVE_UP]))
+            {
+                if (!cameraUseGravity) playerPosition->y += 1/PLAYER_MOVEMENT_DIVIDER;
+            }
+            else if (IsKeyDown(cameraMoveControl[MOVE_DOWN]))
+            {
+                if (!cameraUseGravity) playerPosition->y -= 1/PLAYER_MOVEMENT_DIVIDER;
             }
 
             if (cameraMode == CAMERA_THIRD_PERSON)
             {
                 // Camera orientation calculation
-                // Get the mouse sensitivity
-                cameraAngle.x += cameraMouseVariation.x * -mouseSensitivity;
-                cameraAngle.y += cameraMouseVariation.y * -mouseSensitivity;
+                cameraAngle.x += cameraMouseVariation.x*-mouseSensitivity;
+                cameraAngle.y += cameraMouseVariation.y*-mouseSensitivity;
 
                 // Angle clamp
-                if (cameraAngle.y > THIRD_PERSON_MIN_CLAMP * DEG2RAD) cameraAngle.y = THIRD_PERSON_MIN_CLAMP * DEG2RAD;
-                else if (cameraAngle.y < THIRD_PERSON_MAX_CLAMP * DEG2RAD) cameraAngle.y = THIRD_PERSON_MAX_CLAMP * DEG2RAD;
+                if (cameraAngle.y > THIRD_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = THIRD_PERSON_MIN_CLAMP*DEG2RAD;
+                else if (cameraAngle.y < THIRD_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = THIRD_PERSON_MAX_CLAMP*DEG2RAD;
 
                 // Camera zoom
-                cameraTargetDistance -= (GetMouseWheelMove() * CAMERA_SCROLL_SENSITIVITY);
+                cameraTargetDistance -= (mouseWheelMove*CAMERA_SCROLL_SENSITIVITY);
 
                 // Camera distance clamp
                 if (cameraTargetDistance < THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = THIRD_PERSON_DISTANCE_CLAMP;
 
                 // Camera is always looking at player
-                camera->target.x = playerPosition->x + THIRD_PERSON_OFFSET.x * cos(cameraAngle.x) + THIRD_PERSON_OFFSET.z * sin(cameraAngle.x);
-                camera->target.y = playerPosition->y + PLAYER_HEIGHT * FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION + THIRD_PERSON_OFFSET.y;
-                camera->target.z = playerPosition->z + THIRD_PERSON_OFFSET.z * sin(cameraAngle.x) - THIRD_PERSON_OFFSET.x * sin(cameraAngle.x);
+                camera->target.x = playerPosition->x + THIRD_PERSON_OFFSET.x*cos(cameraAngle.x) + THIRD_PERSON_OFFSET.z*sin(cameraAngle.x);
+                camera->target.y = playerPosition->y + PLAYER_HEIGHT*FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION + THIRD_PERSON_OFFSET.y;
+                camera->target.z = playerPosition->z + THIRD_PERSON_OFFSET.z*sin(cameraAngle.x) - THIRD_PERSON_OFFSET.x*sin(cameraAngle.x);
 
                 // Camera position update
-                camera->position.x = sin(cameraAngle.x) * cameraTargetDistance * cos(cameraAngle.y) + camera->target.x;
+                camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
 
-                if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y) * cameraTargetDistance * sin(cameraAngle.y) + camera->target.y;
-                else camera->position.y = -sin(cameraAngle.y) * cameraTargetDistance * sin(cameraAngle.y) + camera->target.y;
+                if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
+                else camera->position.y = -sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
 
-                camera->position.z = cos(cameraAngle.x) * cameraTargetDistance * cos(cameraAngle.y) + camera->target.z;
+                camera->position.z = cos(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.z;
             }
-            else
+            else    // CAMERA_FIRST_PERSON
             {
-                if (isMoving) cameraMovementCounter++;
+                if (isMoving) cameraMoveCounter++;
 
                 // Camera orientation calculation
-                // Get the mouse sensitivity
-                cameraAngle.x += cameraMouseVariation.x * -mouseSensitivity;
-                cameraAngle.y += cameraMouseVariation.y * -mouseSensitivity;
+                cameraAngle.x += cameraMouseVariation.x*-mouseSensitivity;
+                cameraAngle.y += cameraMouseVariation.y*-mouseSensitivity;
 
                 // Angle clamp
-                if (cameraAngle.y > FIRST_PERSON_MIN_CLAMP * DEG2RAD) cameraAngle.y = FIRST_PERSON_MIN_CLAMP * DEG2RAD;
-                else if (cameraAngle.y < FIRST_PERSON_MAX_CLAMP * DEG2RAD) cameraAngle.y = FIRST_PERSON_MAX_CLAMP * DEG2RAD;
+                if (cameraAngle.y > FIRST_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = FIRST_PERSON_MIN_CLAMP*DEG2RAD;
+                else if (cameraAngle.y < FIRST_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = FIRST_PERSON_MAX_CLAMP*DEG2RAD;
 
                 // Camera is always looking at player
-                camera->target.x = camera->position.x - sin(cameraAngle.x) * FIRST_PERSON_FOCUS_DISTANCE;
-                camera->target.y = camera->position.y + sin(cameraAngle.y) * FIRST_PERSON_FOCUS_DISTANCE;
-                camera->target.z = camera->position.z - cos(cameraAngle.x) * FIRST_PERSON_FOCUS_DISTANCE;
+                camera->target.x = camera->position.x - sin(cameraAngle.x)*FIRST_PERSON_FOCUS_DISTANCE;
+                camera->target.y = camera->position.y + sin(cameraAngle.y)*FIRST_PERSON_FOCUS_DISTANCE;
+                camera->target.z = camera->position.z - cos(cameraAngle.x)*FIRST_PERSON_FOCUS_DISTANCE;
 
                 camera->position.x = playerPosition->x;
-                camera->position.y = (playerPosition->y + PLAYER_HEIGHT * FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION) - sin(cameraMovementCounter / FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER) / FIRST_PERSON_STEP_DIVIDER;
+                camera->position.y = (playerPosition->y + PLAYER_HEIGHT*FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION) - sin(cameraMoveCounter/FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/FIRST_PERSON_STEP_DIVIDER;
                 camera->position.z = playerPosition->z;
 
-                camera->up.x = sin(cameraMovementCounter / (FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER * 2)) / FIRST_PERSON_WAVING_DIVIDER;
-                camera->up.z = -sin(cameraMovementCounter / (FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER * 2)) / FIRST_PERSON_WAVING_DIVIDER;
+                camera->up.x = sin(cameraMoveCounter/(FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/FIRST_PERSON_WAVING_DIVIDER;
+                camera->up.z = -sin(cameraMoveCounter/(FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/FIRST_PERSON_WAVING_DIVIDER;
             }
         } break;
         default: break;
     }
-#endif
 }
