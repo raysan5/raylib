@@ -218,7 +218,6 @@ static bool useTempBuffer = false;
 
 // Flags for supported extensions
 static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support VAO extension)
-static bool npotSupported = false;  // NPOT textures full support
 
 // Compressed textures support flags
 //static bool texCompDXTSupported = false;     // DDS texture compression support
@@ -237,6 +236,7 @@ static bool enabledPostpro = false;
 
 // Compressed textures support flags
 static bool texCompDXTSupported = false;     // DDS texture compression support
+static bool npotSupported = false;  // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -2236,9 +2236,12 @@ void SetDefaultShader(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     SetCustomShader(defaultShader);
-    SetPostproShader(defaultShader);
     
-    enabledPostpro = false;
+    if (enabledPostpro) 
+    {
+        SetPostproShader(defaultShader);
+        enabledPostpro = false;
+    }  
 #endif
 }
 
