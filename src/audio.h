@@ -95,7 +95,6 @@ void SetMusicVolume(float volume);                              // Set volume fo
 float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
 float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
 
-
 #ifdef __cplusplus
 }
 #endif
