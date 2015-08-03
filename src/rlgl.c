@@ -1003,57 +1003,82 @@ void rlglInitPostpro(void)
     glBindTexture(GL_TEXTURE_2D, fboColorTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GetScreenWidth(), GetScreenHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Create the texture that will serve as the depth attachment for the framebuffer.
+    // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
+    glGenRenderbuffers(1, &fboDepthTexture);
+    glBindRenderbuffer(GL_RENDERBUFFER, fboDepthTexture);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, GetScreenWidth(), GetScreenHeight());
+    
+    // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extensions)
+    // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
+/*
     glGenTextures(1, &fboDepthTexture);
     glBindTexture(GL_TEXTURE_2D, fboDepthTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GetScreenWidth(), GetScreenHeight(), 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
+*/
 
     // Create the framebuffer object
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    // Attach color texture and depth texture to FBO
+    // Attach color texture and depth renderbuffer to FBO
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboColorTexture, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fboDepthTexture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fboDepthTexture);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-    if (status != GL_FRAMEBUFFER_COMPLETE) TraceLog(WARNING, "Framebuffer object could not be created...");
-    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
+    if (status != GL_FRAMEBUFFER_COMPLETE) 
+    {
+        TraceLog(WARNING, "Framebuffer object could not be created...");
+        
+        switch(status)
+        {
+            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(WARNING, "Framebuffer incomplete dimensions"); break;
+#endif
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete missing attachment"); break;
+            default: break;
+        }
+    }
+    else
+    {
+        TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // Create a simple quad model to render fbo texture
-    VertexData quadData;
-    
-    quadData.vertexCount = 6;
-    
-    float w = GetScreenWidth();
-    float h = GetScreenHeight();
-    
-    float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
-    float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
-    float quadNormals[6*3] = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
-    unsigned char quadColors[6*4] = { 255 };
-    
-    quadData.vertices = quadPositions;
-    quadData.texcoords = quadTexcoords;
-    quadData.normals = quadNormals;
-    quadData.colors = quadColors;
-    
-    postproQuad = rlglLoadModel(quadData);
-    
-    // NOTE: fboColorTexture id must be assigned to postproQuad model shader
+        // Create a simple quad model to render fbo texture
+        VertexData quadData;
+        
+        quadData.vertexCount = 6;
+        
+        float w = GetScreenWidth();
+        float h = GetScreenHeight();
+        
+        float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
+        float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
+        float quadNormals[6*3] = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
+        unsigned char quadColors[6*4] = { 255 };
+        
+        quadData.vertices = quadPositions;
+        quadData.texcoords = quadTexcoords;
+        quadData.normals = quadNormals;
+        quadData.colors = quadColors;
+        
+        postproQuad = rlglLoadModel(quadData);
+        
+        // NOTE: fboColorTexture id must be assigned to postproQuad model shader
+    }
 #endif
 }
 
@@ -1352,15 +1377,16 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
     glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(projection));
     glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(modelviewworld));
-    
+
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
     float vColor[4] = { (float)color.r/255, (float)color.g/255, (float)color.b/255, (float)color.a/255 };
     glUniform4fv(model.shader.tintColorLoc, 1, vColor);
-    
+
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
+    //glUniform1i(model.shader.mapDiffuseLoc, 0);
 
     if (model.shader.texNormalId != 0)
     {
@@ -1390,13 +1416,20 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
         glEnableVertexAttribArray(model.shader.texcoordLoc);
 
         // Add normals support
-        glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[2]);
-        glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(model.shader.normalLoc);
+        if (model.shader.normalLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[2]);
+            glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(model.shader.normalLoc);
+        }
     }
 
     // Draw call!
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
+    
+    //glDisableVertexAttribArray(model.shader.vertexLoc);
+    //glDisableVertexAttribArray(model.shader.texcoordLoc);
+    //if (model.shader.normalLoc != -1) glDisableVertexAttribArray(model.shader.normalLoc);
     
     if (model.shader.texNormalId != 0)
     {
@@ -1780,9 +1813,9 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 #endif
 
     // Magnification and minification filters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Alternative: GL_LINEAR
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Alternative: GL_LINEAR
+   
 #if defined(GRAPHICS_API_OPENGL_33)
     if (mipmapCount > 1)
     {
@@ -1883,9 +1916,10 @@ Model rlglLoadModel(VertexData mesh)
     model.shader.id = 0;        // No shader used
 
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model.texture.id = whiteTexture;     // Default whiteTexture
-    model.texture.width = 1;     // Default whiteTexture width
-    model.texture.height = 1;    // Default whiteTexture height
+    model.texture.id = whiteTexture;    // Default whiteTexture
+    model.texture.width = 1;            // Default whiteTexture width
+    model.texture.height = 1;           // Default whiteTexture height
+    model.shader = simpleShader;        // Default model shader
 
     GLuint vaoModel = 0;         // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];      // Vertex Buffer Objects (VBO)
@@ -1903,22 +1937,20 @@ Model rlglLoadModel(VertexData mesh)
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleShader.vertexLoc);
-    glVertexAttribPointer(simpleShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(model.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.shader.vertexLoc);
 
     // Enable vertex attributes: texcoords
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.vertexCount, mesh.texcoords, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleShader.texcoordLoc);
-    glVertexAttribPointer(simpleShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(model.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.shader.texcoordLoc);
 
     // Enable vertex attributes: normals
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleShader.normalLoc);
-    glVertexAttribPointer(simpleShader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-
-    model.shader = simpleShader;    // By default, simple shader will be used
+    glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.shader.normalLoc);
 
     model.mesh.vboId[0] = vertexBuffer[0];     // Vertex position VBO
     model.mesh.vboId[1] = vertexBuffer[1];     // Texcoords VBO
@@ -2027,39 +2059,54 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     // Shaders loading from external text file
     char *vShaderStr = TextFileRead(vsFileName);
     char *fShaderStr = TextFileRead(fsFileName);
-
-    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
-
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shader.id);
-
-    // Shader strings must be freed
-    free(vShaderStr);
-    free(fShaderStr);
     
-    // Set shader textures ids (all 0 by default)
-    shader.texDiffuseId = 0;
-    shader.texNormalId = 0;
-    shader.texSpecularId = 0;
+    if ((vShaderStr != NULL) && (fShaderStr != NULL))
+    {
+        shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
-    // Get handles to GLSL input attibute locations
-    //-------------------------------------------------------------------
-    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
-    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
-    shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
-    // NOTE: custom shader does not use colorLoc
-    shader.colorLoc = -1;
+        if (shader.id != 0)
+        {
+            TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
+        
+            // Set shader textures ids (all 0 by default)
+            shader.texDiffuseId = 0;
+            shader.texNormalId = 0;
+            shader.texSpecularId = 0;
 
-    // Get handles to GLSL uniform locations (vertex shader)
-    shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
-    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
+            // Get handles to GLSL input attibute locations
+            //-------------------------------------------------------------------
+            shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
+            shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
+            shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
+            // NOTE: custom shader does not use colorLoc
+            shader.colorLoc = -1;
 
-    // Get handles to GLSL uniform locations (fragment shader)
-    shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
-    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
-    shader.mapNormalLoc = -1;       // It can be set later
-    shader.mapSpecularLoc = -1;     // It can be set later
-    //--------------------------------------------------------------------
+            // Get handles to GLSL uniform locations (vertex shader)
+            shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+            shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
+
+            // Get handles to GLSL uniform locations (fragment shader)
+            shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+            shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
+            shader.mapNormalLoc = -1;       // It can be set later
+            shader.mapSpecularLoc = -1;     // It can be set later
+            //--------------------------------------------------------------------
+        }
+        else
+        {
+            TraceLog(WARNING, "Custom shader could not be loaded");
+            shader = simpleShader;
+        }
+        
+        // Shader strings must be freed
+        free(vShaderStr);
+        free(fShaderStr);
+    }
+    else
+    {
+        TraceLog(WARNING, "Custom shader could not be loaded");
+        shader = simpleShader;
+    }        
 #endif
 
     return shader;
@@ -2270,7 +2317,8 @@ void SetModelShader(Model *model, Shader shader)
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
     
-    //if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
+    // NOTE: If SetModelTexture() is called previously, texture is not assigned to new shader
+    if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
 #endif
 }
 
