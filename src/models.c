@@ -1116,6 +1116,8 @@ void UnloadModel(Model model)
     rlDeleteBuffers(model.mesh.vboId[2]);
 
     rlDeleteVertexArrays(model.mesh.vaoId);
+    
+    TraceLog(INFO, "Unloaded model data");
 }
 
 // Link a texture to a model

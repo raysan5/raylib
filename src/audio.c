@@ -449,6 +449,8 @@ void UnloadSound(Sound sound)
 {
     alDeleteSources(1, &sound.source);
     alDeleteBuffers(1, &sound.buffer);
+    
+    TraceLog(INFO, "Unloaded sound data");
 }
 
 // Play a sound
@@ -922,6 +924,8 @@ static Wave LoadOGG(char *fileName)
 static void UnloadWave(Wave wave)
 {
     free(wave.data);
+    
+    TraceLog(INFO, "Unloaded wave data");
 }
 
 // Some required functions for audio standalone module version

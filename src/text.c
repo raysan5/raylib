@@ -216,6 +216,8 @@ extern void UnloadDefaultFont(void)
 {
     UnloadTexture(defaultFont.texture);
     free(defaultFont.charSet);
+    
+    TraceLog(INFO, "Unloaded default font data");
 }
 
 // Get the default font, useful to be used with extended parameters
@@ -266,6 +268,8 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 {
     UnloadTexture(spriteFont.texture);
     free(spriteFont.charSet);
+    
+    TraceLog(INFO, "Unloaded sprite font data");
 }
 
 // Draw text (using default font)

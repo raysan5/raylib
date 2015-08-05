@@ -390,12 +390,16 @@ Texture2D LoadTextureFromImage(Image image)
 void UnloadImage(Image image)
 {
     free(image.data);
+    
+    TraceLog(INFO, "Unloaded image data");
 }
 
 // Unload texture from GPU memory
 void UnloadTexture(Texture2D texture)
 {
     rlDeleteTextures(texture.id);
+    
+    TraceLog(INFO, "[TEX ID %i] Unloaded texture data", texture.id);
 }
 
 // Get pixel data from image in the form of Color struct array
