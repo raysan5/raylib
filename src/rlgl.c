@@ -33,20 +33,21 @@
 #include <string.h>         // Declares strcmp(), strlen(), strtok()
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #ifdef __APPLE__            // OpenGL include for OSX
+    #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl.h>
     #else
-        #include <GL/gl.h>      // Basic OpenGL include
+        #include <GL/gl.h>          // Basic OpenGL include
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
     #define GLEW_STATIC
-    #ifdef __APPLE__            // OpenGL include for OSX
+    #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl3.h>
     #else
-        #include <GL/glew.h>    // Extensions loading lib
-        //#include "glad.h"     // TODO: Other extensions loading lib? --> REVIEW
+        #include <GL/glew.h>        // Extensions loading lib
+        //#include "glad.h"         // TODO: Test glad extensions loading lib
+        //#include "gl_core_3_3.h"  // TODO: Test glLoadGen extension loading lib: ERRORS
     #endif
 #endif
 
@@ -54,6 +55,10 @@
     #include <EGL/egl.h>
     #include <GLES2/gl2.h>
     #include <GLES2/gl2ext.h>
+#endif
+
+#if defined(RLGL_STANDALONE)
+    #include <stdarg.h>         // Used for functions with variable number of parameters (TraceLog())
 #endif
 
 //----------------------------------------------------------------------------------
@@ -177,6 +182,10 @@ typedef struct {
     unsigned char a;
 } pixel;
 
+#if defined(RLGL_STANDALONE)
+typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+#endif
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -250,6 +259,9 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 // NOTE: It's required in shapes and models modules!
 unsigned int whiteTexture;
 
+// Save screen size data (render size), required for postpro quad
+static int screenWidth, screenHeight;
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -271,6 +283,10 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 static char** StringSplit(char *baseString, const char delimiter, int *numExt);
+#endif
+
+#if defined(RLGL_STANDALONE)
+static void TraceLog(int msgType, const char *text, ...);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -846,12 +862,12 @@ void rlglInit(void)
 #if defined(GRAPHICS_API_OPENGL_33)
     // Initialize extensions using GLEW
     glewExperimental = 1;       // Needed for core profile
-    
     GLenum error = glewInit();
     
     if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
-
+    
     if (glewIsSupported("GL_VERSION_3_3"))
+    //if (ogl_LoadFunctions() != ogl_LOAD_FAILED)
     {
         TraceLog(INFO, "OpenGL 3.3 Core profile");
         
@@ -995,6 +1011,7 @@ void rlglInit(void)
 }
 
 // Init postpro system
+// NOTE: Uses global variables screenWidth and screenHeight
 void rlglInitPostpro(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1005,13 +1022,13 @@ void rlglInitPostpro(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GetScreenWidth(), GetScreenHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
     glGenRenderbuffers(1, &fboDepthTexture);
     glBindRenderbuffer(GL_RENDERBUFFER, fboDepthTexture);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, GetScreenWidth(), GetScreenHeight());
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, screenWidth, screenHeight);
     
     // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extensions)
     // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
@@ -1062,8 +1079,8 @@ void rlglInitPostpro(void)
         
         quadData.vertexCount = 6;
         
-        float w = GetScreenWidth();
-        float h = GetScreenHeight();
+        float w = screenWidth;
+        float h = screenHeight;
         
         float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
         float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
@@ -1141,7 +1158,20 @@ void rlglClose(void)
     {
         glDeleteFramebuffers(1, &fbo);
         
-        UnloadModel(postproQuad);
+        // Unload postpro quad model data
+#if defined(GRAPHICS_API_OPENGL_11)
+        free(postproQuad.mesh.vertices);
+        free(postproQuad.mesh.texcoords);
+        free(postproQuad.mesh.normals);
+#endif
+
+        rlDeleteBuffers(postproQuad.mesh.vboId[0]);
+        rlDeleteBuffers(postproQuad.mesh.vboId[1]);
+        rlDeleteBuffers(postproQuad.mesh.vboId[2]);
+
+        rlDeleteVertexArrays(postproQuad.mesh.vaoId);
+        
+        TraceLog(INFO, "Unloaded postpro quad data");
     }
 
     free(draws);
@@ -1312,7 +1342,7 @@ void rlglDrawPostpro(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    rlglDrawModel(postproQuad, (Vector3){0,0,0}, 0.0f, (Vector3){0,0,0}, (Vector3){1.0f, 1.0f, 1.0f}, WHITE, false);
+    rlglDrawModel(postproQuad, (Vector3){0,0,0}, 0.0f, (Vector3){0,0,0}, (Vector3){1.0f, 1.0f, 1.0f}, (Color){ 255, 255, 255, 255 }, false);
 #endif
 }
 
@@ -1459,17 +1489,23 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 }
 
 // Initialize Graphics Device (OpenGL stuff)
+// NOTE: Stores global variables screenWidth and screenHeight
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 {
+    // Save screen size data (global vars), required on postpro quad
+    // NOTE: Size represents render size, it could differ from screen size!
+    screenWidth = width;
+    screenHeight = height;
+    
     // NOTE: Required! viewport must be recalculated if screen resized!
     glViewport(offsetX/2, offsetY/2, width - offsetX, height - offsetY);    // Set viewport width and height
 
     // NOTE: Don't confuse glViewport with the transformation matrix
     // NOTE: glViewport just defines the area of the context that you will actually draw to.
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set background color (black)
     //glClearDepth(1.0f);                                   // Clear depth buffer (default)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
 
     glEnable(GL_DEPTH_TEST);                                // Enables depth testing (required for 3D)
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
@@ -2216,6 +2252,8 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 void UnloadShader(Shader shader)
 {
     rlDeleteShader(shader.id);
+    
+    TraceLog(INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
 }
 
 // Set custom shader to be used on batch draw
@@ -2252,6 +2290,7 @@ void SetCustomShader(Shader shader)
 }
 
 // Set postprocessing shader
+// NOTE: Uses global variables screenWidth and screenHeight
 void SetPostproShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2265,8 +2304,8 @@ void SetPostproShader(Shader shader)
     
     Texture2D texture;
     texture.id = fboColorTexture;
-    texture.width = GetScreenWidth();
-    texture.height = GetScreenHeight();
+    texture.width = screenWidth;
+    texture.height = screenHeight;
 
     SetShaderMapDiffuse(&postproQuad.shader, texture);
     
@@ -3072,12 +3111,9 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
-
-typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
-
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
-void TraceLog(int msgType, const char *text, ...)
+static void TraceLog(int msgType, const char *text, ...)
 {
     va_list args;
     va_start(args, text);
