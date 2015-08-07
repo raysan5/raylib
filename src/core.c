@@ -998,7 +998,8 @@ static void InitDisplay(int width, int height)
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
     //glfwWindowHint(GLFW_DECORATED, GL_TRUE);    // Border and buttons on Window
-    //glfwWindowHint(GLFW_RED_BITS, 8);           // Bit depths of color components for default framebuffer
+    //glfwWindowHint(GLFW_RED_BITS, 8);           // Framebuffer red color component bits
+    //glfwWindowHint(GLFW_DEPTH_BITS, 16);        // Depthbuffer bits (24 by default)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);       // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers
@@ -1097,7 +1098,14 @@ static void InitDisplay(int width, int height)
     VC_RECT_T srcRect;
 #endif
 
-    // TODO: if (configFlags & FLAG_MSAA_4X_HINT) activate (EGL_SAMPLES, 4)
+    EGLint samples = 0;
+    EGLint sampleBuffer = 0;
+    if (configFlags & FLAG_MSAA_4X_HINT) 
+    {
+        samples = 4;
+        sampleBuffer = 1;
+    }
+    
     const EGLint framebufferAttribs[] =
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    // Type of context support -> Required on RPI?
@@ -1108,8 +1116,8 @@ static void InitDisplay(int width, int height)
         //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth
         EGL_DEPTH_SIZE, 8,          // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        //EGL_SAMPLE_BUFFERS, 1,    // Activate MSAA
-        //EGL_SAMPLES, 4,           // 4x Antialiasing (Free on MALI GPUs)
+        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
+        EGL_SAMPLES, samples,       // 4x Antialiasing (Free on MALI GPUs)
         EGL_NONE
     };
 
