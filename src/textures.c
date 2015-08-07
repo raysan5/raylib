@@ -330,7 +330,6 @@ Texture2D LoadTexture(const char *fileName)
     else
     {
         TraceLog(WARNING, "Texture could not be created");
-        
         texture.id = 0;
     }
 
@@ -391,7 +390,8 @@ void UnloadImage(Image image)
 {
     free(image.data);
     
-    TraceLog(INFO, "Unloaded image data");
+    // NOTE: It becomes anoying every time a texture is loaded
+    //TraceLog(INFO, "Unloaded image data");
 }
 
 // Unload texture from GPU memory
@@ -519,136 +519,139 @@ Image GetTextureData(Texture2D texture)
 // Convert image data to desired format
 void ImageConvertFormat(Image *image, int newFormat)
 {
-    if ((image->format != newFormat) && (image->format < 8) && (newFormat < 8))
+    if (image->format != newFormat)
     {
-        Color *pixels = GetImageData(*image);
-        
-        free(image->data);
-        
-        image->format = newFormat;
-
-        int k = 0;
-        
-        switch (image->format)
+        if ((image->format < 8) && (newFormat < 8))
         {
-            case UNCOMPRESSED_GRAYSCALE:
-            {
-                image->data = (unsigned char *)malloc(image->width*image->height*sizeof(unsigned char));
-                
-                for (int i = 0; i < image->width*image->height; i++)
-                {
-                    ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
-                    k++;
-                }
-        
-            } break;
-            case UNCOMPRESSED_GRAY_ALPHA:
-            {
-               image->data = (unsigned char *)malloc(image->width*image->height*2*sizeof(unsigned char));
-                
-               for (int i = 0; i < image->width*image->height*2; i += 2)
-                {
-                    ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
-                    ((unsigned char *)image->data)[i + 1] = pixels[k].a;
-                    k++;
-                }
+            Color *pixels = GetImageData(*image);
+            
+            free(image->data);
+            
+            image->format = newFormat;
 
-            } break;
-            case UNCOMPRESSED_R5G6B5:
+            int k = 0;
+            
+            switch (image->format)
             {
-                image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
-                
-                unsigned char r;
-                unsigned char g;
-                unsigned char b;
-                
-                for (int i = 0; i < image->width*image->height; i++)
+                case UNCOMPRESSED_GRAYSCALE:
                 {
-                    r = (unsigned char)(round((float)pixels[k].r*31/255));
-                    g = (unsigned char)(round((float)pixels[k].g*63/255));
-                    b = (unsigned char)(round((float)pixels[k].b*31/255));
+                    image->data = (unsigned char *)malloc(image->width*image->height*sizeof(unsigned char));
                     
-                    ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
-
-                    k++;
-                }
-
-            } break;
-            case UNCOMPRESSED_R8G8B8:
-            {
-                image->data = (unsigned char *)malloc(image->width*image->height*3*sizeof(unsigned char));
-                
-                for (int i = 0; i < image->width*image->height*3; i += 3)
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
+                        k++;
+                    }
+            
+                } break;
+                case UNCOMPRESSED_GRAY_ALPHA:
                 {
-                    ((unsigned char *)image->data)[i] = pixels[k].r;
-                    ((unsigned char *)image->data)[i + 1] = pixels[k].g;
-                    ((unsigned char *)image->data)[i + 2] = pixels[k].b;
-                    k++;
-                }
-            } break;
-            case UNCOMPRESSED_R5G5B5A1:
-            {
-                image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
-                
-                unsigned char r;
-                unsigned char g;
-                unsigned char b;
-                unsigned char a = 1;
-                
-                for (int i = 0; i < image->width*image->height; i++)
-                {
-                    r = (unsigned char)(round((float)pixels[k].r*31/255));
-                    g = (unsigned char)(round((float)pixels[k].g*31/255));
-                    b = (unsigned char)(round((float)pixels[k].b*31/255));
-                    a = (pixels[k].a > 50) ? 1 : 0;
+                   image->data = (unsigned char *)malloc(image->width*image->height*2*sizeof(unsigned char));
                     
-                    ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1| (unsigned short)a;
+                   for (int i = 0; i < image->width*image->height*2; i += 2)
+                    {
+                        ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
+                        ((unsigned char *)image->data)[i + 1] = pixels[k].a;
+                        k++;
+                    }
 
-                    k++;
-                }
-
-            } break;
-            case UNCOMPRESSED_R4G4B4A4:
-            {
-                image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
-                
-                unsigned char r;
-                unsigned char g;
-                unsigned char b;
-                unsigned char a;
-                
-                for (int i = 0; i < image->width*image->height; i++)
+                } break;
+                case UNCOMPRESSED_R5G6B5:
                 {
-                    r = (unsigned char)(round((float)pixels[k].r*15/255));
-                    g = (unsigned char)(round((float)pixels[k].g*15/255));
-                    b = (unsigned char)(round((float)pixels[k].b*15/255));
-                    a = (unsigned char)(round((float)pixels[k].a*15/255));
+                    image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
                     
-                    ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8| (unsigned short)b << 4| (unsigned short)a;
+                    unsigned char r;
+                    unsigned char g;
+                    unsigned char b;
+                    
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        r = (unsigned char)(round((float)pixels[k].r*31/255));
+                        g = (unsigned char)(round((float)pixels[k].g*63/255));
+                        b = (unsigned char)(round((float)pixels[k].b*31/255));
+                        
+                        ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
 
-                    k++;
-                }
-                
-            } break;
-            case UNCOMPRESSED_R8G8B8A8:
-            {
-                image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
-                
-                for (int i = 0; i < image->width*image->height*4; i += 4)
+                        k++;
+                    }
+
+                } break;
+                case UNCOMPRESSED_R8G8B8:
                 {
-                    ((unsigned char *)image->data)[i] = pixels[k].r;
-                    ((unsigned char *)image->data)[i + 1] = pixels[k].g;
-                    ((unsigned char *)image->data)[i + 2] = pixels[k].b;
-                    ((unsigned char *)image->data)[i + 3] = pixels[k].a;
-                    k++;
-                }
-            } break;
-            default: break;
+                    image->data = (unsigned char *)malloc(image->width*image->height*3*sizeof(unsigned char));
+                    
+                    for (int i = 0; i < image->width*image->height*3; i += 3)
+                    {
+                        ((unsigned char *)image->data)[i] = pixels[k].r;
+                        ((unsigned char *)image->data)[i + 1] = pixels[k].g;
+                        ((unsigned char *)image->data)[i + 2] = pixels[k].b;
+                        k++;
+                    }
+                } break;
+                case UNCOMPRESSED_R5G5B5A1:
+                {
+                    image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
+                    
+                    unsigned char r;
+                    unsigned char g;
+                    unsigned char b;
+                    unsigned char a = 1;
+                    
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        r = (unsigned char)(round((float)pixels[k].r*31/255));
+                        g = (unsigned char)(round((float)pixels[k].g*31/255));
+                        b = (unsigned char)(round((float)pixels[k].b*31/255));
+                        a = (pixels[k].a > 50) ? 1 : 0;
+                        
+                        ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1| (unsigned short)a;
+
+                        k++;
+                    }
+
+                } break;
+                case UNCOMPRESSED_R4G4B4A4:
+                {
+                    image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
+                    
+                    unsigned char r;
+                    unsigned char g;
+                    unsigned char b;
+                    unsigned char a;
+                    
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        r = (unsigned char)(round((float)pixels[k].r*15/255));
+                        g = (unsigned char)(round((float)pixels[k].g*15/255));
+                        b = (unsigned char)(round((float)pixels[k].b*15/255));
+                        a = (unsigned char)(round((float)pixels[k].a*15/255));
+                        
+                        ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8| (unsigned short)b << 4| (unsigned short)a;
+
+                        k++;
+                    }
+                    
+                } break;
+                case UNCOMPRESSED_R8G8B8A8:
+                {
+                    image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
+                    
+                    for (int i = 0; i < image->width*image->height*4; i += 4)
+                    {
+                        ((unsigned char *)image->data)[i] = pixels[k].r;
+                        ((unsigned char *)image->data)[i + 1] = pixels[k].g;
+                        ((unsigned char *)image->data)[i + 2] = pixels[k].b;
+                        ((unsigned char *)image->data)[i + 3] = pixels[k].a;
+                        k++;
+                    }
+                } break;
+                default: break;
+            }
+            
+            free(pixels);
         }
-        
-        free(pixels);
+        else TraceLog(WARNING, "Image data format is compressed, can not be converted");
     }
-    else TraceLog(WARNING, "Image data format is compressed, can not be converted");
 }
 
 
@@ -656,8 +659,8 @@ void ImageConvertFormat(Image *image, int newFormat)
 // NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
 void ImageConvertToPOT(Image *image, Color fillColor)
 {
-    // TODO: Review for new image struct
-    /*
+    Color *pixels = GetImageData(*image);   // Get pixels data
+    
     // Just add the required amount of pixels at the right and bottom sides of image...
     int potWidth = GetNextPOT(image->width);
     int potHeight = GetNextPOT(image->height);
@@ -665,29 +668,33 @@ void ImageConvertToPOT(Image *image, Color fillColor)
     // Check if POT texture generation is required (if texture is not already POT)
     if ((potWidth != image->width) || (potHeight != image->height))
     {
-        Color *imgDataPixelPOT = NULL;
+        Color *pixelsPOT = NULL;
 
         // Generate POT array from NPOT data
-        imgDataPixelPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
+        pixelsPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
 
         for (int j = 0; j < potHeight; j++)
         {
             for (int i = 0; i < potWidth; i++)
             {
-                if ((j < image->height) && (i < image->width)) imgDataPixelPOT[j*potWidth + i] = image->data[j*image->width + i];
-                else imgDataPixelPOT[j*potWidth + i] = fillColor;
+                if ((j < image->height) && (i < image->width)) pixelsPOT[j*potWidth + i] = pixels[j*image->width + i];
+                else pixelsPOT[j*potWidth + i] = fillColor;
             }
         }
 
         TraceLog(WARNING, "Image converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
 
-        free(image->pixels);
+        free(pixels);                       // Free pixels data
+        free(image->data);                  // Free old image data
+        
+        int format = image->format;         // Store image data format to reconvert later
+        
+        *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
+        
+        free(pixelsPOT);                    // Free POT pixels data
 
-        image->pixels = imgDataPixelPOT;
-        image->width = potWidth;
-        image->height = potHeight;
+        ImageConvertFormat(image, format);  // Reconvert image to previous format
     }
-    */
 }
 
 // Copy an image to a new image
