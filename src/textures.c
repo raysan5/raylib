@@ -490,20 +490,28 @@ Color *GetImageData(Image image)
 }
 
 // Get pixel data from GPU texture and return an Image
+// NOTE: Compressed texture formats not supported
 Image GetTextureData(Texture2D texture)
 {
     Image image;
+    image.data = NULL;
     
-    image.data = rlglReadTexturePixels(texture.id, texture.format);
-    
-    if (image.data != NULL)
+    if (texture.format < 8)
     {
-        image.width = texture.width;
-        image.height = texture.height;
-        image.format = texture.format;
-        image.mipmaps = 1;
+        image.data = rlglReadTexturePixels(texture.id, texture.format);
+        
+        if (image.data != NULL)
+        {
+            image.width = texture.width;
+            image.height = texture.height;
+            image.format = texture.format;
+            image.mipmaps = 1;
+            
+            TraceLog(INFO, "Texture pixel data obtained successfully");
+        }
+        else TraceLog(WARNING, "Texture pixel data could not be obtained");
     }
-    else TraceLog(WARNING, "Texture pixel data could not be obtained");
+    else TraceLog(WARNING, "Compressed texture data could not be obtained");
     
     return image;
 }
