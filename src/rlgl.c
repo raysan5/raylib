@@ -244,8 +244,8 @@ static bool enabledPostpro = false;
 #endif
 
 // Compressed textures support flags
-static bool texCompDXTSupported = false;     // DDS texture compression support
-static bool npotSupported = false;  // NPOT textures full support
+static bool texCompDXTSupported = false;   // DDS texture compression support
+static bool npotSupported = false;         // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -255,12 +255,14 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 //static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
 
+// Save screen size data (render size), required for postpro quad
+static int screenWidth, screenHeight;
+
+static int blendMode = 0;
+
 // White texture useful for plain color polys (required by shader)
 // NOTE: It's required in shapes and models modules!
 unsigned int whiteTexture;
-
-// Save screen size data (render size), required for postpro quad
-static int screenWidth, screenHeight;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -2043,6 +2045,8 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     int width, height;
     
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
     //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
@@ -2063,15 +2067,13 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
         case UNCOMPRESSED_R8G8B8A8: pixels = (unsigned char *)malloc(size*4); glFormat = GL_RGBA; glType = GL_UNSIGNED_BYTE; break;                // 32 bpp
         default: TraceLog(WARNING, "Texture format not suported"); break;
     }
-
-    glBindTexture(GL_TEXTURE_2D, textureId);
     
     // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
     // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting. 
     // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.) 
     // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    
+
     glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -2511,6 +2513,26 @@ void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textur
     }
 #endif
 */
+}
+
+// Set blending mode (alpha, additive, multiplied)
+// NOTE: Only 3 blending modes predefined
+void SetBlendMode(int mode)
+{
+    if ((blendMode != mode) && (mode < 3))
+    {
+        rlglDraw();
+        
+        switch (mode)
+        {
+            case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
+            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); break; // Alternative: glBlendFunc(GL_ONE, GL_ONE);
+            case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); break;
+            default: break;
+        }
+        
+        blendMode = mode;
+    }
 }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)

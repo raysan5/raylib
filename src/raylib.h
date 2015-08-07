@@ -353,6 +353,9 @@ typedef enum {
     COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } TextureFormat;
 
+// Color blending modes (pre-defined)
+typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
+
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
@@ -447,6 +450,8 @@ void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                    
 void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
 void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
 void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+
+void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)

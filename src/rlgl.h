@@ -182,6 +182,9 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Texture2D texture;
         Shader shader;
     } Model;
+	
+    // Color blending modes (pre-defined)
+    typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
 #endif
 
 #ifdef __cplusplus
@@ -282,6 +285,8 @@ void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                    
 void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
 void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
 void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+
+void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 #endif
 
 #ifdef __cplusplus
