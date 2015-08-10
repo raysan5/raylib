@@ -998,8 +998,8 @@ static void InitDisplay(int width, int height)
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
     //glfwWindowHint(GLFW_DECORATED, GL_TRUE);    // Border and buttons on Window
-    //glfwWindowHint(GLFW_RED_BITS, 8);           // Framebuffer red color component bits
-    //glfwWindowHint(GLFW_DEPTH_BITS, 16);        // Depthbuffer bits (24 by default)
+    //glfwWindowHint(GLFW_RED_BITS, 8);           // Color framebuffer red component bits
+    //glfwWindowHint(GLFW_DEPTH_BITS, 16);        // Depth buffer bits (24 by default)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);       // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers
@@ -1114,10 +1114,10 @@ static void InitDisplay(int width, int height)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth
-        EGL_DEPTH_SIZE, 8,          // Depth buffer size (Required to use Depth testing!)
+        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
         EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
-        EGL_SAMPLES, samples,       // 4x Antialiasing (Free on MALI GPUs)
+        EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
         EGL_NONE
     };
 
