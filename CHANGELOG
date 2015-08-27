@@ -22,6 +22,7 @@ BIG changes:
 
 smaller changes:
 [rlgl] Added check for OpenGL supported extensions
+[rlgl] Added function SetBlenMode() to select some predefined blending modes 
 [core] Added support for drop&drag of external files into running program
 [core] Added functions ShowCursor(), HideCursor(), IsCursorHidden()
 [core] Renamed function SetFlags() to SetConfigFlags()
