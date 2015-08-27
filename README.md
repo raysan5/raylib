@@ -75,6 +75,28 @@ Lots of code changes and lot of testing have concluded in this amazing new rayli
 
 In December 2014, new raylib 1.2.2 was published with support to compile directly for web (html5) using [emscripten](http://kripken.github.io/emscripten-site/) and [asm.js](http://asmjs.org/).
 
+notes on raylib 1.3
+-------------------
+
+On September 2015, after 1 year of raylib 1.2 release, arrives raylib 1.3. This version adds shaders functionality,
+improves textures module and provides some new modules (camera system, gestures system, IMGUI).
+
+Shaders, the biggest addition to raylib, with support for simple and easy shaders loading and use. Loaded shaders can be
+assigned to models or used as fullscreen postrocessing shaders.
+
+Textures module has been improved to support most of the internal texture formats available in OpenGL
+(RGB565, RGB888, RGBA5551, RGBA4444, etc.), including compressed texture formats (DXT, ETC1, ETC2, ASTC, PVRT).
+
+New camera module offers the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, third person),
+very easy to use, just calling functions: SetCameraMode() and UpdateCamera().
+
+New gestures module simplifies getures detection on Android and HTML5 programs.
+
+New IMGUI (Immediate Mode GUI) module: raygui, offers a set of functions to create simple user interfaces,
+primary intended for tools development, still in experimental state but already fully functional.
+
+Lots of code changes and lot of testing have concluded in this amazing new raylib 1.3.
+
 features
 --------
  
@@ -82,6 +104,8 @@ features
    *  Uses C# PascalCase/camelCase notation
    *  Hardware accelerated with OpenGL (1.1, 3.3+ or ES2)
    *  Unique OpenGL abstraction layer: [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
+   *  Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
+   *  Unique OpenGL abstraction layer [rlgl]
    *  Powerful fonts module with SpriteFonts support
    *  Multiple textures support, including DDS, PKM and mipmaps generation
    *  Basic 3d support for Shapes, Models, Heightmaps and Billboards
@@ -258,9 +282,16 @@ acknowledgments
 
 The following people have contributed in some way to make raylib project a reality. Big thanks to them!
 
- - [Zopokx](https://github.com/Zopokx) for testing and hosting the web.
+ - [Zopokx](https://github.com/Zopokx) for testing the web.
  - [Elendow](http://www.elendow.com) for testing and helping on web development.
- - Victor Dual for implementation and testing of 3D shapes functions.
- - Marc Palau for implementation and testing of 3D shapes functions.
+ - Victor Dual for implementating and testing of 3D shapes functions.
+ - Marc Palau for implementating and testing of 3D shapes functions and helping on development of camera and getures modules.
+ - Kevin Gato for improving texture internal formats support and helping on raygui development. 
+ - Daniel Nicolas for improving texture internal formats support and helping on raygui development. 
+ - Marc Agüera for testing and using raylib on a real product (Koala Seasons)
+ - Daniel Moreno for testing and using raylib on a real product (Koala Seasons)
+ - Daniel Gomez for testing and using raylib on a real product (Koala Seasons)
+ - Sergio Martinez for helping on raygui development and tools development.
+ 
 	
 [raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"

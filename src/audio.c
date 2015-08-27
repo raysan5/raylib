@@ -8,7 +8,7 @@
 *       OpenAL Soft - Audio device management lib (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -27,7 +27,13 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"
+//#define AUDIO_STANDALONE     // NOTE: To use the audio module as standalone lib, just uncomment this line
+
+#if defined(AUDIO_STANDALONE)
+    #include "audio.h"
+#else
+    #include "raylib.h"
+#endif
 
 #include "AL/al.h"          // OpenAL basic header
 #include "AL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
@@ -36,8 +42,12 @@
 #include <string.h>         // Required for strcmp()
 #include <stdio.h>          // Used for .WAV loading
 
-#include "utils.h"          // rRES data decompression utility function
+#if defined(AUDIO_STANDALONE)
+    #include <stdarg.h>     // Used for functions with variable number of parameters (TraceLog())
+#else
+    #include "utils.h"      // rRES data decompression utility function
                             // NOTE: Includes Android fopen function map
+#endif
 
 //#define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.h"     // OGG loading functions 
@@ -75,6 +85,10 @@ typedef struct Music {
 
 } Music;
 
+#if defined(AUDIO_STANDALONE)
+typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+#endif
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -85,13 +99,18 @@ static Music currentMusic;      // Current music loaded
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Wave LoadWAV(const char *fileName);      // Load WAV file
-static Wave LoadOGG(char *fileName);            // Load OGG file
-static void UnloadWave(Wave wave);              // Unload wave data
+static Wave LoadWAV(const char *fileName);          // Load WAV file
+static Wave LoadOGG(char *fileName);                // Load OGG file
+static void UnloadWave(Wave wave);                  // Unload wave data
 
-static bool BufferMusicStream(ALuint buffer);   // Fill music buffers with data
-static void EmptyMusicStream(void);             // Empty music buffers
-extern void UpdateMusicStream(void);            // Updates buffers (refill) for music streaming
+static bool BufferMusicStream(ALuint buffer);       // Fill music buffers with data
+static void EmptyMusicStream(void);                 // Empty music buffers
+extern void UpdateMusicStream(void);                // Updates buffers (refill) for music streaming
+
+#if defined(AUDIO_STANDALONE)
+const char *GetExtension(const char *fileName);     // Get the extension for a filename
+void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message (INFO, ERROR, WARNING)
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
@@ -273,8 +292,13 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
 {
     // NOTE: rresName could be directly a char array with all the data!!! --> TODO
     Sound sound;
-    bool found = false;
 
+#if defined(AUDIO_STANDALONE)
+    TraceLog(WARNING, "Sound loading from rRES resource file not supported on standalone mode");
+#else
+    
+    bool found = false;
+    
     char id[4];             // rRES file identifier
     unsigned char version;  // rRES file version and subversion
     char useless;           // rRES header reserved data
@@ -416,7 +440,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
     }
 
     if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
-
+#endif
     return sound;
 }
 
@@ -425,6 +449,8 @@ void UnloadSound(Sound sound)
 {
     alDeleteSources(1, &sound.source);
     alDeleteBuffers(1, &sound.buffer);
+    
+    TraceLog(INFO, "Unloaded sound data");
 }
 
 // Play a sound
@@ -777,6 +803,7 @@ static Wave LoadWAV(const char *fileName)
     if (wavFile == NULL)
     {
         TraceLog(WARNING, "[%s] WAV file could not be opened", fileName);
+        wave.data = NULL;
     }
     else
     {
@@ -846,40 +873,49 @@ static Wave LoadOGG(char *fileName)
     Wave wave;
 
     stb_vorbis *oggFile = stb_vorbis_open_filename(fileName, NULL, NULL);
-    stb_vorbis_info info = stb_vorbis_get_info(oggFile);
 
-    wave.sampleRate = info.sample_rate;
-    wave.bitsPerSample = 16;
-    wave.channels = info.channels;
+    if (oggFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] OGG file could not be opened", fileName);
+        wave.data = NULL;
+    }
+    else
+    {
+        stb_vorbis_info info = stb_vorbis_get_info(oggFile);
 
-    TraceLog(DEBUG, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
-    TraceLog(DEBUG, "[%s] Ogg channels: %i", fileName, info.channels);
+        wave.sampleRate = info.sample_rate;
+        wave.bitsPerSample = 16;
+        wave.channels = info.channels;
 
-    int totalSamplesLength = (stb_vorbis_stream_length_in_samples(oggFile) * info.channels);
+        TraceLog(DEBUG, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
+        TraceLog(DEBUG, "[%s] Ogg channels: %i", fileName, info.channels);
 
-    wave.dataSize = totalSamplesLength*sizeof(short);   // Size must be in bytes
+        int totalSamplesLength = (stb_vorbis_stream_length_in_samples(oggFile) * info.channels);
 
-    TraceLog(DEBUG, "[%s] Samples length: %i", fileName, totalSamplesLength);
+        wave.dataSize = totalSamplesLength*sizeof(short);   // Size must be in bytes
 
-    float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
+        TraceLog(DEBUG, "[%s] Samples length: %i", fileName, totalSamplesLength);
 
-    TraceLog(DEBUG, "[%s] Total seconds: %f", fileName, totalSeconds);
+        float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
 
-    if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio lenght is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
+        TraceLog(DEBUG, "[%s] Total seconds: %f", fileName, totalSeconds);
 
-    int totalSamples = totalSeconds*info.sample_rate*info.channels;
+        if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio lenght is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
 
-    TraceLog(DEBUG, "[%s] Total samples calculated: %i", fileName, totalSamples);
+        int totalSamples = totalSeconds*info.sample_rate*info.channels;
 
-    wave.data = malloc(sizeof(short)*totalSamplesLength);
+        TraceLog(DEBUG, "[%s] Total samples calculated: %i", fileName, totalSamples);
 
-    int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, wave.data, totalSamplesLength);
+        wave.data = malloc(sizeof(short)*totalSamplesLength);
 
-    TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, samplesObtained);
+        int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, wave.data, totalSamplesLength);
 
-    TraceLog(INFO, "[%s] OGG file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
+        TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, samplesObtained);
 
-    stb_vorbis_close(oggFile);
+        TraceLog(INFO, "[%s] OGG file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
+
+        stb_vorbis_close(oggFile);
+    }
 
     return wave;
 }
@@ -888,4 +924,49 @@ static Wave LoadOGG(char *fileName)
 static void UnloadWave(Wave wave)
 {
     free(wave.data);
+    
+    TraceLog(INFO, "Unloaded wave data");
 }
+
+// Some required functions for audio standalone module version
+#if defined(AUDIO_STANDALONE)
+// Get the extension for a filename
+const char *GetExtension(const char *fileName)
+{
+    const char *dot = strrchr(fileName, '.');
+    if(!dot || dot == fileName) return "";
+    return (dot + 1);
+}
+
+// Outputs a trace log message (INFO, ERROR, WARNING)
+// NOTE: If a file has been init, output log is written there
+void TraceLog(int msgType, const char *text, ...)
+{
+    va_list args;
+    int traceDebugMsgs = 0;
+
+#ifdef DO_NOT_TRACE_DEBUG_MSGS
+    traceDebugMsgs = 0;
+#endif
+
+    switch(msgType)
+    {
+        case INFO: fprintf(stdout, "INFO: "); break;
+        case ERROR: fprintf(stdout, "ERROR: "); break;
+        case WARNING: fprintf(stdout, "WARNING: "); break;
+        case DEBUG: if (traceDebugMsgs) fprintf(stdout, "DEBUG: "); break;
+        default: break;
+    }
+
+    if ((msgType != DEBUG) || ((msgType == DEBUG) && (traceDebugMsgs)))
+    {
+        va_start(args, text);
+        vfprintf(stdout, text, args);
+        va_end(args);
+
+        fprintf(stdout, "\n");
+    }
+
+    if (msgType == ERROR) exit(1);      // If ERROR message, exit program
+}
+#endif

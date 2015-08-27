@@ -36,7 +36,7 @@
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2013 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2013 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -176,7 +176,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
 #ifndef __cplusplus
 // Boolean type
 typedef enum { false, true } bool;
@@ -354,6 +353,9 @@ typedef enum {
     COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } TextureFormat;
 
+// Color blending modes (pre-defined)
+typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
+
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
@@ -370,6 +372,9 @@ typedef enum {
     GESTURE_PINCH_OUT   = 1024
 } Gestures;
 
+// Camera system modes
+typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -383,13 +388,14 @@ extern "C" {            // Prevents name mangling of functions
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-void InitWindow(int width, int height, struct android_app *state);  // Init Android activity
+void InitWindow(int width, int height, struct android_app *state);  // Init Android Activity and OpenGL Graphics
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
 
 void CloseWindow(void);                                     // Close Window and Terminate Context
 bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
+bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)
 void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
@@ -418,6 +424,10 @@ Color Fade(Color color, float alpha);                       // Color fade-in or 
 void SetConfigFlags(char flags);                            // Enable some window configurations
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
+bool IsFileDropped(void);                                   // Check if a file have been dropped into window
+char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
+void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
+
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // TODO: Gives the ray trace from mouse position
 
 //------------------------------------------------------------------------------------
@@ -441,6 +451,8 @@ void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D textu
 void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
 void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
+void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
@@ -461,9 +473,9 @@ Vector2 GetMousePosition(void);                         // Returns mouse positio
 void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
-void ShowCursor(void);                                   // Shows cursor
-void HideCursor(void);                                   // Hides cursor
-bool IsCursorHidden(void);                               // Returns true if cursor is not visible
+void ShowCursor(void);                                  // Shows cursor
+void HideCursor(void);                                  // Hides cursor
+bool IsCursorHidden(void);                              // Returns true if cursor is not visible
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -476,22 +488,47 @@ bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad b
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-int GetTouchX(void);                                    // Returns touch position X
-int GetTouchY(void);                                    // Returns touch position Y
-Vector2 GetTouchPosition(void);                         // Returns touch position XY
+//------------------------------------------------------------------------------------
+// Gestures and Touch Handling Functions (Module: gestures)
+//------------------------------------------------------------------------------------
+int GetTouchX(void);                                    // Returns touch position X (relative to screen size)
+int GetTouchY(void);                                    // Returns touch position Y (relative to screen size)
+Vector2 GetTouchPosition(void);                         // Returns touch position XY (relative to screen size)
 
-// Gestures System (module: gestures)
-bool IsGestureDetected(void);
-int GetGestureType(void);
-void SetGesturesEnabled(unsigned int gestureFlags);
-
-float GetGestureDragIntensity(void);
-float GetGestureDragAngle(void);
-Vector2 GetGestureDragVector(void);
-int GetGestureHoldDuration(void);                       // Hold time in frames
-float GetGesturePinchDelta(void);
-float GetGesturePinchAngle(void);
+#if defined(PLATFORM_WEB)
+void InitGesturesSystem(void);                          // Init gestures system (web)
+#elif defined(PLATFORM_ANDROID)
+void InitGesturesSystem(struct android_app *app);       // Init gestures system (android)
 #endif
+void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
+bool IsGestureDetected(void);                           // Check if a gesture have been detected
+int GetGestureType(void);                               // Get latest detected gesture
+void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+
+float GetGestureDragIntensity(void);                    // Get gesture drag intensity
+float GetGestureDragAngle(void);                        // Get gesture drag angle
+Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
+int GetGestureHoldDuration(void);                       // Get gesture hold time in frames
+float GetGesturePinchDelta(void);                       // Get gesture pinch delta
+float GetGesturePinchAngle(void);                       // Get gesture pinch angle
+#endif
+
+//------------------------------------------------------------------------------------
+// Camera System Functions (Module: camera)
+//------------------------------------------------------------------------------------
+void SetCameraMode(int mode);                               // Set camera mode (multiple camera modes available)
+Camera UpdateCamera(Vector3 *playerPosition);               // Update camera and player position (1st person and 3rd person cameras)
+
+void SetCameraMoveControls(int frontKey, int backKey, 
+                           int leftKey, int rightKey, 
+                           int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
+
+void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
+void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
+void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
+
+void SetCameraMouseSensitivity(float sensitivity);          // Set camera mouse sensitivity (1st person and 3rd person cameras)
+void SetCameraTarget(Vector3 target);                       // Set internal camera target
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
@@ -625,6 +662,7 @@ void SetSoundVolume(Sound sound, float volume);                 // Set volume fo
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
 void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
+void UpdateMusicStream(void);                                   // Updates buffers for music streaming
 void StopMusicStream(void);                                     // Stop music playing (close stream)
 void PauseMusicStream(void);                                    // Pause music playing
 void ResumeMusicStream(void);                                   // Resume playing paused music

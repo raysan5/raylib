@@ -1,10 +1,59 @@
 changelog
 ---------
 
-Current Release:    raylib 1.2.2 (31 December 2014)
+Current Release:    raylib 1.3.0 (01 September 2015)
 
 NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.3.0 (01 September 2015)
+-----------------------------------------------
+NOTE: 
+  This version supposed a big boost for raylib, new modules have been added with lots of features.
+  Most of the modules have been completely reviewed to accomodate to the new features.
+
+BIG changes:
+[camera] NEW MODULE: Set of cameras for 3d view: Free, Orbital, 1st person, 3rd person
+[gestures] NEW MODULE: Gestures system for Android and HTML5 platforms
+[raygui] NEW MODULE: Set of IMGUI elements for tools development
+[rlgl] SHADERS: Support for model shaders and postprocessing shaders (multiple functions)
+[textures] FORMATS: Added support for multiple internal formats, including compressed formats
+
+smaller changes:
+[rlgl] Added check for OpenGL supported extensions
+[rlgl] Added function SetBlenMode() to select some predefined blending modes 
+[core] Added support for drop&drag of external files into running program
+[core] Added functions ShowCursor(), HideCursor(), IsCursorHidden()
+[core] Renamed function SetFlags() to SetConfigFlags()
+[shapes] Simplified some functions to improve performance
+[textures] Added function LoadImageEx() 
+[textures] Added function LoadImageRaw()
+[textures] Added function LoadTextureEx()
+[textures] Simplified function parameters LoadTextureFromImage()
+[textures] Added function GetImageData()
+[textures] Added function GetTextureData()
+[textures] Renamed function ConvertToPOT() to ImageConvertToPOT()
+[textures] Added function ImageConvertFormat()
+[textures] Added function GenTextureMipmaps()
+[text] Added support for Latin-1 Extended characters for default font
+[models] Review of struct: Model (added shaders support)
+[models] Added 3d collision functions (sphere vs sphere vs box vs box)
+[models] Added function DrawCubeTexture()
+[models] Added function DrawQuad()
+[models] Added function DrawRay()
+[models] Simplified funtion DrawPlane()
+[models] Removed function DrawPlaneEx()
+[models] Simplified funtion DrawGizmo()
+[models] Removed function DrawGizmoEx()
+[models] Added function LoadModelEx()
+[models] Review of function LoadCubicMap()
+[models] Added function ResolveCollisionCubicmap()
+[audio] Decopupled from raylib, now this module can be used as standalone
+[audio] Added function UpdateMusicStream()
+[raymath] Complete review of the module
+[stb] Updated to latest headers versions
+[*] Lots of tweaks around
 
 -----------------------------------------------
 Release:     raylib 1.2.2 (31 December 2014)

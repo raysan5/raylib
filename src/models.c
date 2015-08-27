@@ -4,7 +4,7 @@
 *
 *   Basic functions to draw 3d shapes and load/draw 3d models (.OBJ)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -558,22 +558,33 @@ void DrawGizmo(Vector3 position)
 Model LoadModel(const char *fileName)
 {
     VertexData vData;
+    
+    Model model;
+    
+    // TODO: Initialize default data for model in case loading fails, maybe a cube?
 
     if (strcmp(GetExtension(fileName),"obj") == 0) vData = LoadOBJ(fileName);
     else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
-
-    // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
-    Model model = rlglLoadModel(vData);     // Upload vertex data to GPU
-
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
-    if (rlGetVersion() != OPENGL_11)
+    
+    if (vData.vertexCount == 0)
     {
-        free(vData.vertices);
-        free(vData.texcoords);
-        free(vData.normals);
+        TraceLog(WARNING, "Model could not be loaded");
+    }
+    else
+    {
+        // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
+        model = rlglLoadModel(vData);     // Upload vertex data to GPU
+
+        // Now that vertex data is uploaded to GPU, we can free arrays
+        // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
+        if (rlGetVersion() != OPENGL_11)
+        {
+            free(vData.vertices);
+            free(vData.texcoords);
+            free(vData.normals);
+        }
     }
 
     return model;
@@ -1105,6 +1116,8 @@ void UnloadModel(Model model)
     rlDeleteBuffers(model.mesh.vboId[2]);
 
     rlDeleteVertexArrays(model.mesh.vaoId);
+    
+    TraceLog(INFO, "Unloaded model data");
 }
 
 // Link a texture to a model

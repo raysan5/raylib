@@ -4,21 +4,21 @@ roadmap
 Current version of raylib is quite complete and functional but there is still a lot of things I would like to improve.
 Here it is a list of features I would like to add and functions to improve.
 
-Around the source code there are some TODO points with pending revisions/bugs and here it is a list of features I would like to add.
+Around the source code there are multiple TODO points with pending revisions/bugs and here it is a list of desired features.
 
-This roadmap is quite outdated... a full list of all the features we are working on should be listed here at some point...
+raylib v1.4
 
-raylib v1.x
-
-   - [DONE] Review Billboard Drawing functions
-   - [DONE] Review Heightmap Loading and Drawing functions - Load Heightmap directly as a Model
-   - Lighting support (only 3d mode)
-   - [DONE] Simple Collision Detection functions
-   - [IN PROGRESS] Default scene Camera controls (zoom, pan, rotate)   
-   - Basic Procedural Image Generation (Gradient, Checked, Spot, Noise, Cellular)
-   - [DONE] Software mipmapping generation and POT conversion (custom implementation)
-   - [IN PROGRESS] TTF fonts support
+   - TTF fonts support (using stb_truetype)
+   - Raycast system for 3D picking (including collisions detection)
+   - Remove GLEW dependency (use another solution...)
+   - Floyd-Steinberg dithering on 16bit image format conversion
+   - Basic image manipulation functions (crop, resize, draw...)
+   - Basic image procedural generation (spot, gradient, noise...)
+   - Basic GPU stats sytem (memory, draws, time...)
    
+Check [GITHUB ISSUES][issues] for further details on implementation status for this features!
+
 Any feature missing? Do you have a request? [Let me know!][raysan5]
 
 [raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"
+[isssues]: https://github.com/raysan5/raylib/issues

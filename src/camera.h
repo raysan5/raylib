@@ -24,7 +24,12 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "raylib.h"
+#ifndef PI
+    #define PI 3.14159265358979323846
+#endif
+
+#define DEG2RAD (PI / 180.0f)
+#define RAD2DEG (180.0f / PI)
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -33,10 +38,30 @@
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
+// NOTE: Below types are required for CAMERA_STANDALONE usage
 //----------------------------------------------------------------------------------
 // Camera modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
+// Vector2 type
+typedef struct Vector2 {
+    float x;
+    float y;
+} Vector2;
+
+// Vector3 type
+typedef struct Vector3 {
+    float x;
+    float y;
+    float z;
+} Vector3;
+
+// Camera type, defines a camera position/orientation in 3d space
+typedef struct Camera {
+    Vector3 position;
+    Vector3 target;
+    Vector3 up;
+} Camera;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -50,17 +75,19 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-void SetCameraMode(int mode);                               // Select camera mode (multiple camera modes available)
-Camera UpdateCamera(Vector3 *position);                     // Update camera with position
+void SetCameraMode(int mode);                               // Set camera mode (multiple camera modes available)
+Camera UpdateCamera(Vector3 *playerPosition);               // Update camera and player position (1st person and 3rd person cameras)
 
-void SetCameraControls(int front, int left, int back, int right, int up, int down);
-void SetCameraMouseSensitivity(float sensitivity);
-void SetCameraResetPosition(Vector3 resetPosition);
-void SetCameraResetControl(int resetKey);
-void SetCameraPawnControl(int pawnControlKey);
-void SetCameraFnControl(int fnControlKey);
-void SetCameraSmoothZoomControl(int smoothZoomControlKey);
-void SetCameraOrbitalTarget(Vector3 target);
+void SetCameraMoveControls(int frontKey, int backKey, 
+                           int leftKey, int rightKey, 
+                           int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
+
+void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
+void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
+void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
+
+void SetCameraMouseSensitivity(float sensitivity);          // Set camera mouse sensitivity (1st person and 3rd person cameras)
+void SetCameraTarget(Vector3 target);                       // Set internal camera target
 
 #ifdef __cplusplus
 }

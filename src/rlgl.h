@@ -7,7 +7,7 @@
 *       OpenGL 3.3+ - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -34,6 +34,10 @@
 #ifndef RLGL_STANDALONE
     #include "raylib.h"         // Required for typedef(s): Model, Shader, Texture2D
     #include "utils.h"          // Required for function TraceLog()
+#endif
+
+#if defined(RLGL_STANDALONE)
+    #define RAYMATH_STANDALONE
 #endif
 
 #include "raymath.h"            // Required for data type Matrix and Matrix functions
@@ -89,9 +93,26 @@ typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
 #ifdef RLGL_STANDALONE
+    #ifndef __cplusplus
+    // Boolean type
+    typedef enum { false, true } bool;
+    #endif
+
+    // byte type
+    typedef unsigned char byte;
+    
+    // Color type, RGBA (32bit)
+    typedef struct Color {
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+        unsigned char a;
+    } Color;
+
     // Texture formats (support depends on OpenGL version)
     typedef enum { 
         UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+        UNCOMPRESSED_GRAY_ALPHA,
         UNCOMPRESSED_R5G6B5,            // 16 bpp
         UNCOMPRESSED_R8G8B8,            // 24 bpp
         UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
@@ -106,7 +127,8 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
         COMPRESSED_PVRT_RGB,            // 4 bpp
         COMPRESSED_PVRT_RGBA,           // 4 bpp
-        /*COMPRESSED_ASTC_RGBA_4x4*/    // 8 bpp
+        COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
+        COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
     } TextureFormat;
 
     // VertexData type
@@ -123,28 +145,28 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
     // Shader type
     typedef struct Shader {
-        unsigned int id;            // Shader program id
+        unsigned int id;                // Shader program id
 
+        // TODO: This should be Texture2D objects
+        unsigned int texDiffuseId;      // Diffuse texture id
+        unsigned int texNormalId;       // Normal texture id
+        unsigned int texSpecularId;     // Specular texture id
+        
         // Variable attributes
-        unsigned int vertexLoc;     // Vertex attribute location point (vertex shader)
-        unsigned int texcoordLoc;   // Texcoord attribute location point (vertex shader)
-        unsigned int normalLoc;     // Normal attribute location point (vertex shader)
-        unsigned int colorLoc;      // Color attibute location point (vertex shader)
+        int vertexLoc;        // Vertex attribute location point (vertex shader)
+        int texcoordLoc;      // Texcoord attribute location point (vertex shader)
+        int normalLoc;        // Normal attribute location point (vertex shader)
+        int colorLoc;         // Color attibute location point (vertex shader)
 
         // Uniforms
-        unsigned int projectionLoc; // Projection matrix uniform location point (vertex shader)
-        unsigned int modelviewLoc;  // ModeView matrix uniform location point (vertex shader)
-        unsigned int textureLoc;    // Texture uniform location point (fragment shader)
-        unsigned int tintColorLoc;  // Color uniform location point (fragment shader)
+        int projectionLoc;    // Projection matrix uniform location point (vertex shader)
+        int modelviewLoc;     // ModeView matrix uniform location point (vertex shader)
+        int tintColorLoc;     // Color uniform location point (fragment shader)
+        
+        int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
+        int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
+        int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
     } Shader;
-
-    // 3d Model type
-    typedef struct Model {
-        VertexData mesh;
-        Matrix transform;
-        Texture2D texture;
-        Shader shader;
-    } Model;
 
     // Texture2D type
     typedef struct Texture2D {
@@ -152,6 +174,17 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         int width;
         int height;
     } Texture2D;
+    
+    // 3d Model type
+    typedef struct Model {
+        VertexData mesh;
+        Matrix transform;
+        Texture2D texture;
+        Shader shader;
+    } Model;
+	
+    // Color blending modes (pre-defined)
+    typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
 #endif
 
 #ifdef __cplusplus
@@ -229,6 +262,31 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format);   // R
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 void PrintProjectionMatrix(void);       // DEBUG: Print projection matrix
 void PrintModelviewMatrix(void);        // DEBUG: Print modelview matrix
+#endif
+
+#if defined(RLGL_STANDALONE)
+//------------------------------------------------------------------------------------
+// Shaders System Functions (Module: rlgl)
+// NOTE: This functions are useless when using OpenGL 1.1
+//------------------------------------------------------------------------------------
+Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
+unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load a custom shader and return program id
+void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
+void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
+void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
+void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
+void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
+bool IsPosproShaderEnabled(void);                                   // Check if postprocessing shader is enabled
+
+int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
+void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
+void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
+void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
+void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+
+void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 #endif
 
 #ifdef __cplusplus

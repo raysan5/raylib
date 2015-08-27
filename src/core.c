@@ -17,7 +17,7 @@
 *
 *   On PLATFORM_RPI, graphic device is managed by EGL and input system is coded in raw mode.
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -164,7 +164,7 @@ static bool customCursor = false;           // Tracks if custom cursor has been 
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static Texture2D cursor;                    // Cursor texture
 
-static Vector2 mousePosition;
+static Vector2 mousePosition;               // Mouse position on screen
 
 static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
 static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
@@ -179,9 +179,12 @@ static int previousMouseWheelY = 0;         // Required to track mouse wheel var
 static int currentMouseWheelY = 0;          // Required to track mouse wheel variation
 
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
-static int lastKeyPressed = -1;
+static int lastKeyPressed = -1;             // Register last key pressed
 
-static bool cursorHidden;
+static bool cursorHidden;                   // Track if cursor is hidden
+
+static char **dropFilesPath;                // Store dropped files paths as strings
+static int dropFilesCount = 0;              // Count stored strings
 #endif
 
 static double currentTime, previousTime;    // Used to track timmings
@@ -189,27 +192,14 @@ static double updateTime, drawTime;         // Time measures for update and draw
 static double frameTime;                    // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
-static char configFlags = 0;
-static bool showLogo = false;
+static char configFlags = 0;                // Configuration flags (bit  based)
+static bool showLogo = false;               // Track if showing logo at init is enabled
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
 extern void LoadDefaultFont(void);              // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont(void);            // [Module: text] Unloads default font from GPU memory
-
-extern void UpdateMusicStream(void);            // [Module: audio] Updates buffers for music streaming
-
-extern Vector2 GetRawPosition(void);
-extern void ResetGestures(void);
-
-#if defined(PLATFORM_ANDROID)
-extern void InitAndroidGestures(struct android_app *app);
-#endif
-
-#if defined(PLATFORM_WEB)
-extern void InitWebGestures(void);              // [Module: gestures] Initializes emscripten gestures for web
-#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -241,7 +231,11 @@ static void CharCallback(GLFWwindow *window, unsigned int key);                 
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
 static void WindowSizeCallback(GLFWwindow *window, int width, int height);                 // GLFW3 WindowSize Callback, runs when window is resized
-static void WindowIconifyCallback(GLFWwindow* window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+static void WindowIconifyCallback(GLFWwindow *window, int iconified);                      // GLFW3 WindowIconify Callback, runs when window is minimized/restored
+#endif
+
+#if defined(PLATFORM_DESKTOP)
+static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
@@ -282,10 +276,6 @@ void InitWindow(int width, int height, const char *title)
     InitMouse();        // Mouse init
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
-#endif
-
-#if defined(PLATFORM_WEB)
-    InitWebGestures();  // Init touch input events for web
 #endif
 
     mousePosition.x = screenWidth/2;
@@ -341,7 +331,7 @@ void InitWindow(int width, int height, struct android_app *state)
     //state->userData = &engine;
     app->onAppCmd = AndroidCommandCallback;
     
-    InitAndroidGestures(app);
+    //InitGesturesSystem(app);   // NOTE: Must be called by user
 
     InitAssetManager(app->activity->assetManager);
 
@@ -409,6 +399,16 @@ bool WindowShouldClose(void)
     return (glfwWindowShouldClose(window));
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     return windowShouldClose;
+#endif
+}
+
+// Detect if window has been minimized (or lost focus)
+bool IsWindowMinimized(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return windowMinimized;
+#else
+    return false;
 #endif
 }
 
@@ -497,13 +497,7 @@ void EndDrawing(void)
 
     SwapBuffers();                  // Copy back buffer to front buffer
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    ResetGestures();
-#endif
-
     PollInputEvents();              // Poll user events
-
-    UpdateMusicStream();            // NOTE: Function checks if music is enabled
 
     currentTime = GetTime();
     drawTime = currentTime - previousTime;
@@ -538,6 +532,7 @@ void Begin3dMode(Camera camera)
     double top = 0.1f*tan(45.0f*PI / 360.0f);
     double right = top*aspect;
 
+    // NOTE: zNear and zFar values are important when computing depth buffer values
     rlFrustum(-right, right, -top, top, 0.1f, 1000.0f);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
@@ -565,7 +560,7 @@ void End3dMode(void)
 // Set target FPS for the game
 void SetTargetFPS(int fps)
 {
-    targetTime = 1 / (float)fps;
+    targetTime = 1 / (double)fps;
 
     TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
 }
@@ -573,16 +568,16 @@ void SetTargetFPS(int fps)
 // Returns current FPS
 float GetFPS(void)
 {
-    return (1/(float)frameTime);
+    return (float)(1/frameTime);
 }
 
 // Returns time in seconds for one frame
 float GetFrameTime(void)
 {
-    // As we are operating quite a lot with frameTime, it could be no stable
-    // so we round it before before passing around to be used
+    // As we are operate quite a lot with frameTime, 
+    // it could be no stable, so we round it before passing it around
     // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime =  round(frameTime*10000) / 10000;
+    double roundedFrameTime =  round(frameTime*10000)/10000;
 
     return (float)roundedFrameTime;    // Time in seconds to run a frame
 }
@@ -643,6 +638,34 @@ void ShowLogo(void)
     showLogo = true;
 }
 
+// Check if a file have been dropped into window
+bool IsFileDropped(void)
+{
+    if (dropFilesCount > 0) return true;
+    else return false;
+}
+
+// Retrieve dropped files into window
+char **GetDroppedFiles(int *count)
+{
+    *count = dropFilesCount;
+    return dropFilesPath;
+}
+
+// Clear dropped files paths buffer
+void ClearDroppedFiles(void)
+{
+    if (dropFilesCount > 0)
+    {
+        for (int i = 0; i < dropFilesCount; i++) free(dropFilesPath[i]);
+        
+        free(dropFilesPath);
+        
+        dropFilesCount = 0;
+    }
+}
+
+// TODO: Gives the ray trace from mouse position
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
     Ray ray;
@@ -650,24 +673,28 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     Matrix proj = MatrixIdentity();
     Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
 
+    // Calculate projection matrix for the camera
     float aspect = (GLfloat)GetScreenWidth()/(GLfloat)GetScreenHeight();
-    double top = 0.1f*tanf(45.0f*PI / 360.0f);
+    double top = 0.1f*tanf(45.0f*PI/360.0f);
     double right = top*aspect;
 
+    // NOTE: zNear and zFar values are important for depth
     proj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
     MatrixTranspose(&proj);
 
-    float realy = (float)GetScreenHeight() - mousePosition.y;
+    // NOTE: Our screen origin is top-left instead of bottom-left: transform required!
+    float invertedMouseY = (float)GetScreenHeight() - mousePosition.y;
 
+    // NOTE: Do I really need to get z value from depth buffer?
     //float z;
-    // glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+    //glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
     //http://www.bfilipek.com/2012/06/select-mouse-opengl.html
 
-    Vector3 nearPoint = { mousePosition.x, realy, 0.0f };
-    Vector3 farPoint = { mousePosition.x, realy, 1.0f };
+    Vector3 nearPoint = { mousePosition.x, invertedMouseY, 0.0f };
+    Vector3 farPoint = { mousePosition.x, invertedMouseY, 1.0f };
 
-    //nearPoint = internalCamera.position;
-    farPoint = rlglUnproject(farPoint, proj, view);
+    nearPoint = rlglUnproject(nearPoint, proj, view);
+    farPoint = rlglUnproject(farPoint, proj, view);     // TODO: it seems it doesn't work...
 
     Vector3 direction = VectorSubtract(farPoint, nearPoint);
     VectorNormalize(&direction);
@@ -791,7 +818,11 @@ void SetMousePosition(Vector2 position)
 // Returns mouse wheel movement Y
 int GetMouseWheelMove(void)
 {
+#if defined(PLATFORM_WEB)
+    return previousMouseWheelY/100;
+#else
     return previousMouseWheelY;
+#endif
 }
 
 // Hide mouse cursor
@@ -933,40 +964,6 @@ bool IsGamepadButtonUp(int gamepad, int button)
 }
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-// Returns touch position X
-int GetTouchX(void)
-{
-    return (int)GetRawPosition().x;
-}
-
-// Returns touch position Y
-int GetTouchY(void)
-{
-    return (int)GetRawPosition().y;
-}
-
-// Returns touch position XY
-Vector2 GetTouchPosition(void)
-{
-    Vector2 position = GetRawPosition();
-    
-    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
-    {
-        // TODO: Seems to work ok but... review!
-        position.x = position.x*((float)screenWidth / (float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
-        position.y = position.y*((float)screenHeight / (float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
-    }
-    else
-    {
-        position.x = position.x*((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
-        position.y = position.y*((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
-    }
-
-    return position;
-}
-#endif
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -1010,7 +1007,8 @@ static void InitDisplay(int width, int height)
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
     //glfwWindowHint(GLFW_DECORATED, GL_TRUE);    // Border and buttons on Window
-    //glfwWindowHint(GLFW_RED_BITS, 8);           // Bit depths of color components for default framebuffer
+    //glfwWindowHint(GLFW_RED_BITS, 8);           // Color framebuffer red component bits
+    //glfwWindowHint(GLFW_DEPTH_BITS, 16);        // Depth buffer bits (24 by default)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);       // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers
@@ -1074,6 +1072,9 @@ static void InitDisplay(int width, int height)
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
     glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
+#if defined(PLATFORM_DESKTOP)
+    glfwSetDropCallback(window, WindowDropCallback);
+#endif
 
     glfwMakeContextCurrent(window);
 
@@ -1106,7 +1107,14 @@ static void InitDisplay(int width, int height)
     VC_RECT_T srcRect;
 #endif
 
-    // TODO: if (configFlags & FLAG_MSAA_4X_HINT) activate (EGL_SAMPLES, 4)
+    EGLint samples = 0;
+    EGLint sampleBuffer = 0;
+    if (configFlags & FLAG_MSAA_4X_HINT) 
+    {
+        samples = 4;
+        sampleBuffer = 1;
+    }
+    
     const EGLint framebufferAttribs[] =
     {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    // Type of context support -> Required on RPI?
@@ -1115,10 +1123,10 @@ static void InitDisplay(int width, int height)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth
-        EGL_DEPTH_SIZE, 8,          // Depth buffer size (Required to use Depth testing!)
+        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        //EGL_SAMPLE_BUFFERS, 1,    // Activate MSAA
-        //EGL_SAMPLES, 4,           // 4x Antialiasing (Free on MALI GPUs)
+        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
+        EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
         EGL_NONE
     };
 
@@ -1317,20 +1325,28 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 static void WindowIconifyCallback(GLFWwindow* window, int iconified)
 {
-    if (iconified)
-    {
-        // The window was iconified
-        PauseMusicStream();
+    if (iconified) windowMinimized = true;  // The window was iconified
+    else windowMinimized = false;           // The window was restored
+}
+#endif
 
-        windowMinimized = true;
-    }
-    else
+#if defined(PLATFORM_DESKTOP)
+// GLFW3 Window Drop Callback, runs when drop files into window
+// NOTE: Paths are stored in dinamic memory for further retrieval
+// Everytime new files are dropped, old ones are discarded
+static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
+{
+    ClearDroppedFiles();
+    
+    dropFilesPath = (char **)malloc(sizeof(char *)*count);
+    
+    for (int i = 0; i < count; i++)
     {
-        // The window was restored
-        ResumeMusicStream();
-
-        windowMinimized = false;
+        dropFilesPath[i] = (char *)malloc(sizeof(char)*256);     // Max path length set to 256 char
+        strcpy(dropFilesPath[i], paths[i]);
     }
+
+    dropFilesCount = count;
 }
 #endif
 
@@ -1379,7 +1395,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         case APP_CMD_GAINED_FOCUS:
         {
             TraceLog(INFO, "APP_CMD_GAINED_FOCUS");
-            ResumeMusicStream();
+            //ResumeMusicStream();
         } break;
         case APP_CMD_PAUSE:
         {
@@ -1389,7 +1405,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         {
             //DrawFrame();
             TraceLog(INFO, "APP_CMD_LOST_FOCUS");
-            PauseMusicStream();
+            //PauseMusicStream();
         } break;
         case APP_CMD_TERM_WINDOW:
         {
@@ -1476,7 +1492,7 @@ static double GetTime(void)
     clock_gettime(CLOCK_MONOTONIC, &ts);
     uint64_t time = ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
-    return (double)(time - baseTime) * 1e-9;
+    return (double)(time - baseTime)*1e-9;
 #endif
 }
 

@@ -7,7 +7,7 @@
 *       OpenGL 3.3+ - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Same behaviour as OpenGL 3.3+
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -33,20 +33,21 @@
 #include <string.h>         // Declares strcmp(), strlen(), strtok()
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #ifdef __APPLE__            // OpenGL include for OSX
+    #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl.h>
     #else
-        #include <GL/gl.h>      // Basic OpenGL include
+        #include <GL/gl.h>          // Basic OpenGL include
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
     #define GLEW_STATIC
-    #ifdef __APPLE__            // OpenGL include for OSX
+    #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl3.h>
     #else
-        #include <GL/glew.h>    // Extensions loading lib
-        //#include "glad.h"     // TODO: Other extensions loading lib? --> REVIEW
+        #include <GL/glew.h>        // GLEW extensions loading lib
+        //#include "glad.h"         // glad extensions loading lib: ERRORS: windows.h
+        //#include "gl_core_3_3.h"  // glLoadGen extension loading lib: ERRORS: windows.h
     #endif
 #endif
 
@@ -54,6 +55,10 @@
     #include <EGL/egl.h>
     #include <GLES2/gl2.h>
     #include <GLES2/gl2ext.h>
+#endif
+
+#if defined(RLGL_STANDALONE)
+    #include <stdarg.h>         // Used for functions with variable number of parameters (TraceLog())
 #endif
 
 //----------------------------------------------------------------------------------
@@ -177,6 +182,10 @@ typedef struct {
     unsigned char a;
 } pixel;
 
+#if defined(RLGL_STANDALONE)
+typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+#endif
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -218,7 +227,6 @@ static bool useTempBuffer = false;
 
 // Flags for supported extensions
 static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support VAO extension)
-static bool npotSupported = false;  // NPOT textures full support
 
 // Compressed textures support flags
 //static bool texCompDXTSupported = false;     // DDS texture compression support
@@ -236,7 +244,8 @@ static bool enabledPostpro = false;
 #endif
 
 // Compressed textures support flags
-static bool texCompDXTSupported = false;     // DDS texture compression support
+static bool texCompDXTSupported = false;   // DDS texture compression support
+static bool npotSupported = false;         // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -245,6 +254,11 @@ static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 //static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
+
+// Save screen size data (render size), required for postpro quad
+static int screenWidth, screenHeight;
+
+static int blendMode = 0;
 
 // White texture useful for plain color polys (required by shader)
 // NOTE: It's required in shapes and models modules!
@@ -271,6 +285,10 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 static char** StringSplit(char *baseString, const char delimiter, int *numExt);
+#endif
+
+#if defined(RLGL_STANDALONE)
+static void TraceLog(int msgType, const char *text, ...);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -838,35 +856,69 @@ void rlglInit(void)
     //for (int i = 0; i < numComp; i++) TraceLog(INFO, "Supported compressed format: 0x%x", format[i]);
 
     // NOTE: We don't need that much data on screen... right now...
+    
+#if defined(GRAPHICS_API_OPENGL_11)
+    TraceLog(INFO, "OpenGL 1.1 profile initialized");
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get supported extensions list
     GLint numExt;
     
 #if defined(GRAPHICS_API_OPENGL_33)
+
+#define GLEW_EXTENSIONS_LOADER
+#if defined(GLEW_EXTENSIONS_LOADER)
     // Initialize extensions using GLEW
     glewExperimental = 1;       // Needed for core profile
-    
     GLenum error = glewInit();
     
     if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
-
+    
     if (glewIsSupported("GL_VERSION_3_3"))
     {
-        TraceLog(INFO, "OpenGL 3.3 Core profile");
+        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
         
         vaoSupported = true;
         npotSupported = true;
     }
+    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
 
-    // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
-    // Alternatives: glLoadGen, glad, libepoxy
-    //if (!gladLoadGL()) TraceLog("ERROR: Failed to initialize glad\n");
-
-    // With GLEW we can check if an extension has been loaded in two ways:
+    // With GLEW, we can check if an extension has been loaded in two ways:
     //if (GLEW_ARB_vertex_array_object) { } 
     //if (glewIsSupported("GL_ARB_vertex_array_object")) { }
 
+    // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
+    // Alternatives: glLoadGen, glad, libepoxy
+    
+#elif defined(GLAD_EXTENSIONS_LOADER)
+    // NOTE: glad is generated and contains only required OpenGL version and core extensions
+    if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
+    //if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n");
+
+    if (GLAD_GL_VERSION_3_3)
+    {
+        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+        
+        vaoSupported = true;
+        npotSupported = true;
+    }
+    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+    
+    // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
+    //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
+
+#elif defined(GLLOADGEN_EXTENSIONS_LOADER)
+    // NOTE: glLoadGen already generates a header with required OpenGL version and core extensions
+    if (ogl_LoadFunctions() != ogl_LOAD_FAILED)
+    {
+        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+        
+        vaoSupported = true;
+        npotSupported = true;
+    }
+    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+#endif
     
     // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
@@ -995,6 +1047,7 @@ void rlglInit(void)
 }
 
 // Init postpro system
+// NOTE: Uses global variables screenWidth and screenHeight
 void rlglInitPostpro(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1003,57 +1056,82 @@ void rlglInitPostpro(void)
     glBindTexture(GL_TEXTURE_2D, fboColorTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GetScreenWidth(), GetScreenHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Create the texture that will serve as the depth attachment for the framebuffer.
+    // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
+    glGenRenderbuffers(1, &fboDepthTexture);
+    glBindRenderbuffer(GL_RENDERBUFFER, fboDepthTexture);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, screenWidth, screenHeight);
+    
+    // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extensions)
+    // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
+/*
     glGenTextures(1, &fboDepthTexture);
     glBindTexture(GL_TEXTURE_2D, fboDepthTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GetScreenWidth(), GetScreenHeight(), 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
+*/
 
     // Create the framebuffer object
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    // Attach color texture and depth texture to FBO
+    // Attach color texture and depth renderbuffer to FBO
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboColorTexture, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fboDepthTexture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fboDepthTexture);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-    if (status != GL_FRAMEBUFFER_COMPLETE) TraceLog(WARNING, "Framebuffer object could not be created...");
-    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
+    if (status != GL_FRAMEBUFFER_COMPLETE) 
+    {
+        TraceLog(WARNING, "Framebuffer object could not be created...");
+        
+        switch(status)
+        {
+            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(WARNING, "Framebuffer incomplete dimensions"); break;
+#endif
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete missing attachment"); break;
+            default: break;
+        }
+    }
+    else
+    {
+        TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // Create a simple quad model to render fbo texture
-    VertexData quadData;
-    
-    quadData.vertexCount = 6;
-    
-    float w = GetScreenWidth();
-    float h = GetScreenHeight();
-    
-    float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
-    float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
-    float quadNormals[6*3] = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
-    unsigned char quadColors[6*4] = { 255 };
-    
-    quadData.vertices = quadPositions;
-    quadData.texcoords = quadTexcoords;
-    quadData.normals = quadNormals;
-    quadData.colors = quadColors;
-    
-    postproQuad = rlglLoadModel(quadData);
-    
-    // NOTE: fboColorTexture id must be assigned to postproQuad model shader
+        // Create a simple quad model to render fbo texture
+        VertexData quadData;
+        
+        quadData.vertexCount = 6;
+        
+        float w = screenWidth;
+        float h = screenHeight;
+        
+        float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
+        float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
+        float quadNormals[6*3] = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
+        unsigned char quadColors[6*4] = { 255 };
+        
+        quadData.vertices = quadPositions;
+        quadData.texcoords = quadTexcoords;
+        quadData.normals = quadNormals;
+        quadData.colors = quadColors;
+        
+        postproQuad = rlglLoadModel(quadData);
+        
+        // NOTE: fboColorTexture id must be assigned to postproQuad model shader
+    }
 #endif
 }
 
@@ -1116,7 +1194,20 @@ void rlglClose(void)
     {
         glDeleteFramebuffers(1, &fbo);
         
-        UnloadModel(postproQuad);
+        // Unload postpro quad model data
+#if defined(GRAPHICS_API_OPENGL_11)
+        free(postproQuad.mesh.vertices);
+        free(postproQuad.mesh.texcoords);
+        free(postproQuad.mesh.normals);
+#endif
+
+        rlDeleteBuffers(postproQuad.mesh.vboId[0]);
+        rlDeleteBuffers(postproQuad.mesh.vboId[1]);
+        rlDeleteBuffers(postproQuad.mesh.vboId[2]);
+
+        rlDeleteVertexArrays(postproQuad.mesh.vaoId);
+        
+        TraceLog(INFO, "Unloaded postpro quad data");
     }
 
     free(draws);
@@ -1287,7 +1378,7 @@ void rlglDrawPostpro(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    rlglDrawModel(postproQuad, (Vector3){0,0,0}, 0.0f, (Vector3){0,0,0}, (Vector3){1.0f, 1.0f, 1.0f}, WHITE, false);
+    rlglDrawModel(postproQuad, (Vector3){0,0,0}, 0.0f, (Vector3){0,0,0}, (Vector3){1.0f, 1.0f, 1.0f}, (Color){ 255, 255, 255, 255 }, false);
 #endif
 }
 
@@ -1352,15 +1443,16 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
     glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(projection));
     glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(modelviewworld));
-    
+
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
     float vColor[4] = { (float)color.r/255, (float)color.g/255, (float)color.b/255, (float)color.a/255 };
     glUniform4fv(model.shader.tintColorLoc, 1, vColor);
-    
+
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
+    glUniform1i(model.shader.mapDiffuseLoc, 0);
 
     if (model.shader.texNormalId != 0)
     {
@@ -1390,13 +1482,20 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
         glEnableVertexAttribArray(model.shader.texcoordLoc);
 
         // Add normals support
-        glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[2]);
-        glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(model.shader.normalLoc);
+        if (model.shader.normalLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[2]);
+            glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(model.shader.normalLoc);
+        }
     }
 
     // Draw call!
     glDrawArrays(GL_TRIANGLES, 0, model.mesh.vertexCount);
+    
+    //glDisableVertexAttribArray(model.shader.vertexLoc);
+    //glDisableVertexAttribArray(model.shader.texcoordLoc);
+    //if (model.shader.normalLoc != -1) glDisableVertexAttribArray(model.shader.normalLoc);
     
     if (model.shader.texNormalId != 0)
     {
@@ -1426,17 +1525,23 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 }
 
 // Initialize Graphics Device (OpenGL stuff)
+// NOTE: Stores global variables screenWidth and screenHeight
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 {
+    // Save screen size data (global vars), required on postpro quad
+    // NOTE: Size represents render size, it could differ from screen size!
+    screenWidth = width;
+    screenHeight = height;
+    
     // NOTE: Required! viewport must be recalculated if screen resized!
     glViewport(offsetX/2, offsetY/2, width - offsetX, height - offsetY);    // Set viewport width and height
 
     // NOTE: Don't confuse glViewport with the transformation matrix
     // NOTE: glViewport just defines the area of the context that you will actually draw to.
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set background color (black)
     //glClearDepth(1.0f);                                   // Clear depth buffer (default)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
 
     glEnable(GL_DEPTH_TEST);                                // Enables depth testing (required for 3D)
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
@@ -1468,170 +1573,61 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
                                   // Possible options: GL_SMOOTH (Color interpolation) or GL_FLAT (no interpolation)
 #endif
 
-    TraceLog(INFO, "OpenGL Graphics initialized successfully");
+    TraceLog(INFO, "OpenGL graphic device initialized successfully");
 }
 
 // Get world coordinates from screen coordinates
 // TODO: It doesn't work! It drives me crazy!
+// NOTE: Using global variables: screenWidth, screenHeight
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {
+    Vector3 result = { 0, 0, 0 };   // Object coordinates
+    
     //GLint viewport[4];
-    //glGetIntegerv(GL_VIEWPORT, viewport);
+    //glGetIntegerv(GL_VIEWPORT, viewport); // Not available on OpenGL ES 2.0
 
     // Viewport data
-/*
-    int x = 0;
-    int y = 0;
-    int width = GetScreenWidth();
-    int height = GetScreenHeight();
-    float minDepth = 0.0f;
-    float maxDepth = 1.0f;
-*/
-/*
-    Matrix modelviewprojection = MatrixMultiply(modelview, projection);
+    int x = 0;                  // viewport[0]
+    int y = 0;                  // viewport[1]
+    int width = screenWidth;    // viewport[2]
+    int height = screenHeight;  // viewport[3]
+    
+    Matrix modelviewprojection = MatrixMultiply(view, proj);
     MatrixInvert(&modelviewprojection);
-
-    Vector3 vector;
-
-    vector.x = (((source.x - x) / ((float)width)) * 2.0f) - 1.0f;
-    vector.y = -((((source.y - y) / ((float)height)) * 2.0f) - 1.0f);
-    vector.z = (source.z - minDepth) / (maxDepth - minDepth);
-
-    //float a = (((vector.x * matrix.M14) + (vector.y * matrix.M24)) + (vector.z * matrix.M34)) + matrix.M44;
-    //float a = (((vector.x * modelviewprojection.m3) + (vector.y * modelviewprojection.m7)) + (vector.z * modelviewprojection.m11)) + modelviewprojection.m15;
-    VectorTransform(&vector, modelviewprojection);
-
-    //if (!MathUtil.IsOne(a)) vector = (vector / a);
-    //VectorScale(&vector, 1/a);
-
-    return vector;
-*/
 /*
-    Vector3 worldPoint;
-
-    // Transformation matrices
-    Matrix modelviewprojection = MatrixIdentity();
-    Quaternion quat;
-
-    // Calculation for inverting a matrix, compute projection x modelview
-    modelviewprojection = MatrixMultiply(proj, view);
-    MatrixInvert(&modelviewprojection);
+    // NOTE: Compute unproject using Vector3
 
     // Transformation of normalized coordinates between -1 and 1
-    quat.x = ((source.x - (float)x)/(float)width*2.0) - 1.0f;
-    quat.y = ((source.y - (float)y)/(float)height*2.0) - 1.0f;
-    quat.z = 2.0*source.z - 1.0;
-    quat.w = 1.0;
+    result.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
+    result.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
+    result.z = source.z*2.0f - 1.0f;
 
-    // Objects coordinates
+    // Object coordinates (multiply vector by matrix)
+    VectorTransform(&result, modelviewprojection);
+*/
+ 
+    // NOTE: Compute unproject using Quaternion (Vector4)
+    Quaternion quat;
+    
+    quat.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
+    quat.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
+    quat.z = source.z*2.0f - 1.0f;
+    quat.w = 1.0;
+    
     QuaternionTransform(&quat, modelviewprojection);
 
-    //if (quat.w == 0.0) return 0;
+    if (quat.w != 0.0)
+    {
+        quat.x /= quat.w;
+        quat.y /= quat.w;
+        quat.z /= quat.w;
+    }
 
-    worldPoint.x = quat.x/quat.w;
-    worldPoint.y = quat.y/quat.w;
-    worldPoint.z = quat.z/quat.w;
+    result.x = quat.x;
+    result.y = quat.y;
+    result.z = quat.z;
 
-    return worldPoint;
-    */
-/*
-    Quaternion quat;
-    Vector3 vec;
-
-    quat.x = 2.0f * GetMousePosition().x / (float)width - 1;
-    quat.y = -(2.0f * GetMousePosition().y / (float)height - 1);
-    quat.z = 0;
-    quat.w = 1;
-
-    Matrix invView;
-    MatrixInvert(&view);
-    Matrix invProj;
-    MatrixInvert(&proj);
-
-    quat.x = invProj.m0 * quat.x + invProj.m4 * quat.y + invProj.m8 * quat.z + invProj.m12 * quat.w;
-    quat.y = invProj.m1 * quat.x + invProj.m5 * quat.y + invProj.m9 * quat.z + invProj.m13 * quat.w;
-    quat.z = invProj.m2 * quat.x + invProj.m6 * quat.y + invProj.m10 * quat.z + invProj.m14 * quat.w;
-    quat.w = invProj.m3 * quat.x + invProj.m7 * quat.y + invProj.m11 * quat.z + invProj.m15 * quat.w;
-
-    quat.x = invView.m0 * quat.x + invView.m4 * quat.y + invView.m8 * quat.z + invView.m12 * quat.w;
-    quat.y = invView.m1 * quat.x + invView.m5 * quat.y + invView.m9 * quat.z + invView.m13 * quat.w;
-    quat.z = invView.m2 * quat.x + invView.m6 * quat.y + invView.m10 * quat.z + invView.m14 * quat.w;
-    quat.w = invView.m3 * quat.x + invView.m7 * quat.y + invView.m11 * quat.z + invView.m15 * quat.w;
-
-    vec.x /= quat.w;
-    vec.y /= quat.w;
-    vec.z /= quat.w;
-
-    return vec;
-    */
-/*
-    Vector3 worldPoint;
-
-    // Transformation matrices
-    Matrix modelviewprojection;
-    Quaternion quat;
-
-    // Calculation for inverting a matrix, compute projection x modelview
-    modelviewprojection = MatrixMultiply(view, proj);
-
-    // Now compute the inverse of matrix A
-    MatrixInvert(&modelviewprojection);
-
-    // Transformation of normalized coordinates between -1 and 1
-    quat.x = ((source.x - (float)x)/(float)width*2.0) - 1.0f;
-    quat.y = ((source.y - (float)y)/(float)height*2.0) - 1.0f;
-    quat.z = 2.0*source.z - 1.0;
-    quat.w = 1.0;
-
-    // Traspose quaternion and multiply
-    Quaternion result;
-    result.x = modelviewprojection.m0 * quad.x + modelviewprojection.m4 * quad.y + modelviewprojection.m8 * quad.z + modelviewprojection.m12 * quad.w;
-    result.y = modelviewprojection.m1 * quad.x + modelviewprojection.m5 * quad.y + modelviewprojection.m9 * quad.z + modelviewprojection.m13 * quad.w;
-    result.z = modelviewprojection.m2 * quad.x + modelviewprojection.m6 * quad.y + modelviewprojection.m10 * quad.z + modelviewprojection.m14 * quad.w;
-    result.w = modelviewprojection.m3 * quad.x + modelviewprojection.m7 * quad.y + modelviewprojection.m11 * quad.z + modelviewprojection.m15 * quad.w;
-
-    // Invert
-    result.w = 1.0f / result.w;
-
-    //if (quat.w == 0.0) return 0;
-
-    worldPoint.x = quat.x * quat.w;
-    worldPoint.y = quat.y * quat.w;
-    worldPoint.z = quat.z * quat.w;
-
-    return worldPoint;
-    */
-/*
-    // Needed Vectors
-    Vector3 normalDeviceCoordinates;
-    Quaternion rayClip;
-    Quaternion rayEye;
-    Vector3 rayWorld;
-
-    // Getting normal device coordinates
-    float x = (2.0 * mousePosition.x) / GetScreenWidth() - 1.0;
-    float y = 1.0 - (2.0 * mousePosition.y) / GetScreenHeight();
-    float z = 1.0;
-    normalDeviceCoordinates = (Vector3){ x, y, z };
-
-    // Getting clip vector
-    rayClip = (Quaternion){ normalDeviceCoordinates.x, normalDeviceCoordinates.y, -1, 1 };
-
-    Matrix invProjection = projection;
-    MatrixInvert(&invProjection);
-
-    rayEye = MatrixQuaternionMultiply(invProjection, rayClip);
-    rayEye = (Quaternion){ rayEye.x, rayEye.y, -1, 0 };
-
-    Matrix invModelview = modelview;
-    MatrixInvert(&invModelview);
-
-    rayWorld = MatrixVector3Multiply(invModelview, (Vector3){rayEye.x, rayEye.y, rayEye.z} );
-    VectorNormalize(&rayWorld);
-
-    return rayWorld;
-*/
-    return (Vector3){ 0, 0, 0 };
+    return result;
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
@@ -1780,9 +1776,9 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 #endif
 
     // Magnification and minification filters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Filter for pixel-perfect drawing, alternative: GL_LINEAR
-    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  // Alternative: GL_LINEAR
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);  // Alternative: GL_LINEAR
+   
 #if defined(GRAPHICS_API_OPENGL_33)
     if (mipmapCount > 1)
     {
@@ -1883,9 +1879,10 @@ Model rlglLoadModel(VertexData mesh)
     model.shader.id = 0;        // No shader used
 
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model.texture.id = whiteTexture;     // Default whiteTexture
-    model.texture.width = 1;     // Default whiteTexture width
-    model.texture.height = 1;    // Default whiteTexture height
+    model.texture.id = whiteTexture;    // Default whiteTexture
+    model.texture.width = 1;            // Default whiteTexture width
+    model.texture.height = 1;           // Default whiteTexture height
+    model.shader = simpleShader;        // Default model shader
 
     GLuint vaoModel = 0;         // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];      // Vertex Buffer Objects (VBO)
@@ -1903,22 +1900,20 @@ Model rlglLoadModel(VertexData mesh)
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleShader.vertexLoc);
-    glVertexAttribPointer(simpleShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(model.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.shader.vertexLoc);
 
     // Enable vertex attributes: texcoords
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.vertexCount, mesh.texcoords, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleShader.texcoordLoc);
-    glVertexAttribPointer(simpleShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glVertexAttribPointer(model.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.shader.texcoordLoc);
 
     // Enable vertex attributes: normals
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(simpleShader.normalLoc);
-    glVertexAttribPointer(simpleShader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-
-    model.shader = simpleShader;    // By default, simple shader will be used
+    glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.shader.normalLoc);
 
     model.mesh.vboId[0] = vertexBuffer[0];     // Vertex position VBO
     model.mesh.vboId[1] = vertexBuffer[1];     // Texcoords VBO
@@ -1975,6 +1970,8 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     int width, height;
     
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
     //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
@@ -1995,15 +1992,13 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
         case UNCOMPRESSED_R8G8B8A8: pixels = (unsigned char *)malloc(size*4); glFormat = GL_RGBA; glType = GL_UNSIGNED_BYTE; break;                // 32 bpp
         default: TraceLog(WARNING, "Texture format not suported"); break;
     }
-
-    glBindTexture(GL_TEXTURE_2D, textureId);
     
     // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
     // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting. 
     // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.) 
     // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    
+
     glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -2027,39 +2022,54 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     // Shaders loading from external text file
     char *vShaderStr = TextFileRead(vsFileName);
     char *fShaderStr = TextFileRead(fsFileName);
-
-    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
-
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Custom shader could not be loaded", shader.id);
-
-    // Shader strings must be freed
-    free(vShaderStr);
-    free(fShaderStr);
     
-    // Set shader textures ids (all 0 by default)
-    shader.texDiffuseId = 0;
-    shader.texNormalId = 0;
-    shader.texSpecularId = 0;
+    if ((vShaderStr != NULL) && (fShaderStr != NULL))
+    {
+        shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
-    // Get handles to GLSL input attibute locations
-    //-------------------------------------------------------------------
-    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
-    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
-    shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
-    // NOTE: custom shader does not use colorLoc
-    shader.colorLoc = -1;
+        if (shader.id != 0)
+        {
+            TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
+        
+            // Set shader textures ids (all 0 by default)
+            shader.texDiffuseId = 0;
+            shader.texNormalId = 0;
+            shader.texSpecularId = 0;
 
-    // Get handles to GLSL uniform locations (vertex shader)
-    shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
-    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
+            // Get handles to GLSL input attibute locations
+            //-------------------------------------------------------------------
+            shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
+            shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
+            shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
+            // NOTE: custom shader does not use colorLoc
+            shader.colorLoc = -1;
 
-    // Get handles to GLSL uniform locations (fragment shader)
-    shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
-    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
-    shader.mapNormalLoc = -1;       // It can be set later
-    shader.mapSpecularLoc = -1;     // It can be set later
-    //--------------------------------------------------------------------
+            // Get handles to GLSL uniform locations (vertex shader)
+            shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+            shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
+
+            // Get handles to GLSL uniform locations (fragment shader)
+            shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+            shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
+            shader.mapNormalLoc = -1;       // It can be set later
+            shader.mapSpecularLoc = -1;     // It can be set later
+            //--------------------------------------------------------------------
+        }
+        else
+        {
+            TraceLog(WARNING, "Custom shader could not be loaded");
+            shader = simpleShader;
+        }
+        
+        // Shader strings must be freed
+        free(vShaderStr);
+        free(fShaderStr);
+    }
+    else
+    {
+        TraceLog(WARNING, "Custom shader could not be loaded");
+        shader = simpleShader;
+    }        
 #endif
 
     return shader;
@@ -2169,6 +2179,8 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 void UnloadShader(Shader shader)
 {
     rlDeleteShader(shader.id);
+    
+    TraceLog(INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
 }
 
 // Set custom shader to be used on batch draw
@@ -2205,6 +2217,7 @@ void SetCustomShader(Shader shader)
 }
 
 // Set postprocessing shader
+// NOTE: Uses global variables screenWidth and screenHeight
 void SetPostproShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2218,8 +2231,8 @@ void SetPostproShader(Shader shader)
     
     Texture2D texture;
     texture.id = fboColorTexture;
-    texture.width = GetScreenWidth();
-    texture.height = GetScreenHeight();
+    texture.width = screenWidth;
+    texture.height = screenHeight;
 
     SetShaderMapDiffuse(&postproQuad.shader, texture);
     
@@ -2236,9 +2249,12 @@ void SetDefaultShader(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     SetCustomShader(defaultShader);
-    SetPostproShader(defaultShader);
     
-    enabledPostpro = false;
+    if (enabledPostpro) 
+    {
+        SetPostproShader(defaultShader);
+        enabledPostpro = false;
+    }  
 #endif
 }
 
@@ -2267,7 +2283,8 @@ void SetModelShader(Model *model, Shader shader)
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
     
-    //if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
+    // NOTE: If SetModelTexture() is called previously, texture is not assigned to new shader
+    if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
 #endif
 }
 
@@ -2421,6 +2438,26 @@ void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textur
     }
 #endif
 */
+}
+
+// Set blending mode (alpha, additive, multiplied)
+// NOTE: Only 3 blending modes predefined
+void SetBlendMode(int mode)
+{
+    if ((blendMode != mode) && (mode < 3))
+    {
+        rlglDraw();
+        
+        switch (mode)
+        {
+            case BLEND_ALPHA: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
+            case BLEND_ADDITIVE: glBlendFunc(GL_SRC_ALPHA, GL_ONE); break; // Alternative: glBlendFunc(GL_ONE, GL_ONE);
+            case BLEND_MULTIPLIED: glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA); break;
+            default: break;
+        }
+        
+        blendMode = mode;
+    }
 }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -3026,7 +3063,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
-void TraceLog(int msgType, const char *text, ...)
+static void TraceLog(int msgType, const char *text, ...)
 {
     va_list args;
     va_start(args, text);

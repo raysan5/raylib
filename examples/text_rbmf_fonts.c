@@ -18,20 +18,43 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 560;
-    int screenHeight = 800;
+    int screenWidth = 800;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - rBMF fonts");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    SpriteFont font1 = LoadSpriteFont("resources/fonts/alagard.rbmf");       // rBMF font loading
-    SpriteFont font2 = LoadSpriteFont("resources/fonts/pixelplay.rbmf");     // rBMF font loading
-    SpriteFont font3 = LoadSpriteFont("resources/fonts/mecha.rbmf");         // rBMF font loading
-    SpriteFont font4 = LoadSpriteFont("resources/fonts/setback.rbmf");       // rBMF font loading
-    SpriteFont font5 = LoadSpriteFont("resources/fonts/romulus.rbmf");       // rBMF font loading
-    SpriteFont font6 = LoadSpriteFont("resources/fonts/pixantiqua.rbmf");    // rBMF font loading
-    SpriteFont font7 = LoadSpriteFont("resources/fonts/alpha_beta.rbmf");    // rBMF font loading
-    SpriteFont font8 = LoadSpriteFont("resources/fonts/jupiter_crash.rbmf"); // rBMF font loading
+    SpriteFont fonts[8];
+    
+    fonts[0] = LoadSpriteFont("resources/fonts/alagard.rbmf");       // rBMF font loading
+    fonts[1] = LoadSpriteFont("resources/fonts/pixelplay.rbmf");     // rBMF font loading
+    fonts[2] = LoadSpriteFont("resources/fonts/mecha.rbmf");         // rBMF font loading
+    fonts[3] = LoadSpriteFont("resources/fonts/setback.rbmf");       // rBMF font loading
+    fonts[4] = LoadSpriteFont("resources/fonts/romulus.rbmf");       // rBMF font loading
+    fonts[5] = LoadSpriteFont("resources/fonts/pixantiqua.rbmf");    // rBMF font loading
+    fonts[6] = LoadSpriteFont("resources/fonts/alpha_beta.rbmf");    // rBMF font loading
+    fonts[7] = LoadSpriteFont("resources/fonts/jupiter_crash.rbmf"); // rBMF font loading
+    
+    const char *messages[8] = { "ALAGARD FONT designed by Hewett Tsoi", 
+                                "PIXELPLAY FONT designed by Aleksander Shevchuk",
+                                "MECHA FONT designed by Captain Falcon",  
+                                "SETBACK FONT designed by Brian Kent (AEnigma)", 
+                                "ROMULUS FONT designed by Hewett Tsoi", 
+                                "PIXANTIQUA FONT designed by Gerhard Grossmann",
+                                "ALPHA_BETA FONT designed by Brian Kent (AEnigma)",
+                                "JUPITER_CRASH FONT designed by Brian Kent (AEnigma)" };
+                                
+    const int spacings[8] = { 2, 4, 8, 4, 3, 4, 4, 1 };
+    
+    Vector2 positions[8];
+    
+    for (int i = 0; i < 8; i++)
+    {
+        positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], GetFontBaseSize(fonts[i])*2, spacings[i]).x/2;
+        positions[i].y = 60 + GetFontBaseSize(fonts[i]) + 50*i;
+    }
+    
+    Color colors[8] = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD };
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -47,15 +70,14 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-
-            DrawTextEx(font1, "TESTING ALAGARD FONT", (Vector2){ 100, 100 }, GetFontBaseSize(font1)*2, 2, MAROON);
-            DrawTextEx(font2, "TESTING PIXELPLAY FONT", (Vector2){ 100, 180 }, GetFontBaseSize(font2)*2, 4, ORANGE);
-            DrawTextEx(font3, "TESTING MECHA FONT", (Vector2){ 100, 260 }, GetFontBaseSize(font3)*2, 8, DARKGREEN);
-            DrawTextEx(font4, "TESTING SETBACK FONT", (Vector2){ 100, 350 }, GetFontBaseSize(font4)*2, 4, DARKBLUE);
-            DrawTextEx(font5, "TESTING ROMULUS FONT", (Vector2){ 100, 430 }, GetFontBaseSize(font5)*2, 3, DARKPURPLE);
-            DrawTextEx(font6, "TESTING PIXANTIQUA FONT", (Vector2){ 100, 510 }, GetFontBaseSize(font6)*2, 4, LIME);
-            DrawTextEx(font7, "TESTING ALPHA_BETA FONT", (Vector2){ 100, 590 }, GetFontBaseSize(font7)*2, 4, GOLD);
-            DrawTextEx(font8, "TESTING JUPITER_CRASH FONT", (Vector2){ 100, 660 }, GetFontBaseSize(font8)*2, 1, RED);
+            
+            DrawText("free fonts included with raylib", 250, 20, 20, DARKGRAY);
+            DrawLine(220, 50, 590, 50, DARKGRAY);
+            
+            for (int i = 0; i < 8; i++)
+            {
+                DrawTextEx(fonts[i], messages[i], positions[i], GetFontBaseSize(fonts[i])*2, spacings[i], colors[i]);
+            }
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -63,14 +85,10 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadSpriteFont(font1);       // SpriteFont unloading
-    UnloadSpriteFont(font2);       // SpriteFont unloading
-    UnloadSpriteFont(font3);       // SpriteFont unloading
-    UnloadSpriteFont(font4);       // SpriteFont unloading
-    UnloadSpriteFont(font5);       // SpriteFont unloading
-    UnloadSpriteFont(font6);       // SpriteFont unloading
-    UnloadSpriteFont(font7);       // SpriteFont unloading
-    UnloadSpriteFont(font8);       // SpriteFont unloading
+    for (int i = 0; i < 8; i++)
+    {
+        UnloadSpriteFont(fonts[i]);       // SpriteFont unloading
+    }
 
     CloseWindow();                 // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

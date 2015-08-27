@@ -4,7 +4,7 @@
 *
 *   Basic functions to load SpriteFonts and draw Text
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -216,6 +216,8 @@ extern void UnloadDefaultFont(void)
 {
     UnloadTexture(defaultFont.texture);
     free(defaultFont.charSet);
+    
+    TraceLog(INFO, "Unloaded default font data");
 }
 
 // Get the default font, useful to be used with extended parameters
@@ -266,6 +268,8 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 {
     UnloadTexture(spriteFont.texture);
     free(spriteFont.charSet);
+    
+    TraceLog(INFO, "Unloaded sprite font data");
 }
 
 // Draw text (using default font)
