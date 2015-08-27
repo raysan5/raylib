@@ -7,7 +7,7 @@
 *   This example has been created using raylib 1.1 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -58,7 +58,12 @@ int main()
             SetMusicVolume(volume);
         }
 */
+        if (IsWindowMinimized()) PauseMusicStream();
+        else ResumeMusicStream();
+
         timePlayed = GetMusicTimePlayed() / GetMusicTimeLength() * 100 * 4; // We scale by 4 to fit 400 pixels
+        
+        UpdateMusicStream();
         //----------------------------------------------------------------------------------
 
         // Draw

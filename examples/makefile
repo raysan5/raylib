@@ -164,8 +164,6 @@ EXAMPLES = \
     textures_logo_raylib \
     textures_image_loading \
     textures_rectangle \
-    textures_compressed_dds \
-    textures_mipmaps \
     textures_srcrec_dstrec \
     text_sprite_fonts \
     text_rbmf_fonts \
@@ -251,14 +249,6 @@ textures_image_loading: textures_image_loading.c
 
 # compile [textures] example - texture rectangle drawing
 textures_rectangle: textures_rectangle.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [textures] example - compressed texture loading (DDS)
-textures_compressed_dds: textures_compressed_dds.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [textures] example - texture mipmaps generation
-textures_mipmaps: textures_mipmaps.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture source and destination rectangles
