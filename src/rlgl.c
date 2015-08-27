@@ -45,9 +45,9 @@
     #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl3.h>
     #else
-        #include <GL/glew.h>        // Extensions loading lib
-        //#include "glad.h"         // TODO: Test glad extensions loading lib
-        //#include "gl_core_3_3.h"  // TODO: Test glLoadGen extension loading lib: ERRORS
+        #include <GL/glew.h>        // GLEW extensions loading lib
+        //#include "glad.h"         // glad extensions loading lib: ERRORS: windows.h
+        //#include "gl_core_3_3.h"  // glLoadGen extension loading lib: ERRORS: windows.h
     #endif
 #endif
 
@@ -856,12 +856,19 @@ void rlglInit(void)
     //for (int i = 0; i < numComp; i++) TraceLog(INFO, "Supported compressed format: 0x%x", format[i]);
 
     // NOTE: We don't need that much data on screen... right now...
+    
+#if defined(GRAPHICS_API_OPENGL_11)
+    TraceLog(INFO, "OpenGL 1.1 profile initialized");
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get supported extensions list
     GLint numExt;
     
 #if defined(GRAPHICS_API_OPENGL_33)
+
+#define GLEW_EXTENSIONS_LOADER
+#if defined(GLEW_EXTENSIONS_LOADER)
     // Initialize extensions using GLEW
     glewExperimental = 1;       // Needed for core profile
     GLenum error = glewInit();
@@ -869,22 +876,49 @@ void rlglInit(void)
     if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
     
     if (glewIsSupported("GL_VERSION_3_3"))
-    //if (ogl_LoadFunctions() != ogl_LOAD_FAILED)
     {
-        TraceLog(INFO, "OpenGL 3.3 Core profile");
+        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
         
         vaoSupported = true;
         npotSupported = true;
     }
+    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
 
-    // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
-    // Alternatives: glLoadGen, glad, libepoxy
-    //if (!gladLoadGL()) TraceLog("ERROR: Failed to initialize glad\n");
-
-    // With GLEW we can check if an extension has been loaded in two ways:
+    // With GLEW, we can check if an extension has been loaded in two ways:
     //if (GLEW_ARB_vertex_array_object) { } 
     //if (glewIsSupported("GL_ARB_vertex_array_object")) { }
 
+    // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
+    // Alternatives: glLoadGen, glad, libepoxy
+    
+#elif defined(GLAD_EXTENSIONS_LOADER)
+    // NOTE: glad is generated and contains only required OpenGL version and core extensions
+    if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
+    //if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n");
+
+    if (GLAD_GL_VERSION_3_3)
+    {
+        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+        
+        vaoSupported = true;
+        npotSupported = true;
+    }
+    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+    
+    // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
+    //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
+
+#elif defined(GLLOADGEN_EXTENSIONS_LOADER)
+    // NOTE: glLoadGen already generates a header with required OpenGL version and core extensions
+    if (ogl_LoadFunctions() != ogl_LOAD_FAILED)
+    {
+        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+        
+        vaoSupported = true;
+        npotSupported = true;
+    }
+    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+#endif
     
     // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
@@ -1418,7 +1452,7 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
-    //glUniform1i(model.shader.mapDiffuseLoc, 0);
+    glUniform1i(model.shader.mapDiffuseLoc, 0);
 
     if (model.shader.texNormalId != 0)
     {
@@ -1544,165 +1578,56 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 
 // Get world coordinates from screen coordinates
 // TODO: It doesn't work! It drives me crazy!
+// NOTE: Using global variables: screenWidth, screenHeight
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {
+    Vector3 result = { 0, 0, 0 };   // Object coordinates
+    
     //GLint viewport[4];
-    //glGetIntegerv(GL_VIEWPORT, viewport);
+    //glGetIntegerv(GL_VIEWPORT, viewport); // Not available on OpenGL ES 2.0
 
     // Viewport data
-/*
-    int x = 0;
-    int y = 0;
-    int width = GetScreenWidth();
-    int height = GetScreenHeight();
-    float minDepth = 0.0f;
-    float maxDepth = 1.0f;
-*/
-/*
-    Matrix modelviewprojection = MatrixMultiply(modelview, projection);
+    int x = 0;                  // viewport[0]
+    int y = 0;                  // viewport[1]
+    int width = screenWidth;    // viewport[2]
+    int height = screenHeight;  // viewport[3]
+    
+    Matrix modelviewprojection = MatrixMultiply(view, proj);
     MatrixInvert(&modelviewprojection);
-
-    Vector3 vector;
-
-    vector.x = (((source.x - x) / ((float)width)) * 2.0f) - 1.0f;
-    vector.y = -((((source.y - y) / ((float)height)) * 2.0f) - 1.0f);
-    vector.z = (source.z - minDepth) / (maxDepth - minDepth);
-
-    //float a = (((vector.x * matrix.M14) + (vector.y * matrix.M24)) + (vector.z * matrix.M34)) + matrix.M44;
-    //float a = (((vector.x * modelviewprojection.m3) + (vector.y * modelviewprojection.m7)) + (vector.z * modelviewprojection.m11)) + modelviewprojection.m15;
-    VectorTransform(&vector, modelviewprojection);
-
-    //if (!MathUtil.IsOne(a)) vector = (vector / a);
-    //VectorScale(&vector, 1/a);
-
-    return vector;
-*/
 /*
-    Vector3 worldPoint;
-
-    // Transformation matrices
-    Matrix modelviewprojection = MatrixIdentity();
-    Quaternion quat;
-
-    // Calculation for inverting a matrix, compute projection x modelview
-    modelviewprojection = MatrixMultiply(proj, view);
-    MatrixInvert(&modelviewprojection);
+    // NOTE: Compute unproject using Vector3
 
     // Transformation of normalized coordinates between -1 and 1
-    quat.x = ((source.x - (float)x)/(float)width*2.0) - 1.0f;
-    quat.y = ((source.y - (float)y)/(float)height*2.0) - 1.0f;
-    quat.z = 2.0*source.z - 1.0;
-    quat.w = 1.0;
+    result.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
+    result.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
+    result.z = source.z*2.0f - 1.0f;
 
-    // Objects coordinates
+    // Object coordinates (multiply vector by matrix)
+    VectorTransform(&result, modelviewprojection);
+*/
+ 
+    // NOTE: Compute unproject using Quaternion (Vector4)
+    Quaternion quat;
+    
+    quat.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
+    quat.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
+    quat.z = source.z*2.0f - 1.0f;
+    quat.w = 1.0;
+    
     QuaternionTransform(&quat, modelviewprojection);
 
-    //if (quat.w == 0.0) return 0;
+    if (quat.w != 0.0)
+    {
+        quat.x /= quat.w;
+        quat.y /= quat.w;
+        quat.z /= quat.w;
+    }
 
-    worldPoint.x = quat.x/quat.w;
-    worldPoint.y = quat.y/quat.w;
-    worldPoint.z = quat.z/quat.w;
+    result.x = quat.x;
+    result.y = quat.y;
+    result.z = quat.z;
 
-    return worldPoint;
-    */
-/*
-    Quaternion quat;
-    Vector3 vec;
-
-    quat.x = 2.0f * GetMousePosition().x / (float)width - 1;
-    quat.y = -(2.0f * GetMousePosition().y / (float)height - 1);
-    quat.z = 0;
-    quat.w = 1;
-
-    Matrix invView;
-    MatrixInvert(&view);
-    Matrix invProj;
-    MatrixInvert(&proj);
-
-    quat.x = invProj.m0 * quat.x + invProj.m4 * quat.y + invProj.m8 * quat.z + invProj.m12 * quat.w;
-    quat.y = invProj.m1 * quat.x + invProj.m5 * quat.y + invProj.m9 * quat.z + invProj.m13 * quat.w;
-    quat.z = invProj.m2 * quat.x + invProj.m6 * quat.y + invProj.m10 * quat.z + invProj.m14 * quat.w;
-    quat.w = invProj.m3 * quat.x + invProj.m7 * quat.y + invProj.m11 * quat.z + invProj.m15 * quat.w;
-
-    quat.x = invView.m0 * quat.x + invView.m4 * quat.y + invView.m8 * quat.z + invView.m12 * quat.w;
-    quat.y = invView.m1 * quat.x + invView.m5 * quat.y + invView.m9 * quat.z + invView.m13 * quat.w;
-    quat.z = invView.m2 * quat.x + invView.m6 * quat.y + invView.m10 * quat.z + invView.m14 * quat.w;
-    quat.w = invView.m3 * quat.x + invView.m7 * quat.y + invView.m11 * quat.z + invView.m15 * quat.w;
-
-    vec.x /= quat.w;
-    vec.y /= quat.w;
-    vec.z /= quat.w;
-
-    return vec;
-    */
-/*
-    Vector3 worldPoint;
-
-    // Transformation matrices
-    Matrix modelviewprojection;
-    Quaternion quat;
-
-    // Calculation for inverting a matrix, compute projection x modelview
-    modelviewprojection = MatrixMultiply(view, proj);
-
-    // Now compute the inverse of matrix A
-    MatrixInvert(&modelviewprojection);
-
-    // Transformation of normalized coordinates between -1 and 1
-    quat.x = ((source.x - (float)x)/(float)width*2.0) - 1.0f;
-    quat.y = ((source.y - (float)y)/(float)height*2.0) - 1.0f;
-    quat.z = 2.0*source.z - 1.0;
-    quat.w = 1.0;
-
-    // Traspose quaternion and multiply
-    Quaternion result;
-    result.x = modelviewprojection.m0 * quad.x + modelviewprojection.m4 * quad.y + modelviewprojection.m8 * quad.z + modelviewprojection.m12 * quad.w;
-    result.y = modelviewprojection.m1 * quad.x + modelviewprojection.m5 * quad.y + modelviewprojection.m9 * quad.z + modelviewprojection.m13 * quad.w;
-    result.z = modelviewprojection.m2 * quad.x + modelviewprojection.m6 * quad.y + modelviewprojection.m10 * quad.z + modelviewprojection.m14 * quad.w;
-    result.w = modelviewprojection.m3 * quad.x + modelviewprojection.m7 * quad.y + modelviewprojection.m11 * quad.z + modelviewprojection.m15 * quad.w;
-
-    // Invert
-    result.w = 1.0f / result.w;
-
-    //if (quat.w == 0.0) return 0;
-
-    worldPoint.x = quat.x * quat.w;
-    worldPoint.y = quat.y * quat.w;
-    worldPoint.z = quat.z * quat.w;
-
-    return worldPoint;
-    */
-/*
-    // Needed Vectors
-    Vector3 normalDeviceCoordinates;
-    Quaternion rayClip;
-    Quaternion rayEye;
-    Vector3 rayWorld;
-
-    // Getting normal device coordinates
-    float x = (2.0 * mousePosition.x) / GetScreenWidth() - 1.0;
-    float y = 1.0 - (2.0 * mousePosition.y) / GetScreenHeight();
-    float z = 1.0;
-    normalDeviceCoordinates = (Vector3){ x, y, z };
-
-    // Getting clip vector
-    rayClip = (Quaternion){ normalDeviceCoordinates.x, normalDeviceCoordinates.y, -1, 1 };
-
-    Matrix invProjection = projection;
-    MatrixInvert(&invProjection);
-
-    rayEye = MatrixQuaternionMultiply(invProjection, rayClip);
-    rayEye = (Quaternion){ rayEye.x, rayEye.y, -1, 0 };
-
-    Matrix invModelview = modelview;
-    MatrixInvert(&invModelview);
-
-    rayWorld = MatrixVector3Multiply(invModelview, (Vector3){rayEye.x, rayEye.y, rayEye.z} );
-    VectorNormalize(&rayWorld);
-
-    return rayWorld;
-*/
-    return (Vector3){ 0, 0, 0 };
+    return result;
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
@@ -3133,6 +3058,9 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
+
+typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
 static void TraceLog(int msgType, const char *text, ...)
