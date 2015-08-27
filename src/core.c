@@ -532,6 +532,7 @@ void Begin3dMode(Camera camera)
     double top = 0.1f*tan(45.0f*PI / 360.0f);
     double right = top*aspect;
 
+    // NOTE: zNear and zFar values are important when computing depth buffer values
     rlFrustum(-right, right, -top, top, 0.1f, 1000.0f);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
@@ -559,7 +560,7 @@ void End3dMode(void)
 // Set target FPS for the game
 void SetTargetFPS(int fps)
 {
-    targetTime = 1 / (float)fps;
+    targetTime = 1 / (double)fps;
 
     TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
 }
@@ -567,16 +568,16 @@ void SetTargetFPS(int fps)
 // Returns current FPS
 float GetFPS(void)
 {
-    return (1/(float)frameTime);
+    return (float)(1/frameTime);
 }
 
 // Returns time in seconds for one frame
 float GetFrameTime(void)
 {
-    // As we are operating quite a lot with frameTime, it could be no stable
-    // so we round it before before passing around to be used
+    // As we are operate quite a lot with frameTime, 
+    // it could be no stable, so we round it before passing it around
     // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime =  round(frameTime*10000) / 10000;
+    double roundedFrameTime =  round(frameTime*10000)/10000;
 
     return (float)roundedFrameTime;    // Time in seconds to run a frame
 }
@@ -672,24 +673,28 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     Matrix proj = MatrixIdentity();
     Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
 
+    // Calculate projection matrix for the camera
     float aspect = (GLfloat)GetScreenWidth()/(GLfloat)GetScreenHeight();
-    double top = 0.1f*tanf(45.0f*PI / 360.0f);
+    double top = 0.1f*tanf(45.0f*PI/360.0f);
     double right = top*aspect;
 
+    // NOTE: zNear and zFar values are important for depth
     proj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
     MatrixTranspose(&proj);
 
-    float realy = (float)GetScreenHeight() - mousePosition.y;
+    // NOTE: Our screen origin is top-left instead of bottom-left: transform required!
+    float invertedMouseY = (float)GetScreenHeight() - mousePosition.y;
 
+    // NOTE: Do I really need to get z value from depth buffer?
     //float z;
-    // glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+    //glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
     //http://www.bfilipek.com/2012/06/select-mouse-opengl.html
 
-    Vector3 nearPoint = { mousePosition.x, realy, 0.0f };
-    Vector3 farPoint = { mousePosition.x, realy, 1.0f };
+    Vector3 nearPoint = { mousePosition.x, invertedMouseY, 0.0f };
+    Vector3 farPoint = { mousePosition.x, invertedMouseY, 1.0f };
 
-    //nearPoint = internalCamera.position;
-    farPoint = rlglUnproject(farPoint, proj, view);
+    nearPoint = rlglUnproject(nearPoint, proj, view);
+    farPoint = rlglUnproject(farPoint, proj, view);     // TODO: it seems it doesn't work...
 
     Vector3 direction = VectorSubtract(farPoint, nearPoint);
     VectorNormalize(&direction);
@@ -813,7 +818,11 @@ void SetMousePosition(Vector2 position)
 // Returns mouse wheel movement Y
 int GetMouseWheelMove(void)
 {
+#if defined(PLATFORM_WEB)
+    return previousMouseWheelY/100;
+#else
     return previousMouseWheelY;
+#endif
 }
 
 // Hide mouse cursor
@@ -1483,7 +1492,7 @@ static double GetTime(void)
     clock_gettime(CLOCK_MONOTONIC, &ts);
     uint64_t time = ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
-    return (double)(time - baseTime) * 1e-9;
+    return (double)(time - baseTime)*1e-9;
 #endif
 }
 
