@@ -146,6 +146,8 @@ void SetCameraMode(int mode)
         cameraAngle.y = -40 * DEG2RAD;
         internalCamera.target = (Vector3){ 0, 0, 0};
         ProcessCamera(&internalCamera, &internalCamera.position);
+        
+        ShowCursor();
     }
     else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_ORBITAL))
     {
