@@ -85,10 +85,10 @@ assigned to models or used as fullscreen postrocessing shaders.
 Textures module has been improved to support most of the internal texture formats available in OpenGL
 (RGB565, RGB888, RGBA5551, RGBA4444, etc.), including compressed texture formats (DXT, ETC1, ETC2, ASTC, PVRT).
 
-New camera module offers the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, third person),
-very easy to use, just calling functions: SetCameraMode() and UpdateCamera().
+New camera module offers to the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, 3rd person).
+Camera modes are very easy to use, just calling functions: SetCameraMode() and UpdateCamera().
 
-New gestures module simplifies getures detection on Android and HTML5 programs.
+New gestures module simplifies gestures detection on Android and HTML5 programs.
 
 New IMGUI (Immediate Mode GUI) module: raygui, offers a set of functions to create simple user interfaces,
 primary intended for tools development, still in experimental state but already fully functional.
@@ -264,7 +264,7 @@ If you are using raylib and you enjoy it, please, [let me know][raysan5].
 
 If you feel you can help, then, [helpme!] (http://www.raylib.com/helpme.htm)
 
-acknowledgments
+acknowledgements
 ---------------
 
 The following people have contributed in some way to make raylib project a reality. Big thanks to them!
@@ -275,9 +275,9 @@ The following people have contributed in some way to make raylib project a reali
  - Marc Palau for implementating and testing of 3D shapes functions and helping on development of camera and getures modules.
  - Kevin Gato for improving texture internal formats support and helping on raygui development. 
  - Daniel Nicolas for improving texture internal formats support and helping on raygui development. 
- - Marc Agüera for testing and using raylib on a real product (Koala Seasons)
- - Daniel Moreno for testing and using raylib on a real product (Koala Seasons)
- - Daniel Gomez for testing and using raylib on a real product (Koala Seasons)
+ - Marc Agüera for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
+ - Daniel Moreno for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
+ - Daniel Gomez for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Sergio Martinez for helping on raygui development and tools development.
  
 	
