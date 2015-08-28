@@ -123,6 +123,7 @@ static int IsKeyDown(int key) { return 0; }
 //----------------------------------------------------------------------------------
 
 // Select camera mode (multiple camera modes available)
+// TODO: Review hardcoded values when changing modes...
 void SetCameraMode(int mode)
 {
     if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_FREE))
@@ -144,7 +145,7 @@ void SetCameraMode(int mode)
         cameraTargetDistance = 10;
         cameraAngle.x = 45 * DEG2RAD;
         cameraAngle.y = -40 * DEG2RAD;
-        internalCamera.target = (Vector3){ 0, 0, 0};
+        internalCamera.target = (Vector3){ 0, 0, 0 };
         ProcessCamera(&internalCamera, &internalCamera.position);
         
         ShowCursor();
@@ -154,7 +155,7 @@ void SetCameraMode(int mode)
         cameraTargetDistance = 10;
         cameraAngle.x = 225 * DEG2RAD;
         cameraAngle.y = -40 * DEG2RAD;
-        internalCamera.target = (Vector3){ 3, 0, 3};
+        internalCamera.target = (Vector3){ 0, 0, 0};
         ProcessCamera(&internalCamera, &internalCamera.position);
     }
 
@@ -162,6 +163,7 @@ void SetCameraMode(int mode)
 }
 
 // Update camera with position
+// TODO: I don't like how this function works right now... not clear enough...
 Camera UpdateCamera(Vector3 *position)
 {
     // Calculate camera
@@ -170,6 +172,55 @@ Camera UpdateCamera(Vector3 *position)
     return internalCamera;
 }
 
+// Set internal camera position
+void SetCameraPosition(Vector3 position)
+{
+    internalCamera.position = position;
+    
+    Vector3 v1 = internalCamera.position;
+    Vector3 v2 = internalCamera.target;
+    
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+    
+    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
+}
+
+// Set internal camera target
+void SetCameraTarget(Vector3 target)
+{
+    internalCamera.target = target;
+    
+    Vector3 v1 = internalCamera.position;
+    Vector3 v2 = internalCamera.target;
+    
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+    
+    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
+}
+
+// Set camera pan key to combine with mouse movement (free camera)
+void SetCameraPanControl(int panKey)
+{
+    panControlKey = panKey;
+}
+
+// Set camera alt key to combine with mouse movement (free camera)
+void SetCameraAltControl(int altKey)
+{
+    altControlKey = altKey;
+}
+
+// Set camera smooth zoom key to combine with mouse (free camera)
+void SetCameraSmoothZoomControl(int szKey)
+{
+    smoothZoomControlKey = szKey;
+}
+
+// Set camera move controls (1st person and 3rd person cameras)
 void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey, int upKey, int downKey)
 {
     cameraMoveControl[MOVE_FRONT] = frontKey;
@@ -180,31 +231,11 @@ void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey,
     cameraMoveControl[MOVE_DOWN] = downKey;
 }
 
+// Set camera mouse sensitivity (1st person and 3rd person cameras)
 void SetCameraMouseSensitivity(float sensitivity)
 {
     mouseSensitivity = (sensitivity / 10000.0);
 }
-
-void SetCameraPanControl(int panKey)
-{
-    panControlKey = panKey;
-}
-
-void SetCameraAltControl(int altKey)
-{
-    altControlKey = altKey;
-}
-
-void SetCameraSmoothZoomControl(int szKey)
-{
-    smoothZoomControlKey = szKey;
-}
-
-void SetCameraTarget(Vector3 target)
-{
-    internalCamera.target = target;
-}
-
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -298,7 +329,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
             }
             else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (mouseWheelMove > 0))
             {
-                cameraTargetDistance -= (mouseWheelMove * CAMERA_SCROLL_SENSITIVITY);
+                cameraTargetDistance -= (mouseWheelMove*CAMERA_SCROLL_SENSITIVITY);
                 if (cameraTargetDistance < FREE_CAMERA_DISTANCE_MIN_CLAMP) cameraTargetDistance = FREE_CAMERA_DISTANCE_MIN_CLAMP;
             }
 
