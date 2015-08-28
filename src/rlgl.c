@@ -858,7 +858,7 @@ void rlglInit(void)
     // NOTE: We don't need that much data on screen... right now...
     
 #if defined(GRAPHICS_API_OPENGL_11)
-    TraceLog(INFO, "OpenGL 1.1 profile initialized");
+    //TraceLog(INFO, "OpenGL 1.1 (or driver default) profile initialized");
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)

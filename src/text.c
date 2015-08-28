@@ -614,8 +614,14 @@ static SpriteFont LoadRBMF(const char *fileName)
 }
 
 // Generate a sprite font from TTF data (font size required)
+// NOTE: This function is a mess, it should be completely redone!
 static SpriteFont LoadTTF(const char *fileName, int fontSize)
 {
+    // Steps:
+    
+    // 1) Generate sprite sheet image with characters from TTF
+    // 2) Load image as SpriteFont
+    
     SpriteFont font;
 
     Image image;
@@ -631,7 +637,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
 
     unsigned char *tempBitmap = (unsigned char *)malloc(image.width*image.height*sizeof(unsigned char));   // One channel bitmap returned!
 
-    // REFERENCE
+    // Reference struct
 /*
     typedef struct
     {
