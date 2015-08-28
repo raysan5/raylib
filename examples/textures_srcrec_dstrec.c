@@ -5,7 +5,7 @@
 *   This example has been created using raylib 1.1 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -21,16 +21,23 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rectangles");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D texture = LoadTexture("resources/raylib_logo.png");        // Texture loading
+    Texture2D guybrush = LoadTexture("resources/guybrush.png");        // Texture loading
 
+    int frameWidth = guybrush.width/7;
+    int frameHeight = guybrush.height;
+    
     // NOTE: Source rectangle (part of the texture to use for drawing)
-    Rectangle sourceRec = { 128, 128, 128, 128 };
+    Rectangle sourceRec = { 0, 0, frameWidth, frameHeight };
 
     // NOTE: Destination rectangle (screen rectangle where drawing part of texture)
-    Rectangle destRec = { screenWidth/2, screenHeight/2, 256, 256 };
+    Rectangle destRec = { screenWidth/2, screenHeight/2, frameWidth*2, frameHeight*2 };
 
-    // NOTE: Origin of the texture in case of rotation, it's relative to destination rectangle size
-    Vector2 origin = { 128, 128 };
+    // NOTE: Origin of the texture (rotation/scale point), it's relative to destination rectangle size
+    Vector2 origin = { frameWidth, frameHeight };
+    
+    int rotation = 0;
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -38,7 +45,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+        rotation++;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -48,10 +55,10 @@ int main()
             ClearBackground(RAYWHITE);
 
             // NOTE: Using DrawTexturePro() we can easily rotate and scale the part of the texture we draw
-            DrawTexturePro(texture, sourceRec, destRec, origin, 45, LIGHTGRAY);
+            DrawTexturePro(guybrush, sourceRec, destRec, origin, rotation, WHITE);
 
-            DrawLine(destRec.x, 0, destRec.x, screenHeight, RED);
-            DrawLine(0, destRec.y, screenWidth, destRec.y, RED);
+            DrawLine(destRec.x, 0, destRec.x, screenHeight, GRAY);
+            DrawLine(0, destRec.y, screenWidth, destRec.y, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -59,7 +66,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(texture);       // Texture unloading
+    UnloadTexture(guybrush);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
