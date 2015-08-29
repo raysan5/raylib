@@ -4,8 +4,8 @@
 *
 *   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
 *       OpenGL 1.1  - Direct map rl* -> gl*
-*       OpenGL 3.3+ - Vertex data is stored in VAOs, call rlglDraw() to render
-*       OpenGL ES 2 - Same behaviour as OpenGL 3.3+
+*       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
+*       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
 *   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
@@ -3060,8 +3060,6 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
-
-typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning

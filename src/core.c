@@ -638,6 +638,7 @@ void ShowLogo(void)
     showLogo = true;
 }
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // Check if a file have been dropped into window
 bool IsFileDropped(void)
 {
@@ -664,6 +665,7 @@ void ClearDroppedFiles(void)
         dropFilesCount = 0;
     }
 }
+#endif
 
 // TODO: Gives the ray trace from mouse position
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
