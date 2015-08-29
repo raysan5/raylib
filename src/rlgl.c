@@ -1938,15 +1938,17 @@ Model rlglLoadModel(VertexData mesh)
 }
 
 // Read screen pixel data (color buffer)
+// ISSUE: Non pre-multiplied alpha when reading from backbuffer!
+// TODO: Multiply alpha
 unsigned char *rlglReadScreenPixels(int width, int height)
 {
-    unsigned char *screenData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
+    unsigned char *screenData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
 
     // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
 
     // Flip image vertically!
-    unsigned char *imgData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
+    unsigned char *imgData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
 
     for (int y = height-1; y >= 0; y--)
     {
