@@ -84,12 +84,12 @@ typedef enum { MOVE_FRONT = 0, MOVE_LEFT, MOVE_BACK, MOVE_RIGHT, MOVE_UP, MOVE_D
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Camera internalCamera = {{2,0,2},{0,0,0},{0,1,0}};
+static Camera internalCamera = {{2, 0, 2}, {0, 0, 0}, {0, 1, 0}};
 static Vector2 cameraAngle = { 0, 0 };
-static float cameraTargetDistance = 5;
+static float cameraTargetDistance = 5.0f;
 static Vector2 cameraMousePosition = { 0, 0 };
 static Vector2 cameraMouseVariation = { 0, 0 };
-static float mouseSensitivity = 0.003;
+static float mouseSensitivity = 0.003f;
 static int cameraMoveControl[6]  = { 'W', 'A', 'S', 'D', 'E', 'Q' };
 static int cameraMoveCounter = 0;
 static int cameraUseGravity = 1;
@@ -234,7 +234,7 @@ void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey,
 // Set camera mouse sensitivity (1st person and 3rd person cameras)
 void SetCameraMouseSensitivity(float sensitivity)
 {
-    mouseSensitivity = (sensitivity / 10000.0);
+    mouseSensitivity = (sensitivity/10000.0);
 }
 
 //----------------------------------------------------------------------------------
@@ -278,7 +278,9 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
         cameraMouseVariation.y = mousePosition.y - cameraMousePosition.y;
     }
 
-    cameraMousePosition = mousePosition;
+	// NOTE: We GetMousePosition() again because it can be modified by a previous SetMousePosition() call
+	// If using directly mousePosition variable we have problems on CAMERA_FIRST_PERSON and CAMERA_THIRD_PERSON
+    cameraMousePosition = GetMousePosition();
 
     // Support for multiple automatic camera modes
     switch (cameraMode)
@@ -480,8 +482,8 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 if (isMoving) cameraMoveCounter++;
 
                 // Camera orientation calculation
-                cameraAngle.x += cameraMouseVariation.x*-mouseSensitivity;
-                cameraAngle.y += cameraMouseVariation.y*-mouseSensitivity;
+                cameraAngle.x += (cameraMouseVariation.x * -mouseSensitivity);
+                cameraAngle.y += (cameraMouseVariation.y * -mouseSensitivity);
 
                 // Angle clamp
                 if (cameraAngle.y > FIRST_PERSON_MIN_CLAMP*DEG2RAD) cameraAngle.y = FIRST_PERSON_MIN_CLAMP*DEG2RAD;
