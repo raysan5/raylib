@@ -638,6 +638,7 @@ void ShowLogo(void)
     showLogo = true;
 }
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // Check if a file have been dropped into window
 bool IsFileDropped(void)
 {
@@ -664,6 +665,7 @@ void ClearDroppedFiles(void)
         dropFilesCount = 0;
     }
 }
+#endif
 
 // TODO: Gives the ray trace from mouse position
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
@@ -1007,8 +1009,8 @@ static void InitDisplay(int width, int height)
 
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
     //glfwWindowHint(GLFW_DECORATED, GL_TRUE);    // Border and buttons on Window
-    //glfwWindowHint(GLFW_RED_BITS, 8);           // Color framebuffer red component bits
-    //glfwWindowHint(GLFW_DEPTH_BITS, 16);        // Depth buffer bits (24 by default)
+    //glfwWindowHint(GLFW_RED_BITS, 8);           // Framebuffer red color component bits
+    //glfwWindowHint(GLFW_DEPTH_BITS, 16);        // Depthbuffer bits (24 by default)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);       // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
     //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers

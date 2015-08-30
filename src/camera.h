@@ -76,18 +76,20 @@ extern "C" {            // Prevents name mangling of functions
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 void SetCameraMode(int mode);                               // Set camera mode (multiple camera modes available)
-Camera UpdateCamera(Vector3 *playerPosition);               // Update camera and player position (1st person and 3rd person cameras)
+void UpdateCamera(Camera *camera);                          // Update camera (player position is ignored)
+void UpdateCameraPlayer(Camera *camera, Vector3 *position); // Update camera and player position (1st person and 3rd person cameras)
 
-void SetCameraMoveControls(int frontKey, int backKey, 
-                           int leftKey, int rightKey, 
-                           int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
+void SetCameraPosition(Vector3 position);                   // Set internal camera position
+void SetCameraTarget(Vector3 target);                       // Set internal camera target
 
 void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
 void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
 
+void SetCameraMoveControls(int frontKey, int backKey, 
+                           int leftKey, int rightKey, 
+                           int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
 void SetCameraMouseSensitivity(float sensitivity);          // Set camera mouse sensitivity (1st person and 3rd person cameras)
-void SetCameraTarget(Vector3 target);                       // Set internal camera target
 
 #ifdef __cplusplus
 }

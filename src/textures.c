@@ -32,7 +32,10 @@
 #include <stdlib.h>          // Declares malloc() and free() for memory management
 #include <string.h>          // Required for strcmp(), strrchr(), strncmp()
 
-#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+                             // Required: rlglLoadTexture() rlDeleteTextures(), 
+                             //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+
 #include "utils.h"           // rRES data decompression utility function
                              // NOTE: Includes Android fopen function map
 
@@ -397,9 +400,12 @@ void UnloadImage(Image image)
 // Unload texture from GPU memory
 void UnloadTexture(Texture2D texture)
 {
-    rlDeleteTextures(texture.id);
-    
-    TraceLog(INFO, "[TEX ID %i] Unloaded texture data", texture.id);
+    if (texture.id != 0)
+    {
+        rlDeleteTextures(texture.id);
+        
+        TraceLog(INFO, "[TEX ID %i] Unloaded texture data", texture.id);
+    }
 }
 
 // Get pixel data from image in the form of Color struct array
@@ -895,6 +901,7 @@ static Image LoadDDS(const char *fileName)
             TraceLog(DEBUG, "[%s] DDS file pixel format size: %i", fileName, header.ddspf.size);
             TraceLog(DEBUG, "[%s] DDS file pixel format flags: 0x%x", fileName, header.ddspf.flags);
             TraceLog(DEBUG, "[%s] DDS file format: 0x%x", fileName, header.ddspf.fourCC);
+            TraceLog(DEBUG, "[%s] DDS file bit count: 0x%x", fileName, header.ddspf.rgbBitCount);
 
             image.width = header.width;
             image.height = header.height;
@@ -959,10 +966,22 @@ static Image LoadDDS(const char *fileName)
             {
                 image.data = (unsigned char *)malloc(image.width*image.height*4*sizeof(unsigned char));
                 fread(image.data, image.width*image.height*4, 1, ddsFile);
+                
+                unsigned char blue = 0;
 
+                // NOTE: Data comes as A8R8G8B8, it must be reordered R8G8B8A8 (view next comment)
+                // DirecX understand ARGB as a 32bit DWORD but the actual memory byte alignment is BGRA
+                // So, we must realign B8G8R8A8 to R8G8B8A8
+                for (int i = 0; i < image.width*image.height*4; i += 4)
+                {
+                    blue = ((unsigned char *)image.data)[i];
+                    ((unsigned char *)image.data)[i] = ((unsigned char *)image.data)[i + 2];
+                    ((unsigned char *)image.data)[i + 2] = blue;
+                }
+                
                 image.format = UNCOMPRESSED_R8G8B8A8;
             }
-            else if (((header.ddspf.flags == 0x04) || (header.ddspf.flags == 0x05)) && (header.ddspf.fourCC > 0))
+            else if (((header.ddspf.flags == 0x04) || (header.ddspf.flags == 0x05)) && (header.ddspf.fourCC > 0)) // Compressed
             {
                 int bufsize;
 
@@ -1062,15 +1081,18 @@ static Image LoadPKM(const char *fileName)
             header.width = ((header.width & 0x00FF) << 8) | ((header.width & 0xFF00) >> 8);
             header.height = ((header.height & 0x00FF) << 8) | ((header.height & 0xFF00) >> 8);
             
-            TraceLog(INFO, "PKM (ETC) image width: %i", header.width);
-            TraceLog(INFO, "PKM (ETC) image height: %i", header.height);
-            TraceLog(INFO, "PKM (ETC) image format: %i", header.format);
+            TraceLog(DEBUG, "PKM (ETC) image width: %i", header.width);
+            TraceLog(DEBUG, "PKM (ETC) image height: %i", header.height);
+            TraceLog(DEBUG, "PKM (ETC) image format: %i", header.format);
             
             image.width = header.width;
             image.height = header.height;
             image.mipmaps = 1;
             
-            int size = image.width*image.height*4/8;  // Total data size in bytes
+            int bpp = 4;
+            if (header.format == 3) bpp = 8;
+            
+            int size = image.width*image.height*bpp/8;  // Total data size in bytes
 
             image.data = (unsigned char*)malloc(size * sizeof(unsigned char));
 

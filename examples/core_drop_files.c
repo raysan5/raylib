@@ -1,8 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Draw 3d planes
+*   raylib [core] example - Windows drop files
 *
-*   This example has been created using raylib 1.2 (www.raylib.com)
+*   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
@@ -18,12 +18,12 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - 3d planes");
-
-    // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
-
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - drop files");
+    
+    int count = 0;
+    char **droppedFiles;
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -31,7 +31,10 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+        if (IsFileDropped())
+        {
+            droppedFiles = GetDroppedFiles(&count);
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -40,15 +43,21 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
-
-                DrawPlane((Vector3){ 0, 0, 0 }, (Vector2){ 4, 4 }, RED);    // Draw a plane XZ
-
-                DrawGrid(10.0, 1.0);
-
-            End3dMode();
-
-            DrawFPS(10, 10);
+            if (count == 0) DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY);
+            else
+            {
+                DrawText("Dropped files:", 100, 40, 20, DARKGRAY);
+                
+                for (int i = 0; i < count; i++)
+                {
+                    if (i%2 == 0) DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5f));
+                    else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3f));
+                    
+                    DrawText(droppedFiles[i], 120, 100 + 40*i, 10, GRAY);
+                }
+                
+                DrawText("Drop new files...", 100, 110 + 40*count, 20, DARKGRAY);
+            }
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -56,7 +65,9 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    ClearDroppedFiles();    // Clear internal buffers
+    
+    CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

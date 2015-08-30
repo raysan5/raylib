@@ -12,6 +12,8 @@ Release:     raylib 1.3.0 (01 September 2015)
 NOTE: 
   This version supposed a big boost for raylib, new modules have been added with lots of features.
   Most of the modules have been completely reviewed to accomodate to the new features.
+  Over 50 new functions have been added to previous raylib version.
+  Most of the examples have been redone and 10 new advanced examples have been added.
 
 BIG changes:
 [camera] NEW MODULE: Set of cameras for 3d view: Free, Orbital, 1st person, 3rd person
@@ -27,6 +29,7 @@ smaller changes:
 [core] Added functions ShowCursor(), HideCursor(), IsCursorHidden()
 [core] Renamed function SetFlags() to SetConfigFlags()
 [shapes] Simplified some functions to improve performance
+[textures] Review of Image struct to support multiple data formats
 [textures] Added function LoadImageEx() 
 [textures] Added function LoadImageRaw()
 [textures] Added function LoadTextureEx()
@@ -37,6 +40,8 @@ smaller changes:
 [textures] Added function ImageConvertFormat()
 [textures] Added function GenTextureMipmaps()
 [text] Added support for Latin-1 Extended characters for default font
+[text] Redesigned SpriteFont struct, replaced Character struct by Rectangle
+[text] Removed function GetFontBaseSize(), use directly spriteFont.size
 [models] Review of struct: Model (added shaders support)
 [models] Added 3d collision functions (sphere vs sphere vs box vs box)
 [models] Added function DrawCubeTexture()

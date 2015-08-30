@@ -5,10 +5,10 @@
 *   NOTE: raylib is distributed with some free to use fonts (even for commercial pourposes!)
 *         To view details and credits for those fonts, check raylib license file
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -50,8 +50,8 @@ int main()
     
     for (int i = 0; i < 8; i++)
     {
-        positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], GetFontBaseSize(fonts[i])*2, spacings[i]).x/2;
-        positions[i].y = 60 + GetFontBaseSize(fonts[i]) + 50*i;
+        positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], fonts[i].size*2, spacings[i]).x/2;
+        positions[i].y = 60 + fonts[i].size + 50*i;
     }
     
     Color colors[8] = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD };
@@ -76,7 +76,7 @@ int main()
             
             for (int i = 0; i < 8; i++)
             {
-                DrawTextEx(fonts[i], messages[i], positions[i], GetFontBaseSize(fonts[i])*2, spacings[i], colors[i]);
+                DrawTextEx(fonts[i], messages[i], positions[i], fonts[i].size*2, spacings[i], colors[i]);
             }
 
         EndDrawing();

@@ -4,8 +4,8 @@
 *
 *   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
 *       OpenGL 1.1  - Direct map rl* -> gl*
-*       OpenGL 3.3+ - Vertex data is stored in VAOs, call rlglDraw() to render
-*       OpenGL ES 2 - Same behaviour as OpenGL 3.3+
+*       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
+*       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
 *   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
@@ -858,7 +858,7 @@ void rlglInit(void)
     // NOTE: We don't need that much data on screen... right now...
     
 #if defined(GRAPHICS_API_OPENGL_11)
-    TraceLog(INFO, "OpenGL 1.1 profile initialized");
+    //TraceLog(INFO, "OpenGL 1.1 (or driver default) profile initialized");
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1938,15 +1938,17 @@ Model rlglLoadModel(VertexData mesh)
 }
 
 // Read screen pixel data (color buffer)
+// ISSUE: Non pre-multiplied alpha when reading from backbuffer!
+// TODO: Multiply alpha
 unsigned char *rlglReadScreenPixels(int width, int height)
 {
-    unsigned char *screenData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
+    unsigned char *screenData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
 
     // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
 
     // Flip image vertically!
-    unsigned char *imgData = (unsigned char *)malloc(width * height * sizeof(unsigned char) * 4);
+    unsigned char *imgData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
 
     for (int y = height-1; y >= 0; y--)
     {
@@ -2075,7 +2077,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     return shader;
 }
 
-// Load a custom shader and return program id
+// Load custom shader strings and return program id
 unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 {
     unsigned int program = 0;
@@ -3058,8 +3060,6 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
-
-typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning

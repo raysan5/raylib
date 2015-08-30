@@ -4,7 +4,7 @@
 *
 *   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
 *       OpenGL 1.1  - Direct map rl* -> gl*
-*       OpenGL 3.3+ - Vertex data is stored in VAOs, call rlglDraw() to render
+*       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
 *   Copyright (c) 2014 Ramon Santamaria (@raysan5)
@@ -270,7 +270,7 @@ void PrintModelviewMatrix(void);        // DEBUG: Print modelview matrix
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load a custom shader and return program id
+unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shader strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
 void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
 void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw

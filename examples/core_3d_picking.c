@@ -2,10 +2,10 @@
 *
 *   raylib [core] example - Picking in 3d mode
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2015 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 *
 ********************************************************************************************/
 
@@ -23,23 +23,30 @@ int main()
     // Define the camera to look into our 3d world
     Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
 
-    Vector3 cubePosition = { 0.0, 0.0, 0.0 };
+    Vector3 cubePosition = { 0.0, 1.0, 0.0 };
     
-    Ray pickingLine;
+    Ray ray;        // Picking line ray
     
-    SetCameraMode(CAMERA_FREE);
+    SetCameraMode(CAMERA_FREE);         // Set a free camera mode
+    SetCameraPosition(camera.position); // Set internal camera position to match our camera position
 
-    SetTargetFPS(60);
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        camera = UpdateCamera(0);
+        UpdateCamera(&camera);          // Update internal camera and our camera
         
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) pickingLine = GetMouseRay(GetMousePosition(), camera);
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            // NOTE: This function is NOT WORKING properly!
+            ray = GetMouseRay(GetMousePosition(), camera);
+            
+            // TODO: Check collision between ray and box
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -50,14 +57,16 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawCube(cubePosition, 2, 2, 2, RED);
-                DrawCubeWires(cubePosition, 2, 2, 2, MAROON);
+                DrawCube(cubePosition, 2, 2, 2, GRAY);
+                DrawCubeWires(cubePosition, 2, 2, 2, DARKGRAY);
 
                 DrawGrid(10.0, 1.0);
                 
-                DrawRay(pickingLine, MAROON);
+                DrawRay(ray, MAROON);
 
             End3dMode();
+            
+            DrawText("Try selecting the box with mouse!", 240, 10, 20, GRAY);
 
             DrawFPS(10, 10);
 

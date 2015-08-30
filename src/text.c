@@ -67,7 +67,7 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static bool PixelIsMagenta(Color p);                // Check if a pixel is magenta
-static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Character **charSet);    // Parse image pixel data to obtain character set measures
+static int ParseImageData(Image image, int **charValues, Rectangle **charSet);    // Parse image pixel data to obtain characters data
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
 static SpriteFont LoadTTF(const char *fileName, int fontSize); // Generate a sprite font image from TTF data (font size required)
 
@@ -181,21 +181,23 @@ extern void LoadDefaultFont(void)
 
     // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, numChars
     //------------------------------------------------------------------------------
-    defaultFont.charSet = (Character *)malloc(defaultFont.numChars * sizeof(Character));    // Allocate space for our character data
-                                                                                            // This memory should be freed at end! --> Done on CloseWindow()
+    defaultFont.charValues = (int *)malloc(defaultFont.numChars*sizeof(int)); 
+    defaultFont.charRecs = (Rectangle *)malloc(defaultFont.numChars*sizeof(Rectangle));   // Allocate space for our character rectangle data
+                                                                                          // This memory should be freed at end! --> Done on CloseWindow()
     int currentLine = 0;
     int currentPosX = charsDivisor;
     int testPosX = charsDivisor;
 
     for (int i = 0; i < defaultFont.numChars; i++)
     {
-        defaultFont.charSet[i].value = FONT_FIRST_CHAR + i;  // First char is 32
-        defaultFont.charSet[i].x = currentPosX;
-        defaultFont.charSet[i].y = charsDivisor + currentLine * (charsHeight + charsDivisor);
-        defaultFont.charSet[i].w = charsWidth[i];
-        defaultFont.charSet[i].h = charsHeight;
+        defaultFont.charValues[i] = FONT_FIRST_CHAR + i;  // First char is 32
+        
+        defaultFont.charRecs[i].x = currentPosX;
+        defaultFont.charRecs[i].y = charsDivisor + currentLine * (charsHeight + charsDivisor);
+        defaultFont.charRecs[i].width = charsWidth[i];
+        defaultFont.charRecs[i].height = charsHeight;
 
-        testPosX += (defaultFont.charSet[i].w + charsDivisor);
+        testPosX += (defaultFont.charRecs[i].width + charsDivisor);
 
         if (testPosX >= defaultFont.texture.width)
         {
@@ -203,11 +205,13 @@ extern void LoadDefaultFont(void)
             currentPosX = 2 * charsDivisor + charsWidth[i];
             testPosX = currentPosX;
 
-            defaultFont.charSet[i].x = charsDivisor;
-            defaultFont.charSet[i].y = charsDivisor + currentLine * (charsHeight + charsDivisor);
+            defaultFont.charRecs[i].x = charsDivisor;
+            defaultFont.charRecs[i].y = charsDivisor + currentLine*(charsHeight + charsDivisor);
         }
         else currentPosX = testPosX;
     }
+    
+    defaultFont.size = defaultFont.charRecs[0].y;
 
     TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
@@ -215,7 +219,8 @@ extern void LoadDefaultFont(void)
 extern void UnloadDefaultFont(void)
 {
     UnloadTexture(defaultFont.texture);
-    free(defaultFont.charSet);
+    free(defaultFont.charValues);
+    free(defaultFont.charRecs);
     
     TraceLog(INFO, "Unloaded default font data");
 }
@@ -238,25 +243,20 @@ SpriteFont LoadSpriteFont(const char *fileName)
     {
         Image image = LoadImage(fileName);
 
-        // At this point we have a data array...
-        
-        Color *imagePixels = GetImageData(image);
-
 #if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
         ImageConvertToPOT(&image, MAGENTA);
 #endif
-        // Process bitmap Font pixel data to get measures (Character array)
+        // Process bitmap font pixel data to get characters measures
         // spriteFont.charSet data is filled inside the function and memory is allocated!
-        int numChars = ParseImageData(imagePixels, image.width, image.height, &spriteFont.charSet);
+        int numChars = ParseImageData(image, &spriteFont.charValues, &spriteFont.charRecs);
 
-        TraceLog(INFO, "[%s] SpriteFont data parsed correctly", fileName);
-        TraceLog(INFO, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
+        TraceLog(DEBUG, "[%s] SpriteFont data parsed correctly", fileName);
+        TraceLog(DEBUG, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
 
         spriteFont.numChars = numChars;
-
         spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
+        spriteFont.size = spriteFont.charRecs[0].height;
 
-        free(imagePixels);
         UnloadImage(image);
     }
 
@@ -267,7 +267,8 @@ SpriteFont LoadSpriteFont(const char *fileName)
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
     UnloadTexture(spriteFont.texture);
-    free(spriteFont.charSet);
+    free(spriteFont.charValues);
+    free(spriteFont.charRecs);
     
     TraceLog(INFO, "Unloaded sprite font data");
 }
@@ -298,32 +299,32 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int f
     float scaleFactor;
     unsigned char letter;
 
-    Character c;
+    Rectangle rec;
 
-    //if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
-    //else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
+    //if (fontSize <= spriteFont.charRecs[0].height) scaleFactor = 1.0f;
+    //else scaleFactor = (float)fontSize / spriteFont.charRecs[0].height;
     
-    scaleFactor = (float)fontSize/spriteFont.charSet[0].h;
+    scaleFactor = (float)fontSize/spriteFont.charRecs[0].height;
 
     for(int i = 0; i < length; i++)
     {
         if ((unsigned char)text[i] == 0xc2)
         {
             letter = (unsigned char)text[i + 1];
-            c = spriteFont.charSet[letter - FONT_FIRST_CHAR];
+            rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR];
             i++;
         }
         else if ((unsigned char)text[i] == 0xc3)
         {
             letter = (unsigned char)text[i + 1];
-            c = spriteFont.charSet[letter - FONT_FIRST_CHAR + 64];
+            rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR + 64];
             i++;
         }
-        else c = spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR];
+        else rec = spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR];
 
-        DrawTexturePro(spriteFont.texture, (Rectangle){ c.x, c.y, c.w, c.h }, (Rectangle){ position.x + offsetX, position.y, c.w*scaleFactor, c.h*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
+        DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + offsetX, position.y, rec.width*scaleFactor, rec.height*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
 
-        offsetX += (c.w*scaleFactor + spacing);
+        offsetX += (rec.width*scaleFactor + spacing);
     }
 }
 
@@ -363,23 +364,17 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
 
     for (int i = 0; i < len; i++)
     {
-        textWidth += spriteFont.charSet[(int)text[i] - FONT_FIRST_CHAR].w;
+        textWidth += spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR].width;
     }
 
-    if (fontSize <= spriteFont.charSet[0].h) scaleFactor = 1.0f;
-    else scaleFactor = (float)fontSize / spriteFont.charSet[0].h;
+    if (fontSize <= spriteFont.charRecs[0].height) scaleFactor = 1.0f;
+    else scaleFactor = (float)fontSize / spriteFont.charRecs[0].height;
 
     Vector2 vec;
     vec.x = (float)textWidth * scaleFactor + (len - 1) * spacing; // Adds chars spacing to measure
-    vec.y = (float)spriteFont.charSet[0].h * scaleFactor;
+    vec.y = (float)spriteFont.charRecs[0].height * scaleFactor;
 
     return vec;
-}
-
-// Returns the base size for a SpriteFont (chars height)
-int GetFontBaseSize(SpriteFont spriteFont)
-{
-    return spriteFont.charSet[0].h;
 }
 
 // Shows current FPS on top-left corner
@@ -420,8 +415,8 @@ static bool PixelIsMagenta(Color p)
     return ((p.r == 255) && (p.g == 0) && (p.b == 255) && (p.a == 255));
 }
 
-// Parse image pixel data to obtain character set measures
-static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Character **charSet)
+// Parse image pixel data to obtain characters data (measures)
+static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
 {
     int charSpacing = 0;
     int lineSpacing = 0;
@@ -429,15 +424,20 @@ static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Char
     int x = 0;
     int y = 0;
 
-    Character tempCharSet[MAX_FONTCHARS];    // We allocate a temporal array for charData, once we get the actual charNumber we copy data to a sized array.
+    // We allocate a temporal arrays for chars data measures, 
+    // once we get the actual number of chars, we copy data to a sized arrays
+    int tempCharValues[MAX_FONTCHARS];
+    Rectangle tempCharRecs[MAX_FONTCHARS];
+    
+    Color *pixels = GetImageData(image);
 
-    for(y = 0; y < imgHeight; y++)
+    for(y = 0; y < image.height; y++)
     {
-        for(x = 0; x < imgWidth; x++)
+        for(x = 0; x < image.width; x++)
         {
-            if (!PixelIsMagenta(imgDataPixel[y*imgWidth + x])) break;
+            if (!PixelIsMagenta(pixels[y*image.width + x])) break;
         }
-        if (!PixelIsMagenta(imgDataPixel[y*imgWidth + x])) break;
+        if (!PixelIsMagenta(pixels[y*image.width + x])) break;
     }
 
     charSpacing = x;
@@ -446,7 +446,7 @@ static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Char
     int charHeight = 0;
     int j = 0;
 
-    while(!PixelIsMagenta(imgDataPixel[(lineSpacing + j)*imgWidth + charSpacing])) j++;
+    while(!PixelIsMagenta(pixels[(lineSpacing + j)*image.width + charSpacing])) j++;
 
     charHeight = j;
 
@@ -455,21 +455,22 @@ static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Char
     int lineToRead = 0;
     int xPosToRead = charSpacing;
 
-    while((lineSpacing + lineToRead * (charHeight + lineSpacing)) < imgHeight)
+    while((lineSpacing + lineToRead * (charHeight + lineSpacing)) < image.height)
     {
-        while((xPosToRead < imgWidth) &&
-              !PixelIsMagenta((imgDataPixel[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*imgWidth + xPosToRead])))
+        while((xPosToRead < image.width) &&
+              !PixelIsMagenta((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead])))
         {
-            tempCharSet[index].value = FONT_FIRST_CHAR + index;
-            tempCharSet[index].x = xPosToRead;
-            tempCharSet[index].y = lineSpacing + lineToRead * (charHeight + lineSpacing);
-            tempCharSet[index].h = charHeight;
+            tempCharValues[index] = FONT_FIRST_CHAR + index;
+            
+            tempCharRecs[index].x = xPosToRead;
+            tempCharRecs[index].y = lineSpacing + lineToRead * (charHeight + lineSpacing);
+            tempCharRecs[index].height = charHeight;
 
             int charWidth = 0;
 
-            while(!PixelIsMagenta(imgDataPixel[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*imgWidth + xPosToRead + charWidth])) charWidth++;
+            while(!PixelIsMagenta(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth])) charWidth++;
 
-            tempCharSet[index].w = charWidth;
+            tempCharRecs[index].width = charWidth;
 
             index++;
 
@@ -479,12 +480,20 @@ static int ParseImageData(Color *imgDataPixel, int imgWidth, int imgHeight, Char
         lineToRead++;
         xPosToRead = charSpacing;
     }
+    
+    free(pixels);
 
-    // We got tempCharSet populated with char data and the number of chars (index)
-    // Now we move temp data to real charSet (passed as parameter to the function)
-    (*charSet) = (Character *)malloc(index * sizeof(Character));        // BE CAREFUL! This memory should be freed!
+    // We got tempCharValues and tempCharsRecs populated with chars data
+    // Now we move temp data to sized charValues and charRecs arrays (passed as parameter to the function)
+    // NOTE: This memory should be freed!
+    (*charRecs) = (Rectangle *)malloc(index*sizeof(Rectangle));
+    (*charValues) = (int *)malloc(index*sizeof(int));
 
-    for (int i = 0; i < index; i++) (*charSet)[i] = tempCharSet[i];
+    for (int i = 0; i < index; i++)
+    {
+        (*charValues)[i] = tempCharValues[i];
+        (*charRecs)[i] = tempCharRecs[i];
+    }
 
     return index;
 }
@@ -528,7 +537,7 @@ static SpriteFont LoadRBMF(const char *fileName)
     {
         fread(&rbmfHeader, sizeof(rbmfInfoHeader), 1, rbmfFile);
 
-        TraceLog(INFO, "[%s] Loading rBMF file, size: %ix%i, numChars: %i, charHeight: %i", fileName, rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
+        TraceLog(DEBUG, "[%s] Loading rBMF file, size: %ix%i, numChars: %i, charHeight: %i", fileName, rbmfHeader.imgWidth, rbmfHeader.imgHeight, rbmfHeader.numChars, rbmfHeader.charHeight);
 
         spriteFont.numChars = (int)rbmfHeader.numChars;
 
@@ -566,15 +575,16 @@ static SpriteFont LoadRBMF(const char *fileName)
         
         free(imagePixels);
 
-        TraceLog(INFO, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
+        TraceLog(DEBUG, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
         spriteFont.texture = LoadTextureFromImage(image);
         UnloadImage(image);     // Unload image data
 
-        //TraceLog(INFO, "[%s] Starting charSet reconstruction", fileName);
+        //TraceLog(INFO, "[%s] Starting chars set reconstruction", fileName);
 
-        // Reconstruct charSet using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
-        spriteFont.charSet = (Character *)malloc(spriteFont.numChars * sizeof(Character));     // Allocate space for our character data
+        // Get characters data using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
+        spriteFont.charValues = (int *)malloc(spriteFont.numChars*sizeof(int)); 
+        spriteFont.charRecs = (Rectangle *)malloc(spriteFont.numChars*sizeof(Rectangle));
 
         int currentLine = 0;
         int currentPosX = charsDivisor;
@@ -582,13 +592,14 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         for (int i = 0; i < spriteFont.numChars; i++)
         {
-            spriteFont.charSet[i].value = (int)rbmfHeader.firstChar + i;
-            spriteFont.charSet[i].x = currentPosX;
-            spriteFont.charSet[i].y = charsDivisor + currentLine * ((int)rbmfHeader.charHeight + charsDivisor);
-            spriteFont.charSet[i].w = (int)rbmfCharWidthData[i];
-            spriteFont.charSet[i].h = (int)rbmfHeader.charHeight;
+            spriteFont.charValues[i] = (int)rbmfHeader.firstChar + i;
+            
+            spriteFont.charRecs[i].x = currentPosX;
+            spriteFont.charRecs[i].y = charsDivisor + currentLine * ((int)rbmfHeader.charHeight + charsDivisor);
+            spriteFont.charRecs[i].width = (int)rbmfCharWidthData[i];
+            spriteFont.charRecs[i].height = (int)rbmfHeader.charHeight;
 
-            testPosX += (spriteFont.charSet[i].w + charsDivisor);
+            testPosX += (spriteFont.charRecs[i].width + charsDivisor);
 
             if (testPosX > spriteFont.texture.width)
             {
@@ -596,11 +607,13 @@ static SpriteFont LoadRBMF(const char *fileName)
                 currentPosX = 2 * charsDivisor + (int)rbmfCharWidthData[i];
                 testPosX = currentPosX;
 
-                spriteFont.charSet[i].x = charsDivisor;
-                spriteFont.charSet[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
+                spriteFont.charRecs[i].x = charsDivisor;
+                spriteFont.charRecs[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
             }
             else currentPosX = testPosX;
         }
+        
+        spriteFont.size = spriteFont.charRecs[0].height;
 
         TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
     }
@@ -614,8 +627,14 @@ static SpriteFont LoadRBMF(const char *fileName)
 }
 
 // Generate a sprite font from TTF data (font size required)
+// NOTE: This function is a mess, it should be completely redone!
 static SpriteFont LoadTTF(const char *fileName, int fontSize)
 {
+    // Steps:
+    
+    // 1) Generate sprite sheet image with characters from TTF
+    // 2) Load image as SpriteFont
+    
     SpriteFont font;
 
     Image image;
@@ -631,7 +650,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
 
     unsigned char *tempBitmap = (unsigned char *)malloc(image.width*image.height*sizeof(unsigned char));   // One channel bitmap returned!
 
-    // REFERENCE
+    // Reference struct
 /*
     typedef struct
     {
@@ -693,8 +712,10 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
 
     print(100,160, 0, "This is a test");
 */
+/*
     font.numChars = 95;
-    font.charSet = (Character *)malloc(font.numChars*sizeof(Character));
+    font.charValues (int *)malloc(font.numChars*sizeof(int));
+    font.charRecs = (Character *)malloc(font.numChars*sizeof(Character));
     font.texture = LoadTextureFromImage(image);
 
     //stbtt_aligned_quad letter;
@@ -702,16 +723,16 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
 
     for (int i = 0; i < font.numChars; i++)
     {
-        font.charSet[i].value = i + 32;
+        font.charValues[i] = i + 32;
 
         //stbtt_GetPackedQuad(chardata[0], 512, 512, i, &x, &y, &letter, 0);
 
-        font.charSet[i].x = chardata[i + 32].x0;
-        font.charSet[i].y = chardata[i + 32].y0;
-        font.charSet[i].w = chardata[i + 32].x1 - chardata[i + 32].x0;
-        font.charSet[i].h = chardata[i + 32].y1 - chardata[i + 32].y0;
+        font.charRecs[i].x = chardata[i + 32].x0;
+        font.charRecs[i].y = chardata[i + 32].y0;
+        font.charRecs[i].width = chardata[i + 32].x1 - chardata[i + 32].x0;
+        font.charRecs[i].height = chardata[i + 32].y1 - chardata[i + 32].y0;
     }
-
+*/
     UnloadImage(image);
 
     return font;
