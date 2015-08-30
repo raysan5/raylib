@@ -162,14 +162,24 @@ void SetCameraMode(int mode)
     cameraMode = mode;
 }
 
-// Update camera with position
-// TODO: I don't like how this function works right now... not clear enough...
-Camera UpdateCamera(Vector3 *position)
+// Update camera (player position is ignored)
+void UpdateCamera(Camera *camera)
 {
-    // Calculate camera
+    Vector3 position = { 0, 0, 0 };
+    
+    // Process internal camera and player position (if required)
+    if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, &position);
+
+    *camera = internalCamera;
+}
+
+// Update camera and player position (1st person and 3rd person cameras)
+void UpdateCameraPlayer(Camera *camera, Vector3 *position)
+{
+    // Process internal camera and player position (if required)
     if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, position);
 
-    return internalCamera;
+    *camera = internalCamera;
 }
 
 // Set internal camera position

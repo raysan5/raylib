@@ -76,7 +76,8 @@ extern "C" {            // Prevents name mangling of functions
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 void SetCameraMode(int mode);                               // Set camera mode (multiple camera modes available)
-Camera UpdateCamera(Vector3 *position);                     // Update camera and player position (1st person and 3rd person cameras)
+void UpdateCamera(Camera *camera);                          // Update camera (player position is ignored)
+void UpdateCameraPlayer(Camera *camera, Vector3 *position); // Update camera and player position (1st person and 3rd person cameras)
 
 void SetCameraPosition(Vector3 position);                   // Set internal camera position
 void SetCameraTarget(Vector3 target);                       // Set internal camera target
