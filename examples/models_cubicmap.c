@@ -35,18 +35,18 @@ int main()
 
     UnloadImage(image);     // Unload cubesmap image from RAM, already uploaded to VRAM
     
-    SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
-    SetCameraPosition(camera.position);     // Set internal camera position to match our custom camera position
+    SetCameraMode(CAMERA_ORBITAL);      // Set an orbital camera mode
+    SetCameraPosition(camera.position); // Set internal camera position to match our custom camera position
 
-    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        camera = UpdateCamera(0);   // Update internal camera and our camera
+        UpdateCamera(&camera);          // Update internal camera and our camera
         //----------------------------------------------------------------------------------
 
         // Draw

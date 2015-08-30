@@ -29,20 +29,20 @@ int main()
     SetModelTexture(&map, texture);                         // Bind texture to model
     Vector3 mapPosition = { -16, 0.0, -16 };                // Set model position (depends on model scaling!)
 
-    UnloadImage(image);                     // Unload heightmap image from RAM, already uploaded to VRAM
+    UnloadImage(image);                 // Unload heightmap image from RAM, already uploaded to VRAM
     
-    SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
-    SetCameraPosition(camera.position);     // Set internal camera position to match our custom camera position
+    SetCameraMode(CAMERA_ORBITAL);      // Set an orbital camera mode
+    SetCameraPosition(camera.position); // Set internal camera position to match our custom camera position
 
-    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        camera = UpdateCamera(0);   // Update internal camera and our camera
+        UpdateCamera(&camera);          // Update internal camera and our camera
         //----------------------------------------------------------------------------------
 
         // Draw

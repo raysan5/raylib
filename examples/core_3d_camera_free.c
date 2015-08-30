@@ -37,7 +37,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        camera = UpdateCamera(0);       // Update internal camera and our camera
+        UpdateCamera(&camera);          // Update internal camera and our camera
         //----------------------------------------------------------------------------------
 
         // Draw
