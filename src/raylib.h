@@ -241,20 +241,13 @@ typedef struct Texture2D {
     int format;             // Data format (TextureFormat)
 } Texture2D;
 
-// Character type (one font glyph)
-typedef struct Character {
-    int value;        //char value = ' '; (int)value = 32;
-    int x;
-    int y;
-    int w;
-    int h;
-} Character;
-
 // SpriteFont type, includes texture and charSet array data
 typedef struct SpriteFont {
-    Texture2D texture;
-    int numChars;
-    Character *charSet;
+    Texture2D texture;      // Font texture
+    int size;               // Base size (default chars height)
+    int numChars;           // Number of characters
+    int *charValues;        // Characters values array
+    Rectangle *charRecs;    // Characters rectangles within the texture
 } SpriteFont;
 
 // Camera type, defines a camera position/orientation in 3d space
@@ -276,7 +269,7 @@ typedef struct VertexData {
     unsigned int vboId[4];
 } VertexData;
 
-// Shader type
+// Shader type (generic shader)
 typedef struct Shader {
     unsigned int id;                // Shader program id
 
@@ -411,6 +404,8 @@ void EndDrawing(void);                                      // End canvas drawin
 void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
 void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 
+Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // TODO: Returns a ray trace from mouse position
+
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 float GetFPS(void);                                         // Returns current FPS
 float GetFrameTime(void);                                   // Returns time in seconds for one frame
@@ -421,37 +416,12 @@ int GetHexValue(Color color);                               // Returns hexadecim
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-void SetConfigFlags(char flags);                            // Enable some window configurations
+void SetConfigFlags(char flags);                            // Setup some window configuration flags
 void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 
 bool IsFileDropped(void);                                   // Check if a file have been dropped into window
 char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
 void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
-
-Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // TODO: Gives the ray trace from mouse position
-
-//------------------------------------------------------------------------------------
-// Shaders System Functions (Module: rlgl)
-// NOTE: This functions are useless when using OpenGL 1.1
-//------------------------------------------------------------------------------------
-Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load a custom shader and return program id
-void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
-void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
-void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
-void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
-bool IsPosproShaderEnabled(void);                                   // Check if postprocessing shader is enabled
-
-int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
-void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
-void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
-void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
-void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
-
-void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -517,7 +487,8 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 // Camera System Functions (Module: camera)
 //------------------------------------------------------------------------------------
 void SetCameraMode(int mode);                               // Set camera mode (multiple camera modes available)
-Camera UpdateCamera(Vector3 *position);                     // Update camera and player position (1st person and 3rd person cameras)
+void UpdateCamera(Camera *camera);                          // Update camera (player position is ignored)
+void UpdateCameraPlayer(Camera *camera, Vector3 *position); // Update camera and player position (1st person and 3rd person cameras)
 
 void SetCameraPosition(Vector3 position);                   // Set internal camera position
 void SetCameraTarget(Vector3 target);                       // Set internal camera target
@@ -571,7 +542,7 @@ Image LoadImageFromRES(const char *rresName, int resId);                        
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
 Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load a texture from raw data into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
-Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data (and generate mipmaps)
+Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
@@ -599,7 +570,7 @@ void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,      
                 int fontSize, int spacing, Color tint);
 int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing);         // Measure string size for SpriteFont
-int GetFontBaseSize(SpriteFont spriteFont);                                                        // Returns the base size for a SpriteFont (chars height)
+
 void DrawFPS(int posX, int posY);                                                                  // Shows current FPS on top-left corner
 const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
 
@@ -644,6 +615,29 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);               // Detect collision between two boxes
 bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere);       // Detect collision between box and sphere
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Return the normal vector of the impacted surface
+
+//------------------------------------------------------------------------------------
+// Shaders System Functions (Module: rlgl)
+// NOTE: This functions are useless when using OpenGL 1.1
+//------------------------------------------------------------------------------------
+Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
+unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shaders strings and return program id
+void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
+void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
+void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
+void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
+void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
+bool IsPosproShaderEnabled(void);                                   // Check if postprocessing shader is enabled
+
+int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
+void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
+void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
+void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
+void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+
+void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
