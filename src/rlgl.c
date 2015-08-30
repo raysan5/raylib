@@ -2077,7 +2077,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     return shader;
 }
 
-// Load a custom shader and return program id
+// Load custom shader strings and return program id
 unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 {
     unsigned int program = 0;
