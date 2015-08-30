@@ -32,7 +32,10 @@
 #include <stdlib.h>          // Declares malloc() and free() for memory management
 #include <string.h>          // Required for strcmp(), strrchr(), strncmp()
 
-#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+                             // Required: rlglLoadTexture() rlDeleteTextures(), 
+                             //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+
 #include "utils.h"           // rRES data decompression utility function
                              // NOTE: Includes Android fopen function map
 
