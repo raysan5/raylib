@@ -154,9 +154,14 @@ EXAMPLES = \
     core_input_keys \
     core_input_mouse \
     core_mouse_wheel \
+    core_input_gamepad \
     core_random_values \
     core_color_select \
+    core_drop_files \
     core_3d_mode \
+    core_3d_picking \
+    core_3d_camera_free \
+    core_3d_camera_first_person \
     shapes_logo_raylib \
     shapes_basic_shapes \
     shapes_colors_palette \
@@ -165,16 +170,23 @@ EXAMPLES = \
     textures_image_loading \
     textures_rectangle \
     textures_srcrec_dstrec \
+    textures_to_image \
+    textures_raw_data \
+    textures_formats_loading \
+    textures_particles_trail_blending \
     text_sprite_fonts \
     text_rbmf_fonts \
     text_format_text \
     text_font_select \
     models_geometric_shapes \
-    models_planes \
     models_billboard \
     models_obj_loading \
     models_heightmap \
     models_cubicmap \
+    shaders_model_shader \
+    shaders_shapes_textures \
+    shaders_custom_uniform \
+    shaders_postprocessing \
     audio_sound_loading \
     audio_music_stream \
     fix_dylib \
@@ -201,16 +213,26 @@ core_input_keys: core_input_keys.c
 core_input_mouse: core_input_mouse.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 # compile [core] example - gamepad input
 core_input_gamepad: core_input_gamepad.c
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+else
+	@echo core_input_gamepad: Only supported on desktop platform
 endif
 
 # compile [core] example - mouse wheel
 core_mouse_wheel: core_mouse_wheel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [core] example - drop files
+core_drop_files: core_drop_files.c
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+else
+	@echo core_drop_files: Only supported on desktop platform
+endif
+    
 # compile [core] example - generate random values
 core_random_values: core_random_values.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -223,6 +245,18 @@ core_color_select: core_color_select.c
 core_3d_mode: core_3d_mode.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [core] example - 3d picking
+core_3d_picking: core_3d_picking.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [core] example - 3d camera free
+core_3d_camera_free: core_3d_camera_free.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [core] example - 3d camera first person
+core_3d_camera_first_person: core_3d_camera_first_person.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)    
+    
 # compile [shapes] example - raylib logo (with basic shapes)
 shapes_logo_raylib: shapes_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -255,6 +289,22 @@ textures_rectangle: textures_rectangle.c
 textures_srcrec_dstrec: textures_srcrec_dstrec.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [textures] example - texture to image
+textures_to_image: textures_to_image.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [textures] example - texture raw data
+textures_raw_data: textures_raw_data.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [textures] example - texture formats loading
+textures_formats_loading: textures_formats_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [textures] example - texture particles trail blending
+textures_particles_trail_blending: textures_particles_trail_blending.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
 # compile [text] example - sprite fonts loading
 text_sprite_fonts: text_sprite_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -295,6 +345,22 @@ models_heightmap: models_heightmap.c
 models_cubicmap: models_cubicmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [shaders] example - model shader
+shaders_model_shader: shaders_model_shader.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [shaders] example - shapes texture shader
+shaders_shapes_textures: shaders_shapes_textures.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [shaders] example - custom uniform in shader
+shaders_custom_uniform: shaders_custom_uniform.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [shaders] example - postprocessing shader
+shaders_postprocessing: shaders_postprocessing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
 # compile [audio] example - sound loading and playing (WAV and OGG)
 audio_sound_loading: audio_sound_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
