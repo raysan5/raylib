@@ -2019,6 +2019,8 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
     Shader shader;
+    
+    shader.id = 0;      // Default value in case of loading failure
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
@@ -2180,9 +2182,11 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 // Unload a custom shader from memory
 void UnloadShader(Shader shader)
 {
-    rlDeleteShader(shader.id);
-    
-    TraceLog(INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
+    if (shader.id != 0)
+    {
+        rlDeleteShader(shader.id);
+        TraceLog(INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
+    }
 }
 
 // Set custom shader to be used on batch draw
@@ -2242,7 +2246,7 @@ void SetPostproShader(Shader shader)
     //TraceLog(DEBUG, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
     //TraceLog(DEBUG, "Shader diffuse map id: %i", shader.texDiffuseId);
 #elif defined(GRAPHICS_API_OPENGL_11)
-    TraceLog(WARNING, "Postprocessing shaders not supported on OpenGL 1.1");
+    TraceLog(WARNING, "Shaders not supported on OpenGL 1.1");
 #endif
 }
 
@@ -2287,6 +2291,8 @@ void SetModelShader(Model *model, Shader shader)
     
     // NOTE: If SetModelTexture() is called previously, texture is not assigned to new shader
     if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
+#elif (GRAPHICS_API_OPENGL_11)
+    TraceLog(WARNING, "Shaders not supported on OpenGL 1.1");
 #endif
 }
 
