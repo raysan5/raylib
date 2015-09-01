@@ -13,7 +13,7 @@ NOTE:
   This version supposed a big boost for raylib, new modules have been added with lots of features.
   Most of the modules have been completely reviewed to accomodate to the new features.
   Over 50 new functions have been added to previous raylib version.
-  Most of the examples have been redone and 10 new advanced examples have been added.
+  Most of the examples have been redone and +10 new advanced examples have been added.
 
 BIG changes:
 [camera] NEW MODULE: Set of cameras for 3d view: Free, Orbital, 1st person, 3rd person
