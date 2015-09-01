@@ -80,7 +80,7 @@ endif
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
 else
     INCLUDES = -I. -I../src
 # external libraries headers

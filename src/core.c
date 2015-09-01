@@ -1627,7 +1627,7 @@ static void PollInputEvents(void)
             else if (key == 0x7f) currentKeyState[259] = 1;
             else
             {
-                TraceLog(INFO, "Pressed key (ASCII): 0x%02x", key);
+                TraceLog(DEBUG, "Pressed key (ASCII): 0x%02x", key);
 
                 currentKeyState[key] = 1;
             }
@@ -1637,7 +1637,7 @@ static void PollInputEvents(void)
         }
         else if (keyboardMode == 1)
         {
-            TraceLog(INFO, "Pressed key (keycode): 0x%02x", key);
+            TraceLog(DEBUG, "Pressed key (keycode): 0x%02x", key);
 
             int asciiKey = -1;
 

@@ -221,8 +221,6 @@ extern void UnloadDefaultFont(void)
     UnloadTexture(defaultFont.texture);
     free(defaultFont.charValues);
     free(defaultFont.charRecs);
-    
-    TraceLog(INFO, "Unloaded default font data");
 }
 
 // Get the default font, useful to be used with extended parameters
@@ -243,7 +241,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
     {
         Image image = LoadImage(fileName);
 
-#if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_WEB)
         ImageConvertToPOT(&image, MAGENTA);
 #endif
         // Process bitmap font pixel data to get characters measures
