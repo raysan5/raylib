@@ -2,7 +2,7 @@
 *
 *   raylib [textures] example - Texture loading and drawing a part defined by a rectangle
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2014 Ramon Santamaria (@raysan5)
