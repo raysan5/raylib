@@ -8,10 +8,9 @@ raylib is a simple and easy-to-use library to learn videogames programming.
 raylib is highly inspired by Borland BGI graphics lib and by XNA framework. 
 Allegro and SDL have also been analyzed for reference.
 
-NOTE for ADVENTURERS: raylib is a programming library to learn videogames programming; no fancy interface, no visual helpers, no auto-debugging... just coding in the most pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](http://www.raylib.com/examples.htm)
-
-Since version 1.2.2 raylib can compile directly for web (html5) using emscripten and asm.js, 
-to see a demo of raylib features working on web, [check here!](http://www.raylib.com/raylib_demo.html)
+NOTE for ADVENTURERS: raylib is a programming library to learn videogames programming; 
+no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
+pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](http://www.raylib.com/examples.htm)
 
 history
 -------
@@ -79,21 +78,24 @@ notes on raylib 1.3
 -------------------
 
 On September 2015, after 1 year of raylib 1.2 release, arrives raylib 1.3. This version adds shaders functionality,
-improves textures module and provides some new modules (camera system, gestures system, IMGUI).
+improves tremendously textures module and also provides some new modules (camera system, gestures system, IMGUI).
 
-Shaders, the biggest addition to raylib, with support for simple and easy shaders loading and use. Loaded shaders can be
-assigned to models or used as fullscreen postrocessing shaders.
+Shaders support is the biggest addition to raylib 1.3, with support for easy shaders loading and use. Loaded shaders can be
+attached to 3d models or used as fullscreen postrocessing effects. A bunch of postprocessing shaders are also included
+in this release, check raylib/shaders folder.
 
-Textures module has been improved to support most of the internal texture formats available in OpenGL
-(RGB565, RGB888, RGBA5551, RGBA4444, etc.), including compressed texture formats (DXT, ETC1, ETC2, ASTC, PVRT).
+Textures module has grown to support most of the internal texture formats available in OpenGL (RGB565, RGB888, RGBA5551, RGBA4444, etc.), 
+including compressed texture formats (DXT, ETC1, ETC2, ASTC, PVRT); raylib 1.3 can load .dds, .pkm, .ktx, .astc and .pvr files. 
 
-New camera module offers to the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, 3rd person).
-Camera modes are very easy to use, just calling functions: SetCameraMode() and UpdateCamera().
+A brand new [camera](https://github.com/raysan5/raylib/blob/develop/src/camera.c) module offers to the user multiple preconfigured ready-to-use camera systems (free camera, 1st person, 3rd person).
+Camera modes are very easy to use, just check examples: [core_3d_camera_free.c](https://github.com/raysan5/raylib/blob/develop/examples/core_3d_camera_free.c) and [core_3d_camera_first_person.c](https://github.com/raysan5/raylib/blob/develop/examples/core_3d_camera_first_person.c).
 
-New gestures module simplifies gestures detection on Android and HTML5 programs.
+New [gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.h) module simplifies gestures detection on Android and HTML5 programs.
 
-New IMGUI (Immediate Mode GUI) module: raygui, offers a set of functions to create simple user interfaces,
-primary intended for tools development, still in experimental state but already fully functional.
+[raygui](https://github.com/raysan5/raylib/blob/develop/src/raygui.h), the new IMGUI (Immediate Mode GUI) module offers a set of functions to create simple user interfaces,
+primary intended for tools development. It's still in experimental state but already fully functional.
+
+Most of the examples have been completely rewritten and +10 new examples have been added to show the new raylib features.
 
 Lots of code changes and lot of testing have concluded in this amazing new raylib 1.3.
 
@@ -102,13 +104,11 @@ features
  
    *  Written in plain C code (C99)
    *  Uses C# PascalCase/camelCase notation
-   *  Hardware accelerated with OpenGL (1.1, 3.3+ or ES2)
-   *  Unique OpenGL abstraction layer: [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
    *  Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
-   *  Unique OpenGL abstraction layer [rlgl]
+   *  Unique OpenGL abstraction layer: [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
    *  Powerful fonts module with SpriteFonts support
-   *  Multiple textures support, including DDS, PKM and mipmaps generation
-   *  Basic 3d support for Shapes, Models, Heightmaps and Billboards
+   *  Outstanding texture formats support, including compressed formats
+   *  Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
    *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
    *  Audio loading and playing with streaming support (WAV and OGG)
    *  Custom color palette for fancy visuals on raywhite background
