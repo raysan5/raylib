@@ -23,8 +23,8 @@ int main()
     // Define the camera to look into our 3d world
     Camera camera = {{ 3.0, 3.0, 3.0 }, { 0.0, 1.5, 0.0 }, { 0.0, 1.0, 0.0 }};
 
-    Model dwarf = LoadModel("resources/model/_dwarf.obj");                   // Load OBJ model
-    Texture2D texture = LoadTexture("resources/model/_dwarf_diffuse.png");   // Load model texture
+    Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
+    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
     SetModelTexture(&dwarf, texture);                             // Bind texture to model
     Vector3 position = { 0.0, 0.0, 0.0 };                         // Set model position
 
