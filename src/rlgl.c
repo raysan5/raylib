@@ -287,6 +287,20 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 static void TraceLog(int msgType, const char *text, ...);
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_ES2)
+// NOTE: strdup() functions replacement (not C99, POSIX function, not available on emscripten)
+// Duplicates a string, returning an identical malloc'd string
+char *mystrdup(const char *str)
+{
+  size_t len = strlen(str) + 1;
+  void *newstr = malloc(len);
+
+  if (newstr == NULL) return NULL;
+
+  return (char *)memcpy(newstr, str, len);
+}
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix operations
 //----------------------------------------------------------------------------------
@@ -928,7 +942,7 @@ void rlglInit(void)
     
     // NOTE: We have to duplicate string because glGetString() returns a const value
     // If not duplicated, it fails in some systems (Raspberry Pi)
-    char *extensionsDup = strdup(extensions);
+    char *extensionsDup = mystrdup(extensions);
     
     // NOTE: String could be splitted using strtok() function (string.h)
     // NOTE: strtok() modifies the received string, it can not be const
