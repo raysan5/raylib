@@ -179,6 +179,7 @@ EXAMPLES = \
     text_format_text \
     text_font_select \
     models_geometric_shapes \
+    models_box_collisions \
     models_billboard \
     models_obj_loading \
     models_heightmap \
@@ -325,6 +326,10 @@ text_font_select: text_font_select.c
 models_geometric_shapes: models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [models] example - box collisions
+models_box_collisions: models_box_collisions.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
 # compile [models] example - basic window
 models_planes: models_planes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
