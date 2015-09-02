@@ -16,11 +16,11 @@ NOTE:
   Most of the examples have been redone and +10 new advanced examples have been added.
 
 BIG changes:
+[rlgl] SHADERS: Support for model shaders and postprocessing shaders (multiple functions)
+[textures] FORMATS: Support for multiple internal formats, including compressed formats
 [camera] NEW MODULE: Set of cameras for 3d view: Free, Orbital, 1st person, 3rd person
 [gestures] NEW MODULE: Gestures system for Android and HTML5 platforms
-[raygui] NEW MODULE: Set of IMGUI elements for tools development
-[rlgl] SHADERS: Support for model shaders and postprocessing shaders (multiple functions)
-[textures] FORMATS: Added support for multiple internal formats, including compressed formats
+[raygui] NEW MODULE: Set of IMGUI elements for tools development (experimental)
 
 smaller changes:
 [rlgl] Added check for OpenGL supported extensions
