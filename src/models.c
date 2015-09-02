@@ -1731,7 +1731,7 @@ static VertexData LoadOBJ(const char *fileName)
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
 
-    int vNum[3], vtNum[3], vnNum[3];
+    int vNum[3], vtNum[3], vnNum[3];    // Used to store triangle indices for v, vt, vn
 
     rewind(objFile);        // Return to the beginning of the file, to read again
 
@@ -1803,14 +1803,16 @@ static VertexData LoadOBJ(const char *fileName)
 
                 if (numTexCoords > 0)
                 {
+                    // NOTE: If using negative texture coordinates with a texture filter of GL_CLAMP_TO_EDGE doesn't work!
+                    // NOTE: Texture coordinates are Y flipped upside-down
                     vData.texcoords[tcCounter] = midTexCoords[vtNum[0]-1].x;
-                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[0]-1].y;
+                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[0]-1].y;
                     tcCounter += 2;
                     vData.texcoords[tcCounter] = midTexCoords[vtNum[1]-1].x;
-                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[1]-1].y;
+                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[1]-1].y;
                     tcCounter += 2;
                     vData.texcoords[tcCounter] = midTexCoords[vtNum[2]-1].x;
-                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[2]-1].y;
+                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[2]-1].y;
                     tcCounter += 2;
                 }
             } break;
@@ -1822,7 +1824,7 @@ static VertexData LoadOBJ(const char *fileName)
 
     // Security check, just in case no normals or no texcoords defined in OBJ
     if (numTexCoords == 0) for (int i = 0; i < (2*vData.vertexCount); i++) vData.texcoords[i] = 0.0f;
-
+    
     // NOTE: We set all vertex colors to white
     // NOTE: Not used any more... just one plain color defined at DrawModel()
     for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
