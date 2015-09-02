@@ -283,12 +283,22 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
 static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 #endif
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
-static char** StringSplit(char *baseString, const char delimiter, int *numExt);
-#endif
-
 #if defined(RLGL_STANDALONE)
 static void TraceLog(int msgType, const char *text, ...);
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+// NOTE: strdup() functions replacement (not C99, POSIX function, not available on emscripten)
+// Duplicates a string, returning an identical malloc'd string
+char *mystrdup(const char *str)
+{
+  size_t len = strlen(str) + 1;
+  void *newstr = malloc(len);
+
+  if (newstr == NULL) return NULL;
+
+  return (char *)memcpy(newstr, str, len);
+}
 #endif
 
 //----------------------------------------------------------------------------------
@@ -863,7 +873,7 @@ void rlglInit(void)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get supported extensions list
-    GLint numExt;
+    GLint numExt = 0;
     
 #if defined(GRAPHICS_API_OPENGL_33)
 
@@ -923,21 +933,39 @@ void rlglInit(void)
     // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
-    const char *ext[numExt];
+    const char *extList[numExt];
     
-    for (int i = 0; i < numExt; i++) ext[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
+    for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
     
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big string
+    char *extensions = (char *)glGetString(GL_EXTENSIONS);  // One big const string
+    
+    // NOTE: We have to duplicate string because glGetString() returns a const value
+    // If not duplicated, it fails in some systems (Raspberry Pi)
+    char *extensionsDup = mystrdup(extensions);
     
     // NOTE: String could be splitted using strtok() function (string.h)
-    char **ext = StringSplit(extensions, ' ', &numExt);
+    // NOTE: strtok() modifies the received string, it can not be const
+    
+    char *extList[512];     // Allocate 512 strings pointers (2 KB)
+
+    extList[numExt] = strtok(extensionsDup, " ");
+
+    while (extList[numExt] != NULL)
+    {
+        numExt++;
+        extList[numExt] = strtok(NULL, " ");
+    }
+    
+    free(extensionsDup);    // Duplicated string must be deallocated
+    
+    numExt -= 1;
 #endif
 
     TraceLog(INFO, "Number of supported extensions: %i", numExt);
 
     // Show supported extensions
-    //for (int i = 0; i < numExt; i++)  TraceLog(INFO, "Supported extension: %s", ext[i]);
+    //for (int i = 0; i < numExt; i++)  TraceLog(INFO, "Supported extension: %s", extList[i]);
 
     // Check required extensions
     for (int i = 0; i < numExt; i++)
@@ -945,7 +973,7 @@ void rlglInit(void)
 #if defined(GRAPHICS_API_OPENGL_ES2)
         // Check VAO support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has VAO support as core feature
-        if (strcmp(ext[i], (const char *)"GL_OES_vertex_array_object") == 0)
+        if (strcmp(extList[i], (const char *)"GL_OES_vertex_array_object") == 0)
         {
             vaoSupported = true;
             
@@ -959,23 +987,23 @@ void rlglInit(void)
         
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
-        if (strcmp(ext[i], (const char *)"GL_OES_texture_npot") == 0) npotSupported = true;
+        if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) npotSupported = true;
 #endif   
         
         // DDS texture compression support
-        if (strcmp(ext[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) texCompDXTSupported = true; 
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) texCompDXTSupported = true; 
         
         // ETC1 texture compression support
-        if (strcmp(ext[i], (const char *)"GL_OES_compressed_ETC1_RGB8_texture") == 0) texCompETC1Supported = true;
+        if (strcmp(extList[i], (const char *)"GL_OES_compressed_ETC1_RGB8_texture") == 0) texCompETC1Supported = true;
 
         // ETC2/EAC texture compression support
-        if (strcmp(ext[i], (const char *)"GL_ARB_ES3_compatibility") == 0) texCompETC2Supported = true;
+        if (strcmp(extList[i], (const char *)"GL_ARB_ES3_compatibility") == 0) texCompETC2Supported = true;
 
         // PVR texture compression support
-        if (strcmp(ext[i], (const char *)"GL_IMG_texture_compression_pvrtc") == 0) texCompPVRTSupported = true;
+        if (strcmp(extList[i], (const char *)"GL_IMG_texture_compression_pvrtc") == 0) texCompPVRTSupported = true;
 
         // ASTC texture compression support
-        if (strcmp(ext[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) texCompASTCSupported = true;
+        if (strcmp(extList[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) texCompASTCSupported = true;
     }
     
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -984,9 +1012,6 @@ void rlglInit(void)
     
     if (npotSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
     else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, NPOT textures not supported");
-    
-    // Once supported extensions have been checked, we should free strings memory
-    free(ext);
 #endif
 
     if (texCompDXTSupported) TraceLog(INFO, "[EXTENSION] DXT compressed textures supported");
@@ -1008,8 +1033,16 @@ void rlglInit(void)
 
     // Initialize matrix stack
     for (int i = 0; i < MATRIX_STACK_SIZE; i++) stack[i] = MatrixIdentity();
+    
+    // Create default white texture for plain colors (required by shader)
+    unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
 
-    // Init default Shader (GLSL 110) -> Common for GL 3.3+ and ES2
+    whiteTexture = rlglLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
+
+    if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
+    else TraceLog(WARNING, "Base white texture could not be loaded");
+
+    // Init default Shader (Custom for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
     simpleShader = LoadSimpleShader();
     //customShader = LoadShader("custom.vs", "custom.fs");     // Works ok
@@ -1023,14 +1056,6 @@ void rlglInit(void)
     tempBuffer = (Vector3 *)malloc(sizeof(Vector3)*TEMP_VERTEX_BUFFER_SIZE);
 
     for (int i = 0; i < TEMP_VERTEX_BUFFER_SIZE; i++) tempBuffer[i] = VectorZero();
-
-    // Create default white texture for plain colors (required by shader)
-    unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
-
-    whiteTexture = rlglLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
-
-    if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
-    else TraceLog(WARNING, "Base white texture could not be loaded");
 
     // Init draw calls tracking system
     draws = (DrawCall *)malloc(sizeof(DrawCall)*MAX_DRAWS_BY_TEXTURE);
@@ -1189,6 +1214,7 @@ void rlglClose(void)
 
     // Free GPU texture
     glDeleteTextures(1, &whiteTexture);
+    TraceLog(INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
 
     if (fbo != 0)
     {
@@ -1207,7 +1233,7 @@ void rlglClose(void)
 
         rlDeleteVertexArrays(postproQuad.mesh.vaoId);
         
-        TraceLog(INFO, "Unloaded postpro quad data");
+        TraceLog(INFO, "[FBO %i] Unloaded postprocessing data", fbo);
     }
 
     free(draws);
@@ -1768,8 +1794,17 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so CLAMP_TO_EDGE must be used
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);       // Set texture to clamp on x-axis
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);       // Set texture to clamp on y-axis
+    if (npotSupported)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repeat on x-axis
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repeat on y-axis
+    }
+    else
+    {
+        // NOTE: If using negative texture coordinates (LoadOBJ()), it does not work!
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);       // Set texture to clamp on x-axis
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);       // Set texture to clamp on y-axis
+    }
 #else
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repeat on x-axis
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repeat on y-axis
@@ -1869,12 +1904,12 @@ Model rlglLoadModel(VertexData mesh)
 
     model.mesh = mesh;
     model.transform = MatrixIdentity();
-
-#if defined(GRAPHICS_API_OPENGL_11)
     model.mesh.vaoId = 0;       // Vertex Array Object
     model.mesh.vboId[0] = 0;    // Vertex position VBO
     model.mesh.vboId[1] = 0;    // Texcoords VBO
     model.mesh.vboId[2] = 0;    // Normals VBO
+
+#if defined(GRAPHICS_API_OPENGL_11)
     model.texture.id = 0;       // No texture required
     model.shader.id = 0;        // No shader used
 
@@ -1882,8 +1917,9 @@ Model rlglLoadModel(VertexData mesh)
     model.texture.id = whiteTexture;    // Default whiteTexture
     model.texture.width = 1;            // Default whiteTexture width
     model.texture.height = 1;           // Default whiteTexture height
+    model.texture.format = UNCOMPRESSED_R8G8B8A8; // Default whiteTexture format
     model.shader = simpleShader;        // Default model shader
-
+    
     GLuint vaoModel = 0;         // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];      // Vertex Buffer Objects (VBO)
 
@@ -2019,6 +2055,8 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
     Shader shader;
+    
+    shader.id = 0;      // Default value in case of loading failure
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
@@ -2180,9 +2218,11 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 // Unload a custom shader from memory
 void UnloadShader(Shader shader)
 {
-    rlDeleteShader(shader.id);
-    
-    TraceLog(INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
+    if (shader.id != 0)
+    {
+        rlDeleteShader(shader.id);
+        TraceLog(INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
+    }
 }
 
 // Set custom shader to be used on batch draw
@@ -2242,7 +2282,7 @@ void SetPostproShader(Shader shader)
     //TraceLog(DEBUG, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
     //TraceLog(DEBUG, "Shader diffuse map id: %i", shader.texDiffuseId);
 #elif defined(GRAPHICS_API_OPENGL_11)
-    TraceLog(WARNING, "Postprocessing shaders not supported on OpenGL 1.1");
+    TraceLog(WARNING, "Shaders not supported on OpenGL 1.1");
 #endif
 }
 
@@ -2287,6 +2327,8 @@ void SetModelShader(Model *model, Shader shader)
     
     // NOTE: If SetModelTexture() is called previously, texture is not assigned to new shader
     if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
+#elif (GRAPHICS_API_OPENGL_11)
+    TraceLog(WARNING, "Shaders not supported on OpenGL 1.1");
 #endif
 }
 
@@ -2527,14 +2569,14 @@ static Shader LoadDefaultShader(void)
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = " #version 330      \n"
+    char vShaderStr[] = "#version 330       \n"
         "in vec3 vertexPosition;            \n"
         "in vec2 vertexTexCoord;            \n"
         "in vec4 vertexColor;               \n"
         "out vec2 fragTexCoord;             \n"
         "out vec4 tintColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char vShaderStr[] = " #version 100      \n"
+    char vShaderStr[] = "#version 100       \n"
         "attribute vec3 vertexPosition;     \n"
         "attribute vec2 vertexTexCoord;     \n"
         "attribute vec4 vertexColor;        \n"
@@ -2552,11 +2594,11 @@ static Shader LoadDefaultShader(void)
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = " #version 330      \n"
+    char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
         "in vec4 tintColor;                 \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char fShaderStr[] = " #version 100      \n"
+    char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
         "varying vec2 fragTexCoord;         \n"
         "varying vec4 tintColor;            \n"
@@ -2590,6 +2632,10 @@ static Shader LoadDefaultShader(void)
     shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
     shader.mapNormalLoc = -1;       // It can be set later
     shader.mapSpecularLoc = -1;     // It can be set later
+    
+    shader.texDiffuseId = whiteTexture; // Default white texture
+    shader.texNormalId = 0;
+    shader.texSpecularId = 0;
     //--------------------------------------------------------------------
 
     return shader;
@@ -2607,13 +2653,13 @@ static Shader LoadSimpleShader(void)
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = " #version 330      \n"
+    char vShaderStr[] = "#version 330       \n"
         "in vec3 vertexPosition;            \n"
         "in vec2 vertexTexCoord;            \n"
         "in vec3 vertexNormal;              \n"
         "out vec2 fragTexCoord;             \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char vShaderStr[] = " #version 100      \n"
+    char vShaderStr[] = "#version 100       \n"
         "attribute vec3 vertexPosition;     \n"
         "attribute vec2 vertexTexCoord;     \n"
         "attribute vec3 vertexNormal;       \n"
@@ -2629,10 +2675,10 @@ static Shader LoadSimpleShader(void)
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = " #version 330      \n"
-        "in vec2 fragTexCoord;         \n"
+    char fShaderStr[] = "#version 330       \n"
+        "in vec2 fragTexCoord;              \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char fShaderStr[] = " #version 100      \n"
+    char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
         "varying vec2 fragTexCoord;         \n"
 #endif
@@ -2666,6 +2712,10 @@ static Shader LoadSimpleShader(void)
     shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
     shader.mapNormalLoc = -1;       // It can be set later
     shader.mapSpecularLoc = -1;     // It can be set later
+    
+    shader.texDiffuseId = whiteTexture; // Default white texture
+    shader.texNormalId = 0;
+    shader.texSpecularId = 0;
     //--------------------------------------------------------------------
 
     return shader;
@@ -2692,7 +2742,7 @@ static char *TextFileRead(char *fileName)
 
             if (count > 0)
             {
-                text = (char *)malloc(sizeof(char) * (count + 1));
+                text = (char *)malloc(sizeof(char)*(count + 1));
                 count = fread(text, sizeof(char), count, textFile);
                 text[count] = '\0';
             }
@@ -3083,57 +3133,5 @@ static void TraceLog(int msgType, const char *text, ...)
     va_end(args);
 
     if (msgType == ERROR) exit(1);
-}
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-static char **StringSplit(char *baseString, const char delimiter, int *numExt)
-{
-    char **result = 0;
-    int count = 0;
-    char *tmp = baseString;
-    char *lastComma = 0;
-    char delim[2];
-    
-    delim[0] = delimiter;
-    delim[1] = 0;
-
-    // Count how many elements will be extracted
-    while (*tmp)
-    {
-        if (delimiter == *tmp)
-        {
-            count++;
-            lastComma = tmp;
-        }
-        
-        tmp++;
-    }
-
-    // Add space for trailing token
-    count += lastComma < (baseString + strlen(baseString) - 1);
-
-    // Add space for terminating null string
-    count++;
-
-    result = malloc(sizeof(char *)*count);
-
-    if (result)
-    {
-        int idx = 0;
-        char *token = strtok(baseString, delim);
-
-        while (token)
-        {
-            *(result + idx++) = token;
-            token = strtok(0, delim);
-        }
-
-        *(result + idx) = 0;
-    }
-    
-    *numExt = (count - 1);
-
-    return result;
 }
 #endif

@@ -584,6 +584,7 @@ Model LoadModel(const char *fileName)
             free(vData.vertices);
             free(vData.texcoords);
             free(vData.normals);
+            free(vData.colors);
         }
     }
 
@@ -619,10 +620,10 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 
     vData.vertexCount = numTriangles*3;
 
-    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char)); // Not used...
+    vData.vertices = (float *)malloc(vData.vertexCount*3*sizeof(float));
+    vData.normals = (float *)malloc(vData.vertexCount*3*sizeof(float));
+    vData.texcoords = (float *)malloc(vData.vertexCount*2*sizeof(float));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount*4*sizeof(unsigned char)); // Not used...
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -722,6 +723,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
         free(vData.vertices);
         free(vData.texcoords);
         free(vData.normals);
+        free(vData.colors);
     }
 
     return model;
@@ -1038,10 +1040,10 @@ Model LoadCubicmap(Image cubicmap)
     // Move data from mapVertices temp arays to vertices float array
     vData.vertexCount = vCounter;
 
-    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));  // Not used...
+    vData.vertices = (float *)malloc(vData.vertexCount*3*sizeof(float));
+    vData.normals = (float *)malloc(vData.vertexCount*3*sizeof(float));
+    vData.texcoords = (float *)malloc(vData.vertexCount*2*sizeof(float));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount*4*sizeof(unsigned char));  // Not used...
 
     // Fill color data
     // NOTE: Not used any more... just one plain color defined at DrawModel()
@@ -1096,6 +1098,7 @@ Model LoadCubicmap(Image cubicmap)
         free(vData.vertices);
         free(vData.texcoords);
         free(vData.normals);
+        free(vData.colors);
     }
 
     return model;
@@ -1117,7 +1120,8 @@ void UnloadModel(Model model)
 
     rlDeleteVertexArrays(model.mesh.vaoId);
     
-    TraceLog(INFO, "Unloaded model data");
+    if (model.mesh.vaoId > 0) TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vaoId);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
 }
 
 // Link a texture to a model
@@ -1718,16 +1722,16 @@ static VertexData LoadOBJ(const char *fileName)
     vData.vertexCount = numTriangles*3;
 
     // Additional arrays to store vertex data as floats
-    vData.vertices = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.texcoords = (float *)malloc(vData.vertexCount * 2 * sizeof(float));
-    vData.normals = (float *)malloc(vData.vertexCount * 3 * sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount * 4 * sizeof(unsigned char));
+    vData.vertices = (float *)malloc(vData.vertexCount*3*sizeof(float));
+    vData.texcoords = (float *)malloc(vData.vertexCount*2*sizeof(float));
+    vData.normals = (float *)malloc(vData.vertexCount*3*sizeof(float));
+    vData.colors = (unsigned char *)malloc(vData.vertexCount*4*sizeof(unsigned char));
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
 
-    int vNum[3], vtNum[3], vnNum[3];
+    int vNum[3], vtNum[3], vnNum[3];    // Used to store triangle indices for v, vt, vn
 
     rewind(objFile);        // Return to the beginning of the file, to read again
 
@@ -1799,14 +1803,16 @@ static VertexData LoadOBJ(const char *fileName)
 
                 if (numTexCoords > 0)
                 {
+                    // NOTE: If using negative texture coordinates with a texture filter of GL_CLAMP_TO_EDGE doesn't work!
+                    // NOTE: Texture coordinates are Y flipped upside-down
                     vData.texcoords[tcCounter] = midTexCoords[vtNum[0]-1].x;
-                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[0]-1].y;
+                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[0]-1].y;
                     tcCounter += 2;
                     vData.texcoords[tcCounter] = midTexCoords[vtNum[1]-1].x;
-                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[1]-1].y;
+                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[1]-1].y;
                     tcCounter += 2;
                     vData.texcoords[tcCounter] = midTexCoords[vtNum[2]-1].x;
-                    vData.texcoords[tcCounter + 1] = -midTexCoords[vtNum[2]-1].y;
+                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[2]-1].y;
                     tcCounter += 2;
                 }
             } break;
@@ -1818,7 +1824,7 @@ static VertexData LoadOBJ(const char *fileName)
 
     // Security check, just in case no normals or no texcoords defined in OBJ
     if (numTexCoords == 0) for (int i = 0; i < (2*vData.vertexCount); i++) vData.texcoords[i] = 0.0f;
-
+    
     // NOTE: We set all vertex colors to white
     // NOTE: Not used any more... just one plain color defined at DrawModel()
     for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;

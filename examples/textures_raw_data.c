@@ -35,6 +35,7 @@ int main()
     int width = 1024;
     int height = 1024;
     
+    // Dynamic memory allocation to store pixels data (Color type)
     Color *pixels = (Color *)malloc(width*height*sizeof(Color));
     
     for (int y = 0; y < height; y++)
@@ -50,6 +51,8 @@ int main()
     Image checkedIm = LoadImageEx(pixels, width, height);
     Texture2D checked = LoadTextureFromImage(checkedIm);
     UnloadImage(checkedIm);     // Unload CPU (RAM) image data
+    
+    // Dynamic memory must be freed after using it
     free(pixels);               // Unload CPU (RAM) pixels data
     //---------------------------------------------------------------------------------------
 

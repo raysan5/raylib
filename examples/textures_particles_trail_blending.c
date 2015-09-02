@@ -13,6 +13,7 @@
 
 #define MAX_PARTICLES 200
 
+// Particle structure with basic data
 typedef struct {
     Vector2 position;
     Color color;

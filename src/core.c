@@ -1024,7 +1024,7 @@ static void InitDisplay(int width, int height)
         if (configFlags & FLAG_MSAA_4X_HINT)
         {
             glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
-            TraceLog(INFO, "Enabled MSAA x4");
+            TraceLog(INFO, "Trying to enable MSAA x4");
         }
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
@@ -1115,6 +1115,7 @@ static void InitDisplay(int width, int height)
     {
         samples = 4;
         sampleBuffer = 1;
+        TraceLog(INFO, "Trying to enable MSAA x4");
     }
     
     const EGLint framebufferAttribs[] =
@@ -1627,7 +1628,7 @@ static void PollInputEvents(void)
             else if (key == 0x7f) currentKeyState[259] = 1;
             else
             {
-                TraceLog(INFO, "Pressed key (ASCII): 0x%02x", key);
+                TraceLog(DEBUG, "Pressed key (ASCII): 0x%02x", key);
 
                 currentKeyState[key] = 1;
             }
@@ -1637,7 +1638,7 @@ static void PollInputEvents(void)
         }
         else if (keyboardMode == 1)
         {
-            TraceLog(INFO, "Pressed key (keycode): 0x%02x", key);
+            TraceLog(DEBUG, "Pressed key (keycode): 0x%02x", key);
 
             int asciiKey = -1;
 
@@ -1724,7 +1725,7 @@ static void InitMouse(void)
 
 // Mouse reading thread
 // NOTE: We need a separate thread to avoid loosing mouse events,
-// if too much time passes between reads, queue gets full and new events override older wants...
+// if too much time passes between reads, queue gets full and new events override older ones...
 static void *MouseThread(void *arg)
 {
     struct input_event mouseEvent;
@@ -1807,8 +1808,12 @@ static void InitKeyboard(void)
     }
     else
     {
-        // We reconfigure keyboard mode to get scancodes (K_RAW) or keycodes (K_MEDIUMRAW)
-        ioctl(STDIN_FILENO, KDSKBMODE, K_MEDIUMRAW);    // ASCII chars (K_XLATE), UNICODE chars (K_UNICODE)
+        // We reconfigure keyboard mode to get:
+        //    - scancodes (K_RAW) 
+        //    - keycodes (K_MEDIUMRAW)
+        //    - ASCII chars (K_XLATE)
+        //    - UNICODE chars (K_UNICODE)
+        ioctl(STDIN_FILENO, KDSKBMODE, K_MEDIUMRAW);
 
         keyboardMode = 1;   // keycodes
     }
@@ -1820,7 +1825,10 @@ static void InitKeyboard(void)
 // Restore default keyboard input
 static void RestoreKeyboard(void)
 {
+    // Reset to default keyboard settings
     tcsetattr(STDIN_FILENO, TCSANOW, &defaultKeyboardSettings);
+    
+    // Reconfigure keyboard to default mode
     ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
 }
 

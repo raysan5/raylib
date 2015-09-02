@@ -1,25 +1,21 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Basic window
+*   raylib [core] example - Basic window (adapted for HTML5 platform)
 *
-*   Welcome to raylib!
+*   This example is prepared to compile for PLATFORM_WEB, PLATFORM_DESKTOP and PLATFORM_RPI
+*   As you will notice, code structure is slightly diferent to the other examples...
+*   To compile it for PLATFORM_WEB just uncomment #define PLATFORM_WEB at beginning
 *
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
-*
-*   You can find all basic examples on C:\raylib\raylib\examples folder or
-*   raylib official webpage: www.raylib.com
-*
-*   Enjoy using raylib. :)
-*
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
+//#define PLATFORM_WEB
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>

@@ -1,9 +1,13 @@
-#version 330
+#version 100
 
-uniform sampler2D texture0;
+precision mediump float;
+
 varying vec2 fragTexCoord;
 
+uniform sampler2D texture0;
 uniform vec4 tintColor;
+
+// NOTE: Add here your custom variables
 
 void main()
 {

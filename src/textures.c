@@ -321,7 +321,7 @@ Texture2D LoadTexture(const char *fileName)
 
     Image image = LoadImage(fileName);
     
-#if defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_WEB)
     ImageConvertToPOT(&image, BLANK);
 #endif
 
@@ -404,7 +404,7 @@ void UnloadTexture(Texture2D texture)
     {
         rlDeleteTextures(texture.id);
         
-        TraceLog(INFO, "[TEX ID %i] Unloaded texture data", texture.id);
+        TraceLog(INFO, "[TEX ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
     }
 }
 
@@ -501,7 +501,10 @@ Image GetTextureData(Texture2D texture)
 {
     Image image;
     image.data = NULL;
-    
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    TraceLog(WARNING, "Texture data retrieval not supported on OpenGL ES 2.0");
+#else
     if (texture.format < 8)
     {
         image.data = rlglReadTexturePixels(texture.id, texture.format);
@@ -518,7 +521,7 @@ Image GetTextureData(Texture2D texture)
         else TraceLog(WARNING, "Texture pixel data could not be obtained");
     }
     else TraceLog(WARNING, "Compressed texture data could not be obtained");
-    
+#endif
     return image;
 }
 
@@ -695,6 +698,8 @@ void ImageConvertToPOT(Image *image, Color fillColor)
         
         int format = image->format;         // Store image data format to reconvert later
         
+        // TODO: Image width and height changes... do we want to store new values or keep the old ones?
+        // NOTE: Issues when using image.width and image.height for sprite animations...
         *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
         
         free(pixelsPOT);                    // Free POT pixels data

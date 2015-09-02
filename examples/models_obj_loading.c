@@ -23,8 +23,8 @@ int main()
     // Define the camera to look into our 3d world
     Camera camera = {{ 3.0, 3.0, 3.0 }, { 0.0, 1.5, 0.0 }, { 0.0, 1.0, 0.0 }};
 
-    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
+    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
     SetModelTexture(&dwarf, texture);                             // Bind texture to model
     Vector3 position = { 0.0, 0.0, 0.0 };                         // Set model position
 
@@ -36,10 +36,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyDown(KEY_LEFT)) position.x -= 0.2;
-        if (IsKeyDown(KEY_RIGHT)) position.x += 0.2;
-        if (IsKeyDown(KEY_UP)) position.z -= 0.2;
-        if (IsKeyDown(KEY_DOWN)) position.z += 0.2;
+        //...
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -54,7 +51,7 @@ int main()
 
                 DrawGrid(10.0, 1.0);        // Draw a grid
 
-                DrawGizmo(position);     // Draw gizmo
+                DrawGizmo(position);        // Draw gizmo
 
             End3dMode();
             

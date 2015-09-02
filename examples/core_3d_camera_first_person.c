@@ -27,7 +27,7 @@ int main()
 
     // Generates some random columns
     float heights[MAX_COLUMNS];
-    Vector3 positions[MAX_COLUMNS] = { 0.0, 2.5, 0.0 };
+    Vector3 positions[MAX_COLUMNS];
     Color colors[MAX_COLUMNS];
     
     for (int i = 0; i < MAX_COLUMNS; i++)
@@ -76,7 +76,7 @@ int main()
 
             DrawText("First person camera default controls:", 20, 20, 10, GRAY);
             DrawText("- Move with keys: W, A, S, D", 40, 50, 10, DARKGRAY);
-            DrawText("- Mouse move to lokk around", 40, 70, 10, DARKGRAY);
+            DrawText("- Mouse move to look around", 40, 70, 10, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

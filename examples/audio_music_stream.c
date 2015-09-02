@@ -4,10 +4,10 @@
 *
 *   NOTE: This example requires OpenAL Soft library installed
 *
-*   This example has been created using raylib 1.1 (www.raylib.com)
+*   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -61,9 +61,9 @@ int main()
         if (IsWindowMinimized()) PauseMusicStream();
         else ResumeMusicStream();
 
-        timePlayed = GetMusicTimePlayed() / GetMusicTimeLength() * 100 * 4; // We scale by 4 to fit 400 pixels
+        timePlayed = GetMusicTimePlayed()/GetMusicTimeLength()*100*4; // We scale by 4 to fit 400 pixels
         
-        UpdateMusicStream();
+        UpdateMusicStream();        // Update music buffer with new stream data
         //----------------------------------------------------------------------------------
 
         // Draw

@@ -2,7 +2,7 @@
 #
 #   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
-#   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+#   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 #    
 #   This software is provided "as-is", without any express or implied warranty. In no event 
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -80,7 +80,7 @@ endif
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
 else
     INCLUDES = -I. -I../src
 # external libraries headers

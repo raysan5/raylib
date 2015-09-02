@@ -614,7 +614,8 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);                     // Detect collision between two spheres
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);               // Detect collision between two boxes
 bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere);       // Detect collision between box and sphere
-Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Return the normal vector of the impacted surface
+Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Detect collision of player radius with cubicmap
+                                                                                                                // NOTE: Return the normal vector of the impacted surface
 
 //------------------------------------------------------------------------------------
 // Shaders System Functions (Module: rlgl)
