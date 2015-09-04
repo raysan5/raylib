@@ -37,6 +37,7 @@
 #if defined(_WIN32)
     //#include <Windows.h>
 #elif defined(__linux)
+    #include <sys/time.h>       // Declares storage size of ‘now’
     #include <time.h>           // Used for clock functions
 #endif
 
