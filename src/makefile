@@ -73,7 +73,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O1 -Wall -std=c99
+    CFLAGS = -O1 -Wall -std=gnu99
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
