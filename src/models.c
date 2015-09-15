@@ -1589,7 +1589,7 @@ static float GetHeightValue(Color pixel)
 // Load OBJ mesh data
 static VertexData LoadOBJ(const char *fileName)
 {
-    VertexData vData;
+    VertexData vData = { 0 };
 
     char dataType;
     char comments[200];

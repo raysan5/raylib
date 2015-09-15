@@ -933,7 +933,7 @@ void rlglInit(void)
     // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
-    const char *extList[numExt];
+    const char **extList = calloc(numExt, sizeof(const char *));
     
     for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
     
@@ -1019,6 +1019,8 @@ void rlglInit(void)
     if (texCompETC2Supported) TraceLog(INFO, "[EXTENSION] ETC2/EAC compressed textures supported");
     if (texCompPVRTSupported) TraceLog(INFO, "[EXTENSION] PVRT compressed textures supported");
     if (texCompASTCSupported) TraceLog(INFO, "[EXTENSION] ASTC compressed textures supported");
+
+		free(extList);
 
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
@@ -2148,11 +2150,13 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 
         glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
 
-        char log[maxLength];
+				char *log = calloc(maxLength, sizeof(char));
 
         glGetShaderInfoLog(vertexShader, maxLength, &length, log);
 
         TraceLog(INFO, "%s", log);
+
+				free(log);
     }
     else TraceLog(INFO, "[VSHDR ID %i] Vertex shader compiled successfully", vertexShader);
 
@@ -2169,11 +2173,13 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 
         glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
 
-        char log[maxLength];
+				char *log = calloc(maxLength, sizeof(char));
 
         glGetShaderInfoLog(fragmentShader, maxLength, &length, log);
 
         TraceLog(INFO, "%s", log);
+
+				free(log);
     }
     else TraceLog(INFO, "[FSHDR ID %i] Fragment shader compiled successfully", fragmentShader);
 
@@ -2197,7 +2203,7 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 
-        char log[maxLength];
+				char *log = calloc(maxLength, sizeof(char));
 
         glGetProgramInfoLog(program, maxLength, &length, log);
 
@@ -2206,6 +2212,8 @@ unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
         glDeleteProgram(program);
 
         program = 0;
+
+				free(log);
     }
     else TraceLog(INFO, "[SHDR ID %i] Shader program loaded successfully", program);
 
