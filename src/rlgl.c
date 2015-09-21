@@ -200,6 +200,8 @@ static int currentMatrixMode;
 
 static DrawMode currentDrawMode;
 
+static float currentDepth = -1.0f;
+
 // Vertex arrays for lines, triangles and quads
 static VertexPositionColorBuffer lines;         // No texture support
 static VertexPositionColorBuffer triangles;     // No texture support
@@ -580,6 +582,11 @@ void rlEnd(void)
         } break;
         default: break;
     }
+    
+    // NOTE: Depth increment is dependant on rlOrtho(): z-near and z-far values,
+    // as well as depth buffer bit-depth (16bit or 24bit or 32bit)
+    // Correct increment formula would be: depthInc = (zfar - znear)/pow(2, bits)
+    currentDepth += (1.0f/20000.0f);
 }
 
 // Define one vertex (position)
@@ -648,13 +655,13 @@ void rlVertex3f(float x, float y, float z)
 // Define one vertex (position)
 void rlVertex2f(float x, float y)
 {
-    rlVertex3f(x, y, 0.0f);
+    rlVertex3f(x, y, currentDepth);
 }
 
 // Define one vertex (position)
 void rlVertex2i(int x, int y)
 {
-    rlVertex3f((float)x, (float)y, 0.0f);
+    rlVertex3f((float)x, (float)y, currentDepth);
 }
 
 // Define one vertex (texture coordinate)
@@ -1395,6 +1402,9 @@ void rlglDraw(void)
     quads.vCounter = 0;
     quads.tcCounter = 0;
     quads.cCounter = 0;
+    
+    // Reset depth for next draw
+    currentDepth = -1.0f;
 #endif
 }
 
@@ -1583,7 +1593,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
     rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
     rlLoadIdentity();                           // Reset current matrix (PROJECTION)
 
-    rlOrtho(0, width - offsetX, height - offsetY, 0, 0, 1); // Config orthographic mode: top-left corner --> (0,0)
+    rlOrtho(0, width - offsetX, height - offsetY, 0, 0.0f, 1.0f); // Config orthographic mode: top-left corner --> (0,0)
 
     rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
