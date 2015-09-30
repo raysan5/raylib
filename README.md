@@ -61,7 +61,7 @@ notes on raylib 1.2
 On September 2014, after 5 month of raylib 1.1 release, it comes raylib 1.2. Again, this version presents a
 complete internal redesign of [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module to support two new platforms: [Android](http://www.android.com/) and [Raspberry Pi](http://www.raspberrypi.org/).
 
-It's been some month of really hard work to accomodate raylib to those new platforms while keeping it easy for the user.
+It's been some month of really hard work to accommodate raylib to those new platforms while keeping it easy for the user.
 On Android, raylib manages internally the activity cicle, as well as the inputs; on Raspberry Pi, a complete raw input
 system has been written from scratch.
 
@@ -118,7 +118,7 @@ raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) lib
 multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, ...).
 
 raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, [OpenAL Soft](http://kcat.strangesoft.net/openal.html) audio library, in multiple flavours,
-to accomodate to Android, Raspberry Pi and HTML5.
+to accommodate to Android, Raspberry Pi and HTML5.
 
 On Android, raylib uses `native_app_glue module` (provided on Android NDK) and native Android libraries to manage window/context, inputs and activity cycle.
 
