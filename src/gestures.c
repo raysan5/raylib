@@ -35,7 +35,10 @@
 #include <stdint.h>             // Defines int32_t, int64_t
 
 #if defined(_WIN32)
-    //#include <Windows.h>
+    //#define WIN32_LEAN_AND_MEAN
+    //#include <Windows.h>        // ISSUE: Rectangle redeclared, CloseWindow/ShowCursor conflicting types
+int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
+int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
 #elif defined(__linux)
     #include <time.h>           // Used for clock functions
 #endif
@@ -546,6 +549,29 @@ static double GetCurrentTime()
     
 	time = ((double)nowTime/10000000.0);    // time in seconds
 */
+/*
+    double pcFreq = 0.0;
+    __int64 counterStart = 0;   // In C99 defined a standard 64-bit integer type named int64_t and unsigned version uint64_t in stdint.h.
+    
+    //int64_t or uint64_t is type defined as long long or unsigned long long in C99's stdint.h.
+    
+    //LARGE_INTEGER li; // Represents a 64-bit signed integer value
+    //li.QuadPart       // A signed 64-bit integer
+    
+    unsigned long long int li;      // __int64, same as long long
+    if(!QueryPerformanceFrequency(&li)) return 0;
+
+    pcFreq = (double)(li)/1000.0;
+
+    QueryPerformanceCounter(&li);
+    counterStart = li;
+
+    unsigned long long int tm;
+    QueryPerformanceCounter(&tm);
+    time = (double)(tm - counterStart)/pcFreq;
+*/    
+    unsigned long long int tm, tf;
+    time = (double)(QueryPerformanceCounter(&tm)/QueryPerformanceFrequency(&tf));   // time in seconds
 #endif
 
 #if defined(__linux)
