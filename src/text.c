@@ -311,14 +311,14 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int f
         
         if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
         {
-            // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
+            // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](Â¿)
             letter = (unsigned char)text[i + 1];
             rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR];
             i++;
         }
         else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
         {
-            // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
+            // Support UTF-8 encoded values from [0xc3 0x80](Ã€) -> [0xc3 0xbf](Ã¿)
             letter = (unsigned char)text[i + 1];
             rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR + 64];
             i++;
