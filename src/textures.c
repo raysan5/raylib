@@ -42,6 +42,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"       // Used to read image data (multiple formats support)
 
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "stb_image_resize.h"
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -322,7 +325,7 @@ Texture2D LoadTexture(const char *fileName)
     Image image = LoadImage(fileName);
     
 #if defined(PLATFORM_WEB)
-    ImageConvertToPOT(&image, BLANK);
+    ImageToPOT(&image, BLANK);
 #endif
 
     if (image.data != NULL)
@@ -526,7 +529,7 @@ Image GetTextureData(Texture2D texture)
 }
 
 // Convert image data to desired format
-void ImageConvertFormat(Image *image, int newFormat)
+void ImageFormat(Image *image, int newFormat)
 {
     if (image->format != newFormat)
     {
@@ -666,7 +669,7 @@ void ImageConvertFormat(Image *image, int newFormat)
 
 // Convert image to POT (power-of-two)
 // NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
-void ImageConvertToPOT(Image *image, Color fillColor)
+void ImageToPOT(Image *image, Color fillColor)
 {
     Color *pixels = GetImageData(*image);   // Get pixels data
     
@@ -704,7 +707,7 @@ void ImageConvertToPOT(Image *image, Color fillColor)
         
         free(pixelsPOT);                    // Free POT pixels data
 
-        ImageConvertFormat(image, format);  // Reconvert image to previous format
+        ImageFormat(image, format);  // Reconvert image to previous format
     }
 }
 
@@ -741,11 +744,242 @@ Image ImageCopy(Image image)
     return newImage;
 }
 
-// TODO: Some useful functions to deal with images
-//void ImageCrop(Image *image, Rectangle crop) {}
-//void ImageResize(Image *image, int newWidth, int newHeight) {}
-//void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec) {}
-//void ImageDrawText(Image *dst, const char *text, Vector2 position, int size, Color color) {}
+// Crop an image to area defined by a rectangle
+// NOTE: Security checks are performed in case rectangle goes out of bounds
+void ImageCrop(Image *image, Rectangle crop) 
+{
+    // Security checks to make sure cropping rectangle is inside margins
+    if ((crop.x + crop.width) > image->width)
+    {
+        crop.width = image->width - crop.x;
+        TraceLog(WARNING, "Crop rectangle width out of bounds, rescaled crop width: %i", crop.width);
+    }
+    
+    if ((crop.y + crop.height) > image->height)
+    {
+        crop.height = image->height - crop.y;
+        TraceLog(WARNING, "Crop rectangle height out of bounds, rescaled crop height: %i", crop.height);
+    }
+    
+    if ((crop.x < image->width) && (crop.y < image->height))
+    {
+        // Start the cropping process
+        Color *pixels = GetImageData(*image);   // Get data as Color pixels array
+        Color *cropPixels = (Color *)malloc(crop.width*crop.height*sizeof(Color));
+
+        for (int j = crop.y; j < (crop.y + crop.height); j++)
+        {
+            for (int i = crop.x; i < (crop.x + crop.width); i++)
+            {
+                cropPixels[(j - crop.y)*crop.width + (i - crop.x)] = pixels[j*image->width + i];
+            }
+        }
+
+        free(pixels);
+
+        int format = image->format;
+
+        UnloadImage(*image);
+
+        *image = LoadImageEx(cropPixels, crop.width, crop.height);
+
+        free(cropPixels);
+
+        // Reformat 32bit RGBA image to original format 
+        ImageFormat(image, format);
+    }
+    else
+    {
+        TraceLog(WARNING, "Image can not be cropped, crop rectangle out of bounds");
+    }
+}
+
+// Resize and image to new size
+// NOTE: Uses stb default scaling filter
+void ImageResize(Image *image, int newWidth, int newHeight) 
+{
+    // Get data as Color pixels array to work with it
+    Color *pixels = GetImageData(*image);
+    Color *output = (Color *)malloc(newWidth*newHeight*sizeof(Color));
+
+    // NOTE: Color data is casted to (unsigned char *), there shouldn't been any problem...
+    stbir_resize_uint8((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, 4);
+
+    int format = image->format;
+
+    UnloadImage(*image);
+
+    *image = LoadImageEx(output, newWidth, newHeight);
+
+    free(output);
+
+    // Reformat 32bit RGBA image to original format 
+    ImageFormat(image, format);
+    
+    free(pixels);
+}
+
+// Draw an image (source) within an image (destination)
+void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec) 
+{
+    // Security checks to avoid size and rectangle issues (out of bounds)
+    // Check that srcRec is inside src image
+    if (srcRec.x < 0) srcRec.x = 0;
+    if (srcRec.y < 0) srcRec.y = 0;
+    
+    if ((srcRec.x + srcRec.width) > src.width)
+    {
+        srcRec.width = src.width - srcRec.x;
+        TraceLog(WARNING, "Source rectangle width out of bounds, rescaled width: %i", srcRec.width);
+    }
+    
+    if ((srcRec.y + srcRec.height) > src.height)
+    {
+        srcRec.height = src.height - srcRec.y;
+        TraceLog(WARNING, "Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
+    }
+    
+    // Check that dstRec is inside dst image
+    if (dstRec.x < 0) dstRec.x = 0;
+    if (dstRec.y < 0) dstRec.y = 0;
+    
+    if ((dstRec.x + dstRec.width) > dst->width)
+    {
+        dstRec.width = dst->width - dstRec.x;
+        TraceLog(WARNING, "Destination rectangle width out of bounds, rescaled width: %i", dstRec.width);
+    }
+    
+    if ((dstRec.y + dstRec.height) > dst->height)
+    {
+        dstRec.height = dst->height - dstRec.y;
+        TraceLog(WARNING, "Destination rectangle height out of bounds, rescaled height: %i", dstRec.height);
+    }
+    
+    // Get dstination image data as Color pixels array to work with it
+    Color *dstPixels = GetImageData(*dst);
+
+    Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
+    ImageCrop(&srcCopy, srcRec);        // Crop source image to desired source rectangle
+
+    // Scale source image in case destination rec size is different than source rec size
+    if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height)) 
+    {
+        ImageResize(&srcCopy, dstRec.width, dstRec.height);
+    }
+
+    // Get source image data as Color array
+    Color *srcPixels = GetImageData(srcCopy);
+    
+    UnloadImage(srcCopy);
+
+    // Blit pixels, copy source image into destination
+    for (int j = dstRec.y; j < (dstRec.y + dstRec.height); j++)
+    {
+        for (int i = dstRec.x; i < (dstRec.x + dstRec.width); i++)
+        {
+            dstPixels[j*dst->width + i] = srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)];
+        }
+    }
+    
+    free(srcPixels);
+
+    int format = dst->format;
+
+    UnloadImage(*dst);
+
+    *dst = LoadImageEx(dstPixels, dst->width, dst->height);
+
+    free(dstPixels);
+
+    ImageFormat(dst, format);
+}
+
+// Draw a text within an image (destination)
+// NOTE: Default font is used
+void ImageDrawText(Image *dst, const char *text, Vector2 position, int size, Color color) 
+{
+    ImageDrawTextEx(dst, GetDefaultFont(), text, position, size, color);
+}
+
+// Draw a text within an image (destination)
+// NOTE: Defined SpriteFont is used
+void ImageDrawTextEx(Image *dst, SpriteFont font, const char *text, Vector2 position, int size, Color color)
+{
+    Image imFont = GetTextureData(font.texture);
+    
+    int posX = (int)position.x;
+    
+    Rectangle srcRec = { 0, 0, 0, font.size };
+    Rectangle dstRec = { posX, (int)position.y, 0, font.size };
+    int length = strlen(text);
+    
+    for (int i = 0; i < length; i++)
+    {
+        srcRec.x = font.charRecs[(int)text[i] - 32].x;
+        srcRec.y = font.charRecs[(int)text[i] - 32].y;
+        srcRec.width = font.charRecs[(int)text[i] - 32].width;
+        dstRec.width = font.charRecs[(int)text[i] - 32].width;
+        
+        printf("[%c] Source Rectangle: %i, %i, %i, %i\n", text[i], srcRec.x, srcRec.y, srcRec.width, srcRec.height);
+        printf("[%c] Destination Rectangle: %i, %i, %i, %i\n\n", text[i], dstRec.x, dstRec.y, dstRec.width, dstRec.height);
+        
+        ImageDraw(dst, imFont, srcRec, dstRec);
+        
+        dstRec.x += srcRec.width;
+    }
+    
+    UnloadImage(imFont);
+}
+
+void ImageFlipVertical(Image *image)
+{
+    Image copy = ImageCopy(*image);
+    ImageFormat(&copy, UNCOMPRESSED_R8G8B8A8);
+        
+    Color *srcPixels = GetImageData(copy);   // Get source image data as Color array
+    Color *dstPixels = GetImageData(copy);
+    
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            //dstPixels[y*image->width + x] = srcPixels[];
+        }
+    }
+    
+    free(srcPixels);
+    free(dstPixels);
+    
+    ImageFormat(&copy, image->format);
+    
+    UnloadImage(*image);
+    image = &copy;
+}
+
+void ImageFlipHorizontal(Image *image)
+{
+    
+}
+
+void ImageColorInvert(Image *image)
+{
+    
+}
+
+void ImageColorGrayscale(Image *image)
+{
+    ImageFormat(image, UNCOMPRESSED_GRAYSCALE);
+}
+
+void ImageColorContrast(Image *image, float contrast)
+{
+    
+}
+
+void ImageColorBrightness(Image *image, int brightness)
+{
+    
+}
 
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D texture)

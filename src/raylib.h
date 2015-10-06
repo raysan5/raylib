@@ -547,8 +547,20 @@ void UnloadImage(Image image);                                                  
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
-void ImageConvertToPOT(Image *image, Color fillColor);                                             // Convert image to POT (power-of-two)
-void ImageConvertFormat(Image *image, int newFormat);                                              // Convert image data to desired format
+void ImageToPOT(Image *image, Color fillColor);                                             // Convert image to POT (power-of-two)
+void ImageFormat(Image *image, int newFormat);                                              // Convert image data to desired format
+Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
+void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
+void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
+void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
+void ImageDrawText(Image *dst, const char *text, Vector2 position, int size, Color color);         // Draw text within an image
+void ImageDrawTextEx(Image *dst, SpriteFont font, const char *text, Vector2 position, int size, Color color);
+void ImageFlipVertical(Image *image);
+void ImageFlipHorizontal(Image *image);
+void ImageColorInvert(Image *image);
+void ImageColorGrayscale(Image *image);
+void ImageColorContrast(Image *image, float contrast);
+void ImageColorBrightness(Image *image, int brightness);
 void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
