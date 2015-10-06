@@ -51,6 +51,7 @@
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>     // GLFW3 library: Windows, OpenGL context and Input management
     #ifdef __linux
         #define GLFW_EXPOSE_NATIVE_X11 // Linux specific definitions for getting
@@ -528,7 +529,7 @@ void Begin3dMode(Camera camera)
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
 
     // Setup perspective projection
-    float aspect = (GLfloat)screenWidth/(GLfloat)screenHeight;
+    float aspect = (float)screenWidth/(float)screenHeight;
     double top = 0.1f*tan(45.0f*PI / 360.0f);
     double right = top*aspect;
 
@@ -619,8 +620,10 @@ Color Fade(Color color, float alpha)
 {
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
+    
+    float colorAlpha = (float)color.a*alpha;
 
-    return (Color){color.r, color.g, color.b, color.a*alpha};
+    return (Color){color.r, color.g, color.b, (unsigned char)colorAlpha};
 }
 
 // Enable some window/system configurations
@@ -676,7 +679,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
 
     // Calculate projection matrix for the camera
-    float aspect = (GLfloat)GetScreenWidth()/(GLfloat)GetScreenHeight();
+    float aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
     double top = 0.1f*tanf(45.0f*PI/360.0f);
     double right = top*aspect;
 
@@ -1019,6 +1022,7 @@ static void InitDisplay(int width, int height)
     // with forward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 3.3 context fordward compatible.
 
+    // Check selection OpenGL version (not initialized yet!)
     if (rlGetVersion() == OPENGL_33)
     {
         if (configFlags & FLAG_MSAA_4X_HINT)
@@ -1029,9 +1033,9 @@ static void InitDisplay(int width, int height)
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.2 and above!
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Other values: GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE); // Fordward Compatibility Hint: Only 3.0 and above!
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
     }
 
     if (fullscreen)
@@ -1455,9 +1459,9 @@ static void TakeScreenshot(void)
     unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
 
     sprintf(buffer, "screenshot%03i.png", shotNum);
-
+    
     // Save image as PNG
-    WritePNG(buffer, imgData, renderWidth, renderHeight);
+    WritePNG(buffer, imgData, renderWidth, renderHeight, 4);
 
     free(imgData);
 

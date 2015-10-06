@@ -717,7 +717,7 @@ static void EmptyMusicStream(void)
 }
 
 // Update (re-fill) music buffers if data already processed
-extern void UpdateMusicStream(void)
+void UpdateMusicStream(void)
 {
     ALuint buffer = 0;
     ALint processed = 0;
