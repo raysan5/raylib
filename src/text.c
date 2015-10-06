@@ -172,7 +172,7 @@ extern void LoadDefaultFont(void)
     //fclose(myimage);
     
     Image image = LoadImageEx(imagePixels, imWidth, imHeight);
-    ImageConvertFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
+    ImageFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
 
     free(imagePixels);
 
@@ -211,7 +211,7 @@ extern void LoadDefaultFont(void)
         else currentPosX = testPosX;
     }
     
-    defaultFont.size = defaultFont.charRecs[0].y;
+    defaultFont.size = defaultFont.charRecs[0].height;
 
     TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
@@ -242,10 +242,10 @@ SpriteFont LoadSpriteFont(const char *fileName)
         Image image = LoadImage(fileName);
 
 #if defined(PLATFORM_WEB)
-        ImageConvertToPOT(&image, MAGENTA);
+        ImageToPOT(&image, MAGENTA);
 #endif
         // Process bitmap font pixel data to get characters measures
-        // spriteFont.charSet data is filled inside the function and memory is allocated!
+        // spriteFont chars data is filled inside the function and memory is allocated!
         int numChars = ParseImageData(image, &spriteFont.charValues, &spriteFont.charRecs);
 
         TraceLog(DEBUG, "[%s] SpriteFont data parsed correctly", fileName);
@@ -288,7 +288,6 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 }
 
 // Draw text using SpriteFont
-// NOTE: If font size is lower than base size, base size is used
 // NOTE: chars spacing is NOT proportional to fontSize
 void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int fontSize, int spacing, Color tint)
 {
@@ -299,21 +298,27 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int f
 
     Rectangle rec;
 
-    //if (fontSize <= spriteFont.charRecs[0].height) scaleFactor = 1.0f;
-    //else scaleFactor = (float)fontSize / spriteFont.charRecs[0].height;
-    
     scaleFactor = (float)fontSize/spriteFont.charRecs[0].height;
 
+    // NOTE: Some ugly hacks are made to support Latin-1 Extended characters directly 
+    // written in C code files (codified by default as UTF-8)
+    
     for(int i = 0; i < length; i++)
     {
-        if ((unsigned char)text[i] == 0xc2)
+        // TODO: Right now we are supposing characters follow a continous order and start at FONT_FIRST_CHAR,
+        // this sytem can be improved to support any characters order and init value...
+        // An intermediate table could be created to link char values with predefined char position index in chars rectangle array
+        
+        if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
         {
+            // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
             letter = (unsigned char)text[i + 1];
             rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR];
             i++;
         }
-        else if ((unsigned char)text[i] == 0xc3)
+        else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
         {
+            // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
             letter = (unsigned char)text[i + 1];
             rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR + 64];
             i++;
@@ -569,7 +574,7 @@ static SpriteFont LoadRBMF(const char *fileName)
         }
         
         Image image = LoadImageEx(imagePixels, rbmfHeader.imgWidth, rbmfHeader.imgHeight);
-        ImageConvertFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
+        ImageFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
         
         free(imagePixels);
 
