@@ -47,7 +47,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     # define raylib graphics api to use (on RPI, OpenGL ES 2.0 must be used)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 else
-    # define raylib graphics api to use (on Windows desktop, OpenGL 1.1 by default)
+    # define raylib graphics api to use (OpenGL 1.1 by default)
     GRAPHICS ?= GRAPHICS_API_OPENGL_11
     #GRAPHICS = GRAPHICS_API_OPENGL_33  # Uncomment to use OpenGL 3.3
 endif
@@ -67,14 +67,12 @@ else
 endif
 
 # define compiler flags:
-#  -O2         defines optimization level
-#  -Wall       turns on most, but not all, compiler warnings
-#  -std=c99    use standard C from 1999 revision
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline
-else
-    CFLAGS = -O1 -Wall -std=c99
-endif
+#  -O1              defines optimization level
+#  -Wall            turns on most, but not all, compiler warnings
+#  -std=c99         defines C language mode (standard C from 1999 revision)
+#  -std=gnu99       defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline   declaring inline functions support (GCC optimized, faster)
+CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
