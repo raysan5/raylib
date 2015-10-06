@@ -182,6 +182,13 @@ typedef struct {
     unsigned char a;
 } pixel;
 
+// Framebuffer Object type
+typedef struct {
+    GLuint id;
+    GLuint colorTextureId;
+    GLuint depthTextureId;
+} FBO;
+
 #if defined(RLGL_STANDALONE)
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 #endif
@@ -238,7 +245,7 @@ static bool texCompPVRTSupported = false;    // PVR texture compression support
 static bool texCompASTCSupported = false;    // ASTC texture compression support
 
 // Framebuffer object and texture
-static GLuint fbo, fboColorTexture, fboDepthTexture;
+static FBO postproFbo;
 static Model postproQuad;
 
 // Shaders related variables
@@ -278,6 +285,9 @@ static void UpdateBuffers(void);
 static char *TextFileRead(char *fn);
 
 static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
+
+FBO rlglLoadFBO(int width, int height);
+void rlglUnloadFBO(FBO fbo);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -776,10 +786,10 @@ void rlDeleteTextures(unsigned int id)
 }
 
 // Enable rendering to postprocessing FBO
-void rlEnableFBO(void)
+void rlEnablePostproFBO()
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, postproFbo.id);
 #endif
 }
 
@@ -910,8 +920,8 @@ void rlglInit(void)
     
 #elif defined(GLAD_EXTENSIONS_LOADER)
     // NOTE: glad is generated and contains only required OpenGL version and core extensions
-    if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
-    //if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n");
+    //if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n"); // No GLFW3 in this module...
 
     if (GLAD_GL_VERSION_3_3)
     {
@@ -1080,68 +1090,13 @@ void rlglInit(void)
 
 // Init postpro system
 // NOTE: Uses global variables screenWidth and screenHeight
+// Modifies global variables: postproFbo, postproQuad
 void rlglInitPostpro(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Create the texture that will serve as the color attachment for the framebuffer
-    glGenTextures(1, &fboColorTexture);
-    glBindTexture(GL_TEXTURE_2D, fboColorTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    postproFbo = rlglLoadFBO(screenWidth, screenHeight);
 
-    // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
-    glGenRenderbuffers(1, &fboDepthTexture);
-    glBindRenderbuffer(GL_RENDERBUFFER, fboDepthTexture);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, screenWidth, screenHeight);
-    
-    // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extensions)
-    // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
-/*
-    glGenTextures(1, &fboDepthTexture);
-    glBindTexture(GL_TEXTURE_2D, fboDepthTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GetScreenWidth(), GetScreenHeight(), 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-*/
-
-    // Create the framebuffer object
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    // Attach color texture and depth renderbuffer to FBO
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboColorTexture, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fboDepthTexture);
-
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-    if (status != GL_FRAMEBUFFER_COMPLETE) 
+    if (postproFbo.id > 0)
     {
-        TraceLog(WARNING, "Framebuffer object could not be created...");
-        
-        switch(status)
-        {
-            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(WARNING, "Framebuffer incomplete dimensions"); break;
-#endif
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete missing attachment"); break;
-            default: break;
-        }
-    }
-    else
-    {
-        TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
         // Create a simple quad model to render fbo texture
         VertexData quadData;
         
@@ -1162,9 +1117,88 @@ void rlglInitPostpro(void)
         
         postproQuad = rlglLoadModel(quadData);
         
-        // NOTE: fboColorTexture id must be assigned to postproQuad model shader
+        // NOTE: postproFbo.colorTextureId must be assigned to postproQuad model shader
     }
+}
+
+// Load a framebuffer object
+FBO rlglLoadFBO(int width, int height)
+{
+    FBO fbo;   
+    fbo.id = 0;
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Create the texture that will serve as the color attachment for the framebuffer
+    glGenTextures(1, &fbo.colorTextureId);
+    glBindTexture(GL_TEXTURE_2D, fbo.colorTextureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
+    glGenRenderbuffers(1, &fbo.depthTextureId);
+    glBindRenderbuffer(GL_RENDERBUFFER, fbo.depthTextureId);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+    
+    // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extensions)
+    // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
+/*
+    glGenTextures(1, &fbo.depthTextureId);
+    glBindTexture(GL_TEXTURE_2D, fbo.depthTextureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+*/
+    // Create the framebuffer object
+    glGenFramebuffers(1, &fbo.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+
+    // Attach color texture and depth renderbuffer to FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.colorTextureId, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo.depthTextureId);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+    if (status != GL_FRAMEBUFFER_COMPLETE) 
+    {
+        TraceLog(WARNING, "Framebuffer object could not be created...");
+        
+        switch(status)
+        {
+            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(WARNING, "Framebuffer incomplete dimensions"); break;
 #endif
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete missing attachment"); break;
+            default: break;
+        }
+        
+        glDeleteTextures(1, &fbo.colorTextureId);
+        glDeleteTextures(1, &fbo.depthTextureId);
+    }
+    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
+
+    return fbo;
+}
+
+// Unload framebuffer object
+void rlglUnloadFBO(FBO fbo)
+{
+    glDeleteFramebuffers(1, &fbo.id);
+    glDeleteTextures(1, &fbo.colorTextureId);
+    glDeleteTextures(1, &fbo.depthTextureId);
+    
+    TraceLog(INFO, "[FBO ID %i] Unloaded framebuffer object successfully", fbo.id);
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -1223,9 +1257,9 @@ void rlglClose(void)
     glDeleteTextures(1, &whiteTexture);
     TraceLog(INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
 
-    if (fbo != 0)
+    if (postproFbo.id != 0)
     {
-        glDeleteFramebuffers(1, &fbo);
+        rlglUnloadFBO(postproFbo);
         
         // Unload postpro quad model data
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -1240,7 +1274,7 @@ void rlglClose(void)
 
         rlDeleteVertexArrays(postproQuad.mesh.vaoId);
         
-        TraceLog(INFO, "[FBO %i] Unloaded postprocessing data", fbo);
+        TraceLog(INFO, "Unloaded postprocessing data");
     }
 
     free(draws);
@@ -2010,7 +2044,7 @@ unsigned char *rlglReadScreenPixels(int width, int height)
 }
 
 // Read texture pixel data
-// NOTE: Retrieving pixel data from GPU not supported on OpenGL ES 2.0
+// NOTE: Retrieving pixel data from GPU (glGetTexImage()) not supported on OpenGL ES 2.0
 void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 {
     void *pixels = NULL;
@@ -2028,11 +2062,31 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
     int glFormat = 0, glType = 0;
 
     unsigned int size = width*height;
+    
+    // NOTE: GL_LUMINANCE and GL_LUMINANCE_ALPHA are removed since OpenGL 3.1
+    // Must be replaced by GL_RED and GL_RG on Core OpenGL 3.3 and data must be swizzled
 
     switch (format)
     {
+#if defined(GRAPHICS_API_OPENGL_11)
         case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_LUMINANCE; glType = GL_UNSIGNED_BYTE; break;            // 8 bit per pixel (no alpha)
         case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_LUMINANCE_ALPHA; glType = GL_UNSIGNED_BYTE; break;   // 16 bpp (2 channels)
+#elif defined(GRAPHICS_API_OPENGL_33) 
+        case UNCOMPRESSED_GRAYSCALE:    // 8 bit per pixel (no alpha)
+        {
+            pixels = (unsigned char *)malloc(size); glFormat = GL_RED; glType = GL_UNSIGNED_BYTE;
+            
+            GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
+            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+        } break;       
+        case UNCOMPRESSED_GRAY_ALPHA:   // 16 bpp (2 channels)
+        {
+            pixels = (unsigned char *)malloc(size*2); glFormat = GL_RG; glType = GL_UNSIGNED_BYTE;
+            
+            GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
+            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+        } break;
+#endif
         case UNCOMPRESSED_R5G6B5: pixels = (unsigned short *)malloc(size); glFormat = GL_RGB; glType = GL_UNSIGNED_SHORT_5_6_5; break;             // 16 bpp
         case UNCOMPRESSED_R8G8B8: pixels = (unsigned char *)malloc(size*3); glFormat = GL_RGB; glType = GL_UNSIGNED_BYTE; break;                   // 24 bpp
         case UNCOMPRESSED_R5G5B5A1: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_5_5_5_1; break;        // 16 bpp (1 bit alpha)
@@ -2050,6 +2104,44 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
     glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
     
     glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    // TODO: Look for some way to retrieve texture width and height from id
+    int width = 1024;
+    int height = 1024;
+
+    FBO fbo = rlglLoadFBO(width, height);
+    
+    // NOTE: Altenatively we can bind texture to color fbo and glReadPixels()
+    
+    // Render texture to fbo
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearDepthf(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, width, height);
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    rlOrtho(0.0, width, height, 0.0, 0.0, 1.0); 
+    //glMatrixMode(GL_MODELVIEW);
+    //glLoadIdentity();
+    //glDisable(GL_TEXTURE_2D);
+    //glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    
+    //Model quad = GenModelQuad(width, height);
+    //DrawModel(quad, (Vector3){ 0, 0, 0 }, 1.0f, WHITE);
+    
+    pixels = (unsigned char *)malloc(width*height*4*sizeof(unsigned char));
+    
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+    // Bind framebuffer 0, which means render to back buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Clean up temporal fbo
+    rlglUnloadFBO(fbo);
 #endif
 
     return pixels;
@@ -2282,7 +2374,7 @@ void SetPostproShader(Shader shader)
     SetModelShader(&postproQuad, shader);
     
     Texture2D texture;
-    texture.id = fboColorTexture;
+    texture.id = postproFbo.colorTextureId;
     texture.width = screenWidth;
     texture.height = screenHeight;
 

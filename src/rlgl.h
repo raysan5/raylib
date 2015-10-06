@@ -232,7 +232,7 @@ void rlDeleteBuffers(unsigned int id);          // Unload vertex data (VBO) from
 void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
 void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
 int rlGetVersion(void);                         // Returns current OpenGL version
-void rlEnableFBO(void);                         // Enable rendering to postprocessing FBO
+void rlEnablePostproFBO(void);                  // Enable rendering to postprocessing FBO
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
