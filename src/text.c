@@ -293,6 +293,7 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int f
 {
     int length = strlen(text);
     int offsetX = 0;
+    int offsetY = 0;    // Line break!
     float scaleFactor;
     unsigned char letter;
 
@@ -323,11 +324,23 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int f
             rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR + 64];
             i++;
         }
-        else rec = spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR];
+        else
+        {
+            if ((unsigned char)text[i] == '\n')
+            {
+                offsetY += ((spriteFont.size + spriteFont.size/2)*scaleFactor);
+                offsetX = 0;
+                rec.x = -1;
+            }
+            else rec = spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR];
+        }
 
-        DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + offsetX, position.y, rec.width*scaleFactor, rec.height*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
+        if (rec.x > 0)
+        {
+            DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + offsetX, position.y + offsetY, rec.width*scaleFactor, rec.height*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
 
-        offsetX += (rec.width*scaleFactor + spacing);
+            offsetX += (rec.width*scaleFactor + spacing);
+        }
     }
 }
 
