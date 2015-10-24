@@ -324,10 +324,6 @@ Texture2D LoadTexture(const char *fileName)
 
     Image image = LoadImage(fileName);
     
-#if defined(PLATFORM_WEB)
-    ImageToPOT(&image, BLANK);
-#endif
-
     if (image.data != NULL)
     { 
         texture = LoadTextureFromImage(image);
@@ -984,7 +980,19 @@ void ImageColorBrightness(Image *image, int brightness)
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D texture)
 {
+#if PLATFORM_WEB
+    int potWidth = GetNextPOT(image->width);
+    int potHeight = GetNextPOT(image->height);
+
+    // Check if texture is POT
+    if ((potWidth != image->width) || (potHeight != image->height))
+    {
+        TraceLog(WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
+    }
+    else rlglGenerateMipmaps(texture.id);
+#else
     rlglGenerateMipmaps(texture.id);
+#endif
 }
 
 // Draw a Texture2D

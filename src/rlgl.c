@@ -1028,7 +1028,7 @@ void rlglInit(void)
     else TraceLog(WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
     
     if (npotSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
-    else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, NPOT textures not supported");
+    else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, NPOT textures support is limited (no-mipmaps, no-repeat");
 #endif
 
     if (texCompDXTSupported) TraceLog(INFO, "[EXTENSION] DXT compressed textures supported");
