@@ -806,12 +806,9 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     UnloadImage(*image);
 
     *image = LoadImageEx(output, newWidth, newHeight);
-
-    free(output);
-
-    // Reformat 32bit RGBA image to original format 
-    ImageFormat(image, format);
+    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format 
     
+    free(output);
     free(pixels);
 }
 
@@ -877,104 +874,286 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
         }
     }
     
-    free(srcPixels);
-
-    int format = dst->format;
-
-    UnloadImage(*dst);
+    UnloadImage(*dst);  // NOTE: Only dst->data is unloaded
 
     *dst = LoadImageEx(dstPixels, dst->width, dst->height);
+    ImageFormat(dst, dst->format);
 
+    free(srcPixels);
     free(dstPixels);
-
-    ImageFormat(dst, format);
 }
 
-// Draw a text within an image (destination)
-// NOTE: Default font is used
-void ImageDrawText(Image *dst, const char *text, Vector2 position, int size, Color color) 
+// Create an image from text (default font)
+Image ImageText(const char *text, int fontSize, Color color)
 {
-    ImageDrawTextEx(dst, GetDefaultFont(), text, position, size, color);
+    int defaultFontSize = 10;   // Default Font chars height in pixel
+    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+    int spacing = fontSize / defaultFontSize;
+    
+    Image imText = ImageTextEx(GetDefaultFont(), text, fontSize, spacing, color);
+    
+    return imText;
 }
 
-// Draw a text within an image (destination)
-// NOTE: Defined SpriteFont is used
-void ImageDrawTextEx(Image *dst, SpriteFont font, const char *text, Vector2 position, int size, Color color)
+// Create an image from text (custom sprite font)
+Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint)
 {
+    int length = strlen(text);
+    int posX = 0;
+
+    Vector2 imSize = MeasureTextEx(font, text, font.size, spacing);
+
+    // NOTE: GetTextureData() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
     
-    int posX = (int)position.x;
+    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Required for color tint
+    ImageColorTint(&imFont, tint);                  // Apply color tint to font
+
+    Color *fontPixels = GetImageData(imFont);
     
-    Rectangle srcRec = { 0, 0, 0, font.size };
-    Rectangle dstRec = { posX, (int)position.y, 0, font.size };
-    int length = strlen(text);
+    // Create image to store text
+    Color *pixels = (Color *)malloc(sizeof(Color)*(int)imSize.x*(int)imSize.y);
     
     for (int i = 0; i < length; i++)
     {
-        srcRec.x = font.charRecs[(int)text[i] - 32].x;
-        srcRec.y = font.charRecs[(int)text[i] - 32].y;
-        srcRec.width = font.charRecs[(int)text[i] - 32].width;
-        dstRec.width = font.charRecs[(int)text[i] - 32].width;
+        Rectangle letterRec = font.charRecs[(int)text[i] - 32];
         
-        printf("[%c] Source Rectangle: %i, %i, %i, %i\n", text[i], srcRec.x, srcRec.y, srcRec.width, srcRec.height);
-        printf("[%c] Destination Rectangle: %i, %i, %i, %i\n\n", text[i], dstRec.x, dstRec.y, dstRec.width, dstRec.height);
+        for (int y = letterRec.y; y < (letterRec.y + letterRec.height); y++)
+        {
+            for (int x = posX; x < (posX + letterRec.width); x++)
+            {
+                pixels[(y - letterRec.y)*(int)imSize.x + x] = fontPixels[y*font.texture.width + (x - posX + letterRec.x)];
+            }
+        }
         
-        ImageDraw(dst, imFont, srcRec, dstRec);
-        
-        dstRec.x += srcRec.width;
+        posX += letterRec.width + spacing;
     }
     
     UnloadImage(imFont);
+    
+    Image imText = LoadImageEx(pixels, (int)imSize.x, (int)imSize.y);
+    
+    // Scale image depending on text size
+    if (fontSize > (int)imSize.y)
+    {
+        float scaleFactor = (float)fontSize/imSize.y;
+        TraceLog(INFO, "Scalefactor: %f", scaleFactor);
+        
+        // TODO: Allow nearest-neighbor scaling algorithm
+        ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor)); 
+    }
+    
+    free(pixels);
+    free(fontPixels);
+    
+    return imText;
 }
 
+// Flip image vertically
 void ImageFlipVertical(Image *image)
 {
-    Image copy = ImageCopy(*image);
-    ImageFormat(&copy, UNCOMPRESSED_R8G8B8A8);
-        
-    Color *srcPixels = GetImageData(copy);   // Get source image data as Color array
-    Color *dstPixels = GetImageData(copy);
+    Color *srcPixels = GetImageData(*image);
+    Color *dstPixels = (Color *)malloc(sizeof(Color)*image->width*image->height);
     
     for (int y = 0; y < image->height; y++)
     {
         for (int x = 0; x < image->width; x++)
         {
-            //dstPixels[y*image->width + x] = srcPixels[];
+            dstPixels[y*image->width + x] = srcPixels[(image->height - 1 - y)*image->width + x];
         }
     }
+    
+    Image processed = LoadImageEx(dstPixels, image->width, image->height);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
     
     free(srcPixels);
     free(dstPixels);
     
-    ImageFormat(&copy, image->format);
-    
-    UnloadImage(*image);
-    image = &copy;
+    image->data = processed.data;
 }
 
+// Flip image horizontally
 void ImageFlipHorizontal(Image *image)
 {
+    Color *srcPixels = GetImageData(*image);
+    Color *dstPixels = (Color *)malloc(sizeof(Color)*image->width*image->height);
     
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            dstPixels[y*image->width + x] = srcPixels[y*image->width + (image->width - 1 - x)];
+        }
+    }
+    
+    Image processed = LoadImageEx(dstPixels, image->width, image->height);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+    
+    free(srcPixels);
+    free(dstPixels);
+    
+    image->data = processed.data;
 }
 
+// Modify image color: tint
+void ImageColorTint(Image *image, Color color)
+{
+    Color *pixels = GetImageData(*image);
+    
+    float cR = (float)color.r/255;
+    float cG = (float)color.g/255;
+    float cB = (float)color.b/255;
+    float cA = (float)color.a/255;
+    
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            unsigned char r = 255*((float)pixels[y*image->width + x].r/255*cR);
+            unsigned char g = 255*((float)pixels[y*image->width + x].g/255*cG);
+            unsigned char b = 255*((float)pixels[y*image->width + x].b/255*cB);
+            unsigned char a = 255*((float)pixels[y*image->width + x].a/255*cA);
+
+            pixels[y*image->width + x].r = r;
+            pixels[y*image->width + x].g = g;
+            pixels[y*image->width + x].b = b;
+            pixels[y*image->width + x].a = a;
+        }
+    }
+
+    Image processed = LoadImageEx(pixels, image->width, image->height);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+    free(pixels);
+    
+    TraceLog(INFO,"color tint applied");
+    
+    image->data = processed.data;
+}
+
+// Modify image color: invert
 void ImageColorInvert(Image *image)
 {
+    Color *pixels = GetImageData(*image);
     
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            pixels[y*image->width + x].r = 255 - pixels[y*image->width + x].r;
+            pixels[y*image->width + x].g = 255 - pixels[y*image->width + x].g;
+            pixels[y*image->width + x].b = 255 - pixels[y*image->width + x].b;
+        }
+    }
+    
+    Image processed = LoadImageEx(pixels, image->width, image->height);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+    free(pixels);
+    
+    image->data = processed.data;
 }
 
+// Modify image color: grayscale
 void ImageColorGrayscale(Image *image)
 {
     ImageFormat(image, UNCOMPRESSED_GRAYSCALE);
 }
 
+// Modify image color: contrast
+// NOTE: Contrast values between -100 and 100
 void ImageColorContrast(Image *image, float contrast)
 {
+    if (contrast < -100) contrast = -100;
+    if (contrast > 100) contrast = 100;
     
+    contrast = (100.0 + contrast)/100.0;
+    contrast *= contrast;
+    
+    Color *pixels = GetImageData(*image);
+    
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            float pR = (float)pixels[y*image->width + x].r/255.0;
+            pR -= 0.5;
+            pR *= contrast;
+            pR += 0.5;
+            pR *= 255;
+            if (pR < 0) pR = 0;
+            if (pR > 255) pR = 255;
+
+            float pG = (float)pixels[y*image->width + x].g/255.0;
+            pG -= 0.5;
+            pG *= contrast;
+            pG += 0.5;
+            pG *= 255;
+            if (pG < 0) pG = 0;
+            if (pG > 255) pG = 255;
+
+            float pB = (float)pixels[y*image->width + x].b/255.0;
+            pB -= 0.5;
+            pB *= contrast;
+            pB += 0.5;
+            pB *= 255;
+            if (pB < 0) pB = 0;
+            if (pB > 255) pB = 255;
+
+            pixels[y*image->width + x].r = (unsigned char)pR;
+            pixels[y*image->width + x].g = (unsigned char)pG;
+            pixels[y*image->width + x].b = (unsigned char)pB;
+        }
+    }
+
+    Image processed = LoadImageEx(pixels, image->width, image->height);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+    free(pixels);
+    
+    image->data = processed.data;
 }
 
+// Modify image color: brightness
+// NOTE: Brightness values between -255 and 255
 void ImageColorBrightness(Image *image, int brightness)
 {
+    if (brightness < -255) brightness = -255;
+    if (brightness > 255) brightness = 255;
     
+    Color *pixels = GetImageData(*image);
+    
+    for (int y = 0; y < image->height; y++)
+    {
+        for (int x = 0; x < image->width; x++)
+        {
+            int cR = pixels[y*image->width + x].r + brightness;
+            int cG = pixels[y*image->width + x].g + brightness;
+            int cB = pixels[y*image->width + x].b + brightness;
+
+            if (cR < 0) cR = 1;
+            if (cR > 255) cR = 255;
+
+            if (cG < 0) cG = 1;
+            if (cG > 255) cG = 255;
+
+            if (cB < 0) cB = 1;
+            if (cB > 255) cB = 255;
+            
+            pixels[y*image->width + x].r = (unsigned char)cR;
+            pixels[y*image->width + x].g = (unsigned char)cG;
+            pixels[y*image->width + x].b = (unsigned char)cB;
+        }
+    }
+
+    Image processed = LoadImageEx(pixels, image->width, image->height);
+    ImageFormat(&processed, image->format);
+    UnloadImage(*image);
+    free(pixels);
+    
+    image->data = processed.data;
 }
 
 // Generate GPU mipmaps for a texture

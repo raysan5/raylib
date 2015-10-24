@@ -279,9 +279,7 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
     Vector2 position = { (float)posX, (float)posY };
 
     int defaultFontSize = 10;   // Default Font chars height in pixel
-
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-
     int spacing = fontSize / defaultFontSize;
 
     DrawTextEx(defaultFont, text, position, fontSize, spacing, color);
@@ -380,7 +378,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
 
     for (int i = 0; i < len; i++)
     {
-        textWidth += spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR].width;
+        if (text[i] != '\n') textWidth += spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR].width;
     }
 
     if (fontSize <= spriteFont.charRecs[0].height) scaleFactor = 1.0f;
