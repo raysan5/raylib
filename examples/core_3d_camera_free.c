@@ -44,7 +44,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(WHITE);
+            ClearBackground(RAYWHITE);
 
             Begin3dMode(camera);
 
