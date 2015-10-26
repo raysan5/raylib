@@ -1008,7 +1008,8 @@ void rlglInit(void)
 #endif   
         
         // DDS texture compression support
-        if (strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) texCompDXTSupported = true; 
+        if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
+            (strcmp(extList[i], (const char *)"GL_WEBKIT_WEBGL_compressed_texture_s3tc") == 0)) texCompDXTSupported = true; 
         
         // ETC1 texture compression support
         if (strcmp(extList[i], (const char *)"GL_OES_compressed_ETC1_RGB8_texture") == 0) texCompETC1Supported = true;
