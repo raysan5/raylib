@@ -1028,8 +1028,6 @@ void ImageColorTint(Image *image, Color color)
     UnloadImage(*image);
     free(pixels);
     
-    TraceLog(INFO,"color tint applied");
-    
     image->data = processed.data;
 }
 
