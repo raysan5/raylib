@@ -95,6 +95,11 @@
     #define DEFAULT_GAMEPAD_DEV     "/dev/input/js0"
 #endif
 
+#if defined(PLATFORM_WEB)
+    #include <emscripten/emscripten.h>
+    #include <emscripten/html5.h>
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -157,6 +162,10 @@ static int renderOffsetX = 0;               // Offset X from render area (must b
 static int renderOffsetY = 0;               // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+static Vector2 touchPosition;               // Touch position on screen
+#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
@@ -247,6 +256,10 @@ static void TakeScreenshot(void);                                               
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
 #endif
 
+#if defined(PLATFORM_WEB)
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
@@ -277,6 +290,12 @@ void InitWindow(int width, int height, const char *title)
     InitMouse();        // Mouse init
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
+#endif
+
+#if defined(PLATFORM_WEB)
+    InitGesturesSystem();
+    
+    emscripten_set_fullscreenchange_callback(0, 0, 1, EmscriptenFullscreenChangeCallback);
 #endif
 
     mousePosition.x = screenWidth/2;
@@ -335,6 +354,8 @@ void InitWindow(int width, int height, struct android_app *state)
     //InitGesturesSystem(app);   // NOTE: Must be called by user
 
     InitAssetManager(app->activity->assetManager);
+    
+    InitGesturesSystem(app);
 
     TraceLog(INFO, "Android app initialized successfully");
 
@@ -499,7 +520,7 @@ void EndDrawing(void)
     SwapBuffers();                  // Copy back buffer to front buffer
 
     PollInputEvents();              // Poll user events
-
+    
     currentTime = GetTime();
     drawTime = currentTime - previousTime;
     previousTime = currentTime;
@@ -814,7 +835,7 @@ Vector2 GetMousePosition(void)
 void SetMousePosition(Vector2 position)
 {
     mousePosition = position;
-#if defined(PLATFORM_DESKTOP)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // NOTE: emscripten not implemented
     glfwSetCursorPos(window, position.x, position.y);
 #endif
@@ -966,6 +987,41 @@ bool IsGamepadButtonUp(int gamepad, int button)
         return true;
     }
     else return false;
+}
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+// Returns touch position X
+int GetTouchX(void)
+{
+    return (int)touchPosition.x;
+}
+
+// Returns touch position Y
+int GetTouchY(void)
+{
+    return (int)touchPosition.y;
+}
+
+// Returns touch position XY
+// TODO: touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(void)
+{
+    Vector2 position = touchPosition;
+
+    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
+    {
+        // TODO: Seems to work ok but... review!
+        position.x = position.x*((float)screenWidth/(float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
+        position.y = position.y*((float)screenHeight/(float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
+    }
+    else
+    {
+        position.x = position.x*((float)renderWidth/(float)displayWidth) - renderOffsetX/2;
+        position.y = position.y*((float)renderHeight/(float)displayHeight) - renderOffsetY/2;
+    }
+
+    return position;
 }
 #endif
 
@@ -1547,6 +1603,13 @@ static bool GetMouseButtonStatus(int button)
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    // Touch events reading (requires gestures module)
+    touchPosition = GetRawTouchPosition();
+    
+    UpdateGestures();
+#endif
+    
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
     double mouseX;
@@ -1939,6 +2002,31 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
         renderOffsetY = 0;
     }
 }
+
+#if defined(PLATFORM_WEB)
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
+{
+    //isFullscreen: int e->isFullscreen 
+    //fullscreenEnabled: int e->fullscreenEnabled 
+    //fs element nodeName: (char *) e->nodeName
+    //fs element id: (char *) e->id
+    //Current element size: (int) e->elementWidth, (int) e->elementHeight
+    //Screen size:(int) e->screenWidth, (int) e->screenHeight
+    
+    if (e->isFullscreen)
+    {
+        TraceLog(INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
+    }
+    else
+    {
+        TraceLog(INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
+    }
+    
+    // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
+
+    return 0;
+}
+#endif
 
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)

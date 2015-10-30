@@ -122,7 +122,7 @@ static int currentGesture = GESTURE_NONE;
 
 static unsigned int enabledGestures = 0;       // TODO: Currently not in use...
 
-static Vector2 touchPosition;
+static Vector2 rawTouchPosition;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -147,55 +147,15 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
-// Returns touch position X
-int GetTouchX(void)
+// Get touch position (could require further processing depending on display size)
+Vector2 GetRawTouchPosition(void)
 {
-    return (int)touchPosition.x;
-}
-
-// Returns touch position Y
-int GetTouchY(void)
-{
-    return (int)touchPosition.y;
-}
-
-// Returns touch position XY
-// TODO: touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(void)
-{
-    Vector2 position = touchPosition;
-/*
-    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
-    {
-        // TODO: Seems to work ok but... review!
-        position.x = position.x*((float)screenWidth / (float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
-        position.y = position.y*((float)screenHeight / (float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
-    }
-    else
-    {
-        position.x = position.x*((float)renderWidth / (float)displayWidth) - renderOffsetX/2;
-        position.y = position.y*((float)renderHeight / (float)displayHeight) - renderOffsetY/2;
-    }
-*/
-    return position;
+    return rawTouchPosition;
 }
 
 // Check if a gesture have been detected
 bool IsGestureDetected(void)
 {
-/*
-    if (currentGesture == GESTURE_DRAG)                 TraceLog(INFO, "DRAG");
-    else if (currentGesture == GESTURE_TAP)             TraceLog(INFO, "TAP");
-    else if (currentGesture == GESTURE_DOUBLETAP)       TraceLog(INFO, "DOUBLE");
-    else if (currentGesture == GESTURE_HOLD)            TraceLog(INFO, "HOLD");
-    else if (currentGesture == GESTURE_SWIPE_RIGHT)     TraceLog(INFO, "RIGHT");
-    else if (currentGesture == GESTURE_SWIPE_UP)        TraceLog(INFO, "UP");
-    else if (currentGesture == GESTURE_SWIPE_LEFT)      TraceLog(INFO, "LEFT");
-    else if (currentGesture == GESTURE_SWIPE_DOWN)      TraceLog(INFO, "DOWN");
-    else if (currentGesture == GESTURE_PINCH_IN)        TraceLog(INFO, "PINCH IN");
-    else if (currentGesture == GESTURE_PINCH_OUT)       TraceLog(INFO, "PINCH OUT");
-*/
-
     if (currentGesture != GESTURE_NONE) return true;
     else return false;
 }
@@ -382,7 +342,7 @@ static void ProcessMotionEvent(GestureEvent event)
                 {
                     lastDragPosition = endDragPosition;
                     
-                    endDragPosition = touchPosition;
+                    endDragPosition = rawTouchPosition;
                     
                     //endDragPosition.x = AMotionEvent_getX(event, 0);
                     //endDragPosition.y = AMotionEvent_getY(event, 0);
@@ -594,8 +554,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        touchPosition.x = AMotionEvent_getX(event, 0);
-        touchPosition.y = AMotionEvent_getY(event, 0);
+        rawTouchPosition.x = AMotionEvent_getX(event, 0);
+        rawTouchPosition.y = AMotionEvent_getY(event, 0);
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -676,10 +636,13 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     gestureEvent.pointCount = touchEvent->numTouches;
     
     // Position
-    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
-    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
+    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
+    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
+    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
+    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
+    printf("EVENT DETECTED!\n");
     
-    touchPosition = gestureEvent.position[0];
+    rawTouchPosition = gestureEvent.position[0];
     
     ProcessMotionEvent(gestureEvent);
 
