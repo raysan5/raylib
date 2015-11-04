@@ -40,6 +40,7 @@
 int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
 int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
 #elif defined(__linux)
+    #include <sys/time.h>       // Declares storage size of ‘now’
     #include <time.h>           // Used for clock functions
 #endif
 
