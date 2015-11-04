@@ -1880,6 +1880,38 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     return id;
 }
 
+void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data)
+{
+    glBindTexture(GL_TEXTURE_2D, id);
+
+#if defined(GRAPHICS_API_OPENGL_33)
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RG, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
+        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        default: TraceLog(WARNING, "Texture format updating not supported"); break;
+    }
+#elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
+        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        default: TraceLog(WARNING, "Texture format updating not supported"); break;
+    }
+#endif
+}
+
 // Generate mipmap data for selected texture
 void rlglGenerateMipmaps(unsigned int textureId)
 {
@@ -2046,6 +2078,7 @@ unsigned char *rlglReadScreenPixels(int width, int height)
 
 // Read texture pixel data
 // NOTE: Retrieving pixel data from GPU (glGetTexImage()) not supported on OpenGL ES 2.0
+//void *rlglReadTexturePixels(Texture2D texture)  // Required to know texture size! It could not be retrieved on OpenGL ES 2.0
 void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 {
     void *pixels = NULL;
@@ -2108,14 +2141,32 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    // TODO: Look for some way to retrieve texture width and height from id
+    // TODO: Look for some way to retrieve texture width and height from id -> NO WAY AVAILABLE
     int width = 1024;
     int height = 1024;
 
     FBO fbo = rlglLoadFBO(width, height);
     
-    // NOTE: Altenatively we can bind texture to color fbo and glReadPixels()
+    // NOTE: Two possible Options:
+    // 1 - Bind texture to color fbo attachment and glReadPixels()
+    // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
     
+#define GET_TEXTURE_FBO_OPTION_1
+
+#if defined(GET_TEXTURE_FBO_OPTION_1)
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+
+    // Attach color texture and depth renderbuffer to FBO
+    // NOTE: texture must RGB
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+    
+    pixels = (unsigned char *)malloc(width*height*3*sizeof(unsigned char));
+    
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+#elif defined(GET_TEXTURE_FBO_OPTION_2)
     // Render texture to fbo
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -2131,8 +2182,12 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
     //glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     
-    //Model quad = GenModelQuad(width, height);
-    //DrawModel(quad, (Vector3){ 0, 0, 0 }, 1.0f, WHITE);
+    Model quad;
+    //quad.mesh = GenMeshQuad(width, height);
+    quad.transform = MatrixIdentity();
+    quad.shader = simpleShader;
+    
+    DrawModel(quad, (Vector3){ 0, 0, 0 }, 1.0f, WHITE);
     
     pixels = (unsigned char *)malloc(width*height*4*sizeof(unsigned char));
     
@@ -2140,7 +2195,8 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 
     // Bind framebuffer 0, which means render to back buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+#endif // GET_TEXTURE_FBO_OPTION
+
     // Clean up temporal fbo
     rlglUnloadFBO(fbo);
 #endif

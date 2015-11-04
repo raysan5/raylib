@@ -338,16 +338,17 @@ Texture2D LoadTexture(const char *fileName)
     return texture;
 }
 
-Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount)
+// Load a texture from raw data into GPU memory
+Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat)
 {
     Texture2D texture;
 
     texture.width = width;
     texture.height = height;
-    texture.mipmaps = mipmapCount;
+    texture.mipmaps = 1;
     texture.format = textureFormat;
     
-    texture.id = rlglLoadTexture(data, width, height, textureFormat, mipmapCount);
+    texture.id = rlglLoadTexture(data, width, height, textureFormat, 1);
     
     return texture;
 }
@@ -1170,6 +1171,13 @@ void GenTextureMipmaps(Texture2D texture)
 #else
     rlglGenerateMipmaps(texture.id);
 #endif
+}
+
+// Update GPU texture with new data
+// NOTE: pixels data must match texture.format
+void UpdateTexture(Texture2D texture, void *pixels)
+{
+    rlglUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
 // Draw a Texture2D

@@ -242,7 +242,8 @@ void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
-unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);       // Load in GPU OpenGL texture
+unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
+void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(unsigned int textureId);                           // Generate mipmap data for selected texture
 
 // NOTE: There is a set of shader related functions that are available to end user,
