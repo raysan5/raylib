@@ -496,13 +496,14 @@ bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad b
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-//------------------------------------------------------------------------------------
-// Gestures and Touch Handling Functions (Module: gestures)
-//------------------------------------------------------------------------------------
 int GetTouchX(void);                                    // Returns touch position X (relative to screen size)
 int GetTouchY(void);                                    // Returns touch position Y (relative to screen size)
 Vector2 GetTouchPosition(void);                         // Returns touch position XY (relative to screen size)
 
+//------------------------------------------------------------------------------------
+// Gestures and Touch Handling Functions (Module: gestures)
+//------------------------------------------------------------------------------------
+Vector2 GetRawTouchPosition(void);                         // Gewt touch position (raw)
 #if defined(PLATFORM_WEB)
 void InitGesturesSystem(void);                          // Init gestures system (web)
 #elif defined(PLATFORM_ANDROID)

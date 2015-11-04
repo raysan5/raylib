@@ -1028,8 +1028,6 @@ void ImageColorTint(Image *image, Color color)
     UnloadImage(*image);
     free(pixels);
     
-    TraceLog(INFO,"color tint applied");
-    
     image->data = processed.data;
 }
 
@@ -1160,11 +1158,11 @@ void ImageColorBrightness(Image *image, int brightness)
 void GenTextureMipmaps(Texture2D texture)
 {
 #if PLATFORM_WEB
-    int potWidth = GetNextPOT(image->width);
-    int potHeight = GetNextPOT(image->height);
+    int potWidth = GetNextPOT(texture.width);
+    int potHeight = GetNextPOT(texture.height);
 
     // Check if texture is POT
-    if ((potWidth != image->width) || (potHeight != image->height))
+    if ((potWidth != texture.width) || (potHeight != texture.height))
     {
         TraceLog(WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
     }
