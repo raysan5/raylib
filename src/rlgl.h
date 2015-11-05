@@ -255,10 +255,10 @@ void rlglDrawPostpro(void);                     // Draw with postprocessing shad
 Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);
 
-Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);            // Get world coordinates from screen coordinates
+Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 
-unsigned char *rlglReadScreenPixels(int width, int height);                 // Read screen pixel data (color buffer)
-void *rlglReadTexturePixels(unsigned int textureId, unsigned int format);   // Read texture pixel data
+unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
+void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 void PrintProjectionMatrix(void);       // DEBUG: Print projection matrix

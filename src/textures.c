@@ -502,26 +502,27 @@ Image GetTextureData(Texture2D texture)
     Image image;
     image.data = NULL;
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    TraceLog(WARNING, "Texture data retrieval not supported on OpenGL ES 2.0");
-#else
     if (texture.format < 8)
     {
-        image.data = rlglReadTexturePixels(texture.id, texture.format);
+        image.data = rlglReadTexturePixels(texture);
         
         if (image.data != NULL)
         {
             image.width = texture.width;
             image.height = texture.height;
-            image.format = texture.format;
             image.mipmaps = 1;
-            
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGB (from framebuffer)
+            image.format = UNCOMPRESSED_R8G8B8A8;
+#else
+            image.format = texture.format;
+#endif
             TraceLog(INFO, "Texture pixel data obtained successfully");
         }
         else TraceLog(WARNING, "Texture pixel data could not be obtained");
     }
     else TraceLog(WARNING, "Compressed texture data could not be obtained");
-#endif
+
     return image;
 }
 

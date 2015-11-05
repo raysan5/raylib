@@ -1029,7 +1029,7 @@ void rlglInit(void)
     else TraceLog(WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
     
     if (npotSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
-    else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, NPOT textures support is limited (no-mipmaps, no-repeat");
+    else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, NPOT textures support is limited (no-mipmaps, no-repeat)");
 #endif
 
     if (texCompDXTSupported) TraceLog(INFO, "[EXTENSION] DXT compressed textures supported");
@@ -2051,8 +2051,6 @@ Model rlglLoadModel(VertexData mesh)
 }
 
 // Read screen pixel data (color buffer)
-// ISSUE: Non pre-multiplied alpha when reading from backbuffer!
-// TODO: Multiply alpha
 unsigned char *rlglReadScreenPixels(int width, int height)
 {
     unsigned char *screenData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
@@ -2082,28 +2080,30 @@ unsigned char *rlglReadScreenPixels(int width, int height)
 }
 
 // Read texture pixel data
-// NOTE: Retrieving pixel data from GPU (glGetTexImage()) not supported on OpenGL ES 2.0
-//void *rlglReadTexturePixels(Texture2D texture)  // Required to know texture size! It could not be retrieved on OpenGL ES 2.0
-void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
+// NOTE: glGetTexImage() is not available on OpenGL ES 2.0
+// Texture2D width and height are required on OpenGL ES 2.0. There is no way to get it from texture id.
+void *rlglReadTexturePixels(Texture2D texture)
 {
     void *pixels = NULL;
     
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    int width, height;
+    glBindTexture(GL_TEXTURE_2D, texture.id);
     
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    
+    // NOTE: Using texture.id, we can retrieve some texture info (but not on OpenGL ES 2.0)
+    /*
+    int width, height, format;
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-    //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
-    //GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
+    // Other texture info: GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
+    */
     
     int glFormat = 0, glType = 0;
 
-    unsigned int size = width*height;
+    unsigned int size = texture.width*texture.height;
     
     // NOTE: GL_LUMINANCE and GL_LUMINANCE_ALPHA are removed since OpenGL 3.1
-    // Must be replaced by GL_RED and GL_RG on Core OpenGL 3.3 and data must be swizzled
+    // Must be replaced by GL_RED and GL_RG on Core OpenGL 3.3
 
     switch (format)
     {
@@ -2111,27 +2111,15 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
         case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_LUMINANCE; glType = GL_UNSIGNED_BYTE; break;            // 8 bit per pixel (no alpha)
         case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_LUMINANCE_ALPHA; glType = GL_UNSIGNED_BYTE; break;   // 16 bpp (2 channels)
 #elif defined(GRAPHICS_API_OPENGL_33) 
-        case UNCOMPRESSED_GRAYSCALE:    // 8 bit per pixel (no alpha)
-        {
-            pixels = (unsigned char *)malloc(size); glFormat = GL_RED; glType = GL_UNSIGNED_BYTE;
-            
-            GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
-            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-        } break;       
-        case UNCOMPRESSED_GRAY_ALPHA:   // 16 bpp (2 channels)
-        {
-            pixels = (unsigned char *)malloc(size*2); glFormat = GL_RG; glType = GL_UNSIGNED_BYTE;
-            
-            GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
-            glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-        } break;
+        case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_RED; glType = GL_UNSIGNED_BYTE; break;       
+        case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_RG; glType = GL_UNSIGNED_BYTE; break;
 #endif
         case UNCOMPRESSED_R5G6B5: pixels = (unsigned short *)malloc(size); glFormat = GL_RGB; glType = GL_UNSIGNED_SHORT_5_6_5; break;             // 16 bpp
         case UNCOMPRESSED_R8G8B8: pixels = (unsigned char *)malloc(size*3); glFormat = GL_RGB; glType = GL_UNSIGNED_BYTE; break;                   // 24 bpp
         case UNCOMPRESSED_R5G5B5A1: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_5_5_5_1; break;        // 16 bpp (1 bit alpha)
         case UNCOMPRESSED_R4G4B4A4: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_4_4_4_4; break;        // 16 bpp (4 bit alpha)
         case UNCOMPRESSED_R8G8B8A8: pixels = (unsigned char *)malloc(size*4); glFormat = GL_RGBA; glType = GL_UNSIGNED_BYTE; break;                // 32 bpp
-        default: TraceLog(WARNING, "Texture format not suported"); break;
+        default: TraceLog(WARNING, "Texture data retrieval, format not suported"); break;
     }
     
     // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
@@ -2146,34 +2134,36 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    // TODO: Look for some way to retrieve texture width and height from id -> NO WAY AVAILABLE
-    int width = 1024;
-    int height = 1024;
-
-    FBO fbo = rlglLoadFBO(width, height);
+    FBO fbo = rlglLoadFBO(texture.width, texture.height);
     
     // NOTE: Two possible Options:
     // 1 - Bind texture to color fbo attachment and glReadPixels()
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
     
-#define GET_TEXTURE_FBO_OPTION_1
+#define GET_TEXTURE_FBO_OPTION_1    // It works
 
 #if defined(GET_TEXTURE_FBO_OPTION_1)
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Attach color texture and depth renderbuffer to FBO
-    // NOTE: texture must RGB
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+    // Attach our texture to FBO -> Texture must be RGB
+    // NOTE: Previoust attached texture is automatically detached
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
     
-    pixels = (unsigned char *)malloc(width*height*3*sizeof(unsigned char));
+    pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
     
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    // NOTE: Despite FBO color texture is RGB, we read data as RGBA... reading as RGB doesn't work... o__O
+    glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    
+    // Re-attach internal FBO color texture before deleting it
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.colorTextureId, 0);
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
 #elif defined(GET_TEXTURE_FBO_OPTION_2)
     // Render texture to fbo
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+    
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClearDepthf(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2194,12 +2184,14 @@ void *rlglReadTexturePixels(unsigned int textureId, unsigned int format)
     
     DrawModel(quad, (Vector3){ 0, 0, 0 }, 1.0f, WHITE);
     
-    pixels = (unsigned char *)malloc(width*height*4*sizeof(unsigned char));
+    pixels = (unsigned char *)malloc(texture.width*texture.height*3*sizeof(unsigned char));
     
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glReadPixels(0, 0, texture.width, texture.height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
     // Bind framebuffer 0, which means render to back buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    UnloadModel(quad);
 #endif // GET_TEXTURE_FBO_OPTION
 
     // Clean up temporal fbo
