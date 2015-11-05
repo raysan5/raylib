@@ -557,11 +557,10 @@ void DrawGizmo(Vector3 position)
 // Load a 3d model (from file)
 Model LoadModel(const char *fileName)
 {
-    VertexData vData;
-    
     Model model;
+    VertexData vData = { 0 };
     
-    // TODO: Initialize default data for model in case loading fails, maybe a cube?
+    // NOTE: Initialize default data for model in case loading fails, maybe a cube?
 
     if (strcmp(GetExtension(fileName),"obj") == 0) vData = LoadOBJ(fileName);
     else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
@@ -1589,7 +1588,7 @@ static float GetHeightValue(Color pixel)
 // Load OBJ mesh data
 static VertexData LoadOBJ(const char *fileName)
 {
-    VertexData vData;
+    VertexData vData = { 0 };
 
     char dataType;
     char comments[200];

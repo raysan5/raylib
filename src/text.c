@@ -649,7 +649,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize)
     // 1) Generate sprite sheet image with characters from TTF
     // 2) Load image as SpriteFont
     
-    SpriteFont font;
+    SpriteFont font = { 0 };
 
     Image image;
     image.width = 512;
