@@ -1610,7 +1610,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
     // NOTE: Don't confuse glViewport with the transformation matrix
     // NOTE: glViewport just defines the area of the context that you will actually draw to.
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set background color (black)
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
     //glClearDepth(1.0f);                                   // Clear depth buffer (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
 
@@ -2063,11 +2063,16 @@ unsigned char *rlglReadScreenPixels(int width, int height)
     // Flip image vertically!
     unsigned char *imgData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
 
-    for (int y = height-1; y >= 0; y--)
+    for (int y = height - 1; y >= 0; y--)
     {
         for (int x = 0; x < (width*4); x++)
         {
-            imgData[x + (height - y - 1)*width*4] = screenData[x + (y*width*4)];
+            // Flip line
+            imgData[((height - 1) - y)*width*4 + x] = screenData[(y*width*4) + x];
+            
+            // Set alpha component value to 255 (no trasparent image retrieval)
+            // NOTE: Alpha value has already been applied to RGB in framebuffer, we don't need it!
+            if (((x + 1)%4) == 0) imgData[((height - 1) - y)*width*4 + x] = 255;
         }
     }
 
