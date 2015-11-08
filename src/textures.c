@@ -338,16 +338,17 @@ Texture2D LoadTexture(const char *fileName)
     return texture;
 }
 
-Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount)
+// Load a texture from raw data into GPU memory
+Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat)
 {
     Texture2D texture;
 
     texture.width = width;
     texture.height = height;
-    texture.mipmaps = mipmapCount;
+    texture.mipmaps = 1;
     texture.format = textureFormat;
     
-    texture.id = rlglLoadTexture(data, width, height, textureFormat, mipmapCount);
+    texture.id = rlglLoadTexture(data, width, height, textureFormat, 1);
     
     return texture;
 }
@@ -501,26 +502,27 @@ Image GetTextureData(Texture2D texture)
     Image image;
     image.data = NULL;
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
-    TraceLog(WARNING, "Texture data retrieval not supported on OpenGL ES 2.0");
-#else
     if (texture.format < 8)
     {
-        image.data = rlglReadTexturePixels(texture.id, texture.format);
+        image.data = rlglReadTexturePixels(texture);
         
         if (image.data != NULL)
         {
             image.width = texture.width;
             image.height = texture.height;
-            image.format = texture.format;
             image.mipmaps = 1;
-            
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGB (from framebuffer)
+            image.format = UNCOMPRESSED_R8G8B8A8;
+#else
+            image.format = texture.format;
+#endif
             TraceLog(INFO, "Texture pixel data obtained successfully");
         }
         else TraceLog(WARNING, "Texture pixel data could not be obtained");
     }
     else TraceLog(WARNING, "Compressed texture data could not be obtained");
-#endif
+
     return image;
 }
 
@@ -1170,6 +1172,13 @@ void GenTextureMipmaps(Texture2D texture)
 #else
     rlglGenerateMipmaps(texture.id);
 #endif
+}
+
+// Update GPU texture with new data
+// NOTE: pixels data must match texture.format
+void UpdateTexture(Texture2D texture, void *pixels)
+{
+    rlglUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
 // Draw a Texture2D
