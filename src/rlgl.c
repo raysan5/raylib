@@ -2105,7 +2105,7 @@ void *rlglReadTexturePixels(Texture2D texture)
     // NOTE: GL_LUMINANCE and GL_LUMINANCE_ALPHA are removed since OpenGL 3.1
     // Must be replaced by GL_RED and GL_RG on Core OpenGL 3.3
 
-    switch (format)
+    switch (texture.format)
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_LUMINANCE; glType = GL_UNSIGNED_BYTE; break;            // 8 bit per pixel (no alpha)
