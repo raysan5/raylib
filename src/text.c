@@ -240,20 +240,25 @@ SpriteFont LoadSpriteFont(const char *fileName)
     else
     {
         Image image = LoadImage(fileName);
+        
+        if (image.data != NULL)
+        {     
+            // Process bitmap font pixel data to get characters measures
+            // spriteFont chars data is filled inside the function and memory is allocated!
+            int numChars = ParseImageData(image, &spriteFont.charValues, &spriteFont.charRecs);
 
-#if defined(PLATFORM_WEB)
-        ImageToPOT(&image, MAGENTA);
-#endif
-        // Process bitmap font pixel data to get characters measures
-        // spriteFont chars data is filled inside the function and memory is allocated!
-        int numChars = ParseImageData(image, &spriteFont.charValues, &spriteFont.charRecs);
+            TraceLog(DEBUG, "[%s] SpriteFont data parsed correctly", fileName);
+            TraceLog(DEBUG, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
 
-        TraceLog(DEBUG, "[%s] SpriteFont data parsed correctly", fileName);
-        TraceLog(DEBUG, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
-
-        spriteFont.numChars = numChars;
-        spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
-        spriteFont.size = spriteFont.charRecs[0].height;
+            spriteFont.numChars = numChars;
+            spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
+            spriteFont.size = spriteFont.charRecs[0].height;
+        }
+        else
+        {
+            TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName, numChars);
+            spriteFont = GetDefaultFont();
+        }
 
         UnloadImage(image);
     }
@@ -545,7 +550,9 @@ static SpriteFont LoadRBMF(const char *fileName)
 
     if (rbmfFile == NULL)
     {
-        TraceLog(WARNING, "[%s] rBMF font file could not be opened", fileName);
+        TraceLog(WARNING, "[%s] rBMF font file could not be opened, using default font", fileName);
+        
+        spriteFont = GetDefaultFont();
     }
     else
     {
