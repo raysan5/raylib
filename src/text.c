@@ -256,7 +256,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
         }
         else
         {
-            TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName, numChars);
+            TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
             spriteFont = GetDefaultFont();
         }
 
