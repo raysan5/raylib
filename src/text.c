@@ -256,7 +256,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
         }
         else
         {
-            TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName, numChars);
+            TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
             spriteFont = GetDefaultFont();
         }
 
@@ -378,20 +378,42 @@ int MeasureText(const char *text, int fontSize)
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing)
 {
     int len = strlen(text);
+    int tempLen = 0;            // Used to count longer text line num chars
+    int lenCounter = 0;
+    
     int textWidth = 0;
+    int tempTextWidth = 0;      // Used to count longer text line width
+    
+    int textHeight = spriteFont.size;
     float scaleFactor;
 
     for (int i = 0; i < len; i++)
     {
-        if (text[i] != '\n') textWidth += spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR].width;
+        lenCounter++;
+        
+        if (text[i] != '\n')
+        {
+            textWidth += spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR].width;
+        }
+        else
+        {
+            if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+            lenCounter = 0;
+            textWidth = 0;
+            textHeight += (spriteFont.size + spriteFont.size/2);
+        }
+        
+        if (tempLen < lenCounter) tempLen = lenCounter;
     }
+    
+    if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
-    if (fontSize <= spriteFont.charRecs[0].height) scaleFactor = 1.0f;
-    else scaleFactor = (float)fontSize / spriteFont.charRecs[0].height;
+    if (fontSize <= spriteFont.size) scaleFactor = 1.0f;
+    else scaleFactor = (float)fontSize/spriteFont.size;
 
     Vector2 vec;
-    vec.x = (float)textWidth * scaleFactor + (len - 1) * spacing; // Adds chars spacing to measure
-    vec.y = (float)spriteFont.charRecs[0].height * scaleFactor;
+    vec.x = (float)tempTextWidth*scaleFactor + (tempLen - 1)*spacing; // Adds chars spacing to measure
+    vec.y = (float)textHeight*scaleFactor;
 
     return vec;
 }
