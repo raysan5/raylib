@@ -510,6 +510,17 @@ void BeginDrawing(void)
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
+// Setup drawing canvas with extended parameters
+void BeginDrawingEx(int blendMode, Shader shader, Matrix transform)
+{
+    BeginDrawing();
+    
+    SetBlendMode(blendMode);
+    SetPostproShader(shader);
+    
+    rlMultMatrixf(GetMatrixVector(transform));
+}
+
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing(void)
 {
@@ -1097,7 +1108,7 @@ static void InitDisplay(int width, int height)
     if (fullscreen)
     {
         // At this point we need to manage render size vs screen size
-        // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
+        // NOTE: This function uses and modifies global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
         SetupFramebufferSize(displayWidth, displayHeight);
 
         window = glfwCreateWindow(renderWidth, renderHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);

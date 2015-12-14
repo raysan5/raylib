@@ -442,6 +442,7 @@ int GetScreenHeight(void);                                  // Get current scree
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
+void BeginDrawingEx(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with extended parameters
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
 void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
@@ -508,7 +509,7 @@ Vector2 GetTouchPosition(void);                         // Returns touch positio
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
-Vector2 GetRawTouchPosition(void);                         // Gewt touch position (raw)
+Vector2 GetRawTouchPosition(void);                      // Get touch position (raw)
 #if defined(PLATFORM_WEB)
 void InitGesturesSystem(void);                          // Init gestures system (web)
 #elif defined(PLATFORM_ANDROID)
