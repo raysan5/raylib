@@ -1094,6 +1094,7 @@ void rlglInit(void)
 // Modifies global variables: postproFbo, postproQuad
 void rlglInitPostpro(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     postproFbo = rlglLoadFBO(screenWidth, screenHeight);
 
     if (postproFbo.id > 0)
@@ -1120,6 +1121,7 @@ void rlglInitPostpro(void)
         
         // NOTE: postproFbo.colorTextureId must be assigned to postproQuad model shader
     }
+#endif
 }
 
 // Load a framebuffer object
@@ -1195,11 +1197,13 @@ FBO rlglLoadFBO(int width, int height)
 // Unload framebuffer object
 void rlglUnloadFBO(FBO fbo)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDeleteFramebuffers(1, &fbo.id);
     glDeleteTextures(1, &fbo.colorTextureId);
     glDeleteTextures(1, &fbo.depthTextureId);
     
     TraceLog(INFO, "[FBO ID %i] Unloaded framebuffer object successfully", fbo.id);
+#endif
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -1939,7 +1943,8 @@ void rlglGenerateMipmaps(unsigned int textureId)
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
-        void *data = rlglReadTexturePixels(textureId, UNCOMPRESSED_R8G8B8A8);   // TODO: Detect internal format 
+        // TODO: rlglReadTexturePixels() needs Texture2D type parameter, not unsigned int parameter
+        void *data; // = rlglReadTexturePixels(textureId, UNCOMPRESSED_R8G8B8A8);   // TODO: Detect internal format 
         
         // NOTE: data size is reallocated to fit mipmaps data
         int mipmapCount = GenerateMipmaps(data, width, height);

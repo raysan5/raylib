@@ -368,6 +368,26 @@ typedef struct Wave {
     short channels;
 } Wave;
 
+// Light type
+typedef struct Light {
+    float position[3];
+    float rotation[3];
+    float intensity[1];
+    float ambientColor[3];
+    float diffuseColor[3];
+    float specularColor[3];
+    float specularIntensity[1];
+} Light;
+
+// Material type
+typedef struct Material {
+    float ambientColor[3];
+    float diffuseColor[3];
+    float specularColor[3];
+    float glossiness[1];
+    float normalDepth[1];
+} Material;
+
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
@@ -701,6 +721,26 @@ void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D tex
 void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+
+//----------------------------------------------------------------------------------
+// Lighting System Functions (engine-module: lighting)
+// NOTE: light and material structs uses float pointers instead of vectors to be compatible with SetShaderValue()
+//----------------------------------------------------------------------------------
+// Lights functions
+void SetLightPosition(Light *light, Vector3 position);                  // Set light position converting position vector to float pointer
+void SetLightRotation(Light *light, Vector3 rotation);                  // Set light rotation converting rotation vector to float pointer
+void SetLightIntensity(Light *light, float intensity);                  // Set light intensity value 
+void SetLightAmbientColor(Light *light, Vector3 color);                 // Set light ambient color value (it will be multiplied by material ambient color)
+void SetLightDiffuseColor(Light *light, Vector3 color);                 // Set light diffuse color (light color)
+void SetLightSpecularColor(Light *light, Vector3 color);                // Set light specular color (it will be multiplied by material specular color)
+void SetLightSpecIntensity(Light *light, float specIntensity);          // Set light specular intensity (specular color scalar multiplier)
+
+// Materials functions
+void SetMaterialAmbientColor(Material *material, Vector3 color);        // Set material ambient color value (it will be multiplied by light ambient color)
+void SetMaterialDiffuseColor(Material *material, Vector3 color);        // Set material diffuse color (material color, should use DrawModel() tint parameter)
+void SetMaterialSpecularColor(Material *material, Vector3 color);       // Set material specular color (it will be multiplied by light specular color)
+void SetMaterialGlossiness(Material *material, float glossiness);       // Set material glossiness value (recommended values: 0 - 100)
+void SetMaterialNormalDepth(Material *material, float depth);           // Set normal map depth (B component from RGB type map scalar multiplier)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
