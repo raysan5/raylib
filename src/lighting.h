@@ -61,7 +61,7 @@ typedef struct Material {
 } Material;
 
 //----------------------------------------------------------------------------------
-// Module Functions Declaration 
+// Module Functions Definitions
 // NOTE: light and material structs uses float pointers instead of vectors to be compatible with SetShaderValue()
 //----------------------------------------------------------------------------------
 // Lights functions

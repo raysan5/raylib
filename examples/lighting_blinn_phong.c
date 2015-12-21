@@ -1,11 +1,21 @@
 /*******************************************************************************************
 *
-*   raylib - Phong lighting shader example
+*   raylib [lighting] example - Basic Phong lighting
 *
-*   This example has been created using raylib v1.3.0 (www.raylib.com)
+*   Welcome to raylib!
+*
+*   To test examples, just press F6 and execute raylib_compile_execute script
+*   Note that compiled executable is placed in the same folder as .c file
+*
+*   You can find all basic examples on C:\raylib\raylib\examples folder or
+*   raylib official webpage: www.raylib.com
+*
+*   Enjoy using raylib. :)
+*
+*   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -22,7 +32,7 @@ int main()
     const int screenHeight = 450;
     
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [lighting] example - basic blinn-phong lighting");
+    InitWindow(screenWidth, screenHeight, "raylib [lighting] example - blinn phong lighting");
     SetTargetFPS(60);
     
     // Camera initialization

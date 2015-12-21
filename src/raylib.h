@@ -433,6 +433,44 @@ typedef enum {
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
+// Collider types
+typedef enum { RectangleCollider, CircleCollider } ColliderType;
+
+// Physics struct
+typedef struct Physics {
+    bool enabled;
+    bool debug;     // Should be used by programmer for testing purposes
+    Vector2 gravity;
+} Physics;
+
+// Transform struct
+typedef struct Transform {
+    Vector2 position;
+    float rotation;
+    Vector2 scale;
+} Transform;
+
+// Rigidbody struct
+typedef struct Rigidbody {
+    bool enabled;
+    float mass;
+    Vector2 acceleration;
+    Vector2 velocity;
+    bool isGrounded;
+    bool isContact;     // Avoid freeze player when touching floor
+    bool applyGravity;
+    float friction;     // 0.0f to 1.0f
+    float bounciness;   // 0.0f to 1.0f
+} Rigidbody;
+
+// Collider struct
+typedef struct Collider {
+    bool enabled;
+    ColliderType type;
+    Rectangle bounds;   // Just used for RectangleCollider type
+    int radius;         // Just used for CircleCollider type
+} Collider;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -741,6 +779,25 @@ void SetMaterialDiffuseColor(Material *material, Vector3 color);        // Set m
 void SetMaterialSpecularColor(Material *material, Vector3 color);       // Set material specular color (it will be multiplied by light specular color)
 void SetMaterialGlossiness(Material *material, float glossiness);       // Set material glossiness value (recommended values: 0 - 100)
 void SetMaterialNormalDepth(Material *material, float depth);           // Set normal map depth (B component from RGB type map scalar multiplier)
+
+//----------------------------------------------------------------------------------
+// Physics System Functions (engine-module: physics)
+//----------------------------------------------------------------------------------
+void InitPhysics();                                                     // Initialize all internal physics values
+void SetPhysics(Physics settings);                                      // Set physics settings values using Physics data type to overwrite internal physics settings
+
+void AddRigidbody(int index, Rigidbody rigidbody);                      // Initialize a new rigidbody with parameters to internal index slot
+void AddCollider(int index, Collider collider);                         // Initialize a new Collider with parameters to internal index slot
+
+void ApplyPhysics(int index, Vector2 *position);                        // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
+void SetRigidbodyEnabled(int index, bool state);                        // Set enabled state to a defined rigidbody
+void SetRigidbodyVelocity(int index, Vector2 velocity);                 // Set velocity of rigidbody (without considering of mass value)
+void AddRigidbodyForce(int index, Vector2 force);                       // Set rigidbody force (considering mass value)
+
+void SetColliderEnabled(int index, bool state);                         // Set enabled state to a defined collider
+
+Rigidbody GetRigidbody(int index);                                      // Returns the internal rigidbody data defined by index parameter
+Collider GetCollider(int index);                                        // Returns the internal collider data defined by index parameter
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
