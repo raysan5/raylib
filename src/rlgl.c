@@ -1498,6 +1498,8 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     glUseProgram(model.shader.id);
 
     // Apply transformation provided in model.transform matrix
+    // TODO: review if at this point the modelview matrix just contains view matrix values
+    Matrix viewworld = modelview;   // Store view matrix before applying model transformations
     Matrix modelviewworld = MatrixMultiply(model.transform, modelview);   // World-space transformation
 
     // Apply transformations provided in function
@@ -1513,6 +1515,8 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
     glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(projection));
+    glUniformMatrix4fv(model.shader.modelLoc, 1, false, GetMatrixVector(transform));
+    glUniformMatrix4fv(model.shader.viewLoc, 1, false, GetMatrixVector(viewworld));
     glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(modelviewworld));
 
     // Apply color tinting to model
@@ -2242,6 +2246,8 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
             // Get handles to GLSL uniform locations (vertex shader)
             shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+            shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
+            shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
             shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
             // Get handles to GLSL uniform locations (fragment shader)
@@ -2781,6 +2787,8 @@ static Shader LoadDefaultShader(void)
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.modelLoc = glGetUniformLocation(shader.id, "modelMatrix");
+    shader.viewLoc = glGetUniformLocation(shader.id, "viewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
@@ -2861,6 +2869,8 @@ static Shader LoadSimpleShader(void)
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
+    shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)

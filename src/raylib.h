@@ -329,7 +329,9 @@ typedef struct Shader {
 
     // Uniforms
     int projectionLoc;    // Projection matrix uniform location point (vertex shader)
-    int modelviewLoc;     // ModeView matrix uniform location point (vertex shader)
+    int modelviewLoc;     // ModelView matrix uniform location point (vertex shader)
+    int modelLoc;         // Model transformation matrix uniform location point (vertex shader)
+    int viewLoc;          // View transformation matrix uniform location point (vertex shader)
     int tintColorLoc;     // Color uniform location point (fragment shader)
     
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
@@ -666,6 +668,7 @@ void SetModelTexture(Model *model, Texture2D texture);                          
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint);      // Draw a model with extended parameters
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
+void DrawModelWiresEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint);      // Draw a model wires (with texture if set) with extended parameters
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
