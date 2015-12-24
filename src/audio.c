@@ -92,7 +92,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-bool musicEnabled = false;
+static bool musicEnabled = false;
 static Music currentMusic;      // Current music loaded
                                 // NOTE: Only one music file playing at a time
 

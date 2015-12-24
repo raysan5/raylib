@@ -329,7 +329,9 @@ typedef struct Shader {
 
     // Uniforms
     int projectionLoc;    // Projection matrix uniform location point (vertex shader)
-    int modelviewLoc;     // ModeView matrix uniform location point (vertex shader)
+    int modelviewLoc;     // ModelView matrix uniform location point (vertex shader)
+    int modelLoc;         // Model transformation matrix uniform location point (vertex shader)
+    int viewLoc;          // View transformation matrix uniform location point (vertex shader)
     int tintColorLoc;     // Color uniform location point (fragment shader)
     
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
@@ -365,6 +367,26 @@ typedef struct Wave {
     short bitsPerSample;
     short channels;
 } Wave;
+
+// Light type
+typedef struct Light {
+    float position[3];
+    float rotation[3];
+    float intensity[1];
+    float ambientColor[3];
+    float diffuseColor[3];
+    float specularColor[3];
+    float specularIntensity[1];
+} Light;
+
+// Material type
+typedef struct Material {
+    float ambientColor[3];
+    float diffuseColor[3];
+    float specularColor[3];
+    float glossiness[1];
+    float normalDepth[1];
+} Material;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -410,6 +432,44 @@ typedef enum {
 
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
+
+// Collider types
+typedef enum { RectangleCollider, CircleCollider } ColliderType;
+
+// Physics struct
+typedef struct Physics {
+    bool enabled;
+    bool debug;     // Should be used by programmer for testing purposes
+    Vector2 gravity;
+} Physics;
+
+// Transform struct
+typedef struct Transform {
+    Vector2 position;
+    float rotation;
+    Vector2 scale;
+} Transform;
+
+// Rigidbody struct
+typedef struct Rigidbody {
+    bool enabled;
+    float mass;
+    Vector2 acceleration;
+    Vector2 velocity;
+    bool isGrounded;
+    bool isContact;     // Avoid freeze player when touching floor
+    bool applyGravity;
+    float friction;     // 0.0f to 1.0f
+    float bounciness;   // 0.0f to 1.0f
+} Rigidbody;
+
+// Collider struct
+typedef struct Collider {
+    bool enabled;
+    ColliderType type;
+    Rectangle bounds;   // Just used for RectangleCollider type
+    int radius;         // Just used for CircleCollider type
+} Collider;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -666,6 +726,7 @@ void SetModelTexture(Model *model, Texture2D texture);                          
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint);      // Draw a model with extended parameters
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
+void DrawModelWiresEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint);      // Draw a model wires (with texture if set) with extended parameters
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
@@ -698,6 +759,45 @@ void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D tex
 void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+
+//----------------------------------------------------------------------------------
+// Lighting System Functions (engine-module: lighting)
+// NOTE: light and material structs uses float pointers instead of vectors to be compatible with SetShaderValue()
+//----------------------------------------------------------------------------------
+// Lights functions
+void SetLightPosition(Light *light, Vector3 position);                  // Set light position converting position vector to float pointer
+void SetLightRotation(Light *light, Vector3 rotation);                  // Set light rotation converting rotation vector to float pointer
+void SetLightIntensity(Light *light, float intensity);                  // Set light intensity value 
+void SetLightAmbientColor(Light *light, Vector3 color);                 // Set light ambient color value (it will be multiplied by material ambient color)
+void SetLightDiffuseColor(Light *light, Vector3 color);                 // Set light diffuse color (light color)
+void SetLightSpecularColor(Light *light, Vector3 color);                // Set light specular color (it will be multiplied by material specular color)
+void SetLightSpecIntensity(Light *light, float specIntensity);          // Set light specular intensity (specular color scalar multiplier)
+
+// Materials functions
+void SetMaterialAmbientColor(Material *material, Vector3 color);        // Set material ambient color value (it will be multiplied by light ambient color)
+void SetMaterialDiffuseColor(Material *material, Vector3 color);        // Set material diffuse color (material color, should use DrawModel() tint parameter)
+void SetMaterialSpecularColor(Material *material, Vector3 color);       // Set material specular color (it will be multiplied by light specular color)
+void SetMaterialGlossiness(Material *material, float glossiness);       // Set material glossiness value (recommended values: 0 - 100)
+void SetMaterialNormalDepth(Material *material, float depth);           // Set normal map depth (B component from RGB type map scalar multiplier)
+
+//----------------------------------------------------------------------------------
+// Physics System Functions (engine-module: physics)
+//----------------------------------------------------------------------------------
+void InitPhysics();                                                     // Initialize all internal physics values
+void SetPhysics(Physics settings);                                      // Set physics settings values using Physics data type to overwrite internal physics settings
+
+void AddRigidbody(int index, Rigidbody rigidbody);                      // Initialize a new rigidbody with parameters to internal index slot
+void AddCollider(int index, Collider collider);                         // Initialize a new Collider with parameters to internal index slot
+
+void ApplyPhysics(int index, Vector2 *position);                        // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
+void SetRigidbodyEnabled(int index, bool state);                        // Set enabled state to a defined rigidbody
+void SetRigidbodyVelocity(int index, Vector2 velocity);                 // Set velocity of rigidbody (without considering of mass value)
+void AddRigidbodyForce(int index, Vector2 force);                       // Set rigidbody force (considering mass value)
+
+void SetColliderEnabled(int index, bool state);                         // Set enabled state to a defined collider
+
+Rigidbody GetRigidbody(int index);                                      // Returns the internal rigidbody data defined by index parameter
+Collider GetCollider(int index);                                        // Returns the internal collider data defined by index parameter
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

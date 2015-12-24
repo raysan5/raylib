@@ -1094,6 +1094,7 @@ void rlglInit(void)
 // Modifies global variables: postproFbo, postproQuad
 void rlglInitPostpro(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     postproFbo = rlglLoadFBO(screenWidth, screenHeight);
 
     if (postproFbo.id > 0)
@@ -1120,6 +1121,7 @@ void rlglInitPostpro(void)
         
         // NOTE: postproFbo.colorTextureId must be assigned to postproQuad model shader
     }
+#endif
 }
 
 // Load a framebuffer object
@@ -1195,11 +1197,13 @@ FBO rlglLoadFBO(int width, int height)
 // Unload framebuffer object
 void rlglUnloadFBO(FBO fbo)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDeleteFramebuffers(1, &fbo.id);
     glDeleteTextures(1, &fbo.colorTextureId);
     glDeleteTextures(1, &fbo.depthTextureId);
     
     TraceLog(INFO, "[FBO ID %i] Unloaded framebuffer object successfully", fbo.id);
+#endif
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -1498,6 +1502,8 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     glUseProgram(model.shader.id);
 
     // Apply transformation provided in model.transform matrix
+    // TODO: review if at this point the modelview matrix just contains view matrix values
+    Matrix viewworld = modelview;   // Store view matrix before applying model transformations
     Matrix modelviewworld = MatrixMultiply(model.transform, modelview);   // World-space transformation
 
     // Apply transformations provided in function
@@ -1513,6 +1519,8 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 
     // NOTE: Drawing in OpenGL 3.3+, transform is passed to shader
     glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(projection));
+    glUniformMatrix4fv(model.shader.modelLoc, 1, false, GetMatrixVector(transform));
+    glUniformMatrix4fv(model.shader.viewLoc, 1, false, GetMatrixVector(viewworld));
     glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(modelviewworld));
 
     // Apply color tinting to model
@@ -1935,7 +1943,8 @@ void rlglGenerateMipmaps(unsigned int textureId)
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
-        void *data = rlglReadTexturePixels(textureId, UNCOMPRESSED_R8G8B8A8);   // TODO: Detect internal format 
+        // TODO: rlglReadTexturePixels() needs Texture2D type parameter, not unsigned int parameter
+        void *data; // = rlglReadTexturePixels(textureId, UNCOMPRESSED_R8G8B8A8);   // TODO: Detect internal format 
         
         // NOTE: data size is reallocated to fit mipmaps data
         int mipmapCount = GenerateMipmaps(data, width, height);
@@ -2242,6 +2251,8 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
             // Get handles to GLSL uniform locations (vertex shader)
             shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+            shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
+            shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
             shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
             // Get handles to GLSL uniform locations (fragment shader)
@@ -2781,6 +2792,8 @@ static Shader LoadDefaultShader(void)
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.modelLoc = glGetUniformLocation(shader.id, "modelMatrix");
+    shader.viewLoc = glGetUniformLocation(shader.id, "viewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
@@ -2861,6 +2874,8 @@ static Shader LoadSimpleShader(void)
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
+    shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
     shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
