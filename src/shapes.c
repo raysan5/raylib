@@ -391,16 +391,24 @@ bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, floa
 }
 
 // Check collision between circle and rectangle
+// NOTE: Reviewed version to take into account corner limit case
 bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 {
-    bool collision = false;
+    int recCenterX = rec.x + rec.width/2;
+    int recCenterY = rec.y + rec.height/2;
+    
+    float dx = abs(center.x - recCenterX);
+    float dy = abs(center.y - recCenterY);
 
-    float dx = fabs((rec.x + rec.width/2) - center.x);
-    float dy = fabs((rec.y + rec.height/2) - center.y);
+    if (dx > (rec.width/2 + radius)) { return false; }
+    if (dy > (rec.height/2 + radius)) { return false; }
 
-    if ((dx <= (rec.width/2 + radius)) && (dy <= (rec.height/2 + radius))) collision = true;
+    if (dx <= (rec.width/2)) { return true; } 
+    if (dy <= (rec.height/2)) { return true; }
 
-    return collision;
+    float cornerDistanceSq = pow(dx - rec.width/2, 2) + pow(dy - rec.height/2, 2);
+
+    return (cornerDistanceSq <= (radius*radius));
 }
 
 // Get collision rectangle for two rectangles collision
