@@ -21,8 +21,8 @@
 *
 **********************************************************************************************/
 
-#ifndef PHYSICS_H
-#define PHYSICS_H
+#ifndef PHYSAC_H
+#define PHYSAC_H
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -96,4 +96,4 @@ Collider GetCollider(int index);                                        // Retur
 }
 #endif
 
-#endif // PHYSICS_H
+#endif // PHYSAC_H
