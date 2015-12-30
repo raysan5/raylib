@@ -44,6 +44,7 @@
 #define FONT_FIRST_CHAR         32
 #define MAX_FONTCHARS          128
 #define MAX_FORMATTEXT_LENGTH   64
+#define MAX_SUBTEXT_LENGTH      64
 
 #define BIT_CHECK(a,b) ((a) & (1<<(b)))
 
@@ -356,6 +357,31 @@ const char *FormatText(const char *text, ...)
     va_start(args, text);
     vsprintf(buffer, text, args);
     va_end(args);
+
+    return buffer;
+}
+
+// Get a piece of a text string
+const char *SubText(const char *text, int position, int length)
+{
+    static char buffer[MAX_SUBTEXT_LENGTH];
+    int textLength = strlen(text);
+    
+    if (position >= textLength)
+    {
+        position = textLength - 1;
+        length = 0;
+    }
+    
+    if (length >= textLength) length = textLength;
+ 
+    for (int c = 0 ; c < length ; c++)
+    {
+        *(buffer+c) = *(text+position);
+        text++;
+    }
+
+    *(buffer+length) = '\0';
 
     return buffer;
 }
