@@ -350,8 +350,6 @@ void InitWindow(int width, int height, struct android_app *state)
 
     //state->userData = &engine;
     app->onAppCmd = AndroidCommandCallback;
-    
-    //InitGesturesSystem(app);   // NOTE: Must be called by user
 
     InitAssetManager(app->activity->assetManager);
     
@@ -1568,7 +1566,7 @@ static void InitTimer(void)
     previousTime = GetTime();       // Get time as double
 }
 
-// Get current time measure since InitTimer()
+// Get current time measure (in seconds) since InitTimer()
 static double GetTime(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1576,7 +1574,7 @@ static double GetTime(void)
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
     return (double)(time - baseTime)*1e-9;
 #endif

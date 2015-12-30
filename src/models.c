@@ -577,7 +577,10 @@ Model LoadModel(const char *fileName)
         model = rlglLoadModel(vData);     // Upload vertex data to GPU
 
         // Now that vertex data is uploaded to GPU, we can free arrays
-        // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
+        // NOTE 1: We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
+        // NOTE 2: ...but we could keep CPU vertex data in case we need to update the mesh
+        
+        /*
         if (rlGetVersion() != OPENGL_11)
         {
             free(vData.vertices);
@@ -585,6 +588,7 @@ Model LoadModel(const char *fileName)
             free(vData.normals);
             free(vData.colors);
         }
+        */
     }
 
     return model;
