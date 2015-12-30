@@ -549,8 +549,7 @@ void ImageFormat(Image *image, int newFormat)
                     
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
-                        k++;
+                        ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[i].r*0.299f + (float)pixels[i].g*0.587f + (float)pixels[i].b*0.114f);
                     }
             
                 } break;
@@ -570,9 +569,9 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
                     
-                    unsigned char r;
-                    unsigned char g;
-                    unsigned char b;
+                    unsigned char r = 0;
+                    unsigned char g = 0;
+                    unsigned char b = 0;
                     
                     for (int i = 0; i < image->width*image->height; i++)
                     {
@@ -581,8 +580,6 @@ void ImageFormat(Image *image, int newFormat)
                         b = (unsigned char)(round((float)pixels[k].b*31/255));
                         
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
-
-                        k++;
                     }
 
                 } break;
@@ -600,45 +597,43 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case UNCOMPRESSED_R5G5B5A1:
                 {
+                    #define ALPHA_THRESHOLD  50
+                    
                     image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
                     
-                    unsigned char r;
-                    unsigned char g;
-                    unsigned char b;
-                    unsigned char a = 1;
+                    unsigned char r = 0;
+                    unsigned char g = 0;
+                    unsigned char b = 0;
+                    unsigned char a = 0;
                     
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[k].r*31/255));
-                        g = (unsigned char)(round((float)pixels[k].g*31/255));
-                        b = (unsigned char)(round((float)pixels[k].b*31/255));
-                        a = (pixels[k].a > 50) ? 1 : 0;
+                        r = (unsigned char)(round((float)pixels[i].r*31/255));
+                        g = (unsigned char)(round((float)pixels[i].g*31/255));
+                        b = (unsigned char)(round((float)pixels[i].b*31/255));
+                        a = (pixels[i].a > ALPHA_THRESHOLD) ? 1 : 0;
                         
-                        ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1| (unsigned short)a;
-
-                        k++;
+                        ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
                     }
-
+                    
                 } break;
                 case UNCOMPRESSED_R4G4B4A4:
                 {
                     image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
                     
-                    unsigned char r;
-                    unsigned char g;
-                    unsigned char b;
-                    unsigned char a;
+                    unsigned char r = 0;
+                    unsigned char g = 0;
+                    unsigned char b = 0;
+                    unsigned char a = 0;
                     
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[k].r*15/255));
-                        g = (unsigned char)(round((float)pixels[k].g*15/255));
-                        b = (unsigned char)(round((float)pixels[k].b*15/255));
-                        a = (unsigned char)(round((float)pixels[k].a*15/255));
+                        r = (unsigned char)(round((float)pixels[i].r*15/255));
+                        g = (unsigned char)(round((float)pixels[i].g*15/255));
+                        b = (unsigned char)(round((float)pixels[i].b*15/255));
+                        a = (unsigned char)(round((float)pixels[i].a*15/255));
                         
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8| (unsigned short)b << 4| (unsigned short)a;
-
-                        k++;
                     }
                     
                 } break;
@@ -664,6 +659,114 @@ void ImageFormat(Image *image, int newFormat)
     }
 }
 
+// Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
+// NOTE: In case selected bpp do not represent an known 16bit format, 
+// dithered data is stored in the LSB part of the unsigned short
+void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
+{
+    if (image->format >= 8)
+    {
+        TraceLog(WARNING, "Compressed data formats can not be dithered");
+        return;
+    }
+
+    if ((rBpp+gBpp+bBpp+aBpp) > 16)
+    {
+        TraceLog(WARNING, "Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
+    }
+    else
+    {
+        Color *pixels = GetImageData(*image);
+        
+        free(image->data);      // free old image data
+        
+        if ((image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8))
+        {
+            TraceLog(WARNING, "Image format is already 16bpp or lower, dithering could have no effect");
+        }
+        
+        // Define new image format, check if desired bpp match internal known format
+        if ((rBpp == 5) && (gBpp == 6) && (bBpp == 5) && (aBpp == 0)) image->format = UNCOMPRESSED_R5G6B5;
+        else if ((rBpp == 5) && (gBpp == 5) && (bBpp == 5) && (aBpp == 1)) image->format = UNCOMPRESSED_R5G5B5A1;
+        else if ((rBpp == 4) && (gBpp == 4) && (bBpp == 4) && (aBpp == 4)) image->format = UNCOMPRESSED_R4G4B4A4;
+        else
+        {
+            image->format = 0;
+            TraceLog(WARNING, "Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
+        }
+
+        // NOTE: We will store the dithered data as unsigned short (16bpp)
+        image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
+        
+        Color oldpixel = WHITE;
+        Color newpixel = WHITE;
+        
+        int error_r, error_g, error_b;
+        unsigned short pixel_r, pixel_g, pixel_b, pixel_a;   // Used for 16bit pixel composition
+        
+        #define MIN(a,b) (((a)<(b))?(a):(b))
+
+        for (int y = 0; y < image->height; y++)
+        {
+            for (int x = 0; x < image->width; x++)
+            {
+                oldpixel = pixels[y*image->width + x];
+                
+                // TODO: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
+                newpixel.r = oldpixel.r>>(8 - rBpp);     // R bits
+                newpixel.g = oldpixel.g>>(8 - gBpp);     // G bits
+                newpixel.b = oldpixel.b>>(8 - bBpp);     // B bits
+                newpixel.a = oldpixel.a>>(8 - aBpp);     // A bits (not used on dithering)
+
+                // NOTE: Error must be computed between new and old pixel but using same number of bits!
+                // We want to know how much color precision we have lost...
+                error_r = (int)oldpixel.r - (int)(newpixel.r<<(8 - rBpp));
+                error_g = (int)oldpixel.g - (int)(newpixel.g<<(8 - gBpp));
+                error_b = (int)oldpixel.b - (int)(newpixel.b<<(8 - bBpp));
+                
+                pixels[y*image->width + x] = newpixel;
+
+                // NOTE: Some cases are out of the array and should be ignored
+                if (x < (image->width - 1))
+                {
+                    pixels[y*image->width + x+1].r = MIN((int)pixels[y*image->width + x+1].r + (int)((float)error_r*7.0f/16), 0xff);
+                    pixels[y*image->width + x+1].g = MIN((int)pixels[y*image->width + x+1].g + (int)((float)error_g*7.0f/16), 0xff);
+                    pixels[y*image->width + x+1].b = MIN((int)pixels[y*image->width + x+1].b + (int)((float)error_b*7.0f/16), 0xff);
+                }
+                
+                if ((x > 0) && (y < (image->height - 1)))
+                {
+                    pixels[(y+1)*image->width + x-1].r = MIN((int)pixels[(y+1)*image->width + x-1].r + (int)((float)error_r*3.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x-1].g = MIN((int)pixels[(y+1)*image->width + x-1].g + (int)((float)error_g*3.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x-1].b = MIN((int)pixels[(y+1)*image->width + x-1].b + (int)((float)error_b*3.0f/16), 0xff);
+                }
+                
+                if (y < (image->height - 1))
+                {
+                    pixels[(y+1)*image->width + x].r = MIN((int)pixels[(y+1)*image->width + x].r + (int)((float)error_r*5.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x].g = MIN((int)pixels[(y+1)*image->width + x].g + (int)((float)error_g*5.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x].b = MIN((int)pixels[(y+1)*image->width + x].b + (int)((float)error_b*5.0f/16), 0xff);
+                }
+                
+                if ((x < (image->width - 1)) && (y < (image->height - 1)))
+                {
+                    pixels[(y+1)*image->width + x+1].r = MIN((int)pixels[(y+1)*image->width + x+1].r + (int)((float)error_r*1.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x+1].g = MIN((int)pixels[(y+1)*image->width + x+1].g + (int)((float)error_g*1.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x+1].b = MIN((int)pixels[(y+1)*image->width + x+1].b + (int)((float)error_b*1.0f/16), 0xff);
+                }
+
+                pixel_r = (unsigned short)newpixel.r;
+                pixel_g = (unsigned short)newpixel.g;
+                pixel_b = (unsigned short)newpixel.b;
+                pixel_a = (unsigned short)newpixel.a;
+                
+                ((unsigned short *)image->data)[y*image->width + x] = (pixel_r<<(gBpp + bBpp + aBpp)) | (pixel_g<<(bBpp + aBpp)) | (pixel_b<<aBpp) | pixel_a;
+            }
+        }
+
+        free(pixels);
+    }
+}
 
 // Convert image to POT (power-of-two)
 // NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
