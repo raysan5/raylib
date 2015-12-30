@@ -21,10 +21,10 @@
 *
 **********************************************************************************************/
 
-//#define PHYSICS_STANDALONE     // NOTE: To use the physics module as standalone lib, just uncomment this line
+//#define PHYSAC_STANDALONE     // NOTE: To use the physics module as standalone lib, just uncomment this line
 
-#if defined(PHYSICS_STANDALONE)
-    #include "physics.h"
+#if defined(PHYSAC_STANDALONE)
+    #include "physac.h"
 #else
     #include "raylib.h"
 #endif
