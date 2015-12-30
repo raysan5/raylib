@@ -43,6 +43,7 @@ LOCAL_SRC_FILES  :=\
                     ../../src/textures.c \
                     ../../src/text.c \
                     ../../src/shapes.c \
+                    ../../src/gestures.c \
                     ../../src/models.c \
                     ../../src/utils.c \
                     ../../src/audio.c \
