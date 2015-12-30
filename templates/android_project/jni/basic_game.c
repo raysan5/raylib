@@ -30,8 +30,9 @@ void android_main(struct android_app *app)
     const int screenHeight = 450;
     
     GameScreen currentScreen = LOGO;
-    
+
     InitWindow(screenWidth, screenHeight, app);
+    InitGesturesSystem(app);
     
     // TODO: Initialize all required variables and load all required data here!
 
@@ -50,7 +51,7 @@ void android_main(struct android_app *app)
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        //----------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------        
         switch(currentScreen) 
         {
             case LOGO: 
@@ -70,7 +71,7 @@ void android_main(struct android_app *app)
                 // TODO: Update TITLE screen variables here!
 
                 // Press enter to change to GAMEPLAY screen
-                if (IsScreenTouched())
+                if (GetGestureType() == GESTURE_TAP)
                 {
                     PlaySound(fx);
                     currentScreen = GAMEPLAY;
@@ -81,8 +82,8 @@ void android_main(struct android_app *app)
                 // TODO: Update GAMEPLAY screen variables here!
 
                 // Press enter to change to ENDING screen
-                if (IsScreenTouched())
-                {
+                if (GetGestureType() == GESTURE_TAP)
+                {  
                     PlaySound(fx);
                     currentScreen = ENDING;
                 } 
@@ -92,7 +93,7 @@ void android_main(struct android_app *app)
                 // TODO: Update ENDING screen variables here!
 
                 // Press enter to return to TITLE screen
-                if (IsScreenTouched())
+                if (GetGestureType() == GESTURE_TAP)
                 {
                     PlaySound(fx);
                     currentScreen = TITLE;
@@ -100,6 +101,8 @@ void android_main(struct android_app *app)
             } break;
             default: break;
         }
+        
+        UpdateGestures();
         //----------------------------------------------------------------------------------
         
         // Draw
