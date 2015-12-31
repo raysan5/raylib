@@ -32,7 +32,6 @@ void android_main(struct android_app *app)
     GameScreen currentScreen = LOGO;
 
     InitWindow(screenWidth, screenHeight, app);
-    InitGesturesSystem(app);
     
     // TODO: Initialize all required variables and load all required data here!
 
@@ -51,7 +50,7 @@ void android_main(struct android_app *app)
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        //----------------------------------------------------------------------------------        
+        //----------------------------------------------------------------------------------
         switch(currentScreen) 
         {
             case LOGO: 
@@ -101,8 +100,6 @@ void android_main(struct android_app *app)
             } break;
             default: break;
         }
-        
-        UpdateGestures();
         //----------------------------------------------------------------------------------
         
         // Draw
