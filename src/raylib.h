@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.3.0 (www.raylib.com)
+*   raylib 1.4.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -291,6 +291,8 @@ typedef struct SpriteFont {
     int numChars;           // Number of characters
     int *charValues;        // Characters values array
     Rectangle *charRecs;    // Characters rectangles within the texture
+    Vector2 *charOffsets;   // Characters offsets (on drawing)
+    int *charAdvanceX;      // Characters x advance (on drawing)
 } SpriteFont;
 
 // Camera type, defines a camera position/orientation in 3d space
