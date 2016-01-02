@@ -534,20 +534,16 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
-        //int32_t key = AKeyEvent_getKeyCode(event);
-        //int32_t AKeyEvent_getMetaState(event);
-        
-        //int32_t code = AKeyEvent_getKeyCode((const AInputEvent *)event);
-        
+        int32_t keycode = AKeyEvent_getKeyCode(event);
+        int32_t AKeyEvent_getMetaState(event);
+
         // If we are in active mode, we eat the back button and move into pause mode.  
         // If we are already in pause mode, we allow the back button to be handled by the OS, which means we'll be shut down.
-        /*
-        if ((code == AKEYCODE_BACK) && mActiveMode)
+        if ((keycode == AKEYCODE_BACK)) // && mActiveMode)
         {
-            setActiveMode(false);
-            return 1;
+            //setActiveMode(false);
+            //return 1;
         }
-        */
     }
     
     int32_t action = AMotionEvent_getAction(event);
