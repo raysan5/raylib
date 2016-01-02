@@ -2,16 +2,6 @@
 *
 *   raylib game - Floppy Bird
 *
-*   Welcome to raylib!
-*
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
-*
-*   You can find all basic examples on C:\raylib\raylib\examples folder or
-*   raylib official webpage: www.raylib.com
-*
-*   Enjoy using raylib. :)
-*
 *   This game has been created using raylib 1.1 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
@@ -86,10 +76,21 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        backScroll--;
         
+        // Background scroll logic
+        backScroll--;
         if (backScroll <= -800) backScroll = 0; 
         
+        // Player movement logic
+        if (!gameover)
+        {
+            if (IsKeyDown(KEY_SPACE)) floppyPos.y -= 3;
+            else floppyPos.y += 1;
+        
+            if (IsKeyPressed(KEY_SPACE)) PlaySound(jump);
+        }
+        
+        // Tubes moving logic
         for (int i = 0; i < MAX_TUBES; i++) tubesPos[i].x -= tubesSpeedX;
         
         for (int i = 0; i < MAX_TUBES*2; i += 2)
@@ -98,12 +99,7 @@ int main()
             tubesRecs[i+1].x = tubesPos[i/2].x;
         }
 
-        if (IsKeyDown(KEY_SPACE) && !gameover) floppyPos.y -= 3;
-        else floppyPos.y += 1;
-        
-        if (IsKeyPressed(KEY_SPACE) && !gameover) PlaySound(jump);
-        
-        // Check Collisions
+        // Check collisions player-tubes
         for (int i = 0; i < MAX_TUBES*2; i++)
         {
             if (CheckCollisionCircleRec((Vector2){ floppyPos.x + floppy.width/2, floppyPos.y + floppy.height/2 }, floppy.width/2, tubesRecs[i])) 
@@ -122,6 +118,7 @@ int main()
             }
         }
         
+        // Gameover logic for reset
         if (gameover && IsKeyPressed(KEY_ENTER))
         {
             for (int i = 0; i < MAX_TUBES; i++)
@@ -147,7 +144,6 @@ int main()
             gameover = false;
             score = 0;
         }
-        
         //----------------------------------------------------------------------------------
         
         // Draw
@@ -156,32 +152,39 @@ int main()
         
             ClearBackground(RAYWHITE);
             
+            // Draw scrolling background
             DrawTexture(background, backScroll, 0, WHITE);
             DrawTexture(background, screenWidth + backScroll, 0, WHITE);
             
-            if (!gameover)
-            {
-                DrawTextureEx(floppy, floppyPos, 0, 1.0, WHITE);
-                //DrawCircleLines(floppyPos.x + floppy.width/2, floppyPos.y + floppy.height/2, floppy.width/2, RED);
-            }
-            
+            // Draw moving tubes
             for (int i = 0; i < MAX_TUBES; i++)
             {
                 if (tubesPos[i].x <= 800) DrawTextureEx(tubes, tubesPos[i], 0, 1.0, WHITE);
             
+                // Draw collision recs
                 //DrawRectangleLines(tubesRecs[i*2].x, tubesRecs[i*2].y, tubesRecs[i*2].width, tubesRecs[i*2].height, RED);
                 //DrawRectangleLines(tubesRecs[i*2 + 1].x, tubesRecs[i*2 + 1].y, tubesRecs[i*2 + 1].width, tubesRecs[i*2 + 1].height, RED);
             }
             
+            // Draw scores
             DrawText(FormatText("%04i", score), 20, 20, 40, PINK);
             DrawText(FormatText("HI-SCORE: %04i", hiscore), 20, 70, 20, VIOLET); 
             
-            if (gameover)
+            // Draw player or game over messages
+            if (!gameover)
+            {
+                DrawTextureEx(floppy, floppyPos, 0, 1.0, WHITE);
+                
+                // Draw collision circle
+                //DrawCircleLines(floppyPos.x + floppy.width/2, floppyPos.y + floppy.height/2, floppy.width/2, RED);
+            }
+            else
             {
                 DrawText("GAME OVER", 100, 180, 100, MAROON);
                 DrawText("PRESS ENTER to RETRY!", 280, 280, 20, RED);    
             }
             
+            // Draw screen light flash when passing through a tube
             if (superfx)
             {
                 DrawRectangle(0, 0, screenWidth, screenHeight, GOLD);
