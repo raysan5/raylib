@@ -1749,6 +1749,7 @@ static Image LoadPVR(const char *fileName)
     // GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG       0x8C00
     // GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG      0x8C02
     
+#if 0   // Not used...
     // PVR file v2 Header (52 bytes)
     typedef struct {
         unsigned int headerLength;
@@ -1765,6 +1766,7 @@ static Image LoadPVR(const char *fileName)
         unsigned int pvrTag;
         unsigned int numSurfs;
     } pvrHeaderV2;
+#endif
 
     // PVR file v3 Header (52 bytes)
     // NOTE: After it could be metadata (15 bytes?)
@@ -1784,6 +1786,7 @@ static Image LoadPVR(const char *fileName)
         unsigned int metaDataSize;
     } pvrHeaderV3;
     
+#if 0   // Not used...
     // Metadata (usually 15 bytes)
     typedef struct {
         unsigned int devFOURCC;
@@ -1791,6 +1794,7 @@ static Image LoadPVR(const char *fileName)
         unsigned int dataSize;      // Not used?
         unsigned char *data;        // Not used?
     } pvrMetadata; 
+#endif
 
     Image image;
 

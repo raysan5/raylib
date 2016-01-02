@@ -267,7 +267,7 @@ void RecordMalloc(int mallocType, int mallocSize, const char *msg)
 const char *GetExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
-    if(!dot || dot == fileName) return "";
+    if (!dot || dot == fileName) return "";
     return (dot + 1);
 }
 
