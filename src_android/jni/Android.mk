@@ -48,7 +48,6 @@ LOCAL_SRC_FILES  :=\
                     ../../src/utils.c \
                     ../../src/audio.c \
                     ../../src/stb_vorbis.c \
-                    ../../src/gestures.c \
 
 # Required includes paths (.h)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/include $(LOCAL_PATH)/../../src
