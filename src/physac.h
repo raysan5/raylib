@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib physics engine module - Basic functions to apply physics to 2D objects
+*   [physac] raylib physics engine module - Basic functions to apply physics to 2D objects
 *
 *   Copyright (c) 2015 Victor Fisac and Ramon Santamaria
 *
@@ -74,23 +74,25 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 //----------------------------------------------------------------------------------
-// Module Functions Declaration
+// Module Functions Declarations
 //----------------------------------------------------------------------------------
-void InitPhysics();                                                     // Initialize all internal physics values
-void SetPhysics(Physics settings);                                      // Set physics settings values using Physics data type to overwrite internal physics settings
+void InitPhysics();                                                         // Initialize all internal physics values
+void SetPhysics(Physics settings);                                          // Set physics settings values using Physics data type to overwrite internal physics settings
 
-void AddRigidbody(int index, Rigidbody rigidbody);                      // Initialize a new rigidbody with parameters to internal index slot
-void AddCollider(int index, Collider collider);                         // Initialize a new Collider with parameters to internal index slot
+void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot
+void AddCollider(int index, Collider collider);                             // Initialize a new Collider with parameters to internal index slot
 
-void ApplyPhysics(int index, Vector2 *position);                        // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
-void SetRigidbodyEnabled(int index, bool state);                        // Set enabled state to a defined rigidbody
-void SetRigidbodyVelocity(int index, Vector2 velocity);                 // Set velocity of rigidbody (without considering of mass value)
-void AddRigidbodyForce(int index, Vector2 force);                       // Set rigidbody force (considering mass value)
+void ApplyPhysics(int index, Vector2 *position);                            // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
+void SetRigidbodyEnabled(int index, bool state);                            // Set enabled state to a defined rigidbody
+void SetRigidbodyVelocity(int index, Vector2 velocity);                     // Set velocity of rigidbody (without considering of mass value)
+void SetRigidbodyAcceleration(int index, Vector2 acceleration);             // Set acceleration of rigidbody (without considering of mass value)
+void AddRigidbodyForce(int index, Vector2 force);                           // Set rigidbody force (considering mass value)
+void AddForceAtPosition(Vector2 position, float intensity, float radius);   // Add a force to all enabled rigidbodies at a position
 
-void SetColliderEnabled(int index, bool state);                         // Set enabled state to a defined collider
+void SetColliderEnabled(int index, bool state);                             // Set enabled state to a defined collider
 
-Rigidbody GetRigidbody(int index);                                      // Returns the internal rigidbody data defined by index parameter
-Collider GetCollider(int index);                                        // Returns the internal collider data defined by index parameter
+Rigidbody GetRigidbody(int index);                                          // Returns the internal rigidbody data defined by index parameter
+Collider GetCollider(int index);                                            // Returns the internal collider data defined by index parameter
 
 #ifdef __cplusplus
 }
