@@ -66,7 +66,7 @@
     #include <jni.h>                        // Java native interface
     #include <android/sensor.h>             // Android sensors functions
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
-    //#include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
+    #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
     #include <EGL/egl.h>        // Khronos EGL library - Native platform display device control functions
     #include <GLES2/gl2.h>      // Khronos OpenGL ES 2.0 library
@@ -103,7 +103,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_TOUCH_POINTS 256
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -121,7 +120,8 @@ static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;
 static bool windowReady = false;                // Used to detect display initialization
-
+static bool appEnabled = true;                  // Used to detec if app is active
+static bool contextRebindRequired = false;      // Used to know context rebind required
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
@@ -149,6 +149,7 @@ static int gamepadStream = -1;                  // Gamepad device file descripto
 static EGLDisplay display;          // Native display device (physical screen connection)
 static EGLSurface surface;          // Surface to draw on, framebuffers (connected to context)
 static EGLContext context;          // Graphic context, mode in which drawing can be done
+static EGLConfig config;            // Graphic config
 static uint64_t baseTime;                   // Base time measure for hi-res timer
 static bool windowShouldClose = false;      // Flag to set window for closing
 #endif
@@ -254,10 +255,12 @@ static void TakeScreenshot(void);                                               
 
 #if defined(PLATFORM_ANDROID)
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
+static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);          // Process Android inputs
 #endif
 
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
+static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -293,9 +296,15 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
-    InitGesturesSystem();
-    
     emscripten_set_fullscreenchange_callback(0, 0, 1, EmscriptenFullscreenChangeCallback);
+
+    // NOTE: Some code examples
+    //emscripten_set_touchstart_callback(0, NULL, 1, Emscripten_HandleTouch);
+    //emscripten_set_touchend_callback("#canvas", data, 0, Emscripten_HandleTouch);
+    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
 #endif
 
     mousePosition.x = screenWidth/2;
@@ -350,24 +359,23 @@ void InitWindow(int width, int height, struct android_app *state)
 
     //state->userData = &engine;
     app->onAppCmd = AndroidCommandCallback;
-
-    InitAssetManager(app->activity->assetManager);
+    app->onInputEvent = AndroidInputCallback;
     
-    InitGesturesSystem(app);
+    InitAssetManager(app->activity->assetManager);
 
     TraceLog(INFO, "Android app initialized successfully");
 
+    // Wait for window to be initialized (display and context)
     while (!windowReady)
     {
-        // Wait for window to be initialized (display and context)
         // Process events loop
         while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
         {
             // Process this event
             if (source != NULL) source->process(app, source);
 
-            // Check if we are exiting
-            if (app->destroyRequested != 0) windowShouldClose = true;
+            // NOTE: Never close window, native activity is controlled by the system!
+            //if (app->destroyRequested != 0) windowShouldClose = true;
         }
     }
 }
@@ -1221,7 +1229,6 @@ static void InitDisplay(int width, int height)
     };
 
     EGLint numConfigs;
-    EGLConfig config;
 
     // Get an EGL display connection
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -1455,30 +1462,62 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
             if (app->window != NULL)
             {
-                // Init device display (monitor, LCD, ...)
-                InitDisplay(screenWidth, screenHeight);
-
-                // Init OpenGL graphics
-                InitGraphics();
-
-                // Load default font for convenience
-                // NOTE: External function (defined in module: text)
-                LoadDefaultFont();
-
-                // Init hi-res timer
-                InitTimer();
-
-                // raylib logo appearing animation (if enabled)
-                if (showLogo)
+                if (contextRebindRequired)
                 {
-                    SetTargetFPS(60);
-                    LogoAnimation();
+                    // Reset screen scaling to full display size
+                    EGLint displayFormat;
+                    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &displayFormat);
+                    ANativeWindow_setBuffersGeometry(app->window, renderWidth, renderHeight, displayFormat);
+
+                    // Recreate display surface and re-attach OpenGL context
+                    surface = eglCreateWindowSurface(display, config, app->window, NULL);
+                    eglMakeCurrent(display, surface, surface, context);
+
+                    contextRebindRequired = false;
+                }
+                else
+                {
+                    // Init device display (monitor, LCD, ...)
+                    InitDisplay(screenWidth, screenHeight);
+
+                    // Init OpenGL graphics
+                    InitGraphics();
+
+                    // Load default font for convenience
+                    // NOTE: External function (defined in module: text)
+                    LoadDefaultFont();
+                    
+                    // TODO: GPU assets reload in case of lost focus (lost context)
+                    // NOTE: This problem has been solved just unbinding and rebinding context from display
+					/*
+                    if (assetsReloadRequired)
+                    {
+                        for (int i = 0; i < assetsCount; i++)
+                        {
+                            // TODO: Unload old asset if required
+                            
+                            // Load texture again to pointed texture
+                            (*textureAsset + i) = LoadTexture(assetPath[i]);
+                        }
+                    }
+                    */
+
+                    // Init hi-res timer
+                    InitTimer();
+
+                    // raylib logo appearing animation (if enabled)
+                    if (showLogo)
+                    {
+                        SetTargetFPS(60);   // Not required on Android
+                        LogoAnimation();
+                    }
                 }
             }
         } break;
         case APP_CMD_GAINED_FOCUS:
         {
             TraceLog(INFO, "APP_CMD_GAINED_FOCUS");
+            appEnabled = true;
             //ResumeMusicStream();
         } break;
         case APP_CMD_PAUSE:
@@ -1489,11 +1528,18 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         {
             //DrawFrame();
             TraceLog(INFO, "APP_CMD_LOST_FOCUS");
+            appEnabled = false;
             //PauseMusicStream();
         } break;
         case APP_CMD_TERM_WINDOW:
         {
-            // TODO: Do display destruction here? -> Yes but only display, don't free buffers!
+            // Dettach OpenGL context and destroy display surface
+            // NOTE 1: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
+            // NOTE 2: In some cases (too many context loaded), OS could unload context automatically... :(
+            eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+            eglDestroySurface(display, surface);
+            
+            contextRebindRequired = true;
 
             TraceLog(INFO, "APP_CMD_TERM_WINDOW");
         } break;
@@ -1523,6 +1569,61 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         } break;
         default: break;
     }
+}
+
+// Android: Get input events
+static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
+{
+    //http://developer.android.com/ndk/reference/index.html
+    
+    int type = AInputEvent_getType(event);
+
+    if (type == AINPUT_EVENT_TYPE_MOTION)
+    {
+        touchPosition.x = AMotionEvent_getX(event, 0);
+        touchPosition.y = AMotionEvent_getY(event, 0);
+    }
+    else if (type == AINPUT_EVENT_TYPE_KEY)
+    {
+        int32_t keycode = AKeyEvent_getKeyCode(event);
+        //int32_t AKeyEvent_getMetaState(event);
+
+        //if (keycode == AKEYCODE_HOME) { }
+        //if (keycode == AKEYCODE_POWER) { }
+        if (keycode == AKEYCODE_BACK)
+        {
+            // Eat BACK_BUTTON, just do nothing... and don't let to be handled by OS!
+            return 1;
+        }
+        else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
+        {
+            // Set default OS behaviour
+            return 0;
+        }
+    }
+    
+    int32_t action = AMotionEvent_getAction(event);
+    unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+    
+    GestureEvent gestureEvent;
+    
+    // Register touch actions
+    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_UP;
+    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Register touch points count
+    gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
+    
+    // Register touch points position
+    // NOTE: Only two points registered
+    gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
+    gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
+    
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+
+    return 0;   // return 1;
 }
 #endif
 
@@ -1613,9 +1714,8 @@ static bool GetMouseButtonStatus(int button)
 static void PollInputEvents(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    // Touch events reading (requires gestures module)
-    touchPosition = GetRawTouchPosition();
-    
+
+    // TODO: Remove this requirement...
     UpdateGestures();
 #endif
     
@@ -1645,23 +1745,18 @@ static void PollInputEvents(void)
     glfwPollEvents();       // Register keyboard/mouse events... and window events!
 #elif defined(PLATFORM_ANDROID)
 
-    // TODO: Check virtual keyboard (?)
-
     // Poll Events (registered events)
-    // TODO: Enable/disable activityMinimized to block activity if minimized
-    //while ((ident = ALooper_pollAll(activityMinimized ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
-    while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
+    // NOTE: Activity is paused if not enabled (appEnabled)
+    while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
     {
         // Process this event
         if (source != NULL) source->process(app, source);
 
-        // Check if we are exiting
+        // NOTE: Never close window, native activity is controlled by the system!
         if (app->destroyRequested != 0)
         {
-            // NOTE: Never close window, native activity is controlled by the system!
             //TraceLog(INFO, "Closing Window...");
             //windowShouldClose = true;
-
             //ANativeActivity_finish(app->activity);
         }
     }
@@ -2034,6 +2129,59 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
 
     return 0;
+}
+
+// Web: Get input events
+static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
+{
+    /*
+    for (int i = 0; i < touchEvent->numTouches; i++)
+    {
+        long x, y, id;
+
+        if (!touchEvent->touches[i].isChanged) continue;
+
+        id = touchEvent->touches[i].identifier;
+        x = touchEvent->touches[i].canvasX;
+        y = touchEvent->touches[i].canvasY;
+    }
+    
+    printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
+           event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
+
+    for(int i = 0; i < event->numTouches; ++i)
+    {
+        const EmscriptenTouchPoint *t = &event->touches[i];
+        
+        printf("  %ld: screen: (%ld,%ld), client: (%ld,%ld), page: (%ld,%ld), isChanged: %d, onTarget: %d, canvas: (%ld, %ld)\n",
+          t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
+    }
+    */
+    
+    GestureEvent gestureEvent;
+
+    // Register touch actions
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_UP;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Register touch points count
+    gestureEvent.pointCount = touchEvent->numTouches;
+    
+    // Register touch points position
+    // NOTE: Only two points registered
+    // TODO: Touch data should be scaled accordingly!
+    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
+    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
+    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
+    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
+
+    touchPosition = gestureEvent.position[0];
+    
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
+
+    return 1;
 }
 #endif
 

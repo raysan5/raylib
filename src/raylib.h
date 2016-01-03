@@ -70,7 +70,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    #include <android_native_app_glue.h>    // Defines android_app struct
+    typedef struct android_app;     // Define android_app struct (android_native_app_glue.h)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -432,6 +432,17 @@ typedef enum {
     GESTURE_PINCH_OUT   = 1024
 } Gestures;
 
+typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
+
+// Gesture events
+// NOTE: MAX_TOUCH_POINTS fixed to 4
+typedef struct {
+    int touchAction;
+    int pointCount;
+    int pointerId[4];
+    Vector2 position[4];
+} GestureEvent;
+
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
@@ -571,16 +582,11 @@ Vector2 GetTouchPosition(void);                         // Returns touch positio
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
-Vector2 GetRawTouchPosition(void);                      // Get touch position (raw)
-#if defined(PLATFORM_WEB)
-void InitGesturesSystem(void);                          // Init gestures system (web)
-#elif defined(PLATFORM_ANDROID)
-void InitGesturesSystem(struct android_app *app);       // Init gestures system (android)
-#endif
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 bool IsGestureDetected(void);                           // Check if a gesture have been detected
 int GetGestureType(void);                               // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 
 float GetGestureDragIntensity(void);                    // Get gesture drag intensity
 float GetGestureDragAngle(void);                        // Get gesture drag angle
