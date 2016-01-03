@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.3.0 (www.raylib.com)
+*   raylib 1.4.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -70,7 +70,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    #include <android_native_app_glue.h>    // Defines android_app struct
+    typedef struct android_app;     // Define android_app struct (android_native_app_glue.h)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -291,6 +291,8 @@ typedef struct SpriteFont {
     int numChars;           // Number of characters
     int *charValues;        // Characters values array
     Rectangle *charRecs;    // Characters rectangles within the texture
+    Vector2 *charOffsets;   // Characters offsets (on drawing)
+    int *charAdvanceX;      // Characters x advance (on drawing)
 } SpriteFont;
 
 // Camera type, defines a camera position/orientation in 3d space
@@ -429,6 +431,17 @@ typedef enum {
     GESTURE_PINCH_IN    = 512,
     GESTURE_PINCH_OUT   = 1024
 } Gestures;
+
+typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
+
+// Gesture events
+// NOTE: MAX_TOUCH_POINTS fixed to 4
+typedef struct {
+    int touchAction;
+    int pointCount;
+    int pointerId[4];
+    Vector2 position[4];
+} GestureEvent;
 
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
@@ -569,16 +582,11 @@ Vector2 GetTouchPosition(void);                         // Returns touch positio
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
-Vector2 GetRawTouchPosition(void);                      // Get touch position (raw)
-#if defined(PLATFORM_WEB)
-void InitGesturesSystem(void);                          // Init gestures system (web)
-#elif defined(PLATFORM_ANDROID)
-void InitGesturesSystem(struct android_app *app);       // Init gestures system (android)
-#endif
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 bool IsGestureDetected(void);                           // Check if a gesture have been detected
 int GetGestureType(void);                               // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 
 float GetGestureDragIntensity(void);                    // Get gesture drag intensity
 float GetGestureDragAngle(void);                        // Get gesture drag angle
@@ -654,6 +662,7 @@ Color *GetImageData(Image image);                                               
 Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
 void ImageFormat(Image *image, int newFormat);                                                     // Convert image data to desired format
+void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
 void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
 void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
@@ -692,6 +701,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
 
 void DrawFPS(int posX, int posY);                                                                  // Shows current FPS on top-left corner
 const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
+const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)

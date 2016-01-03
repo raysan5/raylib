@@ -43,7 +43,9 @@ void android_main(struct android_app *app)
 
     int framesCounter = 0;          // Used to count frames
     
-    //SetTargetFPS(60);             // Not required on Android, already locked to 60 fps
+    PlayMusicStream("ambient.ogg");
+    
+    SetTargetFPS(60);               // Not required on Android, already locked to 60 fps
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -51,6 +53,8 @@ void android_main(struct android_app *app)
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdateMusicStream();
+        
         switch(currentScreen) 
         {
             case LOGO: 
