@@ -31,7 +31,7 @@ int main()
     // Model initialization
     Vector3 position = { 0.0, 0.0, 0.0 };
     Model model = LoadModel("resources/model/dwarf.obj");
-    // Shader shader = LoadShader("resources/shaders/phong.vs", "resources/shaders/phong.fs");
+    Shader shader = LoadShader("resources/shaders/phong.vs", "resources/shaders/phong.fs");
     SetModelShader(&model, shader);
     
     // Shader locations initialization
@@ -154,7 +154,7 @@ int main()
             
             Begin3dMode(camera);
                 
-                DrawModel(model, position, 0.1f, (Color){255 * blinnMaterial.diffuseColor[0], 255 * blinnMaterial.diffuseColor[1], 255 * blinnMaterial.diffuseColor[2], 255});
+                DrawModel(model, position, 4.0f, (Color){255 * blinnMaterial.diffuseColor[0], 255 * blinnMaterial.diffuseColor[1], 255 * blinnMaterial.diffuseColor[2], 255});
 
                 DrawSphere((Vector3){directionalLight.position[0], directionalLight.position[1], directionalLight.position[2]}, 1, YELLOW);
                 
