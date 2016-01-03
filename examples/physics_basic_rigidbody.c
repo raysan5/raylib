@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [physics] example - Basic rigidbody
+*   raylib [physac] physics example - Basic rigidbody
 *
 *   Welcome to raylib!
 *
