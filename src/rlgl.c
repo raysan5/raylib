@@ -397,33 +397,33 @@ void rlLoadIdentity(void)
 // Multiply the current matrix by a translation matrix
 void rlTranslatef(float x, float y, float z)
 {
-    Matrix mat = MatrixTranslate(x, y, z);
-    MatrixTranspose(&mat);
+    Matrix matTranslation = MatrixTranslate(x, y, z);
+    MatrixTranspose(&matTranslation);
 
-    *currentMatrix = MatrixMultiply(*currentMatrix, mat);
+    *currentMatrix = MatrixMultiply(*currentMatrix, matTranslation);
 }
 
 // Multiply the current matrix by a rotation matrix
 void rlRotatef(float angleDeg, float x, float y, float z)
 {
-    Matrix rotation = MatrixIdentity();
+    Matrix matRotation = MatrixIdentity();
 
     Vector3 axis = (Vector3){ x, y, z };
     VectorNormalize(&axis);
-    rotation = MatrixRotate(angleDeg*DEG2RAD, axis);
+    matRotation = MatrixRotate(angleDeg*DEG2RAD, axis);
 
-    MatrixTranspose(&rotation);
+    MatrixTranspose(&matRotation);
 
-    *currentMatrix = MatrixMultiply(*currentMatrix, rotation);
+    *currentMatrix = MatrixMultiply(*currentMatrix, matRotation);
 }
 
 // Multiply the current matrix by a scaling matrix
 void rlScalef(float x, float y, float z)
 {
-    Matrix mat = MatrixScale(x, y, z);
-    MatrixTranspose(&mat);
+    Matrix matScale = MatrixScale(x, y, z);
+    MatrixTranspose(&matScale);
 
-    *currentMatrix = MatrixMultiply(*currentMatrix, mat);
+    *currentMatrix = MatrixMultiply(*currentMatrix, matScale);
 }
 
 // Multiply the current matrix by another matrix

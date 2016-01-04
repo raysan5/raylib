@@ -783,8 +783,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
     Ray ray;
 
-    Matrix proj = MatrixIdentity();
-    Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix matProj = MatrixIdentity();
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
     // Calculate projection matrix for the camera
     float aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
@@ -792,8 +792,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important for depth
-    proj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
-    MatrixTranspose(&proj);
+    matProj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
+    MatrixTranspose(&matProj);
 
     // NOTE: Our screen origin is top-left instead of bottom-left: transform required!
     float invertedMouseY = (float)GetScreenHeight() - mousePosition.y;
@@ -806,8 +806,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     Vector3 nearPoint = { mousePosition.x, invertedMouseY, 0.0f };
     Vector3 farPoint = { mousePosition.x, invertedMouseY, 1.0f };
 
-    nearPoint = rlglUnproject(nearPoint, proj, view);
-    farPoint = rlglUnproject(farPoint, proj, view);     // TODO: it seems it doesn't work...
+    nearPoint = rlglUnproject(nearPoint, matProj, matView);
+    farPoint = rlglUnproject(farPoint, matProj, matView);     // TODO: it seems it doesn't work...
 
     Vector3 direction = VectorSubtract(farPoint, nearPoint);
     VectorNormalize(&direction);
