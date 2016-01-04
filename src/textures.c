@@ -1271,9 +1271,9 @@ void GenTextureMipmaps(Texture2D texture)
     {
         TraceLog(WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
     }
-    else rlglGenerateMipmaps(texture.id);
+    else rlglGenerateMipmaps(texture);
 #else
-    rlglGenerateMipmaps(texture.id);
+    rlglGenerateMipmaps(texture);
 #endif
 }
 
