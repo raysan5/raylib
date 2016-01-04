@@ -540,6 +540,9 @@ bool IsFileDropped(void);                                   // Check if a file h
 char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
 void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
 
+void StorageSaveValue(int position, int value);             // Storage save integer value (to defined position)
+int StorageLoadValue(int position);                         // Storage load integer value (from defined position)
+
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------

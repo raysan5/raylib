@@ -1921,40 +1921,31 @@ void rlglUpdateTexture(unsigned int id, int width, int height, int format, void 
 }
 
 // Generate mipmap data for selected texture
-void rlglGenerateMipmaps(unsigned int textureId)
+void rlglGenerateMipmaps(Texture2D texture)
 {
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    glBindTexture(GL_TEXTURE_2D, texture.id);
     
     // Check if texture is power-of-two (POT)
     bool texIsPOT = false;
    
-    // NOTE: In OpenGL ES 2.0 we have no way to retrieve texture size from id
-    
-#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    int width, height;
-    
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-    
-    if (((width > 0) && ((width & (width - 1)) == 0)) && ((height > 0) && ((height & (height - 1)) == 0))) texIsPOT = true;
-#endif
+    if (((texture.width > 0) && ((texture.width & (texture.width - 1)) == 0)) && 
+        ((texture.height > 0) && ((texture.height & (texture.height - 1)) == 0))) texIsPOT = true;
 
     if ((texIsPOT) || (npotSupported))
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
-        // TODO: rlglReadTexturePixels() needs Texture2D type parameter, not unsigned int parameter
-        void *data; // = rlglReadTexturePixels(textureId, UNCOMPRESSED_R8G8B8A8);   // TODO: Detect internal format 
+        void *data = rlglReadTexturePixels(texture);
         
         // NOTE: data size is reallocated to fit mipmaps data
-        int mipmapCount = GenerateMipmaps(data, width, height);
+        int mipmapCount = GenerateMipmaps(data, texture.width, texture.height);
 
         // TODO: Adjust mipmap size depending on texture format!
-        int size = width*height*4;
+        int size = texture.width*texture.height*4;
         int offset = size;
 
-        int mipWidth = width/2;
-        int mipHeight = height/2;
+        int mipWidth = texture.width/2;
+        int mipHeight = texture.height/2;
 
         // Load the mipmaps
         for (int level = 1; level < mipmapCount; level++)
@@ -1968,17 +1959,17 @@ void rlglGenerateMipmaps(unsigned int textureId)
             mipHeight /= 2;
         }
         
-        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", textureId);
+        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture.id);
         
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
-        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", textureId);
+        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps (must be available)
 #endif
     }
-    else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", textureId);
+    else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture.id);
         
     glBindTexture(GL_TEXTURE_2D, 0);
 }
