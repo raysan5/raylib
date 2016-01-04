@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib physics engine module - Basic functions to apply physics to 2D objects
+*   [physac] raylib physics engine module - Basic functions to apply physics to 2D objects
 *
 *   Copyright (c) 2015 Victor Fisac and Ramon Santamaria
 *
@@ -36,7 +36,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define MAX_ELEMENTS 1024       // Stored rigidbodies and colliders array length
-#define DECIMAL_FIX 0.01f       // Decimal margin for collision checks (avoid rigidbodies shake)
+#define DECIMAL_FIX 0.26f       // Decimal margin for collision checks (avoid rigidbodies shake)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -52,7 +52,14 @@ static Rigidbody rigidbodies[MAX_ELEMENTS];
 static bool collisionChecker = false;
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition
+// Module specific Functions Declarations
+//----------------------------------------------------------------------------------
+static float Vector2Length(Vector2 vector);
+static float Vector2LengthPoints(Vector2 a, Vector2 b);
+static Vector2 Vector2Normalize(Vector2 vector);
+
+//----------------------------------------------------------------------------------
+// Module Functions Definitions
 //----------------------------------------------------------------------------------
 void InitPhysics()
 {    
@@ -94,12 +101,32 @@ void ApplyPhysics(int index, Vector2 *position)
 {
     if (rigidbodies[index].enabled)
     {
-        // Apply gravity
-        rigidbodies[index].velocity.y += rigidbodies[index].acceleration.y;
-        rigidbodies[index].velocity.x += rigidbodies[index].acceleration.x;
+        // Apply friction to acceleration
+        if (rigidbodies[index].acceleration.x > DECIMAL_FIX)
+        {
+            rigidbodies[index].acceleration.x -= rigidbodies[index].friction;
+        }
+        else if (rigidbodies[index].acceleration.x < -DECIMAL_FIX)
+        {
+            rigidbodies[index].acceleration.x += rigidbodies[index].friction;
+        }
+        else
+        {
+            rigidbodies[index].acceleration.x = 0;
+        }
         
-        rigidbodies[index].velocity.y += physics.gravity.y;
-        rigidbodies[index].velocity.x += physics.gravity.x;
+        if (rigidbodies[index].acceleration.y > DECIMAL_FIX / 2)
+        {
+            rigidbodies[index].acceleration.y -= rigidbodies[index].friction;
+        }
+        else if (rigidbodies[index].acceleration.y < -DECIMAL_FIX / 2)
+        {
+            rigidbodies[index].acceleration.y += rigidbodies[index].friction;
+        }
+        else
+        {
+            rigidbodies[index].acceleration.y = 0;
+        }
         
         // Apply friction to velocity
         if (rigidbodies[index].isGrounded)
@@ -118,11 +145,11 @@ void ApplyPhysics(int index, Vector2 *position)
             }
         }
         
-        if (rigidbodies[index].velocity.y > DECIMAL_FIX)
+        if (rigidbodies[index].velocity.y > DECIMAL_FIX / 2)
         {
             rigidbodies[index].velocity.y -= rigidbodies[index].friction;
         }
-        else if (rigidbodies[index].velocity.y < -DECIMAL_FIX)
+        else if (rigidbodies[index].velocity.y < -DECIMAL_FIX / 2)
         {
             rigidbodies[index].velocity.y += rigidbodies[index].friction;
         }
@@ -131,35 +158,13 @@ void ApplyPhysics(int index, Vector2 *position)
             rigidbodies[index].velocity.y = 0;
         }
         
-        // Apply friction to acceleration
-        if (rigidbodies[index].isGrounded)
-        {
-            if (rigidbodies[index].acceleration.x > DECIMAL_FIX)
-            {
-                rigidbodies[index].acceleration.x -= rigidbodies[index].friction;
-            }
-            else if (rigidbodies[index].acceleration.x < -DECIMAL_FIX)
-            {
-                rigidbodies[index].acceleration.x += rigidbodies[index].friction;
-            }
-            else
-            {
-                rigidbodies[index].acceleration.x = 0;
-            }
-        }
+        // Apply gravity
+        rigidbodies[index].velocity.y += physics.gravity.y;
+        rigidbodies[index].velocity.x += physics.gravity.x;
         
-        if (rigidbodies[index].acceleration.y > DECIMAL_FIX)
-        {
-            rigidbodies[index].acceleration.y -= rigidbodies[index].friction;
-        }
-        else if (rigidbodies[index].acceleration.y < -DECIMAL_FIX)
-        {
-            rigidbodies[index].acceleration.y += rigidbodies[index].friction;
-        }
-        else
-        {
-            rigidbodies[index].acceleration.y = 0;
-        }
+        // Apply acceleration
+        rigidbodies[index].velocity.y += rigidbodies[index].acceleration.y;
+        rigidbodies[index].velocity.x += rigidbodies[index].acceleration.x;
         
         // Update position vector
         position->x += rigidbodies[index].velocity.x;        
@@ -250,10 +255,49 @@ void SetRigidbodyVelocity(int index, Vector2 velocity)
     rigidbodies[index].velocity.y = velocity.y;
 }
 
+void SetRigidbodyAcceleration(int index, Vector2 acceleration)
+{
+    rigidbodies[index].acceleration.x = acceleration.x;
+    rigidbodies[index].acceleration.y = acceleration.y;
+}
+
 void AddRigidbodyForce(int index, Vector2 force)
 {
-    rigidbodies[index].acceleration.x = force.x * rigidbodies[index].mass;
-    rigidbodies[index].acceleration.y = force.y * rigidbodies[index].mass;
+    rigidbodies[index].acceleration.x = force.x / rigidbodies[index].mass;
+    rigidbodies[index].acceleration.y = force.y / rigidbodies[index].mass;
+}
+
+void AddForceAtPosition(Vector2 position, float intensity, float radius)
+{
+    for(int i = 0; i < MAX_ELEMENTS; i++)
+    {
+        if(rigidbodies[i].enabled)
+        {
+            // Get position from its collider
+            Vector2 pos = {colliders[i].bounds.x, colliders[i].bounds.y};
+            
+            // Get distance between rigidbody position and target position
+            float distance = Vector2LengthPoints(position, pos);
+            
+            if(distance <= radius)
+            {
+                // Calculate force based on direction
+                Vector2 force = {colliders[i].bounds.x - position.x, colliders[i].bounds.y - position.y};
+                
+                // Normalize the direction vector
+                force = Vector2Normalize(force);
+                
+                // Invert y value
+                force.y *= -1;
+                
+                // Apply intensity and distance
+                force = (Vector2){force.x * intensity / distance, force.y * intensity / distance};
+                
+                // Add calculated force to the rigidbodies
+                AddRigidbodyForce(i, force);
+            }
+        }
+    }
 }
 
 void SetColliderEnabled(int index, bool state)
@@ -269,4 +313,30 @@ Collider GetCollider(int index)
 Rigidbody GetRigidbody(int index)
 {
     return rigidbodies[index];
+}
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Definitions
+//----------------------------------------------------------------------------------
+static float Vector2Length(Vector2 vector)
+{
+    return sqrt((vector.x * vector.x) + (vector.y * vector.y));
+}
+
+static float Vector2LengthPoints(Vector2 a, Vector2 b)
+{
+    Vector2 vector = {b.x - a.x, b.y - a.y};
+    return sqrt((vector.x * vector.x) + (vector.y * vector.y));
+}
+
+static Vector2 Vector2Normalize(Vector2 vector)
+{
+    float length = Vector2Length(vector);
+    
+    if(length != 0)
+    {
+        return (Vector2){vector.x / length, vector.y / length};
+    }
+    
+    return (Vector2){0, 0};
 }

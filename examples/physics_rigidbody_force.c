@@ -1,28 +1,21 @@
 /*******************************************************************************************
 *
-*   raylib [physac] physics example - Basic rigidbody
-*
-*   Welcome to raylib!
-*
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
-*
-*   You can find all basic examples on C:\raylib\raylib\examples folder or
-*   raylib official webpage: www.raylib.com
-*
-*   Enjoy using raylib. :)
+*   raylib [physac] physics example - Rigidbody forces
 *
 *   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#define OBJECT_SIZE 50
-#define PLAYER_INDEX 0
+#define MAX_OBJECTS 5
+#define OBJECTS_OFFSET 150
+
+#define FORCE_INTENSITY 250.0f  // Customize by user
+#define FORCE_RADIUS 100        // Customize by user    
 
 int main()
 {
@@ -31,7 +24,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
     
-    InitWindow(screenWidth, screenHeight, "raylib [physics] example - basic rigidbody");
+    InitWindow(screenWidth, screenHeight, "raylib [physics] example - rigidbodies forces");
     SetTargetFPS(60);   // Enable v-sync
     InitPhysics();      // Initialize internal physics values   (max rigidbodies/colliders available: 1024)
     
@@ -41,19 +34,19 @@ int main()
     // Set internal physics settings
     SetPhysics(worldPhysics);
     
-    // Object initialization
-    Transform player = (Transform){(Vector2){(screenWidth - OBJECT_SIZE) / 2, (screenHeight - OBJECT_SIZE) / 2}, 0.0f, (Vector2){OBJECT_SIZE, OBJECT_SIZE}};
-    AddCollider(PLAYER_INDEX, (Collider){true, RectangleCollider, (Rectangle){player.position.x, player.position.y, player.scale.x, player.scale.y}, 0});
-    AddRigidbody(PLAYER_INDEX, (Rigidbody){true, 1.0f, (Vector2){0, 0}, (Vector2){0, 0}, false, false, true, 0.5f, 1.0f});
+    // Objects initialization
+    Transform objects[MAX_OBJECTS];
+    for(int i = 0; i < MAX_OBJECTS; i++)
+    {
+        objects[i] = (Transform){(Vector2){75 + OBJECTS_OFFSET * i, (screenHeight - 50) / 2}, 0.0f, (Vector2){50, 50}};
+        AddCollider(i, (Collider){true, RectangleCollider, (Rectangle){objects[i].position.x, objects[i].position.y, objects[i].scale.x, objects[i].scale.y}, 0});
+        AddRigidbody(i, (Rigidbody){true, 1.0f, (Vector2){0, 0}, (Vector2){0, 0}, false, false, true, 0.5f, 0.5f});
+    }
     
     // Floor initialization 
     // NOTE: floor doesn't need a rigidbody because it's a static physic object, just a collider to collide with other dynamic colliders (with rigidbody)
     Transform floor = (Transform){(Vector2){0, screenHeight * 0.8f}, 0.0f, (Vector2){screenWidth, screenHeight * 0.2f}};
-    AddCollider(PLAYER_INDEX + 1, (Collider){true, RectangleCollider, (Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, 0});
-    
-    // Object properties initialization
-    float moveSpeed = 6.0f;
-    float jumpForce = 4.5f;
+    AddCollider(MAX_OBJECTS, (Collider){true, RectangleCollider, (Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, 0});
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -64,28 +57,15 @@ int main()
         
         // Update object physics 
         // NOTE: all physics detections and reactions are calculated in ApplyPhysics() function (You will live happier :D)
-        ApplyPhysics(PLAYER_INDEX, &player.position);
-        
-        // Check jump button input
-        if(IsKeyDown(KEY_SPACE) && GetRigidbody(PLAYER_INDEX).isGrounded)
+        for(int i = 0; i < MAX_OBJECTS; i++)
         {
-            // Reset object Y velocity to avoid double jumping cases but keep the same X velocity that it already has
-            SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){GetRigidbody(PLAYER_INDEX).velocity.x, 0});
-            
-            // Add jumping force in Y axis
-            AddRigidbodyForce(PLAYER_INDEX, (Vector2){0, jumpForce});
+            ApplyPhysics(i, &objects[i].position);
         }
         
-        // Check movement buttons input
-        if(IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+        // Check foce button input
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
-            // Set rigidbody velocity in X based on moveSpeed value and apply the same Y velocity that it already has
-            SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){moveSpeed, GetRigidbody(PLAYER_INDEX).velocity.y});
-        }
-        else if(IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-        {
-            // Set rigidbody velocity in X based on moveSpeed negative value and apply the same Y velocity that it already has
-            SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){-moveSpeed, GetRigidbody(PLAYER_INDEX).velocity.y});
+            AddForceAtPosition(GetMousePosition(), FORCE_INTENSITY, FORCE_RADIUS);
         }
         
         // Check debug mode toggle button input
@@ -105,31 +85,48 @@ int main()
 
             ClearBackground(RAYWHITE);
             
-            // Draw information
-            DrawText("Use LEFT / RIGHT to MOVE and SPACE to JUMP", (screenWidth - MeasureText("Use LEFT / RIGHT to MOVE and SPACE to JUMP", 20)) / 2, screenHeight * 0.20f, 20, LIGHTGRAY);
-            DrawText("Use P to switch DEBUG MODE", (screenWidth - MeasureText("Use P to switch DEBUG MODE", 20)) / 2, screenHeight * 0.3f, 20, LIGHTGRAY);
-            
             // Check if debug mode is enabled
             if(worldPhysics.debug)
             {
-                // Draw every internal physics stored collider if it is active
-                for(int i = 0; i < 2; i++)
+                // Draw every internal physics stored collider if it is active (floor included)
+                for(int i = 0; i < MAX_OBJECTS + 1; i++)
                 {
                     if(GetCollider(i).enabled)
                     {
+                        // Draw collider bounds
                         DrawRectangleLines(GetCollider(i).bounds.x, GetCollider(i).bounds.y, GetCollider(i).bounds.width, GetCollider(i).bounds.height, GREEN);
+                        
+                        // Check if current collider is not floor
+                        if(i < MAX_OBJECTS)
+                        {
+                            // Draw lines between mouse position and objects if they are in force range
+                            if(CheckCollisionPointCircle(GetMousePosition(), (Vector2){GetCollider(i).bounds.x + GetCollider(i).bounds.width / 2, GetCollider(i).bounds.y + GetCollider(i).bounds.height / 2}, FORCE_RADIUS))
+                            {
+                                DrawLineV(GetMousePosition(), (Vector2){GetCollider(i).bounds.x + GetCollider(i).bounds.width / 2, GetCollider(i).bounds.y + GetCollider(i).bounds.height / 2}, RED);
+                            }
+                        }
                     }
                 }
                 
+                // Draw radius circle
+                DrawCircleLines(GetMousePosition().x, GetMousePosition().y, FORCE_RADIUS, RED);
             }
             else
             {
-                // Draw player
-                DrawRectangleRec((Rectangle){player.position.x, player.position.y, player.scale.x, player.scale.y}, GRAY);
+                // Draw objects
+                for(int i = 0; i < MAX_OBJECTS; i++)
+                {
+                    DrawRectangleRec((Rectangle){objects[i].position.x, objects[i].position.y, objects[i].scale.x, objects[i].scale.y}, GRAY);
+                }
                 
                 // Draw floor
                 DrawRectangleRec((Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, BLACK);
             }
+            
+                        
+            // Draw help messages
+            DrawText("Use LEFT MOUSE BUTTON to create a force in mouse position", (screenWidth - MeasureText("Use LEFT MOUSE BUTTON to create a force in mouse position", 20)) / 2, screenHeight * 0.20f, 20, LIGHTGRAY);
+            DrawText("Use P to switch DEBUG MODE", (screenWidth - MeasureText("Use P to switch DEBUG MODE", 20)) / 2, screenHeight * 0.3f, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
