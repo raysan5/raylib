@@ -708,6 +708,67 @@ void ClearDroppedFiles(void)
 }
 #endif
 
+// Storage save integer value (to defined position)
+// NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
+void StorageSaveValue(int position, int value)
+{
+    FILE *storageFile = NULL;
+
+    // Try open existing file to append data
+    storageFile = fopen("storage.data", "rb+");      
+
+    // If file doesn't exist, create a new storage data file
+    if (!storageFile) storageFile = fopen("storage.data", "wb");
+
+    if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
+    else
+    {
+        // Get file size
+        fseek(storageFile, 0, SEEK_END);
+        int fileSize = ftell(storageFile);  // Size in bytes
+        fseek(storageFile, 0, SEEK_SET);
+        
+        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
+        else
+        {
+            fseek(storageFile, (position*4), SEEK_SET);
+            fwrite(&value, 1, 4, storageFile);
+        }
+        
+        fclose(storageFile);
+    }
+}
+
+// Storage load integer value (from defined position)
+// NOTE: If requested position could not be found, value 0 is returned
+int StorageLoadValue(int position)
+{
+    int value = 0;
+    
+    // Try open existing file to append data
+    FILE *storageFile = fopen("storage.data", "rb");      
+
+    if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
+    else
+    {
+        // Get file size
+        fseek(storageFile, 0, SEEK_END);
+        int fileSize = ftell(storageFile);  // Size in bytes
+        rewind(storageFile);
+        
+        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
+        else
+        {
+            fseek(storageFile, (position*4), SEEK_SET);
+            fread(&value, 1, 4, storageFile);
+        }
+        
+        fclose(storageFile);
+    }
+    
+    return value;
+}
+
 // TODO: Gives the ray trace from mouse position
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
