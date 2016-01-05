@@ -61,7 +61,7 @@ static Vector2 Vector2Normalize(Vector2 vector);
 //----------------------------------------------------------------------------------
 // Module Functions Definitions
 //----------------------------------------------------------------------------------
-void InitPhysics()
+void InitPhysics(void)
 {    
     for (int i = 0; i < MAX_ELEMENTS; i++)
     {

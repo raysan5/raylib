@@ -1111,6 +1111,7 @@ Vector2 GetTouchPosition(void)
     return position;
 }
 
+// Detect if a button has been pressed once
 bool IsButtonPressed(int button)
 {
     bool pressed = false;
