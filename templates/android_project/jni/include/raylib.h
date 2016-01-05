@@ -186,6 +186,12 @@
 
 // TODO: Review Xbox360 USB Controller Buttons
 
+// Android Physic Buttons
+#define ANDROID_BACK            4
+#define ANDROID_MENU            82
+#define ANDROID_VOLUME_UP       24
+#define ANDROID_VOLUME_DOWN     25
+
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
 #define LIGHTGRAY  (Color){ 200, 200, 200, 255 }   // Light Gray
@@ -540,6 +546,9 @@ bool IsFileDropped(void);                                   // Check if a file h
 char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
 void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
 
+void StorageSaveValue(int position, int value);             // Storage save integer value (to defined position)
+int StorageLoadValue(int position);                         // Storage load integer value (from defined position)
+
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
@@ -578,6 +587,9 @@ bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad b
 int GetTouchX(void);                                    // Returns touch position X (relative to screen size)
 int GetTouchY(void);                                    // Returns touch position Y (relative to screen size)
 Vector2 GetTouchPosition(void);                         // Returns touch position XY (relative to screen size)
+bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
+bool IsButtonDown(int button);                          // Detect if an android physic button is being pressed
+bool IsButtonReleased(int button);                      // Detect if an android physic button has been released    
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
@@ -793,21 +805,23 @@ void SetMaterialNormalDepth(Material *material, float depth);           // Set n
 //----------------------------------------------------------------------------------
 // Physics System Functions (engine-module: physics)
 //----------------------------------------------------------------------------------
-void InitPhysics();                                                     // Initialize all internal physics values
-void SetPhysics(Physics settings);                                      // Set physics settings values using Physics data type to overwrite internal physics settings
+void InitPhysics();                                                         // Initialize all internal physics values
+void SetPhysics(Physics settings);                                          // Set physics settings values using Physics data type to overwrite internal physics settings
 
-void AddRigidbody(int index, Rigidbody rigidbody);                      // Initialize a new rigidbody with parameters to internal index slot
-void AddCollider(int index, Collider collider);                         // Initialize a new Collider with parameters to internal index slot
+void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot
+void AddCollider(int index, Collider collider);                             // Initialize a new Collider with parameters to internal index slot
 
-void ApplyPhysics(int index, Vector2 *position);                        // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
-void SetRigidbodyEnabled(int index, bool state);                        // Set enabled state to a defined rigidbody
-void SetRigidbodyVelocity(int index, Vector2 velocity);                 // Set velocity of rigidbody (without considering of mass value)
-void AddRigidbodyForce(int index, Vector2 force);                       // Set rigidbody force (considering mass value)
+void ApplyPhysics(int index, Vector2 *position);                            // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
+void SetRigidbodyEnabled(int index, bool state);                            // Set enabled state to a defined rigidbody
+void SetRigidbodyVelocity(int index, Vector2 velocity);                     // Set velocity of rigidbody (without considering of mass value)
+void SetRigidbodyAcceleration(int index, Vector2 acceleration);             // Set acceleration of rigidbody (without considering of mass value)
+void AddRigidbodyForce(int index, Vector2 force);                           // Set rigidbody force (considering mass value)
+void AddForceAtPosition(Vector2 position, float intensity, float radius);   // Add a force to all enabled rigidbodies at a position
 
-void SetColliderEnabled(int index, bool state);                         // Set enabled state to a defined collider
+void SetColliderEnabled(int index, bool state);                             // Set enabled state to a defined collider
 
-Rigidbody GetRigidbody(int index);                                      // Returns the internal rigidbody data defined by index parameter
-Collider GetCollider(int index);                                        // Returns the internal collider data defined by index parameter
+Rigidbody GetRigidbody(int index);                                          // Returns the internal rigidbody data defined by index parameter
+Collider GetCollider(int index);                                            // Returns the internal collider data defined by index parameter
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

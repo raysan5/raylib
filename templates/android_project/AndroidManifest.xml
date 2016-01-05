@@ -23,7 +23,7 @@
                 android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
         <!-- Our activity is the built-in NativeActivity framework class. -->
         <activity android:name="android.app.NativeActivity"
-                android:configChanges="orientation|keyboardHidden"
+                android:configChanges="orientation|keyboardHidden|screenSize"
                 android:screenOrientation="landscape"
                 android:clearTaskOnLaunch="true" >
                 <!-- android:theme="@android:style/Theme.NoTitleBar.Fullscreen" -->

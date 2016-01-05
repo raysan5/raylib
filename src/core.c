@@ -1686,11 +1686,19 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         int32_t keycode = AKeyEvent_getKeyCode(event);
         //int32_t AKeyEvent_getMetaState(event);
         
+        // Save current button and its state
         currentButtonState[keycode] = AKeyEvent_getAction (event);  // Down = 0, Up = 1
 
-        //if (keycode == AKEYCODE_HOME) { }
-        if (keycode == AKEYCODE_POWER) { return 1; }
-        if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
+        if (keycode == AKEYCODE_POWER)
+        {
+            // Let the OS handle input to avoid app stuck. Behaviour: CMD_PAUSE -> CMD_SAVE_STATE -> CMD_STOP -> CMD_CONFIG_CHANGED -> CMD_LOST_FOCUS
+            // Resuming Behaviour: CMD_START -> CMD_RESUME -> CMD_CONFIG_CHANGED -> CMD_CONFIG_CHANGED -> CMD_GAINED_FOCUS
+            // It seems like locking mobile, screen size (CMD_CONFIG_CHANGED) is affected.
+            // NOTE: AndroidManifest.xml must have <activity android:configChanges="orientation|keyboardHidden|screenSize" >
+            // Before that change, activity was calling CMD_TERM_WINDOW and CMD_DESTROY when locking mobile, so that was not a normal behaviour
+            return 0;
+        } 
+        else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
         {
             // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
             return 1;
