@@ -226,6 +226,8 @@ Vector3 VectorZero(void)
 //----------------------------------------------------------------------------------
 
 // Returns an OpenGL-ready vector (glMultMatrixf)
+// NOTE: Returned vector is row-major instead column-major as expected,
+// it means, returned vector is a transposed version of the matrix!
 float *GetMatrixVector(Matrix mat)
 {
     static float vector[16];
@@ -598,33 +600,22 @@ Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result;
 
-    // Cache the matrix values (speed optimization)
-    float a00 = left.m0, a01 = left.m1, a02 = left.m2, a03 = left.m3;
-    float a10 = left.m4, a11 = left.m5, a12 = left.m6, a13 = left.m7;
-    float a20 = left.m8, a21 = left.m9, a22 = left.m10, a23 = left.m11;
-    float a30 = left.m12, a31 = left.m13, a32 = left.m14, a33 = left.m15;
-
-    float b00 = right.m0, b01 = right.m1, b02 = right.m2, b03 = right.m3;
-    float b10 = right.m4, b11 = right.m5, b12 = right.m6, b13 = right.m7;
-    float b20 = right.m8, b21 = right.m9, b22 = right.m10, b23 = right.m11;
-    float b30 = right.m12, b31 = right.m13, b32 = right.m14, b33 = right.m15;
-
-    result.m0 = b00*a00 + b01*a10 + b02*a20 + b03*a30;
-    result.m1 = b00*a01 + b01*a11 + b02*a21 + b03*a31;
-    result.m2 = b00*a02 + b01*a12 + b02*a22 + b03*a32;
-    result.m3 = b00*a03 + b01*a13 + b02*a23 + b03*a33;
-    result.m4 = b10*a00 + b11*a10 + b12*a20 + b13*a30;
-    result.m5 = b10*a01 + b11*a11 + b12*a21 + b13*a31;
-    result.m6 = b10*a02 + b11*a12 + b12*a22 + b13*a32;
-    result.m7 = b10*a03 + b11*a13 + b12*a23 + b13*a33;
-    result.m8 = b20*a00 + b21*a10 + b22*a20 + b23*a30;
-    result.m9 = b20*a01 + b21*a11 + b22*a21 + b23*a31;
-    result.m10 = b20*a02 + b21*a12 + b22*a22 + b23*a32;
-    result.m11 = b20*a03 + b21*a13 + b22*a23 + b23*a33;
-    result.m12 = b30*a00 + b31*a10 + b32*a20 + b33*a30;
-    result.m13 = b30*a01 + b31*a11 + b32*a21 + b33*a31;
-    result.m14 = b30*a02 + b31*a12 + b32*a22 + b33*a32;
-    result.m15 = b30*a03 + b31*a13 + b32*a23 + b33*a33;
+    result.m0 = right.m0*left.m0 + right.m1*left.m4 + right.m2*left.m8 + right.m3*left.m12;
+    result.m1 = right.m0*left.m1 + right.m1*left.m5 + right.m2*left.m9 + right.m3*left.m13;
+    result.m2 = right.m0*left.m2 + right.m1*left.m6 + right.m2*left.m10 + right.m3*left.m14;
+    result.m3 = right.m0*left.m3 + right.m1*left.m7 + right.m2*left.m11 + right.m3*left.m15;
+    result.m4 = right.m4*left.m0 + right.m5*left.m4 + right.m6*left.m8 + right.m7*left.m12;
+    result.m5 = right.m4*left.m1 + right.m5*left.m5 + right.m6*left.m9 + right.m7*left.m13;
+    result.m6 = right.m4*left.m2 + right.m5*left.m6 + right.m6*left.m10 + right.m7*left.m14;
+    result.m7 = right.m4*left.m3 + right.m5*left.m7 + right.m6*left.m11 + right.m7*left.m15;
+    result.m8 = right.m8*left.m0 + right.m9*left.m4 + right.m10*left.m8 + right.m11*left.m12;
+    result.m9 = right.m8*left.m1 + right.m9*left.m5 + right.m10*left.m9 + right.m11*left.m13;
+    result.m10 = right.m8*left.m2 + right.m9*left.m6 + right.m10*left.m10 + right.m11*left.m14;
+    result.m11 = right.m8*left.m3 + right.m9*left.m7 + right.m10*left.m11 + right.m11*left.m15;
+    result.m12 = right.m12*left.m0 + right.m13*left.m4 + right.m14*left.m8 + right.m15*left.m12;
+    result.m13 = right.m12*left.m1 + right.m13*left.m5 + right.m14*left.m9 + right.m15*left.m13;
+    result.m14 = right.m12*left.m2 + right.m13*left.m6 + right.m14*left.m10 + right.m15*left.m14;
+    result.m15 = right.m12*left.m3 + right.m13*left.m7 + right.m14*left.m11 + right.m15*left.m15;
 
     return result;
 }

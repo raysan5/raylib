@@ -122,8 +122,8 @@ static int ident, events;
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
-static int previousButtonState[512] = { 1 };   // Required to check if button pressed/released once
-static int currentButtonState[512] = { 1 };    // Required to check if button pressed/released once
+static int previousButtonState[128] = { 1 };    // Required to check if button pressed/released once
+static int currentButtonState[128] = { 1 };     // Required to check if button pressed/released once
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
@@ -272,7 +272,7 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(INFO, "Initializing raylib (v1.3.0)");
+    TraceLog(INFO, "Initializing raylib (v1.4.0)");
 
     // Store window title (could be useful...)
     windowTitle = title;
@@ -324,7 +324,7 @@ void InitWindow(int width, int height, const char *title)
 // Android activity initialization
 void InitWindow(int width, int height, struct android_app *state)
 {
-    TraceLog(INFO, "Initializing raylib (v1.3.0)");
+    TraceLog(INFO, "Initializing raylib (v1.4.0)");
 
     app_dummy();
 
@@ -368,7 +368,7 @@ void InitWindow(int width, int height, struct android_app *state)
     TraceLog(INFO, "Android app initialized successfully");
 
     // Init button states values (default up)
-    for(int i = 0; i < 512; i++)
+    for(int i = 0; i < 128; i++)
     {
         currentButtonState[i] = 1;
         previousButtonState[i] = 1;
@@ -587,8 +587,8 @@ void Begin3dMode(Camera camera)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     // Setup Camera view
-    Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(GetMatrixVector(view));      // Multiply MODELVIEW matrix by view matrix (camera)
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    rlMultMatrixf(GetMatrixVector(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -778,42 +778,78 @@ int StorageLoadValue(int position)
     return value;
 }
 
-// TODO: Gives the ray trace from mouse position
+// Gives the ray trace from mouse position
+// TODO: DOESN'T WORK! :(
+//http://www.songho.ca/opengl/gl_transform.html
+//http://www.songho.ca/opengl/gl_matrix.html
+//http://www.sjbaker.org/steve/omniv/matrices_can_be_your_friends.html
+//https://www.opengl.org/archives/resources/faq/technical/transformations.htm
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
     Ray ray;
-
-    Matrix matProj = MatrixIdentity();
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-
-    // Calculate projection matrix for the camera
+    
+    // Calculate projection matrix
     float aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
     double top = 0.1f*tanf(45.0f*PI/360.0f);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important for depth
-    matProj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
-    MatrixTranspose(&matProj);
+    Matrix matProjection = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
+    
+    // Calculate view matrix (camera)
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    
+    // Tutorial used: http://antongerdelan.net/opengl/raycasting.html
+    
+    // Step 0: We got mouse coordinates in viewport-space [0:screenWidth, 0:screenHeight]
+    // NOTE: That that 0 is at the top of the screen here, so the y-axis direction is opposed to that in other coordinate systems
+    
+    // Step 1: 3d Normalised Device Coordinates [-1:1, -1:1, -1:1]
+    // Transform mousePosition into 3d normalised device coordinates. 
+    // We have an x and y already, so we scale their range, and reverse the direction of y.
+    float x = (2.0f*mousePosition.x)/(float)screenWidth - 1.0f;
+    float y = 1.0f - (2.0f*mousePosition.x)/(float)screenHeight;
+    float z = 1.0f;
+    Vector3 rayDevice = { x, y, z };
+    
+    // Step 2: 4d Homogeneous Clip Coordinates [-1:1, -1:1, -1:1, -1:1]
+    // We want our ray's z to point forwards - this is usually the negative z direction in OpenGL style. 
+    // We can add a w, just so that we have a 4d vector.
+    //vec4 ray_clip = vec4 (ray_nds.xy, -1.0, 1.0);
+    Quaternion rayClip = { rayDevice.x, rayDevice.y , -1.0f, 1.0f };
+    
+    // Step 3: 4d Eye (Camera) Coordinates [-x:x, -y:y, -z:z, -w:w]
+    // To get into clip space from eye space we multiply the vector by a projection matrix. 
+    // We can go backwards by multiplying by the inverse of this matrix.
+    //vec4 ray_eye = MatrixInverse(matProjection) * ray_clip;
+    Quaternion rayEye = rayClip;
+    MatrixInvert(&matProjection);
+    QuaternionTransform(&rayEye, matProjection);
+    
+    // We only needed to un-project the x,y part, so let's manually set the z,w part to mean "forwards, and not a point".
+    //ray_eye = vec4(ray_eye.xy, -1.0, 0.0);
+    rayEye.z = -1.0f;
+    rayEye.w = 0.0f;
+    
+    // Step 4: 4d World Coordinates [-x:x, -y:y, -z:z, -w:w]
+    // Go back another step in the transformation pipeline. Remember that we manually specified a -1 for the z component, 
+    // which means that our ray isn't normalised. We should do this before we use it
+    //Vector3 rayWorld = (MatrixInverse(matView) * ray_eye).xyz;
+    MatrixInvert(&matView);
+    QuaternionTransform(&rayEye, matView);
+    Vector3 rayWorld = { rayEye.x, rayEye.y, rayEye.z };
 
-    // NOTE: Our screen origin is top-left instead of bottom-left: transform required!
-    float invertedMouseY = (float)GetScreenHeight() - mousePosition.y;
-
-    // NOTE: Do I really need to get z value from depth buffer?
-    //float z;
-    //glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
-    //http://www.bfilipek.com/2012/06/select-mouse-opengl.html
-
-    Vector3 nearPoint = { mousePosition.x, invertedMouseY, 0.0f };
-    Vector3 farPoint = { mousePosition.x, invertedMouseY, 1.0f };
-
-    nearPoint = rlglUnproject(nearPoint, matProj, matView);
-    farPoint = rlglUnproject(farPoint, matProj, matView);     // TODO: it seems it doesn't work...
-
-    Vector3 direction = VectorSubtract(farPoint, nearPoint);
-    VectorNormalize(&direction);
-
-    ray.position = nearPoint;
-    ray.direction = direction;
+    VectorNormalize(&rayWorld);
+    
+    // Assuming our camera is looking directly along the -Z world axis, 
+    // we should get [0,0,-1] when the mouse is in the centre of the screen, 
+    // and less significant z values when the mouse moves around the screen.
+    
+    ray.position = camera.position;
+    ray.direction = rayWorld;
+    
+    TraceLog(INFO, "ray.position -> (%f, %f, %f)", ray.position.x, ray.position.y, ray.position.z);
+    TraceLog(INFO, "ray.direction -> (%f, %f, %f)", ray.direction.x, ray.direction.y, ray.direction.z);
 
     return ray;
 }
@@ -1688,7 +1724,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         //int32_t AKeyEvent_getMetaState(event);
         
         // Save current button and its state
-        currentButtonState[keycode] = AKeyEvent_getAction (event);  // Down = 0, Up = 1
+        currentButtonState[keycode] = AKeyEvent_getAction(event);  // Down = 0, Up = 1
 
         if (keycode == AKEYCODE_POWER)
         {
@@ -1826,7 +1862,6 @@ static void PollInputEvents(void)
 
     // TODO: Remove this requirement...
     UpdateGestures();
-    
 #endif
     
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1856,7 +1891,7 @@ static void PollInputEvents(void)
 #elif defined(PLATFORM_ANDROID)
 
     // Register previous keys states
-    for (int i = 0; i < 512; i++) previousButtonState[i] = currentButtonState[i];
+    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
 
     // Poll Events (registered events)
     // NOTE: Activity is paused if not enabled (appEnabled)
