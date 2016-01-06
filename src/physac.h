@@ -76,7 +76,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declarations
 //----------------------------------------------------------------------------------
-void InitPhysics();                                                         // Initialize all internal physics values
+void InitPhysics(void);                                                     // Initialize all internal physics values
 void SetPhysics(Physics settings);                                          // Set physics settings values using Physics data type to overwrite internal physics settings
 
 void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot

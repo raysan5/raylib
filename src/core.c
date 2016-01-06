@@ -122,6 +122,8 @@ static int ident, events;
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
+static int previousButtonState[512] = { 1 };   // Required to check if button pressed/released once
+static int currentButtonState[512] = { 1 };    // Required to check if button pressed/released once
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
@@ -364,6 +366,13 @@ void InitWindow(int width, int height, struct android_app *state)
     InitAssetManager(app->activity->assetManager);
 
     TraceLog(INFO, "Android app initialized successfully");
+
+    // Init button states values (default up)
+    for(int i = 0; i < 512; i++)
+    {
+        currentButtonState[i] = 1;
+        previousButtonState[i] = 1;
+    }
 
     // Wait for window to be initialized (display and context)
     while (!windowReady)
@@ -1101,6 +1110,35 @@ Vector2 GetTouchPosition(void)
 
     return position;
 }
+
+// Detect if a button has been pressed once
+bool IsButtonPressed(int button)
+{
+    bool pressed = false;
+
+    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 0)) pressed = true;
+    else pressed = false;
+
+    return pressed;
+}
+
+// Detect if a button is being pressed (button held down)
+bool IsButtonDown(int button)
+{
+    if (currentButtonState[button] == 0) return true;
+    else return false;
+}
+
+// Detect if a button has been released once
+bool IsButtonReleased(int button)
+{
+    bool released = false;
+
+    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 1)) released = true;
+    else released = false;
+
+    return released;
+}
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1648,12 +1686,22 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     {
         int32_t keycode = AKeyEvent_getKeyCode(event);
         //int32_t AKeyEvent_getMetaState(event);
+        
+        // Save current button and its state
+        currentButtonState[keycode] = AKeyEvent_getAction (event);  // Down = 0, Up = 1
 
-        //if (keycode == AKEYCODE_HOME) { }
-        //if (keycode == AKEYCODE_POWER) { }
-        if (keycode == AKEYCODE_BACK)
+        if (keycode == AKEYCODE_POWER)
         {
-            // Eat BACK_BUTTON, just do nothing... and don't let to be handled by OS!
+            // Let the OS handle input to avoid app stuck. Behaviour: CMD_PAUSE -> CMD_SAVE_STATE -> CMD_STOP -> CMD_CONFIG_CHANGED -> CMD_LOST_FOCUS
+            // Resuming Behaviour: CMD_START -> CMD_RESUME -> CMD_CONFIG_CHANGED -> CMD_CONFIG_CHANGED -> CMD_GAINED_FOCUS
+            // It seems like locking mobile, screen size (CMD_CONFIG_CHANGED) is affected.
+            // NOTE: AndroidManifest.xml must have <activity android:configChanges="orientation|keyboardHidden|screenSize" >
+            // Before that change, activity was calling CMD_TERM_WINDOW and CMD_DESTROY when locking mobile, so that was not a normal behaviour
+            return 0;
+        } 
+        else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
+        {
+            // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
             return 1;
         }
         else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
@@ -1778,6 +1826,7 @@ static void PollInputEvents(void)
 
     // TODO: Remove this requirement...
     UpdateGestures();
+    
 #endif
     
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1805,6 +1854,9 @@ static void PollInputEvents(void)
 
     glfwPollEvents();       // Register keyboard/mouse events... and window events!
 #elif defined(PLATFORM_ANDROID)
+
+    // Register previous keys states
+    for (int i = 0; i < 512; i++) previousButtonState[i] = currentButtonState[i];
 
     // Poll Events (registered events)
     // NOTE: Activity is paused if not enabled (appEnabled)

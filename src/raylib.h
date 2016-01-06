@@ -186,6 +186,12 @@
 
 // TODO: Review Xbox360 USB Controller Buttons
 
+// Android Physic Buttons
+#define ANDROID_BACK            4
+#define ANDROID_MENU            82
+#define ANDROID_VOLUME_UP       24
+#define ANDROID_VOLUME_DOWN     25
+
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
 #define LIGHTGRAY  (Color){ 200, 200, 200, 255 }   // Light Gray
@@ -581,6 +587,9 @@ bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad b
 int GetTouchX(void);                                    // Returns touch position X (relative to screen size)
 int GetTouchY(void);                                    // Returns touch position Y (relative to screen size)
 Vector2 GetTouchPosition(void);                         // Returns touch position XY (relative to screen size)
+bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
+bool IsButtonDown(int button);                          // Detect if an android physic button is being pressed
+bool IsButtonReleased(int button);                      // Detect if an android physic button has been released
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
@@ -796,7 +805,7 @@ void SetMaterialNormalDepth(Material *material, float depth);           // Set n
 //----------------------------------------------------------------------------------
 // Physics System Functions (engine-module: physics)
 //----------------------------------------------------------------------------------
-void InitPhysics();                                                         // Initialize all internal physics values
+void InitPhysics(void);                                                     // Initialize all internal physics values
 void SetPhysics(Physics settings);                                          // Set physics settings values using Physics data type to overwrite internal physics settings
 
 void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot
