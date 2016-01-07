@@ -779,78 +779,68 @@ int StorageLoadValue(int position)
 }
 
 // Gives the ray trace from mouse position
-// TODO: DOESN'T WORK! :(
 //http://www.songho.ca/opengl/gl_transform.html
 //http://www.songho.ca/opengl/gl_matrix.html
 //http://www.sjbaker.org/steve/omniv/matrices_can_be_your_friends.html
 //https://www.opengl.org/archives/resources/faq/technical/transformations.htm
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
+    // Tutorial used: https://mkonrad.net/2014/08/07/simple-opengl-object-picking-in-3d.html
+    // Similar to http://antongerdelan.net, the problem is maybe in MatrixPerspective vs MatrixFrustum
+    // or matrix order (transpose it or not... that's the question)
+    
     Ray ray;
     
-    // Calculate projection matrix
-    float aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
-    double top = 0.1f*tanf(45.0f*PI/360.0f);
-    double right = top*aspect;
-
-    // NOTE: zNear and zFar values are important for depth
-    Matrix matProjection = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
+    // Calculate normalized device coordinates
+    // NOTE: y value is negative
+    float x = (2.0f * mousePosition.x) / GetScreenWidth() - 1.0f;
+    float y = 1.0f - (2.0f * mousePosition.y) / GetScreenHeight();
+    float z = 1.0f;
     
-    // Calculate view matrix (camera)
+    // Store values in a vector
+    Vector3 deviceCoords = {x, y, z};
+    
+    // Device debug message
+    TraceLog(INFO, "device(%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
+    
+    // Calculate projection matrix (from perspective instead of frustum
+    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    
+    // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     
-    // Tutorial used: http://antongerdelan.net/opengl/raycasting.html
+    // Do I need to transpose it? It seems that yes...
+    // NOTE: matrix order is maybe incorrect... In OpenGL to get world position from
+    // camera view it just needs to get inverted, but here we need to transpose it too.
+    // For example, if you get view matrix, transpose and inverted and you transform it
+    // to a vector, you will get its 3d world position coordinates (camera.position).
+    // If you don't transpose, final position will be wrong.
+    MatrixTranspose(&matView);
     
-    // Step 0: We got mouse coordinates in viewport-space [0:screenWidth, 0:screenHeight]
-    // NOTE: That that 0 is at the top of the screen here, so the y-axis direction is opposed to that in other coordinate systems
+    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
+    Matrix matProjView = MatrixMultiply(matProj, matView);
+    MatrixInvert(&matProjView);
     
-    // Step 1: 3d Normalised Device Coordinates [-1:1, -1:1, -1:1]
-    // Transform mousePosition into 3d normalised device coordinates. 
-    // We have an x and y already, so we scale their range, and reverse the direction of y.
-    float x = (2.0f*mousePosition.x)/(float)screenWidth - 1.0f;
-    float y = 1.0f - (2.0f*mousePosition.x)/(float)screenHeight;
-    float z = 1.0f;
-    Vector3 rayDevice = { x, y, z };
+    // Calculate far and near points
+    Quaternion near = { deviceCoords.x, deviceCoords.y, 0, 1};
+    Quaternion far = { deviceCoords.x, deviceCoords.y, 1, 1};
     
-    // Step 2: 4d Homogeneous Clip Coordinates [-1:1, -1:1, -1:1, -1:1]
-    // We want our ray's z to point forwards - this is usually the negative z direction in OpenGL style. 
-    // We can add a w, just so that we have a 4d vector.
-    //vec4 ray_clip = vec4 (ray_nds.xy, -1.0, 1.0);
-    Quaternion rayClip = { rayDevice.x, rayDevice.y , -1.0f, 1.0f };
+    // Multiply points by unproject matrix
+    QuaternionTransform(&near, matProjView);
+    QuaternionTransform(&far, matProjView);
     
-    // Step 3: 4d Eye (Camera) Coordinates [-x:x, -y:y, -z:z, -w:w]
-    // To get into clip space from eye space we multiply the vector by a projection matrix. 
-    // We can go backwards by multiplying by the inverse of this matrix.
-    //vec4 ray_eye = MatrixInverse(matProjection) * ray_clip;
-    Quaternion rayEye = rayClip;
-    MatrixInvert(&matProjection);
-    QuaternionTransform(&rayEye, matProjection);
+    // Calculate normalized world points in vectors
+    Vector3 nearPoint = {near.x / near.w, near.y / near.w, near.z / near.w};
+    Vector3 farPoint = {far.x / far.w, far.y / far.w, far.z / far.w};
     
-    // We only needed to un-project the x,y part, so let's manually set the z,w part to mean "forwards, and not a point".
-    //ray_eye = vec4(ray_eye.xy, -1.0, 0.0);
-    rayEye.z = -1.0f;
-    rayEye.w = 0.0f;
+    // Calculate normalized direction vector
+    Vector3 direction = VectorSubtract(farPoint, nearPoint);
+    VectorNormalize(&direction);
     
-    // Step 4: 4d World Coordinates [-x:x, -y:y, -z:z, -w:w]
-    // Go back another step in the transformation pipeline. Remember that we manually specified a -1 for the z component, 
-    // which means that our ray isn't normalised. We should do this before we use it
-    //Vector3 rayWorld = (MatrixInverse(matView) * ray_eye).xyz;
-    MatrixInvert(&matView);
-    QuaternionTransform(&rayEye, matView);
-    Vector3 rayWorld = { rayEye.x, rayEye.y, rayEye.z };
-
-    VectorNormalize(&rayWorld);
-    
-    // Assuming our camera is looking directly along the -Z world axis, 
-    // we should get [0,0,-1] when the mouse is in the centre of the screen, 
-    // and less significant z values when the mouse moves around the screen.
-    
+    // Apply calculated vectors to ray
     ray.position = camera.position;
-    ray.direction = rayWorld;
+    ray.direction = direction;
     
-    TraceLog(INFO, "ray.position -> (%f, %f, %f)", ray.position.x, ray.position.y, ray.position.z);
-    TraceLog(INFO, "ray.direction -> (%f, %f, %f)", ray.direction.x, ray.direction.y, ray.direction.z);
-
     return ray;
 }
 

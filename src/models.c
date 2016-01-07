@@ -1336,6 +1336,26 @@ bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSph
     return collision;
 }
 
+// Detect collision between ray and box
+bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
+{
+    bool collision = false;
+    
+    float t[8];
+    t[0] = (minBBox.x - ray.position.x) / ray.direction.x;
+    t[1] = (maxBBox.x - ray.position.x) / ray.direction.x;
+    t[2] = (minBBox.y - ray.position.y) / ray.direction.y;
+    t[3] = (maxBBox.y - ray.position.y) / ray.direction.y;
+    t[4] = (minBBox.z - ray.position.z) / ray.direction.z;
+    t[5] = (maxBBox.z - ray.position.z) / ray.direction.z;
+    t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
+    t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
+    
+    collision = !(t[7] < 0 || t[6] > t[7]);
+    
+    return collision;
+}
+
 // TODO: Useful function to check collision area?
 //BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
 
