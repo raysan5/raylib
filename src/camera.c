@@ -317,7 +317,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
                 camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
 
-                if (camera->target.y < 0) camera->target.y = -0.001;
+                // if (camera->target.y < 0) camera->target.y = -0.001;
             }
             else if ((camera->position.y > camera->target.y) && (camera->target.y < 0) && (mouseWheelMove > 0))
             {
@@ -337,7 +337,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
                 camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
 
-                if (camera->target.y > 0) camera->target.y = 0.001;
+                // if (camera->target.y > 0) camera->target.y = 0.001;
             }
             else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (mouseWheelMove > 0))
             {
