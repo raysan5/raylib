@@ -527,7 +527,8 @@ void EndDrawing(void);                                      // End canvas drawin
 void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
 void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 
-Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // TODO: Returns a ray trace from mouse position
+Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
+Vector2 WorldToScreen(Vector3 position, Camera camera);     // Returns the screen space position from a 3d world space position
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 float GetFPS(void);                                         // Returns current FPS
@@ -785,26 +786,6 @@ void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D tex
 void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
-
-//----------------------------------------------------------------------------------
-// Lighting System Functions (engine-module: lighting)
-// NOTE: light and material structs uses float pointers instead of vectors to be compatible with SetShaderValue()
-//----------------------------------------------------------------------------------
-// Lights functions
-void SetLightPosition(Light *light, Vector3 position);                  // Set light position converting position vector to float pointer
-void SetLightRotation(Light *light, Vector3 rotation);                  // Set light rotation converting rotation vector to float pointer
-void SetLightIntensity(Light *light, float intensity);                  // Set light intensity value 
-void SetLightAmbientColor(Light *light, Vector3 color);                 // Set light ambient color value (it will be multiplied by material ambient color)
-void SetLightDiffuseColor(Light *light, Vector3 color);                 // Set light diffuse color (light color)
-void SetLightSpecularColor(Light *light, Vector3 color);                // Set light specular color (it will be multiplied by material specular color)
-void SetLightSpecIntensity(Light *light, float specIntensity);          // Set light specular intensity (specular color scalar multiplier)
-
-// Materials functions
-void SetMaterialAmbientColor(Material *material, Vector3 color);        // Set material ambient color value (it will be multiplied by light ambient color)
-void SetMaterialDiffuseColor(Material *material, Vector3 color);        // Set material diffuse color (material color, should use DrawModel() tint parameter)
-void SetMaterialSpecularColor(Material *material, Vector3 color);       // Set material specular color (it will be multiplied by light specular color)
-void SetMaterialGlossiness(Material *material, float glossiness);       // Set material glossiness value (recommended values: 0 - 100)
-void SetMaterialNormalDepth(Material *material, float depth);           // Set normal map depth (B component from RGB type map scalar multiplier)
 
 //----------------------------------------------------------------------------------
 // Physics System Functions (engine-module: physics)

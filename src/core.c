@@ -791,7 +791,7 @@ int StorageLoadValue(int position)
     return value;
 }
 
-// Gives the ray trace from mouse position
+// Returns a ray trace from mouse position
 //http://www.songho.ca/opengl/gl_transform.html
 //http://www.songho.ca/opengl/gl_matrix.html
 //http://www.sjbaker.org/steve/omniv/matrices_can_be_your_friends.html
@@ -855,6 +855,34 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     ray.direction = direction;
     
     return ray;
+}
+
+// Returns the screen space position from a 3d world space position
+Vector2 WorldToScreen(Vector3 position, Camera camera)
+{    
+    // Calculate projection matrix (from perspective instead of frustum
+    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    
+    // Calculate view matrix from camera look at (and transpose it)
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    MatrixTranspose(&matView);
+    
+    // Convert world position vector to quaternion
+    Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
+    
+    // Transform world position to view
+    QuaternionTransform(&worldPos, matView);
+    
+    // Transform result to projection (clip space position)
+    QuaternionTransform(&worldPos, matProj);
+    
+    // Calculate normalized device coordinates (inverted y)
+    Vector3 ndcPos = { worldPos.x / worldPos.w, -worldPos.y / worldPos.w, worldPos.z / worldPos.z };
+    
+    // Calculate 2d screen position vector
+    Vector2 screenPosition = { (ndcPos.x + 1.0f) / 2.0f * GetScreenWidth(), (ndcPos.y + 1.0f) / 2.0f * GetScreenHeight() };
+    
+    return screenPosition;
 }
 
 //----------------------------------------------------------------------------------
