@@ -1301,7 +1301,35 @@ void rlglDraw(void)
         glUniform1i(currentShader.mapDiffuseLoc, 0);
     }
 
-    // NOTE: We draw in this order: triangle shapes, textured quads and lines
+    // NOTE: We draw in this order: lines, triangles, quads
+    
+    if (lines.vCounter > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+
+        if (vaoSupported)
+        {
+            glBindVertexArray(vaoLines);
+        }
+        else
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
+            glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(currentShader.vertexLoc);
+
+            if (currentShader.colorLoc != -1)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+            }
+        }
+
+        glDrawArrays(GL_LINES, 0, lines.vCounter);
+
+        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
     if (triangles.vCounter > 0)
     {
@@ -1392,34 +1420,6 @@ void rlglDraw(void)
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures
-    }
-
-    if (lines.vCounter > 0)
-    {
-        glBindTexture(GL_TEXTURE_2D, whiteTexture);
-
-        if (vaoSupported)
-        {
-            glBindVertexArray(vaoLines);
-        }
-        else
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
-            glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(currentShader.vertexLoc);
-
-            if (currentShader.colorLoc != -1)
-            {
-                glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
-                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(currentShader.colorLoc);
-            }
-        }
-
-        glDrawArrays(GL_LINES, 0, lines.vCounter);
-
-        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     if (vaoSupported) glBindVertexArray(0);   // Unbind VAO
