@@ -1296,12 +1296,40 @@ void rlglDraw(void)
     {
         glUseProgram(currentShader.id);
 
-        glUniformMatrix4fv(currentShader.projectionLoc, 1, false, GetMatrixVector(projection));
-        glUniformMatrix4fv(currentShader.modelviewLoc, 1, false, GetMatrixVector(modelview));
+        glUniformMatrix4fv(currentShader.projectionLoc, 1, false, MatrixToFloat(projection));
+        glUniformMatrix4fv(currentShader.modelviewLoc, 1, false, MatrixToFloat(modelview));
         glUniform1i(currentShader.mapDiffuseLoc, 0);
     }
 
-    // NOTE: We draw in this order: triangle shapes, textured quads and lines
+    // NOTE: We draw in this order: lines, triangles, quads
+    
+    if (lines.vCounter > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+
+        if (vaoSupported)
+        {
+            glBindVertexArray(vaoLines);
+        }
+        else
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
+            glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(currentShader.vertexLoc);
+
+            if (currentShader.colorLoc != -1)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+            }
+        }
+
+        glDrawArrays(GL_LINES, 0, lines.vCounter);
+
+        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
     if (triangles.vCounter > 0)
     {
@@ -1392,34 +1420,6 @@ void rlglDraw(void)
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures
-    }
-
-    if (lines.vCounter > 0)
-    {
-        glBindTexture(GL_TEXTURE_2D, whiteTexture);
-
-        if (vaoSupported)
-        {
-            glBindVertexArray(vaoLines);
-        }
-        else
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
-            glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(currentShader.vertexLoc);
-
-            if (currentShader.colorLoc != -1)
-            {
-                glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
-                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(currentShader.colorLoc);
-            }
-        }
-
-        glDrawArrays(GL_LINES, 0, lines.vCounter);
-
-        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     if (vaoSupported) glBindVertexArray(0);   // Unbind VAO
@@ -1524,10 +1524,10 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 
     // NOTE: Drawing in OpenGL 3.3+, matrices are passed to shader
     // TODO: Reduce number of matrices passed to shaders, use only matMVP
-    glUniformMatrix4fv(model.shader.modelLoc, 1, false, GetMatrixVector(matModel));
-    glUniformMatrix4fv(model.shader.viewLoc, 1, false, GetMatrixVector(matView));
-    glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(matProjection));
-    glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(matModelView));
+    glUniformMatrix4fv(model.shader.modelLoc, 1, false, MatrixToFloat(matModel));
+    glUniformMatrix4fv(model.shader.viewLoc, 1, false, MatrixToFloat(matView));
+    glUniformMatrix4fv(model.shader.projectionLoc, 1, false, MatrixToFloat(matProjection));
+    glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, MatrixToFloat(matModelView));
 
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
