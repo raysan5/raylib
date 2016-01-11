@@ -378,22 +378,22 @@ typedef struct Wave {
 
 // Light type
 typedef struct Light {
-    float position[3];
-    float rotation[3];
-    float intensity[1];
-    float ambientColor[3];
-    float diffuseColor[3];
-    float specularColor[3];
-    float specularIntensity[1];
+    Vector3 position;
+    Vector3 direction;
+    float intensity;
+    float specIntensity;
+    Color diffuse;
+    Color ambient;
+    Color specular;
 } Light;
 
 // Material type
 typedef struct Material {
-    float ambientColor[3];
-    float diffuseColor[3];
-    float specularColor[3];
-    float glossiness[1];
-    float normalDepth[1];
+    Color diffuse;
+    Color ambient;
+    Color specular;
+    float glossiness;
+    float normalDepth;
 } Material;
 
 // Texture formats
@@ -535,6 +535,9 @@ float GetFrameTime(void);                                   // Returns time in s
 
 Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
+float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
+float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array (defined in raymath module)
+float *MatrixToVector(Matrix mat);                          // Converts Matrix to float array (defined in raymath module)
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f

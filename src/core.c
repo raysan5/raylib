@@ -519,7 +519,7 @@ void BeginDrawing(void)
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
-    rlMultMatrixf(GetMatrixVector(downscaleView));       // If downscale required, apply it here
+    rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
@@ -533,7 +533,7 @@ void BeginDrawingEx(int blendMode, Shader shader, Matrix transform)
     SetBlendMode(blendMode);
     SetPostproShader(shader);
     
-    rlMultMatrixf(GetMatrixVector(transform));
+    rlMultMatrixf(MatrixToFloat(transform));
 }
 
 // End canvas drawing and Swap Buffers (Double Buffering)
@@ -588,7 +588,7 @@ void Begin3dMode(Camera camera)
 
     // Setup Camera view
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(GetMatrixVector(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
+    rlMultMatrixf(MatrixToFloat(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -628,6 +628,19 @@ float GetFrameTime(void)
     double roundedFrameTime =  round(frameTime*10000)/10000;
 
     return (float)roundedFrameTime;    // Time in seconds to run a frame
+}
+
+// Converts Color to float array and normalizes
+float *ColorToFloat(Color color)
+{
+    static float buffer[4];
+
+    buffer[0] = (float)color.r/255;
+    buffer[1] = (float)color.g/255;
+    buffer[2] = (float)color.b/255;
+    buffer[3] = (float)color.a/255;
+
+    return buffer;
 }
 
 // Returns a Color struct from hexadecimal value

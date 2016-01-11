@@ -79,6 +79,7 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Vector3
 //------------------------------------------------------------------------------------
+float *VectorToFloat(Vector3 vec);                      // Converts Vector3 to float array
 Vector3 VectorAdd(Vector3 v1, Vector3 v2);              // Add two vectors
 Vector3 VectorSubtract(Vector3 v1, Vector3 v2);         // Substract two vectors
 Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2);     // Calculate two vectors cross product
@@ -97,7 +98,7 @@ Vector3 VectorZero(void);                               // Return a Vector3 init
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
 //------------------------------------------------------------------------------------
-float *GetMatrixVector(Matrix mat);                     // Returns an OpenGL-ready vector (glMultMatrixf)
+float *MatrixToFloat(Matrix mat);                       // Converts Matrix to float array
 float MatrixDeterminant(Matrix mat);                    // Compute matrix determinant
 float MatrixTrace(Matrix mat);                          // Returns the trace of the matrix (sum of the values along the diagonal)
 void MatrixTranspose(Matrix *mat);                      // Transposes provided matrix

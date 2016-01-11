@@ -43,6 +43,18 @@
 // Module Functions Definition - Vector3 math
 //----------------------------------------------------------------------------------
 
+// Converts Vector3 to float array
+float *VectorToFloat(Vector3 vec)
+{
+    static float buffer[3];
+
+    buffer[0] = vec.x;
+    buffer[1] = vec.y;
+    buffer[2] = vec.z;
+
+    return buffer;
+}
+
 // Add two vectors
 Vector3 VectorAdd(Vector3 v1, Vector3 v2)
 {
@@ -225,31 +237,32 @@ Vector3 VectorZero(void)
 // Module Functions Definition - Matrix math
 //----------------------------------------------------------------------------------
 
-// Returns an OpenGL-ready vector (glMultMatrixf)
-// NOTE: Returned vector is row-major instead column-major as expected,
-// it means, returned vector is a transposed version of the matrix!
-float *GetMatrixVector(Matrix mat)
+// Converts Matrix to float array
+// NOTE: Returned vector is a transposed version of the Matrix struct, 
+// it should be this way because, despite raymath use OpenGL column-major convention,
+// Matrix struct memory alignment and variables naming are not coherent
+float *MatrixToFloat(Matrix mat)
 {
-    static float vector[16];
+    static float buffer[16];
 
-    vector[0] = mat.m0;
-    vector[1] = mat.m4;
-    vector[2] = mat.m8;
-    vector[3] = mat.m12;
-    vector[4] = mat.m1;
-    vector[5] = mat.m5;
-    vector[6] = mat.m9;
-    vector[7] = mat.m13;
-    vector[8] = mat.m2;
-    vector[9] = mat.m6;
-    vector[10] = mat.m10;
-    vector[11] = mat.m14;
-    vector[12] = mat.m3;
-    vector[13] = mat.m7;
-    vector[14] = mat.m11;
-    vector[15] = mat.m15;
+    buffer[0] = mat.m0;
+    buffer[1] = mat.m4;
+    buffer[2] = mat.m8;
+    buffer[3] = mat.m12;
+    buffer[4] = mat.m1;
+    buffer[5] = mat.m5;
+    buffer[6] = mat.m9;
+    buffer[7] = mat.m13;
+    buffer[8] = mat.m2;
+    buffer[9] = mat.m6;
+    buffer[10] = mat.m10;
+    buffer[11] = mat.m14;
+    buffer[12] = mat.m3;
+    buffer[13] = mat.m7;
+    buffer[14] = mat.m11;
+    buffer[15] = mat.m15;
 
-    return vector;
+    return buffer;
 }
 
 // Compute matrix determinant

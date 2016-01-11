@@ -1296,8 +1296,8 @@ void rlglDraw(void)
     {
         glUseProgram(currentShader.id);
 
-        glUniformMatrix4fv(currentShader.projectionLoc, 1, false, GetMatrixVector(projection));
-        glUniformMatrix4fv(currentShader.modelviewLoc, 1, false, GetMatrixVector(modelview));
+        glUniformMatrix4fv(currentShader.projectionLoc, 1, false, MatrixToFloat(projection));
+        glUniformMatrix4fv(currentShader.modelviewLoc, 1, false, MatrixToFloat(modelview));
         glUniform1i(currentShader.mapDiffuseLoc, 0);
     }
 
@@ -1524,10 +1524,10 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 
     // NOTE: Drawing in OpenGL 3.3+, matrices are passed to shader
     // TODO: Reduce number of matrices passed to shaders, use only matMVP
-    glUniformMatrix4fv(model.shader.modelLoc, 1, false, GetMatrixVector(matModel));
-    glUniformMatrix4fv(model.shader.viewLoc, 1, false, GetMatrixVector(matView));
-    glUniformMatrix4fv(model.shader.projectionLoc, 1, false, GetMatrixVector(matProjection));
-    glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, GetMatrixVector(matModelView));
+    glUniformMatrix4fv(model.shader.modelLoc, 1, false, MatrixToFloat(matModel));
+    glUniformMatrix4fv(model.shader.viewLoc, 1, false, MatrixToFloat(matView));
+    glUniformMatrix4fv(model.shader.projectionLoc, 1, false, MatrixToFloat(matProjection));
+    glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, MatrixToFloat(matModelView));
 
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
