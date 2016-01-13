@@ -21,11 +21,14 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d mode");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera;
+    camera.position = (Vector3){ 0.0, 10.0, 10.0 };
+    camera.target = (Vector3){ 0.0, 0.0, 0.0 };
+    camera.up = (Vector3){ 0.0, 1.0, 0.0 };
 
     Vector3 cubePosition = { 0.0, 0.0, 0.0 };
 
-    //SetTargetFPS(60);   // Set our game to run at 60 frames-per-second, but not now...
+    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -40,12 +43,12 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(WHITE);
+            ClearBackground(RAYWHITE);
 
             Begin3dMode(camera);
 
-                DrawCube(cubePosition, 2, 2, 2, RED);
-                DrawCubeWires(cubePosition, 2, 2, 2, MAROON);
+                DrawCube(cubePosition, 2.0, 2.0, 2.0, RED);
+                DrawCubeWires(cubePosition, 2.0, 2.0, 2.0, MAROON);
 
                 DrawGrid(10.0, 1.0);
 
