@@ -821,10 +821,10 @@ void rlDeleteBuffers(unsigned int id)
 void rlClearColor(byte r, byte g, byte b, byte a)
 {
     // Color values clamp to 0.0f(0) and 1.0f(255)
-    float cr = (float)r / 255;
-    float cg = (float)g / 255;
-    float cb = (float)b / 255;
-    float ca = (float)a / 255;
+    float cr = (float)r/255;
+    float cg = (float)g/255;
+    float cb = (float)b/255;
+    float ca = (float)a/255;
 
     glClearColor(cr, cg, cb, ca);
 }
@@ -1104,12 +1104,12 @@ void rlglInitPostpro(void)
         
         quadData.vertexCount = 6;
         
-        float w = screenWidth;
-        float h = screenHeight;
+        float w = (float)screenWidth;
+        float h = (float)screenHeight;
         
-        float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
-        float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
-        float quadNormals[6*3] = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
+        float quadPositions[6*3] = { w, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, h, 0.0f, 0.0f, h, 0.0f, w, h, 0.0f, w, 0.0f, 0.0f }; 
+        float quadTexcoords[6*2] = { 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f };
+        float quadNormals[6*3] = { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f };
         unsigned char quadColors[6*4] = { 255 };
         
         quadData.vertices = quadPositions;
@@ -1667,7 +1667,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 // NOTE: Using global variables: screenWidth, screenHeight
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {
-    Vector3 result = { 0, 0, 0 };   // Object coordinates
+    Vector3 result = { 0.0f, 0.0f, 0.0f };   // Object coordinates
     
     //GLint viewport[4];
     //glGetIntegerv(GL_VIEWPORT, viewport); // Not available on OpenGL ES 2.0
@@ -1698,11 +1698,11 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
     quat.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
     quat.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
     quat.z = source.z*2.0f - 1.0f;
-    quat.w = 1.0;
+    quat.w = 1.0f;
     
     QuaternionTransform(&quat, modelviewprojection);
 
-    if (quat.w != 0.0)
+    if (quat.w != 0.0f)
     {
         quat.x /= quat.w;
         quat.y /= quat.w;
@@ -2171,7 +2171,7 @@ void *rlglReadTexturePixels(Texture2D texture)
     // Render texture to fbo
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
     
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepthf(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, width, height);
@@ -2189,7 +2189,7 @@ void *rlglReadTexturePixels(Texture2D texture)
     quad.transform = MatrixIdentity();
     quad.shader = simpleShader;
     
-    DrawModel(quad, (Vector3){ 0, 0, 0 }, 1.0f, WHITE);
+    DrawModel(quad, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, WHITE);
     
     pixels = (unsigned char *)malloc(texture.width*texture.height*3*sizeof(unsigned char));
     
@@ -3239,19 +3239,19 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
     int x2, y2;
     pixel prow, pcol;
 
-    int width = srcWidth / 2;
-    int height = srcHeight / 2;
+    int width = srcWidth/2;
+    int height = srcHeight/2;
 
     pixel *mipmap = (pixel *)malloc(width*height*sizeof(pixel));
 
     // Scaling algorithm works perfectly (box-filter)
     for (int y = 0; y < height; y++)
     {
-        y2 = 2 * y;
+        y2 = 2*y;
 
         for (int x = 0; x < width; x++)
         {
-            x2 = 2 * x;
+            x2 = 2*x;
 
             prow.r = (srcData[y2*srcWidth + x2].r + srcData[y2*srcWidth + x2 + 1].r)/2;
             prow.g = (srcData[y2*srcWidth + x2].g + srcData[y2*srcWidth + x2 + 1].g)/2;
