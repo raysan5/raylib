@@ -5,7 +5,7 @@ in vec2 fragTexCoord;
 out vec4 fragColor;
 
 uniform sampler2D texture0;
-uniform vec4 tintColor;
+uniform vec4 fragTintColor;
 
 // NOTE: Add here your custom variables
 
@@ -15,5 +15,5 @@ void main()
     
     // NOTE: Implement here your fragment shader code
     
-    fragColor = texelColor*tintColor;
+    fragColor = texelColor*fragTintColor;
 }

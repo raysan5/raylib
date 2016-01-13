@@ -6,8 +6,8 @@ in vec2 vertexTexCoord;
 in vec3 vertexNormal;
 
 // Projection and model data
-uniform mat4 projectionMatrix;
-uniform mat4 modelviewMatrix;
+uniform mat4 mvpMatrix;
+
 uniform mat4 modelMatrix;
 
 // Attributes to fragment shader

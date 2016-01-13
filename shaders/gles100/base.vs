@@ -6,8 +6,7 @@ attribute vec3 vertexNormal;
 
 varying vec2 fragTexCoord;
 
-uniform mat4 projectionMatrix;
-uniform mat4 modelviewMatrix;
+uniform mat4 mvpMatrix;
 
 // NOTE: Add here your custom variables 
 
@@ -17,5 +16,5 @@ void main()
     
     fragTexCoord = vertexTexCoord;
     
-    gl_Position = projectionMatrix*modelviewMatrix*vec4(vertexPosition, 1.0);
+    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);
 }

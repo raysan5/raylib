@@ -336,8 +336,8 @@ typedef struct Shader {
     int colorLoc;         // Color attibute location point (vertex shader)
 
     // Uniforms
-    int projectionLoc;    // Projection matrix uniform location point (vertex shader)
-    int modelviewLoc;     // ModelView matrix uniform location point (vertex shader)
+    int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
+    
     int modelLoc;         // Model transformation matrix uniform location point (vertex shader)
     int viewLoc;          // View transformation matrix uniform location point (vertex shader)
     int tintColorLoc;     // Color uniform location point (fragment shader)

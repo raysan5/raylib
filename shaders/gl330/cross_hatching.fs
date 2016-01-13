@@ -5,7 +5,7 @@ in vec2 fragTexCoord;
 out vec4 fragColor;
 
 uniform sampler2D texture0;
-uniform vec4 tintColor;
+uniform vec4 fragTintColor;
 
 // NOTE: Add here your custom variables 
 
