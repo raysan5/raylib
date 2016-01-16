@@ -9,13 +9,13 @@ uniform vec4 fragTintColor;
 
 // NOTE: Add here your custom variables
 
-const float renderWidth = 800;      // HARDCODED for example!
-const float renderHeight = 480;     // Use uniforms instead...
+const float renderWidth = 800.0;      // HARDCODED for example!
+const float renderHeight = 480.0;     // Use uniforms instead...
 
 float radius = 250.0;
 float angle = 0.8;
 
-uniform vec2 center = vec2(200, 200);
+uniform vec2 center = vec2(200.0, 200.0);
 
 void main (void)
 {

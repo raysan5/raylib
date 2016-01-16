@@ -23,7 +23,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
     
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
     // Generates some random columns
     float heights[MAX_COLUMNS];
@@ -37,7 +37,7 @@ int main()
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
     
-    Vector3 playerPosition = { 4, 2, 4 };       // Define player position
+    Vector3 playerPosition = { 4.0f, 2.0f, 4.0f };       // Define player position
     
     SetCameraMode(CAMERA_FIRST_PERSON);         // Set a first person camera mode
 
@@ -60,16 +60,16 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawPlane((Vector3){ 0, 0, 0 }, (Vector2){ 32, 32 }, LIGHTGRAY); // Draw ground
-                DrawCube((Vector3){ -16, 2.5, 0 }, 1, 5, 32, BLUE);     // Draw a blue wall
-                DrawCube((Vector3){ 16, 2.5, 0 }, 1, 5, 32, LIME);      // Draw a green wall
-                DrawCube((Vector3){ 0, 2.5, 16 }, 32, 5, 1, GOLD);      // Draw a yellow wall
+                DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ 32.0f, 32.0f }, LIGHTGRAY); // Draw ground
+                DrawCube((Vector3){ -16.0f, 2.5f, 0.0f }, 1.0f, 5.0f, 32.0f, BLUE);     // Draw a blue wall
+                DrawCube((Vector3){ 16.0f, 2.5f, 0.0f }, 1.0f, 5.0f, 32.0f, LIME);      // Draw a green wall
+                DrawCube((Vector3){ 0.0f, 2.5f, 16.0f }, 32.0f, 5.0f, 1.0f, GOLD);      // Draw a yellow wall
             
                 // Draw some cubes around
                 for (int i = 0; i < MAX_COLUMNS; i++)
                 {
-                    DrawCube(positions[i], 2, heights[i], 2, colors[i]);
-                    DrawCubeWires(positions[i], 2, heights[i], 2, MAROON);
+                    DrawCube(positions[i], 2.0f, heights[i], 2.0f, colors[i]);
+                    DrawCubeWires(positions[i], 2.0f, heights[i], 2.0f, MAROON);
                 }
 
             End3dMode();

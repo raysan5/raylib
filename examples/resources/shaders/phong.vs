@@ -7,7 +7,6 @@ in vec3 vertexNormal;
 
 // Projection and model data
 uniform mat4 mvpMatrix;
-
 uniform mat4 modelMatrix;
 
 // Attributes to fragment shader
@@ -21,8 +20,8 @@ void main()
     
     // Calculate view vector normal from model
     mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
-    fragNormal = normalize(normalMatrix * vertexNormal);
+    fragNormal = normalize(normalMatrix*vertexNormal);
     
     // Calculate final vertex position
-    gl_Position = projectionMatrix * modelviewMatrix * vec4(vertexPosition, 1.0);
+    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);
 }

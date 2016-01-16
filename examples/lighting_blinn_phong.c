@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [lighting] example - Basic Phong lighting
+*   raylib [shaders] example - Blinn-Phong lighting
 *
 *   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -22,14 +22,14 @@ int main()
     const int screenHeight = 450;
     
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [lighting] example - blinn phong lighting");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - blinn-phong lighting");
     SetTargetFPS(60);
     
     // Camera initialization
-    Camera camera = {{ 10.0, 8.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 8.0f, 8.0f, 8.0f }, { 0.0f, 3.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
     
     // Model initialization
-    Vector3 position = { 0.0, 0.0, 0.0 };
+    Vector3 position = { 0.0f, 0.0f, 0.0f };
     Model model = LoadModel("resources/model/dwarf.obj");
     Shader shader = LoadShader("resources/shaders/phong.vs", "resources/shaders/phong.fs");
     SetModelShader(&model, shader);
@@ -54,7 +54,7 @@ int main()
     Material matBlinn;
     
     // Light initialization
-    light.position = (Vector3){ 5.0f, 1.0f, 1.0f };
+    light.position = (Vector3){ 4.0f, 2.0f, 0.0f };
     light.direction = (Vector3){ 5.0f, 1.0f, 1.0f };
     light.intensity = 1.0f;
     light.diffuse = WHITE;
@@ -129,7 +129,9 @@ int main()
             Begin3dMode(camera);
                 
                 DrawModel(model, position, 4.0f, matBlinn.diffuse);
-                DrawSphere(light.position, 1.0f, YELLOW);
+                DrawSphere(light.position, 0.5f, GOLD);
+                
+                DrawGrid(20, 1.0f);
                 
             End3dMode();
             

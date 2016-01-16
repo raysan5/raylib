@@ -21,9 +21,9 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
-    Vector3 cubePosition = { 0.0, 0.0, 0.0 };
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
     Vector2 cubeScreenPosition;
     
@@ -53,10 +53,10 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawCube(cubePosition, 2, 2, 2, RED);
-                DrawCubeWires(cubePosition, 2, 2, 2, MAROON);
+                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
-                DrawGrid(10.0, 1.0);
+                DrawGrid(10, 1.0f);
 
             End3dMode();
             

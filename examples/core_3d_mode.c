@@ -22,11 +22,11 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera;
-    camera.position = (Vector3){ 0.0, 10.0, 10.0 };
-    camera.target = (Vector3){ 0.0, 0.0, 0.0 };
-    camera.up = (Vector3){ 0.0, 1.0, 0.0 };
+    camera.position = (Vector3){ 0.0f, 10.0f, 10.0f };
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
 
-    Vector3 cubePosition = { 0.0, 0.0, 0.0 };
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -47,10 +47,10 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawCube(cubePosition, 2.0, 2.0, 2.0, RED);
-                DrawCubeWires(cubePosition, 2.0, 2.0, 2.0, MAROON);
+                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
-                DrawGrid(10.0, 1.0);
+                DrawGrid(10, 1.0f);
 
             End3dMode();
 
