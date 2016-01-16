@@ -9,10 +9,10 @@ uniform vec4 fragTintColor;
 
 // NOTE: Add here your custom variables
 
-const float renderWidth = 1280;
-const float renderHeight = 720;
+const float renderWidth = 1280.0;
+const float renderHeight = 720.0;
 
-float stitchingSize = 6.0f;
+float stitchingSize = 6.0;
 
 uniform int invert = 0;
 
@@ -35,11 +35,11 @@ vec4 PostFX(sampler2D tex, vec2 uv)
     if ((remX == remY) || (((int(cPos.x) - int(blPos.x)) == (int(blPos.y) - int(cPos.y)))))
     {
         if (invert == 1) c = vec4(0.2, 0.15, 0.05, 1.0);
-        else c = texture2D(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
+        else c = texture(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
     }
     else
     {
-        if (invert == 1) c = texture2D(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
+        if (invert == 1) c = texture(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
         else c = vec4(0.0, 0.0, 0.0, 1.0);
     }
     

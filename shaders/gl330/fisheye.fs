@@ -13,7 +13,7 @@ const float PI = 3.1415926535;
 
 void main()
 {
-    float aperture = 178.0f;
+    float aperture = 178.0;
     float apertureHalf = 0.5 * aperture * (PI / 180.0);
     float maxFactor = sin(apertureHalf);
 
@@ -36,5 +36,5 @@ void main()
         uv = fragTexCoord.xy;
     }
 
-    fragColor = texture2D(texture0, uv);
+    fragColor = texture(texture0, uv);
 }

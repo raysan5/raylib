@@ -9,8 +9,8 @@ uniform vec4 fragTintColor;
 
 // NOTE: Add here your custom variables
 
-float offset = 0;
-float frequency = 720/3.0;
+float offset = 0.0;
+float frequency = 720.0/3.0;
 
 uniform float time;
 
@@ -21,7 +21,7 @@ void main (void)
     float tval = 0; //time
     vec2 uv = 0.5 + (fragTexCoord - 0.5)*(0.9 + 0.01*sin(0.5*tval));
 
-    vec4 color = texture2D(texture0, fragTexCoord);
+    vec4 color = texture(texture0, fragTexCoord);
 
     color = clamp(color*0.5 + 0.5*color*color*1.2, 0.0, 1.0);
     color *= 0.5 + 0.5*16.0*uv.x*uv.y*(1.0 - uv.x)*(1.0 - uv.y);
@@ -35,7 +35,7 @@ void main (void)
     float globalPos = (fragTexCoord.y + offset) * frequency;
     float wavePos = cos((fract(globalPos) - 0.5)*3.14);
     
-    vec4 color = texture2D(texture0, fragTexCoord);
+    vec4 color = texture(texture0, fragTexCoord);
 
-    fragColor = mix(vec4(0, 0.3, 0, 0), color, wavePos);
+    fragColor = mix(vec4(0.0, 0.3, 0.0, 0.0), color, wavePos);
 }

@@ -11,21 +11,21 @@ uniform vec4 fragTintColor;
 
 void main()
 {
-    vec4 color = texture2D(texture0, fragTexCoord);
+    vec4 color = texture(texture0, fragTexCoord);
 
-    color += texture2D(texture0, fragTexCoord + 0.001);
-    color += texture2D(texture0, fragTexCoord + 0.003);
-    color += texture2D(texture0, fragTexCoord + 0.005);
-    color += texture2D(texture0, fragTexCoord + 0.007);
-    color += texture2D(texture0, fragTexCoord + 0.009);
-    color += texture2D(texture0, fragTexCoord + 0.011);
+    color += texture(texture0, fragTexCoord + 0.001);
+    color += texture(texture0, fragTexCoord + 0.003);
+    color += texture(texture0, fragTexCoord + 0.005);
+    color += texture(texture0, fragTexCoord + 0.007);
+    color += texture(texture0, fragTexCoord + 0.009);
+    color += texture(texture0, fragTexCoord + 0.011);
 
-    color += texture2D(texture0, fragTexCoord - 0.001);
-    color += texture2D(texture0, fragTexCoord - 0.003);
-    color += texture2D(texture0, fragTexCoord - 0.005);
-    color += texture2D(texture0, fragTexCoord - 0.007);
-    color += texture2D(texture0, fragTexCoord - 0.009);
-    color += texture2D(texture0, fragTexCoord - 0.011);
+    color += texture(texture0, fragTexCoord - 0.001);
+    color += texture(texture0, fragTexCoord - 0.003);
+    color += texture(texture0, fragTexCoord - 0.005);
+    color += texture(texture0, fragTexCoord - 0.007);
+    color += texture(texture0, fragTexCoord - 0.009);
+    color += texture(texture0, fragTexCoord - 0.011);
 
     color.rgb = vec3((color.r + color.g + color.b)/3.0);
     color = color/9.5;
