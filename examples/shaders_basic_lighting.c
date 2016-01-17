@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Blinn-Phong lighting
+*   raylib [shaders] example - Basic lighting: Blinn-Phong
 *
 *   This example has been created using raylib 1.3 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -22,8 +22,7 @@ int main()
     const int screenHeight = 450;
     
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - blinn-phong lighting");
-    SetTargetFPS(60);
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic lighting");
     
     // Camera initialization
     Camera camera = {{ 8.0f, 8.0f, 8.0f }, { 0.0f, 3.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
@@ -72,6 +71,8 @@ int main()
     SetCameraMode(CAMERA_FREE);             // Set camera mode
     SetCameraPosition(camera.position);     // Set internal camera position to match our camera position
     SetCameraTarget(camera.target);         // Set internal camera target to match our camera target
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -79,9 +80,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        
-        // Update camera position
-        UpdateCamera(&camera);
+        UpdateCamera(&camera);      // Update camera position
         
         // Glossiness input control
         if(IsKeyDown(KEY_UP)) matBlinn.glossiness += SHININESS_SPEED;
