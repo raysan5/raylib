@@ -308,17 +308,27 @@ typedef struct Camera {
     Vector3 up;
 } Camera;
 
+// Bounding box type
+typedef struct BoundingBox {
+    Vector3 min;
+    Vector3 max;
+} BoundingBox;
+
 // Vertex data definning a mesh
-// NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
-typedef struct VertexData {
-    int vertexCount;
-    float *vertices;            // 3 components per vertex
-    float *texcoords;           // 2 components per vertex
-    float *normals;             // 3 components per vertex
-    unsigned char *colors;      // 4 components per vertex
-    unsigned int vaoId;
-    unsigned int vboId[4];
-} VertexData;
+typedef struct Mesh {
+    int vertexCount;            // num vertices
+    float *vertices;            // vertex position (XYZ - 3 components per vertex)
+    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
+    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
+    float *normals;             // vertex normals (XYZ - 3 components per vertex)
+    float *tangents;            // vertex tangents (XYZ - 3 components per vertex)
+    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex)
+    
+    BoundingBox bounds;         // mesh limits defined by min and max points
+    
+    unsigned int vaoId;         // OpenGL Vertex Array Object id
+    unsigned int vboId[6];      // OpenGL Vertex Buffer Objects id (6 types of vertex data)
+} Mesh;
 
 // Shader type (generic shader)
 typedef struct Shader {
@@ -349,7 +359,7 @@ typedef struct Shader {
 
 // 3d Model type
 typedef struct Model {
-    VertexData mesh;
+    Mesh mesh;
     Matrix transform;
     Texture2D texture;    // Only for OpenGL 1.1, on newer versions this should be in the shader
     Shader shader;
@@ -742,7 +752,7 @@ void DrawGizmo(Vector3 position);                                               
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
-Model LoadModelEx(VertexData data);                                                                // Load a 3d model (from vertex data)
+Model LoadModelEx(Mesh data);                                                                      // Load a 3d model (from vertex data)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)

@@ -1100,9 +1100,9 @@ void rlglInitPostpro(void)
     if (postproFbo.id > 0)
     {
         // Create a simple quad model to render fbo texture
-        VertexData quadData;
+        Mesh quad;
         
-        quadData.vertexCount = 6;
+        quad.vertexCount = 6;
         
         float w = (float)screenWidth;
         float h = (float)screenHeight;
@@ -1112,12 +1112,12 @@ void rlglInitPostpro(void)
         float quadNormals[6*3] = { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f };
         unsigned char quadColors[6*4] = { 255 };
         
-        quadData.vertices = quadPositions;
-        quadData.texcoords = quadTexcoords;
-        quadData.normals = quadNormals;
-        quadData.colors = quadColors;
+        quad.vertices = quadPositions;
+        quad.texcoords = quadTexcoords;
+        quad.normals = quadNormals;
+        quad.colors = quadColors;
         
-        postproQuad = rlglLoadModel(quadData);
+        postproQuad = rlglLoadModel(quad);
         
         // NOTE: postproFbo.colorTextureId must be assigned to postproQuad model shader
     }
@@ -1982,7 +1982,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 }
 
 // Load vertex data into a VAO (if supported) and VBO
-Model rlglLoadModel(VertexData mesh)
+Model rlglLoadModel(Mesh mesh)
 {
     Model model;
 
