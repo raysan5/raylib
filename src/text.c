@@ -269,14 +269,14 @@ SpriteFont LoadSpriteFont(const char *fileName)
             spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
             spriteFont.size = spriteFont.charRecs[0].height;
             
-            defaultFont.charOffsets = (Vector2 *)malloc(defaultFont.numChars*sizeof(Vector2));
-            defaultFont.charAdvanceX = (int *)malloc(defaultFont.numChars*sizeof(int));
+            spriteFont.charOffsets = (Vector2 *)malloc(spriteFont.numChars*sizeof(Vector2));
+            spriteFont.charAdvanceX = (int *)malloc(spriteFont.numChars*sizeof(int));
             
-            for (int i = 0; i < defaultFont.numChars; i++)
+            for (int i = 0; i < spriteFont.numChars; i++)
             {
                 // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
-                defaultFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
-                defaultFont.charAdvanceX[i] = 0;
+                spriteFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
+                spriteFont.charAdvanceX[i] = 0;
             }
         }
         else
@@ -308,7 +308,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
         free(spriteFont.charRecs);
         free(spriteFont.charOffsets);
         free(spriteFont.charAdvanceX);
-            
+
         TraceLog(INFO, "Unloaded sprite font data");
     }
 }
@@ -627,7 +627,7 @@ static SpriteFont LoadRBMF(const char *fileName)
         char charsDataType;     // Char data type provided
     } rbmfInfoHeader;
 
-    SpriteFont spriteFont;
+    SpriteFont spriteFont = { 0 };
 
     rbmfInfoHeader rbmfHeader;
     unsigned int *rbmfFileData = NULL;
@@ -695,6 +695,8 @@ static SpriteFont LoadRBMF(const char *fileName)
         // Get characters data using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
         spriteFont.charValues = (int *)malloc(spriteFont.numChars*sizeof(int)); 
         spriteFont.charRecs = (Rectangle *)malloc(spriteFont.numChars*sizeof(Rectangle));
+        spriteFont.charOffsets = (Vector2 *)malloc(spriteFont.numChars*sizeof(Vector2));
+        spriteFont.charAdvanceX = (int *)malloc(spriteFont.numChars*sizeof(int));
 
         int currentLine = 0;
         int currentPosX = charsDivisor;
@@ -708,6 +710,10 @@ static SpriteFont LoadRBMF(const char *fileName)
             spriteFont.charRecs[i].y = charsDivisor + currentLine * ((int)rbmfHeader.charHeight + charsDivisor);
             spriteFont.charRecs[i].width = (int)rbmfCharWidthData[i];
             spriteFont.charRecs[i].height = (int)rbmfHeader.charHeight;
+            
+            // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
+            spriteFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
+            spriteFont.charAdvanceX[i] = 0;
 
             testPosX += (spriteFont.charRecs[i].width + charsDivisor);
 
