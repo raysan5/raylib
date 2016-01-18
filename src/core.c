@@ -1963,7 +1963,7 @@ static void PollInputEvents(void)
 
         int key = keysBuffer[i];
 
-        if (keyboardMode == 2)
+        if (keyboardMode == 2)  // scancodes
         {
             // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
             // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
@@ -1998,9 +1998,13 @@ static void PollInputEvents(void)
             // Detect ESC to stop program
             if ((key == 0x1b) && (numKeysBuffer == 1)) windowShouldClose = true;
         }
-        else if (keyboardMode == 1)
+        else if (keyboardMode == 1)     // keycodes (K_MEDIUMRAW mode)
         {
             TraceLog(DEBUG, "Pressed key (keycode): 0x%02x", key);
+            
+            // NOTE: Each key is 7-bits (high bit in the byte is 0 for down, 1 for up)
+            
+            // TODO: Review (or rewrite) this code... not clear... replace by events!
 
             int asciiKey = -1;
 
