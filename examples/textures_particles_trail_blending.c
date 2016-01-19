@@ -41,12 +41,12 @@ int main()
         mouseTail[i].position = (Vector2){ 0, 0 };
         mouseTail[i].color = (Color){ GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 };
         mouseTail[i].alpha = 1.0f;
-        mouseTail[i].size = (float)GetRandomValue(1, 30)/20;
+        mouseTail[i].size = (float)GetRandomValue(1, 30)/20.0f;
         mouseTail[i].rotation = GetRandomValue(0, 360);
         mouseTail[i].active = false;
     }
     
-    float gravity = 3;
+    float gravity = 3.0f;
 
     Texture2D smoke = LoadTexture("resources/smoke.png");
     
@@ -85,7 +85,7 @@ int main()
                 
                 if (mouseTail[i].alpha <= 0.0f) mouseTail[i].active = false;
                 
-                mouseTail[i].rotation += 5;
+                mouseTail[i].rotation += 5.0f;
             }
         }
         

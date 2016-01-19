@@ -21,11 +21,14 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d picking");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
-    Vector3 cubePosition = { 0.0, 1.0, 0.0 };
+    Vector3 cubePosition = { 0.0f, 1.0f, 0.0f };
+    Vector3 cubeSize = { 2.0f, 2.0f, 2.0f };
     
     Ray ray;        // Picking line ray
+    
+    bool collision = false;
     
     SetCameraMode(CAMERA_FREE);         // Set a free camera mode
     SetCameraPosition(camera.position); // Set internal camera position to match our camera position
@@ -45,7 +48,10 @@ int main()
             // NOTE: This function is NOT WORKING properly!
             ray = GetMouseRay(GetMousePosition(), camera);
             
-            // TODO: Check collision between ray and box
+            // Check collision between ray and box
+            collision = CheckCollisionRayBox(ray,
+                (Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
+                (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 });
         }
         //----------------------------------------------------------------------------------
 
@@ -57,16 +63,18 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawCube(cubePosition, 2, 2, 2, GRAY);
-                DrawCubeWires(cubePosition, 2, 2, 2, DARKGRAY);
-
-                DrawGrid(10.0, 1.0);
+                DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, GRAY);
+                DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, DARKGRAY);
                 
                 DrawRay(ray, MAROON);
+                
+                DrawGrid(10, 1.0f);
 
             End3dMode();
             
             DrawText("Try selecting the box with mouse!", 240, 10, 20, GRAY);
+            
+            if(collision) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, screenHeight * 0.1f, 30, GREEN);
 
             DrawFPS(10, 10);
 

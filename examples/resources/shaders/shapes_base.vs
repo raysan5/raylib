@@ -4,16 +4,15 @@ attribute vec3 vertexPosition;
 attribute vec2 vertexTexCoord;
 attribute vec4 vertexColor;
 
-uniform mat4 projectionMatrix;
-uniform mat4 modelviewMatrix;
+uniform mat4 mvpMatrix;
 
 varying vec2 fragTexCoord;
-varying vec4 fragColor;
+varying vec4 fragTintColor;
 
 void main()
 {
     fragTexCoord = vertexTexCoord;
-    fragColor = vertexColor;
+    fragTintColor = vertexColor;
     
-    gl_Position = projectionMatrix*modelviewMatrix*vec4(vertexPosition, 1.0);
+    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);
 }

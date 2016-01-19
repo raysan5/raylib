@@ -21,10 +21,10 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - drawing billboards");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 5.0, 4.0, 5.0 }, { 0.0, 2.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 5.0f, 4.0f, 5.0f }, { 0.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
     Texture2D bill = LoadTexture("resources/billboard.png");     // Our texture billboard
-    Vector3 billPosition = { 0.0, 2.0, 0.0 };                   // Position where draw billboard
+    Vector3 billPosition = { 0.0f, 2.0f, 0.0f };                 // Position where draw billboard
     
     SetCameraMode(CAMERA_ORBITAL);      // Set an orbital camera mode
     SetCameraPosition(camera.position); // Set internal camera position to match our camera position
@@ -48,10 +48,10 @@ int main()
             ClearBackground(RAYWHITE);
 
             Begin3dMode(camera);
-
+            
                 DrawBillboard(camera, bill, billPosition, 2.0f, WHITE);
-
-                DrawGrid(10.0, 1.0);        // Draw a grid
+                
+                DrawGrid(10, 1.0f);        // Draw a grid
 
             End3dMode();
 

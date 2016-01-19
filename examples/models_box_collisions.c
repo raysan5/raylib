@@ -21,16 +21,16 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - box collisions");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
     
-    Vector3 playerPosition = { 0, 1, 2 };
-    Vector3 playerSize = { 1, 2, 1 };
+    Vector3 playerPosition = { 0.0f, 1.0f, 2.0f };
+    Vector3 playerSize = { 1.0f, 2.0f, 1.0f };
     Color playerColor = GREEN;
     
-    Vector3 enemyBoxPos = { -4, 1, 0 };
-    Vector3 enemyBoxSize = { 2, 2, 2 };
+    Vector3 enemyBoxPos = { -4.0f, 1.0f, 0.0f };
+    Vector3 enemyBoxSize = { 2.0f, 2.0f, 2.0f };
     
-    Vector3 enemySpherePos = { 4, 0, 0 };
+    Vector3 enemySpherePos = { 4.0f, 0.0f, 0.0f };
     float enemySphereSize = 1.5f;
     
     bool collision = false;
@@ -98,7 +98,7 @@ int main()
                 // Draw player
                 DrawCubeV(playerPosition, playerSize, playerColor);
 
-                DrawGrid(10.0, 1.0);        // Draw a grid
+                DrawGrid(10, 1.0f);        // Draw a grid
 
             End3dMode();
             

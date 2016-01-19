@@ -30,13 +30,13 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing shader");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 3.0, 3.0, 3.0 }, { 0.0, 1.5, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
     
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
     SetModelTexture(&dwarf, texture);                                       // Bind texture to model
 
-    Vector3 position = { 0.0, 0.0, 0.0 };                                   // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
     
     Shader shader = LoadShader("resources/shaders/base.vs", 
                                "resources/shaders/bloom.fs");               // Load postpro shader
@@ -69,7 +69,7 @@ int main()
 
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10.0, 1.0);     // Draw a grid
+                DrawGrid(10, 1.0f);     // Draw a grid
 
             End3dMode();
             

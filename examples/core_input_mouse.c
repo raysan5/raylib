@@ -20,8 +20,9 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - mouse input");
 
-    int mouseX, mouseY;
-    Vector2 ballPosition = { -100.0, -100.0 };
+    Vector2 ballPosition = { -100.0f, -100.0f };
+    
+    SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
 
     // Main game loop
@@ -31,11 +32,7 @@ int main()
         //----------------------------------------------------------------------------------
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
-            mouseX = GetMouseX();
-            mouseY = GetMouseY();
-
-            ballPosition.x = (float)mouseX;
-            ballPosition.y = (float)mouseY;
+            ballPosition = GetMousePosition();
         }
         //----------------------------------------------------------------------------------
 

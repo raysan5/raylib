@@ -20,7 +20,7 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - keyboard input");
 
-    Vector2 ballPosition = { screenWidth/2, screenHeight/2 };
+    Vector2 ballPosition = { (float)screenWidth/2, (float)screenHeight/2 };
 
     SetTargetFPS(60);       // Set target frames-per-second
     //--------------------------------------------------------------------------------------
@@ -30,10 +30,10 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyDown(KEY_RIGHT)) ballPosition.x += 0.8;
-        if (IsKeyDown(KEY_LEFT)) ballPosition.x -= 0.8;
-        if (IsKeyDown(KEY_UP)) ballPosition.y -= 0.8;
-        if (IsKeyDown(KEY_DOWN)) ballPosition.y += 0.8;
+        if (IsKeyDown(KEY_RIGHT)) ballPosition.x += 0.8f;
+        if (IsKeyDown(KEY_LEFT)) ballPosition.x -= 0.8f;
+        if (IsKeyDown(KEY_UP)) ballPosition.y -= 0.8f;
+        if (IsKeyDown(KEY_DOWN)) ballPosition.y += 0.8f;
         //----------------------------------------------------------------------------------
 
         // Draw

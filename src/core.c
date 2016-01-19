@@ -66,7 +66,7 @@
     #include <jni.h>                        // Java native interface
     #include <android/sensor.h>             // Android sensors functions
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
-    //#include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
+    #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
     #include <EGL/egl.h>        // Khronos EGL library - Native platform display device control functions
     #include <GLES2/gl2.h>      // Khronos OpenGL ES 2.0 library
@@ -103,7 +103,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_TOUCH_POINTS 256
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -121,7 +120,10 @@ static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;
 static bool windowReady = false;                // Used to detect display initialization
-
+static bool appEnabled = true;                  // Used to detec if app is active
+static bool contextRebindRequired = false;      // Used to know context rebind required
+static int previousButtonState[128] = { 1 };    // Required to check if button pressed/released once
+static int currentButtonState[128] = { 1 };     // Required to check if button pressed/released once
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
@@ -149,6 +151,7 @@ static int gamepadStream = -1;                  // Gamepad device file descripto
 static EGLDisplay display;          // Native display device (physical screen connection)
 static EGLSurface surface;          // Surface to draw on, framebuffers (connected to context)
 static EGLContext context;          // Graphic context, mode in which drawing can be done
+static EGLConfig config;            // Graphic config
 static uint64_t baseTime;                   // Base time measure for hi-res timer
 static bool windowShouldClose = false;      // Flag to set window for closing
 #endif
@@ -254,10 +257,12 @@ static void TakeScreenshot(void);                                               
 
 #if defined(PLATFORM_ANDROID)
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
+static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);          // Process Android inputs
 #endif
 
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
+static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 #endif
 
 //----------------------------------------------------------------------------------
@@ -267,7 +272,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(INFO, "Initializing raylib (v1.3.0)");
+    TraceLog(INFO, "Initializing raylib (v1.4.0)");
 
     // Store window title (could be useful...)
     windowTitle = title;
@@ -293,13 +298,19 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_WEB)
-    InitGesturesSystem();
-    
     emscripten_set_fullscreenchange_callback(0, 0, 1, EmscriptenFullscreenChangeCallback);
+
+    // NOTE: Some code examples
+    //emscripten_set_touchstart_callback(0, NULL, 1, Emscripten_HandleTouch);
+    //emscripten_set_touchend_callback("#canvas", data, 0, Emscripten_HandleTouch);
+    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
 #endif
 
-    mousePosition.x = screenWidth/2;
-    mousePosition.y = screenHeight/2;
+    mousePosition.x = (float)screenWidth/2.0f;
+    mousePosition.y = (float)screenHeight/2.0f;
 
     // raylib logo appearing animation (if enabled)
     if (showLogo)
@@ -313,7 +324,7 @@ void InitWindow(int width, int height, const char *title)
 // Android activity initialization
 void InitWindow(int width, int height, struct android_app *state)
 {
-    TraceLog(INFO, "Initializing raylib (v1.3.0)");
+    TraceLog(INFO, "Initializing raylib (v1.4.0)");
 
     app_dummy();
 
@@ -350,26 +361,30 @@ void InitWindow(int width, int height, struct android_app *state)
 
     //state->userData = &engine;
     app->onAppCmd = AndroidCommandCallback;
+    app->onInputEvent = AndroidInputCallback;
     
-    //InitGesturesSystem(app);   // NOTE: Must be called by user
-
     InitAssetManager(app->activity->assetManager);
-    
-    InitGesturesSystem(app);
 
     TraceLog(INFO, "Android app initialized successfully");
 
+    // Init button states values (default up)
+    for(int i = 0; i < 128; i++)
+    {
+        currentButtonState[i] = 1;
+        previousButtonState[i] = 1;
+    }
+
+    // Wait for window to be initialized (display and context)
     while (!windowReady)
     {
-        // Wait for window to be initialized (display and context)
         // Process events loop
         while ((ident = ALooper_pollAll(0, NULL, &events,(void**)&source)) >= 0)
         {
             // Process this event
             if (source != NULL) source->process(app, source);
 
-            // Check if we are exiting
-            if (app->destroyRequested != 0) windowShouldClose = true;
+            // NOTE: Never close window, native activity is controlled by the system!
+            //if (app->destroyRequested != 0) windowShouldClose = true;
         }
     }
 }
@@ -504,10 +519,21 @@ void BeginDrawing(void)
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
-    rlMultMatrixf(GetMatrixVector(downscaleView));       // If downscale required, apply it here
+    rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
+}
+
+// Setup drawing canvas with extended parameters
+void BeginDrawingEx(int blendMode, Shader shader, Matrix transform)
+{
+    BeginDrawing();
+    
+    SetBlendMode(blendMode);
+    SetPostproShader(shader);
+    
+    rlMultMatrixf(MatrixToFloat(transform));
 }
 
 // End canvas drawing and Swap Buffers (Double Buffering)
@@ -551,7 +577,7 @@ void Begin3dMode(Camera camera)
 
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.1f*tan(45.0f*PI / 360.0f);
+    double top = 0.1f*tan(45.0f*PI/360.0f);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
@@ -561,8 +587,8 @@ void Begin3dMode(Camera camera)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     // Setup Camera view
-    Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(GetMatrixVector(view));      // Multiply MODELVIEW matrix by view matrix (camera)
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    rlMultMatrixf(MatrixToFloat(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -582,7 +608,7 @@ void End3dMode(void)
 // Set target FPS for the game
 void SetTargetFPS(int fps)
 {
-    targetTime = 1 / (double)fps;
+    targetTime = 1.0/(double)fps;
 
     TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
 }
@@ -599,9 +625,22 @@ float GetFrameTime(void)
     // As we are operate quite a lot with frameTime, 
     // it could be no stable, so we round it before passing it around
     // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime =  round(frameTime*10000)/10000;
+    double roundedFrameTime =  round(frameTime*10000)/10000.0;
 
     return (float)roundedFrameTime;    // Time in seconds to run a frame
+}
+
+// Converts Color to float array and normalizes
+float *ColorToFloat(Color color)
+{
+    static float buffer[4];
+
+    buffer[0] = (float)color.r/255;
+    buffer[1] = (float)color.g/255;
+    buffer[2] = (float)color.b/255;
+    buffer[3] = (float)color.a/255;
+
+    return buffer;
 }
 
 // Returns a Color struct from hexadecimal value
@@ -691,44 +730,159 @@ void ClearDroppedFiles(void)
 }
 #endif
 
-// TODO: Gives the ray trace from mouse position
+// Storage save integer value (to defined position)
+// NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
+void StorageSaveValue(int position, int value)
+{
+    FILE *storageFile = NULL;
+
+    // Try open existing file to append data
+    storageFile = fopen("storage.data", "rb+");      
+
+    // If file doesn't exist, create a new storage data file
+    if (!storageFile) storageFile = fopen("storage.data", "wb");
+
+    if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
+    else
+    {
+        // Get file size
+        fseek(storageFile, 0, SEEK_END);
+        int fileSize = ftell(storageFile);  // Size in bytes
+        fseek(storageFile, 0, SEEK_SET);
+        
+        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
+        else
+        {
+            fseek(storageFile, (position*4), SEEK_SET);
+            fwrite(&value, 1, 4, storageFile);
+        }
+        
+        fclose(storageFile);
+    }
+}
+
+// Storage load integer value (from defined position)
+// NOTE: If requested position could not be found, value 0 is returned
+int StorageLoadValue(int position)
+{
+    int value = 0;
+    
+    // Try open existing file to append data
+    FILE *storageFile = fopen("storage.data", "rb");      
+
+    if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
+    else
+    {
+        // Get file size
+        fseek(storageFile, 0, SEEK_END);
+        int fileSize = ftell(storageFile);  // Size in bytes
+        rewind(storageFile);
+        
+        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
+        else
+        {
+            fseek(storageFile, (position*4), SEEK_SET);
+            fread(&value, 1, 4, storageFile);
+        }
+        
+        fclose(storageFile);
+    }
+    
+    return value;
+}
+
+// Returns a ray trace from mouse position
+//http://www.songho.ca/opengl/gl_transform.html
+//http://www.songho.ca/opengl/gl_matrix.html
+//http://www.sjbaker.org/steve/omniv/matrices_can_be_your_friends.html
+//https://www.opengl.org/archives/resources/faq/technical/transformations.htm
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 {
+    // Tutorial used: https://mkonrad.net/2014/08/07/simple-opengl-object-picking-in-3d.html
+    // Similar to http://antongerdelan.net, the problem is maybe in MatrixPerspective vs MatrixFrustum
+    // or matrix order (transpose it or not... that's the question)
+    
     Ray ray;
-
-    Matrix proj = MatrixIdentity();
-    Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
-
-    // Calculate projection matrix for the camera
-    float aspect = (float)GetScreenWidth()/(float)GetScreenHeight();
-    double top = 0.1f*tanf(45.0f*PI/360.0f);
-    double right = top*aspect;
-
-    // NOTE: zNear and zFar values are important for depth
-    proj = MatrixFrustum(-right, right, -top, top, 0.01f, 1000.0f);
-    MatrixTranspose(&proj);
-
-    // NOTE: Our screen origin is top-left instead of bottom-left: transform required!
-    float invertedMouseY = (float)GetScreenHeight() - mousePosition.y;
-
-    // NOTE: Do I really need to get z value from depth buffer?
-    //float z;
-    //glReadPixels(mousePosition.x, mousePosition.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
-    //http://www.bfilipek.com/2012/06/select-mouse-opengl.html
-
-    Vector3 nearPoint = { mousePosition.x, invertedMouseY, 0.0f };
-    Vector3 farPoint = { mousePosition.x, invertedMouseY, 1.0f };
-
-    nearPoint = rlglUnproject(nearPoint, proj, view);
-    farPoint = rlglUnproject(farPoint, proj, view);     // TODO: it seems it doesn't work...
-
+    
+    // Calculate normalized device coordinates
+    // NOTE: y value is negative
+    float x = (2.0f*mousePosition.x)/(float)GetScreenWidth() - 1.0f;
+    float y = 1.0f - (2.0f*mousePosition.y)/(float)GetScreenHeight();
+    float z = 1.0f;
+    
+    // Store values in a vector
+    Vector3 deviceCoords = {x, y, z};
+    
+    // Device debug message
+    TraceLog(INFO, "device(%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
+    
+    // Calculate projection matrix (from perspective instead of frustum
+    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    
+    // Calculate view matrix from camera look at
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    
+    // Do I need to transpose it? It seems that yes...
+    // NOTE: matrix order is maybe incorrect... In OpenGL to get world position from
+    // camera view it just needs to get inverted, but here we need to transpose it too.
+    // For example, if you get view matrix, transpose and inverted and you transform it
+    // to a vector, you will get its 3d world position coordinates (camera.position).
+    // If you don't transpose, final position will be wrong.
+    MatrixTranspose(&matView);
+    
+    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
+    Matrix matProjView = MatrixMultiply(matProj, matView);
+    MatrixInvert(&matProjView);
+    
+    // Calculate far and near points
+    Quaternion near = { deviceCoords.x, deviceCoords.y, 0, 1};
+    Quaternion far = { deviceCoords.x, deviceCoords.y, 1, 1};
+    
+    // Multiply points by unproject matrix
+    QuaternionTransform(&near, matProjView);
+    QuaternionTransform(&far, matProjView);
+    
+    // Calculate normalized world points in vectors
+    Vector3 nearPoint = {near.x / near.w, near.y / near.w, near.z / near.w};
+    Vector3 farPoint = {far.x / far.w, far.y / far.w, far.z / far.w};
+    
+    // Calculate normalized direction vector
     Vector3 direction = VectorSubtract(farPoint, nearPoint);
     VectorNormalize(&direction);
-
-    ray.position = nearPoint;
+    
+    // Apply calculated vectors to ray
+    ray.position = camera.position;
     ray.direction = direction;
-
+    
     return ray;
+}
+
+// Returns the screen space position from a 3d world space position
+Vector2 WorldToScreen(Vector3 position, Camera camera)
+{    
+    // Calculate projection matrix (from perspective instead of frustum
+    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    
+    // Calculate view matrix from camera look at (and transpose it)
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    MatrixTranspose(&matView);
+    
+    // Convert world position vector to quaternion
+    Quaternion worldPos = { position.x, position.y, position.z, 1.0f };
+    
+    // Transform world position to view
+    QuaternionTransform(&worldPos, matView);
+    
+    // Transform result to projection (clip space position)
+    QuaternionTransform(&worldPos, matProj);
+    
+    // Calculate normalized device coordinates (inverted y)
+    Vector3 ndcPos = { worldPos.x / worldPos.w, -worldPos.y / worldPos.w, worldPos.z / worldPos.z };
+    
+    // Calculate 2d screen position vector
+    Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)GetScreenWidth(), (ndcPos.y + 1.0f)/2.0f*(float)GetScreenHeight() };
+    
+    return screenPosition;
 }
 
 //----------------------------------------------------------------------------------
@@ -1023,6 +1177,35 @@ Vector2 GetTouchPosition(void)
 
     return position;
 }
+
+// Detect if a button has been pressed once
+bool IsButtonPressed(int button)
+{
+    bool pressed = false;
+
+    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 0)) pressed = true;
+    else pressed = false;
+
+    return pressed;
+}
+
+// Detect if a button is being pressed (button held down)
+bool IsButtonDown(int button)
+{
+    if (currentButtonState[button] == 0) return true;
+    else return false;
+}
+
+// Detect if a button has been released once
+bool IsButtonReleased(int button)
+{
+    bool released = false;
+
+    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 1)) released = true;
+    else released = false;
+
+    return released;
+}
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1097,7 +1280,7 @@ static void InitDisplay(int width, int height)
     if (fullscreen)
     {
         // At this point we need to manage render size vs screen size
-        // NOTE: This function use and modify global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
+        // NOTE: This function uses and modifies global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
         SetupFramebufferSize(displayWidth, displayHeight);
 
         window = glfwCreateWindow(renderWidth, renderHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
@@ -1212,7 +1395,6 @@ static void InitDisplay(int width, int height)
     };
 
     EGLint numConfigs;
-    EGLConfig config;
 
     // Get an EGL display connection
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -1446,30 +1628,62 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 
             if (app->window != NULL)
             {
-                // Init device display (monitor, LCD, ...)
-                InitDisplay(screenWidth, screenHeight);
-
-                // Init OpenGL graphics
-                InitGraphics();
-
-                // Load default font for convenience
-                // NOTE: External function (defined in module: text)
-                LoadDefaultFont();
-
-                // Init hi-res timer
-                InitTimer();
-
-                // raylib logo appearing animation (if enabled)
-                if (showLogo)
+                if (contextRebindRequired)
                 {
-                    SetTargetFPS(60);
-                    LogoAnimation();
+                    // Reset screen scaling to full display size
+                    EGLint displayFormat;
+                    eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &displayFormat);
+                    ANativeWindow_setBuffersGeometry(app->window, renderWidth, renderHeight, displayFormat);
+
+                    // Recreate display surface and re-attach OpenGL context
+                    surface = eglCreateWindowSurface(display, config, app->window, NULL);
+                    eglMakeCurrent(display, surface, surface, context);
+
+                    contextRebindRequired = false;
+                }
+                else
+                {
+                    // Init device display (monitor, LCD, ...)
+                    InitDisplay(screenWidth, screenHeight);
+
+                    // Init OpenGL graphics
+                    InitGraphics();
+
+                    // Load default font for convenience
+                    // NOTE: External function (defined in module: text)
+                    LoadDefaultFont();
+                    
+                    // TODO: GPU assets reload in case of lost focus (lost context)
+                    // NOTE: This problem has been solved just unbinding and rebinding context from display
+					/*
+                    if (assetsReloadRequired)
+                    {
+                        for (int i = 0; i < assetsCount; i++)
+                        {
+                            // TODO: Unload old asset if required
+                            
+                            // Load texture again to pointed texture
+                            (*textureAsset + i) = LoadTexture(assetPath[i]);
+                        }
+                    }
+                    */
+
+                    // Init hi-res timer
+                    InitTimer();
+
+                    // raylib logo appearing animation (if enabled)
+                    if (showLogo)
+                    {
+                        SetTargetFPS(60);   // Not required on Android
+                        LogoAnimation();
+                    }
                 }
             }
         } break;
         case APP_CMD_GAINED_FOCUS:
         {
             TraceLog(INFO, "APP_CMD_GAINED_FOCUS");
+            appEnabled = true;
             //ResumeMusicStream();
         } break;
         case APP_CMD_PAUSE:
@@ -1480,11 +1694,18 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         {
             //DrawFrame();
             TraceLog(INFO, "APP_CMD_LOST_FOCUS");
+            appEnabled = false;
             //PauseMusicStream();
         } break;
         case APP_CMD_TERM_WINDOW:
         {
-            // TODO: Do display destruction here? -> Yes but only display, don't free buffers!
+            // Dettach OpenGL context and destroy display surface
+            // NOTE 1: Detaching context before destroying display surface avoids losing our resources (textures, shaders, VBOs...)
+            // NOTE 2: In some cases (too many context loaded), OS could unload context automatically... :(
+            eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+            eglDestroySurface(display, surface);
+            
+            contextRebindRequired = true;
 
             TraceLog(INFO, "APP_CMD_TERM_WINDOW");
         } break;
@@ -1514,6 +1735,71 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
         } break;
         default: break;
     }
+}
+
+// Android: Get input events
+static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
+{
+    //http://developer.android.com/ndk/reference/index.html
+    
+    int type = AInputEvent_getType(event);
+
+    if (type == AINPUT_EVENT_TYPE_MOTION)
+    {
+        touchPosition.x = AMotionEvent_getX(event, 0);
+        touchPosition.y = AMotionEvent_getY(event, 0);
+    }
+    else if (type == AINPUT_EVENT_TYPE_KEY)
+    {
+        int32_t keycode = AKeyEvent_getKeyCode(event);
+        //int32_t AKeyEvent_getMetaState(event);
+        
+        // Save current button and its state
+        currentButtonState[keycode] = AKeyEvent_getAction(event);  // Down = 0, Up = 1
+
+        if (keycode == AKEYCODE_POWER)
+        {
+            // Let the OS handle input to avoid app stuck. Behaviour: CMD_PAUSE -> CMD_SAVE_STATE -> CMD_STOP -> CMD_CONFIG_CHANGED -> CMD_LOST_FOCUS
+            // Resuming Behaviour: CMD_START -> CMD_RESUME -> CMD_CONFIG_CHANGED -> CMD_CONFIG_CHANGED -> CMD_GAINED_FOCUS
+            // It seems like locking mobile, screen size (CMD_CONFIG_CHANGED) is affected.
+            // NOTE: AndroidManifest.xml must have <activity android:configChanges="orientation|keyboardHidden|screenSize" >
+            // Before that change, activity was calling CMD_TERM_WINDOW and CMD_DESTROY when locking mobile, so that was not a normal behaviour
+            return 0;
+        } 
+        else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
+        {
+            // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
+            return 1;
+        }
+        else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
+        {
+            // Set default OS behaviour
+            return 0;
+        }
+    }
+    
+    int32_t action = AMotionEvent_getAction(event);
+    unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
+    
+    GestureEvent gestureEvent;
+    
+    // Register touch actions
+    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_UP;
+    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Register touch points count
+    gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
+    
+    // Register touch points position
+    // NOTE: Only two points registered
+    gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
+    gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
+    
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+
+    return 0;   // return 1;
 }
 #endif
 
@@ -1557,7 +1843,7 @@ static void InitTimer(void)
     previousTime = GetTime();       // Get time as double
 }
 
-// Get current time measure since InitTimer()
+// Get current time measure (in seconds) since InitTimer()
 static double GetTime(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1565,7 +1851,7 @@ static double GetTime(void)
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
     return (double)(time - baseTime)*1e-9;
 #endif
@@ -1604,9 +1890,8 @@ static bool GetMouseButtonStatus(int button)
 static void PollInputEvents(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    // Touch events reading (requires gestures module)
-    touchPosition = GetRawTouchPosition();
-    
+
+    // TODO: Remove this requirement...
     UpdateGestures();
 #endif
     
@@ -1636,23 +1921,21 @@ static void PollInputEvents(void)
     glfwPollEvents();       // Register keyboard/mouse events... and window events!
 #elif defined(PLATFORM_ANDROID)
 
-    // TODO: Check virtual keyboard (?)
+    // Register previous keys states
+    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
 
     // Poll Events (registered events)
-    // TODO: Enable/disable activityMinimized to block activity if minimized
-    //while ((ident = ALooper_pollAll(activityMinimized ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
-    while ((ident = ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0)
+    // NOTE: Activity is paused if not enabled (appEnabled)
+    while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
     {
         // Process this event
         if (source != NULL) source->process(app, source);
 
-        // Check if we are exiting
+        // NOTE: Never close window, native activity is controlled by the system!
         if (app->destroyRequested != 0)
         {
-            // NOTE: Never close window, native activity is controlled by the system!
             //TraceLog(INFO, "Closing Window...");
             //windowShouldClose = true;
-
             //ANativeActivity_finish(app->activity);
         }
     }
@@ -1680,7 +1963,7 @@ static void PollInputEvents(void)
 
         int key = keysBuffer[i];
 
-        if (keyboardMode == 2)
+        if (keyboardMode == 2)  // scancodes
         {
             // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
             // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
@@ -1715,9 +1998,13 @@ static void PollInputEvents(void)
             // Detect ESC to stop program
             if ((key == 0x1b) && (numKeysBuffer == 1)) windowShouldClose = true;
         }
-        else if (keyboardMode == 1)
+        else if (keyboardMode == 1)     // keycodes (K_MEDIUMRAW mode)
         {
             TraceLog(DEBUG, "Pressed key (keycode): 0x%02x", key);
+            
+            // NOTE: Each key is 7-bits (high bit in the byte is 0 for down, 1 for up)
+            
+            // TODO: Review (or rewrite) this code... not clear... replace by events!
 
             int asciiKey = -1;
 
@@ -2025,6 +2312,59 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
 
     return 0;
+}
+
+// Web: Get input events
+static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
+{
+    /*
+    for (int i = 0; i < touchEvent->numTouches; i++)
+    {
+        long x, y, id;
+
+        if (!touchEvent->touches[i].isChanged) continue;
+
+        id = touchEvent->touches[i].identifier;
+        x = touchEvent->touches[i].canvasX;
+        y = touchEvent->touches[i].canvasY;
+    }
+    
+    printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
+           event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
+
+    for(int i = 0; i < event->numTouches; ++i)
+    {
+        const EmscriptenTouchPoint *t = &event->touches[i];
+        
+        printf("  %ld: screen: (%ld,%ld), client: (%ld,%ld), page: (%ld,%ld), isChanged: %d, onTarget: %d, canvas: (%ld, %ld)\n",
+          t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
+    }
+    */
+    
+    GestureEvent gestureEvent;
+
+    // Register touch actions
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_UP;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Register touch points count
+    gestureEvent.pointCount = touchEvent->numTouches;
+    
+    // Register touch points position
+    // NOTE: Only two points registered
+    // TODO: Touch data should be scaled accordingly!
+    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
+    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
+    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
+    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
+
+    touchPosition = gestureEvent.position[0];
+    
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
+
+    return 1;
 }
 #endif
 

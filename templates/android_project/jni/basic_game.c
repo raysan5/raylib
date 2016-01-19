@@ -30,7 +30,7 @@ void android_main(struct android_app *app)
     const int screenHeight = 450;
     
     GameScreen currentScreen = LOGO;
-    
+
     InitWindow(screenWidth, screenHeight, app);
     
     // TODO: Initialize all required variables and load all required data here!
@@ -43,7 +43,9 @@ void android_main(struct android_app *app)
 
     int framesCounter = 0;          // Used to count frames
     
-    //SetTargetFPS(60);             // Not required on Android, already locked to 60 fps
+    PlayMusicStream("ambient.ogg");
+    
+    SetTargetFPS(60);               // Not required on Android, already locked to 60 fps
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -51,6 +53,8 @@ void android_main(struct android_app *app)
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdateMusicStream();
+        
         switch(currentScreen) 
         {
             case LOGO: 
@@ -70,7 +74,7 @@ void android_main(struct android_app *app)
                 // TODO: Update TITLE screen variables here!
 
                 // Press enter to change to GAMEPLAY screen
-                if (IsScreenTouched())
+                if (GetGestureType() == GESTURE_TAP)
                 {
                     PlaySound(fx);
                     currentScreen = GAMEPLAY;
@@ -81,8 +85,8 @@ void android_main(struct android_app *app)
                 // TODO: Update GAMEPLAY screen variables here!
 
                 // Press enter to change to ENDING screen
-                if (IsScreenTouched())
-                {
+                if (GetGestureType() == GESTURE_TAP)
+                {  
                     PlaySound(fx);
                     currentScreen = ENDING;
                 } 
@@ -92,7 +96,7 @@ void android_main(struct android_app *app)
                 // TODO: Update ENDING screen variables here!
 
                 // Press enter to return to TITLE screen
-                if (IsScreenTouched())
+                if (GetGestureType() == GESTURE_TAP)
                 {
                     PlaySound(fx);
                     currentScreen = TITLE;
