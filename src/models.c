@@ -1336,18 +1336,28 @@ bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSph
     return collision;
 }
 
-// Detect collision between ray and box
+// Detect collision between ray and sphere
+bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius)
+{
+    bool collision = false;
+    
+    // TODO: implement collision...
+    
+    return collision;
+}
+
+// Detect collision between ray and bounding box
 bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
 {
     bool collision = false;
     
     float t[8];
-    t[0] = (minBBox.x - ray.position.x) / ray.direction.x;
-    t[1] = (maxBBox.x - ray.position.x) / ray.direction.x;
-    t[2] = (minBBox.y - ray.position.y) / ray.direction.y;
-    t[3] = (maxBBox.y - ray.position.y) / ray.direction.y;
-    t[4] = (minBBox.z - ray.position.z) / ray.direction.z;
-    t[5] = (maxBBox.z - ray.position.z) / ray.direction.z;
+    t[0] = (minBBox.x - ray.position.x)/ray.direction.x;
+    t[1] = (maxBBox.x - ray.position.x)/ray.direction.x;
+    t[2] = (minBBox.y - ray.position.y)/ray.direction.y;
+    t[3] = (maxBBox.y - ray.position.y)/ray.direction.y;
+    t[4] = (minBBox.z - ray.position.z)/ray.direction.z;
+    t[5] = (maxBBox.z - ray.position.z)/ray.direction.z;
     t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
     
@@ -1358,6 +1368,32 @@ bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
 
 // TODO: Useful function to check collision area?
 //BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
+
+// Calculate mesh bounding box limits
+BoundingBox CalculateBoundingBox(Mesh mesh)
+{
+    // Get min and max vertex to construct bounds (AABB)
+    Vector3 minVertex = mesh.vertices[0]; 
+    Vector3 maxVertex = mesh.vertices[0];
+
+    for (int i = 1; i < mesh.vertexCount; i++)
+    {
+		// TODO: Compare min and max with previous vertex
+        //minVertex = Vector3.Min(minVertex, mesh.vertices[i]);
+        //maxVertex = Vector3.Max(maxVertex, mesh.vertices[i]);
+    }
+
+    // NOTE: For OBB, transform mesh by model transform matrix
+    //minVertex = VectorTransform(meshMin, mesh.transform);
+    //maxVertex = VectorTransform(meshMax, mesh.transform);
+ 
+    // Create the bounding box
+    BoundingBox box;
+    box.min = minVertex;
+    box.max = maxVertex;
+    
+    return box;
+}
 
 // Detect and resolve cubicmap collisions
 // NOTE: player position (or camera) is modified inside this function
