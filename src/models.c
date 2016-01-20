@@ -1341,7 +1341,42 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
 {
     bool collision = false;
     
-    // TODO: implement collision...
+    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
+    float distance = VectorLength(raySpherePos);
+    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
+    
+    if(d >= 0.0f) collision = true;
+    
+    return collision;
+}
+
+// Detect collision between ray and sphere with extended parameters and collision point detection
+bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint)
+{
+    bool collision = false;
+    
+    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
+    float distance = VectorLength(raySpherePos);
+    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
+    
+    if(d >= 0.0f) collision = true;
+    
+    // Calculate collision point
+    Vector3 offset = ray.direction;
+    float collisionDistance = 0;
+    
+    // Check if ray origin is inside the sphere to calculate the correct collision point
+    if(distance < sphereRadius) collisionDistance = vector + sqrt(d);
+    else collisionDistance = vector - sqrt(d);
+    
+    VectorScale(&offset, collisionDistance);
+    Vector3 cPoint = VectorAdd(ray.position, offset);
+    
+    collisionPoint->x = cPoint.x;
+    collisionPoint->y = cPoint.y;
+    collisionPoint->z = cPoint.z;
     
     return collision;
 }
