@@ -463,12 +463,12 @@ typedef struct {
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
 // Collider types
-typedef enum { RectangleCollider, CircleCollider } ColliderType;
+typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
 
 // Physics struct
 typedef struct Physics {
     bool enabled;
-    bool debug;     // Should be used by programmer for testing purposes
+    bool debug;             // Should be used by programmer for testing purposes
     Vector2 gravity;
 } Physics;
 
@@ -496,8 +496,8 @@ typedef struct Rigidbody {
 typedef struct Collider {
     bool enabled;
     ColliderType type;
-    Rectangle bounds;   // Just used for RectangleCollider type
-    int radius;         // Just used for CircleCollider type
+    Rectangle bounds;   // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
+    int radius;         // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
 } Collider;
 
 #ifdef __cplusplus
@@ -547,8 +547,8 @@ float GetFrameTime(void);                                   // Returns time in s
 Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
 float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
-float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array (defined in raymath module)
-float *MatrixToVector(Matrix mat);                          // Converts Matrix to float array (defined in raymath module)
+float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array
+float *MatrixToFloat(Matrix mat);                           // Converts Matrix to float array
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f

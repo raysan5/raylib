@@ -1,35 +1,45 @@
-// Ogg Vorbis audio decoder - v1.05 - public domain
+// Ogg Vorbis audio decoder - v1.07 - public domain
 // http://nothings.org/stb_vorbis/
 //
-// Written by Sean Barrett in 2007, last updated in 2014
-// Sponsored by RAD Game Tools.
+// Original version written by Sean Barrett in 2007.
 //
-// Placed in the public domain April 2007 by the author: no copyright
-// is claimed, and you may use it for any purpose you like.
+// Originally sponsored by RAD Game Tools. Seeking sponsored
+// by Phillip Bennefall, Marc Andersen, Aaron Baker, Elias Software,
+// Aras Pranckevicius, and Sean Barrett.
+//
+// LICENSE
+//
+//   This software is in the public domain. Where that dedication is not
+//   recognized, you are granted a perpetual, irrevocable license to copy,
+//   distribute, and modify this file as you see fit.
 //
 // No warranty for any purpose is expressed or implied by the author (nor
 // by RAD Game Tools). Report bugs and send enhancements to the author.
 //
 // Limitations:
 //
-//   - seeking not supported except manually via PUSHDATA api
 //   - floor 0 not supported (used in old ogg vorbis files pre-2004)
 //   - lossless sample-truncation at beginning ignored
 //   - cannot concatenate multiple vorbis streams
 //   - sample positions are 32-bit, limiting seekable 192Khz
 //       files to around 6 hours (Ogg supports 64-bit)
 //
+// Feature contributors:
+//    Dougall Johnson (sample-exact seeking)
+//
 // Bugfix/warning contributors:
 //    Terje Mathisen     Niklas Frykholm     Andy Hill
 //    Casey Muratori     John Bolton         Gargaj
 //    Laurent Gomila     Marc LeBlanc        Ronny Chevalier
-//    Bernhard Wodo      Evan Balster			"alxprd"@github
+//    Bernhard Wodo      Evan Balster        "alxprd"@github
 //    Tom Beaumont       Ingo Leitgeb        Nicolas Guillemot
-// (If you reported a bug but do not appear in this list, it is because
-// someone else reported the bug before you. There were too many of you to
-// list them all because I was lax about updating for a long time, sorry.)
+//    Phillip Bennefall  Rohit
 //
 // Partial history:
+//    1.07    - 2015/01/16 - fixes for crashes on invalid files; warning fixes; const
+//    1.06    - 2015/08/31 - full, correct support for seeking API (Dougall Johnson)
+//                           some crash fixes when out of memory or with corrupt files
+//                           fix some inappropriately signed shifts
 //    1.05    - 2015/04/19 - don't define __forceinline if it's redundant
 //    1.04    - 2014/08/27 - fix missing const-correct case in API
 //    1.03    - 2014/08/07 - warning fixes
@@ -37,8 +47,6 @@
 //    1.01    - 2014/06/18 - fix stb_vorbis_get_samples_float (interleaved was correct)
 //    1.0     - 2014/05/26 - fix memory leaks; fix warnings; fix bugs in >2-channel;
 //                           (API change) report sample rate for decode-full-file funcs
-//    0.99996 -            - bracket #include <malloc.h> for macintosh compilation
-//    0.99995 -            - avoid alias-optimization issue in float-to-int conversion
 //
 // See end of file for full version history.
 
@@ -157,10 +165,10 @@ extern unsigned int stb_vorbis_get_file_offset(stb_vorbis *f);
 // specification does not bound the size of an individual frame.
 
 extern stb_vorbis *stb_vorbis_open_pushdata(
-         unsigned char *datablock, int datablock_length_in_bytes,
+         const unsigned char * datablock, int datablock_length_in_bytes,
          int *datablock_memory_consumed_in_bytes,
          int *error,
-         stb_vorbis_alloc *alloc_buffer);
+         const stb_vorbis_alloc *alloc_buffer);
 // create a vorbis decoder by passing in the initial data block containing
 //    the ogg&vorbis headers (you don't need to do parse them, just provide
 //    the first N bytes of the file--you're told if it's not enough, see below)
@@ -171,7 +179,8 @@ extern stb_vorbis *stb_vorbis_open_pushdata(
 //       incomplete and you need to pass in a larger block from the start of the file
 
 extern int stb_vorbis_decode_frame_pushdata(
-         stb_vorbis *f, unsigned char *datablock, int datablock_length_in_bytes,
+         stb_vorbis *f,
+         const unsigned char *datablock, int datablock_length_in_bytes,
          int *channels,             // place to write number of float * buffers
          float ***output,           // place to write float ** array of float * buffers
          int *samples               // place to write number of output samples
@@ -235,18 +244,18 @@ extern int stb_vorbis_decode_memory(const unsigned char *mem, int len, int *chan
 // When you're done with it, just free() the pointer returned in *output.
 
 extern stb_vorbis * stb_vorbis_open_memory(const unsigned char *data, int len,
-                                  int *error, stb_vorbis_alloc *alloc_buffer);
+                                  int *error, const stb_vorbis_alloc *alloc_buffer);
 // create an ogg vorbis decoder from an ogg vorbis stream in memory (note
 // this must be the entire stream!). on failure, returns NULL and sets *error
 
 #ifndef STB_VORBIS_NO_STDIO
 extern stb_vorbis * stb_vorbis_open_filename(const char *filename,
-                                  int *error, stb_vorbis_alloc *alloc_buffer);
+                                  int *error, const stb_vorbis_alloc *alloc_buffer);
 // create an ogg vorbis decoder from a filename via fopen(). on failure,
 // returns NULL and sets *error (possibly to VORBIS_file_open_failure).
 
 extern stb_vorbis * stb_vorbis_open_file(FILE *f, int close_handle_on_close,
-                                  int *error, stb_vorbis_alloc *alloc_buffer);
+                                  int *error, const stb_vorbis_alloc *alloc_buffer);
 // create an ogg vorbis decoder from an open FILE *, looking for a stream at
 // the _current_ seek point (ftell). on failure, returns NULL and sets *error.
 // note that stb_vorbis must "own" this stream; if you seek it in between
@@ -256,7 +265,7 @@ extern stb_vorbis * stb_vorbis_open_file(FILE *f, int close_handle_on_close,
 // function, stb_vorbis_open_file_section(), to limit it.
 
 extern stb_vorbis * stb_vorbis_open_file_section(FILE *f, int close_handle_on_close,
-                int *error, stb_vorbis_alloc *alloc_buffer, unsigned int len);
+                int *error, const stb_vorbis_alloc *alloc_buffer, unsigned int len);
 // create an ogg vorbis decoder from an open FILE *, looking for a stream at
 // the _current_ seek point (ftell); the stream will be of length 'len' bytes.
 // on failure, returns NULL and sets *error. note that stb_vorbis must "own"
@@ -266,7 +275,6 @@ extern stb_vorbis * stb_vorbis_open_file_section(FILE *f, int close_handle_on_cl
 
 extern int stb_vorbis_seek_frame(stb_vorbis *f, unsigned int sample_number);
 extern int stb_vorbis_seek(stb_vorbis *f, unsigned int sample_number);
-// NOT WORKING YET
 // these functions seek in the Vorbis file to (approximately) 'sample_number'.
 // after calling seek_frame(), the next call to get_frame_*() will include
 // the specified sample. after calling stb_vorbis_seek(), the next call to
@@ -275,8 +283,7 @@ extern int stb_vorbis_seek(stb_vorbis *f, unsigned int sample_number);
 // you can also use seek_frame().
 
 extern void stb_vorbis_seek_start(stb_vorbis *f);
-// this function is equivalent to stb_vorbis_seek(f,0), but it
-// actually works
+// this function is equivalent to stb_vorbis_seek(f,0)
 
 extern unsigned int stb_vorbis_stream_length_in_samples(stb_vorbis *f);
 extern float        stb_vorbis_stream_length_in_seconds(stb_vorbis *f);
@@ -296,15 +303,17 @@ extern int stb_vorbis_get_frame_float(stb_vorbis *f, int *channels, float ***out
 extern int stb_vorbis_get_frame_short_interleaved(stb_vorbis *f, int num_c, short *buffer, int num_shorts);
 extern int stb_vorbis_get_frame_short            (stb_vorbis *f, int num_c, short **buffer, int num_samples);
 #endif
-// decode the next frame and return the number of samples per channel. the
-// data is coerced to the number of channels you request according to the
+// decode the next frame and return the number of *samples* per channel.
+// Note that for interleaved data, you pass in the number of shorts (the
+// size of your array), but the return value is the number of samples per
+// channel, not the total number of samples.
+//
+// The data is coerced to the number of channels you request according to the
 // channel coercion rules (see below). You must pass in the size of your
 // buffer(s) so that stb_vorbis will not overwrite the end of the buffer.
 // The maximum buffer size needed can be gotten from get_info(); however,
 // the Vorbis I specification implies an absolute maximum of 4096 samples
-// per channel. Note that for interleaved data, you pass in the number of
-// shorts (the size of your array), but the return value is the number of
-// samples per channel, not the total number of samples.
+// per channel.
 
 // Channel coercion rules:
 //    Let M be the number of channels requested, and N the number of channels present,
@@ -371,7 +380,7 @@ enum STBVorbisError
    VORBIS_invalid_first_page,
    VORBIS_bad_packet_type,
    VORBIS_cant_find_last_page,
-   VORBIS_seek_failed,
+   VORBIS_seek_failed
 };
 
 

@@ -32,28 +32,30 @@ int main()
     int screenHeight = 450;
     
     InitWindow(screenWidth, screenHeight, "raylib [physics] example - basic rigidbody");
-    SetTargetFPS(60);   // Enable v-sync
+
     InitPhysics();      // Initialize internal physics values   (max rigidbodies/colliders available: 1024)
     
     // Physics initialization
-    Physics worldPhysics = {true, false, (Vector2){0, -9.81f}};
+    Physics worldPhysics = { true, false, (Vector2){ 0, -9.81f } };
     
     // Set internal physics settings
     SetPhysics(worldPhysics);
     
     // Object initialization
     Transform player = (Transform){(Vector2){(screenWidth - OBJECT_SIZE) / 2, (screenHeight - OBJECT_SIZE) / 2}, 0.0f, (Vector2){OBJECT_SIZE, OBJECT_SIZE}};
-    AddCollider(PLAYER_INDEX, (Collider){true, RectangleCollider, (Rectangle){player.position.x, player.position.y, player.scale.x, player.scale.y}, 0});
+    AddCollider(PLAYER_INDEX, (Collider){true, COLLIDER_RECTANGLE, (Rectangle){player.position.x, player.position.y, player.scale.x, player.scale.y}, 0});
     AddRigidbody(PLAYER_INDEX, (Rigidbody){true, 1.0f, (Vector2){0, 0}, (Vector2){0, 0}, false, false, true, 0.5f, 1.0f});
     
     // Floor initialization 
     // NOTE: floor doesn't need a rigidbody because it's a static physic object, just a collider to collide with other dynamic colliders (with rigidbody)
     Transform floor = (Transform){(Vector2){0, screenHeight * 0.8f}, 0.0f, (Vector2){screenWidth, screenHeight * 0.2f}};
-    AddCollider(PLAYER_INDEX + 1, (Collider){true, RectangleCollider, (Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, 0});
+    AddCollider(PLAYER_INDEX + 1, (Collider){true, COLLIDER_RECTANGLE, (Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, 0});
     
     // Object properties initialization
     float moveSpeed = 6.0f;
-    float jumpForce = 4.5f;
+    float jumpForce = 5.0f;
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -67,7 +69,7 @@ int main()
         ApplyPhysics(PLAYER_INDEX, &player.position);
         
         // Check jump button input
-        if(IsKeyDown(KEY_SPACE) && GetRigidbody(PLAYER_INDEX).isGrounded)
+        if (IsKeyDown(KEY_SPACE) && GetRigidbody(PLAYER_INDEX).isGrounded)
         {
             // Reset object Y velocity to avoid double jumping cases but keep the same X velocity that it already has
             SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){GetRigidbody(PLAYER_INDEX).velocity.x, 0});
@@ -77,12 +79,12 @@ int main()
         }
         
         // Check movement buttons input
-        if(IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
         {
             // Set rigidbody velocity in X based on moveSpeed value and apply the same Y velocity that it already has
             SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){moveSpeed, GetRigidbody(PLAYER_INDEX).velocity.y});
         }
-        else if(IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+        else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
         {
             // Set rigidbody velocity in X based on moveSpeed negative value and apply the same Y velocity that it already has
             SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){-moveSpeed, GetRigidbody(PLAYER_INDEX).velocity.y});
@@ -110,12 +112,12 @@ int main()
             DrawText("Use P to switch DEBUG MODE", (screenWidth - MeasureText("Use P to switch DEBUG MODE", 20)) / 2, screenHeight * 0.3f, 20, LIGHTGRAY);
             
             // Check if debug mode is enabled
-            if(worldPhysics.debug)
+            if (worldPhysics.debug)
             {
                 // Draw every internal physics stored collider if it is active
-                for(int i = 0; i < 2; i++)
+                for (int i = 0; i < 2; i++)
                 {
-                    if(GetCollider(i).enabled)
+                    if (GetCollider(i).enabled)
                     {
                         DrawRectangleLines(GetCollider(i).bounds.x, GetCollider(i).bounds.y, GetCollider(i).bounds.width, GetCollider(i).bounds.height, GREEN);
                     }

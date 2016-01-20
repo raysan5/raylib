@@ -34,8 +34,8 @@
 #include <string.h>     // Required for strcmp()
 #include <math.h>       // Used for sin, cos, tan
 
-#include "raymath.h"    // Required for data type Matrix and Matrix functions
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "raymath.h"    // Required for data type Matrix and Matrix functions
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -1373,8 +1373,8 @@ bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
 BoundingBox CalculateBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = mesh.vertices[0]; 
-    Vector3 maxVertex = mesh.vertices[0];
+    Vector3 minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+    Vector3 maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
 
     for (int i = 1; i < mesh.vertexCount; i++)
     {

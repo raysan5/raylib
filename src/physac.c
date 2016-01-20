@@ -55,8 +55,8 @@ static bool collisionChecker = false;
 // Module specific Functions Declarations
 //----------------------------------------------------------------------------------
 static float Vector2Length(Vector2 vector);
-static float Vector2LengthPoints(Vector2 a, Vector2 b);
-static Vector2 Vector2Normalize(Vector2 vector);
+static float Vector2Distance(Vector2 a, Vector2 b);
+static void Vector2Normalize(Vector2 *vector);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definitions
@@ -183,9 +183,9 @@ void ApplyPhysics(int index, Vector2 *position)
             {
                 if (colliders[index].enabled && colliders[j].enabled)
                 {
-                    if (colliders[index].type == RectangleCollider)
+                    if (colliders[index].type == COLLIDER_RECTANGLE)
                     {
-                        if (colliders[j].type == RectangleCollider)
+                        if (colliders[j].type == COLLIDER_RECTANGLE)
                         {
                             if (CheckCollisionRecs(colliders[index].bounds, colliders[j].bounds))
                             {
@@ -207,7 +207,7 @@ void ApplyPhysics(int index, Vector2 *position)
                     }
                     else
                     {
-                        if (colliders[j].type == RectangleCollider)
+                        if (colliders[j].type == COLLIDER_RECTANGLE)
                         {
                             if (CheckCollisionCircleRec((Vector2){colliders[index].bounds.x, colliders[index].bounds.y}, colliders[index].radius, colliders[j].bounds))
                             {
@@ -277,7 +277,7 @@ void AddForceAtPosition(Vector2 position, float intensity, float radius)
             Vector2 pos = {colliders[i].bounds.x, colliders[i].bounds.y};
             
             // Get distance between rigidbody position and target position
-            float distance = Vector2LengthPoints(position, pos);
+            float distance = Vector2Distance(position, pos);
             
             if(distance <= radius)
             {
@@ -285,7 +285,7 @@ void AddForceAtPosition(Vector2 position, float intensity, float radius)
                 Vector2 force = {colliders[i].bounds.x - position.x, colliders[i].bounds.y - position.y};
                 
                 // Normalize the direction vector
-                force = Vector2Normalize(force);
+                Vector2Normalize(&force);
                 
                 // Invert y value
                 force.y *= -1;
@@ -323,20 +323,24 @@ static float Vector2Length(Vector2 vector)
     return sqrt((vector.x * vector.x) + (vector.y * vector.y));
 }
 
-static float Vector2LengthPoints(Vector2 a, Vector2 b)
+static float Vector2Distance(Vector2 a, Vector2 b)
 {
     Vector2 vector = {b.x - a.x, b.y - a.y};
     return sqrt((vector.x * vector.x) + (vector.y * vector.y));
 }
 
-static Vector2 Vector2Normalize(Vector2 vector)
+static void Vector2Normalize(Vector2 *vector)
 {
-    float length = Vector2Length(vector);
+    float length = Vector2Length(*vector);
     
-    if(length != 0)
+    if (length != 0.0f)
     {
-        return (Vector2){vector.x / length, vector.y / length};
+        vector->x /= length;
+        vector->y /= length;
     }
-    
-    return (Vector2){0, 0};
+    else 
+    {
+        vector->x = 0.0f;
+        vector->y = 0.0f;
+    }
 }

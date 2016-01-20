@@ -32,7 +32,8 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum { RectangleCollider, CircleCollider } ColliderType;
+// Collider types
+typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
 
 // Physics struct
 typedef struct Physics {
@@ -65,8 +66,8 @@ typedef struct Rigidbody {
 typedef struct Collider {
     bool enabled;
     ColliderType type;
-    Rectangle bounds;   // Just used for RectangleCollider type
-    int radius;     // Just used for CircleCollider type
+    Rectangle bounds;   // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
+    int radius;         // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
 } Collider;
 
 #ifdef __cplusplus
