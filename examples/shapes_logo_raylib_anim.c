@@ -35,9 +35,7 @@ int main()
     char raylib[8] = "       \0";   // raylib text array, max 8 letters
 
     int state = 0;                  // Tracking animation states (State Machine)
-
-    float alpha = 1.0;              // Useful for fading
-
+    float alpha = 1.0f;             // Useful for fading
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------

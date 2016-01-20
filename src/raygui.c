@@ -255,7 +255,7 @@ bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle)
     
     // Update control
     //--------------------------------------------------------------------   
-   if (toggleButton.width < textWidth) toggleButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
+    if (toggleButton.width < textWidth) toggleButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
     if (toggleButton.height < textHeight) toggleButton.height = textHeight + style[TOGGLE_TEXT_PADDING]/2;
     if (CheckCollisionPointRec(mousePoint, toggleButton))
     {
@@ -320,7 +320,7 @@ int GuiComboBox(Rectangle bounds, int comboNum, char **comboText, int comboActiv
 {
     ComboBoxState comboBoxState = COMBOBOX_UNACTIVE;
     Rectangle comboBoxButton = bounds;
-    Rectangle click = { bounds.x + bounds.width + style[COMBOBOX_PADDING], bounds.y, style[COMBOBOX_BUTTON_WIDTH], bounds.height };
+    Rectangle click = { bounds.x + bounds.width + style[COMBOBOX_PADDING], bounds.y, style[COMBOBOX_BUTTON_WIDTH], style[COMBOBOX_BUTTON_HEIGHT] };
     Vector2 mousePoint = GetMousePosition();
 
     int textHeight = GetDefaultFont().size;
@@ -691,7 +691,7 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
     }
     else if (!CheckCollisionPointRec(mousePoint, labelBoxBound)) buttonSide = 0;
     
-    if(IsMouseButtonUp(MOUSE_LEFT_BUTTON))
+    if (IsMouseButtonUp(MOUSE_LEFT_BUTTON))
     {
         valueSpeed = false;
         framesCounter = 0;
@@ -710,13 +710,13 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
             DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
             DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
             
-            DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
-            DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
+            DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
+            DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
             
             DrawRectangleRec(labelBoxBound, GetColor(style[SPINNER_LABEL_BORDER_COLOR]));
             DrawRectangle(labelBoxBound.x + 1, labelBoxBound.y + 1, labelBoxBound.width - 2, labelBoxBound.height - 2, GetColor(style[SPINNER_LABEL_INSIDE_COLOR]));
             
-            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_TEXT_COLOR]));
+            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_TEXT_COLOR]));
         } break;
         case SPINNER_HOVER:
         {
@@ -728,8 +728,8 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
                 DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
                 DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
                 
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_SYMBOL_COLOR])); 
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
+                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_SYMBOL_COLOR])); 
+                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
             }                
             else if (buttonSide == 2)
             {
@@ -739,14 +739,14 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
                 DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_HOVER_BUTTON_BORDER_COLOR]));
                 DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_HOVER_BUTTON_INSIDE_COLOR]));
                 
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_SYMBOL_COLOR])); 
+                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
+                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_SYMBOL_COLOR])); 
             }
             
             DrawRectangleRec(labelBoxBound, GetColor(style[SPINNER_LABEL_BORDER_COLOR]));
             DrawRectangle(labelBoxBound.x + 1, labelBoxBound.y + 1, labelBoxBound.width - 2, labelBoxBound.height - 2, GetColor(style[SPINNER_LABEL_INSIDE_COLOR]));
             
-            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_TEXT_COLOR]));  
+            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_HOVER_TEXT_COLOR]));  
         } break;
         case SPINNER_PRESSED:
         {
@@ -758,9 +758,9 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
                 DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
                 DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_DEFAULT_BUTTON_INSIDE_COLOR]));
                 
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_SYMBOL_COLOR])); 
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
-            }                
+                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_SYMBOL_COLOR])); 
+                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
+            }
             else if (buttonSide == 2)
             {
                 DrawRectangleRec(leftButtonBound, GetColor(style[SPINNER_DEFAULT_BUTTON_BORDER_COLOR]));
@@ -769,16 +769,18 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
                 DrawRectangleRec(rightButtonBound, GetColor(style[SPINNER_PRESSED_BUTTON_BORDER_COLOR]));
                 DrawRectangle(rightButtonBound.x + 2, rightButtonBound.y + 2, rightButtonBound.width - 4, rightButtonBound.height - 4, GetColor(style[SPINNER_PRESSED_BUTTON_INSIDE_COLOR]));
                 
-                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
-                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_SYMBOL_COLOR])); 
-            }            
+                DrawText(FormatText("-"), leftButtonBound.x + (leftButtonBound.width/2 - (MeasureText(FormatText("+"), style[GLOBAL_TEXT_FONTSIZE]))/2), leftButtonBound.y + (leftButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_DEFAULT_SYMBOL_COLOR])); 
+                DrawText(FormatText("+"), rightButtonBound.x + (rightButtonBound.width/2 - (MeasureText(FormatText("-"), style[GLOBAL_TEXT_FONTSIZE]))/2), rightButtonBound.y + (rightButtonBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_SYMBOL_COLOR])); 
+            }
+            
             DrawRectangleRec(labelBoxBound, GetColor(style[SPINNER_LABEL_BORDER_COLOR]));
             DrawRectangle(labelBoxBound.x + 1, labelBoxBound.y + 1, labelBoxBound.width - 2, labelBoxBound.height - 2, GetColor(style[SPINNER_LABEL_INSIDE_COLOR]));
             
-            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - textHeight/2), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_TEXT_COLOR]));  
+            DrawText(FormatText("%i", value), labelBoxBound.x + (labelBoxBound.width/2 - textWidth/2), labelBoxBound.y + (labelBoxBound.height/2 - (style[GLOBAL_TEXT_FONTSIZE]/2)), style[GLOBAL_TEXT_FONTSIZE], GetColor(style[SPINNER_PRESSED_TEXT_COLOR]));  
         } break;
         default: break;
     }
+    
     return value;
 }
 
@@ -843,12 +845,12 @@ char *GuiTextBox(Rectangle bounds, char *text)
     {
         if (text[i] == '\0') break;
         
-        DrawText(FormatText("%c", text[i]), initPos, bounds.y + 5, style[TEXTBOX_TEXT_FONTSIZE], GetColor(style[TEXTBOX_TEXT_COLOR]));
+        DrawText(FormatText("%c", text[i]), initPos, bounds.y + style[TEXTBOX_TEXT_FONTSIZE], style[TEXTBOX_TEXT_FONTSIZE], GetColor(style[TEXTBOX_TEXT_COLOR]));
         
         initPos += ((GetDefaultFont().charRecs[(int)text[i] - 32].width + 2));
     }
 
-    if ((framesCounter/20)%2 && CheckCollisionPointRec(mousePoint, bounds)) DrawLine(initPos + 2, bounds.y, initPos + 2, bounds.y + 10 + 10, GetColor(style[TEXTBOX_LINE_COLOR]));
+    if ((framesCounter/20)%2 && CheckCollisionPointRec(mousePoint, bounds)) DrawLine(initPos + 2, bounds.y + 5, initPos + 2, bounds.y + 10 + 15, GetColor(style[TEXTBOX_LINE_COLOR]));
     //--------------------------------------------------------------------    
 
     return text;

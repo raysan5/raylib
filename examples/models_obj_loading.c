@@ -21,12 +21,12 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - obj model loading");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 3.0, 3.0, 3.0 }, { 0.0, 1.5, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
-    SetModelTexture(&dwarf, texture);                             // Bind texture to model
-    Vector3 position = { 0.0, 0.0, 0.0 };                         // Set model position
+    SetModelTexture(&dwarf, texture);                                       // Bind texture to model
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ int main()
 
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10.0, 1.0);        // Draw a grid
+                DrawGrid(10, 1.0f);        // Draw a grid
 
                 DrawGizmo(position);        // Draw gizmo
 

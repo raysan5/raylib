@@ -5,16 +5,16 @@ in vec2 fragTexCoord;
 out vec4 fragColor;
 
 uniform sampler2D texture0;
-uniform vec4 tintColor;
+uniform vec4 fragTintColor;
 
 // NOTE: Add here your custom variables
 
-float gamma = 0.6f;
-float numColors = 8.0f;
+float gamma = 0.6;
+float numColors = 8.0;
 
 void main()
 {
-    vec3 color = texture2D(texture0, fragTexCoord.xy).rgb;
+    vec3 color = texture(texture0, fragTexCoord.xy).rgb;
     
     color = pow(color, vec3(gamma, gamma, gamma));
     color = color*numColors;

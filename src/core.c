@@ -309,8 +309,8 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
 #endif
 
-    mousePosition.x = screenWidth/2;
-    mousePosition.y = screenHeight/2;
+    mousePosition.x = (float)screenWidth/2.0f;
+    mousePosition.y = (float)screenHeight/2.0f;
 
     // raylib logo appearing animation (if enabled)
     if (showLogo)
@@ -577,7 +577,7 @@ void Begin3dMode(Camera camera)
 
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.1f*tan(45.0f*PI / 360.0f);
+    double top = 0.1f*tan(45.0f*PI/360.0f);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
@@ -608,7 +608,7 @@ void End3dMode(void)
 // Set target FPS for the game
 void SetTargetFPS(int fps)
 {
-    targetTime = 1 / (double)fps;
+    targetTime = 1.0/(double)fps;
 
     TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
 }
@@ -625,7 +625,7 @@ float GetFrameTime(void)
     // As we are operate quite a lot with frameTime, 
     // it could be no stable, so we round it before passing it around
     // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime =  round(frameTime*10000)/10000;
+    double roundedFrameTime =  round(frameTime*10000)/10000.0;
 
     return (float)roundedFrameTime;    // Time in seconds to run a frame
 }
@@ -806,8 +806,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     
     // Calculate normalized device coordinates
     // NOTE: y value is negative
-    float x = (2.0f * mousePosition.x) / GetScreenWidth() - 1.0f;
-    float y = 1.0f - (2.0f * mousePosition.y) / GetScreenHeight();
+    float x = (2.0f*mousePosition.x)/(float)GetScreenWidth() - 1.0f;
+    float y = 1.0f - (2.0f*mousePosition.y)/(float)GetScreenHeight();
     float z = 1.0f;
     
     // Store values in a vector
@@ -880,7 +880,7 @@ Vector2 WorldToScreen(Vector3 position, Camera camera)
     Vector3 ndcPos = { worldPos.x / worldPos.w, -worldPos.y / worldPos.w, worldPos.z / worldPos.z };
     
     // Calculate 2d screen position vector
-    Vector2 screenPosition = { (ndcPos.x + 1.0f) / 2.0f * GetScreenWidth(), (ndcPos.y + 1.0f) / 2.0f * GetScreenHeight() };
+    Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)GetScreenWidth(), (ndcPos.y + 1.0f)/2.0f*(float)GetScreenHeight() };
     
     return screenPosition;
 }
@@ -1963,7 +1963,7 @@ static void PollInputEvents(void)
 
         int key = keysBuffer[i];
 
-        if (keyboardMode == 2)
+        if (keyboardMode == 2)  // scancodes
         {
             // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
             // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
@@ -1998,9 +1998,13 @@ static void PollInputEvents(void)
             // Detect ESC to stop program
             if ((key == 0x1b) && (numKeysBuffer == 1)) windowShouldClose = true;
         }
-        else if (keyboardMode == 1)
+        else if (keyboardMode == 1)     // keycodes (K_MEDIUMRAW mode)
         {
             TraceLog(DEBUG, "Pressed key (keycode): 0x%02x", key);
+            
+            // NOTE: Each key is 7-bits (high bit in the byte is 0 for down, 1 for up)
+            
+            // TODO: Review (or rewrite) this code... not clear... replace by events!
 
             int asciiKey = -1;
 

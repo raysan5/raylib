@@ -8,14 +8,17 @@ Around the source code there are multiple TODO points with pending revisions/bug
 
 raylib v1.4
 
-   - TTF fonts support (using stb_truetype)
-   - Raycast system for 3D picking (including collisions detection)
+   [DONE] TTF fonts support (using stb_truetype)
+   [DONE] Raycast system for 3D picking (including collisions detection)
+   [DONE] Floyd-Steinberg dithering on 16bit image format conversion
+   [DONE] Basic image manipulation functions (crop, resize, draw...)
+   [DONE] Storage load/save data functionality
+   [DONE] Physics module
+   [IN PROGRESS] LUA scripting support (wrapper to lua lib)
    - Remove GLEW dependency (use another solution... glad?)
-   - Floyd-Steinberg dithering on 16bit image format conversion
-   - Basic image manipulation functions (crop, resize, draw...)
    - Basic image procedural generation (spot, gradient, noise...)
    - Basic GPU stats sytem (memory, draws, time...)
-   - LUA scripting support (wrapper to lua lib)
+   
    
 Check [GITHUB ISSUES][issues] for further details on implementation status for this features!
 

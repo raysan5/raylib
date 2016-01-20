@@ -6,7 +6,7 @@ in vec3 fragNormal;
 
 // Diffuse data
 uniform sampler2D texture0;
-uniform vec4 tintColor;
+uniform vec4 fragTintColor;
 
 // Light attributes
 uniform vec3 light_ambientColor = vec3(0.6, 0.3, 0);

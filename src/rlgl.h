@@ -131,17 +131,22 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
     } TextureFormat;
 
-    // VertexData type
+    // Mesh with vertex data type
     // NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
-    typedef struct VertexData {
-        int vertexCount;
-        float *vertices;            // 3 components per vertex
-        float *texcoords;           // 2 components per vertex
-        float *normals;             // 3 components per vertex
-        unsigned char *colors;
-        unsigned int vaoId;
-        unsigned int vboId[4];
-    } VertexData;
+    typedef struct Mesh {
+        int vertexCount;            // num vertices
+        float *vertices;            // vertex position (XYZ - 3 components per vertex)
+        float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
+        float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
+        float *normals;             // vertex normals (XYZ - 3 components per vertex)
+        float *tangents;            // vertex tangents (XYZ - 3 components per vertex)
+        unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex)
+        
+        BoundingBox bounds;         // mesh limits defined by min and max points
+        
+        unsigned int vaoId;         // OpenGL Vertex Array Object id
+        unsigned int vboId[6];      // OpenGL Vertex Buffer Objects id (6 types of vertex data)
+    } Mesh;
 
     // Shader type
     typedef struct Shader {
@@ -159,8 +164,8 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         int colorLoc;         // Color attibute location point (vertex shader)
 
         // Uniforms
-        int projectionLoc;    // Projection matrix uniform location point (vertex shader)
-        int modelviewLoc;     // ModelView matrix uniform location point (vertex shader)
+        int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
+    
         int modelLoc;         // Model transformation matrix uniform location point (vertex shader)
         int viewLoc;          // View transformation matrix uniform location point (vertex shader)
         int tintColorLoc;     // Color uniform location point (fragment shader)
@@ -179,7 +184,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // 3d Model type
     typedef struct Model {
-        VertexData mesh;
+        Mesh mesh;
         Matrix transform;
         Texture2D texture;
         Shader shader;
@@ -254,7 +259,7 @@ void rlglGenerateMipmaps(Texture2D texture);                             // Gene
 void rlglInitPostpro(void);                     // Initialize postprocessing system
 void rlglDrawPostpro(void);                     // Draw with postprocessing shader
 
-Model rlglLoadModel(VertexData mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
+Model rlglLoadModel(Mesh mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);
 
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates

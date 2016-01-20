@@ -21,10 +21,10 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d picking");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0, 10.0, 10.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
-    Vector3 cubePosition = { 0.0, 1.0, 0.0 };
-    Vector3 cubeSize = { 2.0, 2.0, 2.0 };
+    Vector3 cubePosition = { 0.0f, 1.0f, 0.0f };
+    Vector3 cubeSize = { 2.0f, 2.0f, 2.0f };
     
     Ray ray;        // Picking line ray
     
@@ -50,8 +50,8 @@ int main()
             
             // Check collision between ray and box
             collision = CheckCollisionRayBox(ray,
-                (Vector3){cubePosition.x - cubeSize.x / 2,cubePosition.y - cubeSize.y / 2,cubePosition.z - cubeSize.z / 2},
-                (Vector3){cubePosition.x + cubeSize.x / 2,cubePosition.y + cubeSize.y / 2,cubePosition.z + cubeSize.z / 2});
+                (Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
+                (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 });
         }
         //----------------------------------------------------------------------------------
 
@@ -65,10 +65,10 @@ int main()
 
                 DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, GRAY);
                 DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, DARKGRAY);
-
-                DrawGrid(10.0, 1.0);
                 
                 DrawRay(ray, MAROON);
+                
+                DrawGrid(10, 1.0f);
 
             End3dMode();
             

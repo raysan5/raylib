@@ -821,10 +821,10 @@ void rlDeleteBuffers(unsigned int id)
 void rlClearColor(byte r, byte g, byte b, byte a)
 {
     // Color values clamp to 0.0f(0) and 1.0f(255)
-    float cr = (float)r / 255;
-    float cg = (float)g / 255;
-    float cb = (float)b / 255;
-    float ca = (float)a / 255;
+    float cr = (float)r/255;
+    float cg = (float)g/255;
+    float cb = (float)b/255;
+    float ca = (float)a/255;
 
     glClearColor(cr, cg, cb, ca);
 }
@@ -1100,24 +1100,24 @@ void rlglInitPostpro(void)
     if (postproFbo.id > 0)
     {
         // Create a simple quad model to render fbo texture
-        VertexData quadData;
+        Mesh quad;
         
-        quadData.vertexCount = 6;
+        quad.vertexCount = 6;
         
-        float w = screenWidth;
-        float h = screenHeight;
+        float w = (float)screenWidth;
+        float h = (float)screenHeight;
         
-        float quadPositions[6*3] = { w, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, h, 0.0, 0, h, 0.0, w, h, 0.0, w, 0.0, 0.0 }; 
-        float quadTexcoords[6*2] = { 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0 };
-        float quadNormals[6*3] = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
+        float quadPositions[6*3] = { w, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, h, 0.0f, 0.0f, h, 0.0f, w, h, 0.0f, w, 0.0f, 0.0f }; 
+        float quadTexcoords[6*2] = { 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f };
+        float quadNormals[6*3] = { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f };
         unsigned char quadColors[6*4] = { 255 };
         
-        quadData.vertices = quadPositions;
-        quadData.texcoords = quadTexcoords;
-        quadData.normals = quadNormals;
-        quadData.colors = quadColors;
+        quad.vertices = quadPositions;
+        quad.texcoords = quadTexcoords;
+        quad.normals = quadNormals;
+        quad.colors = quadColors;
         
-        postproQuad = rlglLoadModel(quadData);
+        postproQuad = rlglLoadModel(quad);
         
         // NOTE: postproFbo.colorTextureId must be assigned to postproQuad model shader
     }
@@ -1295,9 +1295,10 @@ void rlglDraw(void)
     if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
     {
         glUseProgram(currentShader.id);
+        
+        Matrix matMVP = MatrixMultiply(modelview, projection);        // Create modelview-projection matrix
 
-        glUniformMatrix4fv(currentShader.projectionLoc, 1, false, MatrixToFloat(projection));
-        glUniformMatrix4fv(currentShader.modelviewLoc, 1, false, MatrixToFloat(modelview));
+        glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(matMVP));
         glUniform1i(currentShader.mapDiffuseLoc, 0);
     }
 
@@ -1520,14 +1521,14 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     Matrix matModelView = MatrixMultiply(matModel, matView);            // Transform to camera-space coordinates
 
     // Calculate model-view-projection matrix (MVP)
-    //Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
+    Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
 
     // NOTE: Drawing in OpenGL 3.3+, matrices are passed to shader
     // TODO: Reduce number of matrices passed to shaders, use only matMVP
     glUniformMatrix4fv(model.shader.modelLoc, 1, false, MatrixToFloat(matModel));
     glUniformMatrix4fv(model.shader.viewLoc, 1, false, MatrixToFloat(matView));
-    glUniformMatrix4fv(model.shader.projectionLoc, 1, false, MatrixToFloat(matProjection));
-    glUniformMatrix4fv(model.shader.modelviewLoc, 1, false, MatrixToFloat(matModelView));
+    
+    glUniformMatrix4fv(model.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
 
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
@@ -1666,7 +1667,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 // NOTE: Using global variables: screenWidth, screenHeight
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {
-    Vector3 result = { 0, 0, 0 };   // Object coordinates
+    Vector3 result = { 0.0f, 0.0f, 0.0f };   // Object coordinates
     
     //GLint viewport[4];
     //glGetIntegerv(GL_VIEWPORT, viewport); // Not available on OpenGL ES 2.0
@@ -1697,11 +1698,11 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
     quat.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
     quat.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
     quat.z = source.z*2.0f - 1.0f;
-    quat.w = 1.0;
+    quat.w = 1.0f;
     
     QuaternionTransform(&quat, modelviewprojection);
 
-    if (quat.w != 0.0)
+    if (quat.w != 0.0f)
     {
         quat.x /= quat.w;
         quat.y /= quat.w;
@@ -1981,7 +1982,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 }
 
 // Load vertex data into a VAO (if supported) and VBO
-Model rlglLoadModel(VertexData mesh)
+Model rlglLoadModel(Mesh mesh)
 {
     Model model;
 
@@ -2170,7 +2171,7 @@ void *rlglReadTexturePixels(Texture2D texture)
     // Render texture to fbo
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
     
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepthf(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, width, height);
@@ -2188,7 +2189,7 @@ void *rlglReadTexturePixels(Texture2D texture)
     quad.transform = MatrixIdentity();
     quad.shader = simpleShader;
     
-    DrawModel(quad, (Vector3){ 0, 0, 0 }, 1.0f, WHITE);
+    DrawModel(quad, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, WHITE);
     
     pixels = (unsigned char *)malloc(texture.width*texture.height*3*sizeof(unsigned char));
     
@@ -2247,13 +2248,13 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
             shader.colorLoc = -1;
 
             // Get handles to GLSL uniform locations (vertex shader)
-            shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+            shader.mvpLoc  = glGetUniformLocation(shader.id, "mvpMatrix");
+            
             shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
             shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
-            shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
             // Get handles to GLSL uniform locations (fragment shader)
-            shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+            shader.tintColorLoc = glGetUniformLocation(shader.id, "fragTintColor");
             shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
             shader.mapNormalLoc = -1;       // It can be set later
             shader.mapSpecularLoc = -1;     // It can be set later
@@ -2738,40 +2739,39 @@ static Shader LoadDefaultShader(void)
         "in vec2 vertexTexCoord;            \n"
         "in vec4 vertexColor;               \n"
         "out vec2 fragTexCoord;             \n"
-        "out vec4 tintColor;                \n"
+        "out vec4 fragTintColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char vShaderStr[] = "#version 100       \n"
         "attribute vec3 vertexPosition;     \n"
         "attribute vec2 vertexTexCoord;     \n"
         "attribute vec4 vertexColor;        \n"
         "varying vec2 fragTexCoord;         \n"
-        "varying vec4 tintColor;            \n"
+        "varying vec4 fragTintColor;        \n"
 #endif
-        "uniform mat4 projectionMatrix;     \n"
-        "uniform mat4 modelviewMatrix;      \n"
+        "uniform mat4 mvpMatrix;     \n"
         "void main()                        \n"
         "{                                  \n"
         "    fragTexCoord = vertexTexCoord; \n"
-        "    tintColor = vertexColor;       \n"
-        "    gl_Position = projectionMatrix*modelviewMatrix*vec4(vertexPosition, 1.0); \n"
+        "    fragTintColor = vertexColor;   \n"
+        "    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
         "}                                  \n";
 
     // Fragment shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
     char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
-        "in vec4 tintColor;                 \n"
+        "in vec4 fragTintColor;                 \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
         "varying vec2 fragTexCoord;         \n"
-        "varying vec4 tintColor;            \n"
+        "varying vec4 fragTintColor;        \n"
 #endif
         "uniform sampler2D texture0;        \n"
         "void main()                        \n"
         "{                                  \n"
         "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
-        "    gl_FragColor = texelColor*tintColor; \n"    
+        "    gl_FragColor = texelColor*fragTintColor; \n"    
         "}                                  \n";
 
     shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
@@ -2788,10 +2788,10 @@ static Shader LoadDefaultShader(void)
     shader.normalLoc = -1;
 
     // Get handles to GLSL uniform locations (vertex shader)
-    shader.modelviewLoc = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.mvpLoc = glGetUniformLocation(shader.id, "mvpMatrix");
+    
     shader.modelLoc = glGetUniformLocation(shader.id, "modelMatrix");
     shader.viewLoc = glGetUniformLocation(shader.id, "viewMatrix");
-    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
     shader.tintColorLoc = -1;
@@ -2831,12 +2831,11 @@ static Shader LoadSimpleShader(void)
         "attribute vec3 vertexNormal;       \n"
         "varying vec2 fragTexCoord;         \n"
 #endif
-        "uniform mat4 projectionMatrix;     \n"
-        "uniform mat4 modelviewMatrix;      \n"
+        "uniform mat4 mvpMatrix;            \n"
         "void main()                        \n"
         "{                                  \n"
         "    fragTexCoord = vertexTexCoord; \n"
-        "    gl_Position = projectionMatrix*modelviewMatrix*vec4(vertexPosition, 1.0); \n"
+        "    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
         "}                                  \n";
 
     // Fragment shader directly defined, no external file required
@@ -2849,11 +2848,11 @@ static Shader LoadSimpleShader(void)
         "varying vec2 fragTexCoord;         \n"
 #endif
         "uniform sampler2D texture0;        \n"
-        "uniform vec4 tintColor;            \n"
+        "uniform vec4 fragTintColor;        \n"
         "void main()                        \n"
         "{                                  \n"
         "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
-        "    gl_FragColor = texelColor*tintColor; \n"
+        "    gl_FragColor = texelColor*fragTintColor; \n"
         "}                                  \n";
 
     shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
@@ -2870,13 +2869,13 @@ static Shader LoadSimpleShader(void)
     shader.colorLoc = -1;
 
     // Get handles to GLSL uniform locations (vertex shader)
-    shader.modelviewLoc  = glGetUniformLocation(shader.id, "modelviewMatrix");
+    shader.mvpLoc  = glGetUniformLocation(shader.id, "mvpMatrix");
+    
     shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
     shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
-    shader.projectionLoc = glGetUniformLocation(shader.id, "projectionMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader.tintColorLoc = glGetUniformLocation(shader.id, "tintColor");
+    shader.tintColorLoc = glGetUniformLocation(shader.id, "fragTintColor");
     shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
     shader.mapNormalLoc = -1;       // It can be set later
     shader.mapSpecularLoc = -1;     // It can be set later
@@ -3240,19 +3239,19 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
     int x2, y2;
     pixel prow, pcol;
 
-    int width = srcWidth / 2;
-    int height = srcHeight / 2;
+    int width = srcWidth/2;
+    int height = srcHeight/2;
 
     pixel *mipmap = (pixel *)malloc(width*height*sizeof(pixel));
 
     // Scaling algorithm works perfectly (box-filter)
     for (int y = 0; y < height; y++)
     {
-        y2 = 2 * y;
+        y2 = 2*y;
 
         for (int x = 0; x < width; x++)
         {
-            x2 = 2 * x;
+            x2 = 2*x;
 
             prow.r = (srcData[y2*srcWidth + x2].r + srcData[y2*srcWidth + x2 + 1].r)/2;
             prow.g = (srcData[y2*srcWidth + x2].g + srcData[y2*srcWidth + x2 + 1].g)/2;
