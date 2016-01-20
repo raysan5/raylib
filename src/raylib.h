@@ -463,12 +463,12 @@ typedef struct {
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
 // Collider types
-typedef enum { RectangleCollider, CircleCollider } ColliderType;
+typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
 
 // Physics struct
 typedef struct Physics {
     bool enabled;
-    bool debug;     // Should be used by programmer for testing purposes
+    bool debug;             // Should be used by programmer for testing purposes
     Vector2 gravity;
 } Physics;
 
@@ -496,8 +496,8 @@ typedef struct Rigidbody {
 typedef struct Collider {
     bool enabled;
     ColliderType type;
-    Rectangle bounds;   // Just used for RectangleCollider type
-    int radius;         // Just used for CircleCollider type
+    Rectangle bounds;   // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
+    int radius;         // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
 } Collider;
 
 #ifdef __cplusplus

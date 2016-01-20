@@ -32,7 +32,8 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum { RectangleCollider, CircleCollider } ColliderType;
+// Collider types
+typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
 
 // Physics struct
 typedef struct Physics {

@@ -183,9 +183,9 @@ void ApplyPhysics(int index, Vector2 *position)
             {
                 if (colliders[index].enabled && colliders[j].enabled)
                 {
-                    if (colliders[index].type == RectangleCollider)
+                    if (colliders[index].type == COLLIDER_RECTANGLE)
                     {
-                        if (colliders[j].type == RectangleCollider)
+                        if (colliders[j].type == COLLIDER_RECTANGLE)
                         {
                             if (CheckCollisionRecs(colliders[index].bounds, colliders[j].bounds))
                             {
@@ -207,7 +207,7 @@ void ApplyPhysics(int index, Vector2 *position)
                     }
                     else
                     {
-                        if (colliders[j].type == RectangleCollider)
+                        if (colliders[j].type == COLLIDER_RECTANGLE)
                         {
                             if (CheckCollisionCircleRec((Vector2){colliders[index].bounds.x, colliders[index].bounds.y}, colliders[index].radius, colliders[j].bounds))
                             {

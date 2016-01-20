@@ -11,11 +11,11 @@
 
 #include "raylib.h"
 
-#define MAX_OBJECTS 5
-#define OBJECTS_OFFSET 150
+#define MAX_OBJECTS           5
+#define OBJECTS_OFFSET      150
 
-#define FORCE_INTENSITY 250.0f  // Customize by user
-#define FORCE_RADIUS 100        // Customize by user    
+#define FORCE_INTENSITY  250.0f     // Customize by user
+#define FORCE_RADIUS        100     // Customize by user    
 
 int main()
 {
@@ -25,7 +25,7 @@ int main()
     int screenHeight = 450;
     
     InitWindow(screenWidth, screenHeight, "raylib [physics] example - rigidbodies forces");
-    SetTargetFPS(60);   // Enable v-sync
+
     InitPhysics();      // Initialize internal physics values   (max rigidbodies/colliders available: 1024)
     
     // Physics initialization
@@ -36,17 +36,20 @@ int main()
     
     // Objects initialization
     Transform objects[MAX_OBJECTS];
-    for(int i = 0; i < MAX_OBJECTS; i++)
+    
+    for (int i = 0; i < MAX_OBJECTS; i++)
     {
         objects[i] = (Transform){(Vector2){75 + OBJECTS_OFFSET * i, (screenHeight - 50) / 2}, 0.0f, (Vector2){50, 50}};
-        AddCollider(i, (Collider){true, RectangleCollider, (Rectangle){objects[i].position.x, objects[i].position.y, objects[i].scale.x, objects[i].scale.y}, 0});
+        AddCollider(i, (Collider){true, COLLIDER_RECTANGLE, (Rectangle){objects[i].position.x, objects[i].position.y, objects[i].scale.x, objects[i].scale.y}, 0});
         AddRigidbody(i, (Rigidbody){true, 1.0f, (Vector2){0, 0}, (Vector2){0, 0}, false, false, true, 0.5f, 0.5f});
     }
     
     // Floor initialization 
     // NOTE: floor doesn't need a rigidbody because it's a static physic object, just a collider to collide with other dynamic colliders (with rigidbody)
     Transform floor = (Transform){(Vector2){0, screenHeight * 0.8f}, 0.0f, (Vector2){screenWidth, screenHeight * 0.2f}};
-    AddCollider(MAX_OBJECTS, (Collider){true, RectangleCollider, (Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, 0});
+    AddCollider(MAX_OBJECTS, (Collider){true, COLLIDER_RECTANGLE, (Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, 0});
+
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -57,19 +60,19 @@ int main()
         
         // Update object physics 
         // NOTE: all physics detections and reactions are calculated in ApplyPhysics() function (You will live happier :D)
-        for(int i = 0; i < MAX_OBJECTS; i++)
+        for (int i = 0; i < MAX_OBJECTS; i++)
         {
             ApplyPhysics(i, &objects[i].position);
         }
         
         // Check foce button input
-        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             AddForceAtPosition(GetMousePosition(), FORCE_INTENSITY, FORCE_RADIUS);
         }
         
         // Check debug mode toggle button input
-        if(IsKeyPressed(KEY_P))
+        if (IsKeyPressed(KEY_P))
         {
             // Update program physics value
             worldPhysics.debug = !worldPhysics.debug;
@@ -86,21 +89,21 @@ int main()
             ClearBackground(RAYWHITE);
             
             // Check if debug mode is enabled
-            if(worldPhysics.debug)
+            if (worldPhysics.debug)
             {
                 // Draw every internal physics stored collider if it is active (floor included)
-                for(int i = 0; i < MAX_OBJECTS + 1; i++)
+                for (int i = 0; i < MAX_OBJECTS + 1; i++)
                 {
-                    if(GetCollider(i).enabled)
+                    if (GetCollider(i).enabled)
                     {
                         // Draw collider bounds
                         DrawRectangleLines(GetCollider(i).bounds.x, GetCollider(i).bounds.y, GetCollider(i).bounds.width, GetCollider(i).bounds.height, GREEN);
                         
                         // Check if current collider is not floor
-                        if(i < MAX_OBJECTS)
+                        if (i < MAX_OBJECTS)
                         {
                             // Draw lines between mouse position and objects if they are in force range
-                            if(CheckCollisionPointCircle(GetMousePosition(), (Vector2){GetCollider(i).bounds.x + GetCollider(i).bounds.width / 2, GetCollider(i).bounds.y + GetCollider(i).bounds.height / 2}, FORCE_RADIUS))
+                            if (CheckCollisionPointCircle(GetMousePosition(), (Vector2){GetCollider(i).bounds.x + GetCollider(i).bounds.width / 2, GetCollider(i).bounds.y + GetCollider(i).bounds.height / 2}, FORCE_RADIUS))
                             {
                                 DrawLineV(GetMousePosition(), (Vector2){GetCollider(i).bounds.x + GetCollider(i).bounds.width / 2, GetCollider(i).bounds.y + GetCollider(i).bounds.height / 2}, RED);
                             }
@@ -114,7 +117,7 @@ int main()
             else
             {
                 // Draw objects
-                for(int i = 0; i < MAX_OBJECTS; i++)
+                for (int i = 0; i < MAX_OBJECTS; i++)
                 {
                     DrawRectangleRec((Rectangle){objects[i].position.x, objects[i].position.y, objects[i].scale.x, objects[i].scale.y}, GRAY);
                 }
