@@ -1341,42 +1341,7 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
 {
     bool collision = false;
     
-    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
-    float distance = VectorLength(raySpherePos);
-    float vector = VectorDotProduct(raySpherePos, ray.direction);
-    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
-    
-    if(d >= 0.0f) collision = true;
-    
-    return collision;
-}
-
-// Detect collision between ray and sphere with extended parameters and collision point detection
-bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint)
-{
-    bool collision = false;
-    
-    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
-    float distance = VectorLength(raySpherePos);
-    float vector = VectorDotProduct(raySpherePos, ray.direction);
-    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
-    
-    if(d >= 0.0f) collision = true;
-    
-    // Calculate collision point
-    Vector3 offset = ray.direction;
-    float collisionDistance = 0;
-    
-    // Check if ray origin is inside the sphere to calculate the correct collision point
-    if(distance < sphereRadius) collisionDistance = vector + sqrt(d);
-    else collisionDistance = vector - sqrt(d);
-    
-    VectorScale(&offset, collisionDistance);
-    Vector3 cPoint = VectorAdd(ray.position, offset);
-    
-    collisionPoint->x = cPoint.x;
-    collisionPoint->y = cPoint.y;
-    collisionPoint->z = cPoint.z;
+    // TODO: implement collision...
     
     return collision;
 }
@@ -1408,8 +1373,8 @@ bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
 BoundingBox CalculateBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = {mesh.vertices[0], mesh.vertices[1], mesh.vertices[2]};
-    Vector3 maxVertex = {mesh.vertices[0], mesh.vertices[1], mesh.vertices[2]};
+    Vector3 minVertex = mesh.vertices[0]; 
+    Vector3 maxVertex = mesh.vertices[0];
 
     for (int i = 1; i < mesh.vertexCount; i++)
     {
