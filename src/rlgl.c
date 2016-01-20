@@ -32,6 +32,8 @@
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 #include <string.h>         // Declares strcmp(), strlen(), strtok()
 
+#include "raymath.h"        // Required for Vector3 and Matrix functions
+
 #if defined(GRAPHICS_API_OPENGL_11)
     #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl.h>

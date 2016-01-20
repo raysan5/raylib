@@ -37,10 +37,11 @@
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #define RAYMATH_STANDALONE
+    #define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
+    #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
+    #define RAYMATH_STANDALONE      // Not dependent on raylib.h structs: Vector3, Matrix
+    #include "raymath.h"            // Required for Vector3 and Matrix functions
 #endif
-
-#include "raymath.h"            // Required for data type Matrix and Matrix functions
 
 // Select desired OpenGL version
 // NOTE: Those preprocessor defines are only used on rlgl module,
@@ -92,7 +93,7 @@ typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
 typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
-#ifdef RLGL_STANDALONE
+#if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
     // Boolean type
     typedef enum { false, true } bool;

@@ -38,9 +38,12 @@
 
 #include "raylib.h"         // raylib main header
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "raymath.h"        // Required for data type Matrix and Matrix functions
 #include "utils.h"          // TraceLog() function
                             // NOTE: Includes Android fopen map, InitAssetManager()
+                            
+#define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
+#define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
+#include "raymath.h"            // Required for Vector3 and Matrix functions
 
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand(), atexit()
@@ -639,6 +642,46 @@ float *ColorToFloat(Color color)
     buffer[1] = (float)color.g/255;
     buffer[2] = (float)color.b/255;
     buffer[3] = (float)color.a/255;
+
+    return buffer;
+}
+
+// Converts Vector3 to float array
+float *VectorToFloat(Vector3 vec)
+{
+    static float buffer[3];
+
+    buffer[0] = vec.x;
+    buffer[1] = vec.y;
+    buffer[2] = vec.z;
+
+    return buffer;
+}
+
+// Converts Matrix to float array
+// NOTE: Returned vector is a transposed version of the Matrix struct, 
+// it should be this way because, despite raymath use OpenGL column-major convention,
+// Matrix struct memory alignment and variables naming are not coherent
+float *MatrixToFloat(Matrix mat)
+{
+    static float buffer[16];
+
+    buffer[0] = mat.m0;
+    buffer[1] = mat.m4;
+    buffer[2] = mat.m8;
+    buffer[3] = mat.m12;
+    buffer[4] = mat.m1;
+    buffer[5] = mat.m5;
+    buffer[6] = mat.m9;
+    buffer[7] = mat.m13;
+    buffer[8] = mat.m2;
+    buffer[9] = mat.m6;
+    buffer[10] = mat.m10;
+    buffer[11] = mat.m14;
+    buffer[12] = mat.m3;
+    buffer[13] = mat.m7;
+    buffer[14] = mat.m11;
+    buffer[15] = mat.m15;
 
     return buffer;
 }

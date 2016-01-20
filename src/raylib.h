@@ -547,8 +547,8 @@ float GetFrameTime(void);                                   // Returns time in s
 Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
 float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
-float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array (defined in raymath module)
-float *MatrixToVector(Matrix mat);                          // Converts Matrix to float array (defined in raymath module)
+float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array
+float *MatrixToFloat(Matrix mat);                           // Converts Matrix to float array
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
