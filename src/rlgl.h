@@ -36,12 +36,7 @@
     #include "utils.h"          // Required for function TraceLog()
 #endif
 
-#if defined(RLGL_STANDALONE)
-    #define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
-    #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
-    #define RAYMATH_STANDALONE      // Not dependent on raylib.h structs: Vector3, Matrix
-    #include "raymath.h"            // Required for Vector3 and Matrix functions
-#endif
+#include "raymath.h"
 
 // Select desired OpenGL version
 // NOTE: Those preprocessor defines are only used on rlgl module,
@@ -131,6 +126,12 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
         COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
     } TextureFormat;
+    
+    // Bounding box type
+    typedef struct BoundingBox {
+        Vector3 min;
+        Vector3 max;
+    } BoundingBox;
 
     // Mesh with vertex data type
     // NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
@@ -177,10 +178,13 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
     } Shader;
 
     // Texture2D type
+    // NOTE: Data stored in GPU memory
     typedef struct Texture2D {
-        unsigned int id;            // Texture id
-        int width;
-        int height;
+        unsigned int id;        // OpenGL texture id
+        int width;              // Texture base width
+        int height;             // Texture base height
+        int mipmaps;            // Mipmap levels, 1 by default
+        int format;             // Data format (TextureFormat)
     } Texture2D;
     
     // 3d Model type
