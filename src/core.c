@@ -54,10 +54,15 @@
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    #define GLEW_STATIC
-    #include <GL/glew.h>        // GLEW extensions loading lib
-    //#include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
-    
+
+    #define GLEW_EXTENSIONS_LOADER
+    #if defined(GLEW_EXTENSIONS_LOADER)
+        #define GLEW_STATIC
+        #include <GL/glew.h>        // GLEW extensions loading lib
+    #elif defined(GLAD_EXTENSIONS_LOADER)
+        #include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
+    #endif
+
     //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>     // GLFW3 library: Windows, OpenGL context and Input management
 
@@ -1386,7 +1391,6 @@ static void InitDisplay(int width, int height)
     // Extensions initialization for OpenGL 3.3
     if (rlGetVersion() == OPENGL_33)
     {
-        #define GLEW_EXTENSIONS_LOADER
         #if defined(GLEW_EXTENSIONS_LOADER)
             // Initialize extensions using GLEW
             glewExperimental = 1;       // Needed for core profile
@@ -1403,7 +1407,6 @@ static void InitDisplay(int width, int height)
 
             // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
             // Alternatives: glLoadGen, glad, libepoxy
-            
         #elif defined(GLAD_EXTENSIONS_LOADER)
             // NOTE: glad is generated and contains only required OpenGL version and Core extensions
             //if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
