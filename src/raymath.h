@@ -170,6 +170,7 @@ RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transfo
 
 #endif  // notdef RAYMATH_EXTERN_INLINE
 
+#endif  // RAYMATH_H
 //////////////////////////////////////////////////////////////////// end of header file
 
 #if defined(RAYMATH_IMPLEMENTATION) || defined(RAYMATH_EXTERN_INLINE)
@@ -1096,5 +1097,3 @@ RMDEF void QuaternionTransform(Quaternion *q, Matrix mat)
 }
 
 #endif  // RAYMATH_IMPLEMENTATION
-
-#endif  // RAYMATH_H
