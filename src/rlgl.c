@@ -43,13 +43,11 @@
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #define GLEW_STATIC
     #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl3.h>
     #else
-        #include <GL/glew.h>        // GLEW extensions loading lib
-        //#include "glad.h"         // glad extensions loading lib: ERRORS: windows.h
-        //#include "gl_core_3_3.h"  // glLoadGen extension loading lib: ERRORS: windows.h
+        #include <GL/glew.h>        // GLEW header, includes OpenGL headers
+        //#include "glad.h"         // glad header, includes OpenGL headers
     #endif
 #endif
 
@@ -896,59 +894,10 @@ void rlglInit(void)
     
 #if defined(GRAPHICS_API_OPENGL_33)
 
-#define GLEW_EXTENSIONS_LOADER
-#if defined(GLEW_EXTENSIONS_LOADER)
-    // Initialize extensions using GLEW
-    glewExperimental = 1;       // Needed for core profile
-    GLenum error = glewInit();
-    
-    if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
-    
-    if (glewIsSupported("GL_VERSION_3_3"))
-    {
-        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-        
-        vaoSupported = true;
-        npotSupported = true;
-    }
-    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+    // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
+    vaoSupported = true;
+    npotSupported = true;
 
-    // With GLEW, we can check if an extension has been loaded in two ways:
-    //if (GLEW_ARB_vertex_array_object) { } 
-    //if (glewIsSupported("GL_ARB_vertex_array_object")) { }
-
-    // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
-    // Alternatives: glLoadGen, glad, libepoxy
-    
-#elif defined(GLAD_EXTENSIONS_LOADER)
-    // NOTE: glad is generated and contains only required OpenGL version and core extensions
-    //if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n"); // No GLFW3 in this module...
-
-    if (GLAD_GL_VERSION_3_3)
-    {
-        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-        
-        vaoSupported = true;
-        npotSupported = true;
-    }
-    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
-    
-    // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
-    //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
-
-#elif defined(GLLOADGEN_EXTENSIONS_LOADER)
-    // NOTE: glLoadGen already generates a header with required OpenGL version and core extensions
-    if (ogl_LoadFunctions() != ogl_LOAD_FAILED)
-    {
-        TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-        
-        vaoSupported = true;
-        npotSupported = true;
-    }
-    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
-#endif
-    
     // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
