@@ -55,7 +55,7 @@
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 
-    #define GLEW_EXTENSIONS_LOADER
+    #define GLAD_EXTENSIONS_LOADER
     #if defined(GLEW_EXTENSIONS_LOADER)
         #define GLEW_STATIC
         #include <GL/glew.h>        // GLEW extensions loading lib

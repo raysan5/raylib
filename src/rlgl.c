@@ -46,8 +46,9 @@
     #ifdef __APPLE__                // OpenGL include for OSX
         #include <OpenGL/gl3.h>
     #else
-        #include <GL/glew.h>        // GLEW header, includes OpenGL headers
-        //#include "glad.h"         // glad header, includes OpenGL headers
+        //#define GLEW_STATIC
+        //#include <GL/glew.h>        // GLEW header, includes OpenGL headers
+        #include "glad.h"         // glad header, includes OpenGL headers
     #endif
 #endif
 
