@@ -217,8 +217,13 @@ void ProcessGestureEvent(GestureEvent event)
                     angle = CalculateAngle(initialDragPosition, endDragPosition, magnitude);
                     intensity = magnitude / (float)draggingTimeCounter;
                     
-                    currentGesture = GESTURE_DRAG;
-                    draggingTimeCounter++;
+                    // Check if drag movement is less than minimum to keep it as hold state or switch to drag state
+                    if(magnitude > FORCE_TO_SWIPE)
+                    {
+                        currentGesture = GESTURE_DRAG;
+                        draggingTimeCounter++;
+                    }
+                    else currentGesture = GESTURE_HOLD;
                 }
             }
         } break;
@@ -339,8 +344,13 @@ void UpdateGestures(void)
 {
     // NOTE: Gestures are processed through system callbacks on touch events
     
-    if ((previousGesture == GESTURE_TAP) && (currentGesture == GESTURE_TAP)) currentGesture = GESTURE_HOLD;
-    else if (currentGesture != GESTURE_HOLD) currentGesture = GESTURE_NONE;
+    // When screen is touched, in first frame GESTURE_TAP is called but in next frame touch event callback is not called (if touch position doesn't change),
+    // so we need to store previous frame gesture type manually in this update function to switch to HOLD if current gesture is
+    // GESTURE_TAP two frames in a row. Due to current gesture is set to HOLD, current gesture doesn't need to be reset to NONE every frame.
+    // It will be reset when UP is called.
+    if(currentGesture == GESTURE_TAP) previousGesture = currentGesture;
+    
+    if(previousGesture == GESTURE_TAP && currentGesture == GESTURE_TAP) currentGesture = GESTURE_HOLD;
 }
 
 //----------------------------------------------------------------------------------
