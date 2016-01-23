@@ -7,10 +7,10 @@
 *   Features:
 *     Library written in plain C code (C99)
 *     Uses C# PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL (1.1, 3.3+ or ES2)
+*     Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
 *     Unique OpenGL abstraction layer [rlgl]
-*     Powerful fonts module with SpriteFonts support
-*     Multiple textures support, including DDS and mipmaps generation
+*     Powerful fonts module with SpriteFonts support (including AngelCode fonts and TTF)
+*     Multiple textures support, including compressed formats and mipmaps generation
 *     Basic 3d support for Shapes, Models, Heightmaps and Billboards
 *     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing with streaming support (WAV and OGG)
@@ -18,20 +18,21 @@
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
-*     GLEW for OpenGL extensions loading (3.3+ and ES2)
+*     GLAD for OpenGL extensions loading (3.3 Core profile)
 *     stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA, PSD, GIF, HDR, PIC)
 *     stb_image_write (Sean Barret) for image writting (PNG)
 *     stb_vorbis (Sean Barret) for ogg audio loading
+*     stb_truetype (Sean Barret) for ttf fonts loading
 *     OpenAL Soft for audio device/context management
 *     tinfl for data decompression (DEFLATE algorithm)
 *
 *   Some design decisions:
-*     32bit Colors - All defined color are always RGBA
-*     SpriteFonts - All loaded sprite-font images are converted to RGBA and POT textures
+*     32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
 *     One custom default font is loaded automatically when InitWindow()
-*     If using OpenGL 3.3+ or ES2, one default shader is loaded automatically (internally defined)
+*     If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
+*     If using OpenGL 3.3 or ES2, two default shaders are loaded automatically (internally defined)
 *
-*   -- LICENSE (raylib v1.2, September 2014) --
+*   -- LICENSE --
 *
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
