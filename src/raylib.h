@@ -18,7 +18,7 @@
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
-*     GLAD for OpenGL extensions loading (3.3 Core profile)
+*     GLAD for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP)
 *     stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA, PSD, GIF, HDR, PIC)
 *     stb_image_write (Sean Barret) for image writting (PNG)
 *     stb_vorbis (Sean Barret) for ogg audio loading

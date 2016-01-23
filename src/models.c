@@ -557,7 +557,7 @@ void DrawGizmo(Vector3 position)
 // Load a 3d model (from file)
 Model LoadModel(const char *fileName)
 {
-    Model model;
+    Model model = { 0 };
     Mesh mesh = { 0 };
     
     // NOTE: Initialize default data for model in case loading fails, maybe a cube?

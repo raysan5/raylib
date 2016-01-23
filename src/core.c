@@ -1230,7 +1230,9 @@ Vector2 GetTouchPosition(void)
 
     return position;
 }
+#endif
 
+#if defined(PLATFORM_ANDROID)
 // Detect if a button has been pressed once
 bool IsButtonPressed(int button)
 {

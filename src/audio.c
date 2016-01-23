@@ -166,15 +166,8 @@ void CloseAudioDevice(void)
 // Load sound to memory
 Sound LoadSound(char *fileName)
 {
-    Sound sound;
-    Wave wave;
-
-    // Init some default values for wave...
-    wave.data = NULL;
-    wave.dataSize = 0;
-    wave.sampleRate = 0;
-    wave.bitsPerSample = 0;
-    wave.channels = 0;
+    Sound sound = { 0 };
+    Wave wave = { 0 };
 
     // NOTE: The entire file is loaded to memory to play it all at once (no-streaming)
 
@@ -236,7 +229,7 @@ Sound LoadSound(char *fileName)
 // Load sound from wave data
 Sound LoadSoundFromWave(Wave wave)
 {
-    Sound sound;
+    Sound sound = { 0 };
 
     if (wave.data != NULL)
     {
@@ -290,7 +283,7 @@ Sound LoadSoundFromWave(Wave wave)
 Sound LoadSoundFromRES(const char *rresName, int resId)
 {
     // NOTE: rresName could be directly a char array with all the data!!! --> TODO
-    Sound sound;
+    Sound sound = { 0 };
 
 #if defined(AUDIO_STANDALONE)
     TraceLog(WARNING, "Sound loading from rRES resource file not supported on standalone mode");
@@ -791,7 +784,7 @@ static Wave LoadWAV(const char *fileName)
     WaveFormat waveFormat;
     WaveData waveData;
 
-    Wave wave;
+    Wave wave = { 0 };
     FILE *wavFile;
 
     wavFile = fopen(fileName, "rb");
