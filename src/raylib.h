@@ -598,13 +598,15 @@ bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad b
 bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 int GetTouchX(void);                                    // Returns touch position X (relative to screen size)
 int GetTouchY(void);                                    // Returns touch position Y (relative to screen size)
 Vector2 GetTouchPosition(void);                         // Returns touch position XY (relative to screen size)
+
+#if defined(PLATFORM_ANDROID)
 bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
 bool IsButtonDown(int button);                          // Detect if an android physic button is being pressed
 bool IsButtonReleased(int button);                      // Detect if an android physic button has been released
+#endif
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
@@ -621,7 +623,6 @@ Vector2 GetGestureDragVector(void);                     // Get gesture drag vect
 int GetGestureHoldDuration(void);                       // Get gesture hold time in frames
 float GetGesturePinchDelta(void);                       // Get gesture pinch delta
 float GetGesturePinchAngle(void);                       // Get gesture pinch angle
-#endif
 
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: camera)

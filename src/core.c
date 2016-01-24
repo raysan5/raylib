@@ -1197,23 +1197,31 @@ bool IsGamepadButtonUp(int gamepad, int button)
 }
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 // Returns touch position X
 int GetTouchX(void)
 {
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     return (int)touchPosition.x;
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+    return GetMouseX();
+#endif
 }
 
 // Returns touch position Y
 int GetTouchY(void)
 {
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     return (int)touchPosition.y;
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+    return GetMouseY();
+#endif
 }
 
 // Returns touch position XY
 // TODO: touch position should be scaled depending on display size and render size
 Vector2 GetTouchPosition(void)
 {
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
     Vector2 position = touchPosition;
 
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
@@ -1227,10 +1235,12 @@ Vector2 GetTouchPosition(void)
         position.x = position.x*((float)renderWidth/(float)displayWidth) - renderOffsetX/2;
         position.y = position.y*((float)renderHeight/(float)displayHeight) - renderOffsetY/2;
     }
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+    Vector2 position = GetMousePosition();
+#endif
 
     return position;
 }
-#endif
 
 #if defined(PLATFORM_ANDROID)
 // Detect if a button has been pressed once
@@ -1633,6 +1643,28 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     currentMouseState[button] = action;
+    
+    // TODO: Test mouse gestures
+    
+#define ENABLE_MOUSE_GESTURES
+#if defined(ENABLE_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent;
+    
+    // Register touch actions
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_MOVE;
+    else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_UP;
+    
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+    
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = GetMousePosition();
+    
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
 }
 
 // GLFW3 Char Key Callback, runs on key pressed (get char value)
@@ -1976,11 +2008,9 @@ static bool GetMouseButtonStatus(int button)
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-
-    // TODO: Remove this requirement...
+    // NOTE: Gestures update must be called every frame to reset gestures correctly
+    // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
-#endif
     
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
