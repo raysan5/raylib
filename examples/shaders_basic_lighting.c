@@ -14,6 +14,17 @@
 #define SHININESS_SPEED 1.0f
 #define LIGHT_SPEED 0.25f
 
+// Light type
+typedef struct Light {
+    Vector3 position;
+    Vector3 direction;
+    float intensity;
+    float specIntensity;
+    Color diffuse;
+    Color ambient;
+    Color specular;
+} Light;
+
 int main()
 {
     // Initialization
@@ -48,6 +59,10 @@ int main()
     int cameraLoc = GetShaderLocation(shader, "cameraPos");
     int lightLoc = GetShaderLocation(shader, "lightPos");
     
+    // Model and View matrix locations (required for lighting)
+    int modelLoc = GetShaderLocation(shader, "modelMatrix");
+    //int viewLoc = GetShaderLocation(shader, "viewMatrix");        // Not used
+    
     // Light and material definitions
     Light light;
     Material matBlinn;
@@ -81,6 +96,10 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);      // Update camera position
+        
+        // NOTE: Model transform can be set in model.transform or directly with params at draw... WATCH OUT!
+        SetShaderValueMatrix(shader, modelLoc, model.transform);            // Send model matrix to shader
+        //SetShaderValueMatrix(shader, viewLoc, GetCameraMatrix(camera));   // Not used
         
         // Glossiness input control
         if(IsKeyDown(KEY_UP)) matBlinn.glossiness += SHININESS_SPEED;
