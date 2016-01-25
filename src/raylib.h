@@ -358,12 +358,31 @@ typedef struct Shader {
     int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
 } Shader;
 
+// Material type
+// TODO: Redesign material-shaders-textures system
+typedef struct Material {
+    //Shader shader;
+
+    //Texture2D texDiffuse;      // Diffuse texture
+    //Texture2D texNormal;       // Normal texture
+    //Texture2D texSpecular;     // Specular texture
+    
+    Color colDiffuse;
+    Color colAmbient;
+    Color colSpecular;
+    
+    float glossiness;
+    float normalDepth;
+} Material;
+
 // 3d Model type
+// TODO: Replace shader/testure by material
 typedef struct Model {
     Mesh mesh;
     Matrix transform;
     Texture2D texture;    // Only for OpenGL 1.1, on newer versions this should be in the shader
     Shader shader;
+	//Material material;
 } Model;
 
 // Ray type (useful for raycast)
@@ -386,26 +405,6 @@ typedef struct Wave {
     short bitsPerSample;
     short channels;
 } Wave;
-
-// Light type
-typedef struct Light {
-    Vector3 position;
-    Vector3 direction;
-    float intensity;
-    float specIntensity;
-    Color diffuse;
-    Color ambient;
-    Color specular;
-} Light;
-
-// Material type
-typedef struct Material {
-    Color diffuse;
-    Color ambient;
-    Color specular;
-    float glossiness;
-    float normalDepth;
-} Material;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -535,11 +534,12 @@ void BeginDrawing(void);                                    // Setup drawing can
 void BeginDrawingEx(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with extended parameters
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
-void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
+void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
 void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
 Vector2 WorldToScreen(Vector3 position, Camera camera);     // Returns the screen space position from a 3d world space position
+Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 float GetFPS(void);                                         // Returns current FPS

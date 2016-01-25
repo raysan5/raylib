@@ -1477,8 +1477,8 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
 
     // NOTE: Drawing in OpenGL 3.3+, matrices are passed to shader
     // TODO: Reduce number of matrices passed to shaders, use only matMVP
-    glUniformMatrix4fv(model.shader.modelLoc, 1, false, MatrixToFloat(matModel));
-    glUniformMatrix4fv(model.shader.viewLoc, 1, false, MatrixToFloat(matView));
+    //glUniformMatrix4fv(model.material.shader.modelLoc, 1, false, MatrixToFloat(matModel));
+    //glUniformMatrix4fv(model.material.shader.viewLoc, 1, false, MatrixToFloat(matView));
     
     glUniformMatrix4fv(model.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
 
@@ -2201,9 +2201,6 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
             // Get handles to GLSL uniform locations (vertex shader)
             shader.mvpLoc  = glGetUniformLocation(shader.id, "mvpMatrix");
-            
-            shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
-            shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
 
             // Get handles to GLSL uniform locations (fragment shader)
             shader.tintColorLoc = glGetUniformLocation(shader.id, "fragTintColor");
@@ -2503,6 +2500,18 @@ void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size)
 #endif
 }
 
+// Set shader uniform value (matrix 4x4)
+void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glUseProgram(shader.id);
+
+    glUniformMatrix4fv(uniformLoc, 1, false, MatrixToFloat(mat));
+    
+    glUseProgram(0);
+#endif
+}
+
 // Default diffuse shader map texture assignment
 void SetShaderMapDiffuse(Shader *shader, Texture2D texture)
 {
@@ -2741,9 +2750,6 @@ static Shader LoadDefaultShader(void)
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.mvpLoc = glGetUniformLocation(shader.id, "mvpMatrix");
-    
-    shader.modelLoc = glGetUniformLocation(shader.id, "modelMatrix");
-    shader.viewLoc = glGetUniformLocation(shader.id, "viewMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
     shader.tintColorLoc = -1;
@@ -2822,9 +2828,6 @@ static Shader LoadSimpleShader(void)
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader.mvpLoc  = glGetUniformLocation(shader.id, "mvpMatrix");
-    
-    shader.modelLoc  = glGetUniformLocation(shader.id, "modelMatrix");
-    shader.viewLoc  = glGetUniformLocation(shader.id, "viewMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
     shader.tintColorLoc = glGetUniformLocation(shader.id, "fragTintColor");
