@@ -126,6 +126,8 @@ RMDEF Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount); // Calculate lin
 RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal);  // Calculate reflected vector to normal
 RMDEF void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Vector3 by a given Matrix
 RMDEF Vector3 VectorZero(void);                               // Return a Vector3 init to zero
+RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);          // Return min value for each pair of components
+RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);          // Return max value for each pair of components
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
@@ -359,6 +361,30 @@ RMDEF Vector3 VectorZero(void)
     Vector3 zero = { 0.0f, 0.0f, 0.0f };
 
     return zero;
+}
+
+// Return min value for each pair of components
+RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2)
+{
+    Vector3 result;
+    
+    result.x = fminf(vec1.x, vec2.x);
+    result.y = fminf(vec1.y, vec2.y);
+    result.z = fminf(vec1.z, vec2.z);
+    
+    return result;
+}
+
+// Return max value for each pair of components
+RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2)
+{
+    Vector3 result;
+    
+    result.x = fmaxf(vec1.x, vec2.x);
+    result.y = fmaxf(vec1.y, vec2.y);
+    result.z = fmaxf(vec1.z, vec2.z);
+    
+    return result;
 }
 
 //----------------------------------------------------------------------------------

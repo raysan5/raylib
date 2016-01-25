@@ -1275,6 +1275,20 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     rlDisableTexture();
 }
 
+// Draw a bounding box with wires
+void DrawBoundingBox(BoundingBox box)
+{
+    Vector3 size;
+    
+    size.x = fabsf(box.max.x - box.min.x);
+    size.y = fabsf(box.max.y - box.min.y);
+    size.z = fabsf(box.max.z - box.min.z);
+    
+    Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
+    
+    DrawCubeWires(center, size.x, size.y, size.z, GREEN);
+}
+
 // Detect collision between two spheres
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
 {
@@ -1401,10 +1415,8 @@ bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
     return collision;
 }
 
-// TODO: Useful function to check collision area?
-//BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
-
 // Calculate mesh bounding box limits
+// NOTE: minVertex and maxVertex should be transformed by model transform matrix (position, scale, rotate)
 BoundingBox CalculateBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
@@ -1413,15 +1425,10 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
 
     for (int i = 1; i < mesh.vertexCount; i++)
     {
-		// TODO: Compare min and max with previous vertex
-        //minVertex = Vector3.Min(minVertex, mesh.vertices[i]);
-        //maxVertex = Vector3.Max(maxVertex, mesh.vertices[i]);
+		minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+        maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
     }
-
-    // NOTE: For OBB, transform mesh by model transform matrix
-    //minVertex = VectorTransform(meshMin, mesh.transform);
-    //maxVertex = VectorTransform(meshMax, mesh.transform);
- 
+    
     // Create the bounding box
     BoundingBox box;
     box.min = minVertex;
