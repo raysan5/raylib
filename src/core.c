@@ -1916,6 +1916,10 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     // Register touch points count
     gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
     
+    // Register touch points id DESKTOP
+    gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
+    gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
+    
     // Register touch points position
     // NOTE: Only two points registered
     gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
@@ -2473,6 +2477,10 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     
     // Register touch points count
     gestureEvent.pointCount = touchEvent->numTouches;
+    
+    // Register touch points id WEB
+    gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
+    gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
     
     // Register touch points position
     // NOTE: Only two points registered

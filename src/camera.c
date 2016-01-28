@@ -2,7 +2,7 @@
 *
 *   raylib Camera System - Camera Modes Setup and Control Functions
 *
-*   Copyright (c) 2015 Marc Palau and Ramon Santamaria
+*   Copyright (c) 2015 Marc Palau and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
