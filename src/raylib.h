@@ -586,6 +586,8 @@ int GetMouseWheelMove(void);                            // Returns mouse wheel m
 
 void ShowCursor(void);                                  // Shows cursor
 void HideCursor(void);                                  // Hides cursor
+void EnableCursor(void);                                // Enables cursor
+void DisableCursor(void);                               // Disables cursor
 bool IsCursorHidden(void);                              // Returns true if cursor is not visible
 #endif
 
