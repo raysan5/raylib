@@ -115,7 +115,7 @@ rlgl.o: rlgl.c
 	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
 # compile glad module
-raymath.o: glad.c
+glad.o: glad.c
 	$(CC) -c glad.c $(CFLAGS) $(INCLUDES)
 
 # compile shapes module
