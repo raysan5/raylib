@@ -1097,6 +1097,24 @@ void ShowCursor()
     cursorHidden = false;
 }
 
+// Disable mouse cursor
+void DisableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+    cursorHidden = true;
+}
+
+// Enable mouse cursor
+void EnableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
+    cursorHidden = false;
+}
+
 // Check if mouse cursor is hidden
 bool IsCursorHidden()
 {
