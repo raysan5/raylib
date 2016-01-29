@@ -1,4 +1,4 @@
-#version 110
+#version 330
 
 uniform sampler2D texture0;
 varying vec2 fragTexCoord;
