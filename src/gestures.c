@@ -65,20 +65,11 @@ typedef enum {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-// Tap gesture variables
-static Vector2 initialTapPosition = { 0, 0 };
-
-// Double Tap gesture variables
-static bool doubleTapping = false;
-static bool untap = false;              // Check if recently done a tap
 
 // Drag gesture variables
-static Vector2 initialDragPosition = { 0, 0 };
-static Vector2 endDragPosition = { 0, 0 };
-static Vector2 lastDragPosition = { 0, 0 };
 static Vector2 dragVector = { 0, 0 };
 
-// Albert&Ian
+// Touch gesture variables
 static Vector2 touchDownPosition = { 0, 0 };
 static Vector2 touchDownPosition2 = { 0, 0 };
 static Vector2 touchUpPosition = { 0, 0 };
@@ -87,7 +78,6 @@ static Vector2 moveDownPosition2 = { 0, 0 };
 
 static int numTap = 0;
 static int numHold = 0;
-static int numPinch = 0;
 static int pointCount = 0;
 static int touchId = -1;
 
@@ -99,10 +89,6 @@ static float intensity = 0;             // How fast we did the drag (pixels per 
 static int draggingTimeCounter = 0;     // Time that have passed while dragging
 
 // Pinch gesture variables
-static Vector2 firstInitialPinchPosition = { 0, 0 };
-static Vector2 secondInitialPinchPosition = { 0, 0 };
-static Vector2 firstEndPinchPosition = { 0, 0 };
-static Vector2 secondEndPinchPosition = { 0, 0 };
 static float pinchDelta = 0;            // Pinch delta displacement
 
 // Detected gestures
@@ -115,12 +101,9 @@ static unsigned int enabledGestures = 0b0000001111111111;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitPinchGesture(Vector2 posA, Vector2 posB);
 static float CalculateAngle(Vector2 initialPosition, Vector2 actualPosition, float magnitude);
-static float VectorDistance(Vector2 v1, Vector2 v2);
-static float VectorDotProduct(Vector2 v1, Vector2 v2);
+static float Vector2Distance(Vector2 v1, Vector2 v2);
 static double GetCurrentTime();
-static float Vector2Distance();
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -135,18 +118,18 @@ void ProcessGestureEvent(GestureEvent event)
     
     previousGesture = currentGesture;
     
-    pointCount = event.pointCount;
+    pointCount = event.pointCount;      // Required on UpdateGestures()
     
-    // Albert&Ian
     if (pointCount < 2)
     {      
         touchId = event.pointerId[0];
+        
         if (event.touchAction == TOUCH_DOWN)
         {
             numTap++;    // Tap counter
 
             // Detect GESTURE_DOUBLE_TAP
-            if ((currentGesture == GESTURE_NONE) && (numTap >= 2) && ((GetCurrentTime() - eventTime) < TAP_TIMEOUT) && (GetMagnitude(touchDownPosition, event.position[0]) < DOUBLETAP_RANGE))
+            if ((currentGesture == GESTURE_NONE) && (numTap >= 2) && ((GetCurrentTime() - eventTime) < TAP_TIMEOUT) && (Vector2Distance(touchDownPosition, event.position[0]) < DOUBLETAP_RANGE))
             {
                 currentGesture = GESTURE_DOUBLETAP;
                 numTap = 0;
@@ -164,19 +147,17 @@ void ProcessGestureEvent(GestureEvent event)
         }
         else if (event.touchAction == TOUCH_UP)
         {
-            if (currentGesture = GESTURE_DRAG) 
-            {
-                touchUpPosition = event.position[0];
-            }
-            
+            if (currentGesture == GESTURE_DRAG) touchUpPosition = event.position[0];
+
             // Calculate for swipe
-            magnitude = GetMagnitude(touchDownPosition, touchUpPosition);
+            magnitude = Vector2Distance(touchDownPosition, touchUpPosition);
             intensity = magnitude / (float)draggingTimeCounter;
             
             // Detect GESTURE_SWIPE
             if ((intensity > FORCE_TO_SWIPE) && (touchId == 0))
             {
                 angle = CalculateAngle(touchDownPosition, touchUpPosition, magnitude);
+                
                 if ((angle < 30) || (angle > 330)) currentGesture = GESTURE_SWIPE_RIGHT;        // Right
                 else if ((angle > 30) && (angle < 120)) currentGesture = GESTURE_SWIPE_UP;      // Up
                 else if ((angle > 120) && (angle < 210)) currentGesture = GESTURE_SWIPE_LEFT;   // Left
@@ -196,7 +177,8 @@ void ProcessGestureEvent(GestureEvent event)
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
-            if (GetMagnitude(moveDownPosition, event.position[0]) > 5) eventTime = GetCurrentTime();
+            if (Vector2Distance(moveDownPosition, event.position[0]) > 5) eventTime = GetCurrentTime();
+            
             moveDownPosition = event.position[0];
             
             if (currentGesture == GESTURE_HOLD) 
@@ -205,7 +187,7 @@ void ProcessGestureEvent(GestureEvent event)
                 
                 numHold = 2;
 
-                magnitude = GetMagnitude(touchDownPosition, moveDownPosition);
+                magnitude = Vector2Distance(touchDownPosition, moveDownPosition);
                 
                 // Detect GESTURE_DRAG
                 if (magnitude >= FORCE_TO_DRAG) currentGesture = GESTURE_DRAG;
@@ -214,10 +196,8 @@ void ProcessGestureEvent(GestureEvent event)
             draggingTimeCounter++;
         }
     }
-    else
+    else    // Two touch points
     {
-        // two fingers
-        
         if (event.touchAction == TOUCH_DOWN)
         {
             touchDownPosition = event.position[0];
@@ -227,7 +207,7 @@ void ProcessGestureEvent(GestureEvent event)
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
-            magnitude = GetMagnitude(moveDownPosition, moveDownPosition2);
+            magnitude = Vector2Distance(moveDownPosition, moveDownPosition2);
             
             touchDownPosition = moveDownPosition;
             touchDownPosition2 = moveDownPosition2;
@@ -235,9 +215,9 @@ void ProcessGestureEvent(GestureEvent event)
             moveDownPosition = event.position[0];
             moveDownPosition2 = event.position[1];
             
-            if ( (GetMagnitude(touchDownPosition, moveDownPosition) > FORCE_TO_PINCH) || (GetMagnitude(touchDownPosition2, moveDownPosition2) > FORCE_TO_PINCH))
+            if ((Vector2Distance(touchDownPosition, moveDownPosition) > FORCE_TO_PINCH) || (Vector2Distance(touchDownPosition2, moveDownPosition2) > FORCE_TO_PINCH))
             {
-                if ((GetMagnitude(moveDownPosition, moveDownPosition2) - magnitude) < 0) currentGesture = GESTURE_PINCH_IN;
+                if ((Vector2Distance(moveDownPosition, moveDownPosition2) - magnitude) < 0) currentGesture = GESTURE_PINCH_IN;
                 else currentGesture = GESTURE_PINCH_OUT;
             }
             else 
@@ -259,6 +239,7 @@ void UpdateGestures(void)
 
     // Detect GESTURE_HOLD
     if (((currentGesture == GESTURE_TAP) || (currentGesture == GESTURE_DOUBLETAP)) && pointCount < 2) currentGesture = GESTURE_HOLD;
+    
     if ((GetCurrentTime() - eventTime) > TAP_TIMEOUT && (currentGesture == GESTURE_DRAG) && pointCount < 2)
     {
         currentGesture = GESTURE_HOLD;
@@ -270,19 +251,6 @@ void UpdateGestures(void)
     {
         currentGesture = GESTURE_NONE;
     }
-}
-
-// Calculate distance between two vectors
-float Vector2Distance(Vector2 v1, Vector3 v2)
-{
-    float result;
-
-    float dx = v2.x - v1.x;
-    float dy = v2.y - v1.y;
-
-    result = sqrt(dx*dx + dy*dy);
-
-    return result;
 }
 
 // Check if a gesture have been detected
@@ -342,20 +310,6 @@ float GetGesturePinchAngle(void)
     return 0;
 }
 
-// Update gestures detected (must be called every frame)
-void UpdateGestures(void)
-{
-    // NOTE: Gestures are processed through system callbacks on touch events
-    
-    // When screen is touched, in first frame GESTURE_TAP is called but in next frame touch event callback is not called (if touch position doesn't change),
-    // so we need to store previous frame gesture type manually in this update function to switch to HOLD if current gesture is
-    // GESTURE_TAP two frames in a row. Due to current gesture is set to HOLD, current gesture doesn't need to be reset to NONE every frame.
-    // It will be reset when UP is called.
-    if(currentGesture == GESTURE_TAP) previousGesture = currentGesture;
-    
-    if(previousGesture == GESTURE_TAP && currentGesture == GESTURE_TAP) currentGesture = GESTURE_HOLD;
-}
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -395,28 +349,7 @@ static float CalculateAngle(Vector2 initialPosition, Vector2 finalPosition, floa
     return angle;
 }
 
-static void InitPinchGesture(Vector2 posA, Vector2 posB)
-{
-    initialDragPosition = (Vector2){ 0, 0 };
-    endDragPosition = (Vector2){ 0, 0 };
-    lastDragPosition = (Vector2){ 0, 0 };
-
-    // Initialize positions
-    firstInitialPinchPosition = posA;
-    secondInitialPinchPosition = posB;
-    
-    firstEndPinchPosition = firstInitialPinchPosition;
-    secondEndPinchPosition = secondInitialPinchPosition;
-    
-    // Resets
-    magnitude = 0;
-    angle = 0;
-    intensity = 0;
-
-    gestureType = TYPE_DUAL_INPUT;
-}
-
-static float VectorDistance(Vector2 v1, Vector2 v2)
+static float Vector2Distance(Vector2 v1, Vector2 v2)
 {
     float result;
 
@@ -424,21 +357,6 @@ static float VectorDistance(Vector2 v1, Vector2 v2)
     float dy = v2.y - v1.y;
 
     result = sqrt(dx*dx + dy*dy);
-
-    return result;
-}
-
-static float VectorDotProduct(Vector2 v1, Vector2 v2)
-{
-    float result;
-
-    float v1Module = sqrt(v1.x*v1.x + v1.y*v1.y);
-    float v2Module = sqrt(v2.x*v2.x + v2.y*v2.y);
-    
-    Vector2 v1Normalized = { v1.x / v1Module, v1.y / v1Module };
-    Vector2 v2Normalized = { v2.x / v2Module, v2.y / v2Module };
-    
-    result = v1Normalized.x*v2Normalized.x + v1Normalized.y*v2Normalized.y;
 
     return result;
 }
