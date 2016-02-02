@@ -435,17 +435,17 @@ typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
-    GESTURE_NONE        = 1,
-    GESTURE_TAP         = 2,
-    GESTURE_DOUBLETAP   = 4,
-    GESTURE_HOLD        = 8,
-    GESTURE_DRAG        = 16,
-    GESTURE_SWIPE_RIGHT = 32,
-    GESTURE_SWIPE_LEFT  = 64,
-    GESTURE_SWIPE_UP    = 128,
-    GESTURE_SWIPE_DOWN  = 256,
-    GESTURE_PINCH_IN    = 512,
-    GESTURE_PINCH_OUT   = 1024
+    GESTURE_NONE        = 0,
+    GESTURE_TAP         = 1,
+    GESTURE_DOUBLETAP   = 2,
+    GESTURE_HOLD        = 4,
+    GESTURE_DRAG        = 8,
+    GESTURE_SWIPE_RIGHT = 16,
+    GESTURE_SWIPE_LEFT  = 32,
+    GESTURE_SWIPE_UP    = 64,
+    GESTURE_SWIPE_DOWN  = 128,
+    GESTURE_PINCH_IN    = 256,
+    GESTURE_PINCH_OUT   = 512
 } Gestures;
 
 typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
@@ -781,7 +781,6 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox);                                           // Detect collision between ray and box
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Detect collision of player radius with cubicmap
                                                                                                                 // NOTE: Return the normal vector of the impacted surface
-
 //------------------------------------------------------------------------------------
 // Shaders System Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1

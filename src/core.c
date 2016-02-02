@@ -253,6 +253,7 @@ static void InitGamepad(void);                          // Init raw gamepad inpu
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);     // GLFW3 Mouse Button Callback, runs on mouse button pressed
+static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);                // GLFW3 Cursor Position Callback, runs on mouse move
 static void CharCallback(GLFWwindow *window, unsigned int key);                            // GLFW3 Char Key Callback, runs on key pressed (get char value)
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
@@ -1415,6 +1416,7 @@ static void InitDisplay(int width, int height)
     glfwSetCursorEnterCallback(window, CursorEnterCallback);
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
+    glfwSetCursorPosCallback(window, MouseCursorPosCallback);    // Track mouse position changes
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
     glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
@@ -1677,7 +1679,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     
     // Register touch actions
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_DOWN;
-    else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_MOVE;
+    //else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_MOVE;
     else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_UP;
     
     // Register touch points count
@@ -1685,7 +1687,28 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     
     // Register touch points position, only one point registered
     gestureEvent.position[0] = GetMousePosition();
+	
+	// Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+// GLFW3 Cursor Position Callback, runs on mouse move
+static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
+{
+#define ENABLE_MOUSE_GESTURES
+#if defined(ENABLE_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent;
+
+    gestureEvent.touchAction = TOUCH_MOVE;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
     
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = (Vector2){ (float)x, (float)y };
+
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
@@ -1934,7 +1957,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     // Register touch points count
     gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
     
-    // Register touch points id DESKTOP
+    // Register touch points id
     gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
     gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
     
@@ -2496,7 +2519,7 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     // Register touch points count
     gestureEvent.pointCount = touchEvent->numTouches;
     
-    // Register touch points id WEB
+    // Register touch points id
     gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
     gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
     
