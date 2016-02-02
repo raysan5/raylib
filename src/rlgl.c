@@ -411,7 +411,7 @@ void rlRotatef(float angleDeg, float x, float y, float z)
 
     Vector3 axis = (Vector3){ x, y, z };
     VectorNormalize(&axis);
-    matRotation = MatrixRotate(angleDeg*DEG2RAD, axis);
+    matRotation = MatrixRotate(axis, angleDeg*DEG2RAD);
 
     MatrixTranspose(&matRotation);
 
@@ -1406,13 +1406,13 @@ void rlglDrawPostpro(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    rlglDrawModel(postproQuad, (Vector3){0,0,0}, 0.0f, (Vector3){0,0,0}, (Vector3){1.0f, 1.0f, 1.0f}, (Color){ 255, 255, 255, 255 }, false);
+    rlglDrawModel(postproQuad, (Vector3){0,0,0}, (Vector3){0,0,0}, 0.0f, (Vector3){1.0f, 1.0f, 1.0f}, (Color){ 255, 255, 255, 255 }, false);
 #endif
 }
 
 // Draw a 3d model
 // NOTE: Model transform can come within model struct
-void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires)
+void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color color, bool wires)
 {
 #if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glPolygonMode() not available on OpenGL ES
@@ -1461,7 +1461,7 @@ void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 r
     
     // Calculate transformation matrix from function parameters
     // Get transform matrix (rotation -> scale -> translation)
-    Matrix matRotation = MatrixRotate(rotationAngle*DEG2RAD, rotationAxis);
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
     Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
     Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matRotation, matScale), matTranslation);

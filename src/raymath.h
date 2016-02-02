@@ -141,7 +141,7 @@ RMDEF Matrix MatrixIdentity(void);                            // Returns identit
 RMDEF Matrix MatrixAdd(Matrix left, Matrix right);            // Add two matrices
 RMDEF Matrix MatrixSubstract(Matrix left, Matrix right);      // Substract two matrices (left - right)
 RMDEF Matrix MatrixTranslate(float x, float y, float z);      // Returns translation matrix
-RMDEF Matrix MatrixRotate(float angle, Vector3 axis);         // Returns rotation matrix for an angle around an specified axis (angle in radians)
+RMDEF Matrix MatrixRotate(Vector3 axis, float angle);         // Returns rotation matrix for an angle around an specified axis (angle in radians)
 RMDEF Matrix MatrixRotateX(float angle);                      // Returns x-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateY(float angle);                      // Returns y-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateZ(float angle);                      // Returns z-rotation matrix (angle in radians)
@@ -162,8 +162,8 @@ RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calcula
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
 RMDEF Matrix QuaternionToMatrix(Quaternion q);                        // Returns a matrix for a given quaternion
-RMDEF Quaternion QuaternionFromAxisAngle(float angle, Vector3 axis);  // Returns rotation quaternion for an angle and axis
-RMDEF void QuaternionToAxisAngle(Quaternion q, float *outAngle, Vector3 *outAxis); // Returns the rotation angle and axis for a given quaternion
+RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns rotation quaternion for an angle and axis
+RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle); // Returns the rotation angle and axis for a given quaternion
 RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transform a quaternion given a transformation matrix
 
 #ifdef __cplusplus
@@ -587,7 +587,7 @@ RMDEF Matrix MatrixTranslate(float x, float y, float z)
 
 // Create rotation matrix from axis and angle
 // NOTE: Angle should be provided in radians
-RMDEF Matrix MatrixRotate(float angle, Vector3 axis)
+RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 {
     Matrix result;
 
@@ -605,9 +605,9 @@ RMDEF Matrix MatrixRotate(float angle, Vector3 axis)
         z *= length;
     }
 
-    float s = sinf(angle);
-    float c = cosf(angle);
-    float t = 1.0f - c;
+    float sinres = sinf(angle);
+    float cosres = cosf(angle);
+    float t = 1.0f - cosres;
 
     // Cache some matrix values (speed optimization)
     float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
@@ -615,9 +615,9 @@ RMDEF Matrix MatrixRotate(float angle, Vector3 axis)
     float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
 
     // Construct the elements of the rotation matrix
-    float b00 = x*x*t + c, b01 = y*x*t + z*s, b02 = z*x*t - y*s;
-    float b10 = x*y*t - z*s, b11 = y*y*t + c, b12 = z*y*t + x*s;
-    float b20 = x*z*t + y*s, b21 = y*z*t - x*s, b22 = z*z*t + c;
+    float b00 = x*x*t + cosres, b01 = y*x*t + z*sinres, b02 = z*x*t - y*sinres;
+    float b10 = x*y*t - z*sinres, b11 = y*y*t + cosres, b12 = z*y*t + x*sinres;
+    float b20 = x*z*t + y*sinres, b21 = y*z*t - x*sinres, b22 = z*z*t + cosres;
 
     // Perform rotation-specific matrix multiplication
     result.m0 = a00*b00 + a10*b01 + a20*b02;
@@ -688,8 +688,8 @@ RMDEF Matrix MatrixRotateX(float angle)
 {
     Matrix result = MatrixIdentity();
 
-    float cosres = (float)cos(angle);
-    float sinres = (float)sin(angle);
+    float cosres = cosf(angle);
+    float sinres = sinf(angle);
 
     result.m5 = cosres;
     result.m6 = -sinres;
@@ -720,8 +720,8 @@ RMDEF Matrix MatrixRotateZ(float angle)
 {
     Matrix result = MatrixIdentity();
 
-    float cosres = (float)cos(angle);
-    float sinres = (float)sin(angle);
+    float cosres = cosf(angle);
+    float sinres = sinf(angle);
 
     result.m0 = cosres;
     result.m1 = -sinres;
@@ -946,8 +946,8 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         }
         else
         {
-            float ratioA = sin((1 - amount)*halfTheta)/sinHalfTheta;
-            float ratioB = sin(amount*halfTheta)/sinHalfTheta;
+            float ratioA = sinf((1 - amount)*halfTheta)/sinHalfTheta;
+            float ratioB = sinf(amount*halfTheta)/sinHalfTheta;
 
             result.x = (q1.x*ratioA + q2.x*ratioB);
             result.y = (q1.y*ratioA + q2.y*ratioB);
@@ -1060,7 +1060,7 @@ RMDEF Matrix QuaternionToMatrix(Quaternion q)
 
 // Returns rotation quaternion for an angle and axis
 // NOTE: angle must be provided in radians
-RMDEF Quaternion QuaternionFromAxisAngle(float angle, Vector3 axis)
+RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -1069,11 +1069,14 @@ RMDEF Quaternion QuaternionFromAxisAngle(float angle, Vector3 axis)
     angle *= 0.5f;
 
     VectorNormalize(&axis);
+    
+    float sinres = sinf(angle);
+    float cosres = cosf(angle);
 
-    result.x = axis.x*(float)sin(angle);
-    result.y = axis.y*(float)sin(angle);
-    result.z = axis.z*(float)sin(angle);
-    result.w = (float)cos(angle);
+    result.x = axis.x*sinres;
+    result.y = axis.y*sinres;
+    result.z = axis.z*sinres;
+    result.w = cosres;
 
     QuaternionNormalize(&result);
 
@@ -1081,7 +1084,7 @@ RMDEF Quaternion QuaternionFromAxisAngle(float angle, Vector3 axis)
 }
 
 // Returns the rotation angle and axis for a given quaternion
-RMDEF void QuaternionToAxisAngle(Quaternion q, float *outAngle, Vector3 *outAxis)
+RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle)
 {
     if (fabs(q.w) > 1.0f) QuaternionNormalize(&q);
 

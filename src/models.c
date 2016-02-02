@@ -1149,14 +1149,14 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
 
-    DrawModelEx(model, position, 0.0f, rotationAxis, vScale, tint);
+    DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
 // Draw a model with extended parameters
-void DrawModelEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint)
+void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
     // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
-    rlglDrawModel(model, position, rotationAngle, rotationAxis, scale, tint, false);
+    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, false);
 }
 
 // Draw a model wires (with texture if set)
@@ -1165,14 +1165,14 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color color)
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
 
-    rlglDrawModel(model, position, 0.0f, rotationAxis, vScale, color, true);
+    rlglDrawModel(model, position, rotationAxis, 0.0f, vScale, color, true);
 }
 
 // Draw a model wires (with texture if set) with extended parameters
-void DrawModelWiresEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint)
+void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
     // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
-    rlglDrawModel(model, position, rotationAngle, rotationAxis, scale, tint, true);
+    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, true);
 }
 
 // Draw a billboard
