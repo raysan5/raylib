@@ -53,8 +53,7 @@
 #include <string.h>         // String function definitions, memset()
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-
+#if defined(PLATFORM_DESKTOP)
     #define GLAD_EXTENSIONS_LOADER
     #if defined(GLEW_EXTENSIONS_LOADER)
         #define GLEW_STATIC
@@ -62,14 +61,16 @@
     #elif defined(GLAD_EXTENSIONS_LOADER)
         #include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
     #endif
+#endif
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
-    #include <GLFW/glfw3.h>     // GLFW3 library: Windows, OpenGL context and Input management
+    #include <GLFW/glfw3.h>       // GLFW3 library: Windows, OpenGL context and Input management
 
     #ifdef __linux
-        #define GLFW_EXPOSE_NATIVE_X11 // Linux specific definitions for getting
-        #define GLFW_EXPOSE_NATIVE_GLX // native functions like glfwGetX11Window
-        #include <GLFW/glfw3native.h>  // which are required for hiding mouse
+        #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
+        #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
+        #include <GLFW/glfw3native.h>    // which are required for hiding mouse
     #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
