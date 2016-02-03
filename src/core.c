@@ -116,6 +116,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
+#define STORAGE_FILENAME    "storage.data"
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -591,7 +592,7 @@ void Begin3dMode(Camera camera)
 
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.1f*tan(45.0f*PI/360.0f);
+    double top = 0.1*tan(45.0*PI/360.0);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
@@ -630,7 +631,7 @@ void SetTargetFPS(int fps)
 // Returns current FPS
 float GetFPS(void)
 {
-    return (float)(1/frameTime);
+    return (float)(1.0/frameTime);
 }
 
 // Returns time in seconds for one frame
@@ -791,10 +792,10 @@ void StorageSaveValue(int position, int value)
     FILE *storageFile = NULL;
 
     // Try open existing file to append data
-    storageFile = fopen("storage.data", "rb+");      
+    storageFile = fopen(STORAGE_FILENAME, "rb+");      
 
     // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen("storage.data", "wb");
+    if (!storageFile) storageFile = fopen(STORAGE_FILENAME, "wb");
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
     else
@@ -822,7 +823,7 @@ int StorageLoadValue(int position)
     int value = 0;
     
     // Try open existing file to append data
-    FILE *storageFile = fopen("storage.data", "rb");      
+    FILE *storageFile = fopen(STORAGE_FILENAME, "rb");      
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
     else
@@ -889,8 +890,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     MatrixInvert(&matProjView);
     
     // Calculate far and near points
-    Quaternion near = { deviceCoords.x, deviceCoords.y, 0, 1};
-    Quaternion far = { deviceCoords.x, deviceCoords.y, 1, 1};
+    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f};
+    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f};
     
     // Multiply points by unproject matrix
     QuaternionTransform(&near, matProjView);

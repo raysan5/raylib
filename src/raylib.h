@@ -81,8 +81,8 @@
     #define PI 3.14159265358979323846
 #endif
 
-#define DEG2RAD (PI / 180.0f)
-#define RAD2DEG (180.0f / PI)
+#define DEG2RAD (PI/180.0f)
+#define RAD2DEG (180.0f/PI)
 
 // raylib Config Flags
 #define FLAG_FULLSCREEN_MODE    1

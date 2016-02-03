@@ -1406,7 +1406,7 @@ void rlglDrawPostpro(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    rlglDrawModel(postproQuad, (Vector3){0,0,0}, (Vector3){0,0,0}, 0.0f, (Vector3){1.0f, 1.0f, 1.0f}, (Color){ 255, 255, 255, 255 }, false);
+    rlglDrawModel(postproQuad, (Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, 0.0f, (Vector3){1.0f, 1.0f, 1.0f}, (Color){ 255, 255, 255, 255 }, false);
 #endif
 }
 
