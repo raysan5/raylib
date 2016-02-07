@@ -29,7 +29,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum { FIRST = 0, SECOND, THIRD } enemyWave;
+typedef enum { FIRST = 0, SECOND, THIRD } EnemyWave;
 
 typedef struct Player{
     Rectangle rec;
@@ -66,7 +66,7 @@ static bool victory;
 static Player player;
 static Enemy enemy[NUM_MAX_ENEMIES];
 static Shoot shoot[NUM_SHOOTS];
-static enemyWave wave;
+static EnemyWave wave;
 
 static int shootRate;
 static float alpha;
@@ -149,8 +149,8 @@ void InitGame(void)
     // Initialize player
     player.rec.x =  20;
     player.rec.y = 50;
-    player.rec.width = 10;
-    player.rec.height = 10;
+    player.rec.width = 20;
+    player.rec.height = 20;
     player.speed.x = 5;
     player.speed.y = 5;
     player.color = BLACK;
@@ -165,7 +165,7 @@ void InitGame(void)
         enemy[i].speed.x = 5;
         enemy[i].speed.y = 5;
         enemy[i].active = true;
-        enemy[i].color = DARKGRAY;
+        enemy[i].color = GRAY;
     }
 
     // Initialize shoots
@@ -178,7 +178,7 @@ void InitGame(void)
         shoot[i].speed.x = 7;
         shoot[i].speed.y = 0;
         shoot[i].active = false;
-        shoot[i].color = WHITE;
+        shoot[i].color = MAROON;
     }
 }
 
@@ -325,10 +325,9 @@ void UpdateGame(void)
                     {
                         if (enemy[j].active)
                         {
-                           if (CheckCollisionRecs(shoot[i].rec, enemy[j].rec))
+                            if (CheckCollisionRecs(shoot[i].rec, enemy[j].rec))
                             {
                                 shoot[i].active = false;
-                                enemy[j].active = false;
                                 enemy[j].rec.x = GetRandomValue(screenWidth, screenWidth + 1000);
                                 enemy[j].rec.y = GetRandomValue(0, screenHeight - enemy[j].rec.height);
                                 shootRate = 0;
@@ -362,7 +361,7 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(LIGHTGRAY);
+        ClearBackground(RAYWHITE);
         
         if (!gameOver)
         {
@@ -382,7 +381,7 @@ void DrawGame(void)
                 if (shoot[i].active) DrawRectangleRec(shoot[i].rec, shoot[i].color);
             }
             
-            DrawText(FormatText("%04i", score), 20, 20, 40, DARKGRAY);
+            DrawText(FormatText("%04i", score), 20, 20, 40, GRAY);
         
             if (victory) DrawText("YOU WIN", screenWidth/2 - MeasureText("YOU WIN", 40)/2, screenHeight/2 - 40, 40, BLACK);
         

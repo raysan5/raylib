@@ -22,13 +22,13 @@
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
-#define MAX_SPEED           6
+#define PLAYER_BASE_SIZE    20.0f
+#define PLAYER_SPEED        6.0f
+#define PLAYER_MAX_SHOOTS   10
+
 #define METEORS_SPEED       2
-#define NUM_SHOOTS          10
-#define NUM_BIG_METEORS     4
-#define NUM_MEDIUM_METEORS  8
-#define NUM_SMALL_METEORS   16
-#define SHIP_BASE_SIZE      20.0f
+#define MAX_MEDIUM_METEORS  8
+#define MAX_SMALL_METEORS   16
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -43,22 +43,13 @@ typedef struct Player {
     Color color;
 } Player;
 
-typedef struct MediumMeteor {
+typedef struct Meteor {
     Vector2 position;
     Vector2 speed;
     float radius;
     bool active;
     Color color;
-} MediumMeteor;
-
-typedef struct SmallMeteor {
-    Vector2 position;
-    Vector2 speed;
-    float radius;
-    bool active;
-    Color color;
-} SmallMeteor;
-
+} Meteor;
 
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
@@ -74,8 +65,8 @@ static bool pause;
 static float shipHeight;
 
 static Player player;
-static MediumMeteor mediumMeteor[NUM_MEDIUM_METEORS];
-static SmallMeteor smallMeteor[NUM_SMALL_METEORS];
+static Meteor mediumMeteor[MAX_MEDIUM_METEORS];
+static Meteor smallMeteor[MAX_SMALL_METEORS];
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -85,8 +76,6 @@ static void UpdateGame(void);       // Update game (one frame)
 static void DrawGame(void);         // Draw game (one frame)
 static void UnloadGame(void);       // Unload game
 static void UpdateDrawFrame(void);  // Update and Draw (one frame)
-
-static void DrawSpaceship(Vector2 position, float rotation, Color color);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -146,7 +135,7 @@ void InitGame(void)
 
     framesCounter = 0;
 
-    shipHeight = (SHIP_BASE_SIZE/2)/tanf(20*DEG2RAD);
+    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*DEG2RAD);
 
     // Initialization player
     player.position = (Vector2){screenWidth/2, screenHeight/2 - shipHeight/2};
@@ -156,7 +145,7 @@ void InitGame(void)
     player.collider = (Vector3){player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight/2.5f), 12};
     player.color = LIGHTGRAY;
 
-    for (int i = 0; i < NUM_MEDIUM_METEORS; i++)
+    for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
     {
         posx = GetRandomValue(0, screenWidth);
 
@@ -196,7 +185,7 @@ void InitGame(void)
         mediumMeteor[i].color = GREEN;
     }
 
-    for (int i = 0; i < NUM_SMALL_METEORS; i++)
+    for (int i = 0; i < MAX_SMALL_METEORS; i++)
     {
         posx = GetRandomValue(0, screenWidth);
 
@@ -255,8 +244,8 @@ void UpdateGame(void)
             if (IsKeyDown(KEY_RIGHT)) player.rotation += 5;
 
             // Speed
-            player.speed.x = sin(player.rotation*DEG2RAD)*MAX_SPEED;
-            player.speed.y = cos(player.rotation*DEG2RAD)*MAX_SPEED;
+            player.speed.x = sin(player.rotation*DEG2RAD)*PLAYER_SPEED;
+            player.speed.y = cos(player.rotation*DEG2RAD)*PLAYER_SPEED;
 
             // Controller
             if (IsKeyDown(KEY_UP))
@@ -287,19 +276,19 @@ void UpdateGame(void)
             // Collision Player to meteors
             player.collider = (Vector3){player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight/2.5f), 12};
 
-            for (int a = 0; a < NUM_MEDIUM_METEORS; a++)
+            for (int a = 0; a < MAX_MEDIUM_METEORS; a++)
             {
                 if (CheckCollisionCircles((Vector2){player.collider.x, player.collider.y}, player.collider.z, mediumMeteor[a].position, mediumMeteor[a].radius) && mediumMeteor[a].active) gameOver = true;
             }
 
-            for (int a = 0; a < NUM_SMALL_METEORS; a++)
+            for (int a = 0; a < MAX_SMALL_METEORS; a++)
             {
                 if (CheckCollisionCircles((Vector2){player.collider.x, player.collider.y}, player.collider.z, smallMeteor[a].position, smallMeteor[a].radius) && smallMeteor[a].active) gameOver = true;
             }
 
             // Meteor logic
 
-            for (int i = 0; i < NUM_MEDIUM_METEORS; i++)
+            for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
             {
                 if (mediumMeteor[i].active)
                 {
@@ -315,7 +304,7 @@ void UpdateGame(void)
                 }
             }
 
-            for (int i = 0; i < NUM_SMALL_METEORS; i++)
+            for (int i = 0; i < MAX_SMALL_METEORS; i++)
             {
                 if (smallMeteor[i].active)
                 {
@@ -347,31 +336,30 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(DARKGRAY);
+        ClearBackground(RAYWHITE);
         
         if (!gameOver)
         {
             // Draw spaceship
             Vector2 v1 = { player.position.x + sinf(player.rotation*DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*DEG2RAD)*(shipHeight) };
-            Vector2 v2 = { player.position.x - cosf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2), player.position.y - sinf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2) };
-            Vector2 v3 = { player.position.x + cosf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2), player.position.y + sinf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2) };
-
-            DrawTriangleLines(v1, v2, v3, player.color);
+            Vector2 v2 = { player.position.x - cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v3 = { player.position.x + cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            DrawTriangle(v1, v2, v3, MAROON);
 
             // Draw meteor
-            for (int i = 0;i < NUM_MEDIUM_METEORS; i++)
+            for (int i = 0;i < MAX_MEDIUM_METEORS; i++)
             {
-                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, mediumMeteor[i].color);
-                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(mediumMeteor[i].color, 0.25f));
+                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, GRAY);
+                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
             }
 
-            for (int i = 0;i < NUM_SMALL_METEORS; i++)
+            for (int i = 0;i < MAX_SMALL_METEORS; i++)
             {
-                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, smallMeteor[i].color);
-                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(smallMeteor[i].color, 0.25f));
+                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, DARKGRAY);
+                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
             }
 
-            DrawText(FormatText("SURVIVAL TIME: %.02f", (float)framesCounter/60), 10, 10, 20, WHITE);
+            DrawText(FormatText("TIME: %.02f", (float)framesCounter/60), 10, 10, 20, BLACK);
 
             if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
         }

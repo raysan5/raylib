@@ -22,19 +22,16 @@
 //----------------------------------------------------------------------------------
 typedef struct Player {
     Vector2 position;
-    int radius;
     Vector2 speed;
-    Color color;
+    int radius;
 } Player;
 
 typedef struct Enemy {
     Vector2 position;
+    Vector2 speed;
     int radius;
     int radiusBounds;
-    Vector2 speed;
-    bool moveRight;
-    Color colorBounds;
-    Color color;
+    bool moveRight;         // RAY: o__O
 } Enemy;
 
 typedef struct Points {
@@ -42,15 +39,14 @@ typedef struct Points {
     int radius;
     int value;
     bool active;
-    Color color;
 } Points;
 
-typedef struct Exit {
+typedef struct Home {
     Rectangle rec;
     bool active;
     bool save;
     Color color;
-} Exit;
+} Home;
 
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
@@ -67,7 +63,7 @@ static int hiScore = 0;
 static Player player;
 static Enemy enemy;
 static Points points;
-static Exit exit;
+static Home home;
 static bool follow;
 
 //------------------------------------------------------------------------------------
@@ -136,30 +132,25 @@ void InitGame(void)
     player.position = (Vector2){50, 50};
     player.radius = 20;
     player.speed = (Vector2){5, 5};
-    player.color = DARKGRAY;
 
     enemy.position = (Vector2){screenWidth - 50, screenHeight/2};
     enemy.radius = 20;
     enemy.radiusBounds = 150;
     enemy.speed = (Vector2){3, 3};
     enemy.moveRight = true;
-    enemy.color = MAROON;
-    enemy.colorBounds = RED;
     follow = false;
 
     points.radius = 10;
     points.position = (Vector2){GetRandomValue(points.radius, screenWidth - points.radius), GetRandomValue(points.radius, screenHeight - points.radius)};
     points.value = 100;
     points.active = true;
-    points.color = GOLD;
 
-    exit.rec.width = 50;
-    exit.rec.height = 50;
-    exit.rec.x = GetRandomValue(0, screenWidth - exit.rec.width);
-    exit.rec.y = GetRandomValue(0, screenHeight - exit.rec.height);
-    exit.active = false;
-    exit.save = false;
-    exit.color = PINK;
+    home.rec.width = 50;
+    home.rec.height = 50;
+    home.rec.x = GetRandomValue(0, screenWidth - home.rec.width);
+    home.rec.y = GetRandomValue(0, screenHeight - home.rec.height);
+    home.active = false;
+    home.save = false;
 }
 
 // Update game (one frame)
@@ -184,7 +175,7 @@ void UpdateGame(void)
             if (player.position.y + player.radius >= screenHeight) player.position.y = screenHeight - player.radius;
 
             //IA Enemy
-            if ( (follow || CheckCollisionCircles(player.position, player.radius, enemy.position, enemy.radiusBounds)) && !exit.save)
+            if ( (follow || CheckCollisionCircles(player.position, player.radius, enemy.position, enemy.radiusBounds)) && !home.save)
             {
                 if (player.position.x > enemy.position.x) enemy.position.x += enemy.speed.x;
                 if (player.position.x < enemy.position.x) enemy.position.x -= enemy.speed.x;
@@ -212,17 +203,17 @@ void UpdateGame(void)
             {
                 follow = true;
                 points.active = false;
-                exit.active = true;
+                home.active = true;
             }
 
-            if (CheckCollisionCircles(player.position, player.radius, enemy.position, enemy.radius) && !exit.save)
+            if (CheckCollisionCircles(player.position, player.radius, enemy.position, enemy.radius) && !home.save)
             {
                 gameOver = true;
                 
                 if (hiScore < score) hiScore = score;
             }
 
-            if (CheckCollisionCircleRec(player.position, player.radius, exit.rec))
+            if (CheckCollisionCircleRec(player.position, player.radius, home.rec))
             {
                follow = false;
                
@@ -235,9 +226,9 @@ void UpdateGame(void)
                     points.position = (Vector2){GetRandomValue(points.radius, screenWidth - points.radius), GetRandomValue(points.radius, screenHeight - points.radius)};
                }
                
-               exit.save = true;
+               home.save = true;
             }
-            else exit.save = false;
+            else home.save = false;
         }
     }
     else
@@ -259,18 +250,22 @@ void DrawGame(void)
     
         if (!gameOver)
         {
-            if (follow) ClearBackground(RED);
-
-            DrawCircleLines(enemy.position.x, enemy.position.y, enemy.radiusBounds, enemy.colorBounds);
-            DrawCircleV(enemy.position, enemy.radius, enemy.color);
+            if (follow)
+            {
+                DrawRectangle(0, 0, screenWidth, screenHeight, RED);
+                DrawRectangle(10, 10, screenWidth - 20, screenHeight - 20, RAYWHITE);
+            }
             
-            DrawCircleV(player.position, player.radius, player.color);
-            DrawCircleV(points.position, points.radius, points.color);
-            
-            if (exit.active) DrawRectangleRec(exit.rec, exit.color);
+            DrawRectangleLines(home.rec.x, home.rec.y, home.rec.width, home.rec.height, BLUE);
 
-            DrawText(FormatText("SCORE: %04i", score), 10, 10, 20, GRAY);
-            DrawText(FormatText("HI-SCORE: %04i", hiScore), 300, 10, 20, GRAY);
+            DrawCircleLines(enemy.position.x, enemy.position.y, enemy.radiusBounds, RED);
+            DrawCircleV(enemy.position, enemy.radius, MAROON);
+            
+            DrawCircleV(player.position, player.radius, GRAY);
+            if (points.active) DrawCircleV(points.position, points.radius, GOLD);
+
+            DrawText(FormatText("SCORE: %04i", score), 20, 15, 20, GRAY);
+            DrawText(FormatText("HI-SCORE: %04i", hiScore), 300, 15, 20, GRAY);
 
             if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
         }

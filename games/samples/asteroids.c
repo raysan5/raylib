@@ -22,13 +22,14 @@
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
-#define MAX_SPEED           6
+#define PLAYER_BASE_SIZE    20.0f
+#define PLAYER_SPEED        6.0f
+#define PLAYER_MAX_SHOOTS   10
+
 #define METEORS_SPEED       2
-#define NUM_SHOOTS          10
-#define NUM_BIG_METEORS     4
-#define NUM_MEDIUM_METEORS  8
-#define NUM_SMALL_METEORS   16
-#define SHIP_BASE_SIZE      20.0f
+#define MAX_BIG_METEORS     4
+#define MAX_MEDIUM_METEORS  8
+#define MAX_SMALL_METEORS   16
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -53,29 +54,13 @@ typedef struct Shoot {
     Color color;
 } Shoot;
 
-typedef struct BigMeteor {
+typedef struct Meteor {
     Vector2 position;
     Vector2 speed;
     float radius;
     bool active;
     Color color;
-} BigMeteor;
-
-typedef struct MediumMeteor {
-    Vector2 position;
-    Vector2 speed;
-    float radius;
-    bool active;
-    Color color;
-} MediumMeteor;
-
-typedef struct SmallMeteor {
-    Vector2 position;
-    Vector2 speed;
-    float radius;
-    bool active;
-    Color color;
-} SmallMeteor;
+} Meteor;
 
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
@@ -92,10 +77,10 @@ static bool victory;
 static float shipHeight;
 
 static Player player;
-static Shoot shoot[NUM_SHOOTS];
-static BigMeteor bigMeteor[NUM_BIG_METEORS];
-static MediumMeteor mediumMeteor[NUM_MEDIUM_METEORS];
-static SmallMeteor smallMeteor[NUM_SMALL_METEORS];
+static Shoot shoot[PLAYER_MAX_SHOOTS];
+static Meteor bigMeteor[MAX_BIG_METEORS];
+static Meteor mediumMeteor[MAX_MEDIUM_METEORS];
+static Meteor smallMeteor[MAX_SMALL_METEORS];
 
 static int countMediumMeteors;
 static int countSmallMeteors;
@@ -169,7 +154,7 @@ void InitGame(void)
     victory = false;
     pause = false;
 
-    shipHeight = (SHIP_BASE_SIZE/2)/tanf(20*DEG2RAD);
+    shipHeight = (PLAYER_BASE_SIZE/2)/tanf(20*DEG2RAD);
 
     // Initialization player
     player.position = (Vector2){screenWidth/2, screenHeight/2 - shipHeight/2};
@@ -181,10 +166,8 @@ void InitGame(void)
 
     meteorsDestroyed = 0;
 
-    //InitShoot(&shoot);
-
     // Initialization shoot
-    for (int i = 0; i < NUM_SHOOTS; i++)
+    for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
     {
         shoot[i].position = (Vector2){0, 0};
         shoot[i].speed = (Vector2){0, 0};
@@ -194,7 +177,7 @@ void InitGame(void)
         shoot[i].color = WHITE;
     }
 
-    for (int i = 0; i < NUM_BIG_METEORS; i++)
+    for (int i = 0; i < MAX_BIG_METEORS; i++)
     {
         posx = GetRandomValue(0, screenWidth);
 
@@ -236,7 +219,7 @@ void InitGame(void)
         bigMeteor[i].color = BLUE;
     }
 
-    for (int i = 0; i < NUM_MEDIUM_METEORS; i++)
+    for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
     {
         mediumMeteor[i].position = (Vector2){-100, -100};
         mediumMeteor[i].speed = (Vector2){0,0};
@@ -245,7 +228,7 @@ void InitGame(void)
         mediumMeteor[i].color = BLUE;
     }
 
-    for (int i = 0; i < NUM_SMALL_METEORS; i++)
+    for (int i = 0; i < MAX_SMALL_METEORS; i++)
     {
         smallMeteor[i].position = (Vector2){-100, -100};
         smallMeteor[i].speed = (Vector2){0,0};
@@ -274,8 +257,8 @@ void UpdateGame(void)
             if (IsKeyDown(KEY_RIGHT)) player.rotation += 5;
 
             // Speed
-            player.speed.x = sin(player.rotation*DEG2RAD)*MAX_SPEED;
-            player.speed.y = cos(player.rotation*DEG2RAD)*MAX_SPEED;
+            player.speed.x = sin(player.rotation*DEG2RAD)*PLAYER_SPEED;
+            player.speed.y = cos(player.rotation*DEG2RAD)*PLAYER_SPEED;
 
             // Controller
             if (IsKeyDown(KEY_UP))
@@ -306,14 +289,14 @@ void UpdateGame(void)
              // Activation of shoot
             if (IsKeyPressed(KEY_SPACE))
             {
-                for (int i = 0; i < NUM_SHOOTS; i++)
+                for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
                 {
                     if (!shoot[i].active)
                     {
                         shoot[i].position = (Vector2){ player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight) };
                         shoot[i].active = true;
-                        shoot[i].speed.x = 1.5*sin(player.rotation*DEG2RAD)*MAX_SPEED;
-                        shoot[i].speed.y = 1.5*cos(player.rotation*DEG2RAD)*MAX_SPEED;
+                        shoot[i].speed.x = 1.5*sin(player.rotation*DEG2RAD)*PLAYER_SPEED;
+                        shoot[i].speed.y = 1.5*cos(player.rotation*DEG2RAD)*PLAYER_SPEED;
                         shoot[i].rotation = player.rotation;
                         break;
                     }
@@ -321,13 +304,13 @@ void UpdateGame(void)
             }
 
             // Shoot life timer
-            for (int i = 0; i < NUM_SHOOTS; i++)
+            for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
             {
                 if (shoot[i].active) shoot[i].lifeSpawn++;
             }
 
             // Shot logic
-            for (int i = 0; i < NUM_SHOOTS; i++)
+            for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
             {
                 if (shoot[i].active)
                 {
@@ -371,23 +354,23 @@ void UpdateGame(void)
             // Collision Player to meteors
             player.collider = (Vector3){player.position.x + sin(player.rotation*DEG2RAD)*(shipHeight/2.5f), player.position.y - cos(player.rotation*DEG2RAD)*(shipHeight/2.5f), 12};
 
-            for (int a = 0; a < NUM_BIG_METEORS; a++)
+            for (int a = 0; a < MAX_BIG_METEORS; a++)
             {
                 if (CheckCollisionCircles((Vector2){player.collider.x, player.collider.y}, player.collider.z, bigMeteor[a].position, bigMeteor[a].radius) && bigMeteor[a].active) gameOver = true;
             }
 
-            for (int a = 0; a < NUM_MEDIUM_METEORS; a++)
+            for (int a = 0; a < MAX_MEDIUM_METEORS; a++)
             {
                 if (CheckCollisionCircles((Vector2){player.collider.x, player.collider.y}, player.collider.z, mediumMeteor[a].position, mediumMeteor[a].radius) && mediumMeteor[a].active) gameOver = true;
             }
 
-            for (int a = 0; a < NUM_SMALL_METEORS; a++)
+            for (int a = 0; a < MAX_SMALL_METEORS; a++)
             {
                 if (CheckCollisionCircles((Vector2){player.collider.x, player.collider.y}, player.collider.z, smallMeteor[a].position, smallMeteor[a].radius) && smallMeteor[a].active) gameOver = true;
             }
 
             // Meteor logic
-            for (int i = 0; i < NUM_BIG_METEORS; i++)
+            for (int i = 0; i < MAX_BIG_METEORS; i++)
             {
                 if (bigMeteor[i].active)
                 {
@@ -403,7 +386,7 @@ void UpdateGame(void)
                 }
             }
 
-            for (int i = 0; i < NUM_MEDIUM_METEORS; i++)
+            for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
             {
                 if (mediumMeteor[i].active)
                 {
@@ -419,7 +402,7 @@ void UpdateGame(void)
                 }
             }
 
-            for (int i = 0; i < NUM_SMALL_METEORS; i++)
+            for (int i = 0; i < MAX_SMALL_METEORS; i++)
             {
                 if (smallMeteor[i].active)
                 {
@@ -436,11 +419,11 @@ void UpdateGame(void)
             }
 
             // Collision behaviour
-            for (int i = 0; i < NUM_SHOOTS; i++)
+            for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
             {
                 if ((shoot[i].active))
                 {
-                    for (int a = 0; a < NUM_BIG_METEORS; a++)
+                    for (int a = 0; a < MAX_BIG_METEORS; a++)
                     {
                         if (bigMeteor[a].active && CheckCollisionCircles(shoot[i].position, shoot[i].radius, bigMeteor[a].position, bigMeteor[a].radius))
                         {
@@ -466,13 +449,13 @@ void UpdateGame(void)
                             }
                             //bigMeteor[a].position = (Vector2){-100, -100};
                             bigMeteor[a].color = RED;
-                            a = NUM_BIG_METEORS;
+                            a = MAX_BIG_METEORS;
                         }
                     }
                 }
                 if ((shoot[i].active))
                 {
-                    for (int b = 0; b < NUM_MEDIUM_METEORS; b++)
+                    for (int b = 0; b < MAX_MEDIUM_METEORS; b++)
                     {
                         if (mediumMeteor[b].active && CheckCollisionCircles(shoot[i].position, shoot[i].radius, mediumMeteor[b].position, mediumMeteor[b].radius))
                         {
@@ -498,13 +481,13 @@ void UpdateGame(void)
                             }
                             //mediumMeteor[b].position = (Vector2){-100, -100};
                             mediumMeteor[b].color = GREEN;
-                            b = NUM_MEDIUM_METEORS;
+                            b = MAX_MEDIUM_METEORS;
                         }
                     }
                 }
                 if ((shoot[i].active))
                 {
-                    for (int c = 0; c < NUM_SMALL_METEORS; c++)
+                    for (int c = 0; c < MAX_SMALL_METEORS; c++)
                     {
                         if (smallMeteor[c].active && CheckCollisionCircles(shoot[i].position, shoot[i].radius, smallMeteor[c].position, smallMeteor[c].radius))
                         {
@@ -514,14 +497,14 @@ void UpdateGame(void)
                             meteorsDestroyed++;
                             smallMeteor[c].color = YELLOW;
                            // smallMeteor[c].position = (Vector2){-100, -100};
-                            c = NUM_SMALL_METEORS;
+                            c = MAX_SMALL_METEORS;
                         }
                     }
                 }
             }
         }
 
-        if (meteorsDestroyed == NUM_BIG_METEORS + NUM_MEDIUM_METEORS + NUM_SMALL_METEORS) victory = true;
+        if (meteorsDestroyed == MAX_BIG_METEORS + MAX_MEDIUM_METEORS + MAX_SMALL_METEORS) victory = true;
     }
     else
     {
@@ -538,39 +521,39 @@ void DrawGame(void)
 {
     BeginDrawing();
 
-        ClearBackground(DARKGRAY);
+        ClearBackground(RAYWHITE);
 
         if (!gameOver)
         {
             // Draw spaceship
             Vector2 v1 = { player.position.x + sinf(player.rotation*DEG2RAD)*(shipHeight), player.position.y - cosf(player.rotation*DEG2RAD)*(shipHeight) };
-            Vector2 v2 = { player.position.x - cosf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2), player.position.y - sinf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2) };
-            Vector2 v3 = { player.position.x + cosf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2), player.position.y + sinf(player.rotation*DEG2RAD)*(SHIP_BASE_SIZE/2) };
-            DrawTriangleLines(v1, v2, v3, player.color);
+            Vector2 v2 = { player.position.x - cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y - sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            Vector2 v3 = { player.position.x + cosf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2), player.position.y + sinf(player.rotation*DEG2RAD)*(PLAYER_BASE_SIZE/2) };
+            DrawTriangle(v1, v2, v3, MAROON);
             
             // Draw meteors
-            for (int i = 0; i < NUM_BIG_METEORS; i++)
+            for (int i = 0; i < MAX_BIG_METEORS; i++)
             {
-                if (bigMeteor[i].active) DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, bigMeteor[i].color);
-                else DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, Fade(bigMeteor[i].color, 0.25f));
+                if (bigMeteor[i].active) DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, DARKGRAY);
+                else DrawCircleV(bigMeteor[i].position, bigMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
             }
 
-            for (int i = 0; i < NUM_MEDIUM_METEORS; i++)
+            for (int i = 0; i < MAX_MEDIUM_METEORS; i++)
             {
-                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, mediumMeteor[i].color);
-                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(mediumMeteor[i].color, 0.25f));
+                if (mediumMeteor[i].active) DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, GRAY);
+                else DrawCircleV(mediumMeteor[i].position, mediumMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
             }
 
-            for (int i = 0; i < NUM_SMALL_METEORS; i++)
+            for (int i = 0; i < MAX_SMALL_METEORS; i++)
             {
-                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, smallMeteor[i].color);
-                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(smallMeteor[i].color, 0.25f));
+                if (smallMeteor[i].active) DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, GRAY);
+                else DrawCircleV(smallMeteor[i].position, smallMeteor[i].radius, Fade(LIGHTGRAY, 0.3f));
             }
 
             // Draw shoot
-            for (int i = 0; i < NUM_SHOOTS; i++)
+            for (int i = 0; i < PLAYER_MAX_SHOOTS; i++)
             {
-                if (shoot[i].active) DrawCircleV(shoot[i].position, shoot[i].radius, shoot[i].color);
+                if (shoot[i].active) DrawCircleV(shoot[i].position, shoot[i].radius, BLACK);
             }
 
             if (victory) DrawText("VICTORY", screenWidth/2 - MeasureText("VICTORY", 20)/2, screenHeight/2, 20, LIGHTGRAY);

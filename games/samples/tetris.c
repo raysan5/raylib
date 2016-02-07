@@ -25,7 +25,7 @@
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
-#define SQUARE_SIZE             30
+#define SQUARE_SIZE             20
 
 #define GRID_HORIZONTAL_SIZE    12
 #define GRID_VERTICAL_SIZE      20
@@ -45,7 +45,7 @@ typedef enum GridSquare { EMPTY, MOVING, FULL, BLOCK, FADING } GridSquare;
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
 static int screenWidth = 800;
-static int screenHeight = 620;
+static int screenHeight = 450;
 
 static bool gameOver = false;
 static bool pause = false;
@@ -289,6 +289,8 @@ void UpdateGame(void)
                     DeleteCompleteLines();
                     fadeLineCounter = 0;
                     lineToDelete = false;
+                    
+                    lines++;
                 }
             }
         }
@@ -314,10 +316,10 @@ void DrawGame(void)
         {
             // Draw gameplay area
             Vector2 offset;
-            offset.x = screenWidth/2 - (GRID_HORIZONTAL_SIZE*SQUARE_SIZE/2);
+            offset.x = screenWidth/2 - (GRID_HORIZONTAL_SIZE*SQUARE_SIZE/2) - 50;
             offset.y = screenHeight/2 - ((GRID_VERTICAL_SIZE - 1)*SQUARE_SIZE/2) + SQUARE_SIZE*2;
 
-            offset.y -= 60;     // NOTE: Harcoded position!
+            offset.y -= 50;     // NOTE: Harcoded position!
 
             int controller = offset.x;
 
@@ -360,13 +362,9 @@ void DrawGame(void)
                 offset.y += SQUARE_SIZE;
             }
             
-            // Draw incoming piece
-            //offset.x = screenWidth/2 - (4*SQUARE_SIZE/2);
-            //offset.y = (screenHeight/2 - ((GRID_VERTICAL_SIZE - 1)*SQUARE_SIZE/2)) - (3*SQUARE_SIZE);
-
-            // NOTE: Harcoded positions for the demo!
-            offset.x = 850;
-            offset.y = 75;
+            // Draw incoming piece (hardcoded)
+            offset.x = 500;
+            offset.y = 45;
 
             int controler = offset.x;
             
@@ -392,6 +390,9 @@ void DrawGame(void)
                 offset.x = controler;
                 offset.y += SQUARE_SIZE;
             }
+            
+            DrawText("INCOMING:", offset.x, offset.y - 100, 10, GRAY);
+            DrawText(FormatText("LINES:      %04i", lines), offset.x, offset.y + 20, 10, GRAY);
             
             if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
         }

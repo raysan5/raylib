@@ -206,24 +206,24 @@ void DrawGame(void)
 
         if (!gameOver) 
         {
-            DrawCircle(floppy.position.x, floppy.position.y, floppy.radius, BLUE);
+            DrawCircle(floppy.position.x, floppy.position.y, floppy.radius, DARKGRAY);
 
             // Draw tubes
             for (int i = 0; i < MAX_TUBES; i++)
             {
-                DrawRectangle(tubes[i*2].rec.x, tubes[i*2].rec.y, tubes[i*2].rec.width, tubes[i*2].rec.height, RED);
-                DrawRectangle(tubes[i*2 + 1].rec.x, tubes[i*2 + 1].rec.y, tubes[i*2 + 1].rec.width, tubes[i*2 + 1].rec.height, RED);
+                DrawRectangle(tubes[i*2].rec.x, tubes[i*2].rec.y, tubes[i*2].rec.width, tubes[i*2].rec.height, GRAY);
+                DrawRectangle(tubes[i*2 + 1].rec.x, tubes[i*2 + 1].rec.y, tubes[i*2 + 1].rec.width, tubes[i*2 + 1].rec.height, GRAY);
             }
             
             // Draw flashing fx (one frame only)
             if (superfx)
             {
-                DrawRectangle(0, 0, screenWidth, screenHeight, GOLD);
+                DrawRectangle(0, 0, screenWidth, screenHeight, WHITE);
                 superfx = false;
             }
 
-            DrawText(FormatText("%04i", score), 20, 20, 40, PINK);
-            DrawText(FormatText("HI-SCORE: %04i", hiScore), 20, 70, 20, VIOLET);
+            DrawText(FormatText("%04i", score), 20, 20, 40, GRAY);
+            DrawText(FormatText("HI-SCORE: %04i", hiScore), 20, 70, 20, LIGHTGRAY);
 
             if (pause) DrawText("GAME PAUSED", screenWidth/2 - MeasureText("GAME PAUSED", 40)/2, screenHeight/2 - 40, 40, GRAY);
         }
