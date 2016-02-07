@@ -1427,6 +1427,7 @@ static void InitDisplay(int width, int height)
 
     glfwMakeContextCurrent(window);
 
+#if defined(PLATFORM_DESKTOP)
     // Extensions initialization for OpenGL 3.3
     if (rlGetVersion() == OPENGL_33)
     {
@@ -1458,6 +1459,7 @@ static void InitDisplay(int width, int height)
             //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
         #endif
     }
+#endif
     
     // Enables GPU v-sync, so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
     // If not set, swap interval uses GPU v-sync configuration
