@@ -99,7 +99,7 @@ static unsigned int enabledGestures = 0b0000001111111111;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static float CalculateAngle(Vector2 initialPosition, Vector2 actualPosition, float magnitude);
+static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition);
 static float Vector2Distance(Vector2 v1, Vector2 v2);
 static double GetCurrentTime();
 
@@ -152,9 +152,9 @@ void ProcessGestureEvent(GestureEvent event)
             dragIntensity = dragDistance/(float)draggingTimeCounter;       // RAY: WTF!!! Counting frames???
             
             // Detect GESTURE_SWIPE
-            if ((dragIntensity > FORCE_TO_SWIPE) && (touchId == 0))     // RAY: why check (touchId == 0)???
+            if ((dragIntensity > FORCE_TO_SWIPE) && (touchId == 0))        // RAY: why check (touchId == 0)???
             {
-                dragAngle = CalculateAngle(touchDownPosition, touchUpPosition, dragDistance);
+                dragAngle = Vector2Angle(touchDownPosition, touchUpPosition);
                 
                 if ((dragAngle < 30) || (dragAngle > 330)) currentGesture = GESTURE_SWIPE_RIGHT;        // Right
                 else if ((dragAngle > 30) && (dragAngle < 120)) currentGesture = GESTURE_SWIPE_UP;      // Up
@@ -322,46 +322,18 @@ float GetGesturePinchAngle(void)
 
 // RAY: Do we really need magnitude??? why???
 // TODO: Remove magnitude dependency...
-static float CalculateAngle(Vector2 initialPosition, Vector2 finalPosition, float magnitude)
+static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition)
 {
     float angle;
-    
-    // Calculate arcsinus of the movement   // RAY: o__O
-    angle = asin((finalPosition.y - initialPosition.y)/magnitude);
-    angle *= RAD2DEG;
-
+   
     // RAY: review this (better) solution
-    //angle = atan2(p1.y - p2.y, p1.x - p2.x);
-    //angle *= RAD2DEG;
+    angle = atan2(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x);
+    angle *= RAD2DEG;
+    
+    if (angle < 0) angle += 360;
     
     // http://stackoverflow.com/questions/21483999/using-atan2-to-find-angle-between-two-vectors
-    
-    // TODO: Remove sector dependency (self-note: check moving eyes exercise)
-    
-    // Calculate angle depending on the sector
-    if ((finalPosition.x - initialPosition.x) >= 0)
-    {
-        // Sector 4
-        if ((finalPosition.y - initialPosition.y) >= 0)
-        {
-            angle *= -1;
-            angle += 360;
-        }
-        // Sector 1
-        else angle *= -1;
-    }
-    else
-    {
-        // Sector 3
-        if ((finalPosition.y - initialPosition.y) >= 0) angle += 180;
-        // Sector 2
-        else
-        {
-            angle *= -1;
-            angle = 180 - angle;
-        }
-    }
-    
+
     return angle;
 }
 
@@ -389,16 +361,16 @@ static double GetCurrentTime()
     QueryPerformanceFrequency(&clockFrequency);
     QueryPerformanceCounter(&currentTime);
     
-    time = (double)currentTime/clockFrequency*1000.0f;  // time in miliseconds
+    time = (double)currentTime/clockFrequency*1000.0f;  // Time in miliseconds
 #endif
 
 #if defined(__linux)
     // NOTE: Only for Linux-based systems
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time provided in nanoseconds
+    uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time in nanoseconds
     
-    time = ((double)nowTime/1000000.0);     // time in miliseconds
+    time = ((double)nowTime/1000000.0);     // Time in miliseconds
 #endif
 
     return time;
