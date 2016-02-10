@@ -39,7 +39,6 @@ LOCAL_MODULE     := raylib
 LOCAL_SRC_FILES  :=\
                     ../../src/core.c \
                     ../../src/rlgl.c \
-                    ../../src/raymath.c \
                     ../../src/textures.c \
                     ../../src/text.c \
                     ../../src/shapes.c \

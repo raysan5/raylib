@@ -602,7 +602,7 @@ bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad b
 
 int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
 int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)                   
-Vector2 GetTouchPosition(int index)                     // Returns touch position XY for a touch point index (relative to screen size)
+Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)
 
 #if defined(PLATFORM_ANDROID)
 bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
