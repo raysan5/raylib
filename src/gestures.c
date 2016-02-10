@@ -31,9 +31,7 @@
     #include "raylib.h"         // Required for typedef(s): Vector2, Gestures
 #endif
 
-#include <stdlib.h>             // malloc(), free()
-#include <stdio.h>              // printf(), fprintf()
-#include <math.h>               // Used for ...
+#include <math.h>               // Used for: atan2(), sqrt()
 #include <stdint.h>             // Defines int32_t, int64_t
 
 #if defined(_WIN32)
@@ -47,13 +45,12 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FORCE_TO_SWIPE          20
+#define FORCE_TO_SWIPE          1
 #define FORCE_TO_DRAG           20
 #define FORCE_TO_PINCH          5
 #define TAP_TIMEOUT             300     // Time in milliseconds
 #define PINCH_TIMEOUT           300     // Time in milliseconds
 #define DOUBLETAP_RANGE         30
-//#define MAX_TOUCH_POINTS        4
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -64,30 +61,33 @@
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
-// Drag gesture variables
-static Vector2 dragVector = { 0.0f , 0.0f };
-
 // Touch gesture variables
-static Vector2 touchDownPosition = { 0, 0 };
-static Vector2 touchDownPosition2 = { 0, 0 };
-static Vector2 touchUpPosition = { 0, 0 };
-static Vector2 moveDownPosition = { 0, 0 };
-static Vector2 moveDownPosition2 = { 0, 0 };
+static Vector2 touchDownPosition = { 0.0f, 0.0f };
+static Vector2 touchDownPosition2 = { 0.0f, 0.0f };
+static Vector2 touchDownDragPosition = { 0.0f, 0.0f };
+static Vector2 touchUpPosition = { 0.0f, 0.0f };
+static Vector2 moveDownPosition = { 0.0f, 0.0f };
+static Vector2 moveDownPosition2 = { 0.0f, 0.0f };
 
 static int numTap = 0;
 static int numHold = 0;
+static bool isMoving = false;
+static float timeHold = 0.0f;
 static int pointCount = 0;
 static int touchId = -1;
 
 static double eventTime = 0.0;
+static double swipeTime = 0.0;
 
+// Drag gesture variables
+static Vector2 dragVector = { 0.0f , 0.0f };
 static float dragDistance = 0.0f;       // DRAG distance (from initial touch point to current)
-static float dragAngle = 0;             // DRAG angle direction
-static float dragIntensity = 0;         // DRAG intensity, how far why did the DRAG (pixels per frame)
-static int draggingTimeCounter = 0;     // DRAG time         // RAY: WTF!!! Counting... frames???
+static float dragAngle = 0.0f;          // DRAG angle direction
+static float dragIntensity = 0.0f;      // DRAG intensity, how far why did the DRAG (pixels per frame)
 
 // Pinch gesture variables
 static float pinchDistance = 0.0f;      // Pinch displacement distance      // RAY: Not used! o__O
+static float pinchAngle = 0.0f;         // Pinch displacement distance      // RAY: Not used! o__O
 
 // Detected gestures
 static int previousGesture = GESTURE_NONE;
@@ -111,9 +111,6 @@ static double GetCurrentTime();
 void ProcessGestureEvent(GestureEvent event)
 {
     // Reset required variables
-    dragVector = (Vector2){ 0.0f, 0.0f };   // RAY: Not used???
-    pinchDistance = 0.0f;
-    
     previousGesture = currentGesture;
     
     pointCount = event.pointCount;      // Required on UpdateGestures()
@@ -139,9 +136,12 @@ void ProcessGestureEvent(GestureEvent event)
             }
             
             touchDownPosition = event.position[0];
+            touchDownDragPosition = event.position[0];
             
             touchUpPosition = touchDownPosition;
             eventTime = GetCurrentTime();
+            
+            dragVector = (Vector2){ 0.0f, 0.0f };
         }
         else if (event.touchAction == TOUCH_UP)
         {
@@ -149,12 +149,15 @@ void ProcessGestureEvent(GestureEvent event)
 
             // Calculate for swipe
             dragDistance = Vector2Distance(touchDownPosition, touchUpPosition);
-            dragIntensity = dragDistance/(float)draggingTimeCounter;       // RAY: WTF!!! Counting frames???
+            dragIntensity = dragDistance/(float)((GetCurrentTime() - swipeTime));
+
+            isMoving = false;
             
             // Detect GESTURE_SWIPE
             if ((dragIntensity > FORCE_TO_SWIPE) && (touchId == 0))        // RAY: why check (touchId == 0)???
             {
-                dragAngle = Vector2Angle(touchDownPosition, touchUpPosition);
+                // NOTE: Angle should be inverted in Y
+                dragAngle = 360.0f -  Vector2Angle(touchDownPosition, touchUpPosition);;
                 
                 if ((dragAngle < 30) || (dragAngle > 330)) currentGesture = GESTURE_SWIPE_RIGHT;        // Right
                 else if ((dragAngle > 30) && (dragAngle < 120)) currentGesture = GESTURE_SWIPE_UP;      // Up
@@ -171,11 +174,17 @@ void ProcessGestureEvent(GestureEvent event)
                 currentGesture = GESTURE_NONE;
             }
             
-            draggingTimeCounter = 0;
+            touchDownPosition = (Vector2){ 0.0f, 0.0f };
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
             if (Vector2Distance(moveDownPosition, event.position[0]) > 5) eventTime = GetCurrentTime();
+            
+            if (!isMoving)
+            {
+                swipeTime = GetCurrentTime();
+                isMoving = true;
+            }
             
             moveDownPosition = event.position[0];
             
@@ -190,8 +199,9 @@ void ProcessGestureEvent(GestureEvent event)
                 // Detect GESTURE_DRAG
                 if (dragDistance >= FORCE_TO_DRAG) currentGesture = GESTURE_DRAG;
             }
-            
-            draggingTimeCounter++;      // RAY: What do you count??? Move event actions?
+        
+            dragVector.x = moveDownPosition.x - touchDownDragPosition.x;
+            dragVector.y = moveDownPosition.y - touchDownDragPosition.y;
         }
     }
     else    // Two touch points
@@ -200,13 +210,15 @@ void ProcessGestureEvent(GestureEvent event)
         {
             touchDownPosition = event.position[0];
             touchDownPosition2 = event.position[1];
+            pinchDistance = Vector2Distance(touchDownPosition, touchDownPosition2);
             
             currentGesture = GESTURE_HOLD;
+            timeHold = GetCurrentTime();
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
             pinchDistance = Vector2Distance(moveDownPosition, moveDownPosition2);
-            
+
             touchDownPosition = moveDownPosition;
             touchDownPosition2 = moveDownPosition2;
             
@@ -220,12 +232,17 @@ void ProcessGestureEvent(GestureEvent event)
             }
             else 
             {
-               currentGesture = GESTURE_HOLD; 
+               currentGesture = GESTURE_HOLD;
+               timeHold = GetCurrentTime();
             }
+            
+            // NOTE: Angle should be inverted in Y
+            pinchAngle = 360.0f - Vector2Angle(moveDownPosition, moveDownPosition2);
         }
         else if (event.touchAction == TOUCH_UP)
         {
             pinchDistance = 0.0f;
+            pinchAngle = 0.0f;
             
             currentGesture = GESTURE_NONE;
         }
@@ -238,11 +255,16 @@ void UpdateGestures(void)
     // NOTE: Gestures are processed through system callbacks on touch events
 
     // Detect GESTURE_HOLD
-    if (((currentGesture == GESTURE_TAP) || (currentGesture == GESTURE_DOUBLETAP)) && pointCount < 2) currentGesture = GESTURE_HOLD;
-    
-    if ((GetCurrentTime() - eventTime) > TAP_TIMEOUT && (currentGesture == GESTURE_DRAG) && pointCount < 2)
+    if (((currentGesture == GESTURE_TAP) || (currentGesture == GESTURE_DOUBLETAP)) && (pointCount < 2))
     {
         currentGesture = GESTURE_HOLD;
+        timeHold = GetCurrentTime();
+    }
+    
+    if (((GetCurrentTime() - eventTime) > TAP_TIMEOUT) && (currentGesture == GESTURE_DRAG) && (pointCount < 2))
+    {
+        currentGesture = GESTURE_HOLD;
+        timeHold = GetCurrentTime();
         numHold = 1;
     }
    
@@ -288,17 +310,19 @@ float GetGestureDragAngle(void)
 // Get drag vector (between initial and final position)
 Vector2 GetGestureDragVector(void)
 {
-    // TODO: Calculate DRAG vector
-    
+    // NOTE: Calculated in...
     return dragVector;
 }
 
 // Hold time measured in ms
-int GetGestureHoldDuration(void)
+float GetGestureHoldDuration(void)
 {
-    // TODO: Return last hold time in ms
+    float time = 0.0f;
     
-    return 0;
+    // DONE: Return last hold time in ms
+    if (currentGesture == GESTURE_HOLD) time = (float)GetCurrentTime() - timeHold;
+    
+    return time;
 }
 
 // Get distance between two pinch points
@@ -307,32 +331,34 @@ float GetGesturePinchDelta(void)
     return pinchDistance;
 }
 
+// Get number of touch points
+int GetTouchPointsCount(void)
+{
+    return pointCount;
+}
+
 // Get angle beween two pinch points
 // NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
 float GetGesturePinchAngle(void)
 {
-    // TODO: Calculate pinch angle
+    // NOTE: pinch angle is calculated on two touch points TOUCH_MOVE
     
-    return 0;
+    return pinchAngle;
 }
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-// RAY: Do we really need magnitude??? why???
-// TODO: Remove magnitude dependency...
+// Returns angle from two-points vector with X-axis
 static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition)
 {
     float angle;
-   
-    // RAY: review this (better) solution
+
     angle = atan2(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x);
     angle *= RAD2DEG;
     
-    if (angle < 0) angle += 360;
-    
-    // http://stackoverflow.com/questions/21483999/using-atan2-to-find-angle-between-two-vectors
+    if (angle < 0) angle += 360.0f;
 
     return angle;
 }

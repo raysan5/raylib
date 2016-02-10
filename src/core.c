@@ -117,7 +117,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define STORAGE_FILENAME    "storage.data"
+#define STORAGE_FILENAME     "storage.data"
+#define MAX_TOUCH_POINTS     2
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -182,7 +183,7 @@ static bool fullscreen = false;             // Fullscreen mode (useful only for 
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-static Vector2 touchPosition;               // Touch position on screen
+static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
@@ -1228,7 +1229,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 int GetTouchX(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    return (int)touchPosition.x;
+    return (int)touchPosition[0].x;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI
     return GetMouseX();
 #endif
@@ -1238,7 +1239,7 @@ int GetTouchX(void)
 int GetTouchY(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    return (int)touchPosition.y;
+    return (int)touchPosition[0].y;
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI
     return GetMouseY();
 #endif
@@ -1246,10 +1247,13 @@ int GetTouchY(void)
 
 // Returns touch position XY
 // TODO: touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(void)
+Vector2 GetTouchPosition(int index)
 {
+    Vector2 position = { -1.0f, -1.0f };
+    
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-    Vector2 position = touchPosition;
+    if (index < MAX_TOUCH_POINTS) position = touchPosition[index];
+    else TraceLog(WARNING, "Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
@@ -1263,7 +1267,7 @@ Vector2 GetTouchPosition(void)
         position.y = position.y*((float)renderHeight/(float)displayHeight) - renderOffsetY/2;
     }
 #else   // PLATFORM_DESKTOP, PLATFORM_RPI
-    Vector2 position = GetMousePosition();
+    if (index == 0) position = GetMousePosition();
 #endif
 
     return position;
@@ -1916,8 +1920,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        touchPosition.x = AMotionEvent_getX(event, 0);
-        touchPosition.y = AMotionEvent_getY(event, 0);
+        // Get first touch position
+        touchPosition[0].x = AMotionEvent_getX(event, 0);
+        touchPosition[0].y = AMotionEvent_getY(event, 0);
+        
+        // Get second touch position
+        touchPosition[1].x = AMotionEvent_getX(event, 1);
+        touchPosition[1].y = AMotionEvent_getY(event, 1);
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -2535,7 +2544,8 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
     gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
 
-    touchPosition = gestureEvent.position[0];
+    touchPosition[0] = gestureEvent.position[0];
+    touchPosition[1] = gestureEvent.position[1];
     
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);   // Process obtained gestures data

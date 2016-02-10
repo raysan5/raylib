@@ -102,6 +102,7 @@ Vector2 GetGestureDragVector(void);                     // Get gesture drag vect
 int GetGestureHoldDuration(void);                       // Get gesture hold time in frames
 float GetGesturePinchDelta(void);                       // Get gesture pinch delta
 float GetGesturePinchAngle(void);                       // Get gesture pinch angle
+int GetTouchPointsCount(void);                          // Get touch points count
 
 #ifdef __cplusplus
 }
