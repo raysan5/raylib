@@ -45,7 +45,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FORCE_TO_SWIPE          1
+#define FORCE_TO_SWIPE          1       // Time in milliseconds
 #define FORCE_TO_DRAG           20
 #define FORCE_TO_PINCH          5
 #define TAP_TIMEOUT             300     // Time in milliseconds
@@ -80,14 +80,14 @@ static double eventTime = 0.0;
 static double swipeTime = 0.0;
 
 // Drag gesture variables
-static Vector2 dragVector = { 0.0f , 0.0f };
-static float dragDistance = 0.0f;       // DRAG distance (from initial touch point to current)
-static float dragAngle = 0.0f;          // DRAG angle direction
-static float dragIntensity = 0.0f;      // DRAG intensity, how far why did the DRAG (pixels per frame)
+static Vector2 dragVector = { 0.0f , 0.0f };    // DRAG vector (between initial and current position)
+static float dragDistance = 0.0f;               // DRAG distance (from initial touch point to final) for SWIPE GESTURE
+static float dragAngle = 0.0f;                  // DRAG angle direction for SWIPE GESTURE
+static float dragIntensity = 0.0f;              // DRAG intensity, how far why did the DRAG (pixels per frame) for SWIPE GESTURE
 
 // Pinch gesture variables
-static float pinchDistance = 0.0f;      // Pinch displacement distance      // RAY: Not used! o__O
-static float pinchAngle = 0.0f;         // Pinch displacement distance      // RAY: Not used! o__O
+static float pinchDistance = 0.0f;              // Pinch displacement distance
+static float pinchAngle = 0.0f;                 // Pinch displacement distance
 
 // Detected gestures
 static int previousGesture = GESTURE_NONE;
@@ -122,7 +122,7 @@ void ProcessGestureEvent(GestureEvent event)
         if (event.touchAction == TOUCH_DOWN)
         {
             numTap++;    // Tap counter
-
+            
             // Detect GESTURE_DOUBLE_TAP
             if ((currentGesture == GESTURE_NONE) && (numTap >= 2) && ((GetCurrentTime() - eventTime) < TAP_TIMEOUT) && (Vector2Distance(touchDownPosition, event.position[0]) < DOUBLETAP_RANGE))
             {
@@ -174,7 +174,7 @@ void ProcessGestureEvent(GestureEvent event)
                 currentGesture = GESTURE_NONE;
             }
             
-            touchDownPosition = (Vector2){ 0.0f, 0.0f };
+            touchDownDragPosition = (Vector2){ 0.0f, 0.0f };
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
@@ -297,6 +297,8 @@ void SetGesturesEnabled(unsigned int gestureFlags)
 // Get drag dragIntensity (pixels per frame)
 float GetGestureDragdragIntensity(void)
 {
+    // NOTE: drag intensity is calculated on one touch points TOUCH_UP
+    
     return dragIntensity;
 }
 
@@ -304,22 +306,26 @@ float GetGestureDragdragIntensity(void)
 // NOTE: Angle in degrees, horizontal-right is 0, counterclock-wise
 float GetGestureDragAngle(void)
 {
+    // NOTE: drag angle is calculated on one touch points TOUCH_UP
+    
     return dragAngle;
 }
 
-// Get drag vector (between initial and final position)
+// Get drag vector (between initial touch point to current)
 Vector2 GetGestureDragVector(void)
 {
-    // NOTE: Calculated in...
+    // NOTE: drag vector is calculated on one touch points TOUCH_MOVE
+    
     return dragVector;
 }
 
 // Hold time measured in ms
 float GetGestureHoldDuration(void)
 {
+    // NOTE: time is calculated on current gesture HOLD
+    
     float time = 0.0f;
     
-    // DONE: Return last hold time in ms
     if (currentGesture == GESTURE_HOLD) time = (float)GetCurrentTime() - timeHold;
     
     return time;
@@ -328,12 +334,17 @@ float GetGestureHoldDuration(void)
 // Get distance between two pinch points
 float GetGesturePinchDelta(void)
 {
+    // NOTE: The position values used for pinchDistance are not modified like the position values of [core.c]-->GetTouchPosition(int index)
+    // NOTE: pinch distance is calculated on two touch points TOUCH_MOVE
+    
     return pinchDistance;
 }
 
 // Get number of touch points
 int GetTouchPointsCount(void)
 {
+    // NOTE: point count is calculated when ProcessGestureEvent(GestureEvent event) is called
+    
     return pointCount;
 }
 
