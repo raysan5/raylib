@@ -55,7 +55,6 @@ extern unsigned int whiteTexture;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static float GetHeightValue(Color pixel);
 static Mesh LoadOBJ(const char *fileName);
 
 //----------------------------------------------------------------------------------
@@ -608,17 +607,19 @@ Model LoadModelEx(Mesh data)
 }
 
 // Load a heightmap image as a 3d model
-Model LoadHeightmap(Image heightmap, float maxHeight)
+// NOTE: model map size is defined in generic units
+Model LoadHeightmap(Image heightmap, Vector3 size)
 {
+    #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
+    
     Mesh mesh;
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
     
-    Color *heightmapPixels = GetImageData(heightmap);
+    Color *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
-    // TODO: Consider resolution when generating model data?
     int numTriangles = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
 
     mesh.vertexCount = numTriangles*3;
@@ -634,7 +635,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 
     int trisCounter = 0;
 
-    float scaleFactor = maxHeight/255;    // TODO: Review scaleFactor calculation
+    Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
     for(int z = 0; z < mapZ-1; z++)
     {
@@ -644,17 +645,17 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             //----------------------------------------------------------
 
             // one triangle - 3 vertex
-            mesh.vertices[vCounter] = x;
-            mesh.vertices[vCounter + 1] = GetHeightValue(heightmapPixels[x + z*mapX])*scaleFactor;
-            mesh.vertices[vCounter + 2] = z;
+            mesh.vertices[vCounter] = (float)x*scaleFactor.x;
+            mesh.vertices[vCounter + 1] = (float)GRAY_VALUE(pixels[x + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 2] = (float)z*scaleFactor.z;
 
-            mesh.vertices[vCounter + 3] = x;
-            mesh.vertices[vCounter + 4] = GetHeightValue(heightmapPixels[x + (z+1)*mapX])*scaleFactor;
-            mesh.vertices[vCounter + 5] = z+1;
+            mesh.vertices[vCounter + 3] = (float)x*scaleFactor.x;
+            mesh.vertices[vCounter + 4] = (float)GRAY_VALUE(pixels[x + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 5] = (float)(z + 1)*scaleFactor.z;
 
-            mesh.vertices[vCounter + 6] = x+1;
-            mesh.vertices[vCounter + 7] = GetHeightValue(heightmapPixels[(x+1) + z*mapX])*scaleFactor;
-            mesh.vertices[vCounter + 8] = z;
+            mesh.vertices[vCounter + 6] = (float)(x + 1)*scaleFactor.x;
+            mesh.vertices[vCounter + 7] = (float)GRAY_VALUE(pixels[(x + 1) + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 8] = (float)z*scaleFactor.z;
 
             // another triangle - 3 vertex
             mesh.vertices[vCounter + 9] = mesh.vertices[vCounter + 6];
@@ -665,21 +666,21 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             mesh.vertices[vCounter + 13] = mesh.vertices[vCounter + 4];
             mesh.vertices[vCounter + 14] = mesh.vertices[vCounter + 5];
 
-            mesh.vertices[vCounter + 15] = x+1;
-            mesh.vertices[vCounter + 16] = GetHeightValue(heightmapPixels[(x+1) + (z+1)*mapX])*scaleFactor;
-            mesh.vertices[vCounter + 17] = z+1;
+            mesh.vertices[vCounter + 15] = (float)(x + 1)*scaleFactor.x;
+            mesh.vertices[vCounter + 16] = (float)GRAY_VALUE(pixels[(x + 1) + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 17] = (float)(z + 1)*scaleFactor.z;
             vCounter += 18;     // 6 vertex, 18 floats
 
             // Fill texcoords array with data
             //--------------------------------------------------------------
-            mesh.texcoords[tcCounter] = (float)x / (mapX-1);
-            mesh.texcoords[tcCounter + 1] = (float)z / (mapZ-1);
+            mesh.texcoords[tcCounter] = (float)x/(mapX - 1);
+            mesh.texcoords[tcCounter + 1] = (float)z/(mapZ - 1);
 
-            mesh.texcoords[tcCounter + 2] = (float)x / (mapX-1);
-            mesh.texcoords[tcCounter + 3] = (float)(z+1) / (mapZ-1);
+            mesh.texcoords[tcCounter + 2] = (float)x/(mapX - 1);
+            mesh.texcoords[tcCounter + 3] = (float)(z + 1)/(mapZ - 1);
 
-            mesh.texcoords[tcCounter + 4] = (float)(x+1) / (mapX-1);
-            mesh.texcoords[tcCounter + 5] = (float)z / (mapZ-1);
+            mesh.texcoords[tcCounter + 4] = (float)(x + 1)/(mapX - 1);
+            mesh.texcoords[tcCounter + 5] = (float)z/(mapZ - 1);
 
             mesh.texcoords[tcCounter + 6] = mesh.texcoords[tcCounter + 4];
             mesh.texcoords[tcCounter + 7] = mesh.texcoords[tcCounter + 5];
@@ -687,13 +688,12 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             mesh.texcoords[tcCounter + 8] = mesh.texcoords[tcCounter + 2];
             mesh.texcoords[tcCounter + 9] = mesh.texcoords[tcCounter + 3];
 
-            mesh.texcoords[tcCounter + 10] = (float)(x+1) / (mapX-1);
-            mesh.texcoords[tcCounter + 11] = (float)(z+1) / (mapZ-1);
+            mesh.texcoords[tcCounter + 10] = (float)(x + 1)/(mapX - 1);
+            mesh.texcoords[tcCounter + 11] = (float)(z + 1)/(mapZ - 1);
             tcCounter += 12;    // 6 texcoords, 12 floats
 
             // Fill normals array with data
             //--------------------------------------------------------------
-            // NOTE: Current Model implementation doe not use normals!
             for (int i = 0; i < 18; i += 3)
             {
                 mesh.normals[nCounter + i] = 0.0f;
@@ -709,7 +709,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
         }
     }
     
-    free(heightmapPixels);
+    free(pixels);
 
     // Fill color data
     // NOTE: Not used any more... just one plain color defined at DrawModel()
@@ -1687,12 +1687,6 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
-// Get current vertex y altitude (proportional to pixel colors in grayscale)
-static float GetHeightValue(Color pixel)
-{
-    return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
-}
 
 // Load OBJ mesh data
 static Mesh LoadOBJ(const char *fileName)

@@ -759,7 +759,7 @@ void DrawGizmo(Vector3 position);                                               
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
 Model LoadModelEx(Mesh data);                                                                      // Load a 3d model (from vertex data)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
-Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
+Model LoadHeightmap(Image heightmap, Vector3 size);                                                // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
