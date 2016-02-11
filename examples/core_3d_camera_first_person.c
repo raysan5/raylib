@@ -22,7 +22,7 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
     
-    // Define the camera to look into our 3d world
+    // Define the camera to look into our 3d world (position, target, up vector)
     Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
     // Generates some random columns
