@@ -118,7 +118,6 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define STORAGE_FILENAME     "storage.data"
-#define MAX_TOUCH_POINTS     2
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -324,6 +323,10 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    
+    // TODO: Add gamepad support (not provided by GLFW3 on emscripten)
+    //emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenInputCallback);
+    //emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenInputCallback);
 #endif
 
     mousePosition.x = (float)screenWidth/2.0f;

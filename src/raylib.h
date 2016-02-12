@@ -166,6 +166,9 @@
     #define MOUSE_MIDDLE_BUTTON   2
 #endif
 
+// Touch points registered
+#define MAX_TOUCH_POINTS     2
+
 // Gamepad Number
 #define GAMEPAD_PLAYER1       0
 #define GAMEPAD_PLAYER2       1
@@ -348,9 +351,6 @@ typedef struct Shader {
 
     // Uniforms
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
-    
-    int modelLoc;         // Model transformation matrix uniform location point (vertex shader)
-    int viewLoc;          // View transformation matrix uniform location point (vertex shader)
     int tintColorLoc;     // Color uniform location point (fragment shader)
     
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
@@ -448,15 +448,16 @@ typedef enum {
     GESTURE_PINCH_OUT   = 512
 } Gestures;
 
+// Touch action (fingers or mouse)
 typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
 
 // Gesture events
-// NOTE: MAX_TOUCH_POINTS fixed to 4
+// NOTE: MAX_TOUCH_POINTS fixed to 2
 typedef struct {
     int touchAction;
     int pointCount;
-    int pointerId[4];
-    Vector2 position[4];
+    int pointerId[MAX_TOUCH_POINTS];
+    Vector2 position[MAX_TOUCH_POINTS];
 } GestureEvent;
 
 // Camera system modes
@@ -798,6 +799,7 @@ bool IsPosproShaderEnabled(void);                                   // Check if 
 int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
+void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);                   // Set shader uniform value (matrix 4x4)
 void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
 void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
 void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment

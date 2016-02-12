@@ -77,9 +77,9 @@ int main()
     light.specIntensity = 1.0f;
     
     // Material initialization
-    matBlinn.diffuse = WHITE;
-    matBlinn.ambient = (Color){ 50, 50, 50, 255 };
-    matBlinn.specular = WHITE;
+    matBlinn.colDiffuse = WHITE;
+    matBlinn.colAmbient = (Color){ 50, 50, 50, 255 };
+    matBlinn.colSpecular = WHITE;
     matBlinn.glossiness = 50.0f;
     
     // Setup camera
@@ -129,8 +129,8 @@ int main()
         SetShaderValue(shader, lSpecIntensityLoc, &light.specIntensity, 1);
         
         // Send material values to shader
-        SetShaderValue(shader, mAmbientLoc, ColorToFloat(matBlinn.ambient), 3);
-        SetShaderValue(shader, mSpecularLoc, ColorToFloat(matBlinn.specular), 3);
+        SetShaderValue(shader, mAmbientLoc, ColorToFloat(matBlinn.colAmbient), 3);
+        SetShaderValue(shader, mSpecularLoc, ColorToFloat(matBlinn.colSpecular), 3);
         SetShaderValue(shader, mGlossLoc, &matBlinn.glossiness, 1);
         
         // Send camera and light transform values to shader
@@ -146,7 +146,7 @@ int main()
             
             Begin3dMode(camera);
                 
-                DrawModel(model, position, 4.0f, matBlinn.diffuse);
+                DrawModel(model, position, 4.0f, matBlinn.colDiffuse);
                 DrawSphere(light.position, 0.5f, GOLD);
                 
                 DrawGrid(20, 1.0f);
