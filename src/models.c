@@ -704,7 +704,6 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
             // TODO: Calculate normals in an efficient way
 
             nCounter += 18;     // 6 vertex, 18 floats
-
             trisCounter += 2;
         }
     }

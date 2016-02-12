@@ -280,9 +280,9 @@ Sound LoadSoundFromWave(Wave wave)
 }
 
 // Load sound to memory from rRES file (raylib Resource)
+// TODO: Maybe rresName could be directly a char array with all the data?
 Sound LoadSoundFromRES(const char *rresName, int resId)
 {
-    // NOTE: rresName could be directly a char array with all the data!!! --> TODO
     Sound sound = { 0 };
 
 #if defined(AUDIO_STANDALONE)

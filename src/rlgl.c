@@ -171,7 +171,7 @@ typedef struct {
 typedef struct {
     GLuint textureId;
     int vertexCount;
-    // TODO: DrawState state -> Blending mode, shader
+    // TODO: Store draw state -> blending mode, shader
 } DrawCall;
 
 // pixel type (same as Color type)
@@ -1475,11 +1475,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
     // Calculate model-view-projection matrix (MVP)
     Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
 
-    // NOTE: Drawing in OpenGL 3.3+, matrices are passed to shader
-    // TODO: Reduce number of matrices passed to shaders, use only matMVP
-    //glUniformMatrix4fv(model.material.shader.modelLoc, 1, false, MatrixToFloat(matModel));
-    //glUniformMatrix4fv(model.material.shader.viewLoc, 1, false, MatrixToFloat(matView));
-    
+    // Send combined model-view-projection matrix to shader
     glUniformMatrix4fv(model.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
 
     // Apply color tinting to model
@@ -1900,7 +1896,7 @@ void rlglGenerateMipmaps(Texture2D texture)
         int mipmapCount = GenerateMipmaps(data, texture.width, texture.height);
 
         // TODO: Adjust mipmap size depending on texture format!
-        int size = texture.width*texture.height*4;
+        int size = texture.width*texture.height*4;  // RGBA 32bit only
         int offset = size;
 
         int mipWidth = texture.width/2;

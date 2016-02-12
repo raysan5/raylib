@@ -359,7 +359,7 @@ void InitWindow(int width, int height, struct android_app *state)
     if (orientation == ACONFIGURATION_ORIENTATION_PORT) TraceLog(INFO, "PORTRAIT window orientation");
     else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TraceLog(INFO, "LANDSCAPE window orientation");
 
-    // TODO: Review, it doesn't work...
+    // TODO: Automatic orientation doesn't seem to work
     if (width <= height)
     {
         AConfiguration_setOrientation(app->config, ACONFIGURATION_ORIENTATION_PORT);
@@ -1246,7 +1246,7 @@ int GetTouchY(void)
 }
 
 // Returns touch position XY
-// TODO: touch position should be scaled depending on display size and render size
+// TODO: Touch position should be scaled depending on display size and render size
 Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
@@ -1257,7 +1257,7 @@ Vector2 GetTouchPosition(int index)
 
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
-        // TODO: Seems to work ok but... review!
+        // TODO: Review touch position scaling for screenSize vs displaySize
         position.x = position.x*((float)screenWidth/(float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
         position.y = position.y*((float)screenHeight/(float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
     }
@@ -1668,8 +1668,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 #endif
     else currentKeyState[key] = action;
 
-    // HACK for GuiTextBox, to deteck back key
-    // TODO: Review...
+    // TODO: Review (and remove) this HACK for GuiTextBox, to deteck back key
     if ((key == 259) && (action == GLFW_PRESS)) lastKeyPressed = 3;
 }
 
@@ -1677,8 +1676,6 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     currentMouseState[button] = action;
-    
-    // TODO: Test mouse gestures
     
 #define ENABLE_MOUSE_GESTURES
 #if defined(ENABLE_MOUSE_GESTURES)
@@ -2046,7 +2043,7 @@ static bool GetKeyStatus(int key)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetKey(window, key);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check virtual keyboard (?)
+    // TODO: Check for virtual keyboard
     return false;
 #elif defined(PLATFORM_RPI)
     // NOTE: Keys states are filled in PollInputEvents()
@@ -2061,7 +2058,7 @@ static bool GetMouseButtonStatus(int button)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetMouseButton(window, button);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check virtual keyboard (?)
+    // TODO: Check for virtual keyboard
     return false;
 #elif defined(PLATFORM_RPI)
     // NOTE: mouse buttons array is filled on PollInputEvents()
@@ -2382,7 +2379,7 @@ static void RestoreKeyboard(void)
 // Init gamepad system
 static void InitGamepad(void)
 {
-    // TODO: Gamepad support
+    // TODO: Add Gamepad support
     if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
     else TraceLog(INFO, "Gamepad device initialized successfully");
 }

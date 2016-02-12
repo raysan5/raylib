@@ -346,7 +346,7 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int f
     
     for(int i = 0; i < length; i++)
     {
-        // TODO: Right now we are supposing characters follow a continous order and start at FONT_FIRST_CHAR,
+        // TODO: Right now we are supposing characters that follow a continous order and start at FONT_FIRST_CHAR,
         // this sytem can be improved to support any characters order and init value...
         // An intermediate table could be created to link char values with predefined char position index in chars rectangle array
         

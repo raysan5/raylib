@@ -375,7 +375,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
             }
 
             // Focus to center
-            // TODO: Move this function out of the module?
+            // TODO: Move this function out of this module?
             if (IsKeyDown('Z')) camera->target = (Vector3){ 0.0f, 0.0f, 0.0f };
 
             // Camera position update

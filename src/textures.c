@@ -712,7 +712,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
             {
                 oldpixel = pixels[y*image->width + x];
                 
-                // TODO: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
+                // NOTE: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
                 newpixel.r = oldpixel.r>>(8 - rBpp);     // R bits
                 newpixel.g = oldpixel.g>>(8 - gBpp);     // G bits
                 newpixel.b = oldpixel.b>>(8 - bBpp);     // B bits
@@ -769,7 +769,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 }
 
 // Convert image to POT (power-of-two)
-// NOTE: Requirement on OpenGL ES 2.0 (RPI, HTML5)
+// NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
 void ImageToPOT(Image *image, Color fillColor)
 {
     Color *pixels = GetImageData(*image);   // Get pixels data
@@ -784,7 +784,7 @@ void ImageToPOT(Image *image, Color fillColor)
         Color *pixelsPOT = NULL;
 
         // Generate POT array from NPOT data
-        pixelsPOT = (Color *)malloc(potWidth * potHeight * sizeof(Color));
+        pixelsPOT = (Color *)malloc(potWidth*potHeight*sizeof(Color));
 
         for (int j = 0; j < potHeight; j++)
         {
@@ -896,7 +896,9 @@ void ImageCrop(Image *image, Rectangle crop)
 }
 
 // Resize and image to new size
-// NOTE: Uses stb default scaling filter
+// NOTE: Uses stb default scaling filters (both bicubic):
+// STBIR_DEFAULT_FILTER_UPSAMPLE    STBIR_FILTER_CATMULLROM
+// STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_MITCHELL   (high-quality Catmull-Rom)
 void ImageResize(Image *image, int newWidth, int newHeight) 
 {
     // Get data as Color pixels array to work with it
