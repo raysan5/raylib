@@ -2,20 +2,10 @@
 *
 *   raylib [physac] physics example - Basic rigidbody
 *
-*   Welcome to raylib!
-*
-*   To test examples, just press F6 and execute raylib_compile_execute script
-*   Note that compiled executable is placed in the same folder as .c file
-*
-*   You can find all basic examples on C:\raylib\raylib\examples folder or
-*   raylib official webpage: www.raylib.com
-*
-*   Enjoy using raylib. :)
-*
-*   This example has been created using raylib 1.3 (www.raylib.com)
+*   This example has been created using raylib 1.4 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -33,13 +23,7 @@ int main()
     
     InitWindow(screenWidth, screenHeight, "raylib [physics] example - basic rigidbody");
 
-    InitPhysics();      // Initialize internal physics values   (max rigidbodies/colliders available: 1024)
-    
-    // Physics initialization
-    Physics worldPhysics = { true, false, (Vector2){ 0, -9.81f } };
-    
-    // Set internal physics settings
-    SetPhysics(worldPhysics);
+    InitPhysics(3);      // Initialize physics system with maximum physic objects
     
     // Object initialization
     Transform player = (Transform){(Vector2){(screenWidth - OBJECT_SIZE) / 2, (screenHeight - OBJECT_SIZE) / 2}, 0.0f, (Vector2){OBJECT_SIZE, OBJECT_SIZE}};
@@ -54,6 +38,8 @@ int main()
     // Object properties initialization
     float moveSpeed = 6.0f;
     float jumpForce = 5.0f;
+    
+    bool physicsDebug = false;
     
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -91,14 +77,7 @@ int main()
         }
         
         // Check debug mode toggle button input
-        if(IsKeyPressed(KEY_P))
-        {
-            // Update program physics value
-            worldPhysics.debug = !worldPhysics.debug;
-            
-            // Update internal physics value
-            SetPhysics(worldPhysics);
-        }
+        if (IsKeyPressed(KEY_P)) physicsDebug = !physicsDebug;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -112,7 +91,7 @@ int main()
             DrawText("Use P to switch DEBUG MODE", (screenWidth - MeasureText("Use P to switch DEBUG MODE", 20)) / 2, screenHeight * 0.3f, 20, LIGHTGRAY);
             
             // Check if debug mode is enabled
-            if (worldPhysics.debug)
+            if (physicsDebug)
             {
                 // Draw every internal physics stored collider if it is active
                 for (int i = 0; i < 2; i++)
@@ -122,14 +101,11 @@ int main()
                         DrawRectangleLines(GetCollider(i).bounds.x, GetCollider(i).bounds.y, GetCollider(i).bounds.width, GetCollider(i).bounds.height, GREEN);
                     }
                 }
-                
             }
             else
             {
-                // Draw player
+                // Draw player and floor
                 DrawRectangleRec((Rectangle){player.position.x, player.position.y, player.scale.x, player.scale.y}, GRAY);
-                
-                // Draw floor
                 DrawRectangleRec((Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, BLACK);
             }
 
@@ -138,7 +114,9 @@ int main()
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
+    //--------------------------------------------------------------------------------------
+    UnloadPhysics();      // Unload physic objects
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

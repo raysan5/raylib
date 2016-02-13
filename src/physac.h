@@ -35,13 +35,6 @@
 // Collider types
 typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
 
-// Physics struct
-typedef struct Physics {
-    bool enabled;
-    bool debug;     // Should be used by programmer for testing purposes
-    Vector2 gravity;
-} Physics;
-
 // Transform struct
 typedef struct Transform {
     Vector2 position;
@@ -77,8 +70,8 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declarations
 //----------------------------------------------------------------------------------
-void InitPhysics(void);                                                     // Initialize all internal physics values
-void SetPhysics(Physics settings);                                          // Set physics settings values using Physics data type to overwrite internal physics settings
+void InitPhysics(int maxPhysicElements);                                    // Initialize all internal physics values
+void UnloadPhysics();                                                       // Unload physic elements arrays
 
 void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot
 void AddCollider(int index, Collider collider);                             // Initialize a new Collider with parameters to internal index slot
