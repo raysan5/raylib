@@ -118,7 +118,7 @@
 #define KEY_RIGHT_CONTROL   345
 #define KEY_RIGHT_ALT       346
 
-// Keyboard Alhpa Numeric Keys
+// Keyboard Alpha Numeric Keys
 #define KEY_ZERO             48
 #define KEY_ONE              49
 #define KEY_TWO              50

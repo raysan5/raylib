@@ -151,7 +151,7 @@ pthread_t mouseThreadId;                        // Mouse reading thread id
 static int defaultKeyboardMode;                 // Used to store default keyboard mode
 static struct termios defaultKeyboardSettings;  // Used to staore default keyboard settings
 
-static int keyboardMode = 0;    // Keyboard mode: 1 (KEYCODES), 2 (ASCII)
+static int keyboardMode = 0;    // Keyboard mode: 1 - KEYCODES, 2 - ASCII
 
 // This array maps Unix keycodes to ASCII equivalent and to GLFW3 equivalent for special function keys (>256)
 const short UnixKeycodeToASCII[128] = { 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 9, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 91, 93, 257, 341, 65, 83, 68,
@@ -1128,7 +1128,7 @@ bool IsCursorHidden()
 {
     return cursorHidden;
 }
-#endif
+#endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 
 // TODO: Enable gamepad usage on Rapsberry Pi
 // NOTE: emscripten not implemented
@@ -2077,7 +2077,7 @@ static bool GetMouseButtonStatus(int button)
     // TODO: Check for virtual keyboard
     return false;
 #elif defined(PLATFORM_RPI)
-    // NOTE: mouse buttons array is filled on PollInputEvents()
+    // NOTE: Mouse buttons states are filled in PollInputEvents()
     return currentMouseState[button];
 #endif
 }
@@ -2099,8 +2099,7 @@ static void PollInputEvents(void)
     mousePosition.x = (float)mouseX;
     mousePosition.y = (float)mouseY;
 
-    // Keyboard polling
-    // Automatically managed by GLFW3 through callback
+    // Keyboard input polling (automatically managed by GLFW3 through callback)
     lastKeyPressed = -1;
 
     // Register previous keys states
@@ -2157,7 +2156,7 @@ static void PollInputEvents(void)
 
         int key = keysBuffer[i];
 
-        if (keyboardMode == 2)  // scancodes
+        if (keyboardMode == 2)  // ASCII chars (K_XLATE mode)
         {
             // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
             // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
@@ -2215,8 +2214,7 @@ static void PollInputEvents(void)
             if (key == 0x01) windowShouldClose = true;
         }
 
-
-        // Same fucnionality as GLFW3 KeyCallback()
+        // Same functionality as GLFW3 KeyCallback()
         /*
         if (asciiKey == exitKey) windowShouldClose = true;
         else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
@@ -2356,7 +2354,7 @@ static void InitKeyboard(void)
     // Set new keyboard settings (change occurs immediately)
     tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
 
-    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE, we change that!
+    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE, we change that! -> WHY???
 
     // Save old keyboard mode to restore it at the end
     if (ioctl(STDIN_FILENO, KDGKBMODE, &defaultKeyboardMode) < 0)
@@ -2374,6 +2372,8 @@ static void InitKeyboard(void)
         //    - ASCII chars (K_XLATE)
         //    - UNICODE chars (K_UNICODE)
         ioctl(STDIN_FILENO, KDSKBMODE, K_MEDIUMRAW);
+        
+        //http://lct.sourceforge.net/lct/x60.html
 
         keyboardMode = 1;   // keycodes
     }
@@ -2587,7 +2587,6 @@ static void LogoAnimation(void)
     int bottomSideRecWidth = 16;
     int rightSideRecHeight = 16;
 
-    char raylib[8] = "       ";     // raylib text array, max 8 letters
     int state = 0;                  // Tracking animation states (State Machine)
     float alpha = 1.0f;             // Useful for fading
 
@@ -2627,17 +2626,6 @@ static void LogoAnimation(void)
             {
                 lettersCount++;
                 framesCounter = 0;
-            }
-
-            switch (lettersCount)
-            {
-                case 1: raylib[0] = 'r'; break;
-                case 2: raylib[1] = 'a'; break;
-                case 3: raylib[2] = 'y'; break;
-                case 4: raylib[3] = 'l'; break;
-                case 5: raylib[4] = 'i'; break;
-                case 6: raylib[5] = 'b'; break;
-                default: break;
             }
 
             if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
@@ -2686,7 +2674,7 @@ static void LogoAnimation(void)
 
                 DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
 
-                DrawText(raylib, screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
+                DrawText(SubText("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
             }
 
         EndDrawing();
