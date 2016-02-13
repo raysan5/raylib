@@ -470,6 +470,7 @@ bool IsWindowMinimized(void)
 }
 
 // Fullscreen toggle
+// TODO: When destroying window context is lost and resources too, take care!
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -1379,10 +1380,24 @@ static void InitDisplay(int width, int height)
     if (fullscreen)
     {
         // At this point we need to manage render size vs screen size
-        // NOTE: This function uses and modifies global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
+        // NOTE: This function uses and modifies global module variables: 
+        //       screenWidth/screenHeight - renderWidth/renderHeight - downscaleView
         SetupFramebufferSize(displayWidth, displayHeight);
+        
+        // TODO: SetupFramebufferSize() does not consider properly display video modes.
+        // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
+        // and so, framebuffer is not scaled properly to some monitors.
+        
+        int count; 
+        const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+        
+        for (int i = 0; i < count; i++)
+        {
+            // TODO: Check modes[i]->width;
+            // TODO: Check modes[i]->height;
+        }
 
-        window = glfwCreateWindow(renderWidth, renderHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
+        window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
     }
     else
     {
@@ -1391,10 +1406,8 @@ static void InitDisplay(int width, int height)
         
 #if defined(PLATFORM_DESKTOP)
         // Center window on screen
-        const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        
-        int windowPosX = mode->width/2 - screenWidth/2;
-        int windowPosY = mode->height/2 - screenHeight/2;
+        int windowPosX = displayWidth/2 - screenWidth/2;
+        int windowPosY = displayHeight/2 - screenHeight/2;
         
         if (windowPosX < 0) windowPosX = 0;
         if (windowPosY < 0) windowPosY = 0;
@@ -2402,6 +2415,10 @@ static void SwapBuffers(void)
 // NOTE: Global variables renderWidth/renderHeight can be modified
 static void SetupFramebufferSize(int displayWidth, int displayHeight)
 {
+    // TODO: SetupFramebufferSize() does not consider properly display video modes.
+    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
+    // and so, framebuffer is not scaled properly to some monitors.
+    
     // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
