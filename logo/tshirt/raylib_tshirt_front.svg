@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" width="400" height="400" viewBox="0 0 400.00 400.00" enable-background="new 0 0 400.00 400.00" xml:space="preserve">
+	<path fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 147.929,317.289L 141.667,317.289L 141.667,283.689L 174.563,283.689L 174.563,290.622L 147.929,290.622L 147.929,317.289 Z "/>
+	<path fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 208.139,290.622L 181.443,290.622L 181.443,283.689L 214.601,283.689L 214.601,317.289L 181.443,317.289L 181.443,303.956L 187.705,303.956L 187.705,310.356L 208.139,310.356L 208.139,303.956L 181.443,303.956L 181.443,297.022L 208.139,297.022L 208.139,290.622 Z "/>
+	<path fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 221.623,323.689L 248.219,323.689L 248.219,317.289L 221.623,317.289L 221.623,283.689L 227.785,283.689L 227.785,310.356L 248.219,310.356L 248.219,283.689L 254.481,283.689L 254.481,330.622L 221.623,330.622L 221.623,323.689 Z "/>
+	<path fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 261.603,270.356L 267.765,270.356L 267.765,310.356L 275.032,310.356L 275.032,317.289L 261.603,317.289L 261.603,270.356 Z "/>
+	<path fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 281.512,283.956L 287.775,283.956L 287.775,317.289L 281.512,317.289L 281.512,283.956 Z M 281.512,270.356L 287.775,270.356L 287.775,277.289L 281.512,277.289L 281.512,270.356 Z "/>
+	<path fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" d="M 294.755,270.356L 301.017,270.356L 301.017,283.689L 321.651,283.689L 321.651,290.622L 301.017,290.622L 301.017,310.356L 321.651,310.356L 321.651,283.689L 327.813,283.689L 327.813,317.289L 294.755,317.289L 294.755,270.356 Z "/>
+	<rect x="29.3333" y="29.3346" fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" width="21.3333" height="341.332"/>
+	<rect x="29.3333" y="349.333" fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" width="341.333" height="21.3333"/>
+	<rect x="349.333" y="29.3333" fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" width="21.3333" height="341.333"/>
+	<rect x="29.3333" y="29.3335" fill="#000000" fill-opacity="1" stroke-width="0.2" stroke-linejoin="round" width="341.333" height="21.3333"/>
+</svg>
