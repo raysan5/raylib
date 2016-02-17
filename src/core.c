@@ -1700,14 +1700,22 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     
     // Register touch actions
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_DOWN;
-    //else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_MOVE;
     else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_UP;
+    
+    // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
+    
+    // Assign a pointer ID
+    gestureEvent.pointerId[0] = 0;
     
     // Register touch points count
     gestureEvent.pointCount = 1;
     
     // Register touch points position, only one point registered
     gestureEvent.position[0] = GetMousePosition();
+    
+    // Normalize gestureEvent.position[0] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
 	
 	// Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
@@ -1729,6 +1737,10 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     
     // Register touch points position, only one point registered
     gestureEvent.position[0] = (Vector2){ (float)x, (float)y };
+    
+    // Normalize gestureEvent.position[0] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
@@ -1991,6 +2003,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     // NOTE: Only two points registered
     gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
     gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
+    
+    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+    
+    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[1].y /= (float)GetScreenHeight();
     
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
@@ -2564,6 +2583,13 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     touchPosition[0] = gestureEvent.position[0];
     touchPosition[1] = gestureEvent.position[1];
     
+    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+    
+    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[1].y /= (float)GetScreenHeight();
+
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
 

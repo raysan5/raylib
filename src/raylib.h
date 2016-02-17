@@ -607,19 +607,18 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
+void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 bool IsGestureDetected(void);                           // Check if a gesture have been detected
 int GetGestureType(void);                               // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
-void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
-
-float GetGestureDragIntensity(void);                    // Get gesture drag intensity
-float GetGestureDragAngle(void);                        // Get gesture drag angle
-Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
-float GetGestureHoldDuration(void);                     // Get gesture hold time in ms
-float GetGesturePinchDelta(void);                       // Get gesture pinch delta
-float GetGesturePinchAngle(void);                       // Get gesture pinch angle
 int GetTouchPointsCount(void);                          // Get touch points count
+
+float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
+Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
+float GetGestureDragAngle(void);                        // Get gesture drag angle
+Vector2 GetGesturePinchVector(void);                    // Get gesture pinch delta
+float GetGesturePinchAngle(void);                       // Get gesture pinch angle
 
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: camera)
