@@ -91,7 +91,13 @@ else
 endif
 
 # define all object files required
-OBJS = core.o rlgl.o glad.o shapes.o text.o textures.o models.o audio.o utils.o camera.o gestures.o stb_vorbis.o
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    OBJS = core.o rlgl.o glad.o shapes.o text.o textures.o models.o audio.o utils.o camera.o gestures.o stb_vorbis.o
+else
+	#GLAD only required on desktop platform
+    OBJS = core.o rlgl.o shapes.o text.o textures.o models.o audio.o stb_vorbis.o utils.o camera.o gestures.o
+endif
+
 
 # typing 'make' will invoke the first target entry in the file,
 # in this case, the 'default' target entry is raylib

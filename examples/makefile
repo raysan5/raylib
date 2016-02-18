@@ -227,10 +227,10 @@ core_mouse_wheel: core_mouse_wheel.c
 
 # compile [core] example - gamepad input
 core_input_gamepad: core_input_gamepad.c
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
-	@echo core_input_gamepad: Only supported on desktop platform
+	@echo core_input_gamepad: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
 endif
 
 # compile [core] example - generate random values
@@ -246,15 +246,15 @@ core_drop_files: core_drop_files.c
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
-	@echo core_drop_files: Only supported on desktop platform
+	@echo core_drop_files: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB or PLATFORM_RPI
 endif
 
 # compile [core] example - storage values
 core_storage_values: core_storage_values.c
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
-	@echo core_storage_values: Only supported on desktop platform
+	@echo core_storage_values: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
 endif
 
 # compile [core] example - gestures detection

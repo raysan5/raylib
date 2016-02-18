@@ -102,11 +102,16 @@
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
     #include "EGL/eglext.h"     // Khronos EGL library - Extensions
     #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+    
+    // Old device inputs system
+    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO            // Standard input
+    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"
+    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js0"
 
-    #define DEFAULT_KEYBOARD_DEV    "/dev/input/event0"     // Not used, keyboard inputs are read raw from stdin
-    #define DEFAULT_MOUSE_DEV       "/dev/input/event1"
-    //#define DEFAULT_MOUSE_DEV     "/dev/input/mouse0"
-    #define DEFAULT_GAMEPAD_DEV     "/dev/input/js0"
+    // New device input events (evdev) (must be detected)
+    //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
+    //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
+    //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -142,16 +147,11 @@ static int currentButtonState[128] = { 1 };     // Required to check if button p
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
-// Input variables (mouse/keyboard)
-static int mouseStream = -1;                    // Mouse device file descriptor
-static bool mouseReady = false;                 // Flag to know if mouse is ready
-pthread_t mouseThreadId;                        // Mouse reading thread id
-
+// Keyboard input variables
 // NOTE: For keyboard we will use the standard input (but reconfigured...)
+static struct termios defaultKeyboardSettings;  // Used to store default keyboard settings
 static int defaultKeyboardMode;                 // Used to store default keyboard mode
-static struct termios defaultKeyboardSettings;  // Used to staore default keyboard settings
-
-static int keyboardMode = 0;    // Keyboard mode: 1 - KEYCODES, 2 - ASCII
+static int keyboardMode = 0;                    // Register Keyboard mode: 1 - KEYCODES, 2 - ASCII
 
 // This array maps Unix keycodes to ASCII equivalent and to GLFW3 equivalent for special function keys (>256)
 const short UnixKeycodeToASCII[128] = { 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 9, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 91, 93, 257, 341, 65, 83, 68,
@@ -159,7 +159,15 @@ const short UnixKeycodeToASCII[128] = { 256, 49, 50, 51, 52, 53, 54, 55, 56, 57,
                             297, 298, 299, -1, -1, -1, -1, -1, 45, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 257, 345, 47, -1,
                             346, -1, -1, 265, -1, 263, 262, -1, 264, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
+// Mouse input variables
+static int mouseStream = -1;                    // Mouse device file descriptor
+static bool mouseReady = false;                 // Flag to know if mouse is ready
+pthread_t mouseThreadId;                        // Mouse reading thread id
+
+// Gamepad input variables
 static int gamepadStream = -1;                  // Gamepad device file descriptor
+static bool gamepadReady = false;               // Flag to know if gamepad is ready
+pthread_t gamepadThreadId;                      // Gamepad reading thread id
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -244,11 +252,13 @@ static void LogoAnimation(void);                        // Plays raylib logo app
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 
 #if defined(PLATFORM_RPI)
+static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
+static void ProcessKeyboard(void);                      // Process keyboard events
+static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
 static void *MouseThread(void *arg);                    // Mouse reading thread
-static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
-static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitGamepad(void);                          // Init raw gamepad input
+static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1128,18 +1138,21 @@ bool IsCursorHidden()
 {
     return cursorHidden;
 }
-#endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 
-// TODO: Enable gamepad usage on Rapsberry Pi
-// NOTE: emscripten not implemented
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+// NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
+
 // Detect if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
-    int result = glfwJoystickPresent(gamepad);
+    bool result = false;
+    
+#if defined(PLATFORM_RPI)
+    if (gamepadReady && (gamepad == 0)) result = true;
+#else
+    if (glfwJoystickPresent(gamepad) == 1) result = true;
+#endif
 
-    if (result == 1) return true;
-    else return false;
+    return result;
 }
 
 // Return axis movement vector for a gamepad
@@ -1148,10 +1161,14 @@ Vector2 GetGamepadMovement(int gamepad)
     Vector2 vec = { 0, 0 };
 
     const float *axes;
-    int axisCount;
-
+    int axisCount = 0;
+    
+#if defined(PLATFORM_RPI)
+    // TODO: Get gamepad axis information
+#else
     axes = glfwGetJoystickAxes(gamepad, &axisCount);
-
+#endif
+    
     if (axisCount >= 2)
     {
         vec.x = axes[0];    // Left joystick X
@@ -1184,16 +1201,20 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 // Detect if a gamepad button is being pressed
 bool IsGamepadButtonDown(int gamepad, int button)
 {
+    bool result = false;
     const unsigned char *buttons;
     int buttonsCount;
-
+    
+#if defined(PLATFORM_RPI)
+    // TODO: Get gamepad buttons information
+#else
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
-    if ((buttons != NULL) && (buttons[button] == GLFW_PRESS))
-    {
-        return true;
-    }
-    else return false;
+    if ((buttons != NULL) && (buttons[button] == GLFW_PRESS)) result = true;
+    else result = false;
+#endif
+    
+    return result;
 }
 
 // Detect if a gamepad button has NOT been pressed once
@@ -1216,18 +1237,22 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 // Detect if a mouse button is NOT being pressed
 bool IsGamepadButtonUp(int gamepad, int button)
 {
+    bool result = false;
     const unsigned char *buttons;
     int buttonsCount;
 
+#if defined(PLATFORM_RPI)
+    // TODO: Get gamepad buttons information
+#else
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
-    if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE))
-    {
-        return true;
-    }
-    else return false;
-}
+    if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE)) result = true;
+    else result = false;
 #endif
+
+    return result;
+}
+#endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 
 // Returns touch position X
 int GetTouchX(void)
@@ -2157,7 +2182,68 @@ static void PollInputEvents(void)
 
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
     // we use method 2 (stdin) but maybe in a future we should change to method 1...
+    ProcessKeyboard();
 
+    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
+
+#endif
+}
+
+#if defined(PLATFORM_RPI)
+// Initialize Keyboard system (using standard input)
+static void InitKeyboard(void)
+{
+    // NOTE: We read directly from Standard Input (stdin) - STDIN_FILENO file descriptor
+
+    // Make stdin non-blocking (not enough, need to configure to non-canonical mode)
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);          // F_GETFL: Get the file access mode and the file status flags
+    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);     // F_SETFL: Set the file status flags to the value specified
+
+    // Save terminal keyboard settings and reconfigure terminal with new settings
+    struct termios keyboardNewSettings;
+    tcgetattr(STDIN_FILENO, &defaultKeyboardSettings);    // Get current keyboard settings
+    keyboardNewSettings = defaultKeyboardSettings;
+
+    // New terminal settings for keyboard: turn off buffering (non-canonical mode), echo and key processing
+    // NOTE: ISIG controls if ^C and ^Z generate break signals or not
+    keyboardNewSettings.c_lflag &= ~(ICANON | ECHO | ISIG);
+    //keyboardNewSettings.c_iflag &= ~(ISTRIP | INLCR | ICRNL | IGNCR | IXON | IXOFF);
+    keyboardNewSettings.c_cc[VMIN] = 1;
+    keyboardNewSettings.c_cc[VTIME] = 0;
+
+    // Set new keyboard settings (change occurs immediately)
+    tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
+
+    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE, we change that! -> WHY???
+
+    // Save old keyboard mode to restore it at the end
+    if (ioctl(STDIN_FILENO, KDGKBMODE, &defaultKeyboardMode) < 0)
+    {
+        // NOTE: It could mean we are using a remote keyboard through ssh!
+        TraceLog(WARNING, "Could not change keyboard mode (SSH keyboard?)");
+
+        keyboardMode = 2;   // ASCII
+    }
+    else
+    {
+        // We reconfigure keyboard mode to get:
+        //    - scancodes (K_RAW) 
+        //    - keycodes (K_MEDIUMRAW)
+        //    - ASCII chars (K_XLATE)
+        //    - UNICODE chars (K_UNICODE)
+        ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
+        
+        //http://lct.sourceforge.net/lct/x60.html
+
+        keyboardMode = 2;   // keycodes
+    }
+
+    // Register keyboard restore when program finishes
+    atexit(RestoreKeyboard);
+}
+
+static void ProcessKeyboard(void)
+{
     // Keyboard input polling (fill keys[256] array with status)
     int numKeysBuffer = 0;      // Keys available on buffer
     char keysBuffer[32];        // Max keys to be read at a time
@@ -2242,45 +2328,18 @@ static void PollInputEvents(void)
         }
         */
     }
-
-    // TODO: Gamepad support (use events, easy!)
-/*
-    struct js_event gamepadEvent;
-
-    read(gamepadStream, &gamepadEvent, sizeof(struct js_event));
-
-    if (gamepadEvent.type == JS_EVENT_BUTTON)
-    {
-        switch (gamepadEvent.number)
-        {
-            case 0: // 1st Axis X
-            case 1: // 1st Axis Y
-            case 2: // 2st Axis X
-            case 3: // 2st Axis Y
-            case 4:
-            {
-                if (gamepadEvent.value == 1) // Button pressed, 0 release
-
-            } break;
-            // Buttons is similar, variable for every joystick
-        }
-    }
-    else if (gamepadEvent.type == JS_EVENT_AXIS)
-    {
-        switch (gamepadEvent.number)
-        {
-            case 0: // 1st Axis X
-            case 1: // 1st Axis Y
-            case 2: // 2st Axis X
-            case 3: // 2st Axis Y
-            // Buttons is similar, variable for every joystick
-        }
-    }
-*/
-#endif
 }
 
-#if defined(PLATFORM_RPI)
+// Restore default keyboard input
+static void RestoreKeyboard(void)
+{
+    // Reset to default keyboard settings
+    tcsetattr(STDIN_FILENO, TCSANOW, &defaultKeyboardSettings);
+    
+    // Reconfigure keyboard to default mode
+    ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
+}
+
 // Mouse initialization (including mouse thread)
 static void InitMouse(void)
 {
@@ -2305,118 +2364,156 @@ static void InitMouse(void)
 // if too much time passes between reads, queue gets full and new events override older ones...
 static void *MouseThread(void *arg)
 {
-    struct input_event mouseEvent;
+    const unsigned char XSIGN = 1<<4, YSIGN = 1<<5;
+    
+    typedef struct { 
+        char buttons;
+        char dx, dy; 
+    } MouseEvent;
+    
+    MouseEvent mouse;
+    
+    int mouseRelX = 0;
+    int mouseRelY = 0;
 
     while(1)
     {
-        // NOTE: read() will return -1 if the events queue is empty
-        read(mouseStream, &mouseEvent, sizeof(struct input_event));
-
-        // Check event types
-        if (mouseEvent.type == EV_REL) // Relative motion event
+        if (read(mouseStream, &mouse, sizeof(MouseEvent)) == (int)sizeof(MouseEvent))
         {
-            if (mouseEvent.code == REL_X)
-            {
-                mousePosition.x += (float)mouseEvent.value;
+            if ((mouse.buttons & 0x08) == 0) break;   // This bit should always be set
+            
+            // Check Left button pressed
+            if ((mouse.buttons & 0x01) > 0) currentMouseState[0] = 1;
+            else currentMouseState[0] = 0;
 
-                // Screen limits X check
-                if (mousePosition.x < 0) mousePosition.x = 0;
-                if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
-            }
-
-            if (mouseEvent.code == REL_Y)
-            {
-                mousePosition.y += (float)mouseEvent.value;
-
-                // Screen limits Y check
-                if (mousePosition.y < 0) mousePosition.y = 0;
-                if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
-            }
-
-            if (mouseEvent.code == REL_WHEEL)
-            {
-                // mouseEvent.value give 1 or -1 (direction)
-            }
-        }
-        else if (mouseEvent.type == EV_KEY) // Mouse button event
-        {
-            if (mouseEvent.code == BTN_LEFT) currentMouseState[0] = mouseEvent.value;
-            if (mouseEvent.code == BTN_RIGHT) currentMouseState[1] = mouseEvent.value;
-            if (mouseEvent.code == BTN_MIDDLE) currentMouseState[2] = mouseEvent.value;
-        }
+            // Check Right button pressed
+            if ((mouse.buttons & 0x02) > 0) currentMouseState[1] = 1;
+            else currentMouseState[1] = 0;
+            
+            // Check Middle button pressed
+            if ((mouse.buttons & 0x04) > 0) currentMouseState[2] = 1;
+            else currentMouseState[2] = 0;
+            
+            mouseRelX = (int)mouse.dx;
+            mouseRelY = (int)mouse.dy;
+            
+            if ((mouse.buttons & XSIGN) > 0) mouseRelX = -1*(255 - mouseRelX);
+            if ((mouse.buttons & YSIGN) > 0) mouseRelY = -1*(255 - mouseRelY);
+            
+            mousePosition.x += (float)mouseRelX;
+            mousePosition.y -= (float)mouseRelY;
+            
+            if (mousePosition.x < 0) mousePosition.x = 0;
+            if (mousePosition.y < 0) mousePosition.y = 0;
+            
+            if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
+            if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
+       }
+       //else read(mouseStream, &mouse, 1);   // Try to sync up again
     }
 
     return NULL;
 }
 
-// Initialize Keyboard system (using standard input)
-static void InitKeyboard(void)
-{
-    // NOTE: We read directly from Standard Input (stdin) - STDIN_FILENO file descriptor
-
-    // Make stdin non-blocking (not enough, need to configure to non-canonical mode)
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);          // F_GETFL: Get the file access mode and the file status flags
-    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);     // F_SETFL: Set the file status flags to the value specified
-
-    // Save terminal keyboard settings and reconfigure terminal with new settings
-    struct termios keyboardNewSettings;
-    tcgetattr(STDIN_FILENO, &defaultKeyboardSettings);    // Get current keyboard settings
-    keyboardNewSettings = defaultKeyboardSettings;
-
-    // New terminal settings for keyboard: turn off buffering (non-canonical mode), echo and key processing
-    // NOTE: ISIG controls if ^C and ^Z generate break signals or not
-    keyboardNewSettings.c_lflag &= ~(ICANON | ECHO | ISIG);
-    //keyboardNewSettings.c_iflag &= ~(ISTRIP | INLCR | ICRNL | IGNCR | IXON | IXOFF);
-    keyboardNewSettings.c_cc[VMIN] = 1;
-    keyboardNewSettings.c_cc[VTIME] = 0;
-
-    // Set new keyboard settings (change occurs immediately)
-    tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
-
-    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE, we change that! -> WHY???
-
-    // Save old keyboard mode to restore it at the end
-    if (ioctl(STDIN_FILENO, KDGKBMODE, &defaultKeyboardMode) < 0)
-    {
-        // NOTE: It could mean we are using a remote keyboard through ssh!
-        TraceLog(WARNING, "Could not change keyboard mode (SSH keyboard?)");
-
-        keyboardMode = 2;   // ASCII
-    }
-    else
-    {
-        // We reconfigure keyboard mode to get:
-        //    - scancodes (K_RAW) 
-        //    - keycodes (K_MEDIUMRAW)
-        //    - ASCII chars (K_XLATE)
-        //    - UNICODE chars (K_UNICODE)
-        ioctl(STDIN_FILENO, KDSKBMODE, K_MEDIUMRAW);
-        
-        //http://lct.sourceforge.net/lct/x60.html
-
-        keyboardMode = 1;   // keycodes
-    }
-
-    // Register keyboard restore when program finishes
-    atexit(RestoreKeyboard);
-}
-
-// Restore default keyboard input
-static void RestoreKeyboard(void)
-{
-    // Reset to default keyboard settings
-    tcsetattr(STDIN_FILENO, TCSANOW, &defaultKeyboardSettings);
-    
-    // Reconfigure keyboard to default mode
-    ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
-}
-
 // Init gamepad system
 static void InitGamepad(void)
 {
-    // TODO: Add Gamepad support
-    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
-    else TraceLog(INFO, "Gamepad device initialized successfully");
+    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) 
+    {
+        TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
+    }
+    else
+    {
+        gamepadReady = true;
+
+        int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
+
+        if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
+        else  TraceLog(INFO, "Gamepad device initialized successfully");
+    }
+}
+
+// Process Gamepad (/dev/input/js0)
+static void *GamepadThread(void *arg)
+{
+    #define JS_EVENT_BUTTON         0x01    // Button pressed/released
+    #define JS_EVENT_AXIS           0x02    // Joystick axis moved
+    #define JS_EVENT_INIT           0x80    // Initial state of device
+
+    struct js_event {
+        unsigned int time;      // event timestamp in milliseconds
+        short value;            // event value
+        unsigned char type;     // event type
+        unsigned char number;   // event axis/button number
+    };
+
+    // These values are sensible on Logitech Dual Action Rumble and Xbox360 controller
+    const int joystickAxisX = 0;
+    const int joystickAxisY = 1;
+
+    // Read gamepad event
+	struct js_event gamepadEvent;
+    int bytes;
+    
+    int buttons[11];
+    int stickX;
+    int stickY;
+    
+	while (1) 
+    {
+        if (read(gamepadStream, &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
+        {
+            gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
+            
+            // Process gamepad events by type
+            if (gamepadEvent.type == JS_EVENT_BUTTON) 
+            {
+                if (gamepadEvent.number < 11) 
+                {
+                    switch (gamepadEvent.value) 
+                    {
+                        case 0:
+                        case 1: buttons[gamepadEvent.number] = gamepadEvent.value; break;
+                        default: break;
+                    }
+                }
+                /*
+                switch (gamepadEvent.number)
+                {
+                    case 0: // 1st Axis X
+                    case 1: // 1st Axis Y
+                    case 2: // 2st Axis X
+                    case 3: // 2st Axis Y
+                    case 4:
+                    {
+                        if (gamepadEvent.value == 1) // Button pressed, 0 release
+                        {
+                            
+                        }
+
+                    } break;
+                    // Buttons is similar, variable for every joystick
+                }
+                */
+            }
+            else if (gamepadEvent.type == JS_EVENT_AXIS) 
+            {
+                if (gamepadEvent.number == joystickAxisX) stickX = gamepadEvent.value;
+                if (gamepadEvent.number == joystickAxisY) stickY = gamepadEvent.value;
+                /*
+                switch (gamepadEvent.number)
+                {
+                    case 0: // 1st Axis X
+                    case 1: // 1st Axis Y
+                    case 2: // 2st Axis X
+                    case 3: // 2st Axis Y
+                    // Buttons is similar, variable for every joystick
+                }
+                */
+            }
+        }
+        else read(gamepadStream, &gamepadEvent, 1);   // Try to sync up again
+	}
 }
 #endif
 
