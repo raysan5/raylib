@@ -102,16 +102,6 @@
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
     #include "EGL/eglext.h"     // Khronos EGL library - Extensions
     #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
-    
-    // Old device inputs system
-    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO            // Standard input
-    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"
-    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js0"
-
-    // New device input events (evdev) (must be detected)
-    //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
-    //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
-    //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -123,6 +113,21 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define STORAGE_FILENAME     "storage.data"
+
+#if defined(PLATFORM_RPI)
+    // Old device inputs system
+    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO            // Standard input
+    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"
+    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js0"
+
+    // New device input events (evdev) (must be detected)
+    //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
+    //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
+    //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
+    
+    #define MOUSE_SENSITIVITY         1.0f
+    #define MAX_GAMEPAD_BUTTONS       11
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -168,6 +173,10 @@ pthread_t mouseThreadId;                        // Mouse reading thread id
 static int gamepadStream = -1;                  // Gamepad device file descriptor
 static bool gamepadReady = false;               // Flag to know if gamepad is ready
 pthread_t gamepadThreadId;                      // Gamepad reading thread id
+
+int gamepadButtons[MAX_GAMEPAD_BUTTONS];
+int gamepadAxisX = 0;
+int gamepadAxisY = 0;
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -1165,6 +1174,7 @@ Vector2 GetGamepadMovement(int gamepad)
     
 #if defined(PLATFORM_RPI)
     // TODO: Get gamepad axis information
+    // Use gamepadAxisX, gamepadAxisY
 #else
     axes = glfwGetJoystickAxes(gamepad, &axisCount);
 #endif
@@ -1206,7 +1216,9 @@ bool IsGamepadButtonDown(int gamepad, int button)
     int buttonsCount;
     
 #if defined(PLATFORM_RPI)
-    // TODO: Get gamepad buttons information
+    // Get gamepad buttons information
+    if ((gamepad == 0) && (gamepadButtons[button] == 1)) result = true;
+    else result = false;
 #else
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
@@ -1242,7 +1254,9 @@ bool IsGamepadButtonUp(int gamepad, int button)
     int buttonsCount;
 
 #if defined(PLATFORM_RPI)
-    // TODO: Get gamepad buttons information
+    // Get gamepad buttons information
+    if ((gamepad == 0) && (gamepadButtons[button] == 0)) result = true;
+    else result = false;
 #else
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
@@ -2400,8 +2414,10 @@ static void *MouseThread(void *arg)
             if ((mouse.buttons & XSIGN) > 0) mouseRelX = -1*(255 - mouseRelX);
             if ((mouse.buttons & YSIGN) > 0) mouseRelY = -1*(255 - mouseRelY);
             
-            mousePosition.x += (float)mouseRelX;
-            mousePosition.y -= (float)mouseRelY;
+            // TODO: Mouse movement should not depend on screenWidth and screenHeight, normalize!
+            
+            mousePosition.x += (float)mouseRelX/MOUSE_SENSITIVITY;
+            mousePosition.y -= (float)mouseRelY/MOUSE_SENSITIVITY;
             
             if (mousePosition.x < 0) mousePosition.x = 0;
             if (mousePosition.y < 0) mousePosition.y = 0;
@@ -2453,11 +2469,6 @@ static void *GamepadThread(void *arg)
 
     // Read gamepad event
 	struct js_event gamepadEvent;
-    int bytes;
-    
-    int buttons[11];
-    int stickX;
-    int stickY;
     
 	while (1) 
     {
@@ -2468,12 +2479,12 @@ static void *GamepadThread(void *arg)
             // Process gamepad events by type
             if (gamepadEvent.type == JS_EVENT_BUTTON) 
             {
-                if (gamepadEvent.number < 11) 
+                if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
                 {
                     switch (gamepadEvent.value) 
                     {
                         case 0:
-                        case 1: buttons[gamepadEvent.number] = gamepadEvent.value; break;
+                        case 1: gamepadButtons[gamepadEvent.number] = (int)gamepadEvent.value; break;
                         default: break;
                     }
                 }
@@ -2498,8 +2509,8 @@ static void *GamepadThread(void *arg)
             }
             else if (gamepadEvent.type == JS_EVENT_AXIS) 
             {
-                if (gamepadEvent.number == joystickAxisX) stickX = gamepadEvent.value;
-                if (gamepadEvent.number == joystickAxisY) stickY = gamepadEvent.value;
+                if (gamepadEvent.number == joystickAxisX) gamepadAxisX = (int)gamepadEvent.value;
+                if (gamepadEvent.number == joystickAxisY) gamepadAxisY = (int)gamepadEvent.value;
                 /*
                 switch (gamepadEvent.number)
                 {
@@ -2512,7 +2523,6 @@ static void *GamepadThread(void *arg)
                 */
             }
         }
-        else read(gamepadStream, &gamepadEvent, 1);   // Try to sync up again
 	}
 }
 #endif
