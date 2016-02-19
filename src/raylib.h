@@ -111,6 +111,8 @@
 #define KEY_F8              297
 #define KEY_F9              298
 #define KEY_F10             299
+#define KEY_F11             300
+#define KEY_F12             301
 #define KEY_LEFT_SHIFT      340
 #define KEY_LEFT_CONTROL    341
 #define KEY_LEFT_ALT        342

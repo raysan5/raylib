@@ -125,7 +125,7 @@
     //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
     //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
     
-    #define MOUSE_SENSITIVITY         1.0f
+    #define MOUSE_SENSITIVITY         0.8f
     #define MAX_GAMEPAD_BUTTONS       11
 #endif
 
@@ -156,13 +156,6 @@ static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device
 // NOTE: For keyboard we will use the standard input (but reconfigured...)
 static struct termios defaultKeyboardSettings;  // Used to store default keyboard settings
 static int defaultKeyboardMode;                 // Used to store default keyboard mode
-static int keyboardMode = 0;                    // Register Keyboard mode: 1 - KEYCODES, 2 - ASCII
-
-// This array maps Unix keycodes to ASCII equivalent and to GLFW3 equivalent for special function keys (>256)
-const short UnixKeycodeToASCII[128] = { 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 9, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 91, 93, 257, 341, 65, 83, 68,
-                            70, 71, 72, 74, 75, 76, 59, 39, 96, 340, 92, 90, 88, 67, 86, 66, 78, 77, 44, 46, 47, 344, -1, 342, 32, -1, 290, 291, 292, 293, 294, 295, 296,
-                            297, 298, 299, -1, -1, -1, -1, -1, 45, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 257, 345, 47, -1,
-                            346, -1, -1, 265, -1, 263, 262, -1, 264, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 // Mouse input variables
 static int mouseStream = -1;                    // Mouse device file descriptor
@@ -227,7 +220,9 @@ static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
 static int lastKeyPressed = -1;             // Register last key pressed
 
 static bool cursorHidden;                   // Track if cursor is hidden
+#endif
 
+#if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
 static int dropFilesCount = 0;              // Count stored strings
 #endif
@@ -781,7 +776,7 @@ void ShowLogo(void)
     showLogo = true;
 }
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP)
 // Check if a file have been dropped into window
 bool IsFileDropped(void)
 {
@@ -1212,14 +1207,15 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
-    const unsigned char *buttons;
-    int buttonsCount;
     
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
     if ((gamepad == 0) && (gamepadButtons[button] == 1)) result = true;
     else result = false;
 #else
+    const unsigned char *buttons;
+    int buttonsCount;
+    
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
     if ((buttons != NULL) && (buttons[button] == GLFW_PRESS)) result = true;
@@ -1250,14 +1246,15 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
-    const unsigned char *buttons;
-    int buttonsCount;
 
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
     if ((gamepad == 0) && (gamepadButtons[button] == 0)) result = true;
     else result = false;
 #else
+    const unsigned char *buttons;
+    int buttonsCount;
+
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
     if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE)) result = true;
@@ -2235,8 +2232,6 @@ static void InitKeyboard(void)
     {
         // NOTE: It could mean we are using a remote keyboard through ssh!
         TraceLog(WARNING, "Could not change keyboard mode (SSH keyboard?)");
-
-        keyboardMode = 2;   // ASCII
     }
     else
     {
@@ -2246,102 +2241,108 @@ static void InitKeyboard(void)
         //    - ASCII chars (K_XLATE)
         //    - UNICODE chars (K_UNICODE)
         ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
-        
-        //http://lct.sourceforge.net/lct/x60.html
-
-        keyboardMode = 2;   // keycodes
     }
 
     // Register keyboard restore when program finishes
     atexit(RestoreKeyboard);
 }
 
+// Process keyboard inputs
+// TODO: Most probably input reading and processing should be in a separate thread
 static void ProcessKeyboard(void)
 {
+    #define MAX_KEYBUFFER_SIZE      32      // Max size in bytes to read
+    
     // Keyboard input polling (fill keys[256] array with status)
-    int numKeysBuffer = 0;      // Keys available on buffer
-    char keysBuffer[32];        // Max keys to be read at a time
+    int bufferByteCount = 0;                // Bytes available on the buffer
+    char keysBuffer[MAX_KEYBUFFER_SIZE];    // Max keys to be read at a time
 
     // Reset pressed keys array
     for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
 
     // Read availables keycodes from stdin
-    numKeysBuffer = read(STDIN_FILENO, keysBuffer, 32);     // POSIX system call
+    bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
 
-    // Fill array with pressed keys
-    for (int i = 0; i < numKeysBuffer; i++)
+    // Fill all read bytes (looking for keys)
+    for (int i = 0; i < bufferByteCount; i++)
     {
-        //TraceLog(INFO, "Bytes on keysBuffer: %i", numKeysBuffer);
+        TraceLog(DEBUG, "Bytes on keysBuffer: %i", bufferByteCount);
+        
+        //printf("Key(s) bytes: ");
+        //for (int i = 0; i < bufferByteCount; i++) printf("0x%02x ", keysBuffer[i]);
+        //printf("\n");
 
-        int key = keysBuffer[i];
-
-        if (keyboardMode == 2)  // ASCII chars (K_XLATE mode)
+        // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
+        // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
+        if (keysBuffer[i] == 0x1b)
         {
-            // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
-            // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
-            if (key == 0x1b)
-            {
-                if (keysBuffer[i+1] == 0x5b)    // Special function key
-                {
-                    switch (keysBuffer[i+2])
-                    {
-                        case 0x41: currentKeyState[265] = 1; break;
-                        case 0x42: currentKeyState[264] = 1; break;
-                        case 0x43: currentKeyState[262] = 1; break;
-                        case 0x44: currentKeyState[263] = 1; break;
-                        default: break;
-                    }
-
-                    i += 2;  // Jump to next key
-
-                    // NOTE: Other special function keys (F1, F2...) are not contempled for this keyboardMode...
-                    // ...or they are just not directly keymapped (CTRL, ALT, SHIFT)
-                }
-            }
-            else if (key == 0x0a) currentKeyState[257] = 1;     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
-            else if (key == 0x7f) currentKeyState[259] = 1;
+            // Detect ESC to stop program
+            if (bufferByteCount == 1) currentKeyState[256] = 1; // raylib key: KEY_ESCAPE
             else
             {
-                TraceLog(DEBUG, "Pressed key (ASCII): 0x%02x", key);
+                if (keysBuffer[i + 1] == 0x5b)    // Special function key
+                {
+                    if ((keysBuffer[i + 2] == 0x5b) || (keysBuffer[i + 2] == 0x31) || (keysBuffer[i + 2] == 0x32))
+                    {
+                        // Process special function keys (F1 - F12)
+                        switch (keysBuffer[i + 3])
+                        {
+                            case 0x41: currentKeyState[290] = 1; break;    // raylib KEY_F1
+                            case 0x42: currentKeyState[291] = 1; break;    // raylib KEY_F2
+                            case 0x43: currentKeyState[292] = 1; break;    // raylib KEY_F3
+                            case 0x44: currentKeyState[293] = 1; break;    // raylib KEY_F4
+                            case 0x45: currentKeyState[294] = 1; break;    // raylib KEY_F5
+                            case 0x37: currentKeyState[295] = 1; break;    // raylib KEY_F6
+                            case 0x38: currentKeyState[296] = 1; break;    // raylib KEY_F7
+                            case 0x39: currentKeyState[297] = 1; break;    // raylib KEY_F8
+                            case 0x30: currentKeyState[298] = 1; break;    // raylib KEY_F9
+                            case 0x31: currentKeyState[299] = 1; break;    // raylib KEY_F10
+                            case 0x33: currentKeyState[300] = 1; break;    // raylib KEY_F11
+                            case 0x34: currentKeyState[301] = 1; break;    // raylib KEY_F12
+                            default: break;
+                        }
+                        
+                        if (keysBuffer[i + 2] == 0x5b) i += 4;
+                        else if ((keysBuffer[i + 2] == 0x31) || (keysBuffer[i + 2] == 0x32)) i += 5;
+                    }
+                    else
+                    {
+                        switch (keysBuffer[i + 2])
+                        {
+                            case 0x41: currentKeyState[265] = 1; break;    // raylib KEY_UP
+                            case 0x42: currentKeyState[264] = 1; break;    // raylib KEY_DOWN
+                            case 0x43: currentKeyState[262] = 1; break;    // raylib KEY_RIGHT
+                            case 0x44: currentKeyState[263] = 1; break;    // raylib KEY_LEFT
+                            default: break;
+                        }
 
-                currentKeyState[key] = 1;
+                        i += 3;  // Jump to next key
+                    }
+                    
+                    // NOTE: Some keys are not directly keymapped (CTRL, ALT, SHIFT)
+                }
             }
-
-            // Detect ESC to stop program
-            if ((key == 0x1b) && (numKeysBuffer == 1)) windowShouldClose = true;
         }
-        else if (keyboardMode == 1)     // keycodes (K_MEDIUMRAW mode)
+        else if (keysBuffer[i] == 0x0a) currentKeyState[257] = 1;     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
+        else if (keysBuffer[i] == 0x7f) currentKeyState[259] = 1;     // raylib KEY_BACKSPACE
+        else
         {
-            TraceLog(DEBUG, "Pressed key (keycode): 0x%02x", key);
+            TraceLog(DEBUG, "Pressed key (ASCII): 0x%02x", keysBuffer[i]);
             
-            // NOTE: Each key is 7-bits (high bit in the byte is 0 for down, 1 for up)
-            
-            // TODO: Review (or rewrite) this code... not clear... replace by events!
-
-            int asciiKey = -1;
-
-            // Convert keycode to some recognized key (ASCII or GLFW3 equivalent)
-            if (key < 128) asciiKey = (int)UnixKeycodeToASCII[key];
-
-            // Record equivalent key state
-            if ((asciiKey >= 0) && (asciiKey < 512)) currentKeyState[asciiKey] = 1;
-
-            // In case of letter, we also activate lower case version
-            if ((asciiKey >= 65) && (asciiKey <=90)) currentKeyState[asciiKey + 32] = 1;
-
-            // Detect KEY_ESC to stop program
-            if (key == 0x01) windowShouldClose = true;
+            // Translate lowercase a-z letters to A-Z
+            if ((keysBuffer[i] >= 97) && (keysBuffer[i] <= 122))
+            {
+                currentKeyState[(int)keysBuffer[i] - 32] = 1;
+            }
+            else currentKeyState[(int)keysBuffer[i]] = 1;
         }
-
-        // Same functionality as GLFW3 KeyCallback()
-        /*
-        if (asciiKey == exitKey) windowShouldClose = true;
-        else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
-        {
-            TakeScreenshot();
-        }
-        */
     }
+    
+    // Check exit key (same functionality as GLFW3 KeyCallback())
+    if (currentKeyState[exitKey] == 1) windowShouldClose = true;
+    
+    // Check screen capture key
+    if (currentKeyState[301] == 1) TakeScreenshot();    // raylib key: KEY_F12 (GLFW_KEY_F12)
 }
 
 // Restore default keyboard input
@@ -2414,10 +2415,12 @@ static void *MouseThread(void *arg)
             if ((mouse.buttons & XSIGN) > 0) mouseRelX = -1*(255 - mouseRelX);
             if ((mouse.buttons & YSIGN) > 0) mouseRelY = -1*(255 - mouseRelY);
             
-            // TODO: Mouse movement should not depend on screenWidth and screenHeight, normalize!
-            
-            mousePosition.x += (float)mouseRelX/MOUSE_SENSITIVITY;
-            mousePosition.y -= (float)mouseRelY/MOUSE_SENSITIVITY;
+            // NOTE: Mouse movement is normalized to not be screen resolution dependant
+            // We suppose 2*255 (max relative movement) is equivalent to screenWidth (max pixels width)
+            // Result after normalization is multiplied by MOUSE_SENSITIVITY factor
+
+            mousePosition.x += (float)mouseRelX*((float)screenWidth/(2*255))*MOUSE_SENSITIVITY;
+            mousePosition.y -= (float)mouseRelY*((float)screenHeight/(2*255))*MOUSE_SENSITIVITY;
             
             if (mousePosition.x < 0) mousePosition.x = 0;
             if (mousePosition.y < 0) mousePosition.y = 0;
@@ -2479,36 +2482,18 @@ static void *GamepadThread(void *arg)
             // Process gamepad events by type
             if (gamepadEvent.type == JS_EVENT_BUTTON) 
             {
+                TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                
                 if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
                 {
-                    switch (gamepadEvent.value) 
-                    {
-                        case 0:
-                        case 1: gamepadButtons[gamepadEvent.number] = (int)gamepadEvent.value; break;
-                        default: break;
-                    }
+                    // 1 - button pressed, 0 - button released
+                    gamepadButtons[gamepadEvent.number] = (int)gamepadEvent.value;
                 }
-                /*
-                switch (gamepadEvent.number)
-                {
-                    case 0: // 1st Axis X
-                    case 1: // 1st Axis Y
-                    case 2: // 2st Axis X
-                    case 3: // 2st Axis Y
-                    case 4:
-                    {
-                        if (gamepadEvent.value == 1) // Button pressed, 0 release
-                        {
-                            
-                        }
-
-                    } break;
-                    // Buttons is similar, variable for every joystick
-                }
-                */
             }
             else if (gamepadEvent.type == JS_EVENT_AXIS) 
             {
+                TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                
                 if (gamepadEvent.number == joystickAxisX) gamepadAxisX = (int)gamepadEvent.value;
                 if (gamepadEvent.number == joystickAxisY) gamepadAxisY = (int)gamepadEvent.value;
                 /*
@@ -2518,12 +2503,13 @@ static void *GamepadThread(void *arg)
                     case 1: // 1st Axis Y
                     case 2: // 2st Axis X
                     case 3: // 2st Axis Y
-                    // Buttons is similar, variable for every joystick
                 }
                 */
             }
         }
 	}
+    
+    return NULL;
 }
 #endif
 
