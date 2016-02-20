@@ -2,7 +2,7 @@
 #
 #   raylib - Advance Game
 #
-#   makefile to compile advance game
+#   makefile to compile advance game for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -71,7 +71,7 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1 --shell-file ../../templates/web_shell/shell.html
     #-s ASSERTIONS=1 --preload-file resources
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)

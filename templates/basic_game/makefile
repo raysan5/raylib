@@ -72,7 +72,8 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources --shell-file ../../templates/web_shell/shell.html
+    #-s ASSERTIONS=1            # to check for memory allocation errors (-O1 disables it)
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
@@ -104,8 +105,8 @@ else
     ifneq ($(PLATFORM_OS),OSX)
     # OpenAL Soft
         LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-    # GLEW
-        LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+    # GLEW: Not used, replaced by GLAD
+        #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
     endif
 endif
 
@@ -138,8 +139,8 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # just adjust the correct path to libraylib.bc
-    LIBS = C:/raylib/raylib/src/libraylib.bc
+    # NOTE: Set the correct path to libraylib.bc
+    LIBS = ../../src/libraylib.bc
 endif
 
 # define additional parameters and flags for windows

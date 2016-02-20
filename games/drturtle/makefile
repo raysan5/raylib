@@ -69,7 +69,7 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1 --shell-file ../../templates/web_shell/shell.html
     #-s ASSERTIONS=1 --preload-file resources
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
@@ -79,7 +79,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -IC:/raylib/raylib/src -IC:/raylib/raylib/src
+    INCLUDES = -I. -I../../src
 # external libraries headers
 # GLFW3
     INCLUDES += -I../../external/glfw3/include
@@ -93,7 +93,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -LC:/raylib/raylib/src -L../../../src
+    LFLAGS = -L. -L../../src
     # external libraries to link with
     # GLFW3
     LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
