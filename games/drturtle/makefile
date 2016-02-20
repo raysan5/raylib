@@ -1,8 +1,6 @@
 #**************************************************************************************************
 #
-#   raylib - Advance Game
-#
-#   makefile to compile advance game
+#   raylib - makefile to compile Dr.Turtle game
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -81,7 +79,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../../src
+    INCLUDES = -I. -IC:/raylib/raylib/src -IC:/raylib/raylib/src
 # external libraries headers
 # GLFW3
     INCLUDES += -I../../external/glfw3/include
@@ -95,7 +93,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -L../../src
+    LFLAGS = -L. -LC:/raylib/raylib/src -L../../../src
     # external libraries to link with
     # GLFW3
     LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
@@ -149,29 +147,14 @@ endif
 
 # define all screen object files required
 SCREENS = \
-	screens/screen_logo_raylib.o \
-	screens/screen_title.o \
-	screens/screen_gameplay.o \
 
 # typing 'make' will invoke the first target entry in the file,
 # in this case, the 'default' target entry is advance_game
-default: light_my_ritual
+default: drturtle
 
 # compile template - advance_game
-light_my_ritual: light_my_ritual.c $(SCREENS)
+drturtle: drturtle_final_web.c $(SCREENS)
 	$(CC) -o $@$(EXT) $< $(SCREENS) $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
-# compile screen LOGO raylib
-screens/screen_logo_raylib.o: screens/screen_logo_raylib.c
-	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
-# compile screen TITLE
-screens/screen_title.o: screens/screen_title.c
-	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
-# compile screen ENDING
-screens/screen_gameplay.o: screens/screen_gameplay.c
-	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # clean everything
 clean:
