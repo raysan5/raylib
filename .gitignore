@@ -60,3 +60,5 @@ xcschememanagement.plist
 ._.*
 xcuserdata/
 DerivedData/
+*.dll
+src/libraylib.a

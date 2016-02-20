@@ -30,7 +30,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - model shader");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 3.0, 3.0, 3.0 }, { 0.0, 1.5, 0.0 }, { 0.0, 1.0, 0.0 }};
+    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
@@ -40,7 +40,7 @@ int main()
     SetModelShader(&dwarf, shader);         // Set shader effect to 3d model
     SetModelTexture(&dwarf, texture);       // Bind texture to model
     
-    Vector3 position = { 0.0, 0.0, 0.0 };   // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };   // Set model position
     
     // Setup orbital camera
     SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
@@ -68,7 +68,7 @@ int main()
 
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10.0, 1.0);     // Draw a grid
+                DrawGrid(10, 1.0f);     // Draw a grid
 
             End3dMode();
             

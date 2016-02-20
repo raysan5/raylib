@@ -23,7 +23,7 @@ int main()
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Texture2D guybrush = LoadTexture("resources/guybrush.png");        // Texture loading
 
-    Vector2 position = { 350, 240 };
+    Vector2 position = { 350.0f, 240.0f };
     Rectangle frameRec = { 0, 0, guybrush.width/7, guybrush.height };
     int currentFrame = 0;
     //--------------------------------------------------------------------------------------

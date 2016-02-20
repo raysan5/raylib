@@ -76,7 +76,7 @@ int main()
     // Initialization
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
-    int screenHeight = 480;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture formats loading");
     
@@ -128,8 +128,8 @@ int main()
     
     for (int i = 0; i < NUM_TEXTURES; i++)
     {
-        if (i < NUM_TEXTURES/2) selectRecs[i] = (Rectangle){ 40, 45 + 32*i, 150, 30 };
-        else selectRecs[i] = (Rectangle){ 40 + 152, 45 + 32*(i - NUM_TEXTURES/2), 150, 30 };
+        if (i < NUM_TEXTURES/2) selectRecs[i] = (Rectangle){ 40, 30 + 32*i, 150, 30 };
+        else selectRecs[i] = (Rectangle){ 40 + 152, 30 + 32*(i - NUM_TEXTURES/2), 150, 30 };
     }
     
     // Texture sizes in KB
@@ -215,7 +215,7 @@ int main()
             // Draw selected texture
             if (sonic[selectedFormat].id != 0)
             {
-                DrawTexture(sonic[selectedFormat], 350, 0, WHITE);
+                DrawTexture(sonic[selectedFormat], 350, -10, WHITE);
             }
             else 
             {
@@ -225,9 +225,9 @@ int main()
                 DrawText("ON YOUR GPU", 520, 240, 20, MAROON);
             }
             
-            DrawText("Select texture format (use cursor keys):", 40, 26, 10, DARKGRAY);
-            DrawText("Required GPU memory size (VRAM):", 40, 442, 10, DARKGRAY);
-            DrawText(FormatText("%4.0f KB", textureSizes[selectedFormat]), 240, 435, 20, DARKBLUE);
+            DrawText("Select texture format (use cursor keys):", 40, 10, 10, DARKGRAY);
+            DrawText("Required GPU memory size (VRAM):", 40, 427, 10, DARKGRAY);
+            DrawText(FormatText("%4.0f KB", textureSizes[selectedFormat]), 240, 420, 20, DARKBLUE);
             
         EndDrawing();
         //----------------------------------------------------------------------------------

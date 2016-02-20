@@ -2,7 +2,7 @@
 *
 *   raylib Camera System - Camera Modes Setup and Control Functions
 *
-*   Copyright (c) 2015 Marc Palau and Ramon Santamaria
+*   Copyright (c) 2015 Marc Palau and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -36,44 +36,44 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 // CAMERA_GENERIC
-#define CAMERA_SCROLL_SENSITIVITY               1.5
+#define CAMERA_SCROLL_SENSITIVITY               1.5f
 
 // FREE_CAMERA
-#define FREE_CAMERA_MOUSE_SENSITIVITY           0.01
-#define FREE_CAMERA_DISTANCE_MIN_CLAMP          0.3
-#define FREE_CAMERA_DISTANCE_MAX_CLAMP          120
-#define FREE_CAMERA_MIN_CLAMP                   85
-#define FREE_CAMERA_MAX_CLAMP                  -85
-#define FREE_CAMERA_SMOOTH_ZOOM_SENSITIVITY     0.05
-#define FREE_CAMERA_PANNING_DIVIDER             5.1
+#define FREE_CAMERA_MOUSE_SENSITIVITY           0.01f
+#define FREE_CAMERA_DISTANCE_MIN_CLAMP          0.3f
+#define FREE_CAMERA_DISTANCE_MAX_CLAMP          120.0f
+#define FREE_CAMERA_MIN_CLAMP                   85.0f
+#define FREE_CAMERA_MAX_CLAMP                  -85.0f
+#define FREE_CAMERA_SMOOTH_ZOOM_SENSITIVITY     0.05f
+#define FREE_CAMERA_PANNING_DIVIDER             5.1f
 
 // ORBITAL_CAMERA
-#define ORBITAL_CAMERA_SPEED                    0.01
+#define ORBITAL_CAMERA_SPEED                    0.01f
 
 // FIRST_PERSON
-//#define FIRST_PERSON_MOUSE_SENSITIVITY          0.003
-#define FIRST_PERSON_FOCUS_DISTANCE             25
-#define FIRST_PERSON_MIN_CLAMP                  85
-#define FIRST_PERSON_MAX_CLAMP                 -85
+//#define FIRST_PERSON_MOUSE_SENSITIVITY          0.003f
+#define FIRST_PERSON_FOCUS_DISTANCE             25.0f
+#define FIRST_PERSON_MIN_CLAMP                  85.0f
+#define FIRST_PERSON_MAX_CLAMP                 -85.0f
 
-#define FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER 5.0
-#define FIRST_PERSON_STEP_DIVIDER               30.0
-#define FIRST_PERSON_WAVING_DIVIDER             200.0
+#define FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER 5.0f
+#define FIRST_PERSON_STEP_DIVIDER               30.0f
+#define FIRST_PERSON_WAVING_DIVIDER             200.0f
 
-#define FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION  0.85
+#define FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION  0.85f
 
 // THIRD_PERSON
-//#define THIRD_PERSON_MOUSE_SENSITIVITY          0.003
-#define THIRD_PERSON_DISTANCE_CLAMP             1.2
-#define THIRD_PERSON_MIN_CLAMP                  5
-#define THIRD_PERSON_MAX_CLAMP                 -85
-#define THIRD_PERSON_OFFSET                     (Vector3){ 0.4, 0, 0 }
+//#define THIRD_PERSON_MOUSE_SENSITIVITY          0.003f
+#define THIRD_PERSON_DISTANCE_CLAMP             1.2f
+#define THIRD_PERSON_MIN_CLAMP                  5.0f
+#define THIRD_PERSON_MAX_CLAMP                 -85.0f
+#define THIRD_PERSON_OFFSET                     (Vector3){ 0.4f, 0.0f, 0.0f }
 
 // PLAYER (used by camera)
-#define PLAYER_WIDTH                0.4
-#define PLAYER_HEIGHT               0.9
-#define PLAYER_DEPTH                0.4
-#define PLAYER_MOVEMENT_DIVIDER     20.0
+#define PLAYER_WIDTH                0.4f
+#define PLAYER_HEIGHT               0.9f
+#define PLAYER_DEPTH                0.4f
+#define PLAYER_MOVEMENT_DIVIDER     20.0f
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -84,11 +84,11 @@ typedef enum { MOVE_FRONT = 0, MOVE_LEFT, MOVE_BACK, MOVE_RIGHT, MOVE_UP, MOVE_D
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Camera internalCamera = {{2, 0, 2}, {0, 0, 0}, {0, 1, 0}};
-static Vector2 cameraAngle = { 0, 0 };
+static Camera internalCamera = {{ 2.0f, 0.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+static Vector2 cameraAngle = { 0.0f, 0.0f };
 static float cameraTargetDistance = 5.0f;
-static Vector2 cameraMousePosition = { 0, 0 };
-static Vector2 cameraMouseVariation = { 0, 0 };
+static Vector2 cameraMousePosition = { 0.0f, 0.0f };
+static Vector2 cameraMouseVariation = { 0.0f, 0.0f };
 static float mouseSensitivity = 0.003f;
 static int cameraMoveControl[6]  = { 'W', 'A', 'S', 'D', 'E', 'Q' };
 static int cameraMoveCounter = 0;
@@ -107,7 +107,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition);
 #if defined(CAMERA_STANDALONE)
 // NOTE: Camera controls depend on some raylib input functions
 // TODO: Set your own input functions (used in ProcessCamera())
-static Vector2 GetMousePosition() { return (Vector2){ 0, 0}; }
+static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
 static void SetMousePosition(Vector2 pos) {} 
 static int IsMouseButtonDown(int button) { return 0;}
 static int GetMouseWheelMove() { return 0; }
@@ -129,33 +129,33 @@ void SetCameraMode(int mode)
     if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_FREE))
     {
         cameraMode = CAMERA_THIRD_PERSON;
-        cameraTargetDistance = 5;
-        cameraAngle.y = -40 * DEG2RAD;
+        cameraTargetDistance = 5.0f;
+        cameraAngle.y = -40*DEG2RAD;
         ProcessCamera(&internalCamera, &internalCamera.position);
     }
     else if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_ORBITAL))
     {
         cameraMode = CAMERA_THIRD_PERSON;
-        cameraTargetDistance = 5;
-        cameraAngle.y = -40 * DEG2RAD;
+        cameraTargetDistance = 5.0f;
+        cameraAngle.y = -40*DEG2RAD;
         ProcessCamera(&internalCamera, &internalCamera.position);
     }
     else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_FREE))
     {
-        cameraTargetDistance = 10;
-        cameraAngle.x = 45 * DEG2RAD;
-        cameraAngle.y = -40 * DEG2RAD;
-        internalCamera.target = (Vector3){ 0, 0, 0 };
+        cameraTargetDistance = 10.0f;
+        cameraAngle.x = 45*DEG2RAD;
+        cameraAngle.y = -40*DEG2RAD;
+        internalCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
         ProcessCamera(&internalCamera, &internalCamera.position);
         
         ShowCursor();
     }
     else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_ORBITAL))
     {
-        cameraTargetDistance = 10;
-        cameraAngle.x = 225 * DEG2RAD;
-        cameraAngle.y = -40 * DEG2RAD;
-        internalCamera.target = (Vector3){ 0, 0, 0};
+        cameraTargetDistance = 10.0f;
+        cameraAngle.x = 225*DEG2RAD;
+        cameraAngle.y = -40*DEG2RAD;
+        internalCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
         ProcessCamera(&internalCamera, &internalCamera.position);
     }
 
@@ -165,7 +165,7 @@ void SetCameraMode(int mode)
 // Update camera (player position is ignored)
 void UpdateCamera(Camera *camera)
 {
-    Vector3 position = { 0, 0, 0 };
+    Vector3 position = { 0.0f, 0.0f, 0.0f };
     
     // Process internal camera and player position (if required)
     if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, &position);
@@ -244,7 +244,7 @@ void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey,
 // Set camera mouse sensitivity (1st person and 3rd person cameras)
 void SetCameraMouseSensitivity(float sensitivity)
 {
-    mouseSensitivity = (sensitivity/10000.0);
+    mouseSensitivity = (sensitivity/10000.0f);
 }
 
 //----------------------------------------------------------------------------------
@@ -317,7 +317,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
                 camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
 
-                if (camera->target.y < 0) camera->target.y = -0.001;
+                // if (camera->target.y < 0) camera->target.y = -0.001;
             }
             else if ((camera->position.y > camera->target.y) && (camera->target.y < 0) && (mouseWheelMove > 0))
             {
@@ -337,7 +337,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 camera->target.y += mouseWheelMove*(camera->target.y - camera->position.y)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
                 camera->target.z += mouseWheelMove*(camera->target.z - camera->position.z)*CAMERA_SCROLL_SENSITIVITY/cameraTargetDistance;
 
-                if (camera->target.y > 0) camera->target.y = 0.001;
+                // if (camera->target.y > 0) camera->target.y = 0.001;
             }
             else if ((camera->position.y < camera->target.y) && (camera->target.y > 0) && (mouseWheelMove > 0))
             {
@@ -375,13 +375,13 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
             }
 
             // Focus to center
-            // TODO: Move this function out of the module?
-            if (IsKeyDown('Z')) camera->target = (Vector3){ 0, 0, 0 };
+            // TODO: Move this function out of this module?
+            if (IsKeyDown('Z')) camera->target = (Vector3){ 0.0f, 0.0f, 0.0f };
 
             // Camera position update
             camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
 
-            if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
+            if (cameraAngle.y <= 0.0f) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
             else camera->position.y = -sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
 
             camera->position.z = cos(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.z;
@@ -398,12 +398,12 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
             if (cameraTargetDistance < THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = THIRD_PERSON_DISTANCE_CLAMP;
 
             // Focus to center
-            if (IsKeyDown('Z')) camera->target = (Vector3){ 0, 0, 0 };
+            if (IsKeyDown('Z')) camera->target = (Vector3){ 0.0f, 0.0f, 0.0f };
 
             // Camera position update
             camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
 
-            if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
+            if (cameraAngle.y <= 0.0f) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
             else camera->position.y = -sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
 
             camera->position.z = cos(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.z;
@@ -412,7 +412,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
         case CAMERA_FIRST_PERSON:
         case CAMERA_THIRD_PERSON:
         {
-            int isMoving = 0;
+            bool isMoving = false;
 
             // Keyboard inputs
             if (IsKeyDown(cameraMoveControl[MOVE_FRONT]))
@@ -422,7 +422,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 
                 if (!cameraUseGravity) camera->position.y += sin(cameraAngle.y)/PLAYER_MOVEMENT_DIVIDER;
 
-                isMoving = 1;
+                isMoving = true;
             }
             else if (IsKeyDown(cameraMoveControl[MOVE_BACK]))
             {
@@ -431,7 +431,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 
                 if (!cameraUseGravity) camera->position.y -= sin(cameraAngle.y)/PLAYER_MOVEMENT_DIVIDER;
 
-                isMoving = 1;
+                isMoving = true;
             }
 
             if (IsKeyDown(cameraMoveControl[MOVE_LEFT]))
@@ -439,23 +439,23 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 playerPosition->x -= cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
                 playerPosition->z += sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
 
-                isMoving = 1;
+                isMoving = true;
             }
             else if (IsKeyDown(cameraMoveControl[MOVE_RIGHT]))
             {
                 playerPosition->x += cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
                 playerPosition->z -= sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
 
-                isMoving = 1;
+                isMoving = true;
             }
 
             if (IsKeyDown(cameraMoveControl[MOVE_UP]))
             {
-                if (!cameraUseGravity) playerPosition->y += 1/PLAYER_MOVEMENT_DIVIDER;
+                if (!cameraUseGravity) playerPosition->y += 1.0f/PLAYER_MOVEMENT_DIVIDER;
             }
             else if (IsKeyDown(cameraMoveControl[MOVE_DOWN]))
             {
-                if (!cameraUseGravity) playerPosition->y -= 1/PLAYER_MOVEMENT_DIVIDER;
+                if (!cameraUseGravity) playerPosition->y -= 1.0f/PLAYER_MOVEMENT_DIVIDER;
             }
 
             if (cameraMode == CAMERA_THIRD_PERSON)
@@ -482,7 +482,7 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 // Camera position update
                 camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
 
-                if (cameraAngle.y <= 0) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
+                if (cameraAngle.y <= 0.0f) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
                 else camera->position.y = -sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
 
                 camera->position.z = cos(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.z;

@@ -92,7 +92,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-bool musicEnabled = false;
+static bool musicEnabled = false;
 static Music currentMusic;      // Current music loaded
                                 // NOTE: Only one music file playing at a time
 
@@ -105,7 +105,6 @@ static void UnloadWave(Wave wave);                  // Unload wave data
 
 static bool BufferMusicStream(ALuint buffer);       // Fill music buffers with data
 static void EmptyMusicStream(void);                 // Empty music buffers
-extern void UpdateMusicStream(void);                // Updates buffers (refill) for music streaming
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -167,15 +166,8 @@ void CloseAudioDevice(void)
 // Load sound to memory
 Sound LoadSound(char *fileName)
 {
-    Sound sound;
-    Wave wave;
-
-    // Init some default values for wave...
-    wave.data = NULL;
-    wave.dataSize = 0;
-    wave.sampleRate = 0;
-    wave.bitsPerSample = 0;
-    wave.channels = 0;
+    Sound sound = { 0 };
+    Wave wave = { 0 };
 
     // NOTE: The entire file is loaded to memory to play it all at once (no-streaming)
 
@@ -237,7 +229,7 @@ Sound LoadSound(char *fileName)
 // Load sound from wave data
 Sound LoadSoundFromWave(Wave wave)
 {
-    Sound sound;
+    Sound sound = { 0 };
 
     if (wave.data != NULL)
     {
@@ -288,10 +280,10 @@ Sound LoadSoundFromWave(Wave wave)
 }
 
 // Load sound to memory from rRES file (raylib Resource)
+// TODO: Maybe rresName could be directly a char array with all the data?
 Sound LoadSoundFromRES(const char *rresName, int resId)
 {
-    // NOTE: rresName could be directly a char array with all the data!!! --> TODO
-    Sound sound;
+    Sound sound = { 0 };
 
 #if defined(AUDIO_STANDALONE)
     TraceLog(WARNING, "Sound loading from rRES resource file not supported on standalone mode");
@@ -539,7 +531,7 @@ void PlayMusicStream(char *fileName)
 
             TraceLog(INFO, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
             TraceLog(INFO, "[%s] Ogg channels: %i", fileName, info.channels);
-            TraceLog(INFO, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
+            TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
             if (info.channels == 2) currentMusic.format = AL_FORMAT_STEREO16;
             else currentMusic.format = AL_FORMAT_MONO16;
@@ -567,7 +559,7 @@ void PlayMusicStream(char *fileName)
             alSourceQueueBuffers(currentMusic.source, 2, currentMusic.buffers);
             alSourcePlay(currentMusic.source);
 
-            // NOTE: Regularly, we must check if a buffer has been processed and refill it: MusicStreamUpdate()
+            // NOTE: Regularly, we must check if a buffer has been processed and refill it: UpdateMusicStream()
 
             currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
         }
@@ -708,7 +700,7 @@ static void EmptyMusicStream(void)
 
     alGetSourcei(currentMusic.source, AL_BUFFERS_QUEUED, &queued);
 
-    while(queued > 0)
+    while (queued > 0)
     {
         alSourceUnqueueBuffers(currentMusic.source, 1, &buffer);
 
@@ -717,7 +709,7 @@ static void EmptyMusicStream(void)
 }
 
 // Update (re-fill) music buffers if data already processed
-extern void UpdateMusicStream(void)
+void UpdateMusicStream(void)
 {
     ALuint buffer = 0;
     ALint processed = 0;
@@ -739,19 +731,16 @@ extern void UpdateMusicStream(void)
             // If no more data to stream, restart music (if loop)
             if ((!active) && (currentMusic.loop))
             {
-                if (currentMusic.loop)
-                {
-                    stb_vorbis_seek_start(currentMusic.stream);
-                    currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
+                stb_vorbis_seek_start(currentMusic.stream);
+                currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream)*currentMusic.channels;
 
-                    active = BufferMusicStream(buffer);
-                }
+                active = BufferMusicStream(buffer);
             }
 
             // Add refilled buffer to queue again... don't let the music stop!
             alSourceQueueBuffers(currentMusic.source, 1, &buffer);
 
-            if(alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Ogg playing, error buffering data...");
+            if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Ogg playing, error buffering data...");
 
             processed--;
         }
@@ -795,7 +784,7 @@ static Wave LoadWAV(const char *fileName)
     WaveFormat waveFormat;
     WaveData waveData;
 
-    Wave wave;
+    Wave wave = { 0 };
     FILE *wavFile;
 
     wavFile = fopen(fileName, "rb");

@@ -26,6 +26,8 @@ int main()
 
     Sound fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop

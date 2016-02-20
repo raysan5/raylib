@@ -34,8 +34,8 @@
 #include <string.h>     // Required for strcmp()
 #include <math.h>       // Used for sin, cos, tan
 
-#include "raymath.h"    // Required for data type Matrix and Matrix functions
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "raymath.h"    // Required for data type Matrix and Matrix functions
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -55,8 +55,7 @@ extern unsigned int whiteTexture;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static float GetHeightValue(Color pixel);
-static VertexData LoadOBJ(const char *fileName);
+static Mesh LoadOBJ(const char *fileName);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -64,7 +63,7 @@ static VertexData LoadOBJ(const char *fileName);
 
 // Draw cube
 // NOTE: Cube position is the center position
-void DrawCube(Vector3 position, float width, float height, float lenght, Color color)
+void DrawCube(Vector3 position, float width, float height, float length, Color color)
 {
     float x = 0.0f;
     float y = 0.0f;
@@ -81,58 +80,58 @@ void DrawCube(Vector3 position, float width, float height, float lenght, Color c
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             // Front Face -----------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
 
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
 
             // Back Face ------------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
 
-            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
 
             // Top Face -------------------------------------------------------
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Bottom Left
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Bottom Left
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right
 
-            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right
 
             // Bottom Face ----------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Left
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
-            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
 
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Top Right
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Right
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Left
 
             // Right face -----------------------------------------------------
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
-            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left
 
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left
 
             // Left Face ------------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Right
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Right
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Right
 
-            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right
         rlEnd();
     rlPopMatrix();
 }
@@ -144,7 +143,7 @@ void DrawCubeV(Vector3 position, Vector3 size, Color color)
 }
 
 // Draw cube wires
-void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color)
+void DrawCubeWires(Vector3 position, float width, float height, float length, Color color)
 {
     float x = 0.0f;
     float y = 0.0f;
@@ -160,62 +159,62 @@ void DrawCubeWires(Vector3 position, float width, float height, float lenght, Co
 
             // Front Face -----------------------------------------------------
             // Bottom Line
-            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
 
             // Left Line
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right
 
             // Top Line
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
 
             // Right Line
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left
-            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
 
             // Back Face ------------------------------------------------------
             // Bottom Line
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
 
             // Left Line
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right
-            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
 
             // Top Line
-            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
 
             // Right Line
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left
 
             // Top Face -------------------------------------------------------
             // Left Line
-            rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left Front
-            rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Back
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left Front
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Back
 
             // Right Line
-            rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right Front
-            rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Back
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right Front
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Back
 
             // Bottom Face  ---------------------------------------------------
             // Left Line
-            rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Top Left Front
-            rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Left Back
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Top Left Front
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Left Back
 
             // Right Line
-            rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Top Right Front
-            rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Top Right Back
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Top Right Front
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Right Back
         rlEnd();
     rlPopMatrix();
 }
 
 // Draw cube
 // NOTE: Cube position is the center position
-void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float lenght, Color color)
+void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float length, Color color)
 {
     float x = position.x;
     float y = position.y;
@@ -233,40 +232,40 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
             rlColor4ub(color.r, color.g, color.b, color.a);
             // Front Face
             rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
             // Back Face
             rlNormal3f( 0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Left Of The Texture and Quad
             // Top Face
             rlNormal3f( 0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
             // Bottom Face
             rlNormal3f( 0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
             // Right face
             rlNormal3f( 1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-lenght/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-lenght/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+lenght/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+lenght/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
             // Left Face
             rlNormal3f(-1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-lenght/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+lenght/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+lenght/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-lenght/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
         rlEnd();
     //rlPopMatrix();
 
@@ -534,12 +533,12 @@ void DrawGrid(int slices, float spacing)
 void DrawGizmo(Vector3 position)
 {
     // NOTE: RGB = XYZ
-    float lenght = 1.0f;
+    float length = 1.0f;
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
         //rlRotatef(rotation, 0, 1, 0);
-        rlScalef(lenght, lenght, lenght);
+        rlScalef(length, length, length);
 
         rlBegin(RL_LINES);
             rlColor3f(1.0f, 0.0f, 0.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
@@ -557,42 +556,45 @@ void DrawGizmo(Vector3 position)
 // Load a 3d model (from file)
 Model LoadModel(const char *fileName)
 {
-    VertexData vData;
+    Model model = { 0 };
+    Mesh mesh = { 0 };
     
-    Model model;
-    
-    // TODO: Initialize default data for model in case loading fails, maybe a cube?
+    // NOTE: Initialize default data for model in case loading fails, maybe a cube?
 
-    if (strcmp(GetExtension(fileName),"obj") == 0) vData = LoadOBJ(fileName);
+    if (strcmp(GetExtension(fileName),"obj") == 0) mesh = LoadOBJ(fileName);
     else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
     
-    if (vData.vertexCount == 0)
+    if (mesh.vertexCount == 0)
     {
         TraceLog(WARNING, "Model could not be loaded");
     }
     else
     {
         // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
-        model = rlglLoadModel(vData);     // Upload vertex data to GPU
+        model = rlglLoadModel(mesh);     // Upload vertex data to GPU
 
         // Now that vertex data is uploaded to GPU, we can free arrays
-        // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
+        // NOTE 1: We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
+        // NOTE 2: ...but we could keep CPU vertex data in case we need to update the mesh
+        
+        /*
         if (rlGetVersion() != OPENGL_11)
         {
-            free(vData.vertices);
-            free(vData.texcoords);
-            free(vData.normals);
-            free(vData.colors);
+            free(mesh.vertices);
+            free(mesh.texcoords);
+            free(mesh.normals);
+            free(mesh.colors);
         }
+        */
     }
 
     return model;
 }
 
 // Load a 3d model (from vertex data)
-Model LoadModelEx(VertexData data)
+Model LoadModelEx(Mesh data)
 {
     Model model;
 
@@ -605,25 +607,27 @@ Model LoadModelEx(VertexData data)
 }
 
 // Load a heightmap image as a 3d model
-Model LoadHeightmap(Image heightmap, float maxHeight)
+// NOTE: model map size is defined in generic units
+Model LoadHeightmap(Image heightmap, Vector3 size)
 {
-    VertexData vData;
+    #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
+    
+    Mesh mesh;
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
     
-    Color *heightmapPixels = GetImageData(heightmap);
+    Color *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
-    // TODO: Consider resolution when generating model data?
     int numTriangles = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
 
-    vData.vertexCount = numTriangles*3;
+    mesh.vertexCount = numTriangles*3;
 
-    vData.vertices = (float *)malloc(vData.vertexCount*3*sizeof(float));
-    vData.normals = (float *)malloc(vData.vertexCount*3*sizeof(float));
-    vData.texcoords = (float *)malloc(vData.vertexCount*2*sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount*4*sizeof(unsigned char)); // Not used...
+    mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
+    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char)); // Not used...
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -631,7 +635,7 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 
     int trisCounter = 0;
 
-    float scaleFactor = maxHeight/255;    // TODO: Review scaleFactor calculation
+    Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
     for(int z = 0; z < mapZ-1; z++)
     {
@@ -641,89 +645,87 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
             //----------------------------------------------------------
 
             // one triangle - 3 vertex
-            vData.vertices[vCounter] = x;
-            vData.vertices[vCounter + 1] = GetHeightValue(heightmapPixels[x + z*mapX])*scaleFactor;
-            vData.vertices[vCounter + 2] = z;
+            mesh.vertices[vCounter] = (float)x*scaleFactor.x;
+            mesh.vertices[vCounter + 1] = (float)GRAY_VALUE(pixels[x + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 2] = (float)z*scaleFactor.z;
 
-            vData.vertices[vCounter + 3] = x;
-            vData.vertices[vCounter + 4] = GetHeightValue(heightmapPixels[x + (z+1)*mapX])*scaleFactor;
-            vData.vertices[vCounter + 5] = z+1;
+            mesh.vertices[vCounter + 3] = (float)x*scaleFactor.x;
+            mesh.vertices[vCounter + 4] = (float)GRAY_VALUE(pixels[x + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 5] = (float)(z + 1)*scaleFactor.z;
 
-            vData.vertices[vCounter + 6] = x+1;
-            vData.vertices[vCounter + 7] = GetHeightValue(heightmapPixels[(x+1) + z*mapX])*scaleFactor;
-            vData.vertices[vCounter + 8] = z;
+            mesh.vertices[vCounter + 6] = (float)(x + 1)*scaleFactor.x;
+            mesh.vertices[vCounter + 7] = (float)GRAY_VALUE(pixels[(x + 1) + z*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 8] = (float)z*scaleFactor.z;
 
             // another triangle - 3 vertex
-            vData.vertices[vCounter + 9] = vData.vertices[vCounter + 6];
-            vData.vertices[vCounter + 10] = vData.vertices[vCounter + 7];
-            vData.vertices[vCounter + 11] = vData.vertices[vCounter + 8];
+            mesh.vertices[vCounter + 9] = mesh.vertices[vCounter + 6];
+            mesh.vertices[vCounter + 10] = mesh.vertices[vCounter + 7];
+            mesh.vertices[vCounter + 11] = mesh.vertices[vCounter + 8];
 
-            vData.vertices[vCounter + 12] = vData.vertices[vCounter + 3];
-            vData.vertices[vCounter + 13] = vData.vertices[vCounter + 4];
-            vData.vertices[vCounter + 14] = vData.vertices[vCounter + 5];
+            mesh.vertices[vCounter + 12] = mesh.vertices[vCounter + 3];
+            mesh.vertices[vCounter + 13] = mesh.vertices[vCounter + 4];
+            mesh.vertices[vCounter + 14] = mesh.vertices[vCounter + 5];
 
-            vData.vertices[vCounter + 15] = x+1;
-            vData.vertices[vCounter + 16] = GetHeightValue(heightmapPixels[(x+1) + (z+1)*mapX])*scaleFactor;
-            vData.vertices[vCounter + 17] = z+1;
+            mesh.vertices[vCounter + 15] = (float)(x + 1)*scaleFactor.x;
+            mesh.vertices[vCounter + 16] = (float)GRAY_VALUE(pixels[(x + 1) + (z + 1)*mapX])*scaleFactor.y;
+            mesh.vertices[vCounter + 17] = (float)(z + 1)*scaleFactor.z;
             vCounter += 18;     // 6 vertex, 18 floats
 
             // Fill texcoords array with data
             //--------------------------------------------------------------
-            vData.texcoords[tcCounter] = (float)x / (mapX-1);
-            vData.texcoords[tcCounter + 1] = (float)z / (mapZ-1);
+            mesh.texcoords[tcCounter] = (float)x/(mapX - 1);
+            mesh.texcoords[tcCounter + 1] = (float)z/(mapZ - 1);
 
-            vData.texcoords[tcCounter + 2] = (float)x / (mapX-1);
-            vData.texcoords[tcCounter + 3] = (float)(z+1) / (mapZ-1);
+            mesh.texcoords[tcCounter + 2] = (float)x/(mapX - 1);
+            mesh.texcoords[tcCounter + 3] = (float)(z + 1)/(mapZ - 1);
 
-            vData.texcoords[tcCounter + 4] = (float)(x+1) / (mapX-1);
-            vData.texcoords[tcCounter + 5] = (float)z / (mapZ-1);
+            mesh.texcoords[tcCounter + 4] = (float)(x + 1)/(mapX - 1);
+            mesh.texcoords[tcCounter + 5] = (float)z/(mapZ - 1);
 
-            vData.texcoords[tcCounter + 6] = vData.texcoords[tcCounter + 4];
-            vData.texcoords[tcCounter + 7] = vData.texcoords[tcCounter + 5];
+            mesh.texcoords[tcCounter + 6] = mesh.texcoords[tcCounter + 4];
+            mesh.texcoords[tcCounter + 7] = mesh.texcoords[tcCounter + 5];
 
-            vData.texcoords[tcCounter + 8] = vData.texcoords[tcCounter + 2];
-            vData.texcoords[tcCounter + 9] = vData.texcoords[tcCounter + 3];
+            mesh.texcoords[tcCounter + 8] = mesh.texcoords[tcCounter + 2];
+            mesh.texcoords[tcCounter + 9] = mesh.texcoords[tcCounter + 3];
 
-            vData.texcoords[tcCounter + 10] = (float)(x+1) / (mapX-1);
-            vData.texcoords[tcCounter + 11] = (float)(z+1) / (mapZ-1);
+            mesh.texcoords[tcCounter + 10] = (float)(x + 1)/(mapX - 1);
+            mesh.texcoords[tcCounter + 11] = (float)(z + 1)/(mapZ - 1);
             tcCounter += 12;    // 6 texcoords, 12 floats
 
             // Fill normals array with data
             //--------------------------------------------------------------
-            // NOTE: Current Model implementation doe not use normals!
             for (int i = 0; i < 18; i += 3)
             {
-                vData.normals[nCounter + i] = 0.0f;
-                vData.normals[nCounter + i + 1] = 1.0f;
-                vData.normals[nCounter + i + 2] = 0.0f;
+                mesh.normals[nCounter + i] = 0.0f;
+                mesh.normals[nCounter + i + 1] = 1.0f;
+                mesh.normals[nCounter + i + 2] = 0.0f;
             }
 
             // TODO: Calculate normals in an efficient way
 
             nCounter += 18;     // 6 vertex, 18 floats
-
             trisCounter += 2;
         }
     }
     
-    free(heightmapPixels);
+    free(pixels);
 
     // Fill color data
     // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
+    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
 
-    Model model = rlglLoadModel(vData);
+    Model model = rlglLoadModel(mesh);
 
     // Now that vertex data is uploaded to GPU, we can free arrays
     // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
     if (rlGetVersion() != OPENGL_11)
     {
-        free(vData.vertices);
-        free(vData.texcoords);
-        free(vData.normals);
-        free(vData.colors);
+        free(mesh.vertices);
+        free(mesh.texcoords);
+        free(mesh.normals);
+        free(mesh.colors);
     }
 
     return model;
@@ -732,14 +734,14 @@ Model LoadHeightmap(Image heightmap, float maxHeight)
 // Load a map image as a 3d model (cubes based)
 Model LoadCubicmap(Image cubicmap)
 {
-    VertexData vData;
+    Mesh mesh;
 
     Color *cubicmapPixels = GetImageData(cubicmap);
     
     // Map cube size will be 1.0
     float mapCubeSide = 1.0f;
-    int mapWidth = cubicmap.width * (int)mapCubeSide;
-    int mapHeight = cubicmap.height * (int)mapCubeSide;
+    int mapWidth = cubicmap.width*(int)mapCubeSide;
+    int mapHeight = cubicmap.height*(int)mapCubeSide;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
@@ -750,11 +752,11 @@ Model LoadCubicmap(Image cubicmap)
 
     float w = mapCubeSide;
     float h = mapCubeSide;
-    float h2 = mapCubeSide * 1.5;   // TODO: Review walls height...
+    float h2 = mapCubeSide*1.5f;   // TODO: Review walls height...
 
-    Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles * 3 * sizeof(Vector3));
-    Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles * 3 * sizeof(Vector2));
-    Vector3 *mapNormals = (Vector3 *)malloc(maxTriangles * 3 * sizeof(Vector3));
+    Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles*3*sizeof(Vector3));
+    Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles*3*sizeof(Vector2));
+    Vector3 *mapNormals = (Vector3 *)malloc(maxTriangles*3*sizeof(Vector3));
 
     // Define the 6 normals of the cube, we will combine them accordingly later...
     Vector3 n1 = { 1.0f, 0.0f, 0.0f };
@@ -772,12 +774,12 @@ Model LoadCubicmap(Image cubicmap)
         float height;
     } RectangleF;
 
-    RectangleF rightTexUV = { 0, 0, 0.5, 0.5 };
-    RectangleF leftTexUV = { 0.5, 0, 0.5, 0.5 };
-    RectangleF frontTexUV = { 0, 0, 0.5, 0.5 };
-    RectangleF backTexUV = { 0.5, 0, 0.5, 0.5 };
-    RectangleF topTexUV = { 0, 0.5, 0.5, 0.5 };
-    RectangleF bottomTexUV = { 0.5, 0.5, 0.5, 0.5 };
+    RectangleF rightTexUV = { 0.0f, 0.0f, 0.5f, 0.5f };
+    RectangleF leftTexUV = { 0.5f, 0.0f, 0.5f, 0.5f };
+    RectangleF frontTexUV = { 0.0f, 0.0f, 0.5f, 0.5f };
+    RectangleF backTexUV = { 0.5f, 0.0f, 0.5f, 0.5f };
+    RectangleF topTexUV = { 0.0f, 0.5f, 0.5f, 0.5f };
+    RectangleF bottomTexUV = { 0.5f, 0.5f, 0.5f, 0.5f };
 
     for (int z = 0; z < mapHeight; z += mapCubeSide)
     {
@@ -1038,25 +1040,25 @@ Model LoadCubicmap(Image cubicmap)
     }
 
     // Move data from mapVertices temp arays to vertices float array
-    vData.vertexCount = vCounter;
+    mesh.vertexCount = vCounter;
 
-    vData.vertices = (float *)malloc(vData.vertexCount*3*sizeof(float));
-    vData.normals = (float *)malloc(vData.vertexCount*3*sizeof(float));
-    vData.texcoords = (float *)malloc(vData.vertexCount*2*sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount*4*sizeof(unsigned char));  // Not used...
+    mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
+    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char));  // Not used...
 
     // Fill color data
     // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
+    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
 
     int fCounter = 0;
 
     // Move vertices data
     for (int i = 0; i < vCounter; i++)
     {
-        vData.vertices[fCounter] = mapVertices[i].x;
-        vData.vertices[fCounter + 1] = mapVertices[i].y;
-        vData.vertices[fCounter + 2] = mapVertices[i].z;
+        mesh.vertices[fCounter] = mapVertices[i].x;
+        mesh.vertices[fCounter + 1] = mapVertices[i].y;
+        mesh.vertices[fCounter + 2] = mapVertices[i].z;
         fCounter += 3;
     }
 
@@ -1065,9 +1067,9 @@ Model LoadCubicmap(Image cubicmap)
     // Move normals data
     for (int i = 0; i < nCounter; i++)
     {
-        vData.normals[fCounter] = mapNormals[i].x;
-        vData.normals[fCounter + 1] = mapNormals[i].y;
-        vData.normals[fCounter + 2] = mapNormals[i].z;
+        mesh.normals[fCounter] = mapNormals[i].x;
+        mesh.normals[fCounter + 1] = mapNormals[i].y;
+        mesh.normals[fCounter + 2] = mapNormals[i].z;
         fCounter += 3;
     }
 
@@ -1076,8 +1078,8 @@ Model LoadCubicmap(Image cubicmap)
     // Move texcoords data
     for (int i = 0; i < tcCounter; i++)
     {
-        vData.texcoords[fCounter] = mapTexcoords[i].x;
-        vData.texcoords[fCounter + 1] = mapTexcoords[i].y;
+        mesh.texcoords[fCounter] = mapTexcoords[i].x;
+        mesh.texcoords[fCounter + 1] = mapTexcoords[i].y;
         fCounter += 2;
     }
 
@@ -1087,18 +1089,18 @@ Model LoadCubicmap(Image cubicmap)
     
     free(cubicmapPixels);
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
 
-    Model model = rlglLoadModel(vData);
+    Model model = rlglLoadModel(mesh);
 
     // Now that vertex data is uploaded to GPU, we can free arrays
     // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
     if (rlGetVersion() != OPENGL_11)
     {
-        free(vData.vertices);
-        free(vData.texcoords);
-        free(vData.normals);
-        free(vData.colors);
+        free(mesh.vertices);
+        free(mesh.texcoords);
+        free(mesh.normals);
+        free(mesh.colors);
     }
 
     return model;
@@ -1144,25 +1146,32 @@ void SetModelTexture(Model *model, Texture2D texture)
 void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
     Vector3 vScale = { scale, scale, scale };
-    Vector3 rotationAxis = { 0, 0, 0 };
+    Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
 
-    DrawModelEx(model, position, 0.0f, rotationAxis, vScale, tint);
+    DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
 // Draw a model with extended parameters
-void DrawModelEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint)
+void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
     // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
-    rlglDrawModel(model, position, rotationAngle, rotationAxis, scale, tint, false);
+    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, false);
 }
 
 // Draw a model wires (with texture if set)
 void DrawModelWires(Model model, Vector3 position, float scale, Color color)
 {
     Vector3 vScale = { scale, scale, scale };
-    Vector3 rotationAxis = { 0, 0, 0 };
+    Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
 
-    rlglDrawModel(model, position, 0.0f, rotationAxis, vScale, color, true);
+    rlglDrawModel(model, position, rotationAxis, 0.0f, vScale, color, true);
+}
+
+// Draw a model wires (with texture if set) with extended parameters
+void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
+{
+    // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
+    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, true);
 }
 
 // Draw a billboard
@@ -1178,7 +1187,7 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
     
     // NOTE: Billboard locked to axis-Y
-    Vector3 up = { 0, 1, 0 };
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
 /*
     a-------b
     |       |
@@ -1265,6 +1274,20 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     rlDisableTexture();
 }
 
+// Draw a bounding box with wires
+void DrawBoundingBox(BoundingBox box)
+{
+    Vector3 size;
+    
+    size.x = fabsf(box.max.x - box.min.x);
+    size.y = fabsf(box.max.y - box.min.y);
+    size.z = fabsf(box.max.z - box.min.z);
+    
+    Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
+    
+    DrawCubeWires(center, size.x, size.y, size.z, GREEN);
+}
+
 // Detect collision between two spheres
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB)
 {
@@ -1326,8 +1349,92 @@ bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSph
     return collision;
 }
 
-// TODO: Useful function to check collision area?
-//BoundingBox GetCollisionArea(BoundingBox box1, BoundingBox box2)
+// Detect collision between ray and sphere
+bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius)
+{
+    bool collision = false;
+    
+    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
+    float distance = VectorLength(raySpherePos);
+    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
+    
+    if(d >= 0.0f) collision = true;
+    
+    return collision;
+}
+
+// Detect collision between ray and sphere with extended parameters and collision point detection
+bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint)
+{
+    bool collision = false;
+    
+    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
+    float distance = VectorLength(raySpherePos);
+    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
+    
+    if(d >= 0.0f) collision = true;
+    
+    // Calculate collision point
+    Vector3 offset = ray.direction;
+    float collisionDistance = 0;
+    
+    // Check if ray origin is inside the sphere to calculate the correct collision point
+    if(distance < sphereRadius) collisionDistance = vector + sqrt(d);
+    else collisionDistance = vector - sqrt(d);
+    
+    VectorScale(&offset, collisionDistance);
+    Vector3 cPoint = VectorAdd(ray.position, offset);
+    
+    collisionPoint->x = cPoint.x;
+    collisionPoint->y = cPoint.y;
+    collisionPoint->z = cPoint.z;
+    
+    return collision;
+}
+
+// Detect collision between ray and bounding box
+bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
+{
+    bool collision = false;
+    
+    float t[8];
+    t[0] = (minBBox.x - ray.position.x)/ray.direction.x;
+    t[1] = (maxBBox.x - ray.position.x)/ray.direction.x;
+    t[2] = (minBBox.y - ray.position.y)/ray.direction.y;
+    t[3] = (maxBBox.y - ray.position.y)/ray.direction.y;
+    t[4] = (minBBox.z - ray.position.z)/ray.direction.z;
+    t[5] = (maxBBox.z - ray.position.z)/ray.direction.z;
+    t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
+    t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
+    
+    collision = !(t[7] < 0 || t[6] > t[7]);
+    
+    return collision;
+}
+
+// Calculate mesh bounding box limits
+// NOTE: minVertex and maxVertex should be transformed by model transform matrix (position, scale, rotate)
+BoundingBox CalculateBoundingBox(Mesh mesh)
+{
+    // Get min and max vertex to construct bounds (AABB)
+    Vector3 minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+    Vector3 maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+
+    for (int i = 1; i < mesh.vertexCount; i++)
+    {
+		minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+        maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+    }
+    
+    // Create the bounding box
+    BoundingBox box;
+    box.min = minVertex;
+    box.max = maxVertex;
+    
+    return box;
+}
 
 // Detect and resolve cubicmap collisions
 // NOTE: player position (or camera) is modified inside this function
@@ -1336,7 +1443,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     Color *cubicmapPixels = GetImageData(cubicmap);
     
     // Detect the cell where the player is located
-    Vector3 impactDirection = { 0, 0, 0 };
+    Vector3 impactDirection = { 0.0f, 0.0f, 0.0f };
 
     int locationCellX = 0;
     int locationCellY = 0;
@@ -1359,7 +1466,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 {
                     playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
                     playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 1, 0, 1};
+                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                 }
             }
         }
@@ -1375,7 +1482,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 {
                     playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
                     playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 1, 0, 1};
+                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                 }
             }
         }
@@ -1391,7 +1498,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 {
                     playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
                     playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 1, 0, 1};
+                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                 }
             }
         }
@@ -1407,7 +1514,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 {
                     playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
                     playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 1, 0, 1};
+                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                 }
             }
         }
@@ -1422,7 +1529,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius)
                 {
                     playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 1, 0, 0};
+                    impactDirection = (Vector3){ 1.0f, 0.0f, 0.0f };
                 }
             }
         }
@@ -1434,7 +1541,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius)
                 {
                     playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 1, 0, 0};
+                    impactDirection = (Vector3){ 1.0f, 0.0f, 0.0f };
                 }
             }
         }
@@ -1446,7 +1553,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius)
                 {
                     playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 0, 0, 1};
+                    impactDirection = (Vector3){ 0.0f, 0.0f, 1.0f };
                 }
             }
         }
@@ -1458,7 +1565,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                 if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius)
                 {
                     playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3) { 0, 0, 1};
+                    impactDirection = (Vector3){ 0.0f, 0.0f, 1.0f };
                 }
             }
         }
@@ -1482,7 +1589,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
                         ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
                     {
-                        impactDirection = (Vector3) { 1, 0, 1};
+                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }
                 }
             }
@@ -1505,7 +1612,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
                         ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
                     {
-                        impactDirection = (Vector3) { 1, 0, 1};
+                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }
                 }
             }
@@ -1528,7 +1635,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
                         ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
                     {
-                        impactDirection = (Vector3) { 1, 0, 1};
+                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }
                 }
             }
@@ -1551,7 +1658,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
                         ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
                     {
-                        impactDirection = (Vector3) { 1, 0, 1};
+                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }
                 }
             }
@@ -1561,13 +1668,13 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     // Floor collision
     if (playerPosition->y <= radius)
     {
-        playerPosition->y = radius + 0.01;
+        playerPosition->y = radius + 0.01f;
         impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
     }
     // Roof collision
-    else if (playerPosition->y >= 1.5 - radius)
+    else if (playerPosition->y >= (1.5f - radius))
     {
-        playerPosition->y = (1.5 - radius) - 0.01;
+        playerPosition->y = (1.5f - radius) - 0.01f;
         impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
     }
     
@@ -1580,16 +1687,10 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-// Get current vertex y altitude (proportional to pixel colors in grayscale)
-static float GetHeightValue(Color pixel)
-{
-    return (((float)pixel.r + (float)pixel.g + (float)pixel.b)/3);
-}
-
 // Load OBJ mesh data
-static VertexData LoadOBJ(const char *fileName)
+static Mesh LoadOBJ(const char *fileName)
 {
-    VertexData vData;
+    Mesh mesh = { 0 };
 
     char dataType;
     char comments[200];
@@ -1606,7 +1707,7 @@ static VertexData LoadOBJ(const char *fileName)
     if (objFile == NULL)
     {
         TraceLog(WARNING, "[%s] OBJ file could not be opened", fileName);
-        return vData;
+        return mesh;
     }
 
     // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
@@ -1717,15 +1818,15 @@ static VertexData LoadOBJ(const char *fileName)
     }
 
     // At this point all vertex data (v, vt, vn) has been gathered on midVertices, midTexCoords, midNormals
-    // Now we can organize that data into our VertexData struct
+    // Now we can organize that data into our Mesh struct
 
-    vData.vertexCount = numTriangles*3;
+    mesh.vertexCount = numTriangles*3;
 
     // Additional arrays to store vertex data as floats
-    vData.vertices = (float *)malloc(vData.vertexCount*3*sizeof(float));
-    vData.texcoords = (float *)malloc(vData.vertexCount*2*sizeof(float));
-    vData.normals = (float *)malloc(vData.vertexCount*3*sizeof(float));
-    vData.colors = (unsigned char *)malloc(vData.vertexCount*4*sizeof(unsigned char));
+    mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
+    mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char));
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -1753,32 +1854,32 @@ static VertexData LoadOBJ(const char *fileName)
                 else if (numNormals == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vNum[0], &vtNum[0], &vNum[1], &vtNum[1], &vNum[2], &vtNum[2]);
                 else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vNum[0], &vtNum[0], &vnNum[0], &vNum[1], &vtNum[1], &vnNum[1], &vNum[2], &vtNum[2], &vnNum[2]);
 
-                vData.vertices[vCounter] = midVertices[vNum[0]-1].x;
-                vData.vertices[vCounter + 1] = midVertices[vNum[0]-1].y;
-                vData.vertices[vCounter + 2] = midVertices[vNum[0]-1].z;
+                mesh.vertices[vCounter] = midVertices[vNum[0]-1].x;
+                mesh.vertices[vCounter + 1] = midVertices[vNum[0]-1].y;
+                mesh.vertices[vCounter + 2] = midVertices[vNum[0]-1].z;
                 vCounter += 3;
-                vData.vertices[vCounter] = midVertices[vNum[1]-1].x;
-                vData.vertices[vCounter + 1] = midVertices[vNum[1]-1].y;
-                vData.vertices[vCounter + 2] = midVertices[vNum[1]-1].z;
+                mesh.vertices[vCounter] = midVertices[vNum[1]-1].x;
+                mesh.vertices[vCounter + 1] = midVertices[vNum[1]-1].y;
+                mesh.vertices[vCounter + 2] = midVertices[vNum[1]-1].z;
                 vCounter += 3;
-                vData.vertices[vCounter] = midVertices[vNum[2]-1].x;
-                vData.vertices[vCounter + 1] = midVertices[vNum[2]-1].y;
-                vData.vertices[vCounter + 2] = midVertices[vNum[2]-1].z;
+                mesh.vertices[vCounter] = midVertices[vNum[2]-1].x;
+                mesh.vertices[vCounter + 1] = midVertices[vNum[2]-1].y;
+                mesh.vertices[vCounter + 2] = midVertices[vNum[2]-1].z;
                 vCounter += 3;
 
                 if (numNormals > 0)
                 {
-                    vData.normals[nCounter] = midNormals[vnNum[0]-1].x;
-                    vData.normals[nCounter + 1] = midNormals[vnNum[0]-1].y;
-                    vData.normals[nCounter + 2] = midNormals[vnNum[0]-1].z;
+                    mesh.normals[nCounter] = midNormals[vnNum[0]-1].x;
+                    mesh.normals[nCounter + 1] = midNormals[vnNum[0]-1].y;
+                    mesh.normals[nCounter + 2] = midNormals[vnNum[0]-1].z;
                     nCounter += 3;
-                    vData.normals[nCounter] = midNormals[vnNum[1]-1].x;
-                    vData.normals[nCounter + 1] = midNormals[vnNum[1]-1].y;
-                    vData.normals[nCounter + 2] = midNormals[vnNum[1]-1].z;
+                    mesh.normals[nCounter] = midNormals[vnNum[1]-1].x;
+                    mesh.normals[nCounter + 1] = midNormals[vnNum[1]-1].y;
+                    mesh.normals[nCounter + 2] = midNormals[vnNum[1]-1].z;
                     nCounter += 3;
-                    vData.normals[nCounter] = midNormals[vnNum[2]-1].x;
-                    vData.normals[nCounter + 1] = midNormals[vnNum[2]-1].y;
-                    vData.normals[nCounter + 2] = midNormals[vnNum[2]-1].z;
+                    mesh.normals[nCounter] = midNormals[vnNum[2]-1].x;
+                    mesh.normals[nCounter + 1] = midNormals[vnNum[2]-1].y;
+                    mesh.normals[nCounter + 2] = midNormals[vnNum[2]-1].z;
                     nCounter += 3;
                 }
                 else
@@ -1787,17 +1888,17 @@ static VertexData LoadOBJ(const char *fileName)
                     Vector3 norm = VectorCrossProduct(VectorSubtract(midVertices[vNum[1]-1], midVertices[vNum[0]-1]), VectorSubtract(midVertices[vNum[2]-1], midVertices[vNum[0]-1]));
                     VectorNormalize(&norm);
 
-                    vData.normals[nCounter] = norm.x;
-                    vData.normals[nCounter + 1] = norm.y;
-                    vData.normals[nCounter + 2] = norm.z;
+                    mesh.normals[nCounter] = norm.x;
+                    mesh.normals[nCounter + 1] = norm.y;
+                    mesh.normals[nCounter + 2] = norm.z;
                     nCounter += 3;
-                    vData.normals[nCounter] = norm.x;
-                    vData.normals[nCounter + 1] = norm.y;
-                    vData.normals[nCounter + 2] = norm.z;
+                    mesh.normals[nCounter] = norm.x;
+                    mesh.normals[nCounter + 1] = norm.y;
+                    mesh.normals[nCounter + 2] = norm.z;
                     nCounter += 3;
-                    vData.normals[nCounter] = norm.x;
-                    vData.normals[nCounter + 1] = norm.y;
-                    vData.normals[nCounter + 2] = norm.z;
+                    mesh.normals[nCounter] = norm.x;
+                    mesh.normals[nCounter + 1] = norm.y;
+                    mesh.normals[nCounter + 2] = norm.z;
                     nCounter += 3;
                 }
 
@@ -1805,14 +1906,14 @@ static VertexData LoadOBJ(const char *fileName)
                 {
                     // NOTE: If using negative texture coordinates with a texture filter of GL_CLAMP_TO_EDGE doesn't work!
                     // NOTE: Texture coordinates are Y flipped upside-down
-                    vData.texcoords[tcCounter] = midTexCoords[vtNum[0]-1].x;
-                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[0]-1].y;
+                    mesh.texcoords[tcCounter] = midTexCoords[vtNum[0]-1].x;
+                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[0]-1].y;
                     tcCounter += 2;
-                    vData.texcoords[tcCounter] = midTexCoords[vtNum[1]-1].x;
-                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[1]-1].y;
+                    mesh.texcoords[tcCounter] = midTexCoords[vtNum[1]-1].x;
+                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[1]-1].y;
                     tcCounter += 2;
-                    vData.texcoords[tcCounter] = midTexCoords[vtNum[2]-1].x;
-                    vData.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[2]-1].y;
+                    mesh.texcoords[tcCounter] = midTexCoords[vtNum[2]-1].x;
+                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[2]-1].y;
                     tcCounter += 2;
                 }
             } break;
@@ -1823,19 +1924,19 @@ static VertexData LoadOBJ(const char *fileName)
     fclose(objFile);
 
     // Security check, just in case no normals or no texcoords defined in OBJ
-    if (numTexCoords == 0) for (int i = 0; i < (2*vData.vertexCount); i++) vData.texcoords[i] = 0.0f;
+    if (numTexCoords == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
     
     // NOTE: We set all vertex colors to white
     // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*vData.vertexCount); i++) vData.colors[i] = 255;
+    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
 
     // Now we can free temp mid* arrays
     free(midVertices);
     free(midNormals);
     free(midTexCoords);
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in vData struct
+    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
     TraceLog(INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
-    return vData;
+    return mesh;
 }
