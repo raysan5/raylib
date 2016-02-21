@@ -101,24 +101,24 @@ Lots of code changes and lot of testing have concluded in this amazing new rayli
 notes on raylib 1.4
 -------------------
 
-On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4. For this new version, lots of parts of the library have been reviewed to better accomodate the shaders system.
-Lots of bugs have been solved and some missing features have been added to the library.
+On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4. For this new version, lots of parts of the library have been reviewed, lots of bugs have been solved and some interesting features have been added.
 
-SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TTF fonts (using stb_truetype helper library).
+First big addition is a set of [Image manipulation functions](https://github.com/raysan5/raylib/blob/develop/src/raylib.h#L673) have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image. Now a basic image processing can be done before converting the image to texture for usage.
 
-A set of Image manipulation functions have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image.
+SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TrueType Fonts (using [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h) helper library). Now raylib can read standard .fnt font data and also generate at loading a SpriteFont from a TTF file.
 
-[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed and converted to a header-only file for easier portability, functions can also be used as inline. Raycast system for 3D picking is now fully functional, including some ray collision-detection functions.
+New [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module for basic 2D physics support. Still in development but already functional. Module comes with some usage examples for basic jump and level interaction and also force-based physic movements.
 
-[gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used for any platform.
+[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed; some bugs have been solved and the module has been converted to a header-only file for easier portability, optionally, functions can also be used as inline. 
 
-Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has been added.
+[gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used on any platform providing an unified way to work with inputs and allowing the user to create multiplatform games with only one source code.
 
-Two new functions added for persistent data storage. Now raylib user can save and load game data in a file.
+Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has also been added (experimental).
 
-[physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module added. Basic 2D physics support.
+Other important improvements are the functional raycast system for 3D picking, including some ray collision-detection functions, and the addition of two simple functions for persistent data storage. Now raylib user can save and load game data in a file (only some platforms supported).
 
-Up to 8 new examples have been added to show the new raylib features... and +10 game samples to learn how to create some classic games like Arkanoid, Asteroids, Missile Commander, Snake or Tetris.
+
+Up to 8 new code examples have been added to show the new raylib features and +10 complete game samples have been provided to learn how to create some classic games like Arkanoid, Asteroids, Missile Commander, Snake or Tetris.
 
 Lots of code changes and lots of hours of hard work have concluded in this amazing new raylib 1.4.
 
