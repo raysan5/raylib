@@ -4,7 +4,7 @@ roadmap
 Current version of raylib is quite complete and functional but there is still a lot of things to add and improve.
 Here it is a wish list of features I would like to add and functions to improve.
 
-Note that around the raylib source code there are multiple TODO points with pending revisions/bugs. Check [GITHUB ISSUES][issues] for further details!
+Note that around the raylib source code there are multiple TODO points with pending revisions/bugs. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
 raylib 1.5
 
