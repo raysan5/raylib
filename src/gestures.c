@@ -184,7 +184,7 @@ void ProcessGestureEvent(GestureEvent event)
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
-            if ((currentGesture == GESTURE_DRAG)) eventTime = GetCurrentTime();
+            if (currentGesture == GESTURE_DRAG) eventTime = GetCurrentTime();
             
             if (!startMoving)
             {

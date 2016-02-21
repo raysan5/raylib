@@ -1,8 +1,6 @@
 #**************************************************************************************************
 #
-#   raylib - Basic Game
-#
-#   makefile to compile basic game for desktop platforms, Raspberry Pi and HTML5 (emscripten)
+#   raylib - makefile to compile Dr.Turtle game
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -23,9 +21,8 @@
 #
 #**************************************************************************************************
 
-# define raylib platform to compile for
-# possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
-# WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
+# define raylib platform if not defined (by default, compile for RPI)
+# Other possible platform: PLATFORM_DESKTOP
 PLATFORM ?= PLATFORM_DESKTOP
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
@@ -72,19 +69,17 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources --shell-file ../../templates/web_shell/shell.html
-    #-s ASSERTIONS=1            # to check for memory allocation errors (-O1 disables it)
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1 --shell-file ../../templates/web_shell/shell.html
+    #-s ASSERTIONS=1 --preload-file resources
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
-
-#CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
+    INCLUDES = -I. -I../../src
 # external libraries headers
 # GLFW3
     INCLUDES += -I../../external/glfw3/include
@@ -98,15 +93,15 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
+    LFLAGS = -L. -L../../src
     # external libraries to link with
     # GLFW3
     LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
     ifneq ($(PLATFORM_OS),OSX)
     # OpenAL Soft
         LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-    # GLEW: Not used, replaced by GLAD
-        #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+	# GLEW
+        LFLAGS += -L../../external/glew/lib/$(LIBPATH)
     endif
 endif
 
@@ -117,12 +112,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -pthread
-        # on XWindow could require also below libraries, just uncomment
-        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
-    else
+        LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
+    endif
     ifeq ($(PLATFORM_OS),OSX)
-        # libraries for OS X 10.9 desktop compiling
+    	# libraries for OS X 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
@@ -131,7 +124,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
         LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
     endif
-    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # libraries for Raspberry Pi compiling
@@ -139,7 +131,6 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # NOTE: Set the correct path to libraylib.bc
     LIBS = ../../src/libraylib.bc
 endif
 
@@ -147,20 +138,23 @@ endif
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
-    WINFLAGS = C:/raylib/raylib/src/resources -Wl,--subsystem,windows
+    WINFLAGS = ../../src/resources -Wl,--subsystem,windows
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
 
-# typing 'make' will invoke the first target entry in the file,
-# in this case, the 'default' target entry is basic_game
-default: basic_game
+# define all screen object files required
+SCREENS = \
 
-# compile template - basic_game
-basic_game: basic_game.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+# typing 'make' will invoke the first target entry in the file,
+# in this case, the 'default' target entry is advance_game
+default: drturtle
+
+# compile template - advance_game
+drturtle: drturtle_final_web.c $(SCREENS)
+	$(CC) -o $@$(EXT) $< $(SCREENS) $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # clean everything
 clean:
@@ -170,7 +164,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
+		find . -type f -executable -delete
+		rm -f *.o
     else
 		del *.o *.exe
     endif

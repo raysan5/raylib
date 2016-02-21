@@ -25,14 +25,14 @@ int main()
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
     Image cat = LoadImage("resources/cat.png");             // Load image in CPU memory (RAM)
-    ImageCrop(&cat, (Rectangle){ 170, 120, 280, 380 });     // Crop an image piece
+    ImageCrop(&cat, (Rectangle){ 100, 10, 280, 380 });      // Crop an image piece
     ImageFlipHorizontal(&cat);                              // Flip cropped image horizontally
     ImageResize(&cat, 150, 200);                            // Resize flipped-cropped image
     
     Image parrots = LoadImage("resources/parrots.png");     // Load image in CPU memory (RAM)
     
     // Draw one image over the other with a scaling of 1.5f
-    ImageDraw(&parrots, cat, (Rectangle){ 0, 0, cat.width, cat.height}, (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f });
+    ImageDraw(&parrots, cat, (Rectangle){ 0, 0, cat.width, cat.height }, (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f });
     ImageCrop(&parrots, (Rectangle){ 0, 50, parrots.width, parrots.height - 100 }); // Crop resulting image
     
     UnloadImage(cat);       // Unload image from RAM

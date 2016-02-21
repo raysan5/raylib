@@ -21,6 +21,8 @@
 
 #include "raylib.h"
 
+#include <math.h>        // Used for sinf()
+
 #define MAX_ENEMIES 10
 
 typedef enum { TITLE, GAMEPLAY, ENDING } GameScreen;
@@ -128,7 +130,7 @@ int main()
         framesCounter++;
         
         // Sea color tint effect
-        blue = 210 + 25 * sin(timeCounter);
+        blue = 210 + 25 * sinf(timeCounter);
         timeCounter += 0.01;
 
         // Game screens management
@@ -374,7 +376,7 @@ int main()
                     DrawTexture(title, screenWidth/2 - title.width/2, screenHeight/2 - title.height/2 - 80, WHITE);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER", (Vector2){ screenWidth/2 - 150, 480 }, GetFontBaseSize(font), 0, WHITE);
+                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER", (Vector2){ screenWidth/2 - 150, 480 }, font.size, 0, WHITE);
                 
                 } break;
                 case GAMEPLAY:
@@ -424,8 +426,8 @@ int main()
                     DrawRectangle(20, 20, foodBar, 40, ORANGE);
                     DrawRectangleLines(20, 20, 400, 40, BLACK);
                     
-                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ screenWidth - 300, 20 }, GetFontBaseSize(font), -2, ORANGE);
-                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 550, 20 }, GetFontBaseSize(font), -2, ORANGE);
+                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ screenWidth - 300, 20 }, font.size, -2, ORANGE);
+                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 550, 20 }, font.size, -2, ORANGE);
                     
                     if (gameraMode)
                     {
@@ -439,15 +441,15 @@ int main()
                     // Draw a transparent black rectangle that covers all screen
                     DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.4f));
                 
-                    DrawTextEx(font, "GAME OVER", (Vector2){ 300, 160 }, GetFontBaseSize(font)*3, -2, MAROON);
+                    DrawTextEx(font, "GAME OVER", (Vector2){ 300, 160 }, font.size*3, -2, MAROON);
                     
-                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ 680, 350 }, GetFontBaseSize(font), -2, GOLD);
-                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 290, 350 }, GetFontBaseSize(font), -2, GOLD);
-                    DrawTextEx(font, FormatText("HISCORE: %04i", hiscore), (Vector2){ 665, 400 }, GetFontBaseSize(font), -2, ORANGE);
-                    DrawTextEx(font, FormatText("HIDISTANCE: %04i", (int)hidistance), (Vector2){ 270, 400 }, GetFontBaseSize(font), -2, ORANGE);
+                    DrawTextEx(font, FormatText("SCORE: %04i", score), (Vector2){ 680, 350 }, font.size, -2, GOLD);
+                    DrawTextEx(font, FormatText("DISTANCE: %04i", (int)distance), (Vector2){ 290, 350 }, font.size, -2, GOLD);
+                    DrawTextEx(font, FormatText("HISCORE: %04i", hiscore), (Vector2){ 665, 400 }, font.size, -2, ORANGE);
+                    DrawTextEx(font, FormatText("HIDISTANCE: %04i", (int)hidistance), (Vector2){ 270, 400 }, font.size, -2, ORANGE);
                     
                     // Draw blinking text
-                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER to REPLAY", (Vector2){ screenWidth/2 - 250, 520 }, GetFontBaseSize(font), -2, LIGHTGRAY);
+                    if ((framesCounter/30) % 2) DrawTextEx(font, "PRESS ENTER to REPLAY", (Vector2){ screenWidth/2 - 250, 520 }, font.size, -2, LIGHTGRAY);
                     
                 } break;
                 default: break;

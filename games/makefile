@@ -1,10 +1,8 @@
 #**************************************************************************************************
 #
-#   raylib - Basic Game
+#   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
-#   makefile to compile basic game for desktop platforms, Raspberry Pi and HTML5 (emscripten)
-#
-#   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+#   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 #    
 #   This software is provided "as-is", without any express or implied warranty. In no event 
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -72,7 +70,7 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources --shell-file ../../templates/web_shell/shell.html
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --shell-file ../../templates/web_shell/shell.html
     #-s ASSERTIONS=1            # to check for memory allocation errors (-O1 disables it)
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
@@ -82,29 +80,29 @@ endif
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES = -I. -I../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
+    INCLUDES = -I. -I../src
 # external libraries headers
 # GLFW3
-    INCLUDES += -I../../external/glfw3/include
-# GLEW
-    INCLUDES += -I../../external/glew/include
+    INCLUDES += -I../external/glfw3/include
+# GLEW - Not required any more, replaced by GLAD
+    #INCLUDES += -I../external/glew/include
 # OpenAL Soft
-    INCLUDES += -I../../external/openal_soft/include
+    INCLUDES += -I../external/openal_soft/include
 endif
 
 # define library paths containing required libs
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    LFLAGS = -L. -L../../src -L/opt/vc/lib
+    LFLAGS = -L. -L../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
-    # external libraries to link with
+    LFLAGS = -L. -L../src
+# external libraries to link with
     # GLFW3
-    LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+        LFLAGS += -L../external/glfw3/lib/$(LIBPATH)
     ifneq ($(PLATFORM_OS),OSX)
     # OpenAL Soft
-        LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
+    	LFLAGS += -L../external/openal_soft/lib/$(LIBPATH)
     # GLEW: Not used, replaced by GLAD
         #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
     endif
@@ -118,8 +116,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # requires the following packages:
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -pthread
-        # on XWindow could require also below libraries, just uncomment
-        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+	# on XWindow could require also below libraries, just uncomment
+	#LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
@@ -129,7 +127,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+        LIBS = -lraylib -lglfw3 -lopengl32 -lopenal32 -lgdi32
     endif
     endif
 endif
@@ -140,27 +138,92 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # NOTE: Set the correct path to libraylib.bc
-    LIBS = ../../src/libraylib.bc
+    LIBS = ../src/libraylib.bc
 endif
 
 # define additional parameters and flags for windows
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
-    WINFLAGS = C:/raylib/raylib/src/resources -Wl,--subsystem,windows
+    WINFLAGS = ../src/resources -Wl,--subsystem,windows
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
 
-# typing 'make' will invoke the first target entry in the file,
-# in this case, the 'default' target entry is basic_game
-default: basic_game
+# define all object files required
+SAMPLES = \
+    arkanoid \
+    asteroids \
+    asteroids_survival \
+    floppy \
+    gold_fever \
+    gorilas \
+    missile_commander \
+    pang \
+    snake \
+    space_invaders \
+    tetris \
+    fix_dylib \
 
-# compile template - basic_game
-basic_game: basic_game.c
+
+# typing 'make' will invoke the first target entry in the file,
+# in this case, the 'default' target entry is raylib
+default: samples
+
+# compile all game samples
+samples: $(SAMPLES)
+
+# compile game sample - arkanoid
+arkanoid: arkanoid.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile game sample - steroids
+asteroids: asteroids.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile game sample - asteroids_survival
+asteroids_survival: asteroids_survival.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile game sample - floppy
+floppy: floppy.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile game sample - gold_fever
+gold_fever: gold_fever.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile game sample - gorilas
+gorilas: gorilas.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile game sample - missile_commander
+missile_commander: missile_commander.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile game sample - pang
+pang: pang.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile game sample - snake
+snake: snake.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile game sample - space_invaders
+space_invaders: space_invaders.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile game sample - tetris
+tetris: tetris.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# fix dylib install path name for each executable (MAC)
+fix_dylib:
+ifeq ($(PLATFORM_OS),OSX)
+	find . -type f -perm +ugo+x -print0 | xargs -t -0 -R 1 -I file install_name_tool -change libglfw.3.0.dylib ../external/glfw3/lib/osx/libglfw.3.0.dylib file
+endif
 
 # clean everything
 clean:

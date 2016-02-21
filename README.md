@@ -6,7 +6,6 @@ about
 raylib is a simple and easy-to-use library to learn videogames programming.
 
 raylib is highly inspired by Borland BGI graphics lib and by XNA framework. 
-Allegro and SDL have also been analyzed for reference.
 
 NOTE for ADVENTURERS: raylib is a programming library to learn videogames programming; 
 no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
@@ -15,7 +14,7 @@ pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](h
 history
 -------
 
-I've developed videogames for some years and last year I had to taught videogames development 
+I've developed videogames for some years and 4 year ago I started teaching videogames development 
 to young people with artistic profile, most of them had never written a single line of code.
 
 I started with C language basis and, after searching for the most simple and easy-to-use library to teach 
@@ -102,25 +101,28 @@ Lots of code changes and lot of testing have concluded in this amazing new rayli
 notes on raylib 1.4
 -------------------
 
-On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4.
+On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4. For this new version, lots of parts of the library have been reviewed to better accomodate the shaders system.
+Lots of bugs have been solved and some missing features have been added to the library.
 
-Lots of parts of the library have been reviewed to better accomodate to shaders systems and multiple new features have been added.
+SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TTF fonts (using stb_truetype helper library).
 
-SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TTF fonts (using stb_truetype).
+A set of Image manipulation functions have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image.
 
-Finally, raycast system for 3D picking is working, including some ray collision-detection functions.
+[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed and converted to a header-only file for easier portability, functions can also be used as inline.
 
-A set of Image manipulation functions have been added to crop, resize, colorize, dither and even draw image-to-image or text-to-image.
+Raycast system for 3D picking is now fully functional, including some ray collision-detection functions.
 
-Two new functions added for persistent data storage.
+[raymath](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used for any platform.
 
-New [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module!
+Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has been added.
 
-Complete LUA scripting support to allow raylib usage from LUA and LUA scripts support within raylib.
+Two new functions added for persistent data storage. Now raylib user can save and load game data in a file.
 
-Up to 8 new examples have been added to show the new raylib features.
+[physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module added. Basic 2D physics support.
 
-Lots of code changes and lot of testing have concluded in this amazing new raylib 1.4.
+Up to 8 new examples have been added to show the new raylib features... and +10 game samples to learn how to create some classic games like Arkanoid, Asteroids, Missile Commander, Snake or Tetris.
+
+Lots of code changes and lots of hours of hard work have concluded in this amazing new raylib 1.4.
 
 features
 --------
@@ -130,7 +132,7 @@ features
    *  Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
    *  Unique OpenGL abstraction layer (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
    *  Powerful fonts module with multiple SpriteFonts formats support (XNA bitmap fonts, AngelCode fonts, TTF)
-   *  Outstanding texture formats support, including compressed formats
+   *  Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
    *  Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
    *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
    *  Audio loading and playing with streaming support (WAV and OGG)
@@ -181,6 +183,9 @@ contact
    * Webpage: [http://www.raylib.com](http://www.raylib.com)
    * Twitter: [http://www.twitter.com/raysan5](http://www.twitter.com/raysan5)
    * Facebook: [http://www.facebook.com/raylibgames](http://www.facebook.com/raylibgames)
+   * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
+   * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
+   * Patreon: [https://www.patreon.com/raysan5](https://www.patreon.com/raysan5)
 
 If you are using raylib and you enjoy it, please, [let me know][raysan5].
 

@@ -2,7 +2,7 @@
 #
 #   raylib - Advance Game
 #
-#   makefile to compile advance game
+#   makefile to compile advance game for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
 #   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
 #    
@@ -71,7 +71,7 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1 --shell-file ../../templates/web_shell/shell.html
     #-s ASSERTIONS=1 --preload-file resources
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
@@ -81,7 +81,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -IC:/raylib/raylib/src -IC:/raylib/raylib/src
+    INCLUDES = -I. -I../../src
 # external libraries headers
 # GLFW3
     INCLUDES += -I../../external/glfw3/include
@@ -95,7 +95,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -LC:/raylib/raylib/src -L../../../src
+    LFLAGS = -L. -L../../src
     # external libraries to link with
     # GLFW3
     LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
@@ -133,14 +133,14 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    LIBS = C:/raylib/raylib/src/libraylib.bc
+    LIBS = ../../src/libraylib.bc
 endif
 
 # define additional parameters and flags for windows
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
-    WINFLAGS = C:/raylib/raylib/src/resources -Wl,--subsystem,windows
+    WINFLAGS = ../../src/resources -Wl,--subsystem,windows
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
