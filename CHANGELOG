@@ -18,7 +18,7 @@ BIG changes:
 [textures] IMAGE MANIPULATION: Functions to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image.
 [text] SPRITEFONT SUPPORT: Added support for AngelCode fonts (.fnt) and TrueType fonts (.ttf).
 [gestures] REDESIGN: Gestures system simplified and prepared to process generic touch events, including mouse events (multiplatform).
-[physac] NEW MODULE: Basic 2D physics support, use colliders and rigit bodies; apply forces to physic objects.
+[physac] NEW MODULE: Basic 2D physics support, use colliders and rigidbodies; apply forces to physic objects.
 
 other changes:
 [rlgl] Removed GLEW library dependency, now using GLAD
