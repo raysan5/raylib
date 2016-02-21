@@ -115,8 +115,7 @@ New [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physic
 
 Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has also been added (experimental).
 
-Other important improvements are the functional raycast system for 3D picking, including some ray collision-detection functions, and the addition of two simple functions for persistent data storage. Now raylib user can save and load game data in a file (only some platforms supported).
-
+Other important improvements are the functional raycast system for 3D picking, including some ray collision-detection functions, and the addition of two simple functions for persistent data storage. Now raylib user can save and load game data in a file (only some platforms supported). A simple [easings](https://github.com/raysan5/raylib/blob/develop/src/easings.h) module has also been added for values animation.
 
 Up to 8 new code examples have been added to show the new raylib features and +10 complete game samples have been provided to learn how to create some classic games like Arkanoid, Asteroids, Missile Commander, Snake or Tetris.
 
