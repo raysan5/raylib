@@ -108,11 +108,9 @@ SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) 
 
 A set of Image manipulation functions have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image.
 
-[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed and converted to a header-only file for easier portability, functions can also be used as inline.
+[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed and converted to a header-only file for easier portability, functions can also be used as inline. Raycast system for 3D picking is now fully functional, including some ray collision-detection functions.
 
-Raycast system for 3D picking is now fully functional, including some ray collision-detection functions.
-
-[raymath](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used for any platform.
+[gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used for any platform.
 
 Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has been added.
 
