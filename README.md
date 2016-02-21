@@ -14,7 +14,7 @@ pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](h
 history
 -------
 
-I've developed videogames for some years and 4 year ago I started teaching videogames development 
+I've developed videogames for some years and 4 years ago I started teaching videogames development 
 to young people with artistic profile, most of them had never written a single line of code.
 
 I started with C language basis and, after searching for the most simple and easy-to-use library to teach 

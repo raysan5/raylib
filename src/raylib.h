@@ -697,7 +697,7 @@ void ImageFlipVertical(Image *image);                                           
 void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
 void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
 void ImageColorInvert(Image *image);                                                               // Modify image color: invert
-void ImageColorGrayscale(Image *image);                                                            // Modify bimage color: grayscale
+void ImageColorGrayscale(Image *image);                                                            // Modify image color: grayscale
 void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
 void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
