@@ -1611,7 +1611,6 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 }
 
 // Get world coordinates from screen coordinates
-// TODO: It doesn't work! It drives me crazy!
 // NOTE: Using global variables: screenWidth, screenHeight
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {

@@ -155,8 +155,6 @@ void ProcessGestureEvent(GestureEvent event)
             dragDistance = Vector2Distance(touchDownPosition, touchUpPosition);
             dragIntensity = dragDistance/(float)((GetCurrentTime() - swipeTime));
             
-            // TODO: Make getures detection resolution independant
-
             startMoving = false;
             
             // Detect GESTURE_SWIPE
