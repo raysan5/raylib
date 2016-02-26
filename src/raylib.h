@@ -1,16 +1,16 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.3.0 (www.raylib.com)
+*   raylib 1.4.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
 *   Features:
 *     Library written in plain C code (C99)
 *     Uses C# PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL (1.1, 3.3+ or ES2)
+*     Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
 *     Unique OpenGL abstraction layer [rlgl]
-*     Powerful fonts module with SpriteFonts support
-*     Multiple textures support, including DDS and mipmaps generation
+*     Powerful fonts module with SpriteFonts support (including AngelCode fonts and TTF)
+*     Multiple textures support, including compressed formats and mipmaps generation
 *     Basic 3d support for Shapes, Models, Heightmaps and Billboards
 *     Powerful math module for Vector and Matrix operations [raymath]
 *     Audio loading and playing with streaming support (WAV and OGG)
@@ -18,20 +18,21 @@
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
-*     GLEW for OpenGL extensions loading (3.3+ and ES2)
+*     GLAD for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP)
 *     stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA, PSD, GIF, HDR, PIC)
 *     stb_image_write (Sean Barret) for image writting (PNG)
 *     stb_vorbis (Sean Barret) for ogg audio loading
+*     stb_truetype (Sean Barret) for ttf fonts loading
 *     OpenAL Soft for audio device/context management
 *     tinfl for data decompression (DEFLATE algorithm)
 *
 *   Some design decisions:
-*     32bit Colors - All defined color are always RGBA
-*     SpriteFonts - All loaded sprite-font images are converted to RGBA and POT textures
+*     32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
 *     One custom default font is loaded automatically when InitWindow()
-*     If using OpenGL 3.3+ or ES2, one default shader is loaded automatically (internally defined)
+*     If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
+*     If using OpenGL 3.3 or ES2, two default shaders are loaded automatically (internally defined)
 *
-*   -- LICENSE (raylib v1.2, September 2014) --
+*   -- LICENSE --
 *
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
@@ -70,7 +71,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    #include <android_native_app_glue.h>    // Defines android_app struct
+    typedef struct android_app;     // Define android_app struct (android_native_app_glue.h)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -80,8 +81,8 @@
     #define PI 3.14159265358979323846
 #endif
 
-#define DEG2RAD (PI / 180.0f)
-#define RAD2DEG (180.0f / PI)
+#define DEG2RAD (PI/180.0f)
+#define RAD2DEG (180.0f/PI)
 
 // raylib Config Flags
 #define FLAG_FULLSCREEN_MODE    1
@@ -110,6 +111,8 @@
 #define KEY_F8              297
 #define KEY_F9              298
 #define KEY_F10             299
+#define KEY_F11             300
+#define KEY_F12             301
 #define KEY_LEFT_SHIFT      340
 #define KEY_LEFT_CONTROL    341
 #define KEY_LEFT_ALT        342
@@ -117,10 +120,56 @@
 #define KEY_RIGHT_CONTROL   345
 #define KEY_RIGHT_ALT       346
 
+// Keyboard Alpha Numeric Keys
+#define KEY_ZERO             48
+#define KEY_ONE              49
+#define KEY_TWO              50
+#define KEY_THREE            51
+#define KEY_FOUR             52
+#define KEY_FIVE             53
+#define KEY_SIX              54
+#define KEY_SEVEN            55
+#define KEY_EIGHT            56
+#define KEY_NINE             57
+#define KEY_A                65
+#define KEY_B                66
+#define KEY_C                67
+#define KEY_D                68
+#define KEY_E                69
+#define KEY_F                70
+#define KEY_G                71
+#define KEY_H                72
+#define KEY_I                73
+#define KEY_J                74
+#define KEY_K                75
+#define KEY_L                76
+#define KEY_M                77
+#define KEY_N                78
+#define KEY_O                79
+#define KEY_P                80
+#define KEY_Q                81
+#define KEY_R                82
+#define KEY_S                83
+#define KEY_T                84
+#define KEY_U                85
+#define KEY_V                86
+#define KEY_W                87
+#define KEY_X                88
+#define KEY_Y                89
+#define KEY_Z                90
+
 // Mouse Buttons
 #define MOUSE_LEFT_BUTTON     0
-#define MOUSE_RIGHT_BUTTON    1
-#define MOUSE_MIDDLE_BUTTON   2
+#if defined(PLATFORM_WEB)
+    #define MOUSE_RIGHT_BUTTON    2
+    #define MOUSE_MIDDLE_BUTTON   1
+#else
+    #define MOUSE_RIGHT_BUTTON    1
+    #define MOUSE_MIDDLE_BUTTON   2
+#endif
+
+// Touch points registered
+#define MAX_TOUCH_POINTS     2
 
 // Gamepad Number
 #define GAMEPAD_PLAYER1       0
@@ -142,6 +191,12 @@
 #define GAMEPAD_BUTTON_START   10
 
 // TODO: Review Xbox360 USB Controller Buttons
+
+// Android Physic Buttons
+#define ANDROID_BACK            4
+#define ANDROID_MENU            82
+#define ANDROID_VOLUME_UP       24
+#define ANDROID_VOLUME_DOWN     25
 
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
@@ -248,6 +303,8 @@ typedef struct SpriteFont {
     int numChars;           // Number of characters
     int *charValues;        // Characters values array
     Rectangle *charRecs;    // Characters rectangles within the texture
+    Vector2 *charOffsets;   // Characters offsets (on drawing)
+    int *charAdvanceX;      // Characters x advance (on drawing)
 } SpriteFont;
 
 // Camera type, defines a camera position/orientation in 3d space
@@ -257,17 +314,27 @@ typedef struct Camera {
     Vector3 up;
 } Camera;
 
+// Bounding box type
+typedef struct BoundingBox {
+    Vector3 min;
+    Vector3 max;
+} BoundingBox;
+
 // Vertex data definning a mesh
-// NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
-typedef struct VertexData {
-    int vertexCount;
-    float *vertices;            // 3 components per vertex
-    float *texcoords;           // 2 components per vertex
-    float *normals;             // 3 components per vertex
-    unsigned char *colors;      // 4 components per vertex
-    unsigned int vaoId;
-    unsigned int vboId[4];
-} VertexData;
+typedef struct Mesh {
+    int vertexCount;            // num vertices
+    float *vertices;            // vertex position (XYZ - 3 components per vertex)
+    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
+    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
+    float *normals;             // vertex normals (XYZ - 3 components per vertex)
+    float *tangents;            // vertex tangents (XYZ - 3 components per vertex)
+    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex)
+    
+    BoundingBox bounds;         // mesh limits defined by min and max points
+    
+    unsigned int vaoId;         // OpenGL Vertex Array Object id
+    unsigned int vboId[6];      // OpenGL Vertex Buffer Objects id (6 types of vertex data)
+} Mesh;
 
 // Shader type (generic shader)
 typedef struct Shader {
@@ -285,8 +352,7 @@ typedef struct Shader {
     int colorLoc;         // Color attibute location point (vertex shader)
 
     // Uniforms
-    int projectionLoc;    // Projection matrix uniform location point (vertex shader)
-    int modelviewLoc;     // ModeView matrix uniform location point (vertex shader)
+    int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
     int tintColorLoc;     // Color uniform location point (fragment shader)
     
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
@@ -294,12 +360,31 @@ typedef struct Shader {
     int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
 } Shader;
 
+// Material type
+// TODO: Redesign material-shaders-textures system
+typedef struct Material {
+    //Shader shader;
+
+    //Texture2D texDiffuse;      // Diffuse texture
+    //Texture2D texNormal;       // Normal texture
+    //Texture2D texSpecular;     // Specular texture
+    
+    Color colDiffuse;
+    Color colAmbient;
+    Color colSpecular;
+    
+    float glossiness;
+    float normalDepth;
+} Material;
+
 // 3d Model type
+// TODO: Replace shader/testure by material
 typedef struct Model {
-    VertexData mesh;
+    Mesh mesh;
     Matrix transform;
     Texture2D texture;    // Only for OpenGL 1.1, on newer versions this should be in the shader
     Shader shader;
+	//Material material;
 } Model;
 
 // Ray type (useful for raycast)
@@ -352,21 +437,64 @@ typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
 typedef enum {
-    GESTURE_NONE        = 1,
-    GESTURE_TAP         = 2,
-    GESTURE_DOUBLETAP   = 4,
-    GESTURE_HOLD        = 8,
-    GESTURE_DRAG        = 16,
-    GESTURE_SWIPE_RIGHT = 32,
-    GESTURE_SWIPE_LEFT  = 64,
-    GESTURE_SWIPE_UP    = 128,
-    GESTURE_SWIPE_DOWN  = 256,
-    GESTURE_PINCH_IN    = 512,
-    GESTURE_PINCH_OUT   = 1024
+    GESTURE_NONE        = 0,
+    GESTURE_TAP         = 1,
+    GESTURE_DOUBLETAP   = 2,
+    GESTURE_HOLD        = 4,
+    GESTURE_DRAG        = 8,
+    GESTURE_SWIPE_RIGHT = 16,
+    GESTURE_SWIPE_LEFT  = 32,
+    GESTURE_SWIPE_UP    = 64,
+    GESTURE_SWIPE_DOWN  = 128,
+    GESTURE_PINCH_IN    = 256,
+    GESTURE_PINCH_OUT   = 512
 } Gestures;
+
+// Touch action (fingers or mouse)
+typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
+
+// Gesture events
+// NOTE: MAX_TOUCH_POINTS fixed to 2
+typedef struct {
+    int touchAction;
+    int pointCount;
+    int pointerId[MAX_TOUCH_POINTS];
+    Vector2 position[MAX_TOUCH_POINTS];
+} GestureEvent;
 
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
+
+// Collider types
+typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
+
+// Transform struct
+typedef struct Transform {
+    Vector2 position;
+    float rotation;
+    Vector2 scale;
+} Transform;
+
+// Rigidbody struct
+typedef struct Rigidbody {
+    bool enabled;
+    float mass;
+    Vector2 acceleration;
+    Vector2 velocity;
+    bool isGrounded;
+    bool isContact;     // Avoid freeze player when touching floor
+    bool applyGravity;
+    float friction;     // 0.0f to 1.0f
+    float bounciness;   // 0.0f to 1.0f
+} Rigidbody;
+
+// Collider struct
+typedef struct Collider {
+    bool enabled;
+    ColliderType type;
+    Rectangle bounds;   // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
+    int radius;         // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
+} Collider;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -399,12 +527,15 @@ int GetScreenHeight(void);                                  // Get current scree
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
+void BeginDrawingEx(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with extended parameters
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
-void Begin3dMode(Camera cam);                               // Initializes 3D mode for drawing (Camera setup)
+void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
 void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 
-Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // TODO: Returns a ray trace from mouse position
+Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
+Vector2 WorldToScreen(Vector3 position, Camera camera);     // Returns the screen space position from a 3d world space position
+Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 float GetFPS(void);                                         // Returns current FPS
@@ -412,6 +543,9 @@ float GetFrameTime(void);                                   // Returns time in s
 
 Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
+float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
+float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array
+float *MatrixToFloat(Matrix mat);                           // Converts Matrix to float array
 
 int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
@@ -422,6 +556,9 @@ void ShowLogo(void);                                        // Activates raylib 
 bool IsFileDropped(void);                                   // Check if a file have been dropped into window
 char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
 void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
+
+void StorageSaveValue(int position, int value);             // Storage save integer value (to defined position)
+int StorageLoadValue(int position);                         // Storage load integer value (from defined position)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -445,10 +582,10 @@ int GetMouseWheelMove(void);                            // Returns mouse wheel m
 
 void ShowCursor(void);                                  // Shows cursor
 void HideCursor(void);                                  // Hides cursor
+void EnableCursor(void);                                // Enables cursor
+void DisableCursor(void);                               // Disables cursor
 bool IsCursorHidden(void);                              // Returns true if cursor is not visible
-#endif
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
 bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
@@ -457,31 +594,31 @@ bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad b
 bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
+int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)                   
+Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)
+
+#if defined(PLATFORM_ANDROID)
+bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
+bool IsButtonDown(int button);                          // Detect if an android physic button is being pressed
+bool IsButtonReleased(int button);                      // Detect if an android physic button has been released
+#endif
+
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
-int GetTouchX(void);                                    // Returns touch position X (relative to screen size)
-int GetTouchY(void);                                    // Returns touch position Y (relative to screen size)
-Vector2 GetTouchPosition(void);                         // Returns touch position XY (relative to screen size)
-
-#if defined(PLATFORM_WEB)
-void InitGesturesSystem(void);                          // Init gestures system (web)
-#elif defined(PLATFORM_ANDROID)
-void InitGesturesSystem(struct android_app *app);       // Init gestures system (android)
-#endif
+void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 bool IsGestureDetected(void);                           // Check if a gesture have been detected
 int GetGestureType(void);                               // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+int GetTouchPointsCount(void);                          // Get touch points count
 
-float GetGestureDragIntensity(void);                    // Get gesture drag intensity
-float GetGestureDragAngle(void);                        // Get gesture drag angle
+float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
-int GetGestureHoldDuration(void);                       // Get gesture hold time in frames
-float GetGesturePinchDelta(void);                       // Get gesture pinch delta
+float GetGestureDragAngle(void);                        // Get gesture drag angle
+Vector2 GetGesturePinchVector(void);                    // Get gesture pinch delta
 float GetGesturePinchAngle(void);                       // Get gesture pinch angle
-#endif
 
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: camera)
@@ -540,16 +677,31 @@ Image LoadImageEx(Color *pixels, int width, int height);                        
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image data from RAW file
 Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
-Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load a texture from raw data into GPU memory
+Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat);                     // Load a texture from raw data into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
 Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
 Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
-void ImageConvertToPOT(Image *image, Color fillColor);                                             // Convert image to POT (power-of-two)
-void ImageConvertFormat(Image *image, int newFormat);                                              // Convert image data to desired format
+void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
+void ImageFormat(Image *image, int newFormat);                                                     // Convert image data to desired format
+void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
+Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
+void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
+void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
+void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
+Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
+Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint);       // Create an image from text (custom sprite font)
+void ImageFlipVertical(Image *image);                                                              // Flip image vertically
+void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
+void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
+void ImageColorInvert(Image *image);                                                               // Modify image color: invert
+void ImageColorGrayscale(Image *image);                                                            // Modify image color: grayscale
+void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
+void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
+void UpdateTexture(Texture2D texture, void *pixels);                                               // Update GPU texture with new data
 
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
@@ -573,6 +725,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
 
 void DrawFPS(int posX, int posY);                                                                  // Shows current FPS on top-left corner
 const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
+const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
@@ -597,26 +750,31 @@ void DrawGizmo(Vector3 position);                                               
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
-Model LoadModelEx(VertexData data);                                                                // Load a 3d model (from vertex data)
+Model LoadModelEx(Mesh data);                                                                      // Load a 3d model (from vertex data)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
-Model LoadHeightmap(Image heightmap, float maxHeight);                                             // Load a heightmap image as a 3d model
+Model LoadHeightmap(Image heightmap, Vector3 size);                                                // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                                                     // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
-void DrawModelEx(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color tint);      // Draw a model with extended parameters
+void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model with extended parameters
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
+void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model wires (with texture if set) with extended parameters
+void DrawBoundingBox(BoundingBox box);                                                             // Draw bounding box (wires)
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
+BoundingBox CalculateBoundingBox(Mesh mesh);                                                       // Calculate mesh bounding box limits
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);                     // Detect collision between two spheres
 bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);               // Detect collision between two boxes
 bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere);       // Detect collision between box and sphere
+bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                              // Detect collision between ray and sphere
+bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint);   // Detect collision between ray and sphere with extended parameters and collision point detection
+bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox);                                           // Detect collision between ray and box
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Detect collision of player radius with cubicmap
                                                                                                                 // NOTE: Return the normal vector of the impacted surface
-
 //------------------------------------------------------------------------------------
 // Shaders System Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
@@ -633,12 +791,34 @@ bool IsPosproShaderEnabled(void);                                   // Check if 
 int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
+void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);                   // Set shader uniform value (matrix 4x4)
 void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
 void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
 void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
 void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+
+//----------------------------------------------------------------------------------
+// Physics System Functions (engine-module: physac)
+//----------------------------------------------------------------------------------
+void InitPhysics(int maxPhysicElements);                                    // Initialize all internal physics values
+void UnloadPhysics();                                                       // Unload physic elements arrays
+
+void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot
+void AddCollider(int index, Collider collider);                             // Initialize a new Collider with parameters to internal index slot
+
+void ApplyPhysics(int index, Vector2 *position);                            // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
+void SetRigidbodyEnabled(int index, bool state);                            // Set enabled state to a defined rigidbody
+void SetRigidbodyVelocity(int index, Vector2 velocity);                     // Set velocity of rigidbody (without considering of mass value)
+void SetRigidbodyAcceleration(int index, Vector2 acceleration);             // Set acceleration of rigidbody (without considering of mass value)
+void AddRigidbodyForce(int index, Vector2 force);                           // Set rigidbody force (considering mass value)
+void AddForceAtPosition(Vector2 position, float intensity, float radius);   // Add a force to all enabled rigidbodies at a position
+
+void SetColliderEnabled(int index, bool state);                             // Set enabled state to a defined collider
+
+Rigidbody GetRigidbody(int index);                                          // Returns the internal rigidbody data defined by index parameter
+Collider GetCollider(int index);                                            // Returns the internal collider data defined by index parameter
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

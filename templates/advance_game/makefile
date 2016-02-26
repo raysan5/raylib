@@ -72,7 +72,8 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources --shell-file ../../templates/web_shell/shell.html
+    #-s ASSERTIONS=1            # to check for memory allocation errors (-O1 disables it)
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
@@ -83,12 +84,12 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../../src
+    INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
 # external libraries headers
 # GLFW3
     INCLUDES += -I../../external/glfw3/include
-# GLEW
-    INCLUDES += -I../../external/glew/include
+# GLEW - Not required any more, replaced by GLAD
+    #INCLUDES += -I../external/glew/include
 # OpenAL Soft
     INCLUDES += -I../../external/openal_soft/include
 endif
@@ -97,15 +98,15 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
 else
-    LFLAGS = -L. -L../../src
+    LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
     # external libraries to link with
     # GLFW3
-    LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+        LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
     ifneq ($(PLATFORM_OS),OSX)
     # OpenAL Soft
         LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-	# GLEW
-        LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+    # GLEW: Not used, replaced by GLAD
+        #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
     endif
 endif
 
@@ -115,8 +116,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
-        # libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -pthread
+        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -pthread
+        # on XWindow could require also below libraries, just uncomment
+        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
@@ -126,7 +129,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+        LIBS = -lraylib -lglfw3 -lopengl32 -lopenal32 -lgdi32
     endif
     endif
 endif
@@ -136,6 +139,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
+    # NOTE: Set the correct path to libraylib.bc
     LIBS = ../../src/libraylib.bc
 endif
 
@@ -143,7 +147,7 @@ endif
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
-    WINFLAGS = ../../src/resources -Wl,--subsystem,windows
+    WINFLAGS = C:/raylib/raylib/src/resources -Wl,--subsystem,windows
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)

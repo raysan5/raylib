@@ -160,9 +160,9 @@ void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int he
 
 // Creates a PNG image file from an array of pixel data
 // NOTE: Uses stb_image_write
-void WritePNG(const char *fileName, unsigned char *imgData, int width, int height)
+void WritePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
-    stbi_write_png(fileName, width, height, 4, imgData, width*4); // It WORKS!!!
+    stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
 }
 #endif
 
@@ -267,7 +267,7 @@ void RecordMalloc(int mallocType, int mallocSize, const char *msg)
 const char *GetExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
-    if(!dot || dot == fileName) return "";
+    if (!dot || dot == fileName) return "";
     return (dot + 1);
 }
 

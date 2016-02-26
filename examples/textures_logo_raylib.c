@@ -38,8 +38,7 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawTexture(texture, screenWidth/2 - texture.width/2,
-                        screenHeight/2 - texture.height/2, WHITE);
+            DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
 
             DrawText("this IS a texture!", 360, 370, 10, GRAY);
 

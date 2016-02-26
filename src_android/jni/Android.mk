@@ -39,15 +39,14 @@ LOCAL_MODULE     := raylib
 LOCAL_SRC_FILES  :=\
                     ../../src/core.c \
                     ../../src/rlgl.c \
-                    ../../src/raymath.c \
                     ../../src/textures.c \
                     ../../src/text.c \
                     ../../src/shapes.c \
+                    ../../src/gestures.c \
                     ../../src/models.c \
                     ../../src/utils.c \
                     ../../src/audio.c \
                     ../../src/stb_vorbis.c \
-                    ../../src/gestures.c \
 
 # Required includes paths (.h)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/include $(LOCAL_PATH)/../../src

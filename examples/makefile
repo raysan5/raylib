@@ -85,8 +85,8 @@ else
 # external libraries headers
 # GLFW3
     INCLUDES += -I../external/glfw3/include
-# GLEW
-    INCLUDES += -I../external/glew/include
+# GLEW - Not required any more, replaced by GLAD
+    #INCLUDES += -I../external/glew/include
 # OpenAL Soft
     INCLUDES += -I../external/openal_soft/include
 endif
@@ -102,8 +102,8 @@ else
     ifneq ($(PLATFORM_OS),OSX)
     # OpenAL Soft
     	LFLAGS += -L../external/openal_soft/lib/$(LIBPATH)
-	# GLEW
-    	LFLAGS += -L../external/glew/lib/$(LIBPATH)
+	# GLEW - Not required any more, replaced by GLAD
+    	#LFLAGS += -L../external/glew/lib/$(LIBPATH)
     endif
 endif
 
@@ -113,8 +113,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
-        # libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -pthread
+        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -pthread
+	# on XWindow could require also below libraries, just uncomment
+	#LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
@@ -124,7 +126,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+        LIBS = -lraylib -lglfw3 -lopengl32 -lopenal32 -lgdi32
     endif
     endif
 endif
@@ -134,6 +136,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
+    # just adjust the correct path to libraylib.bc
     LIBS = ../src/libraylib.bc
 endif
 
@@ -158,6 +161,8 @@ EXAMPLES = \
     core_random_values \
     core_color_select \
     core_drop_files \
+    core_storage_values \
+    core_gestures_detection \
     core_3d_mode \
     core_3d_picking \
     core_3d_camera_free \
@@ -174,10 +179,14 @@ EXAMPLES = \
     textures_raw_data \
     textures_formats_loading \
     textures_particles_trail_blending \
+    textures_image_processing \
+    textures_image_drawing \
     text_sprite_fonts \
+    text_bmfont_ttf \
     text_rbmf_fonts \
     text_format_text \
     text_font_select \
+    text_writing_anim \
     models_geometric_shapes \
     models_box_collisions \
     models_billboard \
@@ -191,8 +200,6 @@ EXAMPLES = \
     audio_sound_loading \
     audio_music_stream \
     fix_dylib \
-
-    #core_input_gamepad \
 
 
 # typing 'make' will invoke the first target entry in the file,
@@ -214,16 +221,24 @@ core_input_keys: core_input_keys.c
 core_input_mouse: core_input_mouse.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [core] example - gamepad input
-core_input_gamepad: core_input_gamepad.c
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-else
-	@echo core_input_gamepad: Only supported on desktop platform
-endif
-
 # compile [core] example - mouse wheel
 core_mouse_wheel: core_mouse_wheel.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [core] example - gamepad input
+core_input_gamepad: core_input_gamepad.c
+ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+else
+	@echo core_input_gamepad: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
+endif
+
+# compile [core] example - generate random values
+core_random_values: core_random_values.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [core] example - color selection (collision detection)
+core_color_select: core_color_select.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - drop files
@@ -231,15 +246,19 @@ core_drop_files: core_drop_files.c
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
-	@echo core_drop_files: Only supported on desktop platform
+	@echo core_drop_files: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB or PLATFORM_RPI
 endif
-    
-# compile [core] example - generate random values
-core_random_values: core_random_values.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [core] example - color selection (collision detection)
-core_color_select: core_color_select.c
+# compile [core] example - storage values
+core_storage_values: core_storage_values.c
+ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+else
+	@echo core_storage_values: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
+endif
+
+# compile [core] example - gestures detection
+core_gestures_detection: core_gestures_detection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 3d mode
@@ -306,8 +325,20 @@ textures_formats_loading: textures_formats_loading.c
 textures_particles_trail_blending: textures_particles_trail_blending.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
     
+# compile [textures] example - texture image processing
+textures_image_processing: textures_image_processing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [textures] example - texture image drawing
+textures_image_drawing: textures_image_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
 # compile [text] example - sprite fonts loading
 text_sprite_fonts: text_sprite_fonts.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [text] example - bmfonts and ttf loading
+text_bmfont_ttf: text_bmfont_ttf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - raylib bitmap fonts (rBMF)
@@ -320,6 +351,10 @@ text_format_text: text_format_text.c
 
 # compile [text] example - font selection program
 text_font_select: text_font_select.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - text writing animation
+text_writing_anim: text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic geometric 3d shapes

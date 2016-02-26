@@ -55,6 +55,10 @@ int main()
             ClearBackground(RAYWHITE);
 
             // NOTE: Using DrawTexturePro() we can easily rotate and scale the part of the texture we draw
+            // sourceRec defines the part of the texture we use for drawing
+            // destRec defines the rectangle where our texture part will fit (scaling it to fit)
+            // origin defines the point of the texture used as reference for rotation and scaling
+            // rotation defines the texture rotation (using origin as rotation point)
             DrawTexturePro(guybrush, sourceRec, destRec, origin, rotation, WHITE);
 
             DrawLine(destRec.x, 0, destRec.x, screenHeight, GRAY);

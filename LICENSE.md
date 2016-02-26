@@ -41,7 +41,7 @@ All rBMF fonts provided with raylib are free to use (freeware) and have been des
 3d models
 ---------
 
-dwarf 3d model used in examples is created by Daniel Moreno and licensed as Creative Commons Attribution-NonCommercial 3.0
+dwarf 3d model used in examples is created by David Moreno and licensed as Creative Commons Attribution-NonCommercial 3.0
 
 Full license provided below:
 

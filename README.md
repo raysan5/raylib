@@ -6,7 +6,6 @@ about
 raylib is a simple and easy-to-use library to learn videogames programming.
 
 raylib is highly inspired by Borland BGI graphics lib and by XNA framework. 
-Allegro and SDL have also been analyzed for reference.
 
 NOTE for ADVENTURERS: raylib is a programming library to learn videogames programming; 
 no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
@@ -15,7 +14,7 @@ pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](h
 history
 -------
 
-I've developed videogames for some years and last year I had to taught videogames development 
+I've developed videogames for some years and 4 years ago I started teaching videogames development 
 to young people with artistic profile, most of them had never written a single line of code.
 
 I started with C language basis and, after searching for the most simple and easy-to-use library to teach 
@@ -34,7 +33,7 @@ I've coded quite a lot in C# and XNA and I really love it (in fact, my students 
 so, I decided to use C# language notation and XNA naming conventions. That way, students can jump from 
 raylib to XNA, MonoGame or similar libs extremely easily.
 
-raylib started as a weekend project and after three months of hard work, first version was published.
+raylib started as a weekend project and after three months of hard work, raylib 1.0 was published on November 2013.
 
 Enjoy it.
 
@@ -99,15 +98,38 @@ Most of the examples have been completely rewritten and +10 new examples have be
 
 Lots of code changes and lot of testing have concluded in this amazing new raylib 1.3.
 
+notes on raylib 1.4
+-------------------
+
+On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4. For this new version, lots of parts of the library have been reviewed, lots of bugs have been solved and some interesting features have been added.
+
+First big addition is a set of [Image manipulation functions](https://github.com/raysan5/raylib/blob/develop/src/raylib.h#L673) have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image. Now a basic image processing can be done before converting the image to texture for usage.
+
+SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TrueType Fonts (using [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h) helper library). Now raylib can read standard .fnt font data and also generate at loading a SpriteFont from a TTF file.
+
+New [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module for basic 2D physics support. Still in development but already functional. Module comes with some usage examples for basic jump and level interaction and also force-based physic movements.
+
+[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed; some bugs have been solved and the module has been converted to a header-only file for easier portability, optionally, functions can also be used as inline. 
+
+[gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used on any platform providing an unified way to work with inputs and allowing the user to create multiplatform games with only one source code.
+
+Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has also been added (experimental).
+
+Other important improvements are the functional raycast system for 3D picking, including some ray collision-detection functions, and the addition of two simple functions for persistent data storage. Now raylib user can save and load game data in a file (only some platforms supported). A simple [easings](https://github.com/raysan5/raylib/blob/develop/src/easings.h) module has also been added for values animation.
+
+Up to 8 new code examples have been added to show the new raylib features and +10 complete game samples have been provided to learn how to create some classic games like Arkanoid, Asteroids, Missile Commander, Snake or Tetris.
+
+Lots of code changes and lots of hours of hard work have concluded in this amazing new raylib 1.4.
+
 features
 --------
  
    *  Written in plain C code (C99)
    *  Uses C# PascalCase/camelCase notation
    *  Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
-   *  Unique OpenGL abstraction layer: [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
-   *  Powerful fonts module with SpriteFonts support
-   *  Outstanding texture formats support, including compressed formats
+   *  Unique OpenGL abstraction layer (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
+   *  Powerful fonts module with multiple SpriteFonts formats support (XNA bitmap fonts, AngelCode fonts, TTF)
+   *  Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
    *  Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
    *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
    *  Audio loading and playing with streaming support (WAV and OGG)
@@ -145,126 +167,12 @@ Since raylib v1.1, you can download a Windows Installer package for easy install
 building source (generate libraylib.a)
 --------------------------------------
 
-**Building raylib sources on desktop platforms:**
-
-_Step 1:_ Using MinGW make tool, just navigate from command line to `raylib/src/` folder and type:
-
-    mingw32-make PLATFORM=PLATFORM_DESKTOP
-
-NOTE: By default raylib compiles using OpenGL 1.1 to maximize compatibility; to use OpenGL 3.3 just type:
-
-    mingw32-make PLATFORM=PLATFORM_DESKTOP GRAPHICS=GRAPHICS_API_OPENGL_33
-
-**Building raylib sources on Raspberry Pi:**
-
-_Step 1._ Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
-
-    sudo apt-get install openal1
-
-_Step 2._ Navigate from command line to `raylib/src/` folder and type:
-
-    make
-
-**Building raylib sources for Android:**
-
-_Step 1._ Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
-
-> Download and decompress on C: [Android SDK r23](http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
-
-> Download and decompress on C: [Android NDK r10b](http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
-
-> Download and decompress on C: [Apache Ant 1.9.4](http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
-
-_Step 2._ Create the following environment variables with the correct paths: 
-
-    ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
-    ANDROID_NDK_ROOT = C:\android-ndk-r10b
-    ANT_HOME = C:\apache-ant-1.9.4
-
-_Step 3._ Navigate from command line to folder `raylib/template_android/` and type:
-
-    %ANDROID_NDK_ROOT%\ndk-build
-
-NOTE: libraylib.a will be generated in folder `raylib/src_android/obj/local/armeabi/`, it must be copied
-to Android project; if using `raylib/template_android` project, copy it to `raylib/template_android/jni/libs/`.
-
-**Building raylib sources for Web (HTML5)**
-
-_Step 1._ Make sure you have installed emscripten SDK:
-
-> Download latest version from [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). I recommend downloading the [Portable Emscripten SDK for Windows](https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-1.25.0-portable-64bit.zip) and decompress it in `C:\emsdk-1.25.0` folder. After that, follow the portable version installation instructions.
-
-_Step 2._ Open `raylib/src/makefile` on Notepad++ and run the script named `raylib_makefile_emscripten`
+Check raylib wiki page: [Building source](https://github.com/raysan5/raylib/wiki/Building-source)
 
 building examples
 -----------------
 
-**Building raylib examples on desktop platforms:**
-
-_Step 1:_ Using MinGW make tool, just navigate from command line to `raylib/examples/` folder and type:
-
-    mingw32-make PLATFORM=PLATFORM_DESKTOP
-
-NOTE: Make sure the following libs (and their headers) are placed on their respectibe MinGW folders:
-
-    libglfw3.a    - GLFW3 (static version)
-    libglew32.a   - GLEW, OpenGL extension loading, only required if using OpenGL 3.3+ or ES2
-    libopenal32.a - OpenAL Soft, audio device management
-
-**Building raylib examples on Raspberry Pi:**
-
-_Step 1._ Make sure you have installed in your Raspberry Pi OpenAL Soft library for audio:
-
-    sudo apt-get install openal1
-
-_Step 2._ Navigate from command line to `raylib/examples/` folder and type:
-
-    make
-
-**Building raylib examples for HTML5 (emscripten):**
-
-_Step 1._ Make sure you have installed emscripten SDK:
-
-> Download latest version from [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). I recommend downloading the [Portable Emscripten SDK for Windows](https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-1.25.0-portable-64bit.zip) and decompress it in `C:\emsdk-1.25.0` folder. After that, follow the portable version installation instructions.
-
-_Step 2._ Open `raylib/examples/makefile` on Notepad++ and run the script named `raylib_makefile_emscripten`
-
-NOTE: At this moment, raylib examples are not ready to directly compile for HTML5, code needs to be reorganized due to the way web browsers work. To see how code should be refactored to fit compilation for web, check [core_basic_window_web.c](https://github.com/raysan5/raylib/blob/master/examples/core_basic_window_web.c) example.
-
-**Building raylib project for Android (using template):**
-
-_Step 1._ Make sure you have installed Android SDK, Android NDK and Apache Ant tools:
-
-> Download and decompress on C: [Android SDK r23] (http://dl.google.com/android/android-sdk_r23.0.2-windows.zip)
-
-> Download and decompress on C: [Android NDK r10b] (http://dl.google.com/android/ndk/android-ndk32-r10b-windows-x86.zip)
-
-> Download and decompress on C: [Apache Ant 1.9.4] (http://ftp.cixug.es/apache//ant/binaries/apache-ant-1.9.4-bin.zip)
-
-_Step 2._ Create the following environment variables with the correct paths: 
-
-    ANDROID_SDK_TOOLS = C:\android-sdk\platform-tools
-    ANDROID_NDK_ROOT = C:\android-ndk-r10b
-    ANT_HOME = C:\apache-ant-1.9.4
-
-_Step 3._ To compile project, navigate from command line to folder `raylib/template_android/` and type:
-
-    %ANDROID_NDK_ROOT%\ndk-build
-
-_Step 4._ To generate APK, navigate to folder `raylib/template_android/` and type:
-
-    %ANT_HOME%\bin\ant debug
-
-_Step 5:_ To install APK into connected device (previously intalled drivers and activated USB debug mode on device):
-
-    %ANT_HOME%\bin\ant installd
-
-_Step 6:_ To view log output from device:
-
-    %ANDROID_SDK_TOOLS%\adb logcat -c
-    %ANDROID_SDK_TOOLS%\adb -d  logcat raylib:V *:S
-
-**If you have any doubt, [just let me know][raysan5].**
+Check raylib wiki page: [Building examples](https://github.com/raysan5/raylib/wiki/Building-examples)
 
 contact
 -------
@@ -272,6 +180,9 @@ contact
    * Webpage: [http://www.raylib.com](http://www.raylib.com)
    * Twitter: [http://www.twitter.com/raysan5](http://www.twitter.com/raysan5)
    * Facebook: [http://www.facebook.com/raylibgames](http://www.facebook.com/raylibgames)
+   * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
+   * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
+   * Patreon: [https://www.patreon.com/raysan5](https://www.patreon.com/raysan5)
 
 If you are using raylib and you enjoy it, please, [let me know][raysan5].
 
@@ -292,6 +203,9 @@ The following people have contributed in some way to make raylib project a reali
  - Daniel Moreno for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Daniel Gomez for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Sergio Martinez for helping on raygui development and tools development.
+ - Victor Fisac for developing physics raylib module (physac) and implementing light shaders and raycast system... and multiple tools and games. 
+ - Albert Martos for helping on raygui and porting examples and game-templates to Android and HTML5.
+ - Ian Eito for helping on raygui and porting examples and game-templates to Android and HTML5.
  
 	
-[raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"
+[raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"

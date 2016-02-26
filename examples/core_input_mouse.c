@@ -20,8 +20,10 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - mouse input");
 
-    int mouseX, mouseY;
-    Vector2 ballPosition = { -100.0, -100.0 };
+    Vector2 ballPosition = { -100.0f, -100.0f };
+    Color ballColor = DARKBLUE;
+    
+    SetTargetFPS(60);
     //---------------------------------------------------------------------------------------
 
     // Main game loop
@@ -29,14 +31,11 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        {
-            mouseX = GetMouseX();
-            mouseY = GetMouseY();
-
-            ballPosition.x = (float)mouseX;
-            ballPosition.y = (float)mouseY;
-        }
+        ballPosition = GetMousePosition();
+        
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ballColor = MAROON;
+        else if (IsMouseButtonPressed(MOUSE_MIDDLE_BUTTON)) ballColor = LIME;
+        else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) ballColor = DARKBLUE;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -45,9 +44,9 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawCircleV(ballPosition, 40, GOLD);
+            DrawCircleV(ballPosition, 40, ballColor);
 
-            DrawText("mouse click to draw the ball", 10, 10, 20, DARKGRAY);
+            DrawText("move ball with mouse and click mouse button to change color", 10, 10, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

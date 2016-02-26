@@ -72,7 +72,7 @@ unsigned char *DecompressData(const unsigned char *data, unsigned long compSize,
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height);
-void WritePNG(const char *fileName, unsigned char *imgData, int width, int height);
+void WritePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
 #endif
 
 void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message

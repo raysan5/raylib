@@ -22,7 +22,7 @@ int main()
 
     int framesCounter = 0;  // Variable used to count frames
 
-    int randValue = GetRandomValue(-8,5);   // Get a random integer number between -8 and 5 (both included)
+    int randValue = GetRandomValue(-8, 5);   // Get a random integer number between -8 and 5 (both included)
 
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ int main()
         // Every two seconds (120 frames) a new random value is generated
         if (((framesCounter/120)%2) == 1)
         {
-            randValue = GetRandomValue(-8,5);
+            randValue = GetRandomValue(-8, 5);
             framesCounter = 0;
         }
         //----------------------------------------------------------------------------------

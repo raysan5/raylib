@@ -67,6 +67,17 @@ typedef enum {
     GESTURE_PINCH_OUT   = 1024
 } Gestures;
 
+typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
+
+// Gesture events
+// NOTE: MAX_TOUCH_POINTS fixed to 4
+typedef struct {
+    int touchAction;
+    int pointCount;
+    int pointerId[4];
+    Vector2 position[4];
+} GestureEvent;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -79,26 +90,19 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-int GetTouchX(void);                                    // Returns touch position X (relative to screen size)
-int GetTouchY(void);                                    // Returns touch position Y (relative to screen size)
-Vector2 GetTouchPosition(void);                         // Returns touch position XY (relative to screen size)
-
-#if defined(PLATFORM_WEB)
-void InitGesturesSystem(void);                          // Init gestures system (web)
-#elif defined(PLATFORM_ANDROID)
-void InitGesturesSystem(struct android_app *app);       // Init gestures system (android)
-#endif
+void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 bool IsGestureDetected(void);                           // Check if a gesture have been detected
 int GetGestureType(void);                               // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+int GetTouchPointsCount(void);                          // Get touch points count
 
-float GetGestureDragIntensity(void);                    // Get gesture drag intensity
-float GetGestureDragAngle(void);                        // Get gesture drag angle
+float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
-int GetGestureHoldDuration(void);                       // Get gesture hold time in frames
-float GetGesturePinchDelta(void);                       // Get gesture pinch delta
+float GetGestureDragAngle(void);                        // Get gesture drag angle
+Vector2 GetGesturePinchVector(void);                    // Get gesture pinch delta
 float GetGesturePinchAngle(void);                       // Get gesture pinch angle
+
 
 #ifdef __cplusplus
 }

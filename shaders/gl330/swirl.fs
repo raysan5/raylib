@@ -5,17 +5,17 @@ in vec2 fragTexCoord;
 out vec4 fragColor;
 
 uniform sampler2D texture0;
-uniform vec4 tintColor;
+uniform vec4 fragTintColor;
 
 // NOTE: Add here your custom variables
 
-const float renderWidth = 1280; 
-const float renderHeight = 720; 
+const float renderWidth = 1280.0; 
+const float renderHeight = 720.0; 
 
 float radius = 250.0;
 float angle = 0.8;
 
-uniform vec2 center = vec2(200, 200);
+uniform vec2 center = vec2(200.0, 200.0);
 
 void main (void)
 {
@@ -35,7 +35,7 @@ void main (void)
     }
 
     tc += center;
-    vec3 color = texture2D(texture0, tc/texSize).rgb;
+    vec3 color = texture(texture0, tc/texSize).rgb;
 
     fragColor = vec4(color, 1.0);;
 }
