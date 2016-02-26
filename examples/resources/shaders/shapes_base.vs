@@ -1,4 +1,4 @@
-#version 110
+#version 330
 
 attribute vec3 vertexPosition;
 attribute vec2 vertexTexCoord;

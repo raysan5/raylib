@@ -1,28 +1,37 @@
 roadmap
 -------
 
-Current version of raylib is quite complete and functional but there is still a lot of things I would like to improve.
-Here it is a list of features I would like to add and functions to improve.
+Current version of raylib is quite complete and functional but there is still a lot of things to add and improve.
+Here it is a wish list of features I would like to add and functions to improve.
 
-Around the source code there are multiple TODO points with pending revisions/bugs and here it is a list of desired features.
+Note that around the raylib source code there are multiple TODO points with pending revisions/bugs. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
-raylib v1.4
+raylib 1.5
 
-   [DONE] TTF fonts support (using stb_truetype)
-   [DONE] Raycast system for 3D picking (including collisions detection)
-   [DONE] Floyd-Steinberg dithering on 16bit image format conversion
-   [DONE] Basic image manipulation functions (crop, resize, draw...)
-   [DONE] Storage load/save data functionality
-   [DONE] Physics module
-   [IN PROGRESS] LUA scripting support (wrapper to lua lib)
-   - Remove GLEW dependency (use another solution... glad?)
-   - Basic image procedural generation (spot, gradient, noise...)
-   - Basic GPU stats sytem (memory, draws, time...)
-   
-   
-Check [GITHUB ISSUES][issues] for further details on implementation status for this features!
+    Redesign Shaders/Textures system, use Materials
+    Redesign physics module (physac)
+    Basic GPU stats sytem (memory, draws, time...)
+    Procedural image generation functions (spot, gradient, noise...)
+    Procedural mesh generation functions (cube, cone, sphere...)
+    Touch-based camera controls for Android
+    Skybox and Fog support
+    [IN PROGRESS] LUA scripting support (wrapper to lua lib)
+
+raylib 1.4
+
+    [DONE] TTF fonts support (using stb_truetype)
+    [DONE] Raycast system for 3D picking (including collisions detection)
+    [DONE] Floyd-Steinberg dithering on 16bit image format conversion
+    [DONE] Basic image manipulation functions (crop, resize, draw...)
+    [DONE] Storage load/save data functionality
+    [DONE] Add Physics module (physac)
+    [DONE] Remove GLEW dependency -> Replaced by GLAD
+    [DONE] Redesign Raspberry PI inputs system
+    [DONE] Redesign gestures module to be multiplatform
+    [DONE] Module raymath as header-only and functions inline
+    [DONE] Add Easings module (easings.h)
 
 Any feature missing? Do you have a request? [Let me know!][raysan5]
 
-[raysan5]: mailto:raysan@raysanweb.com "Ramon Santamaria - Ray San"
+[raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"
 [isssues]: https://github.com/raysan5/raylib/issues

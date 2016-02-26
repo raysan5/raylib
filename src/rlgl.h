@@ -167,9 +167,6 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
         // Uniforms
         int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
-    
-        int modelLoc;         // Model transformation matrix uniform location point (vertex shader)
-        int viewLoc;          // View transformation matrix uniform location point (vertex shader)
         int tintColorLoc;     // Color uniform location point (fragment shader)
         
         int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
@@ -265,7 +262,7 @@ void rlglInitPostpro(void);                     // Initialize postprocessing sys
 void rlglDrawPostpro(void);                     // Draw with postprocessing shader
 
 Model rlglLoadModel(Mesh mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglDrawModel(Model model, Vector3 position, float rotationAngle, Vector3 rotationAxis, Vector3 scale, Color color, bool wires);
+void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color color, bool wires);
 
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 

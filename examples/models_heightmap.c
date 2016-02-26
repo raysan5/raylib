@@ -21,13 +21,13 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - heightmap loading and drawing");
 
     // Define our custom camera to look into our 3d world
-    Camera camera = {{ 24.0f, 18.0f, 24.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    Camera camera = {{ 18.0f, 16.0f, 18.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
 
-    Image image = LoadImage("resources/heightmap.png");     // Load heightmap image (RAM)
-    Texture2D texture = LoadTextureFromImage(image);        // Convert image to texture (VRAM)
-    Model map = LoadHeightmap(image, 32);                   // Load heightmap model
-    SetModelTexture(&map, texture);                         // Bind texture to model
-    Vector3 mapPosition = { -16.0f, 0.0f, -16.0f };         // Set model position (depends on model scaling!)
+    Image image = LoadImage("resources/heightmap.png");         // Load heightmap image (RAM)
+    Texture2D texture = LoadTextureFromImage(image);            // Convert image to texture (VRAM)
+    Model map = LoadHeightmap(image, (Vector3){ 16, 8, 16 });   // Load heightmap model with defined size
+    SetModelTexture(&map, texture);                             // Bind texture to model
+    Vector3 mapPosition = { -8.0f, 0.0f, -8.0f };               // Set model position (depends on model scaling!)
 
     UnloadImage(image);                 // Unload heightmap image from RAM, already uploaded to VRAM
     
@@ -54,7 +54,9 @@ int main()
             Begin3dMode(camera);
 
                 // NOTE: Model is scaled to 1/4 of its original size (128x128 units)
-                DrawModel(map, mapPosition, 1/4.0f, RED);
+                DrawModel(map, mapPosition, 1.0f, RED);
+
+                DrawGrid(20, 1.0f);
 
             End3dMode();
             

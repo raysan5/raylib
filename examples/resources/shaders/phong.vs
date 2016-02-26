@@ -7,7 +7,9 @@ in vec3 vertexNormal;
 
 // Projection and model data
 uniform mat4 mvpMatrix;
+
 uniform mat4 modelMatrix;
+//uniform mat4 viewMatrix;  // Not used
 
 // Attributes to fragment shader
 out vec2 fragTexCoord;

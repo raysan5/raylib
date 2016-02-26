@@ -72,7 +72,8 @@ else
     CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources --shell-file ../../templates/web_shell/shell.html
+    #-s ASSERTIONS=1            # to check for memory allocation errors (-O1 disables it)
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
@@ -87,8 +88,8 @@ else
 # external libraries headers
 # GLFW3
     INCLUDES += -I../../external/glfw3/include
-# GLEW
-    INCLUDES += -I../../external/glew/include
+# GLEW - Not required any more, replaced by GLAD
+    #INCLUDES += -I../external/glew/include
 # OpenAL Soft
     INCLUDES += -I../../external/openal_soft/include
 endif
@@ -100,12 +101,12 @@ else
     LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
     # external libraries to link with
     # GLFW3
-    LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+        LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
     ifneq ($(PLATFORM_OS),OSX)
     # OpenAL Soft
         LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-	# GLEW
-        LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+    # GLEW: Not used, replaced by GLAD
+        #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
     endif
 endif
 
@@ -128,7 +129,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+        LIBS = -lraylib -lglfw3 -lopengl32 -lopenal32 -lgdi32
     endif
     endif
 endif
@@ -138,8 +139,8 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # just adjust the correct path to libraylib.bc
-    LIBS = C:/raylib/raylib/src/libraylib.bc
+    # NOTE: Set the correct path to libraylib.bc
+    LIBS = ../../src/libraylib.bc
 endif
 
 # define additional parameters and flags for windows

@@ -2,7 +2,8 @@
 *
 *   raygui - raylib IMGUI system (Immedite Mode GUI)
 *
-*   Copyright (c) 2015 Kevin Gato, Daniel Nicolás, Sergio Martinez and Ramon Santamaria
+*   Initial design by Kevin Gato and Daniel Nicolás
+*   Reviewed by Albert Martos, Ian Eito, Sergio Martinez and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -856,10 +857,6 @@ char *GuiTextBox(Rectangle bounds, char *text)
     return text;
 }
 
-// TODO: GuiBox?
-// TODO: GuiWindow?
-// TODO: GuiPanel?
-
 // Save current GUI style into a text file
 void SaveGuiStyle(const char *fileName)
 {
@@ -873,12 +870,14 @@ void SaveGuiStyle(const char *fileName)
 // Load GUI style from a text file
 void LoadGuiStyle(const char *fileName)
 {
+    #define MAX_STYLE_PROPERTIES    128
+    
     typedef struct {
         char id[64];
         int value;
     } StyleProperty;
     
-    StyleProperty *styleProp = (StyleProperty *)malloc(128*sizeof(StyleProperty));; 
+    StyleProperty *styleProp = (StyleProperty *)malloc(MAX_STYLE_PROPERTIES*sizeof(StyleProperty));; 
     int counter = 0;
     
     FILE *styleFile = fopen(fileName, "rt");

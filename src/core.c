@@ -53,8 +53,7 @@
 #include <string.h>         // String function definitions, memset()
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-
+#if defined(PLATFORM_DESKTOP)
     #define GLAD_EXTENSIONS_LOADER
     #if defined(GLEW_EXTENSIONS_LOADER)
         #define GLEW_STATIC
@@ -62,14 +61,16 @@
     #elif defined(GLAD_EXTENSIONS_LOADER)
         #include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
     #endif
+#endif
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
-    #include <GLFW/glfw3.h>     // GLFW3 library: Windows, OpenGL context and Input management
+    #include <GLFW/glfw3.h>       // GLFW3 library: Windows, OpenGL context and Input management
 
     #ifdef __linux
-        #define GLFW_EXPOSE_NATIVE_X11 // Linux specific definitions for getting
-        #define GLFW_EXPOSE_NATIVE_GLX // native functions like glfwGetX11Window
-        #include <GLFW/glfw3native.h>  // which are required for hiding mouse
+        #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
+        #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
+        #include <GLFW/glfw3native.h>    // which are required for hiding mouse
     #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
@@ -101,11 +102,6 @@
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
     #include "EGL/eglext.h"     // Khronos EGL library - Extensions
     #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
-
-    #define DEFAULT_KEYBOARD_DEV    "/dev/input/event0"     // Not used, keyboard inputs are read raw from stdin
-    #define DEFAULT_MOUSE_DEV       "/dev/input/event1"
-    //#define DEFAULT_MOUSE_DEV     "/dev/input/mouse0"
-    #define DEFAULT_GAMEPAD_DEV     "/dev/input/js0"
 #endif
 
 #if defined(PLATFORM_WEB)
@@ -116,6 +112,22 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
+#define STORAGE_FILENAME     "storage.data"
+
+#if defined(PLATFORM_RPI)
+    // Old device inputs system
+    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO            // Standard input
+    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"
+    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js0"
+
+    // New device input events (evdev) (must be detected)
+    //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
+    //#define DEFAULT_MOUSE_DEV       "/dev/input/eventN"
+    //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
+    
+    #define MOUSE_SENSITIVITY         0.8f
+    #define MAX_GAMEPAD_BUTTONS       11
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -140,24 +152,24 @@ static int currentButtonState[128] = { 1 };     // Required to check if button p
 #elif defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
-// Input variables (mouse/keyboard)
+// Keyboard input variables
+// NOTE: For keyboard we will use the standard input (but reconfigured...)
+static struct termios defaultKeyboardSettings;  // Used to store default keyboard settings
+static int defaultKeyboardMode;                 // Used to store default keyboard mode
+
+// Mouse input variables
 static int mouseStream = -1;                    // Mouse device file descriptor
 static bool mouseReady = false;                 // Flag to know if mouse is ready
 pthread_t mouseThreadId;                        // Mouse reading thread id
 
-// NOTE: For keyboard we will use the standard input (but reconfigured...)
-static int defaultKeyboardMode;                 // Used to store default keyboard mode
-static struct termios defaultKeyboardSettings;  // Used to staore default keyboard settings
-
-static int keyboardMode = 0;    // Keyboard mode: 1 (KEYCODES), 2 (ASCII)
-
-// This array maps Unix keycodes to ASCII equivalent and to GLFW3 equivalent for special function keys (>256)
-const short UnixKeycodeToASCII[128] = { 256, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 259, 9, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 91, 93, 257, 341, 65, 83, 68,
-                            70, 71, 72, 74, 75, 76, 59, 39, 96, 340, 92, 90, 88, 67, 86, 66, 78, 77, 44, 46, 47, 344, -1, 342, 32, -1, 290, 291, 292, 293, 294, 295, 296,
-                            297, 298, 299, -1, -1, -1, -1, -1, 45, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 257, 345, 47, -1,
-                            346, -1, -1, 265, -1, 263, 262, -1, 264, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-
+// Gamepad input variables
 static int gamepadStream = -1;                  // Gamepad device file descriptor
+static bool gamepadReady = false;               // Flag to know if gamepad is ready
+pthread_t gamepadThreadId;                      // Gamepad reading thread id
+
+int gamepadButtons[MAX_GAMEPAD_BUTTONS];
+int gamepadAxisX = 0;
+int gamepadAxisY = 0;
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -180,7 +192,7 @@ static bool fullscreen = false;             // Fullscreen mode (useful only for 
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-static Vector2 touchPosition;               // Touch position on screen
+static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
@@ -208,7 +220,9 @@ static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
 static int lastKeyPressed = -1;             // Register last key pressed
 
 static bool cursorHidden;                   // Track if cursor is hidden
+#endif
 
+#if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
 static int dropFilesCount = 0;              // Count stored strings
 #endif
@@ -242,17 +256,20 @@ static void LogoAnimation(void);                        // Plays raylib logo app
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 
 #if defined(PLATFORM_RPI)
+static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
+static void ProcessKeyboard(void);                      // Process keyboard events
+static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
 static void *MouseThread(void *arg);                    // Mouse reading thread
-static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
-static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitGamepad(void);                          // Init raw gamepad input
+static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);  // GLFW3 Keyboard Callback, runs on key pressed
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);     // GLFW3 Mouse Button Callback, runs on mouse button pressed
+static void MouseCursorPosCallback(GLFWwindow *window, double x, double y);                // GLFW3 Cursor Position Callback, runs on mouse move
 static void CharCallback(GLFWwindow *window, unsigned int key);                            // GLFW3 Char Key Callback, runs on key pressed (get char value)
 static void ScrollCallback(GLFWwindow *window, double xoffset, double yoffset);            // GLFW3 Srolling Callback, runs on mouse wheel
 static void CursorEnterCallback(GLFWwindow *window, int enter);                            // GLFW3 Cursor Enter Callback, cursor enters client area
@@ -320,6 +337,10 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
+    
+    // TODO: Add gamepad support (not provided by GLFW3 on emscripten)
+    //emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenInputCallback);
+    //emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenInputCallback);
 #endif
 
     mousePosition.x = (float)screenWidth/2.0f;
@@ -355,7 +376,7 @@ void InitWindow(int width, int height, struct android_app *state)
     if (orientation == ACONFIGURATION_ORIENTATION_PORT) TraceLog(INFO, "PORTRAIT window orientation");
     else if (orientation == ACONFIGURATION_ORIENTATION_LAND) TraceLog(INFO, "LANDSCAPE window orientation");
 
-    // TODO: Review, it doesn't work...
+    // TODO: Automatic orientation doesn't seem to work
     if (width <= height)
     {
         AConfiguration_setOrientation(app->config, ACONFIGURATION_ORIENTATION_PORT);
@@ -463,6 +484,7 @@ bool IsWindowMinimized(void)
 }
 
 // Fullscreen toggle
+// TODO: When destroying window context is lost and resources too, take care!
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -590,7 +612,7 @@ void Begin3dMode(Camera camera)
 
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.1f*tan(45.0f*PI/360.0f);
+    double top = 0.1*tan(45.0*PI/360.0);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
@@ -629,7 +651,7 @@ void SetTargetFPS(int fps)
 // Returns current FPS
 float GetFPS(void)
 {
-    return (float)(1/frameTime);
+    return (float)(1.0/frameTime);
 }
 
 // Returns time in seconds for one frame
@@ -754,7 +776,7 @@ void ShowLogo(void)
     showLogo = true;
 }
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP)
 // Check if a file have been dropped into window
 bool IsFileDropped(void)
 {
@@ -790,10 +812,10 @@ void StorageSaveValue(int position, int value)
     FILE *storageFile = NULL;
 
     // Try open existing file to append data
-    storageFile = fopen("storage.data", "rb+");      
+    storageFile = fopen(STORAGE_FILENAME, "rb+");      
 
     // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen("storage.data", "wb");
+    if (!storageFile) storageFile = fopen(STORAGE_FILENAME, "wb");
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
     else
@@ -821,7 +843,7 @@ int StorageLoadValue(int position)
     int value = 0;
     
     // Try open existing file to append data
-    FILE *storageFile = fopen("storage.data", "rb");      
+    FILE *storageFile = fopen(STORAGE_FILENAME, "rb");      
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
     else
@@ -888,8 +910,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     MatrixInvert(&matProjView);
     
     // Calculate far and near points
-    Quaternion near = { deviceCoords.x, deviceCoords.y, 0, 1};
-    Quaternion far = { deviceCoords.x, deviceCoords.y, 1, 1};
+    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f};
+    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f};
     
     // Multiply points by unproject matrix
     QuaternionTransform(&near, matProjView);
@@ -936,6 +958,12 @@ Vector2 WorldToScreen(Vector3 position, Camera camera)
     Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)GetScreenWidth(), (ndcPos.y + 1.0f)/2.0f*(float)GetScreenHeight() };
     
     return screenPosition;
+}
+
+// Get transform matrix for camera
+Matrix GetCameraMatrix(Camera camera)
+{
+    return MatrixLookAt(camera.position, camera.target, camera.up);
 }
 
 //----------------------------------------------------------------------------------
@@ -1091,23 +1119,44 @@ void ShowCursor()
     cursorHidden = false;
 }
 
+// Disable mouse cursor
+void DisableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+    cursorHidden = true;
+}
+
+// Enable mouse cursor
+void EnableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
+    cursorHidden = false;
+}
+
 // Check if mouse cursor is hidden
 bool IsCursorHidden()
 {
     return cursorHidden;
 }
-#endif
 
-// TODO: Enable gamepad usage on Rapsberry Pi
-// NOTE: emscripten not implemented
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+// NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
+
 // Detect if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
-    int result = glfwJoystickPresent(gamepad);
+    bool result = false;
+    
+#if defined(PLATFORM_RPI)
+    if (gamepadReady && (gamepad == 0)) result = true;
+#else
+    if (glfwJoystickPresent(gamepad) == 1) result = true;
+#endif
 
-    if (result == 1) return true;
-    else return false;
+    return result;
 }
 
 // Return axis movement vector for a gamepad
@@ -1116,10 +1165,15 @@ Vector2 GetGamepadMovement(int gamepad)
     Vector2 vec = { 0, 0 };
 
     const float *axes;
-    int axisCount;
-
+    int axisCount = 0;
+    
+#if defined(PLATFORM_RPI)
+    // TODO: Get gamepad axis information
+    // Use gamepadAxisX, gamepadAxisY
+#else
     axes = glfwGetJoystickAxes(gamepad, &axisCount);
-
+#endif
+    
     if (axisCount >= 2)
     {
         vec.x = axes[0];    // Left joystick X
@@ -1152,16 +1206,23 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 // Detect if a gamepad button is being pressed
 bool IsGamepadButtonDown(int gamepad, int button)
 {
+    bool result = false;
+    
+#if defined(PLATFORM_RPI)
+    // Get gamepad buttons information
+    if ((gamepad == 0) && (gamepadButtons[button] == 1)) result = true;
+    else result = false;
+#else
     const unsigned char *buttons;
     int buttonsCount;
-
+    
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
-    if ((buttons != NULL) && (buttons[button] == GLFW_PRESS))
-    {
-        return true;
-    }
-    else return false;
+    if ((buttons != NULL) && (buttons[button] == GLFW_PRESS)) result = true;
+    else result = false;
+#endif
+    
+    return result;
 }
 
 // Detect if a gamepad button has NOT been pressed once
@@ -1184,41 +1245,59 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 // Detect if a mouse button is NOT being pressed
 bool IsGamepadButtonUp(int gamepad, int button)
 {
+    bool result = false;
+
+#if defined(PLATFORM_RPI)
+    // Get gamepad buttons information
+    if ((gamepad == 0) && (gamepadButtons[button] == 0)) result = true;
+    else result = false;
+#else
     const unsigned char *buttons;
     int buttonsCount;
 
     buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
 
-    if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE))
-    {
-        return true;
-    }
-    else return false;
-}
+    if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE)) result = true;
+    else result = false;
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    return result;
+}
+#endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+
 // Returns touch position X
 int GetTouchX(void)
 {
-    return (int)touchPosition.x;
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    return (int)touchPosition[0].x;
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+    return GetMouseX();
+#endif
 }
 
 // Returns touch position Y
 int GetTouchY(void)
 {
-    return (int)touchPosition.y;
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    return (int)touchPosition[0].y;
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+    return GetMouseY();
+#endif
 }
 
 // Returns touch position XY
-// TODO: touch position should be scaled depending on display size and render size
-Vector2 GetTouchPosition(void)
+// TODO: Touch position should be scaled depending on display size and render size
+Vector2 GetTouchPosition(int index)
 {
-    Vector2 position = touchPosition;
+    Vector2 position = { -1.0f, -1.0f };
+    
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+    if (index < MAX_TOUCH_POINTS) position = touchPosition[index];
+    else TraceLog(WARNING, "Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
-        // TODO: Seems to work ok but... review!
+        // TODO: Review touch position scaling for screenSize vs displaySize
         position.x = position.x*((float)screenWidth/(float)(displayWidth - renderOffsetX)) - renderOffsetX/2;
         position.y = position.y*((float)screenHeight/(float)(displayHeight - renderOffsetY)) - renderOffsetY/2;
     }
@@ -1227,10 +1306,14 @@ Vector2 GetTouchPosition(void)
         position.x = position.x*((float)renderWidth/(float)displayWidth) - renderOffsetX/2;
         position.y = position.y*((float)renderHeight/(float)displayHeight) - renderOffsetY/2;
     }
+#else   // PLATFORM_DESKTOP, PLATFORM_RPI
+    if (index == 0) position = GetMousePosition();
+#endif
 
     return position;
 }
 
+#if defined(PLATFORM_ANDROID)
 // Detect if a button has been pressed once
 bool IsButtonPressed(int button)
 {
@@ -1333,10 +1416,24 @@ static void InitDisplay(int width, int height)
     if (fullscreen)
     {
         // At this point we need to manage render size vs screen size
-        // NOTE: This function uses and modifies global module variables: screenWidth/screenHeight and renderWidth/renderHeight and downscaleView
+        // NOTE: This function uses and modifies global module variables: 
+        //       screenWidth/screenHeight - renderWidth/renderHeight - downscaleView
         SetupFramebufferSize(displayWidth, displayHeight);
+        
+        // TODO: SetupFramebufferSize() does not consider properly display video modes.
+        // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
+        // and so, framebuffer is not scaled properly to some monitors.
+        
+        int count; 
+        const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+        
+        for (int i = 0; i < count; i++)
+        {
+            // TODO: Check modes[i]->width;
+            // TODO: Check modes[i]->height;
+        }
 
-        window = glfwCreateWindow(renderWidth, renderHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
+        window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
     }
     else
     {
@@ -1345,10 +1442,8 @@ static void InitDisplay(int width, int height)
         
 #if defined(PLATFORM_DESKTOP)
         // Center window on screen
-        const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        
-        int windowPosX = mode->width/2 - screenWidth/2;
-        int windowPosY = mode->height/2 - screenHeight/2;
+        int windowPosX = displayWidth/2 - screenWidth/2;
+        int windowPosY = displayHeight/2 - screenHeight/2;
         
         if (windowPosX < 0) windowPosX = 0;
         if (windowPosY < 0) windowPosY = 0;
@@ -1379,6 +1474,7 @@ static void InitDisplay(int width, int height)
     glfwSetCursorEnterCallback(window, CursorEnterCallback);
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
+    glfwSetCursorPosCallback(window, MouseCursorPosCallback);    // Track mouse position changes
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
     glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
@@ -1388,6 +1484,7 @@ static void InitDisplay(int width, int height)
 
     glfwMakeContextCurrent(window);
 
+#if defined(PLATFORM_DESKTOP)
     // Extensions initialization for OpenGL 3.3
     if (rlGetVersion() == OPENGL_33)
     {
@@ -1419,6 +1516,7 @@ static void InitDisplay(int width, int height)
             //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
         #endif
     }
+#endif
     
     // Enables GPU v-sync, so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
     // If not set, swap interval uses GPU v-sync configuration
@@ -1622,8 +1720,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 #endif
     else currentKeyState[key] = action;
 
-    // HACK for GuiTextBox, to deteck back key
-    // TODO: Review...
+    // TODO: Review (and remove) this HACK for GuiTextBox, to deteck back key
     if ((key == 259) && (action == GLFW_PRESS)) lastKeyPressed = 3;
 }
 
@@ -1631,6 +1728,59 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     currentMouseState[button] = action;
+    
+#define ENABLE_MOUSE_GESTURES
+#if defined(ENABLE_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent;
+    
+    // Register touch actions
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) gestureEvent.touchAction = TOUCH_UP;
+    
+    // NOTE: TOUCH_MOVE event is registered in MouseCursorPosCallback()
+    
+    // Assign a pointer ID
+    gestureEvent.pointerId[0] = 0;
+    
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+    
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = GetMousePosition();
+    
+    // Normalize gestureEvent.position[0] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+	
+	// Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+// GLFW3 Cursor Position Callback, runs on mouse move
+static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
+{
+#define ENABLE_MOUSE_GESTURES
+#if defined(ENABLE_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent;
+
+    gestureEvent.touchAction = TOUCH_MOVE;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+    
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = (Vector2){ (float)x, (float)y };
+    
+    // Normalize gestureEvent.position[0] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
 }
 
 // GLFW3 Char Key Callback, runs on key pressed (get char value)
@@ -1831,8 +1981,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        touchPosition.x = AMotionEvent_getX(event, 0);
-        touchPosition.y = AMotionEvent_getY(event, 0);
+        // Get first touch position
+        touchPosition[0].x = AMotionEvent_getX(event, 0);
+        touchPosition[0].y = AMotionEvent_getY(event, 0);
+        
+        // Get second touch position
+        touchPosition[1].x = AMotionEvent_getX(event, 1);
+        touchPosition[1].y = AMotionEvent_getY(event, 1);
     }
     else if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -1876,10 +2031,21 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     // Register touch points count
     gestureEvent.pointCount = AMotionEvent_getPointerCount(event);
     
+    // Register touch points id
+    gestureEvent.pointerId[0] = AMotionEvent_getPointerId(event, 0);
+    gestureEvent.pointerId[1] = AMotionEvent_getPointerId(event, 1);
+    
     // Register touch points position
     // NOTE: Only two points registered
     gestureEvent.position[0] = (Vector2){ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
     gestureEvent.position[1] = (Vector2){ AMotionEvent_getX(event, 1), AMotionEvent_getY(event, 1) };
+    
+    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+    
+    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[1].y /= (float)GetScreenHeight();
     
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
@@ -1948,7 +2114,7 @@ static bool GetKeyStatus(int key)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetKey(window, key);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check virtual keyboard (?)
+    // TODO: Check for virtual keyboard
     return false;
 #elif defined(PLATFORM_RPI)
     // NOTE: Keys states are filled in PollInputEvents()
@@ -1963,10 +2129,10 @@ static bool GetMouseButtonStatus(int button)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetMouseButton(window, button);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check virtual keyboard (?)
+    // TODO: Check for virtual keyboard
     return false;
 #elif defined(PLATFORM_RPI)
-    // NOTE: mouse buttons array is filled on PollInputEvents()
+    // NOTE: Mouse buttons states are filled in PollInputEvents()
     return currentMouseState[button];
 #endif
 }
@@ -1974,11 +2140,9 @@ static bool GetMouseButtonStatus(int button)
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-
-    // TODO: Remove this requirement...
+    // NOTE: Gestures update must be called every frame to reset gestures correctly
+    // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
-#endif
     
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -1990,8 +2154,7 @@ static void PollInputEvents(void)
     mousePosition.x = (float)mouseX;
     mousePosition.y = (float)mouseY;
 
-    // Keyboard polling
-    // Automatically managed by GLFW3 through callback
+    // Keyboard input polling (automatically managed by GLFW3 through callback)
     lastKeyPressed = -1;
 
     // Register previous keys states
@@ -2030,199 +2193,14 @@ static void PollInputEvents(void)
 
     // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
     // we use method 2 (stdin) but maybe in a future we should change to method 1...
+    ProcessKeyboard();
 
-    // Keyboard input polling (fill keys[256] array with status)
-    int numKeysBuffer = 0;      // Keys available on buffer
-    char keysBuffer[32];        // Max keys to be read at a time
+    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
 
-    // Reset pressed keys array
-    for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
-
-    // Read availables keycodes from stdin
-    numKeysBuffer = read(STDIN_FILENO, keysBuffer, 32);     // POSIX system call
-
-    // Fill array with pressed keys
-    for (int i = 0; i < numKeysBuffer; i++)
-    {
-        //TraceLog(INFO, "Bytes on keysBuffer: %i", numKeysBuffer);
-
-        int key = keysBuffer[i];
-
-        if (keyboardMode == 2)  // scancodes
-        {
-            // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
-            // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
-            if (key == 0x1b)
-            {
-                if (keysBuffer[i+1] == 0x5b)    // Special function key
-                {
-                    switch (keysBuffer[i+2])
-                    {
-                        case 0x41: currentKeyState[265] = 1; break;
-                        case 0x42: currentKeyState[264] = 1; break;
-                        case 0x43: currentKeyState[262] = 1; break;
-                        case 0x44: currentKeyState[263] = 1; break;
-                        default: break;
-                    }
-
-                    i += 2;  // Jump to next key
-
-                    // NOTE: Other special function keys (F1, F2...) are not contempled for this keyboardMode...
-                    // ...or they are just not directly keymapped (CTRL, ALT, SHIFT)
-                }
-            }
-            else if (key == 0x0a) currentKeyState[257] = 1;     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
-            else if (key == 0x7f) currentKeyState[259] = 1;
-            else
-            {
-                TraceLog(DEBUG, "Pressed key (ASCII): 0x%02x", key);
-
-                currentKeyState[key] = 1;
-            }
-
-            // Detect ESC to stop program
-            if ((key == 0x1b) && (numKeysBuffer == 1)) windowShouldClose = true;
-        }
-        else if (keyboardMode == 1)     // keycodes (K_MEDIUMRAW mode)
-        {
-            TraceLog(DEBUG, "Pressed key (keycode): 0x%02x", key);
-            
-            // NOTE: Each key is 7-bits (high bit in the byte is 0 for down, 1 for up)
-            
-            // TODO: Review (or rewrite) this code... not clear... replace by events!
-
-            int asciiKey = -1;
-
-            // Convert keycode to some recognized key (ASCII or GLFW3 equivalent)
-            if (key < 128) asciiKey = (int)UnixKeycodeToASCII[key];
-
-            // Record equivalent key state
-            if ((asciiKey >= 0) && (asciiKey < 512)) currentKeyState[asciiKey] = 1;
-
-            // In case of letter, we also activate lower case version
-            if ((asciiKey >= 65) && (asciiKey <=90)) currentKeyState[asciiKey + 32] = 1;
-
-            // Detect KEY_ESC to stop program
-            if (key == 0x01) windowShouldClose = true;
-        }
-
-
-        // Same fucnionality as GLFW3 KeyCallback()
-        /*
-        if (asciiKey == exitKey) windowShouldClose = true;
-        else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
-        {
-            TakeScreenshot();
-        }
-        */
-    }
-
-    // TODO: Gamepad support (use events, easy!)
-/*
-    struct js_event gamepadEvent;
-
-    read(gamepadStream, &gamepadEvent, sizeof(struct js_event));
-
-    if (gamepadEvent.type == JS_EVENT_BUTTON)
-    {
-        switch (gamepadEvent.number)
-        {
-            case 0: // 1st Axis X
-            case 1: // 1st Axis Y
-            case 2: // 2st Axis X
-            case 3: // 2st Axis Y
-            case 4:
-            {
-                if (gamepadEvent.value == 1) // Button pressed, 0 release
-
-            } break;
-            // Buttons is similar, variable for every joystick
-        }
-    }
-    else if (gamepadEvent.type == JS_EVENT_AXIS)
-    {
-        switch (gamepadEvent.number)
-        {
-            case 0: // 1st Axis X
-            case 1: // 1st Axis Y
-            case 2: // 2st Axis X
-            case 3: // 2st Axis Y
-            // Buttons is similar, variable for every joystick
-        }
-    }
-*/
 #endif
 }
 
 #if defined(PLATFORM_RPI)
-// Mouse initialization (including mouse thread)
-static void InitMouse(void)
-{
-    // NOTE: We can use /dev/input/mice to read from all available mice
-    if ((mouseStream = open(DEFAULT_MOUSE_DEV, O_RDONLY|O_NONBLOCK)) < 0)
-    {
-        TraceLog(WARNING, "Mouse device could not be opened, no mouse available");
-    }
-    else
-    {
-        mouseReady = true;
-
-        int error = pthread_create(&mouseThreadId, NULL, &MouseThread, NULL);
-
-        if (error != 0) TraceLog(WARNING, "Error creating mouse input event thread");
-        else TraceLog(INFO, "Mouse device initialized successfully");
-    }
-}
-
-// Mouse reading thread
-// NOTE: We need a separate thread to avoid loosing mouse events,
-// if too much time passes between reads, queue gets full and new events override older ones...
-static void *MouseThread(void *arg)
-{
-    struct input_event mouseEvent;
-
-    while(1)
-    {
-        // NOTE: read() will return -1 if the events queue is empty
-        read(mouseStream, &mouseEvent, sizeof(struct input_event));
-
-        // Check event types
-        if (mouseEvent.type == EV_REL) // Relative motion event
-        {
-            if (mouseEvent.code == REL_X)
-            {
-                mousePosition.x += (float)mouseEvent.value;
-
-                // Screen limits X check
-                if (mousePosition.x < 0) mousePosition.x = 0;
-                if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
-            }
-
-            if (mouseEvent.code == REL_Y)
-            {
-                mousePosition.y += (float)mouseEvent.value;
-
-                // Screen limits Y check
-                if (mousePosition.y < 0) mousePosition.y = 0;
-                if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
-            }
-
-            if (mouseEvent.code == REL_WHEEL)
-            {
-                // mouseEvent.value give 1 or -1 (direction)
-            }
-        }
-        else if (mouseEvent.type == EV_KEY) // Mouse button event
-        {
-            if (mouseEvent.code == BTN_LEFT) currentMouseState[0] = mouseEvent.value;
-            if (mouseEvent.code == BTN_RIGHT) currentMouseState[1] = mouseEvent.value;
-            if (mouseEvent.code == BTN_MIDDLE) currentMouseState[2] = mouseEvent.value;
-        }
-    }
-
-    return NULL;
-}
-
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
@@ -2247,15 +2225,13 @@ static void InitKeyboard(void)
     // Set new keyboard settings (change occurs immediately)
     tcsetattr(STDIN_FILENO, TCSANOW, &keyboardNewSettings);
 
-    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE, we change that!
+    // NOTE: Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE, we change that! -> WHY???
 
     // Save old keyboard mode to restore it at the end
     if (ioctl(STDIN_FILENO, KDGKBMODE, &defaultKeyboardMode) < 0)
     {
         // NOTE: It could mean we are using a remote keyboard through ssh!
         TraceLog(WARNING, "Could not change keyboard mode (SSH keyboard?)");
-
-        keyboardMode = 2;   // ASCII
     }
     else
     {
@@ -2264,13 +2240,109 @@ static void InitKeyboard(void)
         //    - keycodes (K_MEDIUMRAW)
         //    - ASCII chars (K_XLATE)
         //    - UNICODE chars (K_UNICODE)
-        ioctl(STDIN_FILENO, KDSKBMODE, K_MEDIUMRAW);
-
-        keyboardMode = 1;   // keycodes
+        ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);
     }
 
     // Register keyboard restore when program finishes
     atexit(RestoreKeyboard);
+}
+
+// Process keyboard inputs
+// TODO: Most probably input reading and processing should be in a separate thread
+static void ProcessKeyboard(void)
+{
+    #define MAX_KEYBUFFER_SIZE      32      // Max size in bytes to read
+    
+    // Keyboard input polling (fill keys[256] array with status)
+    int bufferByteCount = 0;                // Bytes available on the buffer
+    char keysBuffer[MAX_KEYBUFFER_SIZE];    // Max keys to be read at a time
+
+    // Reset pressed keys array
+    for (int i = 0; i < 512; i++) currentKeyState[i] = 0;
+
+    // Read availables keycodes from stdin
+    bufferByteCount = read(STDIN_FILENO, keysBuffer, MAX_KEYBUFFER_SIZE);     // POSIX system call
+
+    // Fill all read bytes (looking for keys)
+    for (int i = 0; i < bufferByteCount; i++)
+    {
+        TraceLog(DEBUG, "Bytes on keysBuffer: %i", bufferByteCount);
+        
+        //printf("Key(s) bytes: ");
+        //for (int i = 0; i < bufferByteCount; i++) printf("0x%02x ", keysBuffer[i]);
+        //printf("\n");
+
+        // NOTE: If (key == 0x1b), depending on next key, it could be a special keymap code!
+        // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
+        if (keysBuffer[i] == 0x1b)
+        {
+            // Detect ESC to stop program
+            if (bufferByteCount == 1) currentKeyState[256] = 1; // raylib key: KEY_ESCAPE
+            else
+            {
+                if (keysBuffer[i + 1] == 0x5b)    // Special function key
+                {
+                    if ((keysBuffer[i + 2] == 0x5b) || (keysBuffer[i + 2] == 0x31) || (keysBuffer[i + 2] == 0x32))
+                    {
+                        // Process special function keys (F1 - F12)
+                        switch (keysBuffer[i + 3])
+                        {
+                            case 0x41: currentKeyState[290] = 1; break;    // raylib KEY_F1
+                            case 0x42: currentKeyState[291] = 1; break;    // raylib KEY_F2
+                            case 0x43: currentKeyState[292] = 1; break;    // raylib KEY_F3
+                            case 0x44: currentKeyState[293] = 1; break;    // raylib KEY_F4
+                            case 0x45: currentKeyState[294] = 1; break;    // raylib KEY_F5
+                            case 0x37: currentKeyState[295] = 1; break;    // raylib KEY_F6
+                            case 0x38: currentKeyState[296] = 1; break;    // raylib KEY_F7
+                            case 0x39: currentKeyState[297] = 1; break;    // raylib KEY_F8
+                            case 0x30: currentKeyState[298] = 1; break;    // raylib KEY_F9
+                            case 0x31: currentKeyState[299] = 1; break;    // raylib KEY_F10
+                            case 0x33: currentKeyState[300] = 1; break;    // raylib KEY_F11
+                            case 0x34: currentKeyState[301] = 1; break;    // raylib KEY_F12
+                            default: break;
+                        }
+                        
+                        if (keysBuffer[i + 2] == 0x5b) i += 4;
+                        else if ((keysBuffer[i + 2] == 0x31) || (keysBuffer[i + 2] == 0x32)) i += 5;
+                    }
+                    else
+                    {
+                        switch (keysBuffer[i + 2])
+                        {
+                            case 0x41: currentKeyState[265] = 1; break;    // raylib KEY_UP
+                            case 0x42: currentKeyState[264] = 1; break;    // raylib KEY_DOWN
+                            case 0x43: currentKeyState[262] = 1; break;    // raylib KEY_RIGHT
+                            case 0x44: currentKeyState[263] = 1; break;    // raylib KEY_LEFT
+                            default: break;
+                        }
+
+                        i += 3;  // Jump to next key
+                    }
+                    
+                    // NOTE: Some keys are not directly keymapped (CTRL, ALT, SHIFT)
+                }
+            }
+        }
+        else if (keysBuffer[i] == 0x0a) currentKeyState[257] = 1;     // raylib KEY_ENTER (don't mix with <linux/input.h> KEY_*)
+        else if (keysBuffer[i] == 0x7f) currentKeyState[259] = 1;     // raylib KEY_BACKSPACE
+        else
+        {
+            TraceLog(DEBUG, "Pressed key (ASCII): 0x%02x", keysBuffer[i]);
+            
+            // Translate lowercase a-z letters to A-Z
+            if ((keysBuffer[i] >= 97) && (keysBuffer[i] <= 122))
+            {
+                currentKeyState[(int)keysBuffer[i] - 32] = 1;
+            }
+            else currentKeyState[(int)keysBuffer[i]] = 1;
+        }
+    }
+    
+    // Check exit key (same functionality as GLFW3 KeyCallback())
+    if (currentKeyState[exitKey] == 1) windowShouldClose = true;
+    
+    // Check screen capture key
+    if (currentKeyState[301] == 1) TakeScreenshot();    // raylib key: KEY_F12 (GLFW_KEY_F12)
 }
 
 // Restore default keyboard input
@@ -2283,12 +2355,161 @@ static void RestoreKeyboard(void)
     ioctl(STDIN_FILENO, KDSKBMODE, defaultKeyboardMode);
 }
 
+// Mouse initialization (including mouse thread)
+static void InitMouse(void)
+{
+    // NOTE: We can use /dev/input/mice to read from all available mice
+    if ((mouseStream = open(DEFAULT_MOUSE_DEV, O_RDONLY|O_NONBLOCK)) < 0)
+    {
+        TraceLog(WARNING, "Mouse device could not be opened, no mouse available");
+    }
+    else
+    {
+        mouseReady = true;
+
+        int error = pthread_create(&mouseThreadId, NULL, &MouseThread, NULL);
+
+        if (error != 0) TraceLog(WARNING, "Error creating mouse input event thread");
+        else TraceLog(INFO, "Mouse device initialized successfully");
+    }
+}
+
+// Mouse reading thread
+// NOTE: We need a separate thread to avoid loosing mouse events,
+// if too much time passes between reads, queue gets full and new events override older ones...
+static void *MouseThread(void *arg)
+{
+    const unsigned char XSIGN = 1<<4, YSIGN = 1<<5;
+    
+    typedef struct { 
+        char buttons;
+        char dx, dy; 
+    } MouseEvent;
+    
+    MouseEvent mouse;
+    
+    int mouseRelX = 0;
+    int mouseRelY = 0;
+
+    while(1)
+    {
+        if (read(mouseStream, &mouse, sizeof(MouseEvent)) == (int)sizeof(MouseEvent))
+        {
+            if ((mouse.buttons & 0x08) == 0) break;   // This bit should always be set
+            
+            // Check Left button pressed
+            if ((mouse.buttons & 0x01) > 0) currentMouseState[0] = 1;
+            else currentMouseState[0] = 0;
+
+            // Check Right button pressed
+            if ((mouse.buttons & 0x02) > 0) currentMouseState[1] = 1;
+            else currentMouseState[1] = 0;
+            
+            // Check Middle button pressed
+            if ((mouse.buttons & 0x04) > 0) currentMouseState[2] = 1;
+            else currentMouseState[2] = 0;
+            
+            mouseRelX = (int)mouse.dx;
+            mouseRelY = (int)mouse.dy;
+            
+            if ((mouse.buttons & XSIGN) > 0) mouseRelX = -1*(255 - mouseRelX);
+            if ((mouse.buttons & YSIGN) > 0) mouseRelY = -1*(255 - mouseRelY);
+            
+            // NOTE: Mouse movement is normalized to not be screen resolution dependant
+            // We suppose 2*255 (max relative movement) is equivalent to screenWidth (max pixels width)
+            // Result after normalization is multiplied by MOUSE_SENSITIVITY factor
+
+            mousePosition.x += (float)mouseRelX*((float)screenWidth/(2*255))*MOUSE_SENSITIVITY;
+            mousePosition.y -= (float)mouseRelY*((float)screenHeight/(2*255))*MOUSE_SENSITIVITY;
+            
+            if (mousePosition.x < 0) mousePosition.x = 0;
+            if (mousePosition.y < 0) mousePosition.y = 0;
+            
+            if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
+            if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
+       }
+       //else read(mouseStream, &mouse, 1);   // Try to sync up again
+    }
+
+    return NULL;
+}
+
 // Init gamepad system
 static void InitGamepad(void)
 {
-    // TODO: Gamepad support
-    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
-    else TraceLog(INFO, "Gamepad device initialized successfully");
+    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) 
+    {
+        TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
+    }
+    else
+    {
+        gamepadReady = true;
+
+        int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
+
+        if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
+        else  TraceLog(INFO, "Gamepad device initialized successfully");
+    }
+}
+
+// Process Gamepad (/dev/input/js0)
+static void *GamepadThread(void *arg)
+{
+    #define JS_EVENT_BUTTON         0x01    // Button pressed/released
+    #define JS_EVENT_AXIS           0x02    // Joystick axis moved
+    #define JS_EVENT_INIT           0x80    // Initial state of device
+
+    struct js_event {
+        unsigned int time;      // event timestamp in milliseconds
+        short value;            // event value
+        unsigned char type;     // event type
+        unsigned char number;   // event axis/button number
+    };
+
+    // These values are sensible on Logitech Dual Action Rumble and Xbox360 controller
+    const int joystickAxisX = 0;
+    const int joystickAxisY = 1;
+
+    // Read gamepad event
+	struct js_event gamepadEvent;
+    
+	while (1) 
+    {
+        if (read(gamepadStream, &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
+        {
+            gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
+            
+            // Process gamepad events by type
+            if (gamepadEvent.type == JS_EVENT_BUTTON) 
+            {
+                TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                
+                if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
+                {
+                    // 1 - button pressed, 0 - button released
+                    gamepadButtons[gamepadEvent.number] = (int)gamepadEvent.value;
+                }
+            }
+            else if (gamepadEvent.type == JS_EVENT_AXIS) 
+            {
+                TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                
+                if (gamepadEvent.number == joystickAxisX) gamepadAxisX = (int)gamepadEvent.value;
+                if (gamepadEvent.number == joystickAxisY) gamepadAxisY = (int)gamepadEvent.value;
+                /*
+                switch (gamepadEvent.number)
+                {
+                    case 0: // 1st Axis X
+                    case 1: // 1st Axis Y
+                    case 2: // 2st Axis X
+                    case 3: // 2st Axis Y
+                }
+                */
+            }
+        }
+	}
+    
+    return NULL;
 }
 #endif
 
@@ -2306,6 +2527,10 @@ static void SwapBuffers(void)
 // NOTE: Global variables renderWidth/renderHeight can be modified
 static void SetupFramebufferSize(int displayWidth, int displayHeight)
 {
+    // TODO: SetupFramebufferSize() does not consider properly display video modes.
+    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
+    // and so, framebuffer is not scaled properly to some monitors.
+    
     // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
@@ -2436,6 +2661,10 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     // Register touch points count
     gestureEvent.pointCount = touchEvent->numTouches;
     
+    // Register touch points id
+    gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
+    gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
+    
     // Register touch points position
     // NOTE: Only two points registered
     // TODO: Touch data should be scaled accordingly!
@@ -2444,8 +2673,16 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
     gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
 
-    touchPosition = gestureEvent.position[0];
+    touchPosition[0] = gestureEvent.position[0];
+    touchPosition[1] = gestureEvent.position[1];
     
+    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+    
+    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[1].y /= (float)GetScreenHeight();
+
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
 
@@ -2469,7 +2706,6 @@ static void LogoAnimation(void)
     int bottomSideRecWidth = 16;
     int rightSideRecHeight = 16;
 
-    char raylib[8] = "       ";     // raylib text array, max 8 letters
     int state = 0;                  // Tracking animation states (State Machine)
     float alpha = 1.0f;             // Useful for fading
 
@@ -2509,17 +2745,6 @@ static void LogoAnimation(void)
             {
                 lettersCount++;
                 framesCounter = 0;
-            }
-
-            switch (lettersCount)
-            {
-                case 1: raylib[0] = 'r'; break;
-                case 2: raylib[1] = 'a'; break;
-                case 3: raylib[2] = 'y'; break;
-                case 4: raylib[3] = 'l'; break;
-                case 5: raylib[4] = 'i'; break;
-                case 6: raylib[5] = 'b'; break;
-                default: break;
             }
 
             if (lettersCount >= 10)     // When all letters have appeared, just fade out everything
@@ -2568,7 +2793,7 @@ static void LogoAnimation(void)
 
                 DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
 
-                DrawText(raylib, screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
+                DrawText(SubText("raylib", 0, lettersCount), screenWidth/2 - 44, screenHeight/2 + 48, 50, Fade(BLACK, alpha));
             }
 
         EndDrawing();

@@ -30,13 +30,12 @@
 #endif
 
 #include <math.h>
-#include <stdio.h>
+#include <stdlib.h>             // Required for: malloc(), free()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_ELEMENTS 1024       // Stored rigidbodies and colliders array length
-#define DECIMAL_FIX 0.26f       // Decimal margin for collision checks (avoid rigidbodies shake)
+#define DECIMAL_FIX     0.26f       // Decimal margin for collision checks (avoid rigidbodies shake)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -46,10 +45,13 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Physics physics;
-static Collider colliders[MAX_ELEMENTS];
-static Rigidbody rigidbodies[MAX_ELEMENTS];
-static bool collisionChecker = false;
+static Collider *colliders;         // Colliders array, dynamically allocated at runtime
+static Rigidbody *rigidbodies;      // Rigitbody array, dynamically allocated at runtime
+static bool collisionChecker;
+
+static int maxElements;             // Max physic elements to compute
+static bool enabled;                // Physics enabled? (true by default)
+static Vector2 gravity;             // Gravity value used for physic calculations
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declarations
@@ -61,30 +63,39 @@ static void Vector2Normalize(Vector2 *vector);
 //----------------------------------------------------------------------------------
 // Module Functions Definitions
 //----------------------------------------------------------------------------------
-void InitPhysics(void)
-{    
-    for (int i = 0; i < MAX_ELEMENTS; i++)
+void InitPhysics(int maxPhysicElements)
+{
+    maxElements = maxPhysicElements;
+    
+    colliders = (Collider *)malloc(maxElements*sizeof(Collider));
+    rigidbodies = (Rigidbody *)malloc(maxElements*sizeof(Rigidbody));
+    
+    for (int i = 0; i < maxElements; i++)
     {
+        colliders[i].enabled = false;
+        colliders[i].bounds = (Rectangle){ 0, 0, 0, 0 };
+        colliders[i].radius = 0;
+        
         rigidbodies[i].enabled = false;
         rigidbodies[i].mass = 0.0f;
-        rigidbodies[i].velocity = (Vector2){0, 0};
-        rigidbodies[i].acceleration = (Vector2){0, 0};
+        rigidbodies[i].velocity = (Vector2){ 0.0f, 0.0f };
+        rigidbodies[i].acceleration = (Vector2){ 0.0f, 0.0f };
         rigidbodies[i].isGrounded = false;
         rigidbodies[i].isContact = false;
         rigidbodies[i].friction = 0.0f;
-        
-        colliders[i].enabled = false;
-        colliders[i].bounds = (Rectangle){0, 0, 0, 0};
-        colliders[i].radius = 0;
     }
+    
+    collisionChecker = false;
+    enabled = true;
+    
+    // NOTE: To get better results, gravity needs to be 1:10 from original parameter
+    gravity = (Vector2){ 0.0f, -9.81f/10.0f };     // By default, standard gravity
 }
 
-void SetPhysics(Physics settings)
+void UnloadPhysics()
 {
-    physics = settings;
-    
-    // To get good results, gravity needs to be 1:10 from original parameter
-    physics.gravity = (Vector2){physics.gravity.x / 10, physics.gravity.y / 10};
+    free(colliders);
+    free(rigidbodies);
 }
 
 void AddCollider(int index, Collider collider)
@@ -159,8 +170,8 @@ void ApplyPhysics(int index, Vector2 *position)
         }
         
         // Apply gravity
-        rigidbodies[index].velocity.y += physics.gravity.y;
-        rigidbodies[index].velocity.x += physics.gravity.x;
+        rigidbodies[index].velocity.y += gravity.y;
+        rigidbodies[index].velocity.x += gravity.x;
         
         // Apply acceleration
         rigidbodies[index].velocity.y += rigidbodies[index].acceleration.y;
@@ -177,7 +188,7 @@ void ApplyPhysics(int index, Vector2 *position)
         // Check collision with other colliders
         collisionChecker = false;
         rigidbodies[index].isContact = false;
-        for (int j = 0; j < MAX_ELEMENTS; j++)
+        for (int j = 0; j < maxElements; j++)
         {
             if (index != j)
             {
@@ -269,7 +280,7 @@ void AddRigidbodyForce(int index, Vector2 force)
 
 void AddForceAtPosition(Vector2 position, float intensity, float radius)
 {
-    for(int i = 0; i < MAX_ELEMENTS; i++)
+    for(int i = 0; i < maxElements; i++)
     {
         if(rigidbodies[i].enabled)
         {

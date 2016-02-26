@@ -397,8 +397,8 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     int recCenterX = rec.x + rec.width/2;
     int recCenterY = rec.y + rec.height/2;
     
-    float dx = abs(center.x - recCenterX);
-    float dy = abs(center.y - recCenterY);
+    float dx = fabs(center.x - recCenterX);
+    float dy = fabs(center.y - recCenterY);
 
     if (dx > (rec.width/2 + radius)) { return false; }
     if (dy > (rec.height/2 + radius)) { return false; }
@@ -412,6 +412,7 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 }
 
 // Get collision rectangle for two rectangles collision
+// TODO: Depending on rec1 and rec2 order, it fails -> Review!
 Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 {
     Rectangle retRec = { 0, 0, 0, 0 };

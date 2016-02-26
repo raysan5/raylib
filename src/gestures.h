@@ -90,18 +90,19 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
 bool IsGestureDetected(void);                           // Check if a gesture have been detected
 int GetGestureType(void);                               // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
-void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
+int GetTouchPointsCount(void);                          // Get touch points count
 
-float GetGestureDragIntensity(void);                    // Get gesture drag intensity
-float GetGestureDragAngle(void);                        // Get gesture drag angle
+float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
-int GetGestureHoldDuration(void);                       // Get gesture hold time in frames
-float GetGesturePinchDelta(void);                       // Get gesture pinch delta
+float GetGestureDragAngle(void);                        // Get gesture drag angle
+Vector2 GetGesturePinchVector(void);                    // Get gesture pinch delta
 float GetGesturePinchAngle(void);                       // Get gesture pinch angle
+
 
 #ifdef __cplusplus
 }

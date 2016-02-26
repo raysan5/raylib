@@ -6,7 +6,6 @@ about
 raylib is a simple and easy-to-use library to learn videogames programming.
 
 raylib is highly inspired by Borland BGI graphics lib and by XNA framework. 
-Allegro and SDL have also been analyzed for reference.
 
 NOTE for ADVENTURERS: raylib is a programming library to learn videogames programming; 
 no fancy interface, no visual helpers, no auto-debugging... just coding in the most 
@@ -15,7 +14,7 @@ pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](h
 history
 -------
 
-I've developed videogames for some years and last year I had to taught videogames development 
+I've developed videogames for some years and 4 years ago I started teaching videogames development 
 to young people with artistic profile, most of them had never written a single line of code.
 
 I started with C language basis and, after searching for the most simple and easy-to-use library to teach 
@@ -102,25 +101,25 @@ Lots of code changes and lot of testing have concluded in this amazing new rayli
 notes on raylib 1.4
 -------------------
 
-On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4.
+On February 2016, after 4 months of raylib 1.3 release, it comes raylib 1.4. For this new version, lots of parts of the library have been reviewed, lots of bugs have been solved and some interesting features have been added.
 
-Lots of parts of the library have been reviewed to better accomodate to shaders systems and multiple new features have been added.
+First big addition is a set of [Image manipulation functions](https://github.com/raysan5/raylib/blob/develop/src/raylib.h#L673) have been added to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image. Now a basic image processing can be done before converting the image to texture for usage.
 
-SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TTF fonts (using stb_truetype).
+SpriteFonts system has been improved, adding support for AngelCode fonts (.fnt) and TrueType Fonts (using [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h) helper library). Now raylib can read standard .fnt font data and also generate at loading a SpriteFont from a TTF file.
 
-Finally, raycast system for 3D picking is working, including some ray collision-detection functions.
+New [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module for basic 2D physics support. Still in development but already functional. Module comes with some usage examples for basic jump and level interaction and also force-based physic movements.
 
-A set of Image manipulation functions have been added to crop, resize, colorize, dither and even draw image-to-image or text-to-image.
+[raymath](https://github.com/raysan5/raylib/blob/develop/src/raymath.h) module has been reviewed; some bugs have been solved and the module has been converted to a header-only file for easier portability, optionally, functions can also be used as inline. 
 
-Two new functions added for persistent data storage.
+[gestures](https://github.com/raysan5/raylib/blob/develop/src/gestures.c) module has redesigned and simplified, now it can process touch events from any source, including mouse. This way, gestures system can be used on any platform providing an unified way to work with inputs and allowing the user to create multiplatform games with only one source code.
 
-New [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) physics module!
+Raspberry Pi input system has been redesigned to better read raw inputs using generic Linux event handlers (keyboard:`stdin`, mouse:`/dev/input/mouse0`, gamepad:`/dev/input/js0`). Gamepad support has also been added (experimental).
 
-Complete LUA scripting support to allow raylib usage from LUA and LUA scripts support within raylib.
+Other important improvements are the functional raycast system for 3D picking, including some ray collision-detection functions, and the addition of two simple functions for persistent data storage. Now raylib user can save and load game data in a file (only some platforms supported). A simple [easings](https://github.com/raysan5/raylib/blob/develop/src/easings.h) module has also been added for values animation.
 
-Up to 8 new examples have been added to show the new raylib features.
+Up to 8 new code examples have been added to show the new raylib features and +10 complete game samples have been provided to learn how to create some classic games like Arkanoid, Asteroids, Missile Commander, Snake or Tetris.
 
-Lots of code changes and lot of testing have concluded in this amazing new raylib 1.4.
+Lots of code changes and lots of hours of hard work have concluded in this amazing new raylib 1.4.
 
 features
 --------
@@ -130,7 +129,7 @@ features
    *  Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
    *  Unique OpenGL abstraction layer (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
    *  Powerful fonts module with multiple SpriteFonts formats support (XNA bitmap fonts, AngelCode fonts, TTF)
-   *  Outstanding texture formats support, including compressed formats
+   *  Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
    *  Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
    *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
    *  Audio loading and playing with streaming support (WAV and OGG)
@@ -181,6 +180,9 @@ contact
    * Webpage: [http://www.raylib.com](http://www.raylib.com)
    * Twitter: [http://www.twitter.com/raysan5](http://www.twitter.com/raysan5)
    * Facebook: [http://www.facebook.com/raylibgames](http://www.facebook.com/raylibgames)
+   * Reddit: [https://www.reddit.com/r/raylib](https://www.reddit.com/r/raylib)
+   * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
+   * Patreon: [https://www.patreon.com/raysan5](https://www.patreon.com/raysan5)
 
 If you are using raylib and you enjoy it, please, [let me know][raysan5].
 

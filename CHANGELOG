@@ -1,10 +1,47 @@
 changelog
 ---------
 
-Current Release:    raylib 1.3.0 (03 September 2015)
+Current Release:    raylib 1.4.0 (22 February 2016)
 
 NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
 NOTE: Current Release includes all previous updates.
+
+-----------------------------------------------
+Release:     raylib 1.4.0 (22 February 2016)
+-----------------------------------------------
+NOTE: 
+  This version supposed another big improvement for raylib, inlcuding new modules and new features.
+  More than 30 new functions have been added to previous raylib version.
+  Around 8 new examples and +10 new game samples have been added.
+
+BIG changes:
+[textures] IMAGE MANIPULATION: Functions to crop, resize, colorize, flip, dither and even draw image-to-image or text-to-image.
+[text] SPRITEFONT SUPPORT: Added support for AngelCode fonts (.fnt) and TrueType fonts (.ttf).
+[gestures] REDESIGN: Gestures system simplified and prepared to process generic touch events, including mouse events (multiplatform).
+[physac] NEW MODULE: Basic 2D physics support, use colliders and rigidbodies; apply forces to physic objects.
+
+other changes:
+[rlgl] Removed GLEW library dependency, now using GLAD
+[rlgl] Implemented alternative to glGetTexImage() on OpenGL ES
+[rlgl] Using depth data on batch drawing
+[rlgl] Reviewed glReadPixels() function
+[core][rlgl] Reviewed raycast system, now 3D picking works
+[core] Android: Reviewed Android App cycle, paused if inactive
+[shaders] Implemented Blinn-Phong lighting shading model
+[textures] Implemented Floyd-Steinberg dithering - ImageDither()
+[text] Added line-break support to DrawText()
+[text] Added TrueType Fonts support (using stb_truetype)
+[models] Implement function: CalculateBoundingBox(Mesh mesh)
+[models] Added functions to check Ray collisions
+[models] Improve map resolution control on LoadHeightmap()
+[camera] Corrected small-glitch on zoom-in with mouse-wheel
+[gestures] Implemented SetGesturesEnabled() to enable only some gestures
+[gestures] Implemented GetElapsedTime() on Windows system
+[gestures] Support mouse gestures for desktop platforms
+[raymath] Complete review of the module and converted to header-only
+[easings] Added new module for easing animations
+[stb] Updated to latest headers versions
+[*] Lots of tweaks around
 
 -----------------------------------------------
 Release:     raylib 1.3.0 (01 September 2015)

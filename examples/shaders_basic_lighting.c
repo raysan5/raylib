@@ -14,6 +14,17 @@
 #define SHININESS_SPEED 1.0f
 #define LIGHT_SPEED 0.25f
 
+// Light type
+typedef struct Light {
+    Vector3 position;
+    Vector3 direction;
+    float intensity;
+    float specIntensity;
+    Color diffuse;
+    Color ambient;
+    Color specular;
+} Light;
+
 int main()
 {
     // Initialization
@@ -48,6 +59,10 @@ int main()
     int cameraLoc = GetShaderLocation(shader, "cameraPos");
     int lightLoc = GetShaderLocation(shader, "lightPos");
     
+    // Model and View matrix locations (required for lighting)
+    int modelLoc = GetShaderLocation(shader, "modelMatrix");
+    //int viewLoc = GetShaderLocation(shader, "viewMatrix");        // Not used
+    
     // Light and material definitions
     Light light;
     Material matBlinn;
@@ -62,9 +77,9 @@ int main()
     light.specIntensity = 1.0f;
     
     // Material initialization
-    matBlinn.diffuse = WHITE;
-    matBlinn.ambient = (Color){ 50, 50, 50, 255 };
-    matBlinn.specular = WHITE;
+    matBlinn.colDiffuse = WHITE;
+    matBlinn.colAmbient = (Color){ 50, 50, 50, 255 };
+    matBlinn.colSpecular = WHITE;
     matBlinn.glossiness = 50.0f;
     
     // Setup camera
@@ -81,6 +96,10 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);      // Update camera position
+        
+        // NOTE: Model transform can be set in model.transform or directly with params at draw... WATCH OUT!
+        SetShaderValueMatrix(shader, modelLoc, model.transform);            // Send model matrix to shader
+        //SetShaderValueMatrix(shader, viewLoc, GetCameraMatrix(camera));   // Not used
         
         // Glossiness input control
         if(IsKeyDown(KEY_UP)) matBlinn.glossiness += SHININESS_SPEED;
@@ -110,8 +129,8 @@ int main()
         SetShaderValue(shader, lSpecIntensityLoc, &light.specIntensity, 1);
         
         // Send material values to shader
-        SetShaderValue(shader, mAmbientLoc, ColorToFloat(matBlinn.ambient), 3);
-        SetShaderValue(shader, mSpecularLoc, ColorToFloat(matBlinn.specular), 3);
+        SetShaderValue(shader, mAmbientLoc, ColorToFloat(matBlinn.colAmbient), 3);
+        SetShaderValue(shader, mSpecularLoc, ColorToFloat(matBlinn.colSpecular), 3);
         SetShaderValue(shader, mGlossLoc, &matBlinn.glossiness, 1);
         
         // Send camera and light transform values to shader
@@ -127,7 +146,7 @@ int main()
             
             Begin3dMode(camera);
                 
-                DrawModel(model, position, 4.0f, matBlinn.diffuse);
+                DrawModel(model, position, 4.0f, matBlinn.colDiffuse);
                 DrawSphere(light.position, 0.5f, GOLD);
                 
                 DrawGrid(20, 1.0f);
