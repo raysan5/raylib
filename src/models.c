@@ -575,7 +575,7 @@ Model LoadModel(const char *fileName)
         // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
         model = rlglLoadModel(mesh);     // Upload vertex data to GPU
 
-        // Now that vertex data is uploaded to GPU, we can free arrays
+        // Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM
         // NOTE 1: We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
         // NOTE 2: ...but we could keep CPU vertex data in case we need to update the mesh
         
@@ -718,15 +718,8 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
 
     Model model = rlglLoadModel(mesh);
 
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
-    if (rlGetVersion() != OPENGL_11)
-    {
-        free(mesh.vertices);
-        free(mesh.texcoords);
-        free(mesh.normals);
-        free(mesh.colors);
-    }
+    // Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM...
+    // ...but we keep CPU RAM vertex data in case we need to update the mesh
 
     return model;
 }
@@ -1093,15 +1086,8 @@ Model LoadCubicmap(Image cubicmap)
 
     Model model = rlglLoadModel(mesh);
 
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
-    if (rlGetVersion() != OPENGL_11)
-    {
-        free(mesh.vertices);
-        free(mesh.texcoords);
-        free(mesh.normals);
-        free(mesh.colors);
-    }
+    // Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM...
+    // ...but we keep CPU RAM vertex data in case we need to update the mesh
 
     return model;
 }
@@ -1109,16 +1095,20 @@ Model LoadCubicmap(Image cubicmap)
 // Unload 3d model from memory
 void UnloadModel(Model model)
 {
-    if (rlGetVersion() == OPENGL_11)
-    {
-        free(model.mesh.vertices);
-        free(model.mesh.texcoords);
-        free(model.mesh.normals);
-    }
-
-    rlDeleteBuffers(model.mesh.vboId[0]);
-    rlDeleteBuffers(model.mesh.vboId[1]);
-    rlDeleteBuffers(model.mesh.vboId[2]);
+    // Unload mesh data
+    free(model.mesh.vertices);
+    free(model.mesh.texcoords);
+    free(model.mesh.normals);
+    if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2);
+    if (model.mesh.tangents != NULL) free(model.mesh.tangents);
+    if (model.mesh.colors != NULL) free(model.mesh.colors);
+    
+    rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
+    rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
+    rlDeleteBuffers(model.mesh.vboId[2]);   // normals
+    rlDeleteBuffers(model.mesh.vboId[3]);   // texcoords2
+    rlDeleteBuffers(model.mesh.vboId[4]);   // tangents
+    rlDeleteBuffers(model.mesh.vboId[5]);   // colors
 
     rlDeleteVertexArrays(model.mesh.vaoId);
     
