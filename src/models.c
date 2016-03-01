@@ -1213,7 +1213,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 }
 
 // Draw a bounding box with wires
-void DrawBoundingBox(BoundingBox box)
+void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
     
@@ -1223,7 +1223,7 @@ void DrawBoundingBox(BoundingBox box)
     
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
     
-    DrawCubeWires(center, size.x, size.y, size.z, GREEN);
+    DrawCubeWires(center, size.x, size.y, size.z, color);
 }
 
 // Detect collision between two spheres
