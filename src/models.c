@@ -1244,14 +1244,14 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
 
 // Detect collision between two boxes
 // NOTE: Boxes are defined by two points minimum and maximum
-bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
+bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2)
 {
     bool collision = true;
 
-    if ((maxBBox1.x >= minBBox2.x) && (minBBox1.x <= maxBBox2.x))
+    if ((box1.max.x >= box2.min.x) && (box1.min.x <= box2.max.x))
     {
-        if ((maxBBox1.y < minBBox2.y) || (minBBox1.y > maxBBox2.y)) collision = false;
-        if ((maxBBox1.z < minBBox2.z) || (minBBox1.z > maxBBox2.z)) collision = false;
+        if ((box1.max.y < box2.min.y) || (box1.min.y > box2.max.y)) collision = false;
+        if ((box1.max.z < box2.min.z) || (box1.min.z > box2.max.z)) collision = false;
     }
     else collision = false;
 
@@ -1259,30 +1259,22 @@ bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, V
 }
 
 // Detect collision between box and sphere
-bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere)
+bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere)
 {
     bool collision = false;
 
-    if ((centerSphere.x - minBBox.x > radiusSphere) && (centerSphere.y - minBBox.y > radiusSphere) && (centerSphere.z - minBBox.z > radiusSphere) &&
-            (maxBBox.x - centerSphere.x > radiusSphere) && (maxBBox.y - centerSphere.y > radiusSphere) && (maxBBox.z - centerSphere.z > radiusSphere))
-    {
-        collision = true;
-    }
-    else
-    {
-        float dmin = 0;
+    float dmin = 0;
 
-        if (centerSphere.x - minBBox.x <= radiusSphere) dmin += (centerSphere.x - minBBox.x)*(centerSphere.x - minBBox.x);
-        else if (maxBBox.x - centerSphere.x <= radiusSphere) dmin += (centerSphere.x - maxBBox.x)*(centerSphere.x - maxBBox.x);
+    if (centerSphere.x < box.min.x) dmin += pow(centerSphere.x - box.min.x, 2);
+    else if (centerSphere.x > box.max.x) dmin += pow(centerSphere.x - box.max.x, 2);
 
-        if (centerSphere.y - minBBox.y <= radiusSphere) dmin += (centerSphere.y - minBBox.y)*(centerSphere.y - minBBox.y);
-        else if (maxBBox.y - centerSphere.y <= radiusSphere) dmin += (centerSphere.y - maxBBox.y)*(centerSphere.y - maxBBox.y);
+    if (centerSphere.y < box.min.y) dmin += pow(centerSphere.y - box.min.y, 2);
+    else if (centerSphere.y > box.max.y) dmin += pow(centerSphere.y - box.max.y, 2);
 
-        if (centerSphere.z - minBBox.z <= radiusSphere) dmin += (centerSphere.z - minBBox.z)*(centerSphere.z - minBBox.z);
-        else if (maxBBox.z - centerSphere.z <= radiusSphere) dmin += (centerSphere.z - maxBBox.z)*(centerSphere.z - maxBBox.z);
+    if (centerSphere.z < box.min.z) dmin += pow(centerSphere.z - box.min.z, 2);
+    else if (centerSphere.z > box.max.z) dmin += pow(centerSphere.z - box.max.z, 2);
 
-        if (dmin <= radiusSphere*radiusSphere) collision = true;
-    }
+    if (dmin <= (radiusSphere*radiusSphere)) collision = true;
 
     return collision;
 }
@@ -1333,17 +1325,17 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 }
 
 // Detect collision between ray and bounding box
-bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
+bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 {
     bool collision = false;
     
     float t[8];
-    t[0] = (minBBox.x - ray.position.x)/ray.direction.x;
-    t[1] = (maxBBox.x - ray.position.x)/ray.direction.x;
-    t[2] = (minBBox.y - ray.position.y)/ray.direction.y;
-    t[3] = (maxBBox.y - ray.position.y)/ray.direction.y;
-    t[4] = (minBBox.z - ray.position.z)/ray.direction.z;
-    t[5] = (maxBBox.z - ray.position.z)/ray.direction.z;
+    t[0] = (box.min.x - ray.position.x)/ray.direction.x;
+    t[1] = (box.max.x - ray.position.x)/ray.direction.x;
+    t[2] = (box.min.y - ray.position.y)/ray.direction.y;
+    t[3] = (box.max.y - ray.position.y)/ray.direction.y;
+    t[4] = (box.min.z - ray.position.z)/ray.direction.z;
+    t[5] = (box.max.z - ray.position.z)/ray.direction.z;
     t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
     
