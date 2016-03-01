@@ -446,41 +446,24 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
-    // NOTE: QUADS usage require defining a texture on OpenGL 3.3+
-    if (rlGetVersion() != OPENGL_11) rlEnableTexture(whiteTexture);    // Default white texture
-
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(size.x, 1.0f, size.y);
 
-        rlBegin(RL_QUADS);
+        rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 1.0f, 0.0f);
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, -0.5f);
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, 0.5f);
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(0.5f, 0.0f, 0.5f);
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(0.5f, 0.0f, -0.5f);
+
+            rlVertex3f(0.5f, 0.0f, -0.5f);
+            rlVertex3f(-0.5f, 0.0f, -0.5f);
+            rlVertex3f(-0.5f, 0.0f, 0.5f);
+
+            rlVertex3f(-0.5f, 0.0f, 0.5f);
+            rlVertex3f(0.5f, 0.0f, 0.5f);
+            rlVertex3f(0.5f, 0.0f, -0.5f);
         rlEnd();
     rlPopMatrix();
-
-    if (rlGetVersion() != OPENGL_11) rlDisableTexture();
-}
-
-// Draw a quad
-void DrawQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Color color)
-{
-    // TODO: Calculate normals from vertex position
-    
-    rlBegin(RL_QUADS);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        //rlNormal3f(0.0f, 0.0f, 0.0f);
-
-        rlVertex3f(v1.x, v1.y, v1.z);
-        rlVertex3f(v2.x, v2.y, v2.z);
-        rlVertex3f(v3.x, v3.y, v3.z);
-        rlVertex3f(v4.x, v4.y, v4.z);
-    rlEnd();
 }
 
 // Draw a ray line
@@ -1167,8 +1150,16 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
-    // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
-    Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
+    Rectangle sourceRec = { 0, 0, texture.width, texture.height };
+    
+    DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
+}
+
+// Draw a billboard (part of a texture defined by a rectangle)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
+{
+    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
+    Vector2 sizeRatio = { size, size*(float)sourceRec.height/sourceRec.width };
 
     Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
     MatrixTranspose(&viewMatrix);
@@ -1176,51 +1167,8 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
     //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
     
-    // NOTE: Billboard locked to axis-Y
+    // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
-/*
-    a-------b
-    |       |
-    |   *   |
-    |       |
-    d-------c
-*/
-    VectorScale(&right, sizeRatio.x/2);
-    VectorScale(&up, sizeRatio.y/2);
-
-    Vector3 p1 = VectorAdd(right, up);
-    Vector3 p2 = VectorSubtract(right, up);
-
-    Vector3 a = VectorSubtract(center, p2);
-    Vector3 b = VectorAdd(center, p1);
-    Vector3 c = VectorAdd(center, p2);
-    Vector3 d = VectorSubtract(center, p1);
-
-    rlEnableTexture(texture.id);
-
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-
-        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
-        rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
-        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
-        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
-    rlEnd();
-
-    rlDisableTexture();
-}
-
-// Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
-{
-    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size, size * (float)sourceRec.height/sourceRec.width };
-
-    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&viewMatrix);
-
-    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
 /*
     a-------b
     |       |
@@ -1702,7 +1650,7 @@ static Mesh LoadOBJ(const char *fileName)
 
     // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
-    // NOTE: faces MUST be defined as TRIANGLES, not QUADS
+    // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
     while(!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
