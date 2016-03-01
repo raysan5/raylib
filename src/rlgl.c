@@ -1892,9 +1892,9 @@ void rlglGenerateMipmaps(Texture2D texture)
         void *data = rlglReadTexturePixels(texture);
         
         // NOTE: data size is reallocated to fit mipmaps data
+        // NOTE: CPU mipmap generation only supports RGBA 32bit data
         int mipmapCount = GenerateMipmaps(data, texture.width, texture.height);
 
-        // TODO: Adjust mipmap size depending on texture format!
         int size = texture.width*texture.height*4;  // RGBA 32bit only
         int offset = size;
 
@@ -1915,6 +1915,9 @@ void rlglGenerateMipmaps(Texture2D texture)
         
         TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture.id);
         
+        // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
+        free(data):
+        
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
         TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
@@ -1924,7 +1927,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 #endif
     }
     else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture.id);
-        
+
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -3106,7 +3109,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
     int mipmapCount = 1;                // Required mipmap levels count (including base level)
     int width = baseWidth;
     int height = baseHeight;
-    int size = baseWidth*baseHeight*4;  // Size in bytes (will include mipmaps...)
+    int size = baseWidth*baseHeight*4;  // Size in bytes (will include mipmaps...), RGBA only
 
     // Count mipmap levels required
     while ((width != 1) && (height != 1))
