@@ -819,11 +819,17 @@ static SpriteFont LoadBMFont(const char *fileName)
     
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
     
+    bool unorderedChars = false;
+    int firstChar = 0;
+    
     for (int i = 0; i < numChars; i++)
     {
         fgets(buffer, MAX_BUFFER_SIZE, fntFile);
         sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i", 
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
+                       
+        if (i == 0) firstChar = charId;
+        else if (i != (charId - firstChar)) unorderedChars = true;
         
         // Save data properly in sprite font
         font.charValues[i] = charId;
@@ -832,14 +838,20 @@ static SpriteFont LoadBMFont(const char *fileName)
         font.charAdvanceX[i] = charAdvanceX;
     }
     
-    // TODO: Font data could be not ordered by charId: 32,33,34,35... review charValues and charRecs order
-    
     fclose(fntFile);
-
-    TraceLog(INFO, "[%s] SpriteFont loaded successfully", fileName);
+    
+    if (firstChar != FONT_FIRST_CHAR) TraceLog(WARNING, "BMFont not supported: expected SPACE(32) as first character, falling back to default font");
+    else if (unorderedChars) TraceLog(WARNING, "BMFont not supported: unordered chars data, falling back to default font");
+    
+    // NOTE: Font data could be not ordered by charId: 32,33,34,35... raylib does not support unordered BMFonts
+    if ((firstChar != FONT_FIRST_CHAR) || (unorderedChars))
+    {
+        UnloadSpriteFont(font);
+        font = GetDefaultFont();
+    }
+    else TraceLog(INFO, "[%s] SpriteFont loaded successfully", fileName);
 
     return font;
-    
 }
 
 // Generate a sprite font from TTF file data (font size required)
