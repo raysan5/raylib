@@ -691,6 +691,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);         
 Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
 void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
 void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
+void ImageResizeNN(Image *image,int newWidth,int newHeight);                                       // Resize and image (Nearest-Neighbor scaling algorithm)
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
 Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
 Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint);       // Create an image from text (custom sprite font)
