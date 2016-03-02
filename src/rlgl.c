@@ -1611,54 +1611,24 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 }
 
 // Get world coordinates from screen coordinates
-// NOTE: Using global variables: screenWidth, screenHeight
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {
-    Vector3 result = { 0.0f, 0.0f, 0.0f };   // Object coordinates
+    Vector3 result = { 0.0f, 0.0f, 0.0f };
     
-    //GLint viewport[4];
-    //glGetIntegerv(GL_VIEWPORT, viewport); // Not available on OpenGL ES 2.0
-
-    // Viewport data
-    int x = 0;                  // viewport[0]
-    int y = 0;                  // viewport[1]
-    int width = screenWidth;    // viewport[2]
-    int height = screenHeight;  // viewport[3]
+    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
+    Matrix matProjView = MatrixMultiply(proj, view);
+    MatrixInvert(&matProjView);
     
-    Matrix modelviewprojection = MatrixMultiply(view, proj);
-    MatrixInvert(&modelviewprojection);
-/*
-    // NOTE: Compute unproject using Vector3
-
-    // Transformation of normalized coordinates between -1 and 1
-    result.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
-    result.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
-    result.z = source.z*2.0f - 1.0f;
-
-    // Object coordinates (multiply vector by matrix)
-    VectorTransform(&result, modelviewprojection);
-*/
- 
-    // NOTE: Compute unproject using Quaternion (Vector4)
-    Quaternion quat;
+    // Create quaternion from source point
+    Quaternion quat = { source.x, source.y, source.z, 1.0f };
     
-    quat.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
-    quat.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
-    quat.z = source.z*2.0f - 1.0f;
-    quat.w = 1.0f;
+    // Multiply quat point by unproject matrix
+    QuaternionTransform(&quat, matProjView);
     
-    QuaternionTransform(&quat, modelviewprojection);
-
-    if (quat.w != 0.0f)
-    {
-        quat.x /= quat.w;
-        quat.y /= quat.w;
-        quat.z /= quat.w;
-    }
-
-    result.x = quat.x;
-    result.y = quat.y;
-    result.z = quat.z;
+    // Normalized world points in vectors
+    result.x = quat.x/quat.w;
+    result.y = quat.y/quat.w;
+    result.z = quat.z/quat.w;
 
     return result;
 }

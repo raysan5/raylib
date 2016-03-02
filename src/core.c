@@ -612,11 +612,11 @@ void Begin3dMode(Camera camera)
 
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.1*tan(45.0*PI/360.0);
+    double top = 0.01*tan(45.0*PI/360.0);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
-    rlFrustum(-right, right, -top, top, 0.1f, 1000.0f);
+    rlFrustum(-right, right, -top, top, 0.01, 1000.0);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
@@ -867,16 +867,8 @@ int StorageLoadValue(int position)
 }
 
 // Returns a ray trace from mouse position
-//http://www.songho.ca/opengl/gl_transform.html
-//http://www.songho.ca/opengl/gl_matrix.html
-//http://www.sjbaker.org/steve/omniv/matrices_can_be_your_friends.html
-//https://www.opengl.org/archives/resources/faq/technical/transformations.htm
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
-{
-    // Tutorial used: https://mkonrad.net/2014/08/07/simple-opengl-object-picking-in-3d.html
-    // Similar to http://antongerdelan.net, the problem is maybe in MatrixPerspective vs MatrixFrustum
-    // or matrix order (transpose it or not... that's the question)
-    
+{   
     Ray ray;
     
     // Calculate normalized device coordinates
@@ -886,40 +878,48 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     float z = 1.0f;
     
     // Store values in a vector
-    Vector3 deviceCoords = {x, y, z};
+    Vector3 deviceCoords = { x, y, z };
     
-    // Device debug message
-    TraceLog(INFO, "device(%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
+    TraceLog(DEBUG, "Device coordinates: (%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
     
-    // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    // Calculate projection matrix (from perspective instead of frustum)
+    Matrix matProj = MatrixPerspective(45.0, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     
     // Do I need to transpose it? It seems that yes...
-    // NOTE: matrix order is maybe incorrect... In OpenGL to get world position from
+    // NOTE: matrix order may be incorrect... In OpenGL to get world position from
     // camera view it just needs to get inverted, but here we need to transpose it too.
     // For example, if you get view matrix, transpose and inverted and you transform it
     // to a vector, you will get its 3d world position coordinates (camera.position).
     // If you don't transpose, final position will be wrong.
     MatrixTranspose(&matView);
     
+//#define USE_RLGL_UNPROJECT
+#if defined(USE_RLGL_UNPROJECT)     // OPTION 1: Use rlglUnproject()
+    
+    Vector3 nearPoint = rlglUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
+    Vector3 farPoint = rlglUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
+
+#else   // OPTION 2: Compute unprojection directly here
+    
     // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
     Matrix matProjView = MatrixMultiply(matProj, matView);
     MatrixInvert(&matProjView);
     
     // Calculate far and near points
-    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f};
-    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f};
+    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
+    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
     
     // Multiply points by unproject matrix
     QuaternionTransform(&near, matProjView);
     QuaternionTransform(&far, matProjView);
     
     // Calculate normalized world points in vectors
-    Vector3 nearPoint = {near.x / near.w, near.y / near.w, near.z / near.w};
-    Vector3 farPoint = {far.x / far.w, far.y / far.w, far.z / far.w};
+    Vector3 nearPoint = { near.x/near.w, near.y/near.w, near.z/near.w};
+    Vector3 farPoint = { far.x/far.w, far.y/far.w, far.z/far.w};
+#endif
     
     // Calculate normalized direction vector
     Vector3 direction = VectorSubtract(farPoint, nearPoint);

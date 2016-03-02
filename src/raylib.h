@@ -312,6 +312,7 @@ typedef struct Camera {
     Vector3 position;
     Vector3 target;
     Vector3 up;
+    //float fovy;             // Field-Of-View apperture in Y (degrees)
 } Camera;
 
 // Bounding box type
