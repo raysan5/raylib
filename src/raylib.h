@@ -385,7 +385,7 @@ typedef struct Model {
     Matrix transform;
     Texture2D texture;    // Only for OpenGL 1.1, on newer versions this should be in the shader
     Shader shader;
-	//Material material;
+    //Material material;
 } Model;
 
 // Ray type (useful for raycast)
