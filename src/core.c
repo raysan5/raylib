@@ -560,8 +560,25 @@ void BeginDrawing(void)
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
-// Setup drawing canvas with extended parameters
-void BeginDrawingEx(int blendMode, Shader shader, Matrix transform)
+// Setup drawing canvas with 2d camera
+void BeginDrawingEx(Camera2D camera)
+{
+    BeginDrawing();
+    
+    // TODO: Consider origin offset on position, rotation, scaling
+    
+    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
+    Matrix matTranslation = MatrixTranslate(camera.position.x, camera.position.y, 0.0f);
+    Matrix matOrigin = MatrixTranslate(-camera.origin.x, -camera.origin.y, 0.0f);
+
+    Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+    
+    rlMultMatrixf(MatrixToFloat(matTransform));
+}
+
+// Setup drawing canvas with pro parameters
+void BeginDrawingPro(int blendMode, Shader shader, Matrix transform)
 {
     BeginDrawing();
     

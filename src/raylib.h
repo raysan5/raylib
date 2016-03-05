@@ -315,6 +315,14 @@ typedef struct Camera {
     float fovy;             // Field-Of-View apperture in Y (degrees)
 } Camera;
 
+// Camera2D type, defines a 2d camera
+typedef struct Camera2D {
+    Vector2 position;       // Camera position
+    Vector2 origin;         // Camera origin (for rotation and zoom)
+    float rotation;         // Camera rotation in degrees
+    float zoom;             // Camera zoom (scaling), should be 1.0f by default
+} Camera2D;
+
 // Bounding box type
 typedef struct BoundingBox {
     Vector3 min;
@@ -528,7 +536,8 @@ int GetScreenHeight(void);                                  // Get current scree
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
-void BeginDrawingEx(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with extended parameters
+void BeginDrawingEx(Camera2D camera);                       // Setup drawing canvas with 2d camera
+void BeginDrawingPro(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with pro parameters
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
 void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
