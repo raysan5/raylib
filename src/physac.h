@@ -81,6 +81,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+void InitPhysics();                                                                     // Initializes pointers array (just pointers, fixed size)
 void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
 void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
 
