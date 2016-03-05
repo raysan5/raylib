@@ -465,36 +465,39 @@ typedef struct {
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
-// Collider types
 typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
 
-// Transform struct
 typedef struct Transform {
     Vector2 position;
     float rotation;
     Vector2 scale;
 } Transform;
 
-// Rigidbody struct
 typedef struct Rigidbody {
-    bool enabled;
+    bool enabled;           // Acts as kinematic state (collisions are calculated anyway)
     float mass;
     Vector2 acceleration;
     Vector2 velocity;
-    bool isGrounded;
-    bool isContact;     // Avoid freeze player when touching floor
     bool applyGravity;
-    float friction;     // 0.0f to 1.0f
-    float bounciness;   // 0.0f to 1.0f
+    bool isGrounded;
+    float friction;         // Normalized value
+    float bounciness;       // Normalized value
 } Rigidbody;
 
-// Collider struct
 typedef struct Collider {
     bool enabled;
     ColliderType type;
-    Rectangle bounds;   // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
-    int radius;         // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
+    Rectangle bounds;       // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
+    int radius;             // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
 } Collider;
+
+typedef struct PhysicObject {
+    unsigned int id;
+    Transform transform;
+    Rigidbody rigidbody;
+    Collider collider;
+    bool enabled;
+} PhysicObject;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -800,25 +803,17 @@ void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textur
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 
 //----------------------------------------------------------------------------------
-// Physics System Functions (engine-module: physac)
+// Physics System Functions (Module: physac)
 //----------------------------------------------------------------------------------
-void InitPhysics(int maxPhysicElements);                                    // Initialize all internal physics values
-void UnloadPhysics();                                                       // Unload physic elements arrays
+void InitPhysics();                                                                     // Initializes pointers array (just pointers, fixed size)
+void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
+void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
 
-void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot
-void AddCollider(int index, Collider collider);                             // Initialize a new Collider with parameters to internal index slot
+PhysicObject *CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);      // Create a new physic object dinamically, initialize it and add to pool
+void DestroyPhysicObject(PhysicObject *pObj);                                           // Destroy a specific physic object and take it out of the list
 
-void ApplyPhysics(int index, Vector2 *position);                            // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
-void SetRigidbodyEnabled(int index, bool state);                            // Set enabled state to a defined rigidbody
-void SetRigidbodyVelocity(int index, Vector2 velocity);                     // Set velocity of rigidbody (without considering of mass value)
-void SetRigidbodyAcceleration(int index, Vector2 acceleration);             // Set acceleration of rigidbody (without considering of mass value)
-void AddRigidbodyForce(int index, Vector2 force);                           // Set rigidbody force (considering mass value)
-void AddForceAtPosition(Vector2 position, float intensity, float radius);   // Add a force to all enabled rigidbodies at a position
-
-void SetColliderEnabled(int index, bool state);                             // Set enabled state to a defined collider
-
-Rigidbody GetRigidbody(int index);                                          // Returns the internal rigidbody data defined by index parameter
-Collider GetCollider(int index);                                            // Returns the internal collider data defined by index parameter
+Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
+void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize);          // Draw physic object information at screen position
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
