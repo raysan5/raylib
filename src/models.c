@@ -56,6 +56,8 @@ extern unsigned int whiteTexture;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static Mesh LoadOBJ(const char *fileName);
+static Mesh GenMeshHeightmap(Image image, Vector3 size);
+static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -583,6 +585,63 @@ Model LoadModelEx(Mesh data)
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
 {
+    Mesh mesh = GenMeshHeightmap(heightmap, size);
+    Model model = rlglLoadModel(mesh);
+
+    return model;
+}
+
+// Load a map image as a 3d model (cubes based)
+Model LoadCubicmap(Image cubicmap)
+{
+    Mesh mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0, 1.0, 1.5f });
+    Model model = rlglLoadModel(mesh);
+
+    return model;
+}
+
+// Unload 3d model from memory
+void UnloadModel(Model model)
+{
+    // Unload mesh data
+    free(model.mesh.vertices);
+    free(model.mesh.texcoords);
+    free(model.mesh.normals);
+    free(model.mesh.colors);
+    //if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2); // Not used
+    //if (model.mesh.tangents != NULL) free(model.mesh.tangents); // Not used
+    
+    rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
+    rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
+    rlDeleteBuffers(model.mesh.vboId[2]);   // normals
+    //rlDeleteBuffers(model.mesh.vboId[3]);   // texcoords2 (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[4]);   // tangents (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[5]);   // colors (NOT USED)
+
+    rlDeleteVertexArrays(model.mesh.vaoId);
+    
+    if (model.mesh.vaoId > 0) TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vaoId);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
+}
+
+// Link a texture to a model
+void SetModelTexture(Model *model, Texture2D texture)
+{
+    if (texture.id <= 0)
+    {
+        // Use default white texture (use mesh color)
+        model->texture.id = whiteTexture;               // OpenGL 1.1
+        model->shader.texDiffuseId = whiteTexture;      // OpenGL 3.3 / ES 2.0
+    }
+    else
+    {
+        model->texture = texture;
+        model->shader.texDiffuseId = texture.id;
+    }
+}
+
+static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
+{
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
     
     Mesh mesh;
@@ -687,27 +746,17 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
     // NOTE: Not used any more... just one plain color defined at DrawModel()
     for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-
-    Model model = rlglLoadModel(mesh);
-
-    // Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM...
-    // ...but we keep CPU RAM vertex data in case we need to update the mesh
-
-    return model;
+    return mesh;
 }
 
-// Load a map image as a 3d model (cubes based)
-Model LoadCubicmap(Image cubicmap)
+static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh;
 
     Color *cubicmapPixels = GetImageData(cubicmap);
     
-    // Map cube size will be 1.0
-    float mapCubeSide = 1.0f;
-    int mapWidth = cubicmap.width*(int)mapCubeSide;
-    int mapHeight = cubicmap.height*(int)mapCubeSide;
+    int mapWidth = cubicmap.width*(int)cubeSize.x;
+    int mapHeight = cubicmap.height*(int)cubeSize.z;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
@@ -716,9 +765,9 @@ Model LoadCubicmap(Image cubicmap)
     int tcCounter = 0;      // Used to count texcoords
     int nCounter = 0;       // Used to count normals
 
-    float w = mapCubeSide;
-    float h = mapCubeSide;
-    float h2 = mapCubeSide*1.5f;   // TODO: Review walls height...
+    float w = cubeSize.x;
+    float h = cubeSize.z;
+    float h2 = cubeSize.y;
 
     Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles*3*sizeof(Vector3));
     Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles*3*sizeof(Vector2));
@@ -747,9 +796,9 @@ Model LoadCubicmap(Image cubicmap)
     RectangleF topTexUV = { 0.0f, 0.5f, 0.5f, 0.5f };
     RectangleF bottomTexUV = { 0.5f, 0.5f, 0.5f, 0.5f };
 
-    for (int z = 0; z < mapHeight; z += mapCubeSide)
+    for (int z = 0; z < mapHeight; z += cubeSize.z)
     {
-        for (int x = 0; x < mapWidth; x += mapCubeSide)
+        for (int x = 0; x < mapWidth; x += cubeSize.x)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
             Vector3 v1 = { x - w/2, h2, z - h/2 };
@@ -1053,56 +1102,9 @@ Model LoadCubicmap(Image cubicmap)
     free(mapNormals);
     free(mapTexcoords);
     
-    free(cubicmapPixels);
-
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-
-    Model model = rlglLoadModel(mesh);
-
-    // Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM...
-    // ...but we keep CPU RAM vertex data in case we need to update the mesh
-
-    return model;
-}
-
-// Unload 3d model from memory
-void UnloadModel(Model model)
-{
-    // Unload mesh data
-    free(model.mesh.vertices);
-    free(model.mesh.texcoords);
-    free(model.mesh.normals);
-    free(model.mesh.colors);
-    //if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2); // Not used
-    //if (model.mesh.tangents != NULL) free(model.mesh.tangents); // Not used
+    free(cubicmapPixels);   // Free image pixel data
     
-    rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
-    rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
-    rlDeleteBuffers(model.mesh.vboId[2]);   // normals
-    //rlDeleteBuffers(model.mesh.vboId[3]);   // texcoords2 (NOT USED)
-    //rlDeleteBuffers(model.mesh.vboId[4]);   // tangents (NOT USED)
-    //rlDeleteBuffers(model.mesh.vboId[5]);   // colors (NOT USED)
-
-    rlDeleteVertexArrays(model.mesh.vaoId);
-    
-    if (model.mesh.vaoId > 0) TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vaoId);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
-}
-
-// Link a texture to a model
-void SetModelTexture(Model *model, Texture2D texture)
-{
-    if (texture.id <= 0)
-    {
-        // Use default white texture (use mesh color)
-        model->texture.id = whiteTexture;               // OpenGL 1.1
-        model->shader.texDiffuseId = whiteTexture;      // OpenGL 3.3 / ES 2.0
-    }
-    else
-    {
-        model->texture = texture;
-        model->shader.texDiffuseId = texture.id;
-    }
+    return mesh;
 }
 
 // Draw a model (with texture if set)
