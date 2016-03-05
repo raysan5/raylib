@@ -23,7 +23,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person");
     
     // Define the camera to look into our 3d world (position, target, up vector)
-    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 60.0f };
 
     // Generates some random columns
     float heights[MAX_COLUMNS];
@@ -40,6 +40,7 @@ int main()
     Vector3 playerPosition = { 4.0f, 2.0f, 4.0f };       // Define player position
     
     SetCameraMode(CAMERA_FIRST_PERSON);         // Set a first person camera mode
+    SetCameraFovy(camera.fovy);                 // Set internal camera field-of-view Y
 
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

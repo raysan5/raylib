@@ -558,19 +558,9 @@ Model LoadModel(const char *fileName)
         // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
         model = rlglLoadModel(mesh);     // Upload vertex data to GPU
 
-        // Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM
-        // NOTE 1: We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
-        // NOTE 2: ...but we could keep CPU vertex data in case we need to update the mesh
-        
-        /*
-        if (rlGetVersion() != OPENGL_11)
-        {
-            free(mesh.vertices);
-            free(mesh.texcoords);
-            free(mesh.normals);
-            free(mesh.colors);
-        }
-        */
+        // NOTE: Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM
+        // We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
+        // ...but we could keep CPU vertex data in case we need to update the mesh
     }
 
     return model;
@@ -1082,16 +1072,16 @@ void UnloadModel(Model model)
     free(model.mesh.vertices);
     free(model.mesh.texcoords);
     free(model.mesh.normals);
-    if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2);
-    if (model.mesh.tangents != NULL) free(model.mesh.tangents);
-    if (model.mesh.colors != NULL) free(model.mesh.colors);
+    free(model.mesh.colors);
+    //if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2); // Not used
+    //if (model.mesh.tangents != NULL) free(model.mesh.tangents); // Not used
     
     rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
     rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
     rlDeleteBuffers(model.mesh.vboId[2]);   // normals
-    rlDeleteBuffers(model.mesh.vboId[3]);   // texcoords2
-    rlDeleteBuffers(model.mesh.vboId[4]);   // tangents
-    rlDeleteBuffers(model.mesh.vboId[5]);   // colors
+    //rlDeleteBuffers(model.mesh.vboId[3]);   // texcoords2 (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[4]);   // tangents (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[5]);   // colors (NOT USED)
 
     rlDeleteVertexArrays(model.mesh.vaoId);
     

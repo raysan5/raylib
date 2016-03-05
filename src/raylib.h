@@ -309,10 +309,10 @@ typedef struct SpriteFont {
 
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera {
-    Vector3 position;
-    Vector3 target;
-    Vector3 up;
-    //float fovy;             // Field-Of-View apperture in Y (degrees)
+    Vector3 position;       // Camera position
+    Vector3 target;         // Camera target it looks-at
+    Vector3 up;             // Camera up vector (rotation over its axis)
+    float fovy;             // Field-Of-View apperture in Y (degrees)
 } Camera;
 
 // Bounding box type
@@ -630,6 +630,7 @@ void UpdateCameraPlayer(Camera *camera, Vector3 *position); // Update camera and
 
 void SetCameraPosition(Vector3 position);                   // Set internal camera position
 void SetCameraTarget(Vector3 target);                       // Set internal camera target
+void SetCameraFovy(float fovy);                             // Set internal camera field-of-view-y
 
 void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)

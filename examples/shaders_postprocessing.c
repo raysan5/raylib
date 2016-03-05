@@ -30,7 +30,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing shader");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
     
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture

@@ -21,7 +21,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - cubesmap loading and drawing");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 16.0f, 14.0f, 16.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    Camera camera = {{ 16.0f, 14.0f, 16.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 
     Image image = LoadImage("resources/cubicmap.png");      // Load cubicmap image (RAM)
     Texture2D cubicmap = LoadTextureFromImage(image);       // Convert image to texture to display (VRAM)
@@ -37,6 +37,7 @@ int main()
     
     SetCameraMode(CAMERA_ORBITAL);      // Set an orbital camera mode
     SetCameraPosition(camera.position); // Set internal camera position to match our custom camera position
+    SetCameraFovy(camera.fovy);         // Set internal camera field-of-view Y
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

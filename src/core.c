@@ -609,10 +609,10 @@ void Begin3dMode(Camera camera)
 
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
-
+    
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.01*tan(45.0*PI/360.0);
+    double top = 0.01*tan(camera.fovy*PI/360.0);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
@@ -883,7 +883,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     TraceLog(DEBUG, "Device coordinates: (%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
     
     // Calculate projection matrix (from perspective instead of frustum)
-    Matrix matProj = MatrixPerspective(45.0, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
+    Matrix matProj = MatrixPerspective(camera.fovy, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
@@ -936,7 +936,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 Vector2 WorldToScreen(Vector3 position, Camera camera)
 {    
     // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    Matrix matProj = MatrixPerspective(camera.fovy, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
     
     // Calculate view matrix from camera look at (and transpose it)
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
@@ -1752,8 +1752,8 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     // Normalize gestureEvent.position[0] for screenWidth and screenHeight
     gestureEvent.position[0].x /= (float)GetScreenWidth(); 
     gestureEvent.position[0].y /= (float)GetScreenHeight();
-    
-    // Gesture data is sent to gestures system for processing
+	
+	// Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
 }
@@ -1890,7 +1890,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     
                     // TODO: GPU assets reload in case of lost focus (lost context)
                     // NOTE: This problem has been solved just unbinding and rebinding context from display
-                    /*
+					/*
                     if (assetsReloadRequired)
                     {
                         for (int i = 0; i < assetsCount; i++)
@@ -2471,9 +2471,9 @@ static void *GamepadThread(void *arg)
     const int joystickAxisY = 1;
 
     // Read gamepad event
-    struct js_event gamepadEvent;
+	struct js_event gamepadEvent;
     
-    while (1) 
+	while (1) 
     {
         if (read(gamepadStream, &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
         {
@@ -2507,7 +2507,7 @@ static void *GamepadThread(void *arg)
                 */
             }
         }
-    }
+	}
     
     return NULL;
 }

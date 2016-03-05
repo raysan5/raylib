@@ -36,7 +36,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - basic lighting");
     
     // Camera initialization
-    Camera camera = {{ 8.0f, 8.0f, 8.0f }, { 0.0f, 3.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    Camera camera = {{ 8.0f, 8.0f, 8.0f }, { 0.0f, 3.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
     
     // Model initialization
     Vector3 position = { 0.0f, 0.0f, 0.0f };
