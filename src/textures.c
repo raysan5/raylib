@@ -1090,6 +1090,25 @@ Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, 
     return imText;
 }
 
+// Draw text (default font) within an image (destination)
+void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
+{
+    ImageDrawTextEx(dst, position, GetDefaultFont(), text, fontSize, 0, color);
+}
+
+// Draw text (custom sprite font) within an image (destination)
+void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color)
+{
+    Image imText = ImageTextEx(font, text, fontSize, spacing, color);
+    
+    Rectangle srcRec = { 0, 0, imText.width, imText.height };
+    Rectangle dstRec = { (int)position.x, (int)position.y, imText.width, imText.height };
+    
+    ImageDraw(dst, imText, srcRec, dstRec);
+    
+    UnloadImage(imText);
+}
+
 // Flip image vertically
 void ImageFlipVertical(Image *image)
 {
