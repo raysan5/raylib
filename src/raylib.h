@@ -347,12 +347,7 @@ typedef struct Mesh {
 
 // Shader type (generic shader)
 typedef struct Shader {
-    unsigned int id;                // Shader program id
-
-    // TODO: This should be Texture2D objects
-    unsigned int texDiffuseId;      // Diffuse texture id
-    unsigned int texNormalId;       // Normal texture id
-    unsigned int texSpecularId;     // Specular texture id
+    unsigned int id;            // Shader program id
     
     // Variable attributes
     int vertexLoc;        // Vertex attribute location point (vertex shader)
@@ -370,20 +365,19 @@ typedef struct Shader {
 } Shader;
 
 // Material type
-// TODO: Redesign material-shaders-textures system
 typedef struct Material {
-    //Shader shader;
+    Shader shader;              // Standard shader (supports 3 map types: diffuse, normal, specular)
 
-    //Texture2D texDiffuse;      // Diffuse texture
-    //Texture2D texNormal;       // Normal texture
-    //Texture2D texSpecular;     // Specular texture
+    Texture2D texDiffuse;       // Diffuse texture
+    Texture2D texNormal;        // Normal texture
+    Texture2D texSpecular;      // Specular texture
     
-    Color colDiffuse;
-    Color colAmbient;
-    Color colSpecular;
+    Color colDiffuse;           // Diffuse color
+    Color colAmbient;           // Ambient color
+    Color colSpecular;          // Specular color
     
-    float glossiness;
-    float normalDepth;
+    float glossiness;           // Glossiness level
+    float normalDepth;          // Normal map depth
 } Material;
 
 // 3d Model type
@@ -391,9 +385,7 @@ typedef struct Material {
 typedef struct Model {
     Mesh mesh;
     Matrix transform;
-    Texture2D texture;    // Only for OpenGL 1.1, on newer versions this should be in the shader
-    Shader shader;
-    //Material material;
+    Material material;
 } Model;
 
 // Ray type (useful for raycast)
@@ -774,7 +766,7 @@ void SetModelTexture(Model *model, Texture2D texture);                          
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model with extended parameters
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
-void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model wires (with texture if set) with extended parameters
+void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
 void DrawBoundingBox(BoundingBox box, Color color);                                                // Draw bounding box (wires)
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
@@ -806,10 +798,10 @@ int GetShaderLocation(Shader shader, const char *uniformName);                  
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);                   // Set shader uniform value (matrix 4x4)
-void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
-void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
-void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
-void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+//void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
+//void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
+//void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
+//void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 

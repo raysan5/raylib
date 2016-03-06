@@ -551,10 +551,7 @@ Model LoadModel(const char *fileName)
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
     
-    if (mesh.vertexCount == 0)
-    {
-        TraceLog(WARNING, "Model could not be loaded");
-    }
+    if (mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
     else
     {
         // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
@@ -627,17 +624,8 @@ void UnloadModel(Model model)
 // Link a texture to a model
 void SetModelTexture(Model *model, Texture2D texture)
 {
-    if (texture.id <= 0)
-    {
-        // Use default white texture (use mesh color)
-        model->texture.id = whiteTexture;               // OpenGL 1.1
-        model->shader.texDiffuseId = whiteTexture;      // OpenGL 3.3 / ES 2.0
-    }
-    else
-    {
-        model->texture = texture;
-        model->shader.texDiffuseId = texture.id;
-    }
+    if (texture.id <= 0) model->material.texDiffuse.id = whiteTexture;  // Use default white texture
+    else model->material.texDiffuse = texture;
 }
 
 static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
