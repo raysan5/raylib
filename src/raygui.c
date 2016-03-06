@@ -59,16 +59,16 @@ static int style[NUM_PROPERTIES] = {
     1,                  // GLOBAL_BORDER_WIDTH
     0xf5f5f5ff,         // BACKGROUND_COLOR
     1,                  // LABEL_BORDER_WIDTH
-    0x000000ff,         // LABEL_TEXT_COLOR
+    0x4d4d4dff,         // LABEL_TEXT_COLOR
     20,                 // LABEL_TEXT_PADDING
     2,                  // BUTTON_BORDER_WIDTH
     20,                 // BUTTON_TEXT_PADDING
     0x828282ff,         // BUTTON_DEFAULT_BORDER_COLOR
     0xc8c8c8ff,         // BUTTON_DEFAULT_INSIDE_COLOR
-    0x000000ff,         // BUTTON_DEFAULT_TEXT_COLOR
+    0x4d4d4dff,         // BUTTON_DEFAULT_TEXT_COLOR
     0xc8c8c8ff,         // BUTTON_HOVER_BORDER_COLOR
     0xffffffff,         // BUTTON_HOVER_INSIDE_COLOR
-    0x000000ff,         // BUTTON_HOVER_TEXT_COLOR
+    0x353535ff,         // BUTTON_HOVER_TEXT_COLOR
     0x7bb0d6ff,         // BUTTON_PRESSED_BORDER_COLOR
     0xbcecffff,         // BUTTON_PRESSED_INSIDE_COLOR
     0x5f9aa7ff,         // BUTTON_PRESSED_TEXT_COLOR
@@ -120,7 +120,7 @@ static int style[NUM_PROPERTIES] = {
     0x000000ff,         // SPINNER_PRESSED_TEXT_COLOR
     1,                  // COMBOBOX_PADDING
     30,                 // COMBOBOX_BUTTON_WIDTH
-    30,                 // COMBOBOX_BUTTON_HEIGHT
+    20,                 // COMBOBOX_BUTTON_HEIGHT
     1,                  // COMBOBOX_BORDER_WIDTH
     0x828282ff,         // COMBOBOX_DEFAULT_BORDER_COLOR
     0xc8c8c8ff,         // COMBOBOX_DEFAULT_INSIDE_COLOR
