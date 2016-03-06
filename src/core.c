@@ -1735,10 +1735,11 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         TakeScreenshot();
     }
 #endif
-    else currentKeyState[key] = action;
-
-    // TODO: Review (and remove) this HACK for GuiTextBox, to deteck back key
-    if ((key == 259) && (action == GLFW_PRESS)) lastKeyPressed = 3;
+    else 
+    {
+        currentKeyState[key] = action;
+        if (action == GLFW_PRESS) lastKeyPressed = key;
+    }
 }
 
 // GLFW3 Mouse Button Callback, runs on mouse button pressed

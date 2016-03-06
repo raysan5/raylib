@@ -789,11 +789,11 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
 // NOTE: Requires static variables: framesCounter - ERROR!
 char *GuiTextBox(Rectangle bounds, char *text)
 {
-    #define MAX_CHARS_LENGTH  	20
-    #define KEY_BACKSPACE_TEXT   3
+    #define MAX_CHARS_LENGTH  	 20
+    #define KEY_BACKSPACE_TEXT  259     // GLFW BACKSPACE: 3 + 256
     
     int initPos = bounds.x + 4;
-    char letter = -1;
+    int letter = -1;
     static int framesCounter = 0;
     Vector2 mousePoint = GetMousePosition();
     
@@ -822,12 +822,15 @@ char *GuiTextBox(Rectangle bounds, char *text)
             }
             else
             {
-                for (int i = 0; i < MAX_CHARS_LENGTH; i++)
+                if ((letter >= 32) && (letter < 127))
                 {
-                    if (text[i] == '\0')
+                    for (int i = 0; i < MAX_CHARS_LENGTH; i++)
                     {
-                        text[i] = letter;
-                        break;
+                        if (text[i] == '\0')
+                        {
+                            text[i] = (char)letter;
+                            break;
+                        }
                     }
                 }
             }
