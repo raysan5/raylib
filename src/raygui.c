@@ -258,15 +258,28 @@ bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle)
     //--------------------------------------------------------------------   
     if (toggleButton.width < textWidth) toggleButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
     if (toggleButton.height < textHeight) toggleButton.height = textHeight + style[TOGGLE_TEXT_PADDING]/2;
+    
+    if (toggle) toggleState = TOGGLE_ACTIVE;
+    else toggleState = TOGGLE_UNACTIVE;
+    
     if (CheckCollisionPointRec(mousePoint, toggleButton))
     {
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) toggleState = TOGGLE_PRESSED;
-        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) toggleState = TOGGLE_ACTIVE;
+        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
+            if (toggle)
+            {
+                toggle = false;
+                toggleState = TOGGLE_UNACTIVE;
+            }
+            else
+            {
+                toggle = true;
+                toggleState = TOGGLE_ACTIVE;
+            }
+        }
         else toggleState = TOGGLE_HOVER;
     }
-     
-    if (toggleState == TOGGLE_ACTIVE && !toggle) toggle = true;
-    if (toggle) toggleState = TOGGLE_ACTIVE;
     //--------------------------------------------------------------------   
     
     // Draw control
