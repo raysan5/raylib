@@ -72,7 +72,7 @@ static Vector2 moveDownPosition2 = { 0.0f, 0.0f };
 static int numTap = 0;
 
 static int pointCount = 0;
-static int touchId = -1;
+static int firstTouchId = -1;
 
 static double eventTime = 0.0;
 static double swipeTime = 0.0;
@@ -120,9 +120,7 @@ void ProcessGestureEvent(GestureEvent event)
     pointCount = event.pointCount;      // Required on UpdateGestures()
     
     if (pointCount < 2)
-    {      
-        touchId = event.pointerId[0];
-        
+    {
         if (event.touchAction == TOUCH_DOWN)
         {
             numTap++;    // Tap counter
@@ -145,6 +143,8 @@ void ProcessGestureEvent(GestureEvent event)
             touchUpPosition = touchDownPosition;
             eventTime = GetCurrentTime();
             
+            firstTouchId = event.pointerId[0];
+            
             dragVector = (Vector2){ 0.0f, 0.0f };
         }
         else if (event.touchAction == TOUCH_UP)
@@ -158,7 +158,7 @@ void ProcessGestureEvent(GestureEvent event)
             startMoving = false;
             
             // Detect GESTURE_SWIPE
-            if ((dragIntensity > FORCE_TO_SWIPE) && (touchId == 0))        // RAY: why check (touchId == 0)???
+            if ((dragIntensity > FORCE_TO_SWIPE) && firstTouchId == event.pointerId[0])
             {
                 // NOTE: Angle should be inverted in Y
                 dragAngle = 360.0f - Vector2Angle(touchDownPosition, touchUpPosition);
