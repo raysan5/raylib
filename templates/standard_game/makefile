@@ -83,15 +83,21 @@ endif
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
-else
-    INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
-# external libraries headers
-# GLFW3
-    INCLUDES += -I../../external/glfw3/include
-# GLEW
-    INCLUDES += -I../../external/glew/include
-# OpenAL Soft
-    INCLUDES += -I../../external/openal_soft/include
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+	# add standard directories for GNU/Linux
+    ifeq ($(PLATFORM_OS),LINUX)
+    	INCLUDES = -I/usr/local/include/raylib/
+    else
+    	INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
+		# external libraries headers
+		# GLFW3
+    		INCLUDES += -I../../external/glfw3/include
+		# GLEW - Not required any more, replaced by GLAD
+    		#INCLUDES += -I../external/glew/include
+		# OpenAL Soft
+    		INCLUDES += -I../../external/openal_soft/include
+    endif
 endif
 
 # define library paths containing required libs
