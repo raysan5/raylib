@@ -99,17 +99,23 @@ endif
 
 # define library paths containing required libs
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    LFLAGS = -L. -L../src -L/opt/vc/lib
-else
-    LFLAGS = -L. -L../src
-# external libraries to link with
-# GLFW3
-    LFLAGS += -L../external/glfw3/lib/$(LIBPATH)
-    ifneq ($(PLATFORM_OS),OSX)
-    # OpenAL Soft
-    	LFLAGS += -L../external/openal_soft/lib/$(LIBPATH)
-	# GLEW - Not required any more, replaced by GLAD
-    	#LFLAGS += -L../external/glew/lib/$(LIBPATH)
+    LFLAGS = -L. -L../../src -L/opt/vc/lib
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+	# add standard directories for GNU/Linux
+    ifeq ($(PLATFORM_OS),LINUX)
+ 		LFLAGS = -L. -L../../src
+	else
+    	LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
+    	# external libraries to link with
+    	# GLFW3
+        	LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+    	ifneq ($(PLATFORM_OS),OSX)
+    	# OpenAL Soft
+        	LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
+	    # GLEW: Not used, replaced by GLAD
+        	#LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+    	endif
     endif
 endif
 

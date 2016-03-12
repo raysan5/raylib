@@ -86,7 +86,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 	# add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
-    	INCLUDES = -I/usr/local/include/raylib/
+    	INCLUDES = -I. -I../src -I/usr/local/include/raylib/
     else
     	INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
 		# external libraries headers
@@ -102,16 +102,22 @@ endif
 # define library paths containing required libs
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
-else
-    LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
-    # external libraries to link with
-    # GLFW3
-    LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
-    ifneq ($(PLATFORM_OS),OSX)
-    # OpenAL Soft
-        LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-    # GLEW
-        LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+	# add standard directories for GNU/Linux
+    ifeq ($(PLATFORM_OS),LINUX)
+ 		LFLAGS = -L. -L../../src
+	else
+    	LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
+    	# external libraries to link with
+    	# GLFW3
+        	LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+    	ifneq ($(PLATFORM_OS),OSX)
+    	# OpenAL Soft
+        	LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
+	    # GLEW: Not used, replaced by GLAD
+        	#LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+    	endif
     endif
 endif
 
@@ -124,7 +130,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -pthread
         # on XWindow could require also below libraries, just uncomment
-        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor 
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
