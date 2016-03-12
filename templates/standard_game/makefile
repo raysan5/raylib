@@ -162,9 +162,9 @@ SCREENS = \
 	screens/screen_gameplay.o \
 	screens/screen_ending.o \
 
-# typing 'make' will invoke the first target entry in the file,
+# typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is standard_game
-default: standard_game
+all: standard_game
 
 # compile template - standard_game
 standard_game: standard_game.c $(SCREENS)

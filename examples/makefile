@@ -202,9 +202,9 @@ EXAMPLES = \
     fix_dylib \
 
 
-# typing 'make' will invoke the first target entry in the file,
+# typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is raylib
-default: examples
+all: examples
 
 # compile all examples
 examples: $(EXAMPLES)

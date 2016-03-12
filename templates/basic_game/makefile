@@ -154,9 +154,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
 
-# typing 'make' will invoke the first target entry in the file,
+# typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is basic_game
-default: basic_game
+all: basic_game
 
 # compile template - basic_game
 basic_game: basic_game.c
