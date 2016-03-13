@@ -85,18 +85,18 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-	# add standard directories for GNU/Linux
+    # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
-    	INCLUDES =  -I. -I../src -I/usr/local/include/raylib/
+        INCLUDES = -I. -I../src -I/usr/local/include/raylib/
     else
-    	INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
-		# external libraries headers
-		# GLFW3
-    		INCLUDES += -I../../external/glfw3/include
-		# GLEW - Not required any more, replaced by GLAD
-    		#INCLUDES += -I../external/glew/include
-		# OpenAL Soft
-    		INCLUDES += -I../../external/openal_soft/include
+        INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
+        # external libraries headers
+        # GLFW3
+            INCLUDES += -I../../external/glfw3/include
+        # GLEW - Not required any more, replaced by GLAD
+            #INCLUDES += -I../external/glew/include
+        # OpenAL Soft
+            INCLUDES += -I../../external/openal_soft/include
     endif
 endif
 
@@ -105,20 +105,42 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS = -L. -L../../src -L/opt/vc/lib
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-	# add standard directories for GNU/Linux
+    # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
- 		LFLAGS = -L. -L../../src
-	else
-    	LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
-    	# external libraries to link with
-    	# GLFW3
-        	LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
-    	ifneq ($(PLATFORM_OS),OSX)
-    	# OpenAL Soft
-        	LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-	    # GLEW: Not used, replaced by GLAD
-        	#LFLAGS += -L../../external/glew/lib/$(LIBPATH)
-    	endif
+        LFLAGS = -L. -L../../src
+    else
+        LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
+        # external libraries to link with
+        # GLFW3
+            LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+        ifneq ($(PLATFORM_OS),OSX)
+        # OpenAL Soft
+            LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
+        # GLEW: Not used, replaced by GLAD
+            #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+        endif
+    endif
+endif
+
+# define library paths containing required libs
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    LFLAGS = -L. -L../../src -L/opt/vc/lib
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # add standard directories for GNU/Linux
+    ifeq ($(PLATFORM_OS),LINUX)
+        LFLAGS = -L. -L../../src
+    else
+        LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
+        # external libraries to link with
+        # GLFW3
+        LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+        ifneq ($(PLATFORM_OS),OSX)
+        # OpenAL Soft
+            LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
+        # GLEW
+            LFLAGS += -L../../external/glew/lib/$(LIBPATH)
+        endif
     endif
 endif
 
