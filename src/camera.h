@@ -81,6 +81,7 @@ void UpdateCameraPlayer(Camera *camera, Vector3 *position); // Update camera and
 
 void SetCameraPosition(Vector3 position);                   // Set internal camera position
 void SetCameraTarget(Vector3 target);                       // Set internal camera target
+void SetCameraFovy(float fovy);                             // Set internal camera field-of-view-y
 
 void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)

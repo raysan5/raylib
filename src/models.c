@@ -56,6 +56,8 @@ extern unsigned int whiteTexture;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static Mesh LoadOBJ(const char *fileName);
+static Mesh GenMeshHeightmap(Image image, Vector3 size);
+static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -446,41 +448,24 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
-    // NOTE: QUADS usage require defining a texture on OpenGL 3.3+
-    if (rlGetVersion() != OPENGL_11) rlEnableTexture(whiteTexture);    // Default white texture
-
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(size.x, 1.0f, size.y);
 
-        rlBegin(RL_QUADS);
+        rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 1.0f, 0.0f);
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, -0.5f);
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, 0.5f);
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(0.5f, 0.0f, 0.5f);
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(0.5f, 0.0f, -0.5f);
+
+            rlVertex3f(0.5f, 0.0f, -0.5f);
+            rlVertex3f(-0.5f, 0.0f, -0.5f);
+            rlVertex3f(-0.5f, 0.0f, 0.5f);
+
+            rlVertex3f(-0.5f, 0.0f, 0.5f);
+            rlVertex3f(0.5f, 0.0f, 0.5f);
+            rlVertex3f(0.5f, 0.0f, -0.5f);
         rlEnd();
     rlPopMatrix();
-
-    if (rlGetVersion() != OPENGL_11) rlDisableTexture();
-}
-
-// Draw a quad
-void DrawQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Color color)
-{
-    // TODO: Calculate normals from vertex position
-    
-    rlBegin(RL_QUADS);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        //rlNormal3f(0.0f, 0.0f, 0.0f);
-
-        rlVertex3f(v1.x, v1.y, v1.z);
-        rlVertex3f(v2.x, v2.y, v2.z);
-        rlVertex3f(v3.x, v3.y, v3.z);
-        rlVertex3f(v4.x, v4.y, v4.z);
-    rlEnd();
 }
 
 // Draw a ray line
@@ -566,28 +551,15 @@ Model LoadModel(const char *fileName)
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
     
-    if (mesh.vertexCount == 0)
-    {
-        TraceLog(WARNING, "Model could not be loaded");
-    }
+    if (mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
     else
     {
         // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
         model = rlglLoadModel(mesh);     // Upload vertex data to GPU
 
-        // Now that vertex data is uploaded to GPU, we can free arrays
-        // NOTE 1: We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
-        // NOTE 2: ...but we could keep CPU vertex data in case we need to update the mesh
-        
-        /*
-        if (rlGetVersion() != OPENGL_11)
-        {
-            free(mesh.vertices);
-            free(mesh.texcoords);
-            free(mesh.normals);
-            free(mesh.colors);
-        }
-        */
+        // NOTE: Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM
+        // We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
+        // ...but we could keep CPU vertex data in case we need to update the mesh
     }
 
     return model;
@@ -609,6 +581,54 @@ Model LoadModelEx(Mesh data)
 // Load a heightmap image as a 3d model
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
+{
+    Mesh mesh = GenMeshHeightmap(heightmap, size);
+    Model model = rlglLoadModel(mesh);
+
+    return model;
+}
+
+// Load a map image as a 3d model (cubes based)
+Model LoadCubicmap(Image cubicmap)
+{
+    Mesh mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0, 1.0, 1.5f });
+    Model model = rlglLoadModel(mesh);
+
+    return model;
+}
+
+// Unload 3d model from memory
+void UnloadModel(Model model)
+{
+    // Unload mesh data
+    free(model.mesh.vertices);
+    free(model.mesh.texcoords);
+    free(model.mesh.normals);
+    free(model.mesh.colors);
+    //if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2); // Not used
+    //if (model.mesh.tangents != NULL) free(model.mesh.tangents); // Not used
+    
+    rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
+    rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
+    rlDeleteBuffers(model.mesh.vboId[2]);   // normals
+    //rlDeleteBuffers(model.mesh.vboId[3]);   // texcoords2 (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[4]);   // tangents (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[5]);   // colors (NOT USED)
+
+    rlDeleteVertexArrays(model.mesh.vaoId);
+    
+    if (model.mesh.vaoId > 0) TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vaoId);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
+}
+
+// Link a texture to a model
+void SetModelTexture(Model *model, Texture2D texture)
+{
+    if (texture.id <= 0) model->material.texDiffuse.id = whiteTexture;  // Use default white texture
+    else model->material.texDiffuse = texture;
+}
+
+static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
     
@@ -714,34 +734,17 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
     // NOTE: Not used any more... just one plain color defined at DrawModel()
     for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-
-    Model model = rlglLoadModel(mesh);
-
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
-    if (rlGetVersion() != OPENGL_11)
-    {
-        free(mesh.vertices);
-        free(mesh.texcoords);
-        free(mesh.normals);
-        free(mesh.colors);
-    }
-
-    return model;
+    return mesh;
 }
 
-// Load a map image as a 3d model (cubes based)
-Model LoadCubicmap(Image cubicmap)
+static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh;
 
     Color *cubicmapPixels = GetImageData(cubicmap);
     
-    // Map cube size will be 1.0
-    float mapCubeSide = 1.0f;
-    int mapWidth = cubicmap.width*(int)mapCubeSide;
-    int mapHeight = cubicmap.height*(int)mapCubeSide;
+    int mapWidth = cubicmap.width*(int)cubeSize.x;
+    int mapHeight = cubicmap.height*(int)cubeSize.z;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
@@ -750,9 +753,9 @@ Model LoadCubicmap(Image cubicmap)
     int tcCounter = 0;      // Used to count texcoords
     int nCounter = 0;       // Used to count normals
 
-    float w = mapCubeSide;
-    float h = mapCubeSide;
-    float h2 = mapCubeSide*1.5f;   // TODO: Review walls height...
+    float w = cubeSize.x;
+    float h = cubeSize.z;
+    float h2 = cubeSize.y;
 
     Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles*3*sizeof(Vector3));
     Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles*3*sizeof(Vector2));
@@ -781,9 +784,9 @@ Model LoadCubicmap(Image cubicmap)
     RectangleF topTexUV = { 0.0f, 0.5f, 0.5f, 0.5f };
     RectangleF bottomTexUV = { 0.5f, 0.5f, 0.5f, 0.5f };
 
-    for (int z = 0; z < mapHeight; z += mapCubeSide)
+    for (int z = 0; z < mapHeight; z += cubeSize.z)
     {
-        for (int x = 0; x < mapWidth; x += mapCubeSide)
+        for (int x = 0; x < mapWidth; x += cubeSize.x)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
             Vector3 v1 = { x - w/2, h2, z - h/2 };
@@ -1087,59 +1090,9 @@ Model LoadCubicmap(Image cubicmap)
     free(mapNormals);
     free(mapTexcoords);
     
-    free(cubicmapPixels);
-
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-
-    Model model = rlglLoadModel(mesh);
-
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
-    if (rlGetVersion() != OPENGL_11)
-    {
-        free(mesh.vertices);
-        free(mesh.texcoords);
-        free(mesh.normals);
-        free(mesh.colors);
-    }
-
-    return model;
-}
-
-// Unload 3d model from memory
-void UnloadModel(Model model)
-{
-    if (rlGetVersion() == OPENGL_11)
-    {
-        free(model.mesh.vertices);
-        free(model.mesh.texcoords);
-        free(model.mesh.normals);
-    }
-
-    rlDeleteBuffers(model.mesh.vboId[0]);
-    rlDeleteBuffers(model.mesh.vboId[1]);
-    rlDeleteBuffers(model.mesh.vboId[2]);
-
-    rlDeleteVertexArrays(model.mesh.vaoId);
+    free(cubicmapPixels);   // Free image pixel data
     
-    if (model.mesh.vaoId > 0) TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vaoId);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
-}
-
-// Link a texture to a model
-void SetModelTexture(Model *model, Texture2D texture)
-{
-    if (texture.id <= 0)
-    {
-        // Use default white texture (use mesh color)
-        model->texture.id = whiteTexture;               // OpenGL 1.1
-        model->shader.texDiffuseId = whiteTexture;      // OpenGL 3.3 / ES 2.0
-    }
-    else
-    {
-        model->texture = texture;
-        model->shader.texDiffuseId = texture.id;
-    }
+    return mesh;
 }
 
 // Draw a model (with texture if set)
@@ -1177,8 +1130,16 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
-    // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
-    Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
+    Rectangle sourceRec = { 0, 0, texture.width, texture.height };
+    
+    DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
+}
+
+// Draw a billboard (part of a texture defined by a rectangle)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
+{
+    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
+    Vector2 sizeRatio = { size, size*(float)sourceRec.height/sourceRec.width };
 
     Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
     MatrixTranspose(&viewMatrix);
@@ -1186,51 +1147,8 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
     //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
     
-    // NOTE: Billboard locked to axis-Y
+    // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
-/*
-    a-------b
-    |       |
-    |   *   |
-    |       |
-    d-------c
-*/
-    VectorScale(&right, sizeRatio.x/2);
-    VectorScale(&up, sizeRatio.y/2);
-
-    Vector3 p1 = VectorAdd(right, up);
-    Vector3 p2 = VectorSubtract(right, up);
-
-    Vector3 a = VectorSubtract(center, p2);
-    Vector3 b = VectorAdd(center, p1);
-    Vector3 c = VectorAdd(center, p2);
-    Vector3 d = VectorSubtract(center, p1);
-
-    rlEnableTexture(texture.id);
-
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-
-        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
-        rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
-        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
-        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
-    rlEnd();
-
-    rlDisableTexture();
-}
-
-// Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
-{
-    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size, size * (float)sourceRec.height/sourceRec.width };
-
-    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&viewMatrix);
-
-    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
 /*
     a-------b
     |       |
@@ -1275,7 +1193,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 }
 
 // Draw a bounding box with wires
-void DrawBoundingBox(BoundingBox box)
+void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
     
@@ -1285,7 +1203,7 @@ void DrawBoundingBox(BoundingBox box)
     
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
     
-    DrawCubeWires(center, size.x, size.y, size.z, GREEN);
+    DrawCubeWires(center, size.x, size.y, size.z, color);
 }
 
 // Detect collision between two spheres
@@ -1306,14 +1224,14 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
 
 // Detect collision between two boxes
 // NOTE: Boxes are defined by two points minimum and maximum
-bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
+bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2)
 {
     bool collision = true;
 
-    if ((maxBBox1.x >= minBBox2.x) && (minBBox1.x <= maxBBox2.x))
+    if ((box1.max.x >= box2.min.x) && (box1.min.x <= box2.max.x))
     {
-        if ((maxBBox1.y < minBBox2.y) || (minBBox1.y > maxBBox2.y)) collision = false;
-        if ((maxBBox1.z < minBBox2.z) || (minBBox1.z > maxBBox2.z)) collision = false;
+        if ((box1.max.y < box2.min.y) || (box1.min.y > box2.max.y)) collision = false;
+        if ((box1.max.z < box2.min.z) || (box1.min.z > box2.max.z)) collision = false;
     }
     else collision = false;
 
@@ -1321,30 +1239,22 @@ bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, V
 }
 
 // Detect collision between box and sphere
-bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere)
+bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere)
 {
     bool collision = false;
 
-    if ((centerSphere.x - minBBox.x > radiusSphere) && (centerSphere.y - minBBox.y > radiusSphere) && (centerSphere.z - minBBox.z > radiusSphere) &&
-            (maxBBox.x - centerSphere.x > radiusSphere) && (maxBBox.y - centerSphere.y > radiusSphere) && (maxBBox.z - centerSphere.z > radiusSphere))
-    {
-        collision = true;
-    }
-    else
-    {
-        float dmin = 0;
+    float dmin = 0;
 
-        if (centerSphere.x - minBBox.x <= radiusSphere) dmin += (centerSphere.x - minBBox.x)*(centerSphere.x - minBBox.x);
-        else if (maxBBox.x - centerSphere.x <= radiusSphere) dmin += (centerSphere.x - maxBBox.x)*(centerSphere.x - maxBBox.x);
+    if (centerSphere.x < box.min.x) dmin += pow(centerSphere.x - box.min.x, 2);
+    else if (centerSphere.x > box.max.x) dmin += pow(centerSphere.x - box.max.x, 2);
 
-        if (centerSphere.y - minBBox.y <= radiusSphere) dmin += (centerSphere.y - minBBox.y)*(centerSphere.y - minBBox.y);
-        else if (maxBBox.y - centerSphere.y <= radiusSphere) dmin += (centerSphere.y - maxBBox.y)*(centerSphere.y - maxBBox.y);
+    if (centerSphere.y < box.min.y) dmin += pow(centerSphere.y - box.min.y, 2);
+    else if (centerSphere.y > box.max.y) dmin += pow(centerSphere.y - box.max.y, 2);
 
-        if (centerSphere.z - minBBox.z <= radiusSphere) dmin += (centerSphere.z - minBBox.z)*(centerSphere.z - minBBox.z);
-        else if (maxBBox.z - centerSphere.z <= radiusSphere) dmin += (centerSphere.z - maxBBox.z)*(centerSphere.z - maxBBox.z);
+    if (centerSphere.z < box.min.z) dmin += pow(centerSphere.z - box.min.z, 2);
+    else if (centerSphere.z > box.max.z) dmin += pow(centerSphere.z - box.max.z, 2);
 
-        if (dmin <= radiusSphere*radiusSphere) collision = true;
-    }
+    if (dmin <= (radiusSphere*radiusSphere)) collision = true;
 
     return collision;
 }
@@ -1395,17 +1305,17 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 }
 
 // Detect collision between ray and bounding box
-bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
+bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 {
     bool collision = false;
     
     float t[8];
-    t[0] = (minBBox.x - ray.position.x)/ray.direction.x;
-    t[1] = (maxBBox.x - ray.position.x)/ray.direction.x;
-    t[2] = (minBBox.y - ray.position.y)/ray.direction.y;
-    t[3] = (maxBBox.y - ray.position.y)/ray.direction.y;
-    t[4] = (minBBox.z - ray.position.z)/ray.direction.z;
-    t[5] = (maxBBox.z - ray.position.z)/ray.direction.z;
+    t[0] = (box.min.x - ray.position.x)/ray.direction.x;
+    t[1] = (box.max.x - ray.position.x)/ray.direction.x;
+    t[2] = (box.min.y - ray.position.y)/ray.direction.y;
+    t[3] = (box.max.y - ray.position.y)/ray.direction.y;
+    t[4] = (box.min.z - ray.position.z)/ray.direction.z;
+    t[5] = (box.max.z - ray.position.z)/ray.direction.z;
     t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
     
@@ -1712,7 +1622,7 @@ static Mesh LoadOBJ(const char *fileName)
 
     // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
-    // NOTE: faces MUST be defined as TRIANGLES, not QUADS
+    // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
     while(!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);

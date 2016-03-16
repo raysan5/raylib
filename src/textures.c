@@ -919,6 +919,39 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     free(pixels);
 }
 
+// Resize and image to new size using Nearest-Neighbor scaling algorithm
+void ImageResizeNN(Image *image,int newWidth,int newHeight) 
+{
+    Color *pixels = GetImageData(*image);
+    Color *output = (Color *)malloc(newWidth*newHeight*sizeof(Color));
+    
+    // EDIT: added +1 to account for an early rounding problem
+    int x_ratio = (int)((image->width<<16)/newWidth) + 1;
+    int y_ratio = (int)((image->height<<16)/newHeight) + 1;
+    
+    int x2, y2;
+    for (int i = 0; i < newHeight; i++) 
+    {
+        for (int j = 0; j < newWidth; j++) 
+        {
+            x2 = ((j*x_ratio) >> 16);
+            y2 = ((i*y_ratio) >> 16);
+            
+            output[(i*newWidth) + j] = pixels[(y2*image->width) + x2] ;
+        }                
+    }                
+
+    int format = image->format;
+
+    UnloadImage(*image);
+
+    *image = LoadImageEx(output, newWidth, newHeight);
+    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format 
+    
+    free(output);
+    free(pixels);
+}
+
 // Draw an image (source) within an image (destination)
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec) 
 {
@@ -1046,14 +1079,34 @@ Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, 
         float scaleFactor = (float)fontSize/imSize.y;
         TraceLog(INFO, "Scalefactor: %f", scaleFactor);
         
-        // TODO: Allow nearest-neighbor scaling algorithm
-        ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor)); 
+        // Using nearest-neighbor scaling algorithm for default font
+        if (font.texture.id == GetDefaultFont().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+        else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
     
     free(pixels);
     free(fontPixels);
     
     return imText;
+}
+
+// Draw text (default font) within an image (destination)
+void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
+{
+    ImageDrawTextEx(dst, position, GetDefaultFont(), text, fontSize, 0, color);
+}
+
+// Draw text (custom sprite font) within an image (destination)
+void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color)
+{
+    Image imText = ImageTextEx(font, text, fontSize, spacing, color);
+    
+    Rectangle srcRec = { 0, 0, imText.width, imText.height };
+    Rectangle dstRec = { (int)position.x, (int)position.y, imText.width, imText.height };
+    
+    ImageDraw(dst, imText, srcRec, dstRec);
+    
+    UnloadImage(imText);
 }
 
 // Flip image vertically

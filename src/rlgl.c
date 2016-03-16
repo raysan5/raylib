@@ -1421,7 +1421,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
 
 #if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, model.texture.id);
+    glBindTexture(GL_TEXTURE_2D, model.material.texDiffuse.id);
 
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
@@ -1452,7 +1452,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(model.shader.id);
+    glUseProgram(model.material.shader.id);
     
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1476,28 +1476,30 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
     Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
 
     // Send combined model-view-projection matrix to shader
-    glUniformMatrix4fv(model.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
+    glUniformMatrix4fv(model.material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
 
     // Apply color tinting to model
     // NOTE: Just update one uniform on fragment shader
     float vColor[4] = { (float)color.r/255, (float)color.g/255, (float)color.b/255, (float)color.a/255 };
-    glUniform4fv(model.shader.tintColorLoc, 1, vColor);
+    glUniform4fv(model.material.shader.tintColorLoc, 1, vColor);
 
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, model.shader.texDiffuseId);
-    glUniform1i(model.shader.mapDiffuseLoc, 0);
-
-    if (model.shader.texNormalId != 0)
+    glBindTexture(GL_TEXTURE_2D, model.material.texDiffuse.id);
+    glUniform1i(model.material.shader.mapDiffuseLoc, 0);        // Texture fits in active texture unit 0
+    
+    if (model.material.texNormal.id != 0)
     {
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, model.shader.texNormalId);
+        glBindTexture(GL_TEXTURE_2D, model.material.texNormal.id);
+        glUniform1i(model.material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
     }
     
-    if (model.shader.texSpecularId != 0)
+    if (model.material.texSpecular.id != 0)
     {
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, model.shader.texSpecularId);
+        glBindTexture(GL_TEXTURE_2D, model.material.texSpecular.id);
+        glUniform1i(model.material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
     }
 
     if (vaoSupported)
@@ -1508,19 +1510,19 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
     {
         // Bind model VBOs data
         glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[0]);
-        glVertexAttribPointer(model.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(model.shader.vertexLoc);
+        glVertexAttribPointer(model.material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(model.material.shader.vertexLoc);
 
         glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[1]);
-        glVertexAttribPointer(model.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(model.shader.texcoordLoc);
+        glVertexAttribPointer(model.material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(model.material.shader.texcoordLoc);
 
         // Add normals support
-        if (model.shader.normalLoc != -1)
+        if (model.material.shader.normalLoc != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[2]);
-            glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(model.shader.normalLoc);
+            glVertexAttribPointer(model.material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(model.material.shader.normalLoc);
         }
     }
 
@@ -1531,13 +1533,13 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
     //glDisableVertexAttribArray(model.shader.texcoordLoc);
     //if (model.shader.normalLoc != -1) glDisableVertexAttribArray(model.shader.normalLoc);
     
-    if (model.shader.texNormalId != 0)
+    if (model.material.texNormal.id != 0)
     {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     
-    if (model.shader.texSpecularId != 0)
+    if (model.material.texSpecular.id != 0)
     {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -1611,54 +1613,24 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 }
 
 // Get world coordinates from screen coordinates
-// NOTE: Using global variables: screenWidth, screenHeight
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 {
-    Vector3 result = { 0.0f, 0.0f, 0.0f };   // Object coordinates
+    Vector3 result = { 0.0f, 0.0f, 0.0f };
     
-    //GLint viewport[4];
-    //glGetIntegerv(GL_VIEWPORT, viewport); // Not available on OpenGL ES 2.0
-
-    // Viewport data
-    int x = 0;                  // viewport[0]
-    int y = 0;                  // viewport[1]
-    int width = screenWidth;    // viewport[2]
-    int height = screenHeight;  // viewport[3]
+    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
+    Matrix matProjView = MatrixMultiply(proj, view);
+    MatrixInvert(&matProjView);
     
-    Matrix modelviewprojection = MatrixMultiply(view, proj);
-    MatrixInvert(&modelviewprojection);
-/*
-    // NOTE: Compute unproject using Vector3
-
-    // Transformation of normalized coordinates between -1 and 1
-    result.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
-    result.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
-    result.z = source.z*2.0f - 1.0f;
-
-    // Object coordinates (multiply vector by matrix)
-    VectorTransform(&result, modelviewprojection);
-*/
- 
-    // NOTE: Compute unproject using Quaternion (Vector4)
-    Quaternion quat;
+    // Create quaternion from source point
+    Quaternion quat = { source.x, source.y, source.z, 1.0f };
     
-    quat.x = ((source.x - (float)x)/(float)width)*2.0f - 1.0f;
-    quat.y = ((source.y - (float)y)/(float)height)*2.0f - 1.0f;
-    quat.z = source.z*2.0f - 1.0f;
-    quat.w = 1.0f;
+    // Multiply quat point by unproject matrix
+    QuaternionTransform(&quat, matProjView);
     
-    QuaternionTransform(&quat, modelviewprojection);
-
-    if (quat.w != 0.0f)
-    {
-        quat.x /= quat.w;
-        quat.y /= quat.w;
-        quat.z /= quat.w;
-    }
-
-    result.x = quat.x;
-    result.y = quat.y;
-    result.z = quat.z;
+    // Normalized world points in vectors
+    result.x = quat.x/quat.w;
+    result.y = quat.y/quat.w;
+    result.z = quat.z/quat.w;
 
     return result;
 }
@@ -1892,9 +1864,9 @@ void rlglGenerateMipmaps(Texture2D texture)
         void *data = rlglReadTexturePixels(texture);
         
         // NOTE: data size is reallocated to fit mipmaps data
+        // NOTE: CPU mipmap generation only supports RGBA 32bit data
         int mipmapCount = GenerateMipmaps(data, texture.width, texture.height);
 
-        // TODO: Adjust mipmap size depending on texture format!
         int size = texture.width*texture.height*4;  // RGBA 32bit only
         int offset = size;
 
@@ -1915,6 +1887,9 @@ void rlglGenerateMipmaps(Texture2D texture)
         
         TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture.id);
         
+        // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
+        free(data):
+        
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
         TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
@@ -1924,7 +1899,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 #endif
     }
     else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture.id);
-        
+
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -1934,22 +1909,29 @@ Model rlglLoadModel(Mesh mesh)
     Model model;
 
     model.mesh = mesh;
-    model.transform = MatrixIdentity();
     model.mesh.vaoId = 0;       // Vertex Array Object
-    model.mesh.vboId[0] = 0;    // Vertex position VBO
-    model.mesh.vboId[1] = 0;    // Texcoords VBO
-    model.mesh.vboId[2] = 0;    // Normals VBO
+    model.mesh.vboId[0] = 0;    // Vertex positions VBO
+    model.mesh.vboId[1] = 0;    // Vertex texcoords VBO
+    model.mesh.vboId[2] = 0;    // Vertex normals VBO
+    
+    model.transform = MatrixIdentity();
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    model.texture.id = 0;       // No texture required
-    model.shader.id = 0;        // No shader used
+    model.material.texDiffuse.id = 0;    // No texture required
+    model.material.shader.id = 0;        // No shader used
 
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model.texture.id = whiteTexture;    // Default whiteTexture
-    model.texture.width = 1;            // Default whiteTexture width
-    model.texture.height = 1;           // Default whiteTexture height
-    model.texture.format = UNCOMPRESSED_R8G8B8A8; // Default whiteTexture format
-    model.shader = simpleShader;        // Default model shader
+    model.material.shader = simpleShader;           // Default model shader
+    
+    model.material.texDiffuse.id = whiteTexture;    // Default whiteTexture
+    model.material.texDiffuse.width = 1;            // Default whiteTexture width
+    model.material.texDiffuse.height = 1;           // Default whiteTexture height
+    model.material.texDiffuse.format = UNCOMPRESSED_R8G8B8A8; // Default whiteTexture format
+    
+    model.material.texNormal.id = 0;        // By default, no normal texture
+    model.material.texSpecular.id = 0;      // By default, no specular texture
+    
+    // TODO: Fill default material properties (color, glossiness...)
     
     GLuint vaoModel = 0;         // Vertex Array Objects (VAO)
     GLuint vertexBuffer[3];      // Vertex Buffer Objects (VBO)
@@ -1967,20 +1949,20 @@ Model rlglLoadModel(Mesh mesh)
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(model.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(model.shader.vertexLoc);
+    glVertexAttribPointer(model.material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.material.shader.vertexLoc);
 
     // Enable vertex attributes: texcoords
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh.vertexCount, mesh.texcoords, GL_STATIC_DRAW);
-    glVertexAttribPointer(model.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(model.shader.texcoordLoc);
+    glVertexAttribPointer(model.material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.material.shader.texcoordLoc);
 
     // Enable vertex attributes: normals
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);
-    glVertexAttribPointer(model.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(model.shader.normalLoc);
+    glVertexAttribPointer(model.material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(model.material.shader.normalLoc);
 
     model.mesh.vboId[0] = vertexBuffer[0];     // Vertex position VBO
     model.mesh.vboId[1] = vertexBuffer[1];     // Texcoords VBO
@@ -2180,11 +2162,6 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
         if (shader.id != 0)
         {
             TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
-        
-            // Set shader textures ids (all 0 by default)
-            shader.texDiffuseId = 0;
-            shader.texNormalId = 0;
-            shader.texSpecularId = 0;
 
             // Get handles to GLSL input attibute locations
             //-------------------------------------------------------------------
@@ -2341,28 +2318,7 @@ void SetCustomShader(Shader shader)
     if (currentShader.id != shader.id)
     {
         rlglDraw();
-
         currentShader = shader;
-/*
-        if (vaoSupported) glBindVertexArray(vaoQuads);
-        
-        // Enable vertex attributes: position
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
-        glEnableVertexAttribArray(currentShader.vertexLoc);
-        glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-
-        // Enable vertex attributes: texcoords
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
-        glEnableVertexAttribArray(currentShader.texcoordLoc);
-        glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-
-        // Enable vertex attributes: colors
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
-        glEnableVertexAttribArray(currentShader.colorLoc);
-        glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-
-        if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-*/
     }
 #endif
 }
@@ -2385,7 +2341,7 @@ void SetPostproShader(Shader shader)
     texture.width = screenWidth;
     texture.height = screenHeight;
 
-    SetShaderMapDiffuse(&postproQuad.shader, texture);
+    postproQuad.material.texDiffuse = texture;
     
     //TraceLog(DEBUG, "Postproquad texture id: %i", postproQuad.texture.id);
     //TraceLog(DEBUG, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
@@ -2413,7 +2369,7 @@ void SetDefaultShader(void)
 void SetModelShader(Model *model, Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model->shader = shader;
+    model->material.shader = shader;
 
     if (vaoSupported) glBindVertexArray(model->mesh.vaoId);
 
@@ -2433,9 +2389,7 @@ void SetModelShader(Model *model, Shader shader)
     glVertexAttribPointer(shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-    
-    // NOTE: If SetModelTexture() is called previously, texture is not assigned to new shader
-    if (model->texture.id > 0) model->shader.texDiffuseId = model->texture.id;
+
 #elif (GRAPHICS_API_OPENGL_11)
     TraceLog(WARNING, "Shaders not supported on OpenGL 1.1");
 #endif
@@ -2505,104 +2459,6 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
     
     glUseProgram(0);
 #endif
-}
-
-// Default diffuse shader map texture assignment
-void SetShaderMapDiffuse(Shader *shader, Texture2D texture)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    shader->texDiffuseId = texture.id;
-    
-    glUseProgram(shader->id);
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, shader->texDiffuseId);
-    
-    glUniform1i(shader->mapDiffuseLoc, 0);    // Texture fits in active texture unit 0
-    
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE0);
-    glUseProgram(0);
-#endif
-}
-
-// Normal map texture shader assignment
-void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    shader->mapNormalLoc = glGetUniformLocation(shader->id, uniformName);
-
-    if (shader->mapNormalLoc == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader->id, uniformName);
-    else
-    {
-        shader->texNormalId = texture.id;
-        
-        glUseProgram(shader->id);
-        
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, shader->texNormalId);
-        
-        glUniform1i(shader->mapNormalLoc, 1);    // Texture fits in active texture unit 1
-        
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glUseProgram(0);
-    }
-#endif
-}
-
-// Specular map texture shader assignment
-void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    shader->mapSpecularLoc = glGetUniformLocation(shader->id, uniformName);
-
-    if (shader->mapSpecularLoc == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader->id, uniformName);
-    else
-    {
-        shader->texSpecularId = texture.id;
-        
-        glUseProgram(shader->id);
-        
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, shader->texSpecularId);
-        
-        glUniform1i(shader->mapSpecularLoc, 2);    // Texture fits in active texture unit 2
-        
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glUseProgram(0);
-    }
-#endif
-}
-
-// Generic shader maps assignment
-// TODO: Trying to find a generic shader to allow any kind of map
-// NOTE: mapLocation should be retrieved by user with GetShaderLocation()
-// ISSUE: mapTextureId: Shader should contain a reference to map texture and corresponding textureUnit,
-//        so it can be automatically checked and used in rlglDrawModel()
-void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit)
-{
-/*
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (mapLocation == -1) TraceLog(WARNING, "[SHDR ID %i] Map location could not be found", shader->id);
-    else
-    {
-        shader->mapTextureId = texture.id;
-        
-        glUseProgram(shader->id);
-        
-        glActiveTexture(GL_TEXTURE0 + textureUnit);
-        glBindTexture(GL_TEXTURE_2D, shader->mapTextureId);
-        
-        glUniform1i(mapLocation, textureUnit);    // Texture fits in active textureUnit
-        
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glUseProgram(0);
-    }
-#endif
-*/
 }
 
 // Set blending mode (alpha, additive, multiplied)
@@ -2679,14 +2535,10 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
 }
 
 // Load Shader (Vertex and Fragment)
-// NOTE: This shader program is used only for batch buffers (lines, triangles, quads)
+// NOTE: This shader program is used for batch buffers (lines, triangles, quads)
 static Shader LoadDefaultShader(void)
 {
     Shader shader;
-
-    // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
-    // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
-    // Just defined #version 330 despite shader is #version 110
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -2695,7 +2547,7 @@ static Shader LoadDefaultShader(void)
         "in vec2 vertexTexCoord;            \n"
         "in vec4 vertexColor;               \n"
         "out vec2 fragTexCoord;             \n"
-        "out vec4 fragTintColor;                \n"
+        "out vec4 fragTintColor;            \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char vShaderStr[] = "#version 100       \n"
         "attribute vec3 vertexPosition;     \n"
@@ -2704,7 +2556,7 @@ static Shader LoadDefaultShader(void)
         "varying vec2 fragTexCoord;         \n"
         "varying vec4 fragTintColor;        \n"
 #endif
-        "uniform mat4 mvpMatrix;     \n"
+        "uniform mat4 mvpMatrix;            \n"
         "void main()                        \n"
         "{                                  \n"
         "    fragTexCoord = vertexTexCoord; \n"
@@ -2716,7 +2568,7 @@ static Shader LoadDefaultShader(void)
 #if defined(GRAPHICS_API_OPENGL_33)
     char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
-        "in vec4 fragTintColor;                 \n"
+        "in vec4 fragTintColor;             \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
@@ -2751,10 +2603,6 @@ static Shader LoadDefaultShader(void)
     shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
     shader.mapNormalLoc = -1;       // It can be set later
     shader.mapSpecularLoc = -1;     // It can be set later
-    
-    shader.texDiffuseId = whiteTexture; // Default white texture
-    shader.texNormalId = 0;
-    shader.texSpecularId = 0;
     //--------------------------------------------------------------------
 
     return shader;
@@ -2765,10 +2613,6 @@ static Shader LoadDefaultShader(void)
 static Shader LoadSimpleShader(void)
 {
     Shader shader;
-
-    // NOTE: Shaders are written using GLSL 110 (desktop), that is equivalent to GLSL 100 on ES2
-    // NOTE: Detected an error on ATI cards if defined #version 110 while OpenGL 3.3+
-    // Just defined #version 330 despite shader is #version 110
 
     // Vertex shader directly defined, no external file required
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -2829,10 +2673,6 @@ static Shader LoadSimpleShader(void)
     shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
     shader.mapNormalLoc = -1;       // It can be set later
     shader.mapSpecularLoc = -1;     // It can be set later
-    
-    shader.texDiffuseId = whiteTexture; // Default white texture
-    shader.texNormalId = 0;
-    shader.texSpecularId = 0;
     //--------------------------------------------------------------------
 
     return shader;
@@ -2904,7 +2744,6 @@ static void InitializeBuffers(void)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     quads.indices = (unsigned short *)malloc(sizeof(short)*6*MAX_QUADS_BATCH);  // 6 int by quad (indices)
 #endif
-
 
     for (int i = 0; i < (3*4*MAX_QUADS_BATCH); i++) quads.vertices[i] = 0.0f;
     for (int i = 0; i < (2*4*MAX_QUADS_BATCH); i++) quads.texcoords[i] = 0.0f;
@@ -3106,7 +2945,7 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
     int mipmapCount = 1;                // Required mipmap levels count (including base level)
     int width = baseWidth;
     int height = baseHeight;
-    int size = baseWidth*baseHeight*4;  // Size in bytes (will include mipmaps...)
+    int size = baseWidth*baseHeight*4;  // Size in bytes (will include mipmaps...), RGBA only
 
     // Count mipmap levels required
     while ((width != 1) && (height != 1))

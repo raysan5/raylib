@@ -21,7 +21,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - box collisions");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
     
     Vector3 playerPosition = { 0.0f, 1.0f, 2.0f };
     Vector3 playerSize = { 1.0f, 2.0f, 1.0f };
@@ -53,27 +53,29 @@ int main()
         collision = false;
         
         // Check collisions player vs enemy-box
-        if (CheckCollisionBoxes((Vector3){ playerPosition.x - playerSize.x/2, 
-                                           playerPosition.y - playerSize.y/2, 
-                                           playerPosition.z - playerSize.z/2 }, 
-                                (Vector3){ playerPosition.x + playerSize.x/2,
-                                           playerPosition.y + playerSize.y/2, 
-                                           playerPosition.z + playerSize.z/2 },
-                                (Vector3){ enemyBoxPos.x - enemyBoxSize.x/2, 
-                                           enemyBoxPos.y - enemyBoxSize.y/2, 
-                                           enemyBoxPos.z - enemyBoxSize.z/2 }, 
-                                (Vector3){ enemyBoxPos.x + enemyBoxSize.x/2,
-                                           enemyBoxPos.y + enemyBoxSize.y/2, 
-                                           enemyBoxPos.z + enemyBoxSize.z/2 })) collision = true;
+        if (CheckCollisionBoxes(
+            (BoundingBox){(Vector3){ playerPosition.x - playerSize.x/2, 
+                                     playerPosition.y - playerSize.y/2, 
+                                     playerPosition.z - playerSize.z/2 }, 
+                          (Vector3){ playerPosition.x + playerSize.x/2,
+                                     playerPosition.y + playerSize.y/2, 
+                                     playerPosition.z + playerSize.z/2 }},
+            (BoundingBox){(Vector3){ enemyBoxPos.x - enemyBoxSize.x/2, 
+                                     enemyBoxPos.y - enemyBoxSize.y/2, 
+                                     enemyBoxPos.z - enemyBoxSize.z/2 }, 
+                          (Vector3){ enemyBoxPos.x + enemyBoxSize.x/2,
+                                     enemyBoxPos.y + enemyBoxSize.y/2, 
+                                     enemyBoxPos.z + enemyBoxSize.z/2 }})) collision = true;
         
         // Check collisions player vs enemy-sphere
-        if (CheckCollisionBoxSphere((Vector3){ playerPosition.x - playerSize.x/2, 
-                                               playerPosition.y - playerSize.y/2, 
-                                               playerPosition.z - playerSize.z/2 }, 
-                                    (Vector3){ playerPosition.x + playerSize.x/2,
-                                               playerPosition.y + playerSize.y/2, 
-                                               playerPosition.z + playerSize.z/2 }, 
-                                               enemySpherePos, enemySphereSize)) collision = true;
+        if (CheckCollisionBoxSphere(
+            (BoundingBox){(Vector3){ playerPosition.x - playerSize.x/2, 
+                                     playerPosition.y - playerSize.y/2, 
+                                     playerPosition.z - playerSize.z/2 }, 
+                          (Vector3){ playerPosition.x + playerSize.x/2,
+                                     playerPosition.y + playerSize.y/2, 
+                                     playerPosition.z + playerSize.z/2 }}, 
+            enemySpherePos, enemySphereSize)) collision = true;
         
         if (collision) playerColor = RED;
         else playerColor = GREEN;

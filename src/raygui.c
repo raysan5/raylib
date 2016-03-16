@@ -59,16 +59,16 @@ static int style[NUM_PROPERTIES] = {
     1,                  // GLOBAL_BORDER_WIDTH
     0xf5f5f5ff,         // BACKGROUND_COLOR
     1,                  // LABEL_BORDER_WIDTH
-    0x000000ff,         // LABEL_TEXT_COLOR
+    0x4d4d4dff,         // LABEL_TEXT_COLOR
     20,                 // LABEL_TEXT_PADDING
     2,                  // BUTTON_BORDER_WIDTH
     20,                 // BUTTON_TEXT_PADDING
     0x828282ff,         // BUTTON_DEFAULT_BORDER_COLOR
     0xc8c8c8ff,         // BUTTON_DEFAULT_INSIDE_COLOR
-    0x000000ff,         // BUTTON_DEFAULT_TEXT_COLOR
+    0x4d4d4dff,         // BUTTON_DEFAULT_TEXT_COLOR
     0xc8c8c8ff,         // BUTTON_HOVER_BORDER_COLOR
     0xffffffff,         // BUTTON_HOVER_INSIDE_COLOR
-    0x000000ff,         // BUTTON_HOVER_TEXT_COLOR
+    0x353535ff,         // BUTTON_HOVER_TEXT_COLOR
     0x7bb0d6ff,         // BUTTON_PRESSED_BORDER_COLOR
     0xbcecffff,         // BUTTON_PRESSED_INSIDE_COLOR
     0x5f9aa7ff,         // BUTTON_PRESSED_TEXT_COLOR
@@ -120,7 +120,7 @@ static int style[NUM_PROPERTIES] = {
     0x000000ff,         // SPINNER_PRESSED_TEXT_COLOR
     1,                  // COMBOBOX_PADDING
     30,                 // COMBOBOX_BUTTON_WIDTH
-    30,                 // COMBOBOX_BUTTON_HEIGHT
+    20,                 // COMBOBOX_BUTTON_HEIGHT
     1,                  // COMBOBOX_BORDER_WIDTH
     0x828282ff,         // COMBOBOX_DEFAULT_BORDER_COLOR
     0xc8c8c8ff,         // COMBOBOX_DEFAULT_INSIDE_COLOR
@@ -258,15 +258,28 @@ bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle)
     //--------------------------------------------------------------------   
     if (toggleButton.width < textWidth) toggleButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
     if (toggleButton.height < textHeight) toggleButton.height = textHeight + style[TOGGLE_TEXT_PADDING]/2;
+    
+    if (toggle) toggleState = TOGGLE_ACTIVE;
+    else toggleState = TOGGLE_UNACTIVE;
+    
     if (CheckCollisionPointRec(mousePoint, toggleButton))
     {
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) toggleState = TOGGLE_PRESSED;
-        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) toggleState = TOGGLE_ACTIVE;
+        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
+            if (toggle)
+            {
+                toggle = false;
+                toggleState = TOGGLE_UNACTIVE;
+            }
+            else
+            {
+                toggle = true;
+                toggleState = TOGGLE_ACTIVE;
+            }
+        }
         else toggleState = TOGGLE_HOVER;
     }
-     
-    if (toggleState == TOGGLE_ACTIVE && !toggle) toggle = true;
-    if (toggle) toggleState = TOGGLE_ACTIVE;
     //--------------------------------------------------------------------   
     
     // Draw control
@@ -789,11 +802,11 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
 // NOTE: Requires static variables: framesCounter - ERROR!
 char *GuiTextBox(Rectangle bounds, char *text)
 {
-    #define MAX_CHARS_LENGTH  	20
-    #define KEY_BACKSPACE_TEXT   3
+    #define MAX_CHARS_LENGTH  	 20
+    #define KEY_BACKSPACE_TEXT  259     // GLFW BACKSPACE: 3 + 256
     
     int initPos = bounds.x + 4;
-    char letter = -1;
+    int letter = -1;
     static int framesCounter = 0;
     Vector2 mousePoint = GetMousePosition();
     
@@ -822,12 +835,15 @@ char *GuiTextBox(Rectangle bounds, char *text)
             }
             else
             {
-                for (int i = 0; i < MAX_CHARS_LENGTH; i++)
+                if ((letter >= 32) && (letter < 127))
                 {
-                    if (text[i] == '\0')
+                    for (int i = 0; i < MAX_CHARS_LENGTH; i++)
                     {
-                        text[i] = letter;
-                        break;
+                        if (text[i] == '\0')
+                        {
+                            text[i] = (char)letter;
+                            break;
+                        }
                     }
                 }
             }

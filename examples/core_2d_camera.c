@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Initialize 3d mode
+*   raylib [core] example - 2d camera
 *
-*   This example has been created using raylib 1.0 (www.raylib.com)
+*   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -18,18 +18,16 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d mode");
-
-    // Define the camera to look into our 3d world
-    Camera camera;
-    camera.position = (Vector3){ 0.0f, 10.0f, 10.0f };  // Camera position
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
-
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
-
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera");
+    
+    Camera2D camera;
+    
+    camera.position = (Vector2){ 0, 0 };
+    camera.origin = (Vector2){ 100, 100 };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -37,34 +35,35 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+        if (IsKeyDown(KEY_RIGHT)) camera.position.x--;
+        else if (IsKeyDown(KEY_LEFT)) camera.position.x++;
+        else if (IsKeyDown(KEY_UP)) camera.position.y++;
+        else if (IsKeyDown(KEY_DOWN)) camera.position.y--;
+        
+        if (IsKeyDown(KEY_R)) camera.rotation--;
+        else if (IsKeyDown(KEY_F)) camera.rotation++;
+        
+        if (IsKeyDown(KEY_W)) camera.zoom += 0.005f;
+        if (IsKeyDown(KEY_S)) camera.zoom -= 0.005f;
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
-        BeginDrawing();
+        BeginDrawingEx(camera);
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
-
-                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-
-                DrawGrid(10, 1.0f);
-
-            End3dMode();
-
-            DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
-
-            DrawFPS(10, 10);
+            DrawText("2D CAMERA TEST", 20, 20, 20, GRAY);
+            
+            DrawRectangle(0, 300, screenWidth, 50, GRAY);
+            DrawRectangle(400, 250, 40, 40, RED);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------   
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

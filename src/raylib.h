@@ -309,10 +309,19 @@ typedef struct SpriteFont {
 
 // Camera type, defines a camera position/orientation in 3d space
 typedef struct Camera {
-    Vector3 position;
-    Vector3 target;
-    Vector3 up;
+    Vector3 position;       // Camera position
+    Vector3 target;         // Camera target it looks-at
+    Vector3 up;             // Camera up vector (rotation over its axis)
+    float fovy;             // Field-Of-View apperture in Y (degrees)
 } Camera;
+
+// Camera2D type, defines a 2d camera
+typedef struct Camera2D {
+    Vector2 position;       // Camera position
+    Vector2 origin;         // Camera origin (for rotation and zoom)
+    float rotation;         // Camera rotation in degrees
+    float zoom;             // Camera zoom (scaling), should be 1.0f by default
+} Camera2D;
 
 // Bounding box type
 typedef struct BoundingBox {
@@ -338,12 +347,7 @@ typedef struct Mesh {
 
 // Shader type (generic shader)
 typedef struct Shader {
-    unsigned int id;                // Shader program id
-
-    // TODO: This should be Texture2D objects
-    unsigned int texDiffuseId;      // Diffuse texture id
-    unsigned int texNormalId;       // Normal texture id
-    unsigned int texSpecularId;     // Specular texture id
+    unsigned int id;            // Shader program id
     
     // Variable attributes
     int vertexLoc;        // Vertex attribute location point (vertex shader)
@@ -361,20 +365,19 @@ typedef struct Shader {
 } Shader;
 
 // Material type
-// TODO: Redesign material-shaders-textures system
 typedef struct Material {
-    //Shader shader;
+    Shader shader;              // Standard shader (supports 3 map types: diffuse, normal, specular)
 
-    //Texture2D texDiffuse;      // Diffuse texture
-    //Texture2D texNormal;       // Normal texture
-    //Texture2D texSpecular;     // Specular texture
+    Texture2D texDiffuse;       // Diffuse texture
+    Texture2D texNormal;        // Normal texture
+    Texture2D texSpecular;      // Specular texture
     
-    Color colDiffuse;
-    Color colAmbient;
-    Color colSpecular;
+    Color colDiffuse;           // Diffuse color
+    Color colAmbient;           // Ambient color
+    Color colSpecular;          // Specular color
     
-    float glossiness;
-    float normalDepth;
+    float glossiness;           // Glossiness level
+    float normalDepth;          // Normal map depth
 } Material;
 
 // 3d Model type
@@ -382,9 +385,7 @@ typedef struct Material {
 typedef struct Model {
     Mesh mesh;
     Matrix transform;
-    Texture2D texture;    // Only for OpenGL 1.1, on newer versions this should be in the shader
-    Shader shader;
-	//Material material;
+    Material material;
 } Model;
 
 // Ray type (useful for raycast)
@@ -530,7 +531,8 @@ int GetScreenHeight(void);                                  // Get current scree
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
-void BeginDrawingEx(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with extended parameters
+void BeginDrawingEx(Camera2D camera);                       // Setup drawing canvas with 2d camera
+void BeginDrawingPro(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with pro parameters
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
 void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
@@ -632,6 +634,7 @@ void UpdateCameraPlayer(Camera *camera, Vector3 *position); // Update camera and
 
 void SetCameraPosition(Vector3 position);                   // Set internal camera position
 void SetCameraTarget(Vector3 target);                       // Set internal camera target
+void SetCameraFovy(float fovy);                             // Set internal camera field-of-view-y
 
 void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
@@ -693,9 +696,12 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);         
 Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
 void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
 void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
-void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
+void ImageResizeNN(Image *image,int newWidth,int newHeight);                                       // Resize and image (Nearest-Neighbor scaling algorithm)
 Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
 Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint);       // Create an image from text (custom sprite font)
+void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
+void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
+void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color); // Draw text (custom sprite font) within an image (destination)
 void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
 void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
@@ -743,7 +749,6 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
 void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone wires
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XZ
-void DrawQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Color color);                        // Draw a quad
 void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
@@ -753,7 +758,7 @@ void DrawGizmo(Vector3 position);                                               
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
-Model LoadModelEx(Mesh data);                                                                      // Load a 3d model (from vertex data)
+Model LoadModelEx(Mesh data);                                                                      // Load a 3d model (from mesh data)
 //Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, Vector3 size);                                                // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
@@ -763,19 +768,19 @@ void SetModelTexture(Model *model, Texture2D texture);                          
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model with extended parameters
 void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
-void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model wires (with texture if set) with extended parameters
-void DrawBoundingBox(BoundingBox box);                                                             // Draw bounding box (wires)
+void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
+void DrawBoundingBox(BoundingBox box, Color color);                                                // Draw bounding box (wires)
 
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);                         // Draw a billboard texture
 void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint); // Draw a billboard texture defined by sourceRec
 
-BoundingBox CalculateBoundingBox(Mesh mesh);                                                       // Calculate mesh bounding box limits
+BoundingBox CalculateBoundingBox(Mesh mesh);                                                                    // Calculate mesh bounding box limits
 bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);                     // Detect collision between two spheres
-bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2);               // Detect collision between two boxes
-bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere);       // Detect collision between box and sphere
+bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                                   // Detect collision between two bounding boxes
+bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere);                        // Detect collision between box and sphere
 bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                              // Detect collision between ray and sphere
 bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint);   // Detect collision between ray and sphere with extended parameters and collision point detection
-bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox);                                           // Detect collision between ray and box
+bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                                            // Detect collision between ray and box
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Detect collision of player radius with cubicmap
                                                                                                                 // NOTE: Return the normal vector of the impacted surface
 //------------------------------------------------------------------------------------
@@ -795,10 +800,10 @@ int GetShaderLocation(Shader shader, const char *uniformName);                  
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);                   // Set shader uniform value (matrix 4x4)
-void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
-void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
-void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
-void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+//void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
+//void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
+//void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
+//void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 

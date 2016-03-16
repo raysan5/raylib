@@ -154,11 +154,6 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
     typedef struct Shader {
         unsigned int id;                // Shader program id
 
-        // TODO: This should be Texture2D objects
-        unsigned int texDiffuseId;      // Diffuse texture id
-        unsigned int texNormalId;       // Normal texture id
-        unsigned int texSpecularId;     // Specular texture id
-        
         // Variable attributes
         int vertexLoc;        // Vertex attribute location point (vertex shader)
         int texcoordLoc;      // Texcoord attribute location point (vertex shader)
@@ -184,12 +179,27 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         int format;             // Data format (TextureFormat)
     } Texture2D;
     
+    // Material type
+    typedef struct Material {
+        Shader shader;
+
+        Texture2D texDiffuse;      // Diffuse texture
+        Texture2D texNormal;       // Normal texture
+        Texture2D texSpecular;     // Specular texture
+        
+        Color colDiffuse;
+        Color colAmbient;
+        Color colSpecular;
+        
+        float glossiness;
+        float normalDepth;
+    } Material;
+
     // 3d Model type
     typedef struct Model {
         Mesh mesh;
         Matrix transform;
-        Texture2D texture;
-        Shader shader;
+        Material material;
     } Model;
 	
     // Color blending modes (pre-defined)

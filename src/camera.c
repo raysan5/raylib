@@ -84,7 +84,7 @@ typedef enum { MOVE_FRONT = 0, MOVE_LEFT, MOVE_BACK, MOVE_RIGHT, MOVE_UP, MOVE_D
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Camera internalCamera = {{ 2.0f, 0.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+static Camera internalCamera = {{ 2.0f, 0.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 static Vector2 cameraAngle = { 0.0f, 0.0f };
 static float cameraTargetDistance = 5.0f;
 static Vector2 cameraMousePosition = { 0.0f, 0.0f };
@@ -210,6 +210,12 @@ void SetCameraTarget(Vector3 target)
     float dz = v2.z - v1.z;
     
     cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
+}
+
+// Set internal camera fovy
+void SetCameraFovy(float fovy)
+{
+    internalCamera.fovy = fovy;
 }
 
 // Set camera pan key to combine with mouse movement (free camera)

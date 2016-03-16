@@ -180,44 +180,17 @@ void DrawRectangleGradient(int posX, int posY, int width, int height, Color colo
 // Draw a color-filled rectangle (Vector version)
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-    if (rlGetVersion() == OPENGL_11)
-    {
-        rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
 
-            rlVertex2i(position.x, position.y);
-            rlVertex2i(position.x, position.y + size.y);
-            rlVertex2i(position.x + size.x, position.y + size.y);
+        rlVertex2i(position.x, position.y);
+        rlVertex2i(position.x, position.y + size.y);
+        rlVertex2i(position.x + size.x, position.y + size.y);
 
-            rlVertex2i(position.x, position.y);
-            rlVertex2i(position.x + size.x, position.y + size.y);
-            rlVertex2i(position.x + size.x, position.y);
-        rlEnd();
-    }
-    else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
-    {
-        // NOTE: This shape uses QUADS to avoid drawing order issues (view rlglDraw)
-        rlEnableTexture(whiteTexture); // Default white texture
-
-        rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
-
-            rlTexCoord2f(0.0f, 0.0f);
-            rlVertex2f(position.x, position.y);
-
-            rlTexCoord2f(0.0f, 1.0f);
-            rlVertex2f(position.x, position.y + size.y);
-
-            rlTexCoord2f(1.0f, 1.0f);
-            rlVertex2f(position.x + size.x, position.y + size.y);
-
-            rlTexCoord2f(1.0f, 0.0f);
-            rlVertex2f(position.x + size.x, position.y);
-        rlEnd();
-
-        rlDisableTexture();
-    }
+        rlVertex2i(position.x, position.y);
+        rlVertex2i(position.x + size.x, position.y + size.y);
+        rlVertex2i(position.x + size.x, position.y);
+    rlEnd();
 }
 
 // Draw rectangle outline
