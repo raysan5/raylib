@@ -429,9 +429,24 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
                 retRec.height = rec2.height - dyy;
             }
         }
-
-        if (retRec.width >= rec2.width) retRec.width = rec2.width;
-        if (retRec.height >= rec2.height) retRec.height = rec2.height;
+		
+        if (rec1.width > rec2.width)
+        {
+            if (retRec.width >= rec2.width) retRec.width = rec2.width;
+        }
+        else
+        {
+            if (retRec.width >= rec1.width) retRec.width = rec1.width;
+        }
+        
+        if (rec1.height > rec2.height)
+        {
+            if (retRec.height >= rec2.height) retRec.height = rec2.height;
+        }
+        else
+        {
+           if (retRec.height >= rec1.height) retRec.height = rec1.height;
+        }
     }
 
     return retRec;
