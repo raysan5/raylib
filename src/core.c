@@ -127,6 +127,7 @@
     
     #define MOUSE_SENSITIVITY         0.8f
     #define MAX_GAMEPAD_BUTTONS       11
+    #define MAX_GAMEPAD_AXIS          5
 #endif
 
 //----------------------------------------------------------------------------------
@@ -168,8 +169,7 @@ static bool gamepadReady = false;               // Flag to know if gamepad is re
 pthread_t gamepadThreadId;                      // Gamepad reading thread id
 
 int gamepadButtons[MAX_GAMEPAD_BUTTONS];
-int gamepadAxisX = 0;
-int gamepadAxisY = 0;
+float gamepadAxisValues[MAX_GAMEPAD_AXIS];
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -1177,30 +1177,22 @@ bool IsGamepadAvailable(int gamepad)
 }
 
 // Return axis movement vector for a gamepad
-Vector2 GetGamepadMovement(int gamepad)
+float GetGamepadAxisMovement(int gamepad, int axis)
 {
-    Vector2 vec = { 0, 0 };
-
+    float value = 0;
+    
+#if defined(PLATFORM_RPI)
+    if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisValues[axis];
+#else
     const float *axes;
     int axisCount = 0;
     
-#if defined(PLATFORM_RPI)
-    // TODO: Get gamepad axis information
-    // Use gamepadAxisX, gamepadAxisY
-#else
     axes = glfwGetJoystickAxes(gamepad, &axisCount);
-#endif
     
-    if (axisCount >= 2)
-    {
-        vec.x = axes[0];    // Left joystick X
-        vec.y = axes[1];    // Left joystick Y
+    if (axis < axisCount) value = axes[axis];
+#endif
 
-        //vec.x = axes[2];    // Right joystick X
-        //vec.x = axes[3];    // Right joystick Y
-    }
-
-    return vec;
+    return value;
 }
 
 // Detect if a gamepad button has been pressed once
@@ -2484,10 +2476,6 @@ static void *GamepadThread(void *arg)
         unsigned char number;   // event axis/button number
     };
 
-    // These values are sensible on Logitech Dual Action Rumble and Xbox360 controller
-    const int joystickAxisX = 0;
-    const int joystickAxisY = 1;
-
     // Read gamepad event
 	struct js_event gamepadEvent;
     
@@ -2512,17 +2500,11 @@ static void *GamepadThread(void *arg)
             {
                 TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
                 
-                if (gamepadEvent.number == joystickAxisX) gamepadAxisX = (int)gamepadEvent.value;
-                if (gamepadEvent.number == joystickAxisY) gamepadAxisY = (int)gamepadEvent.value;
-                /*
-                switch (gamepadEvent.number)
+                if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
                 {
-                    case 0: // 1st Axis X
-                    case 1: // 1st Axis Y
-                    case 2: // 2st Axis X
-                    case 3: // 2st Axis Y
+                    // NOTE: Scaling of gamepadEvent.value to get values between -1..1
+                    gamepadAxisValues[gamepadEvent.number] = (float)gamepadEvent.value/32768;
                 }
-                */
             }
         }
 	}

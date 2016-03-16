@@ -190,7 +190,35 @@
 #define GAMEPAD_BUTTON_SELECT   9
 #define GAMEPAD_BUTTON_START   10
 
-// TODO: Review Xbox360 USB Controller Buttons
+// Xbox360 USB Controller Buttons
+#define GAMEPAD_XBOX_BUTTON_A       0
+#define GAMEPAD_XBOX_BUTTON_B       1
+#define GAMEPAD_XBOX_BUTTON_X       2
+#define GAMEPAD_XBOX_BUTTON_Y       3
+#define GAMEPAD_XBOX_BUTTON_LB      4
+#define GAMEPAD_XBOX_BUTTON_RB      5
+#define GAMEPAD_XBOX_BUTTON_SELECT  6
+#define GAMEPAD_XBOX_BUTTON_START   7
+
+#if defined(PLATFORM_RPI)
+    #define GAMEPAD_XBOX_AXIS_DPAD_X    32
+    #define GAMEPAD_XBOX_AXIS_DPAD_Y    64
+    #define GAMEPAD_XBOX_AXIS_RIGHT_X   3
+    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4
+    #define GAMEPAD_XBOX_AXIS_LT        2
+    #define GAMEPAD_XBOX_AXIS_RT        5
+#else
+    #define GAMEPAD_XBOX_BUTTON_UP      10
+    #define GAMEPAD_XBOX_BUTTON_DOWN    12
+    #define GAMEPAD_XBOX_BUTTON_LEFT    13
+    #define GAMEPAD_XBOX_BUTTON_RIGHT   11
+    #define GAMEPAD_XBOX_AXIS_RIGHT_X   4
+    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   3
+    #define GAMEPAD_XBOX_AXIS_LT_RT     2
+#endif
+
+#define GAMEPAD_XBOX_AXIS_LEFT_X    0
+#define GAMEPAD_XBOX_AXIS_LEFT_Y    1
 
 // Android Physic Buttons
 #define ANDROID_BACK            4
@@ -592,7 +620,7 @@ void DisableCursor(void);                               // Disables cursor
 bool IsCursorHidden(void);                              // Returns true if cursor is not visible
 
 bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
-Vector2 GetGamepadMovement(int gamepad);                // Return axis movement vector for a gamepad
+float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
 bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
 bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
 bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
