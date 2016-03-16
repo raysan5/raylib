@@ -62,8 +62,8 @@ typedef struct Rigidbody {
 typedef struct Collider {
     bool enabled;
     ColliderType type;
-    Rectangle bounds;       // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
-    int radius;             // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
+    Rectangle bounds;       // Used for COLLIDER_RECTANGLE
+    int radius;             // Used for COLLIDER_CIRCLE
 } Collider;
 
 typedef struct PhysicObject {

@@ -466,7 +466,7 @@ typedef struct {
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
-typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
+typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE } ColliderType;
 
 typedef struct Transform {
     Vector2 position;
@@ -482,14 +482,14 @@ typedef struct Rigidbody {
     bool applyGravity;
     bool isGrounded;
     float friction;         // Normalized value
-    float bounciness;       // Normalized value
+    float bounciness;
 } Rigidbody;
 
 typedef struct Collider {
     bool enabled;
     ColliderType type;
-    Rectangle bounds;       // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
-    int radius;             // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
+    Rectangle bounds;       // Used for COLLIDER_RECTANGLE
+    int radius;             // Used for COLLIDER_CIRCLE
 } Collider;
 
 typedef struct PhysicObject {
@@ -810,12 +810,15 @@ void SetBlendMode(int mode);                                        // Set blend
 //----------------------------------------------------------------------------------
 // Physics System Functions (Module: physac)
 //----------------------------------------------------------------------------------
-void InitPhysics();                                                                     // Initializes pointers array (just pointers, fixed size)
+void InitPhysics(Vector2 gravity);                                                      // Initializes pointers array (just pointers, fixed size)
 void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
 void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
 
 PhysicObject *CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);      // Create a new physic object dinamically, initialize it and add to pool
 void DestroyPhysicObject(PhysicObject *pObj);                                           // Destroy a specific physic object and take it out of the list
+
+void ApplyForce(PhysicObject *pObj, Vector2 force);                                     // Apply directional force to a physic object
+void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
 
 Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
 void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize);          // Draw physic object information at screen position
