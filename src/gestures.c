@@ -179,6 +179,7 @@ void ProcessGestureEvent(GestureEvent event)
             }
             
             touchDownDragPosition = (Vector2){ 0.0f, 0.0f };
+            pointCount = 0;
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
@@ -257,6 +258,7 @@ void ProcessGestureEvent(GestureEvent event)
             pinchDistance = 0.0f;
             pinchAngle = 0.0f;
             pinchVector = (Vector2){ 0.0f, 0.0f };
+            pointCount = 0;
             
             currentGesture = GESTURE_NONE;
         }
