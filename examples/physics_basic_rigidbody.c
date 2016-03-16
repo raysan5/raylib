@@ -12,7 +12,7 @@
 #include "raylib.h"
 
 #define MOVE_VELOCITY    5
-#define JUMP_VELOCITY    35
+#define JUMP_VELOCITY    30
 
 int main()
 {
@@ -22,42 +22,34 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - basic rigidbody");
-    InitPhysics();      // Initialize physics module
+    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     SetTargetFPS(60);
     
     // Debug variables
     bool isDebug = false;
     
-    // Player physic object
-    PhysicObject *player = CreatePhysicObject((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
-    player->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
-    player->rigidbody.applyGravity = true;
-    player->rigidbody.friction = 0.3f;
-    player->collider.enabled = true;        // Enable physic object collisions detection
+    // Create rectangle physic object
+    PhysicObject *rectangle = CreatePhysicObject((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
+    rectangle->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
+    rectangle->rigidbody.applyGravity = true;
+    rectangle->rigidbody.friction = 0.1f;
+    rectangle->rigidbody.bounciness = 6.0f;
     
-    // Player physic object
-    PhysicObject *player2 = CreatePhysicObject((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
-    player2->rigidbody.enabled = true;
-    player2->rigidbody.applyGravity = true;
-    player2->rigidbody.friction = 0.1f;
-    player2->collider.enabled = true;
+    // Create square physic object
+    PhysicObject *square = CreatePhysicObject((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
+    square->rigidbody.enabled = true;      // Enable physic object rigidbody behaviour
+    square->rigidbody.applyGravity = true;
+    square->rigidbody.friction = 0.1f;
     
-    // Floor physic object
+    // Create walls physic objects
     PhysicObject *floor = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
-    floor->collider.enabled = true;         // Enable just physic object collisions detection
-    
-    // Left wall physic object
     PhysicObject *leftWall = CreatePhysicObject((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    leftWall->collider.enabled = true;
-    
-    // Right wall physic object
     PhysicObject *rightWall = CreatePhysicObject((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    rightWall->collider.enabled = true;
+    PhysicObject *roof = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
     
-    // Platform physic objectdd
+    // Create pplatform physic object
     PhysicObject *platform = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
-    platform->collider.enabled = true;
     
     //--------------------------------------------------------------------------------------
 
@@ -68,20 +60,18 @@ int main()
         //----------------------------------------------------------------------------------
         UpdatePhysics();    // Update all created physic objects
         
-        // Check debug switch input
-        if (IsKeyPressed('P')) isDebug = !isDebug;
-        
-        // Check player movement inputs
-        if (IsKeyDown('W') && player->rigidbody.isGrounded) player->rigidbody.velocity.y = JUMP_VELOCITY;
-        
-        if (IsKeyDown('A')) player->rigidbody.velocity.x = -MOVE_VELOCITY;
-        else if (IsKeyDown('D')) player->rigidbody.velocity.x = MOVE_VELOCITY;
+        // Check rectangle movement inputs
+        if (IsKeyDown('W') && rectangle->rigidbody.isGrounded) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyDown('A')) rectangle->rigidbody.velocity.x = -MOVE_VELOCITY;
+        else if (IsKeyDown('D')) rectangle->rigidbody.velocity.x = MOVE_VELOCITY;
         
         // Check player 2 movement inputs
-        if (IsKeyDown(KEY_UP) && player2->rigidbody.isGrounded) player2->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyDown(KEY_UP) && square->rigidbody.isGrounded) square->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyDown(KEY_LEFT)) square->rigidbody.velocity.x = -MOVE_VELOCITY;
+        else if (IsKeyDown(KEY_RIGHT)) square->rigidbody.velocity.x = MOVE_VELOCITY;
         
-        if (IsKeyDown(KEY_LEFT)) player2->rigidbody.velocity.x = -MOVE_VELOCITY;
-        else if (IsKeyDown(KEY_RIGHT)) player2->rigidbody.velocity.x = MOVE_VELOCITY;
+        // Check debug switch input
+        if (IsKeyPressed('P')) isDebug = !isDebug;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -89,29 +79,31 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+
+            // Convert transform values to rectangle data type variable
+            DrawRectangleRec(TransformToRectangle(floor->transform), DARKGRAY);
+            DrawRectangleRec(TransformToRectangle(leftWall->transform), DARKGRAY);
+            DrawRectangleRec(TransformToRectangle(rightWall->transform), DARKGRAY);
+            DrawRectangleRec(TransformToRectangle(roof->transform), DARKGRAY);
+            
+            DrawRectangleRec(TransformToRectangle(platform->transform), DARKGRAY);
+            
+            DrawRectangleRec(TransformToRectangle(rectangle->transform), RED);
+            DrawRectangleRec(TransformToRectangle(square->transform), BLUE);
             
             if (isDebug)
             {
                 DrawRectangleLines(floor->collider.bounds.x, floor->collider.bounds.y, floor->collider.bounds.width, floor->collider.bounds.height, GREEN);
                 DrawRectangleLines(leftWall->collider.bounds.x, leftWall->collider.bounds.y, leftWall->collider.bounds.width, leftWall->collider.bounds.height, GREEN);
                 DrawRectangleLines(rightWall->collider.bounds.x, rightWall->collider.bounds.y, rightWall->collider.bounds.width, rightWall->collider.bounds.height, GREEN);
+                DrawRectangleLines(roof->collider.bounds.x, roof->collider.bounds.y, roof->collider.bounds.width, roof->collider.bounds.height, GREEN);
                 DrawRectangleLines(platform->collider.bounds.x, platform->collider.bounds.y, platform->collider.bounds.width, platform->collider.bounds.height, GREEN);
-                DrawRectangleLines(player->collider.bounds.x, player->collider.bounds.y, player->collider.bounds.width, player->collider.bounds.height, GREEN);
-                DrawRectangleLines(player2->collider.bounds.x, player2->collider.bounds.y, player2->collider.bounds.width, player2->collider.bounds.height, GREEN);
-            }
-            else
-            {
-                // Convert transform values to rectangle data type variable
-                DrawRectangleRec(TransformToRectangle(floor->transform), DARKGRAY);
-                DrawRectangleRec(TransformToRectangle(leftWall->transform), DARKGRAY);
-                DrawRectangleRec(TransformToRectangle(rightWall->transform), DARKGRAY);
-                DrawRectangleRec(TransformToRectangle(platform->transform), DARKGRAY);
-                DrawRectangleRec(TransformToRectangle(player->transform), RED);
-                DrawRectangleRec(TransformToRectangle(player2->transform), BLUE);
+                DrawRectangleLines(rectangle->collider.bounds.x, rectangle->collider.bounds.y, rectangle->collider.bounds.width, rectangle->collider.bounds.height, GREEN);
+                DrawRectangleLines(square->collider.bounds.x, square->collider.bounds.y, square->collider.bounds.width, square->collider.bounds.height, GREEN);
             }
             
-            // Draw all physic object information in specific screen position and font size
-            // DrawPhysicObjectInfo(player, (Vector2){ 10.0f, 10.0f }, 10);    
+            // Draw help message
+            DrawText("Use WASD to move rectangle and ARROWS to move square", screenWidth/2 - MeasureText("Use WASD to move rectangle and ARROWS to move square", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
