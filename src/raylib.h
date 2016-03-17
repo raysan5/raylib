@@ -174,8 +174,8 @@
 // Gamepad Number
 #define GAMEPAD_PLAYER1       0
 #define GAMEPAD_PLAYER2       1
-#define GAMEPAD_PLAYER3       2
-#define GAMEPAD_PLAYER4       3
+#define GAMEPAD_PLAYER3       2     // Not supported
+#define GAMEPAD_PLAYER4       3     // Not supported
 
 // Gamepad Buttons
 // NOTE: Adjusted for a PS3 USB Controller
@@ -201,8 +201,8 @@
 #define GAMEPAD_XBOX_BUTTON_START   7
 
 #if defined(PLATFORM_RPI)
-    #define GAMEPAD_XBOX_AXIS_DPAD_X    32
-    #define GAMEPAD_XBOX_AXIS_DPAD_Y    64
+    #define GAMEPAD_XBOX_AXIS_DPAD_X    7
+    #define GAMEPAD_XBOX_AXIS_DPAD_Y    6
     #define GAMEPAD_XBOX_AXIS_RIGHT_X   3
     #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4
     #define GAMEPAD_XBOX_AXIS_LT        2

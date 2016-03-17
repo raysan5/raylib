@@ -116,9 +116,9 @@
 
 #if defined(PLATFORM_RPI)
     // Old device inputs system
-    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO            // Standard input
-    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"
-    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js0"
+    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
+    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"       // Mouse input
+    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
 
     // New device input events (evdev) (must be detected)
     //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
@@ -126,8 +126,10 @@
     //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
     
     #define MOUSE_SENSITIVITY         0.8f
-    #define MAX_GAMEPAD_BUTTONS       11
-    #define MAX_GAMEPAD_AXIS          5
+    
+    #define MAX_GAMEPADS              2         // Max number of gamepads supported
+    #define MAX_GAMEPAD_BUTTONS       11        // Max bumber of buttons supported (per gamepad)
+    #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -164,12 +166,12 @@ static bool mouseReady = false;                 // Flag to know if mouse is read
 pthread_t mouseThreadId;                        // Mouse reading thread id
 
 // Gamepad input variables
-static int gamepadStream = -1;                  // Gamepad device file descriptor
-static bool gamepadReady = false;               // Flag to know if gamepad is ready
-pthread_t gamepadThreadId;                      // Gamepad reading thread id
+static int gamepadStream[MAX_GAMEPADS] = { -1 };    // Gamepad device file descriptor (two gamepads supported)
+static bool gamepadReady[MAX_GAMEPADS] = { false }; // Flag to know if gamepad is ready (two gamepads supported)
+pthread_t gamepadThreadId;                          // Gamepad reading thread id
 
-int gamepadButtons[MAX_GAMEPAD_BUTTONS];
-float gamepadAxisValues[MAX_GAMEPAD_AXIS];
+int gamepadButtons[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];        // Gamepad buttons state
+float gamepadAxisValues[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];      // Gamepad axis state
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -1168,7 +1170,7 @@ bool IsGamepadAvailable(int gamepad)
     bool result = false;
     
 #if defined(PLATFORM_RPI)
-    if (gamepadReady && (gamepad == 0)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
 #else
     if (glfwJoystickPresent(gamepad) == 1) result = true;
 #endif
@@ -1182,7 +1184,10 @@ float GetGamepadAxisMovement(int gamepad, int axis)
     float value = 0;
     
 #if defined(PLATFORM_RPI)
-    if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisValues[axis];
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad])
+    {
+        if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisValues[gamepad][axis];
+    }
 #else
     const float *axes;
     int axisCount = 0;
@@ -1219,7 +1224,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
     
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
-    if ((gamepad == 0) && (gamepadButtons[button] == 1)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 1)) result = true;
     else result = false;
 #else
     const unsigned char *buttons;
@@ -1258,7 +1263,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
-    if ((gamepad == 0) && (gamepadButtons[button] == 0)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 0)) result = true;
     else result = false;
 #else
     const unsigned char *buttons;
@@ -2447,19 +2452,31 @@ static void *MouseThread(void *arg)
 // Init gamepad system
 static void InitGamepad(void)
 {
-    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) 
+    char gamepadDev[128] = "";
+            
+    for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
-    }
-    else
-    {
-        gamepadReady = true;
+        sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
+        
+        if ((gamepadStream[i] = open(gamepadDev, O_RDONLY|O_NONBLOCK)) < 0) 
+        {
+            // NOTE: Only show message for first gamepad
+            if (i == 0) TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
+        }
+        else
+        {
+            gamepadReady[i] = true;
 
-        int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
+            // NOTE: Only create one thread
+            if (i == 0)
+            {
+                int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
 
-        if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
-        else  TraceLog(INFO, "Gamepad device initialized successfully");
-    }
+                if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
+                else  TraceLog(INFO, "Gamepad device initialized successfully");
+            }
+        }
+    }       
 }
 
 // Process Gamepad (/dev/input/js0)
@@ -2481,29 +2498,32 @@ static void *GamepadThread(void *arg)
     
 	while (1) 
     {
-        if (read(gamepadStream, &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
+        for (int i = 0; i < MAX_GAMEPADS; i++)
         {
-            gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
-            
-            // Process gamepad events by type
-            if (gamepadEvent.type == JS_EVENT_BUTTON) 
+            if (read(gamepadStream[i], &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
             {
-                TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
                 
-                if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
+                // Process gamepad events by type
+                if (gamepadEvent.type == JS_EVENT_BUTTON) 
                 {
-                    // 1 - button pressed, 0 - button released
-                    gamepadButtons[gamepadEvent.number] = (int)gamepadEvent.value;
+                    TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    
+                    if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
+                    {
+                        // 1 - button pressed, 0 - button released
+                        gamepadButtons[i][gamepadEvent.number] = (int)gamepadEvent.value;
+                    }
                 }
-            }
-            else if (gamepadEvent.type == JS_EVENT_AXIS) 
-            {
-                TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
-                
-                if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
+                else if (gamepadEvent.type == JS_EVENT_AXIS) 
                 {
-                    // NOTE: Scaling of gamepadEvent.value to get values between -1..1
-                    gamepadAxisValues[gamepadEvent.number] = (float)gamepadEvent.value/32768;
+                    TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    
+                    if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
+                    {
+                        // NOTE: Scaling of gamepadEvent.value to get values between -1..1
+                        gamepadAxisValues[i][gamepadEvent.number] = (float)gamepadEvent.value/32768;
+                    }
                 }
             }
         }
