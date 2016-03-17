@@ -643,6 +643,8 @@ void Begin3dMode(Camera camera)
     // Setup Camera view
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     rlMultMatrixf(MatrixToFloat(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
+    
+    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -657,6 +659,8 @@ void End3dMode(void)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     //rlTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
+    
+    rlDisableDepthTest();               // Disable DEPTH_TEST for 2D
 }
 
 // Set target FPS for the game

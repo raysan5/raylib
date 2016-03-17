@@ -780,6 +780,18 @@ void rlDisableTexture(void)
 #endif
 }
 
+// Enable depth test
+void rlEnableDepthTest(void)
+{
+    glEnable(GL_DEPTH_TEST);
+}
+
+// Disable depth test
+void rlDisableDepthTest(void)
+{
+    glDisable(GL_DEPTH_TEST);
+}
+
 // Unload texture from GPU memory
 void rlDeleteTextures(unsigned int id)
 {
@@ -1579,7 +1591,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
     //glClearDepth(1.0f);                                   // Clear depth buffer (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
 
-    glEnable(GL_DEPTH_TEST);                                // Enables depth testing (required for 3D)
+    glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
 
     glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)

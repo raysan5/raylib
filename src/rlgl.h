@@ -244,6 +244,8 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 //------------------------------------------------------------------------------------
 void rlEnableTexture(unsigned int id);          // Enable texture usage
 void rlDisableTexture(void);                    // Disable texture usage
+void rlEnableDepthTest(void);                   // Enable depth test
+void rlDisableDepthTest(void);                  // Disable depth test
 void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
 void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
 void rlDeleteVertexArrays(unsigned int id);     // Unload vertex data (VAO) from GPU memory
