@@ -1488,11 +1488,11 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 
-    glfwSetWindowSizeCallback(window, WindowSizeCallback);
+    glfwSetWindowSizeCallback(window, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
     glfwSetCursorEnterCallback(window, CursorEnterCallback);
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
-    glfwSetCursorPosCallback(window, MouseCursorPosCallback);    // Track mouse position changes
+    glfwSetCursorPosCallback(window, MouseCursorPosCallback);   // Track mouse position changes
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
     glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
@@ -1818,16 +1818,19 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 }
 
 // GLFW3 WindowSize Callback, runs when window is resized
+// NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     // If window is resized, graphics device is re-initialized (but only ortho mode)
-    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);
+    rlglInitGraphics(0, 0, width, height);
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
-    //screenWidth = width;
-    //screenHeight = height;
-
-    // TODO: Update render size?
+    screenWidth = width;
+    screenHeight = height;
+    renderWidth = width;
+    renderHeight = height;
+    
+    // NOTE: Postprocessing texture is not scaled to new size
 
     // Background must be also re-cleared
     ClearBackground(RAYWHITE);

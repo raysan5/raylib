@@ -188,6 +188,8 @@ typedef struct {
 // Framebuffer Object type
 typedef struct {
     GLuint id;
+    int width;
+    int height;
     GLuint colorTextureId;
     GLuint depthTextureId;
 } FBO;
@@ -1071,8 +1073,8 @@ void rlglInitPostpro(void)
         
         quad.vertexCount = 6;
         
-        float w = (float)screenWidth;
-        float h = (float)screenHeight;
+        float w = (float)postproFbo.width;
+        float h = (float)postproFbo.height;
         
         float quadPositions[6*3] = { w, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, h, 0.0f, 0.0f, h, 0.0f, w, h, 0.0f, w, 0.0f, 0.0f }; 
         float quadTexcoords[6*2] = { 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f };
@@ -1096,6 +1098,8 @@ FBO rlglLoadFBO(int width, int height)
 {
     FBO fbo;   
     fbo.id = 0;
+    fbo.width = width;
+    fbo.height = height;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Create the texture that will serve as the color attachment for the framebuffer
@@ -2339,22 +2343,21 @@ void SetCustomShader(Shader shader)
 }
 
 // Set postprocessing shader
-// NOTE: Uses global variables screenWidth and screenHeight
 void SetPostproShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (!enabledPostpro)
     {
         enabledPostpro = true;
-        rlglInitPostpro();
+        rlglInitPostpro();      // Lazy initialization on postprocessing usage
     }
 
     SetModelShader(&postproQuad, shader);
     
     Texture2D texture;
     texture.id = postproFbo.colorTextureId;
-    texture.width = screenWidth;
-    texture.height = screenHeight;
+    texture.width = postproFbo.width;
+    texture.height = postproFbo.height;
 
     postproQuad.material.texDiffuse = texture;
     
