@@ -1793,6 +1793,8 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     // Register touch points position, only one point registered
     gestureEvent.position[0] = (Vector2){ (float)x, (float)y };
     
+    touchPosition[0] = gestureEvent.position[0];
+    
     // Normalize gestureEvent.position[0] for screenWidth and screenHeight
     gestureEvent.position[0].x /= (float)GetScreenWidth(); 
     gestureEvent.position[0].y /= (float)GetScreenHeight();
