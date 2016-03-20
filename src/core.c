@@ -193,9 +193,7 @@ static int renderOffsetY = 0;               // Offset Y from render area (must b
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
-#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
@@ -1786,6 +1784,9 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     GestureEvent gestureEvent;
 
     gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Assign a pointer ID
+    gestureEvent.pointerId[0] = 0;
 
     // Register touch points count
     gestureEvent.pointCount = 1;
