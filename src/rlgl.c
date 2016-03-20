@@ -32,7 +32,9 @@
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 #include <string.h>         // Declares strcmp(), strlen(), strtok()
 
-#include "raymath.h"        // Required for Vector3 and Matrix functions
+#ifndef RLGL_STANDALONE
+    #include "raymath.h"    // Required for Vector3 and Matrix functions
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #ifdef __APPLE__                // OpenGL include for OSX
@@ -298,6 +300,7 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 
 #if defined(RLGL_STANDALONE)
 static void TraceLog(int msgType, const char *text, ...);
+float *MatrixToFloat(Matrix mat);   // Converts Matrix to float array
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -2581,6 +2584,7 @@ static Shader LoadDefaultShader(void)
     char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
         "in vec4 fragTintColor;             \n"
+        "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
@@ -2590,8 +2594,13 @@ static Shader LoadDefaultShader(void)
         "uniform sampler2D texture0;        \n"
         "void main()                        \n"
         "{                                  \n"
-        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
-        "    gl_FragColor = texelColor*fragTintColor; \n"    
+#if defined(GRAPHICS_API_OPENGL_33)
+        "    vec4 texelColor = texture(texture0, fragTexCoord); \n"
+        "    fragColor = texelColor*fragTintColor; \n"
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
+        "    gl_FragColor = texelColor*fragTintColor; \n"
+#endif
         "}                                  \n";
 
     shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
@@ -2651,6 +2660,7 @@ static Shader LoadSimpleShader(void)
 #if defined(GRAPHICS_API_OPENGL_33)
     char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
+        "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
@@ -2660,8 +2670,13 @@ static Shader LoadSimpleShader(void)
         "uniform vec4 fragTintColor;        \n"
         "void main()                        \n"
         "{                                  \n"
-        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
+#if defined(GRAPHICS_API_OPENGL_33)
+        "    vec4 texelColor = texture(texture0, fragTexCoord); \n"
+        "    fragColor = texelColor*fragTintColor; \n"
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
         "    gl_FragColor = texelColor*fragTintColor; \n"
+#endif
         "}                                  \n";
 
     shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
@@ -3101,5 +3116,33 @@ static void TraceLog(int msgType, const char *text, ...)
     va_end(args);
 
     if (msgType == ERROR) exit(1);
+}
+
+// Converts Matrix to float array
+// NOTE: Returned vector is a transposed version of the Matrix struct, 
+// it should be this way because, despite raymath use OpenGL column-major convention,
+// Matrix struct memory alignment and variables naming are not coherent
+float *MatrixToFloat(Matrix mat)
+{
+    static float buffer[16];
+
+    buffer[0] = mat.m0;
+    buffer[1] = mat.m4;
+    buffer[2] = mat.m8;
+    buffer[3] = mat.m12;
+    buffer[4] = mat.m1;
+    buffer[5] = mat.m5;
+    buffer[6] = mat.m9;
+    buffer[7] = mat.m13;
+    buffer[8] = mat.m2;
+    buffer[9] = mat.m6;
+    buffer[10] = mat.m10;
+    buffer[11] = mat.m14;
+    buffer[12] = mat.m3;
+    buffer[13] = mat.m7;
+    buffer[14] = mat.m11;
+    buffer[15] = mat.m15;
+
+    return buffer;
 }
 #endif

@@ -36,7 +36,11 @@
     #include "utils.h"          // Required for function TraceLog()
 #endif
 
-#include "raymath.h"
+#ifdef RLGL_STANDALONE
+    #define RAYMATH_STANDALONE
+#endif
+
+#include "raymath.h"            // Required for types: Vector3, Matrix
 
 // Select desired OpenGL version
 // NOTE: Those preprocessor defines are only used on rlgl module,
