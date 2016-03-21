@@ -146,10 +146,12 @@ static bool windowMinimized = false;
 #elif defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
-static int ident, events;
+static int ident, events;                       // Android ALooper_pollAll() variables
+
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
+
 static int previousButtonState[128] = { 1 };    // Required to check if button pressed/released once
 static int currentButtonState[128] = { 1 };     // Required to check if button pressed/released once
 #elif defined(PLATFORM_RPI)
@@ -400,13 +402,6 @@ void InitWindow(int width, int height, struct android_app *state)
     InitAssetManager(app->activity->assetManager);
 
     TraceLog(INFO, "Android app initialized successfully");
-
-    // Init button states values (default up)
-    for(int i = 0; i < 128; i++)
-    {
-        currentButtonState[i] = 1;
-        previousButtonState[i] = 1;
-    }
 
     // Wait for window to be initialized (display and context)
     while (!windowReady)
