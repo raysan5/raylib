@@ -12,9 +12,12 @@
 #include "raylib.h"
 #include "math.h"
 
-#define FORCE_AMOUNT    5.0f
-#define FORCE_RADIUS    150
-#define LINE_LENGTH     100
+#define FORCE_AMOUNT        5.0f
+#define FORCE_RADIUS        150
+#define LINE_LENGTH         75
+#define TRIANGLE_LENGTH     12
+
+void DrawRigidbodyCircle(PhysicObject *obj, Color color);
 
 int main()
 {
@@ -42,6 +45,7 @@ int main()
     }
     
     // Create circles physic objects
+    // NOTE: when creating circle physic objects, transform.scale must be { 0, 0 } and object radius must be defined in collider.radius and use this value to draw the circle.
     PhysicObject *circles[3];
     for (int i = 0; i < 3; i++)
     {
@@ -111,14 +115,23 @@ int main()
                 // Draw force radius
                 DrawCircleLines(mousePosition.x, mousePosition.y, FORCE_RADIUS, BLACK);
                 
-                // Draw direction line
+                // Draw direction lines
                 if (CheckCollisionPointCircle((Vector2){ rectangles[i]->transform.position.x + rectangles[i]->transform.scale.x/2, rectangles[i]->transform.position.y + rectangles[i]->transform.scale.y/2 }, mousePosition, FORCE_RADIUS))
                 {
                     Vector2 direction = { rectangles[i]->transform.position.x + rectangles[i]->transform.scale.x/2 - mousePosition.x, rectangles[i]->transform.position.y + rectangles[i]->transform.scale.y/2 - mousePosition.y };
                     float angle = atan2l(direction.y, direction.x);
                     
-                    DrawLineV((Vector2){ rectangles[i]->transform.position.x + rectangles[i]->transform.scale.x/2, rectangles[i]->transform.position.y + rectangles[i]->transform.scale.y/2 },
-                    (Vector2){ rectangles[i]->transform.position.x + rectangles[i]->transform.scale.x/2 + (cos(angle)*LINE_LENGTH), rectangles[i]->transform.position.y + rectangles[i]->transform.scale.y/2 + (sin(angle)*LINE_LENGTH) }, BLACK);
+                    // Calculate arrow start and end positions
+                    Vector2 startPosition = { rectangles[i]->transform.position.x + rectangles[i]->transform.scale.x/2, rectangles[i]->transform.position.y + rectangles[i]->transform.scale.y/2 };
+                    Vector2 endPosition = { rectangles[i]->transform.position.x + rectangles[i]->transform.scale.x/2 + (cos(angle)*LINE_LENGTH), rectangles[i]->transform.position.y + rectangles[i]->transform.scale.y/2 + (sin(angle)*LINE_LENGTH) };
+                    
+                    // Draw arrow line
+                    DrawLineV(startPosition, endPosition, BLACK);
+                    
+                    // Draw arrow triangle
+                    DrawTriangleLines((Vector2){ endPosition.x - cos(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH, endPosition.y - sin(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH },
+                                      (Vector2){ endPosition.x + cos(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH, endPosition.y + sin(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH },
+                                      (Vector2){ endPosition.x + cos(angle)*LINE_LENGTH/TRIANGLE_LENGTH*2, endPosition.y + sin(angle)*LINE_LENGTH/TRIANGLE_LENGTH*2 }, BLACK);
                 }
             }
             
@@ -131,14 +144,23 @@ int main()
                 // Draw force radius
                 DrawCircleLines(mousePosition.x, mousePosition.y, FORCE_RADIUS, BLACK);
                 
-                // Draw direction line
+                // Draw direction lines
                 if (CheckCollisionPointCircle((Vector2){ circles[i]->transform.position.x, circles[i]->transform.position.y }, mousePosition, FORCE_RADIUS))
                 {
                     Vector2 direction = { circles[i]->transform.position.x - mousePosition.x, circles[i]->transform.position.y - mousePosition.y };
                     float angle = atan2l(direction.y, direction.x);
                     
-                    DrawLineV((Vector2){ circles[i]->transform.position.x, circles[i]->transform.position.y },
-                    (Vector2){ circles[i]->transform.position.x + (cos(angle)*LINE_LENGTH), circles[i]->transform.position.y + (sin(angle)*LINE_LENGTH) }, BLACK);
+                    // Calculate arrow start and end positions
+                    Vector2 startPosition = { circles[i]->transform.position.x, circles[i]->transform.position.y };
+                    Vector2 endPosition = { circles[i]->transform.position.x + (cos(angle)*LINE_LENGTH), circles[i]->transform.position.y + (sin(angle)*LINE_LENGTH) };
+                    
+                    // Draw arrow line
+                    DrawLineV(startPosition, endPosition, BLACK);
+                    
+                    // Draw arrow triangle
+                    DrawTriangleLines((Vector2){ endPosition.x - cos(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH, endPosition.y - sin(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH },
+                                      (Vector2){ endPosition.x + cos(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH, endPosition.y + sin(angle + 90*DEG2RAD)*LINE_LENGTH/TRIANGLE_LENGTH },
+                                      (Vector2){ endPosition.x + cos(angle)*LINE_LENGTH/TRIANGLE_LENGTH*2, endPosition.y + sin(angle)*LINE_LENGTH/TRIANGLE_LENGTH*2 }, BLACK);
                 }
             }
             

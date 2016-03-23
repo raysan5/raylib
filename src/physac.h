@@ -2,7 +2,7 @@
 *
 *   [physac] raylib physics module - Basic functions to apply physics to 2D objects
 *
-*   Copyright (c) 2015 Victor Fisac and Ramon Santamaria
+*   Copyright (c) 2016 Victor Fisac and Ramon Santamaria
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -44,8 +44,8 @@ typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE } ColliderType;
 
 typedef struct Transform {
     Vector2 position;
-    float rotation;
-    Vector2 scale;
+    float rotation;         // Radians (not used)
+    Vector2 scale;          // Just for rectangle physic objects, for circle physic objects use collider radius and keep scale as { 0, 0 }
 } Transform;
 
 typedef struct Rigidbody {

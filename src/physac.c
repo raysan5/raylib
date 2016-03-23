@@ -2,7 +2,7 @@
 *
 *   [physac] raylib physics module - Basic functions to apply physics to 2D objects
 *
-*   Copyright (c) 2015 Victor Fisac and Ramon Santamaria
+*   Copyright (c) 2016 Victor Fisac and Ramon Santamaria
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -75,10 +75,7 @@ void InitPhysics(Vector2 gravity)
 void UpdatePhysics()
 {
     // Reset all physic objects is grounded state
-    for (int i = 0; i < physicObjectsCount; i++)
-    {
-        if (physicObjects[i]->rigidbody.enabled) physicObjects[i]->rigidbody.isGrounded = false;
-    }
+    for (int i = 0; i < physicObjectsCount; i++) physicObjects[i]->rigidbody.isGrounded = false;
     
     for (int steps = 0; steps < PHYSICS_STEPS; steps++)
     {
@@ -537,26 +534,32 @@ void ApplyForceAtPosition(Vector2 position, float force, float radius)
 {
     for(int i = 0; i < physicObjectsCount; i++)
     {
-        // Calculate direction and distance between force and physic object pposition
-        Vector2 distance = (Vector2){ physicObjects[i]->transform.position.x - position.x, physicObjects[i]->transform.position.y - position.y };
+        if(physicObjects[i]->rigidbody.enabled)
+        {
+            // Calculate direction and distance between force and physic object pposition
+            Vector2 distance = (Vector2){ physicObjects[i]->transform.position.x - position.x, physicObjects[i]->transform.position.y - position.y };
 
-        if(physicObjects[i]->collider.type == COLLIDER_RECTANGLE)
-        {
-            distance.x += physicObjects[i]->transform.scale.x/2;
-            distance.y += physicObjects[i]->transform.scale.y/2;
-        }
-        
-        float distanceLength = Vector2Length(distance);
-        
-        // Check if physic object is in force range
-        if(distanceLength <= radius)
-        {
-            // Normalize force direction
-            distance.x /= distanceLength;
-            distance.y /= -distanceLength;
+            if(physicObjects[i]->collider.type == COLLIDER_RECTANGLE)
+            {
+                distance.x += physicObjects[i]->transform.scale.x/2;
+                distance.y += physicObjects[i]->transform.scale.y/2;
+            }
             
-            // Apply force to the physic object
-            ApplyForce(physicObjects[i], (Vector2){ distance.x*force, distance.y*force });
+            float distanceLength = Vector2Length(distance);
+            
+            // Check if physic object is in force range
+            if(distanceLength <= radius)
+            {
+                // Normalize force direction
+                distance.x /= distanceLength;
+                distance.y /= -distanceLength;
+                
+                // Calculate final force
+                Vector2 finalForce = { distance.x*force, distance.y*force };
+                
+                // Apply force to the physic object
+                ApplyForce(physicObjects[i], finalForce);
+            }
         }
     }
 }
