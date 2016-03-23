@@ -30,13 +30,13 @@
 #endif
 
 #include <stdlib.h>         // Declares malloc() and free() for memory management
-#include <math.h>           // abs() and fminf()
+#include <math.h>           // Declares cos(), sin(), abs() and fminf() for math operations
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_PHYSIC_OBJECTS      256
-#define PHYSICS_STEPS           450
+#define MAX_PHYSIC_OBJECTS      256             // Maximum available physic object slots in objects pool
+#define PHYSICS_STEPS           450             // Physics update steps number (divided calculations in steps per frame) to get more accurately collisions detections
 #define PHYSICS_ACCURACY        0.0001f         // Velocity subtract operations round filter (friction)
 #define PHYSICS_ERRORPERCENT    0.001f          // Collision resolve position fix
 
@@ -145,11 +145,11 @@ void UpdatePhysics()
                             Vector2 direction = { 0.0f, 0.0f };
                             float penetrationDepth = 0.0f;
                             
-                            switch(physicObjects[i]->collider.type)
+                            switch (physicObjects[i]->collider.type)
                             {
                                 case COLLIDER_RECTANGLE:
                                 {
-                                    switch(physicObjects[k]->collider.type)
+                                    switch (physicObjects[k]->collider.type)
                                     {
                                         case COLLIDER_RECTANGLE:
                                         {
@@ -266,7 +266,7 @@ void UpdatePhysics()
                                 } break;
                                 case COLLIDER_CIRCLE:
                                 {
-                                    switch(physicObjects[k]->collider.type)
+                                    switch (physicObjects[k]->collider.type)
                                     {
                                         case COLLIDER_RECTANGLE:
                                         {
@@ -532,14 +532,14 @@ void ApplyForce(PhysicObject *pObj, Vector2 force)
 // Apply radial force to all physic objects in range
 void ApplyForceAtPosition(Vector2 position, float force, float radius)
 {
-    for(int i = 0; i < physicObjectsCount; i++)
+    for (int i = 0; i < physicObjectsCount; i++)
     {
-        if(physicObjects[i]->rigidbody.enabled)
+        if (physicObjects[i]->rigidbody.enabled)
         {
             // Calculate direction and distance between force and physic object pposition
             Vector2 distance = (Vector2){ physicObjects[i]->transform.position.x - position.x, physicObjects[i]->transform.position.y - position.y };
 
-            if(physicObjects[i]->collider.type == COLLIDER_RECTANGLE)
+            if (physicObjects[i]->collider.type == COLLIDER_RECTANGLE)
             {
                 distance.x += physicObjects[i]->transform.scale.x/2;
                 distance.y += physicObjects[i]->transform.scale.y/2;
@@ -548,7 +548,7 @@ void ApplyForceAtPosition(Vector2 position, float force, float radius)
             float distanceLength = Vector2Length(distance);
             
             // Check if physic object is in force range
-            if(distanceLength <= radius)
+            if (distanceLength <= radius)
             {
                 // Normalize force direction
                 distance.x /= distanceLength;
