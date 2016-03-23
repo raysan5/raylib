@@ -116,9 +116,9 @@
 
 #if defined(PLATFORM_RPI)
     // Old device inputs system
-    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO            // Standard input
-    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"
-    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js0"
+    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
+    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"       // Mouse input
+    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
 
     // New device input events (evdev) (must be detected)
     //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
@@ -126,7 +126,10 @@
     //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
     
     #define MOUSE_SENSITIVITY         0.8f
-    #define MAX_GAMEPAD_BUTTONS       11
+    
+    #define MAX_GAMEPADS              2         // Max number of gamepads supported
+    #define MAX_GAMEPAD_BUTTONS       11        // Max bumber of buttons supported (per gamepad)
+    #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -143,10 +146,12 @@ static bool windowMinimized = false;
 #elif defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
-static int ident, events;
+static int ident, events;                       // Android ALooper_pollAll() variables
+
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
+
 static int previousButtonState[128] = { 1 };    // Required to check if button pressed/released once
 static int currentButtonState[128] = { 1 };     // Required to check if button pressed/released once
 #elif defined(PLATFORM_RPI)
@@ -163,13 +168,12 @@ static bool mouseReady = false;                 // Flag to know if mouse is read
 pthread_t mouseThreadId;                        // Mouse reading thread id
 
 // Gamepad input variables
-static int gamepadStream = -1;                  // Gamepad device file descriptor
-static bool gamepadReady = false;               // Flag to know if gamepad is ready
-pthread_t gamepadThreadId;                      // Gamepad reading thread id
+static int gamepadStream[MAX_GAMEPADS] = { -1 };    // Gamepad device file descriptor (two gamepads supported)
+static bool gamepadReady[MAX_GAMEPADS] = { false }; // Flag to know if gamepad is ready (two gamepads supported)
+pthread_t gamepadThreadId;                          // Gamepad reading thread id
 
-int gamepadButtons[MAX_GAMEPAD_BUTTONS];
-int gamepadAxisX = 0;
-int gamepadAxisY = 0;
+int gamepadButtons[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];        // Gamepad buttons state
+float gamepadAxisValues[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];      // Gamepad axis state
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -191,9 +195,7 @@ static int renderOffsetY = 0;               // Offset Y from render area (must b
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
-#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
@@ -400,13 +402,6 @@ void InitWindow(int width, int height, struct android_app *state)
     InitAssetManager(app->activity->assetManager);
 
     TraceLog(INFO, "Android app initialized successfully");
-
-    // Init button states values (default up)
-    for(int i = 0; i < 128; i++)
-    {
-        currentButtonState[i] = 1;
-        previousButtonState[i] = 1;
-    }
 
     // Wait for window to be initialized (display and context)
     while (!windowReady)
@@ -641,6 +636,8 @@ void Begin3dMode(Camera camera)
     // Setup Camera view
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     rlMultMatrixf(MatrixToFloat(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
+    
+    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -655,6 +652,8 @@ void End3dMode(void)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     //rlTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
+    
+    rlDisableDepthTest();               // Disable DEPTH_TEST for 2D
 }
 
 // Set target FPS for the game
@@ -1168,7 +1167,7 @@ bool IsGamepadAvailable(int gamepad)
     bool result = false;
     
 #if defined(PLATFORM_RPI)
-    if (gamepadReady && (gamepad == 0)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
 #else
     if (glfwJoystickPresent(gamepad) == 1) result = true;
 #endif
@@ -1177,30 +1176,25 @@ bool IsGamepadAvailable(int gamepad)
 }
 
 // Return axis movement vector for a gamepad
-Vector2 GetGamepadMovement(int gamepad)
+float GetGamepadAxisMovement(int gamepad, int axis)
 {
-    Vector2 vec = { 0, 0 };
-
+    float value = 0;
+    
+#if defined(PLATFORM_RPI)
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad])
+    {
+        if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisValues[gamepad][axis];
+    }
+#else
     const float *axes;
     int axisCount = 0;
     
-#if defined(PLATFORM_RPI)
-    // TODO: Get gamepad axis information
-    // Use gamepadAxisX, gamepadAxisY
-#else
     axes = glfwGetJoystickAxes(gamepad, &axisCount);
-#endif
     
-    if (axisCount >= 2)
-    {
-        vec.x = axes[0];    // Left joystick X
-        vec.y = axes[1];    // Left joystick Y
+    if (axis < axisCount) value = axes[axis];
+#endif
 
-        //vec.x = axes[2];    // Right joystick X
-        //vec.x = axes[3];    // Right joystick Y
-    }
-
-    return vec;
+    return value;
 }
 
 // Detect if a gamepad button has been pressed once
@@ -1227,7 +1221,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
     
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
-    if ((gamepad == 0) && (gamepadButtons[button] == 1)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 1)) result = true;
     else result = false;
 #else
     const unsigned char *buttons;
@@ -1266,7 +1260,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
-    if ((gamepad == 0) && (gamepadButtons[button] == 0)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 0)) result = true;
     else result = false;
 #else
     const unsigned char *buttons;
@@ -1487,11 +1481,11 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 
-    glfwSetWindowSizeCallback(window, WindowSizeCallback);
+    glfwSetWindowSizeCallback(window, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
     glfwSetCursorEnterCallback(window, CursorEnterCallback);
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
-    glfwSetCursorPosCallback(window, MouseCursorPosCallback);    // Track mouse position changes
+    glfwSetCursorPosCallback(window, MouseCursorPosCallback);   // Track mouse position changes
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
     glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
@@ -1785,12 +1779,17 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     GestureEvent gestureEvent;
 
     gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Assign a pointer ID
+    gestureEvent.pointerId[0] = 0;
 
     // Register touch points count
     gestureEvent.pointCount = 1;
     
     // Register touch points position, only one point registered
     gestureEvent.position[0] = (Vector2){ (float)x, (float)y };
+    
+    touchPosition[0] = gestureEvent.position[0];
     
     // Normalize gestureEvent.position[0] for screenWidth and screenHeight
     gestureEvent.position[0].x /= (float)GetScreenWidth(); 
@@ -1817,16 +1816,19 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 }
 
 // GLFW3 WindowSize Callback, runs when window is resized
+// NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     // If window is resized, graphics device is re-initialized (but only ortho mode)
-    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);
+    rlglInitGraphics(0, 0, width, height);
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
-    //screenWidth = width;
-    //screenHeight = height;
-
-    // TODO: Update render size?
+    screenWidth = width;
+    screenHeight = height;
+    renderWidth = width;
+    renderHeight = height;
+    
+    // NOTE: Postprocessing texture is not scaled to new size
 
     // Background must be also re-cleared
     ClearBackground(RAYWHITE);
@@ -2455,19 +2457,31 @@ static void *MouseThread(void *arg)
 // Init gamepad system
 static void InitGamepad(void)
 {
-    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) 
+    char gamepadDev[128] = "";
+            
+    for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
-    }
-    else
-    {
-        gamepadReady = true;
+        sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
+        
+        if ((gamepadStream[i] = open(gamepadDev, O_RDONLY|O_NONBLOCK)) < 0) 
+        {
+            // NOTE: Only show message for first gamepad
+            if (i == 0) TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
+        }
+        else
+        {
+            gamepadReady[i] = true;
 
-        int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
+            // NOTE: Only create one thread
+            if (i == 0)
+            {
+                int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
 
-        if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
-        else  TraceLog(INFO, "Gamepad device initialized successfully");
-    }
+                if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
+                else  TraceLog(INFO, "Gamepad device initialized successfully");
+            }
+        }
+    }       
 }
 
 // Process Gamepad (/dev/input/js0)
@@ -2484,45 +2498,38 @@ static void *GamepadThread(void *arg)
         unsigned char number;   // event axis/button number
     };
 
-    // These values are sensible on Logitech Dual Action Rumble and Xbox360 controller
-    const int joystickAxisX = 0;
-    const int joystickAxisY = 1;
-
     // Read gamepad event
 	struct js_event gamepadEvent;
     
 	while (1) 
     {
-        if (read(gamepadStream, &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
+        for (int i = 0; i < MAX_GAMEPADS; i++)
         {
-            gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
-            
-            // Process gamepad events by type
-            if (gamepadEvent.type == JS_EVENT_BUTTON) 
+            if (read(gamepadStream[i], &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
             {
-                TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
                 
-                if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
+                // Process gamepad events by type
+                if (gamepadEvent.type == JS_EVENT_BUTTON) 
                 {
-                    // 1 - button pressed, 0 - button released
-                    gamepadButtons[gamepadEvent.number] = (int)gamepadEvent.value;
+                    TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    
+                    if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
+                    {
+                        // 1 - button pressed, 0 - button released
+                        gamepadButtons[i][gamepadEvent.number] = (int)gamepadEvent.value;
+                    }
                 }
-            }
-            else if (gamepadEvent.type == JS_EVENT_AXIS) 
-            {
-                TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
-                
-                if (gamepadEvent.number == joystickAxisX) gamepadAxisX = (int)gamepadEvent.value;
-                if (gamepadEvent.number == joystickAxisY) gamepadAxisY = (int)gamepadEvent.value;
-                /*
-                switch (gamepadEvent.number)
+                else if (gamepadEvent.type == JS_EVENT_AXIS) 
                 {
-                    case 0: // 1st Axis X
-                    case 1: // 1st Axis Y
-                    case 2: // 2st Axis X
-                    case 3: // 2st Axis Y
+                    TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    
+                    if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
+                    {
+                        // NOTE: Scaling of gamepadEvent.value to get values between -1..1
+                        gamepadAxisValues[i][gamepadEvent.number] = (float)gamepadEvent.value/32768;
+                    }
                 }
-                */
             }
         }
 	}

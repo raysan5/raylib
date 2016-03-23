@@ -32,7 +32,9 @@
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
 #include <string.h>         // Declares strcmp(), strlen(), strtok()
 
-#include "raymath.h"        // Required for Vector3 and Matrix functions
+#ifndef RLGL_STANDALONE
+    #include "raymath.h"    // Required for Vector3 and Matrix functions
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
     #ifdef __APPLE__                // OpenGL include for OSX
@@ -186,6 +188,8 @@ typedef struct {
 // Framebuffer Object type
 typedef struct {
     GLuint id;
+    int width;
+    int height;
     GLuint colorTextureId;
     GLuint depthTextureId;
 } FBO;
@@ -298,6 +302,7 @@ static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
 
 #if defined(RLGL_STANDALONE)
 static void TraceLog(int msgType, const char *text, ...);
+float *MatrixToFloat(Matrix mat);   // Converts Matrix to float array
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -780,6 +785,18 @@ void rlDisableTexture(void)
 #endif
 }
 
+// Enable depth test
+void rlEnableDepthTest(void)
+{
+    glEnable(GL_DEPTH_TEST);
+}
+
+// Disable depth test
+void rlDisableDepthTest(void)
+{
+    glDisable(GL_DEPTH_TEST);
+}
+
 // Unload texture from GPU memory
 void rlDeleteTextures(unsigned int id)
 {
@@ -1056,8 +1073,8 @@ void rlglInitPostpro(void)
         
         quad.vertexCount = 6;
         
-        float w = (float)screenWidth;
-        float h = (float)screenHeight;
+        float w = (float)postproFbo.width;
+        float h = (float)postproFbo.height;
         
         float quadPositions[6*3] = { w, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, h, 0.0f, 0.0f, h, 0.0f, w, h, 0.0f, w, 0.0f, 0.0f }; 
         float quadTexcoords[6*2] = { 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f };
@@ -1081,6 +1098,8 @@ FBO rlglLoadFBO(int width, int height)
 {
     FBO fbo;   
     fbo.id = 0;
+    fbo.width = width;
+    fbo.height = height;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Create the texture that will serve as the color attachment for the framebuffer
@@ -1579,7 +1598,7 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
     //glClearDepth(1.0f);                                   // Clear depth buffer (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
 
-    glEnable(GL_DEPTH_TEST);                                // Enables depth testing (required for 3D)
+    glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
 
     glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)
@@ -2324,22 +2343,21 @@ void SetCustomShader(Shader shader)
 }
 
 // Set postprocessing shader
-// NOTE: Uses global variables screenWidth and screenHeight
 void SetPostproShader(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (!enabledPostpro)
     {
         enabledPostpro = true;
-        rlglInitPostpro();
+        rlglInitPostpro();      // Lazy initialization on postprocessing usage
     }
 
     SetModelShader(&postproQuad, shader);
     
     Texture2D texture;
     texture.id = postproFbo.colorTextureId;
-    texture.width = screenWidth;
-    texture.height = screenHeight;
+    texture.width = postproFbo.width;
+    texture.height = postproFbo.height;
 
     postproQuad.material.texDiffuse = texture;
     
@@ -2569,6 +2587,7 @@ static Shader LoadDefaultShader(void)
     char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
         "in vec4 fragTintColor;             \n"
+        "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
@@ -2578,8 +2597,13 @@ static Shader LoadDefaultShader(void)
         "uniform sampler2D texture0;        \n"
         "void main()                        \n"
         "{                                  \n"
-        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
-        "    gl_FragColor = texelColor*fragTintColor; \n"    
+#if defined(GRAPHICS_API_OPENGL_33)
+        "    vec4 texelColor = texture(texture0, fragTexCoord); \n"
+        "    fragColor = texelColor*fragTintColor; \n"
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
+        "    gl_FragColor = texelColor*fragTintColor; \n"
+#endif
         "}                                  \n";
 
     shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
@@ -2639,6 +2663,7 @@ static Shader LoadSimpleShader(void)
 #if defined(GRAPHICS_API_OPENGL_33)
     char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
+        "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
@@ -2648,8 +2673,13 @@ static Shader LoadSimpleShader(void)
         "uniform vec4 fragTintColor;        \n"
         "void main()                        \n"
         "{                                  \n"
-        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"   // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0, use texture() instead
+#if defined(GRAPHICS_API_OPENGL_33)
+        "    vec4 texelColor = texture(texture0, fragTexCoord); \n"
+        "    fragColor = texelColor*fragTintColor; \n"
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
         "    gl_FragColor = texelColor*fragTintColor; \n"
+#endif
         "}                                  \n";
 
     shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
@@ -3089,5 +3119,33 @@ static void TraceLog(int msgType, const char *text, ...)
     va_end(args);
 
     if (msgType == ERROR) exit(1);
+}
+
+// Converts Matrix to float array
+// NOTE: Returned vector is a transposed version of the Matrix struct, 
+// it should be this way because, despite raymath use OpenGL column-major convention,
+// Matrix struct memory alignment and variables naming are not coherent
+float *MatrixToFloat(Matrix mat)
+{
+    static float buffer[16];
+
+    buffer[0] = mat.m0;
+    buffer[1] = mat.m4;
+    buffer[2] = mat.m8;
+    buffer[3] = mat.m12;
+    buffer[4] = mat.m1;
+    buffer[5] = mat.m5;
+    buffer[6] = mat.m9;
+    buffer[7] = mat.m13;
+    buffer[8] = mat.m2;
+    buffer[9] = mat.m6;
+    buffer[10] = mat.m10;
+    buffer[11] = mat.m14;
+    buffer[12] = mat.m3;
+    buffer[13] = mat.m7;
+    buffer[14] = mat.m11;
+    buffer[15] = mat.m15;
+
+    return buffer;
 }
 #endif
