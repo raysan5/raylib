@@ -65,7 +65,7 @@ int main()
         if (IsKeyDown('A')) rectangle->rigidbody.velocity.x = -MOVE_VELOCITY;
         else if (IsKeyDown('D')) rectangle->rigidbody.velocity.x = MOVE_VELOCITY;
         
-        // Check player 2 movement inputs
+        // Check square movement inputs
         if (IsKeyDown(KEY_UP) && square->rigidbody.isGrounded) square->rigidbody.velocity.y = JUMP_VELOCITY;
         if (IsKeyDown(KEY_LEFT)) square->rigidbody.velocity.x = -MOVE_VELOCITY;
         else if (IsKeyDown(KEY_RIGHT)) square->rigidbody.velocity.x = MOVE_VELOCITY;
@@ -80,17 +80,20 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            // Convert transform values to rectangle data type variable
-            DrawRectangleRec(TransformToRectangle(floor->transform), DARKGRAY);
+            // Draw floor, roof and walls rectangles
+            DrawRectangleRec(TransformToRectangle(floor->transform), DARKGRAY);         // Convert transform values to rectangle data type variable
             DrawRectangleRec(TransformToRectangle(leftWall->transform), DARKGRAY);
             DrawRectangleRec(TransformToRectangle(rightWall->transform), DARKGRAY);
             DrawRectangleRec(TransformToRectangle(roof->transform), DARKGRAY);
             
+            // Draw middle platform rectangle
             DrawRectangleRec(TransformToRectangle(platform->transform), DARKGRAY);
             
+            // Draw physic objects
             DrawRectangleRec(TransformToRectangle(rectangle->transform), RED);
             DrawRectangleRec(TransformToRectangle(square->transform), BLUE);
             
+            // Draw collider lines if debug is enabled
             if (isDebug)
             {
                 DrawRectangleLines(floor->collider.bounds.x, floor->collider.bounds.y, floor->collider.bounds.width, floor->collider.bounds.height, GREEN);

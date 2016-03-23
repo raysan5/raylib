@@ -498,8 +498,8 @@ typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE } ColliderType;
 
 typedef struct Transform {
     Vector2 position;
-    float rotation;
-    Vector2 scale;
+    float rotation;         // Radians (not used)
+    Vector2 scale;          // Just for rectangle physic objects, for circle physic objects use collider radius and keep scale as { 0, 0 }
 } Transform;
 
 typedef struct Rigidbody {
