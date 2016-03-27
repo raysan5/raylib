@@ -1328,13 +1328,19 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 BoundingBox CalculateBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
-    Vector3 maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+    Vector3 minVertex = { 0 };
+    Vector3 maxVertex = { 0 };
 
-    for (int i = 1; i < mesh.vertexCount; i++)
+    if (mesh.vertices != NULL)
     {
-		minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
-        maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+        minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+        maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+    
+        for (int i = 1; i < mesh.vertexCount; i++)
+        {
+            minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+            maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+        }
     }
     
     // Create the bounding box
