@@ -304,7 +304,7 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(INFO, "Initializing raylib (v1.4.0)");
+    TraceLog(INFO, "Initializing raylib (v1.5.0)");
 
     // Store window title (could be useful...)
     windowTitle = title;
@@ -360,7 +360,7 @@ void InitWindow(int width, int height, const char *title)
 // Android activity initialization
 void InitWindow(int width, int height, struct android_app *state)
 {
-    TraceLog(INFO, "Initializing raylib (v1.4.0)");
+    TraceLog(INFO, "Initializing raylib (v1.5.0)");
 
     app_dummy();
 
