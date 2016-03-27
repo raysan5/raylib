@@ -29,21 +29,21 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>          // Declares malloc() and free() for memory management
-#include <string.h>          // Required for strcmp(), strrchr(), strncmp()
+#include <stdlib.h>             // Declares malloc() and free() for memory management
+#include <string.h>             // Required for strcmp(), strrchr(), strncmp()
 
-#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                             // Required: rlglLoadTexture() rlDeleteTextures(), 
-                             //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+#include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+                                // Required: rlglLoadTexture() rlDeleteTextures(), 
+                                //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"           // rRES data decompression utility function
-                             // NOTE: Includes Android fopen function map
+#include "utils.h"              // rRES data decompression utility function
+                                // NOTE: Includes Android fopen function map
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"       // Used to read image data (multiple formats support)
+#include "stb_image.h"          // Used to read image data (multiple formats support)
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"
+#include "stb_image_resize.h"   // Used on image scaling function: ImageResize()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -130,6 +130,7 @@ Image LoadImage(const char *fileName)
 }
 
 // Load image data from Color array data (RGBA - 32bit)
+// NOTE: Creates a copy of pixels data array
 Image LoadImageEx(Color *pixels, int width, int height)
 {
     Image image;

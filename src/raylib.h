@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.4.0 (www.raylib.com)
+*   raylib 1.5.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -345,8 +345,8 @@ typedef struct Camera {
 
 // Camera2D type, defines a 2d camera
 typedef struct Camera2D {
-    Vector2 position;       // Camera position
-    Vector2 origin;         // Camera origin (for rotation and zoom)
+    Vector2 offset;         // Camera offset (displacement from target)
+    Vector2 target;         // Camera target (for rotation and zoom)
     float rotation;         // Camera rotation in degrees
     float zoom;             // Camera zoom (scaling), should be 1.0f by default
 } Camera2D;
@@ -375,7 +375,7 @@ typedef struct Mesh {
 
 // Shader type (generic shader)
 typedef struct Shader {
-    unsigned int id;            // Shader program id
+    unsigned int id;      // Shader program id
     
     // Variable attributes
     int vertexLoc;        // Vertex attribute location point (vertex shader)
@@ -411,9 +411,9 @@ typedef struct Material {
 // 3d Model type
 // TODO: Replace shader/testure by material
 typedef struct Model {
-    Mesh mesh;
-    Matrix transform;
-    Material material;
+    Mesh mesh;                  // Vertex data buffers (RAM and VRAM)
+    Matrix transform;           // Local transform matrix
+    Material material;          // Shader and textures data
 } Model;
 
 // Ray type (useful for raycast)
@@ -432,8 +432,8 @@ typedef struct Sound {
 typedef struct Wave {
     void *data;                 // Buffer data pointer
     unsigned int dataSize;      // Data size in bytes
-    unsigned int sampleRate;
-    short bitsPerSample;
+    unsigned int sampleRate;    // Samples per second to be played
+    short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
 
@@ -484,7 +484,7 @@ typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
 
 // Gesture events
 // NOTE: MAX_TOUCH_POINTS fixed to 2
-typedef struct {
+typedef struct GestureEvent {
     int touchAction;
     int pointCount;
     int pointerId[MAX_TOUCH_POINTS];
