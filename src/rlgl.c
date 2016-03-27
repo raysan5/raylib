@@ -823,7 +823,11 @@ void rlDeleteShader(unsigned int id)
 void rlDeleteVertexArrays(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (vaoSupported) glDeleteVertexArrays(1, &id);
+    if (vaoSupported) 
+    {
+        glDeleteVertexArrays(1, &id);
+        TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", id);
+    }
 #endif
 }
 
@@ -832,6 +836,8 @@ void rlDeleteBuffers(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glDeleteBuffers(1, &id);
+    
+    if (!vaoSupported) TraceLog(INFO, "[VBO ID %i] Unloaded model vertex data from VRAM (GPU)", id);
 #endif
 }
 
@@ -1139,7 +1145,7 @@ FBO rlglLoadFBO(int width, int height)
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-    if (status != GL_FRAMEBUFFER_COMPLETE) 
+    if (status != GL_FRAMEBUFFER_COMPLETE)
     {
         TraceLog(WARNING, "Framebuffer object could not be created...");
         
@@ -1238,12 +1244,6 @@ void rlglClose(void)
         rlglUnloadFBO(postproFbo);
         
         // Unload postpro quad model data
-#if defined(GRAPHICS_API_OPENGL_11)
-        free(postproQuad.mesh.vertices);
-        free(postproQuad.mesh.texcoords);
-        free(postproQuad.mesh.normals);
-#endif
-
         rlDeleteBuffers(postproQuad.mesh.vboId[0]);
         rlDeleteBuffers(postproQuad.mesh.vboId[1]);
         rlDeleteBuffers(postproQuad.mesh.vboId[2]);
@@ -1907,7 +1907,7 @@ void rlglGenerateMipmaps(Texture2D texture)
         TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture.id);
         
         // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
-        free(data):
+        free(data);
         
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically

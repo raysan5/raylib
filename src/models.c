@@ -608,6 +608,8 @@ void UnloadModel(Model model)
     //if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2); // Not used
     //if (model.mesh.tangents != NULL) free(model.mesh.tangents); // Not used
     
+    TraceLog(INFO, "Unloaded model data from RAM (CPU)");
+    
     rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
     rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
     rlDeleteBuffers(model.mesh.vboId[2]);   // normals
@@ -616,9 +618,6 @@ void UnloadModel(Model model)
     //rlDeleteBuffers(model.mesh.vboId[5]);   // colors (NOT USED)
 
     rlDeleteVertexArrays(model.mesh.vaoId);
-    
-    if (model.mesh.vaoId > 0) TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vaoId);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
 }
 
 // Link a texture to a model
