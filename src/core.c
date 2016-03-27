@@ -560,14 +560,14 @@ void BeginDrawingEx(Camera2D camera)
 {
     BeginDrawing();
     
-    // TODO: Consider origin offset on position, rotation, scaling
-    
+    // Camera rotation and scaling is always relative to target
+    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
     Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
     Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
-    Matrix matTranslation = MatrixTranslate(camera.position.x, camera.position.y, 0.0f);
-    Matrix matOrigin = MatrixTranslate(-camera.origin.x, -camera.origin.y, 0.0f);
+    
+    Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
 
-    Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+    Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
     
     rlMultMatrixf(MatrixToFloat(matTransform));
 }
