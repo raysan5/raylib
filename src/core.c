@@ -545,7 +545,7 @@ void BeginDrawing(void)
 
     if (IsPosproShaderEnabled()) rlEnablePostproFBO();
 
-    rlClearScreenBuffers();
+    rlClearScreenBuffers();             // Clear current framebuffers
 
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
@@ -654,6 +654,26 @@ void End3dMode(void)
     //rlTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
     
     rlDisableDepthTest();               // Disable DEPTH_TEST for 2D
+}
+
+// Initializes render texture for drawing
+void BeginTextureMode(RenderTexture2D target)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlEnableRenderTexture(target.id);
+    
+    rlClearScreenBuffers();             // Clear render texture buffers
+
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+}
+
+// Ends drawing to render texture
+void EndTextureMode(void)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlDisableRenderTexture();
 }
 
 // Set target FPS for the game

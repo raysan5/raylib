@@ -389,6 +389,14 @@ Texture2D LoadTextureFromImage(Image image)
     return texture;
 }
 
+// Load a texture to be used for rendering
+RenderTexture2D LoadRenderTexture(int width, int height)
+{
+    RenderTexture2D target = rlglLoadRenderTexture(width, height);
+    
+    return target;
+}
+
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
@@ -406,6 +414,17 @@ void UnloadTexture(Texture2D texture)
         rlDeleteTextures(texture.id);
         
         TraceLog(INFO, "[TEX ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
+    }
+}
+
+// Unload render texture from GPU memory
+void UnloadRenderTexture(RenderTexture2D target)
+{
+    if (target.id != 0)
+    {
+        rlDeleteRenderTextures(target);
+        
+        TraceLog(INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
     }
 }
 

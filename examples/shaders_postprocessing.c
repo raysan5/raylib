@@ -41,7 +41,11 @@ int main()
     Shader shader = LoadShader("resources/shaders/base.vs", 
                                "resources/shaders/bloom.fs");               // Load postpro shader
 
-    SetPostproShader(shader);               // Set fullscreen postprocessing shader
+    // NOTE: Old postprocessing system is not flexible enough despite being very easy to use
+    //SetPostproShader(shader);               // Set fullscreen postprocessing shader
+    
+    // New postprocessing system let the user create multiple RenderTexture2D and perform multiple render passes
+    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
     
     // Setup orbital camera
     SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
@@ -65,15 +69,26 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            Begin3dMode(camera);
+            BeginTextureMode(target);   // Enable render to texture RenderTexture2D
 
-                DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                Begin3dMode(camera);
 
-                DrawGrid(10, 1.0f);     // Draw a grid
+                    DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-            End3dMode();
+                    DrawGrid(10, 1.0f);     // Draw a grid
+
+                End3dMode();
+          
+                DrawText("HELLO TEXTURE!!!", 120, 200, 60, RED);
+                
+            EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
             
-            DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, BLACK);
+            SetCustomShader(shader);
+            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
+            DrawTextureRec(target.texture, (Rectangle){ 0, target.texture.height, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            SetDefaultShader();
+            
+            DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, DARKGRAY);
 
             DrawFPS(10, 10);
 
@@ -83,11 +98,12 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);       // Unload shader
-    UnloadTexture(texture);     // Unload texture
-    UnloadModel(dwarf);         // Unload model
+    UnloadShader(shader);           // Unload shader
+    UnloadTexture(texture);         // Unload texture
+    UnloadModel(dwarf);             // Unload model
+    UnloadRenderTexture(target);    // Unload render texture
 
-    CloseWindow();              // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

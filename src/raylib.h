@@ -324,6 +324,13 @@ typedef struct Texture2D {
     int format;             // Data format (TextureFormat)
 } Texture2D;
 
+// RenderTexture2D type, for texture rendering
+typedef struct RenderTexture2D {
+    unsigned int id;        // Render texture (fbo) id
+    Texture2D texture;      // Color buffer attachment texture
+    Texture2D depth;        // Depth buffer attachment texture
+} RenderTexture2D;
+
 // SpriteFont type, includes texture and charSet array data
 typedef struct SpriteFont {
     Texture2D texture;      // Font texture
@@ -565,6 +572,8 @@ void EndDrawing(void);                                      // End canvas drawin
 
 void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
 void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
+void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
+void EndTextureMode(void);                                  // Ends drawing to render texture
 
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
 Vector2 WorldToScreen(Vector3 position, Camera camera);     // Returns the screen space position from a 3d world space position
@@ -714,8 +723,10 @@ Texture2D LoadTexture(const char *fileName);                                    
 Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat);                     // Load a texture from raw data into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
 Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data
+RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load a texture to be used for rendering
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
+void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory
 Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)

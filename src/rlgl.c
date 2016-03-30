@@ -785,6 +785,20 @@ void rlDisableTexture(void)
 #endif
 }
 
+void rlEnableRenderTexture(unsigned int id)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glBindFramebuffer(GL_FRAMEBUFFER, id);
+#endif
+}
+
+void rlDisableRenderTexture(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
+}
+
 // Enable depth test
 void rlEnableDepthTest(void)
 {
@@ -801,6 +815,16 @@ void rlDisableDepthTest(void)
 void rlDeleteTextures(unsigned int id)
 {
     glDeleteTextures(1, &id);
+}
+
+// Unload render texture from GPU memory
+void rlDeleteRenderTextures(RenderTexture2D target)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glDeleteFramebuffers(1, &target.id);
+    glDeleteTextures(1, &target.texture.id);
+    glDeleteTextures(1, &target.depth.id);
+#endif
 }
 
 // Enable rendering to postprocessing FBO
@@ -1163,7 +1187,7 @@ FBO rlglLoadFBO(int width, int height)
         glDeleteTextures(1, &fbo.colorTextureId);
         glDeleteTextures(1, &fbo.depthTextureId);
     }
-    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo);
+    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo.id);
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
@@ -1833,6 +1857,98 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     return id;
 }
 
+// Load a texture to be used for rendering (fbo with color and depth attachments)
+RenderTexture2D rlglLoadRenderTexture(int width, int height)
+{
+    RenderTexture2D target;
+    
+    target.id = 0;
+    
+    target.texture.id = 0;
+    target.texture.width = width;
+    target.texture.height = height;
+    target.texture.format = UNCOMPRESSED_R8G8B8;
+    target.texture.mipmaps = 1;
+    
+    target.depth.id = 0;
+    target.depth.width = width;
+    target.depth.height = height;
+    target.depth.format = 19;       //DEPTH_COMPONENT_16BIT
+    target.depth.mipmaps = 1;
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Create the texture that will serve as the color attachment for the framebuffer
+    glGenTextures(1, &target.texture.id);
+    glBindTexture(GL_TEXTURE_2D, target.texture.id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+#define USE_DEPTH_RENDERBUFFER
+#if defined(USE_DEPTH_RENDERBUFFER)
+    // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
+    glGenRenderbuffers(1, &target.depth.id);
+    glBindRenderbuffer(GL_RENDERBUFFER, target.depth.id);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+    
+#elif defined(USE_DEPTH_TEXTURE)
+    // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extension required)
+    // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
+    glGenTextures(1, &target.depth.id);
+    glBindTexture(GL_TEXTURE_2D, target.depth.id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+
+    // Create the framebuffer object
+    glGenFramebuffers(1, &target.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, target.id);
+
+    // Attach color texture and depth renderbuffer to FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target.texture.id, 0);
+#if defined(USE_DEPTH_RENDERBUFFER)
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, target.depth.id);
+#elif defined(USE_DEPTH_TEXTURE)
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, target.depth.id, 0);
+#endif
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        TraceLog(WARNING, "Framebuffer object could not be created...");
+        
+        switch(status)
+        {
+            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
+#if defined(GRAPHICS_API_OPENGL_ES2)
+            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(WARNING, "Framebuffer incomplete dimensions"); break;
+#endif
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete missing attachment"); break;
+            default: break;
+        }
+        
+        glDeleteTextures(1, &target.texture.id);
+        glDeleteTextures(1, &target.depth.id);
+        glDeleteFramebuffers(1, &target.id);
+    }
+    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", target.id);
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
+
+    return target; 
+}
+
+// Update already loaded texture in GPU with new data
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data)
 {
     glBindTexture(GL_TEXTURE_2D, id);

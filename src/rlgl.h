@@ -183,6 +183,13 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         int format;             // Data format (TextureFormat)
     } Texture2D;
     
+    // RenderTexture2D type, for texture rendering
+    typedef struct RenderTexture2D {
+        unsigned int id;        // Render texture (fbo) id
+        Texture2D texture;      // Color buffer attachment texture
+        Texture2D depth;        // Depth buffer attachment texture
+    } RenderTexture2D;
+    
     // Material type
     typedef struct Material {
         Shader shader;
@@ -248,9 +255,12 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 //------------------------------------------------------------------------------------
 void rlEnableTexture(unsigned int id);          // Enable texture usage
 void rlDisableTexture(void);                    // Disable texture usage
+void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
+void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
 void rlEnableDepthTest(void);                   // Enable depth test
 void rlDisableDepthTest(void);                  // Disable depth test
 void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
+void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
 void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
 void rlDeleteVertexArrays(unsigned int id);     // Unload vertex data (VAO) from GPU memory
 void rlDeleteBuffers(unsigned int id);          // Unload vertex data (VBO) from GPU memory
@@ -268,6 +278,7 @@ void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
+RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
 

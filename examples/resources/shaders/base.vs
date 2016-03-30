@@ -3,8 +3,10 @@
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec3 vertexNormal;
+in vec4 vertexColor;
 
 out vec2 fragTexCoord;
+out vec4 fragTintColor;
 
 uniform mat4 mvpMatrix;
 
@@ -13,6 +15,7 @@ uniform mat4 mvpMatrix;
 void main()
 {
     fragTexCoord = vertexTexCoord;
+    fragTintColor = vertexColor;
     
     gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);
 }
