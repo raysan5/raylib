@@ -47,7 +47,11 @@ int main()
     
     float swirlCenter[2] = { (float)screenWidth/2, (float)screenHeight/2 };
     
-    SetPostproShader(shader);               // Set fullscreen postprocessing shader
+    // NOTE: Old postprocessing system is not flexible enough despite being very easy to use
+    //SetPostproShader(shader);               // Set fullscreen postprocessing shader
+    
+    // New postprocessing system let the user create multiple RenderTexture2D and perform multiple render passes
+    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
     
     // Setup orbital camera
     SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
@@ -78,14 +82,23 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+            
+            BeginTextureMode(target);   // Enable render to texture RenderTexture2D
 
-            Begin3dMode(camera);
+                Begin3dMode(camera);
 
-                DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                    DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10, 1.0f);     // Draw a grid
+                    DrawGrid(10, 1.0f);     // Draw a grid
 
-            End3dMode();
+                End3dMode();
+            
+            EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
+            
+            SetCustomShader(shader);
+            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
+            DrawTextureRec(target.texture, (Rectangle){ 0, target.texture.height, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            SetDefaultShader();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
@@ -97,11 +110,12 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);       // Unload shader
-    UnloadTexture(texture);     // Unload texture
-    UnloadModel(dwarf);         // Unload model
+    UnloadShader(shader);           // Unload shader
+    UnloadTexture(texture);         // Unload texture
+    UnloadModel(dwarf);             // Unload model
+    UnloadRenderTexture(target);    // Unload render texture
 
-    CloseWindow();              // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
