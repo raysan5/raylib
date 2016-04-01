@@ -176,24 +176,6 @@ typedef struct {
     // TODO: Store draw state -> blending mode, shader
 } DrawCall;
 
-// pixel type (same as Color type)
-// NOTE: Used exclusively in mipmap generation functions
-typedef struct {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
-} pixel;
-
-// Framebuffer Object type
-typedef struct {
-    GLuint id;
-    int width;
-    int height;
-    GLuint colorTextureId;
-    GLuint depthTextureId;
-} FBO;
-
 #if defined(RLGL_STANDALONE)
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 #endif
@@ -248,13 +230,6 @@ static bool texCompETC1Supported = false;    // ETC1 texture compression support
 static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;    // PVR texture compression support
 static bool texCompASTCSupported = false;    // ASTC texture compression support
-
-// Framebuffer object and texture
-static FBO postproFbo;
-static Model postproQuad;
-
-// Shaders related variables
-static bool enabledPostpro = false;
 #endif
 
 // Compressed textures support flags
@@ -268,9 +243,6 @@ static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 //static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
-
-// Save screen size data (render size), required for postpro quad
-static int screenWidth, screenHeight;
 
 static int blendMode = 0;
 
@@ -290,14 +262,11 @@ static void UpdateBuffers(void);
 static char *TextFileRead(char *fn);
 
 static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
-
-FBO rlglLoadFBO(int width, int height);
-void rlglUnloadFBO(FBO fbo);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
-static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight);
+static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 #endif
 
 #if defined(RLGL_STANDALONE)
@@ -827,14 +796,6 @@ void rlDeleteRenderTextures(RenderTexture2D target)
 #endif
 }
 
-// Enable rendering to postprocessing FBO
-void rlEnablePostproFBO()
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glBindFramebuffer(GL_FRAMEBUFFER, postproFbo.id);
-#endif
-}
-
 // Unload shader from GPU memory
 void rlDeleteShader(unsigned int id)
 {
@@ -1088,125 +1049,6 @@ void rlglInit(void)
 #endif
 }
 
-// Init postpro system
-// NOTE: Uses global variables screenWidth and screenHeight
-// Modifies global variables: postproFbo, postproQuad
-void rlglInitPostpro(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    postproFbo = rlglLoadFBO(screenWidth, screenHeight);
-
-    if (postproFbo.id > 0)
-    {
-        // Create a simple quad model to render fbo texture
-        Mesh quad;
-        
-        quad.vertexCount = 6;
-        
-        float w = (float)postproFbo.width;
-        float h = (float)postproFbo.height;
-        
-        float quadPositions[6*3] = { w, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, h, 0.0f, 0.0f, h, 0.0f, w, h, 0.0f, w, 0.0f, 0.0f }; 
-        float quadTexcoords[6*2] = { 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f };
-        float quadNormals[6*3] = { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f };
-        unsigned char quadColors[6*4] = { 255 };
-        
-        quad.vertices = quadPositions;
-        quad.texcoords = quadTexcoords;
-        quad.normals = quadNormals;
-        quad.colors = quadColors;
-        
-        postproQuad = rlglLoadModel(quad);
-        
-        // NOTE: postproFbo.colorTextureId must be assigned to postproQuad model shader
-    }
-#endif
-}
-
-// Load a framebuffer object
-FBO rlglLoadFBO(int width, int height)
-{
-    FBO fbo;   
-    fbo.id = 0;
-    fbo.width = width;
-    fbo.height = height;
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Create the texture that will serve as the color attachment for the framebuffer
-    glGenTextures(1, &fbo.colorTextureId);
-    glBindTexture(GL_TEXTURE_2D, fbo.colorTextureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
-    glGenRenderbuffers(1, &fbo.depthTextureId);
-    glBindRenderbuffer(GL_RENDERBUFFER, fbo.depthTextureId);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-    
-    // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extensions)
-    // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
-/*
-    glGenTextures(1, &fbo.depthTextureId);
-    glBindTexture(GL_TEXTURE_2D, fbo.depthTextureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-*/
-    // Create the framebuffer object
-    glGenFramebuffers(1, &fbo.id);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
-
-    // Attach color texture and depth renderbuffer to FBO
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.colorTextureId, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo.depthTextureId);
-
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-    {
-        TraceLog(WARNING, "Framebuffer object could not be created...");
-        
-        switch(status)
-        {
-            case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: TraceLog(WARNING, "Framebuffer incomplete dimensions"); break;
-#endif
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete missing attachment"); break;
-            default: break;
-        }
-        
-        glDeleteTextures(1, &fbo.colorTextureId);
-        glDeleteTextures(1, &fbo.depthTextureId);
-    }
-    else TraceLog(INFO, "[FBO ID %i] Framebuffer object created successfully", fbo.id);
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
-
-    return fbo;
-}
-
-// Unload framebuffer object
-void rlglUnloadFBO(FBO fbo)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDeleteFramebuffers(1, &fbo.id);
-    glDeleteTextures(1, &fbo.colorTextureId);
-    glDeleteTextures(1, &fbo.depthTextureId);
-    
-    TraceLog(INFO, "[FBO ID %i] Unloaded framebuffer object successfully", fbo.id);
-#endif
-}
-
 // Vertex Buffer Object deinitialization (memory free)
 void rlglClose(void)
 {
@@ -1262,20 +1104,6 @@ void rlglClose(void)
     // Free GPU texture
     glDeleteTextures(1, &whiteTexture);
     TraceLog(INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
-
-    if (postproFbo.id != 0)
-    {
-        rlglUnloadFBO(postproFbo);
-        
-        // Unload postpro quad model data
-        rlDeleteBuffers(postproQuad.mesh.vboId[0]);
-        rlDeleteBuffers(postproQuad.mesh.vboId[1]);
-        rlDeleteBuffers(postproQuad.mesh.vboId[2]);
-
-        rlDeleteVertexArrays(postproQuad.mesh.vaoId);
-        
-        TraceLog(INFO, "Unloaded postprocessing data");
-    }
 
     free(draws);
 #endif
@@ -1443,16 +1271,6 @@ void rlglDraw(void)
 #endif
 }
 
-// Draw with postprocessing shader
-void rlglDrawPostpro(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    rlglDrawModel(postproQuad, (Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, 0.0f, (Vector3){1.0f, 1.0f, 1.0f}, (Color){ 255, 255, 255, 255 }, false);
-#endif
-}
-
 // Draw a 3d model
 // NOTE: Model transform can come within model struct
 void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color color, bool wires)
@@ -1606,12 +1424,7 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
 // Initialize Graphics Device (OpenGL stuff)
 // NOTE: Stores global variables screenWidth and screenHeight
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
-{
-    // Save screen size data (global vars), required on postpro quad
-    // NOTE: Size represents render size, it could differ from screen size!
-    screenWidth = width;
-    screenHeight = height;
-    
+{   
     // NOTE: Required! viewport must be recalculated if screen resized!
     glViewport(offsetX/2, offsetY/2, width - offsetX, height - offsetY);    // Set viewport width and height
 
@@ -2458,44 +2271,11 @@ void SetCustomShader(Shader shader)
 #endif
 }
 
-// Set postprocessing shader
-void SetPostproShader(Shader shader)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (!enabledPostpro)
-    {
-        enabledPostpro = true;
-        rlglInitPostpro();      // Lazy initialization on postprocessing usage
-    }
-
-    SetModelShader(&postproQuad, shader);
-    
-    Texture2D texture;
-    texture.id = postproFbo.colorTextureId;
-    texture.width = postproFbo.width;
-    texture.height = postproFbo.height;
-
-    postproQuad.material.texDiffuse = texture;
-    
-    //TraceLog(DEBUG, "Postproquad texture id: %i", postproQuad.texture.id);
-    //TraceLog(DEBUG, "Postproquad shader diffuse map id: %i", postproQuad.shader.texDiffuseId);
-    //TraceLog(DEBUG, "Shader diffuse map id: %i", shader.texDiffuseId);
-#elif defined(GRAPHICS_API_OPENGL_11)
-    TraceLog(WARNING, "Shaders not supported on OpenGL 1.1");
-#endif
-}
-
 // Set default shader to be used in batch draw
 void SetDefaultShader(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     SetCustomShader(defaultShader);
-    
-    if (enabledPostpro) 
-    {
-        SetPostproShader(defaultShader);
-        enabledPostpro = false;
-    }  
 #endif
 }
 
@@ -2526,16 +2306,6 @@ void SetModelShader(Model *model, Shader shader)
 
 #elif (GRAPHICS_API_OPENGL_11)
     TraceLog(WARNING, "Shaders not supported on OpenGL 1.1");
-#endif
-}
-
-// Check if postprocessing is enabled (used in module: core)
-bool IsPosproShaderEnabled(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    return enabledPostpro;
-#elif defined(GRAPHICS_API_OPENGL_11)
-    return false;
 #endif
 }
 
@@ -3120,8 +2890,8 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
 
     // Generate mipmaps
     // NOTE: Every mipmap data is stored after data
-    pixel *image = (pixel *)malloc(width*height*sizeof(pixel));
-    pixel *mipmap = NULL;
+    Color *image = (Color *)malloc(width*height*sizeof(Color));
+    Color *mipmap = NULL;
     int offset = 0;
     int j = 0;
 
@@ -3169,15 +2939,15 @@ static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight)
 }
 
 // Manual mipmap generation (basic scaling algorithm)
-static pixel *GenNextMipmap(pixel *srcData, int srcWidth, int srcHeight)
+static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 {
     int x2, y2;
-    pixel prow, pcol;
+    Color prow, pcol;
 
     int width = srcWidth/2;
     int height = srcHeight/2;
 
-    pixel *mipmap = (pixel *)malloc(width*height*sizeof(pixel));
+    Color *mipmap = (Color *)malloc(width*height*sizeof(Color));
 
     // Scaling algorithm works perfectly (box-filter)
     for (int y = 0; y < height; y++)

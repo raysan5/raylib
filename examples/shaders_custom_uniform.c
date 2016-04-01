@@ -47,10 +47,7 @@ int main()
     
     float swirlCenter[2] = { (float)screenWidth/2, (float)screenHeight/2 };
     
-    // NOTE: Old postprocessing system is not flexible enough despite being very easy to use
-    //SetPostproShader(shader);               // Set fullscreen postprocessing shader
-    
-    // New postprocessing system let the user create multiple RenderTexture2D and perform multiple render passes
+    // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
     
     // Setup orbital camera
@@ -83,7 +80,7 @@ int main()
 
             ClearBackground(RAYWHITE);
             
-            BeginTextureMode(target);   // Enable render to texture RenderTexture2D
+            BeginTextureMode(target);   // Enable drawing to texture
 
                 Begin3dMode(camera);
 

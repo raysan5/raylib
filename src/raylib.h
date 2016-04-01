@@ -829,11 +829,9 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
 unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shaders strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
 void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
 void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
-bool IsPosproShaderEnabled(void);                                   // Check if postprocessing shader is enabled
 
 int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)

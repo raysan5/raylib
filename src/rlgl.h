@@ -267,7 +267,6 @@ void rlDeleteBuffers(unsigned int id);          // Unload vertex data (VBO) from
 void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
 void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
 int rlGetVersion(void);                         // Returns current OpenGL version
-void rlEnablePostproFBO(void);                  // Enable rendering to postprocessing FBO
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
@@ -284,9 +283,6 @@ void rlglGenerateMipmaps(Texture2D texture);                             // Gene
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
-
-void rlglInitPostpro(void);                     // Initialize postprocessing system
-void rlglDrawPostpro(void);                     // Draw with postprocessing shader
 
 Model rlglLoadModel(Mesh mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color color, bool wires);
@@ -309,11 +305,9 @@ void PrintModelviewMatrix(void);        // DEBUG: Print modelview matrix
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
 unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shader strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
 void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
 void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
-bool IsPosproShaderEnabled(void);                                   // Check if postprocessing shader is enabled
 
 int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)

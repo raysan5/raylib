@@ -543,12 +543,8 @@ void BeginDrawing(void)
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
-    if (IsPosproShaderEnabled()) rlEnablePostproFBO();
-
     rlClearScreenBuffers();             // Clear current framebuffers
-
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-
     rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
@@ -578,7 +574,7 @@ void BeginDrawingPro(int blendMode, Shader shader, Matrix transform)
     BeginDrawing();
     
     SetBlendMode(blendMode);
-    SetPostproShader(shader);
+    SetCustomShader(shader);
     
     rlMultMatrixf(MatrixToFloat(transform));
 }
@@ -588,12 +584,11 @@ void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    if (IsPosproShaderEnabled()) rlglDrawPostpro(); // Draw postprocessing effect (shader)
-
     SwapBuffers();                  // Copy back buffer to front buffer
 
     PollInputEvents();              // Poll user events
     
+    // Frame time control system
     currentTime = GetTime();
     drawTime = currentTime - previousTime;
     previousTime = currentTime;
