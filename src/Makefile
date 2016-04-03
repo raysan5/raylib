@@ -84,8 +84,6 @@ else
 # external libraries headers
 # GLFW3
     INCLUDES += -I../external/glfw3/include
-# GLEW
-    INCLUDES += -I../external/glew/include
 # OpenAL Soft
     INCLUDES += -I../external/openal_soft/include
 endif
@@ -143,7 +141,7 @@ models.o: models.c
 # compile audio module
 audio.o: audio.c
 	$(CC) -c audio.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-	
+
 # compile stb_vorbis library
 stb_vorbis.o: stb_vorbis.c
 	$(CC) -c stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
@@ -167,7 +165,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o libraylib.a
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
+		rm -f *.o libraylib.a
     else
 		del *.o libraylib.a
     endif
