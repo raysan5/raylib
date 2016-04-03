@@ -92,8 +92,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # external libraries headers
         # GLFW3
             INCLUDES += -I../../external/glfw3/include
-        # GLEW - Not required any more, replaced by GLAD
-            #INCLUDES += -I../external/glew/include
         # OpenAL Soft
             INCLUDES += -I../../external/openal_soft/include
     endif
@@ -115,8 +113,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifneq ($(PLATFORM_OS),OSX)
         # OpenAL Soft
             LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-        # GLEW: Not used, replaced by GLAD
-            #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
         endif
     endif
 endif
@@ -127,14 +123,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
-        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl -lX11 \
                -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
         # requires the following packages:
-        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
     else
         # libraries for Windows desktop compiling

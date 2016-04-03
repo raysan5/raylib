@@ -84,8 +84,6 @@ else
 # external libraries headers
 # GLFW3
     INCLUDES += -I../external/glfw3/include
-# GLEW
-    INCLUDES += -I../external/glew/include
 # OpenAL Soft
     INCLUDES += -I../external/openal_soft/include
 endif
@@ -143,7 +141,7 @@ models.o: models.c
 # compile audio module
 audio.o: audio.c
 	$(CC) -c audio.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-	
+
 # compile stb_vorbis library
 stb_vorbis.o: stb_vorbis.c
 	$(CC) -c stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
