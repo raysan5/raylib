@@ -119,28 +119,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
-# define library paths containing required libs
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    LFLAGS = -L. -L../../src -L/opt/vc/lib
-endif
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),LINUX)
-        LFLAGS = -L. -L../../src
-    else
-        LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
-        # external libraries to link with
-        # GLFW3
-        LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
-        ifneq ($(PLATFORM_OS),OSX)
-        # OpenAL Soft
-            LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-        # GLEW
-            LFLAGS += -L../../external/glew/lib/$(LIBPATH)
-        endif
-    endif
-endif
-
 # define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
