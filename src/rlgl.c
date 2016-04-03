@@ -202,7 +202,7 @@ static VertexPositionColorBuffer triangles;     // No texture support
 static VertexPositionColorTextureIndexBuffer quads;
 
 // Shader Programs
-static Shader defaultShader, simpleShader;
+static Shader defaultShader;
 static Shader currentShader;                    // By default, defaultShader
 
 // Vertex Array Objects (VAO)
@@ -255,8 +255,7 @@ unsigned int whiteTexture;
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static Shader LoadDefaultShader(void);
-static Shader LoadSimpleShader(void);
-static void GetShaderDefaultLocations(Shader *shader);
+static void LoadDefaultShaderLocations(Shader *shader);
 static void InitializeBuffers(void);
 static void InitializeBuffersGPU(void);
 static void UpdateBuffers(void);
@@ -1021,9 +1020,8 @@ void rlglInit(void)
     if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
     else TraceLog(WARNING, "Base white texture could not be loaded");
 
-    // Init default Shader (Custom for GL 3.3 and ES2)
+    // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
-    simpleShader = LoadSimpleShader();
     //customShader = LoadShader("custom.vs", "custom.fs");     // Works ok
     
     currentShader = defaultShader;
@@ -1083,12 +1081,11 @@ void rlglClose(void)
         glDeleteVertexArrays(1, &vaoQuads);
     }
 
-    //glDetachShader(defaultShaderProgram, v);
-    //glDetachShader(defaultShaderProgram, f);
-    //glDeleteShader(v);
-    //glDeleteShader(f);
+    //glDetachShader(defaultShaderProgram, vertexShader);
+    //glDetachShader(defaultShaderProgram, fragmentShader);
+    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on sahder compilation
     glDeleteProgram(defaultShader.id);
-    glDeleteProgram(simpleShader.id);
 
     // Free vertex arrays memory
     free(lines.vertices);
@@ -1124,6 +1121,7 @@ void rlglDraw(void)
 
         glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(matMVP));
         glUniform1i(currentShader.mapDiffuseLoc, 0);
+        glUniform4f(currentShader.tintColorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     // NOTE: We draw in this order: lines, triangles, quads
@@ -1866,6 +1864,8 @@ Model rlglLoadModel(Mesh mesh)
     model.mesh.vboId[1] = 0;    // Vertex texcoords VBO
     model.mesh.vboId[2] = 0;    // Vertex normals VBO
     
+    // TODO: Consider attributes: color, texcoords2, tangents (if available)
+    
     model.transform = MatrixIdentity();
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -1873,7 +1873,7 @@ Model rlglLoadModel(Mesh mesh)
     model.material.shader.id = 0;        // No shader used
 
 #elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    model.material.shader = simpleShader;           // Default model shader
+    model.material.shader = defaultShader;          // Default model shader
     
     model.material.texDiffuse.id = whiteTexture;    // Default whiteTexture
     model.material.texDiffuse.width = 1;            // Default whiteTexture width
@@ -1896,7 +1896,7 @@ Model rlglLoadModel(Mesh mesh)
     }
 
     // Create buffers for our vertex data (positions, texcoords, normals)
-    glGenBuffers(3, vertexBuffer);
+    glGenBuffers(4, vertexBuffer);
 
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
@@ -1915,7 +1915,10 @@ Model rlglLoadModel(Mesh mesh)
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh.vertexCount, mesh.normals, GL_STATIC_DRAW);
     glVertexAttribPointer(model.material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(model.material.shader.normalLoc);
-
+    
+    glVertexAttrib4f(model.material.shader.colorLoc, 1.0f, 1.0f, 1.0f, 1.0f);    // Color vertex attribute set to default: WHITE
+    glDisableVertexAttribArray(model.material.shader.colorLoc);
+    
     model.mesh.vboId[0] = vertexBuffer[0];     // Vertex position VBO
     model.mesh.vboId[1] = vertexBuffer[1];     // Texcoords VBO
     model.mesh.vboId[2] = vertexBuffer[2];     // Normals VBO
@@ -2068,7 +2071,7 @@ void *rlglReadTexturePixels(Texture2D texture)
     Model quad;
     //quad.mesh = GenMeshQuad(width, height);
     quad.transform = MatrixIdentity();
-    quad.shader = simpleShader;
+    quad.shader = defaultShader;
     
     DrawModel(quad, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, WHITE);
     
@@ -2109,11 +2112,12 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     {
         shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
-        if (shader.id != 0) GetShaderDefaultLocations(&shader);
+        // After shader loading, we try to load default location names
+        if (shader.id != 0) LoadDefaultShaderLocations(&shader);
         else
         {
             TraceLog(WARNING, "Custom shader could not be loaded");
-            shader = simpleShader;
+            shader = defaultShader;
         }
         
         // Shader strings must be freed
@@ -2123,7 +2127,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     else
     {
         TraceLog(WARNING, "Custom shader could not be loaded");
-        shader = simpleShader;
+        shader = defaultShader;
     }        
 #endif
 
@@ -2432,20 +2436,20 @@ static Shader LoadDefaultShader(void)
         "in vec2 vertexTexCoord;            \n"
         "in vec4 vertexColor;               \n"
         "out vec2 fragTexCoord;             \n"
-        "out vec4 fragTintColor;            \n"
+        "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char vShaderStr[] = "#version 100       \n"
         "attribute vec3 vertexPosition;     \n"
         "attribute vec2 vertexTexCoord;     \n"
         "attribute vec4 vertexColor;        \n"
         "varying vec2 fragTexCoord;         \n"
-        "varying vec4 fragTintColor;        \n"
+        "varying vec4 fragColor;            \n"
 #endif
         "uniform mat4 mvpMatrix;            \n"
         "void main()                        \n"
         "{                                  \n"
         "    fragTexCoord = vertexTexCoord; \n"
-        "    fragTintColor = vertexColor;   \n"
+        "    fragColor = vertexColor;       \n"
         "    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
         "}                                  \n";
 
@@ -2453,23 +2457,24 @@ static Shader LoadDefaultShader(void)
 #if defined(GRAPHICS_API_OPENGL_33)
     char fShaderStr[] = "#version 330       \n"
         "in vec2 fragTexCoord;              \n"
-        "in vec4 fragTintColor;             \n"
-        "out vec4 fragColor;                \n"
+        "in vec4 fragColor;                 \n"
+        "out vec4 finalColor;               \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     char fShaderStr[] = "#version 100       \n"
         "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
         "varying vec2 fragTexCoord;         \n"
-        "varying vec4 fragTintColor;        \n"
+        "varying vec4 fragColor;            \n"
 #endif
         "uniform sampler2D texture0;        \n"
+        "uniform vec4 fragTintColor;        \n"
         "void main()                        \n"
         "{                                  \n"
 #if defined(GRAPHICS_API_OPENGL_33)
-        "    vec4 texelColor = texture(texture0, fragTexCoord); \n"
-        "    fragColor = texelColor*fragTintColor; \n"
+        "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
+        "    finalColor = texelColor*fragTintColor*fragColor;     \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
         "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
-        "    gl_FragColor = texelColor*fragTintColor; \n"
+        "    gl_FragColor = texelColor*fragTintColor*fragColor;   \n"
 #endif
         "}                                  \n";
 
@@ -2478,73 +2483,13 @@ static Shader LoadDefaultShader(void)
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
-    GetShaderDefaultLocations(&shader);
-
-    return shader;
-}
-
-// Load Simple Shader (Vertex and Fragment)
-// NOTE: This shader program is used to render models
-static Shader LoadSimpleShader(void)
-{
-    Shader shader;
-
-    // Vertex shader directly defined, no external file required
-#if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = "#version 330       \n"
-        "in vec3 vertexPosition;            \n"
-        "in vec2 vertexTexCoord;            \n"
-        "in vec3 vertexNormal;              \n"
-        "out vec2 fragTexCoord;             \n"
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    char vShaderStr[] = "#version 100       \n"
-        "attribute vec3 vertexPosition;     \n"
-        "attribute vec2 vertexTexCoord;     \n"
-        "attribute vec3 vertexNormal;       \n"
-        "varying vec2 fragTexCoord;         \n"
-#endif
-        "uniform mat4 mvpMatrix;            \n"
-        "void main()                        \n"
-        "{                                  \n"
-        "    fragTexCoord = vertexTexCoord; \n"
-        "    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
-        "}                                  \n";
-
-    // Fragment shader directly defined, no external file required
-#if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = "#version 330       \n"
-        "in vec2 fragTexCoord;              \n"
-        "out vec4 fragColor;                \n"
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    char fShaderStr[] = "#version 100       \n"
-        "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
-        "varying vec2 fragTexCoord;         \n"
-#endif
-        "uniform sampler2D texture0;        \n"
-        "uniform vec4 fragTintColor;        \n"
-        "void main()                        \n"
-        "{                                  \n"
-#if defined(GRAPHICS_API_OPENGL_33)
-        "    vec4 texelColor = texture(texture0, fragTexCoord); \n"
-        "    fragColor = texelColor*fragTintColor; \n"
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
-        "    gl_FragColor = texelColor*fragTintColor; \n"
-#endif
-        "}                                  \n";
-
-    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
-
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shader.id);
-
-    GetShaderDefaultLocations(&shader);
+    LoadDefaultShaderLocations(&shader);
 
     return shader;
 }
 
 // Get location handlers to for shader attributes and uniforms
-static void GetShaderDefaultLocations(Shader *shader)
+static void LoadDefaultShaderLocations(Shader *shader)
 {
     // Get handles to GLSL input attibute locations
     shader->vertexLoc = glGetAttribLocation(shader->id, "vertexPosition");
