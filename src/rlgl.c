@@ -1896,7 +1896,7 @@ Model rlglLoadModel(Mesh mesh)
     }
 
     // Create buffers for our vertex data (positions, texcoords, normals)
-    glGenBuffers(4, vertexBuffer);
+    glGenBuffers(3, vertexBuffer);
 
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
