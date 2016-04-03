@@ -256,6 +256,7 @@ unsigned int whiteTexture;
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static Shader LoadDefaultShader(void);
 static Shader LoadSimpleShader(void);
+static void GetShaderDefaultLocations(Shader *shader);
 static void InitializeBuffers(void);
 static void InitializeBuffersGPU(void);
 static void UpdateBuffers(void);
@@ -1369,22 +1370,25 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
     }
     else
     {
-        // Bind model VBOs data
+        // Bind model VBO data: vertex position
         glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[0]);
         glVertexAttribPointer(model.material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(model.material.shader.vertexLoc);
 
+        // Bind model VBO data: vertex texcoords
         glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[1]);
         glVertexAttribPointer(model.material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(model.material.shader.texcoordLoc);
 
-        // Add normals support
+        // Bind model VBO data: vertex normals (if available)
         if (model.material.shader.normalLoc != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, model.mesh.vboId[2]);
             glVertexAttribPointer(model.material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(model.material.shader.normalLoc);
         }
+        
+        // TODO: Bind model VBO data: colors, tangents, texcoords2 (if available)
     }
 
     // Draw call!
@@ -2094,9 +2098,7 @@ void *rlglReadTexturePixels(Texture2D texture)
 // Load a custom shader and bind default locations
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
-    Shader shader;
-    
-    shader.id = 0;      // Default value in case of loading failure
+    Shader shader = { 0 };
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
@@ -2107,28 +2109,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     {
         shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
-        if (shader.id != 0)
-        {
-            TraceLog(INFO, "[SHDR ID %i] Custom shader loaded successfully", shader.id);
-
-            // Get handles to GLSL input attibute locations
-            //-------------------------------------------------------------------
-            shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
-            shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
-            shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
-            // NOTE: custom shader does not use colorLoc
-            shader.colorLoc = -1;
-
-            // Get handles to GLSL uniform locations (vertex shader)
-            shader.mvpLoc  = glGetUniformLocation(shader.id, "mvpMatrix");
-
-            // Get handles to GLSL uniform locations (fragment shader)
-            shader.tintColorLoc = glGetUniformLocation(shader.id, "fragTintColor");
-            shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
-            shader.mapNormalLoc = -1;       // It can be set later
-            shader.mapSpecularLoc = -1;     // It can be set later
-            //--------------------------------------------------------------------
-        }
+        if (shader.id != 0) GetShaderDefaultLocations(&shader);
         else
         {
             TraceLog(WARNING, "Custom shader could not be loaded");
@@ -2497,23 +2478,7 @@ static Shader LoadDefaultShader(void)
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
-    // Get handles to GLSL input attibute locations
-    //-------------------------------------------------------------------
-    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
-    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
-    shader.colorLoc = glGetAttribLocation(shader.id, "vertexColor");
-    // NOTE: default shader does not use normalLoc
-    shader.normalLoc = -1;
-
-    // Get handles to GLSL uniform locations (vertex shader)
-    shader.mvpLoc = glGetUniformLocation(shader.id, "mvpMatrix");
-
-    // Get handles to GLSL uniform locations (fragment shader)
-    shader.tintColorLoc = -1;
-    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
-    shader.mapNormalLoc = -1;       // It can be set later
-    shader.mapSpecularLoc = -1;     // It can be set later
-    //--------------------------------------------------------------------
+    GetShaderDefaultLocations(&shader);
 
     return shader;
 }
@@ -2573,25 +2538,28 @@ static Shader LoadSimpleShader(void)
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Simple shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Simple shader could not be loaded", shader.id);
 
-    // Get handles to GLSL input attibute locations
-    //-------------------------------------------------------------------
-    shader.vertexLoc = glGetAttribLocation(shader.id, "vertexPosition");
-    shader.texcoordLoc = glGetAttribLocation(shader.id, "vertexTexCoord");
-    shader.normalLoc = glGetAttribLocation(shader.id, "vertexNormal");
-    // NOTE: simple shader does not use colorLoc
-    shader.colorLoc = -1;
-
-    // Get handles to GLSL uniform locations (vertex shader)
-    shader.mvpLoc  = glGetUniformLocation(shader.id, "mvpMatrix");
-
-    // Get handles to GLSL uniform locations (fragment shader)
-    shader.tintColorLoc = glGetUniformLocation(shader.id, "fragTintColor");
-    shader.mapDiffuseLoc = glGetUniformLocation(shader.id, "texture0");
-    shader.mapNormalLoc = -1;       // It can be set later
-    shader.mapSpecularLoc = -1;     // It can be set later
-    //--------------------------------------------------------------------
+    GetShaderDefaultLocations(&shader);
 
     return shader;
+}
+
+// Get location handlers to for shader attributes and uniforms
+static void GetShaderDefaultLocations(Shader *shader)
+{
+    // Get handles to GLSL input attibute locations
+    shader->vertexLoc = glGetAttribLocation(shader->id, "vertexPosition");
+    shader->texcoordLoc = glGetAttribLocation(shader->id, "vertexTexCoord");
+    shader->normalLoc = glGetAttribLocation(shader->id, "vertexNormal");
+    shader->colorLoc = glGetAttribLocation(shader->id, "vertexColor");        // -1 if not found
+
+    // Get handles to GLSL uniform locations (vertex shader)
+    shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");
+
+    // Get handles to GLSL uniform locations (fragment shader)
+    shader->tintColorLoc = glGetUniformLocation(shader->id, "fragTintColor");
+    shader->mapDiffuseLoc = glGetUniformLocation(shader->id, "texture0");
+    shader->mapNormalLoc = glGetUniformLocation(shader->id, "texture1");      // -1 if not found
+    shader->mapSpecularLoc = glGetUniformLocation(shader->id, "texture2");    // -1 if not found
 }
 
 // Read text file

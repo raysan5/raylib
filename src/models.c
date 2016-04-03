@@ -627,6 +627,7 @@ void SetModelTexture(Model *model, Texture2D texture)
     else model->material.texDiffuse = texture;
 }
 
+// Generate a mesh from heightmap
 static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
