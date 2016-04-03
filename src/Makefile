@@ -165,7 +165,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o libraylib.a
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
+		rm -f *.o libraylib.a
     else
 		del *.o libraylib.a
     endif
