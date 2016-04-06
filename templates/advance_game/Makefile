@@ -23,6 +23,8 @@
 #
 #**************************************************************************************************
 
+.PHONY: all clean
+
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
@@ -202,21 +204,22 @@ clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
 		find . -type f -perm +ugo+x -delete
-		rm -f *.o
+		rm -f screens/*.o
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
+		find . -type f -executable -delete
+		rm -f screens/*.o
     else
-		del *.o *.exe
+		del screens\*.o *.exe
     endif
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	find . -type f -executable -delete
-	rm -f *.o
+	rm -f screens/*.o
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-	del *.o *.html *.js
+	del screens/*.o *.html *.js
 endif
 	@echo Cleaning done
 

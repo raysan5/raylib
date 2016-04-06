@@ -21,6 +21,8 @@
 #
 #**************************************************************************************************
 
+.PHONY: all clean
+
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
@@ -97,9 +99,9 @@ else
 endif
 
 
-# typing 'make' will invoke the first target entry in the file,
-# in this case, the 'default' target entry is raylib
-default: raylib
+# typing 'make' will invoke the default target entry called 'all',
+# in this case, the 'default' target entry is basic_game
+all: raylib
 
 # compile raylib library
 raylib: $(OBJS)
@@ -161,21 +163,21 @@ gestures.o: gestures.c
 # clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),OSX)
-		rm -f *.o libraylib.a
-    else
-    ifeq ($(PLATFORM_OS),LINUX)
-		rm -f *.o libraylib.a
-    else
+    ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.o libraylib.a
+    else
+		rm -f *.o libraylib.a
     endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+		del *.o libraylib.bc
+    else
+		rm -f *.o libraylib.bc
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o libraylib.a
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-	del *.o libraylib.bc
 endif
 	@echo Cleaning done
 
