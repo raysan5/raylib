@@ -1,4 +1,4 @@
-// stb_truetype.h - v1.09 - public domain
+// stb_truetype.h - v1.11 - public domain
 // authored from 2009-2015 by Sean Barrett / RAD Game Tools
 //
 //   This library processes TrueType files:
@@ -20,6 +20,10 @@
 //
 //   Mikko Mononen: compound shape support, more cmap formats
 //   Tor Andersson: kerning, subpixel rendering
+//
+//   Misc other:
+//       Ryan Gordon
+//       Simon Glass
 //
 //   Bug/warning reports/fixes:
 //       "Zer" on mollyrocket (with fix)
@@ -45,11 +49,10 @@
 //       Thomas Fields
 //       Derek Vinyard
 //
-//   Misc other:
-//       Ryan Gordon
-//
 // VERSION HISTORY
 //
+//   1.11 (2016-04-02) fix unused-variable warning
+//   1.10 (2016-04-02) user-defined fabs(); rare memory leak; remove duplicate typedef
 //   1.09 (2016-01-16) warning fix; avoid crash on outofmem; use allocation userdata properly
 //   1.08 (2015-09-13) document stbtt_Rasterize(); fixes for vertical & horizontal edges
 //   1.07 (2015-08-01) allow PackFontRanges to accept arrays of sparse codepoints;
@@ -68,9 +71,9 @@
 //
 // LICENSE
 //
-//   This software is in the public domain. Where that dedication is not
-//   recognized, you are granted a perpetual, irrevocable license to copy,
-//   distribute, and modify this file as you see fit.
+//   This software is dual-licensed to the public domain and under the following
+//   license: you are granted a perpetual, irrevocable license to copy, modify,
+//   publish, and distribute this file as you see fit.
 //
 // USAGE
 //
@@ -406,6 +409,11 @@ int main(int arg, char **argv)
    #define STBTT_sqrt(x)      sqrt(x)
    #endif
 
+   #ifndef STBTT_fabs
+   #include <math.h>
+   #define STBTT_fabs(x)      fabs(x)
+   #endif
+
    // #define your own functions "STBTT_malloc" / "STBTT_free" to avoid malloc.h
    #ifndef STBTT_malloc
    #include <stdlib.h>
@@ -629,7 +637,7 @@ STBTT_DEF int stbtt_GetFontOffsetForIndex(const unsigned char *data, int index);
 
 // The following structure is defined publically so you can declare one on
 // the stack or as a global or etc, but you should treat it as opaque.
-typedef struct stbtt_fontinfo
+struct stbtt_fontinfo
 {
    void           * userdata;
    unsigned char  * data;              // pointer to .ttf file
@@ -640,7 +648,7 @@ typedef struct stbtt_fontinfo
    int loca,head,glyf,hhea,hmtx,kern; // table locations as offset from start of .ttf
    int index_map;                     // a cmap mapping for our chosen character encoding
    int indexToLocFormat;              // format needed to map from glyph index to glyph
-} stbtt_fontinfo;
+};
 
 STBTT_DEF int stbtt_InitFont(stbtt_fontinfo *info, const unsigned char *data, int offset);
 // Given an offset into the file that defines a font, this function builds
@@ -940,6 +948,12 @@ typedef int stbtt__test_oversample_pow2[(STBTT_MAX_OVERSAMPLE & (STBTT_MAX_OVERS
 
 #ifndef STBTT_RASTERIZER_VERSION
 #define STBTT_RASTERIZER_VERSION 2
+#endif
+
+#ifdef _MSC_VER
+#define STBTT__NOTUSED(v)  (void)(v)
+#else
+#define STBTT__NOTUSED(v)  (void)sizeof(v)
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -1993,7 +2007,7 @@ static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, 
                }
                y_crossing += dy * (x2 - (x1+1));
 
-               STBTT_assert(fabs(area) <= 1.01f);
+               STBTT_assert(STBTT_fabs(area) <= 1.01f);
 
                scanline[x2] += area + sign * (1-((x2-x2)+(x_bottom-x2))/2) * (sy1-y_crossing);
 
@@ -2071,6 +2085,8 @@ static void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e,
    int y,j=0, i;
    float scanline_data[129], *scanline, *scanline2;
 
+   STBTT__NOTUSED(vsubsample);
+
    if (result->w > 64)
       scanline = (float *) STBTT_malloc((result->w*2+1) * sizeof(float), userdata);
    else
@@ -2129,7 +2145,7 @@ static void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e,
             int m;
             sum += scanline2[i];
             k = scanline[i] + sum;
-            k = (float) fabs(k)*255 + 0.5f;
+            k = (float) STBTT_fabs(k)*255 + 0.5f;
             m = (int) k;
             if (m > 255) m = 255;
             result->pixels[j*result->stride + i] = (unsigned char) m;
@@ -2430,7 +2446,10 @@ STBTT_DEF unsigned char *stbtt_GetGlyphBitmapSubpixel(const stbtt_fontinfo *info
 
    if (scale_x == 0) scale_x = scale_y;
    if (scale_y == 0) {
-      if (scale_x == 0) return NULL;
+      if (scale_x == 0) {
+         STBTT_free(vertices, info->userdata);
+         return NULL;
+      }
       scale_y = scale_x;
    }
 
@@ -2586,11 +2605,6 @@ STBTT_DEF void stbtt_GetBakedQuad(stbtt_bakedchar *chardata, int pw, int ph, int
 //
 
 #ifndef STB_RECT_PACK_VERSION
-#ifdef _MSC_VER
-#define STBTT__NOTUSED(v)  (void)(v)
-#else
-#define STBTT__NOTUSED(v)  (void)sizeof(v)
-#endif
 
 typedef int stbrp_coord;
 
@@ -3205,6 +3219,10 @@ STBTT_DEF int stbtt_FindMatchingFont(const unsigned char *font_collection, const
 
 // FULL VERSION HISTORY
 //
+//   1.11 (2016-04-02) fix unused-variable warning
+//   1.10 (2016-04-02) allow user-defined fabs() replacement
+//                     fix memory leak if fontsize=0.0
+//                     fix warning from duplicate typedef
 //   1.09 (2016-01-16) warning fix; avoid crash on outofmem; use alloc userdata for PackFontRanges
 //   1.08 (2015-09-13) document stbtt_Rasterize(); fixes for vertical & horizontal edges
 //   1.07 (2015-08-01) allow PackFontRanges to accept arrays of sparse codepoints;
