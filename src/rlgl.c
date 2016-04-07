@@ -1897,6 +1897,9 @@ Model rlglLoadModel(Mesh mesh)
 
     // Create buffers for our vertex data (positions, texcoords, normals)
     glGenBuffers(3, vertexBuffer);
+    
+    // NOTE: Default shader is assigned to model, so vbo buffers are properly linked to vertex attribs
+    // If model shader is changed, vbo buffers must be re-assigned to new location points (previously loaded)
 
     // Enable vertex attributes: position
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer[0]);
@@ -2489,13 +2492,14 @@ static Shader LoadDefaultShader(void)
 }
 
 // Get location handlers to for shader attributes and uniforms
+// NOTE: If any location is not found, loc point becomes -1
 static void LoadDefaultShaderLocations(Shader *shader)
 {
     // Get handles to GLSL input attibute locations
     shader->vertexLoc = glGetAttribLocation(shader->id, "vertexPosition");
     shader->texcoordLoc = glGetAttribLocation(shader->id, "vertexTexCoord");
     shader->normalLoc = glGetAttribLocation(shader->id, "vertexNormal");
-    shader->colorLoc = glGetAttribLocation(shader->id, "vertexColor");        // -1 if not found
+    shader->colorLoc = glGetAttribLocation(shader->id, "vertexColor");
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");
@@ -2503,8 +2507,8 @@ static void LoadDefaultShaderLocations(Shader *shader)
     // Get handles to GLSL uniform locations (fragment shader)
     shader->tintColorLoc = glGetUniformLocation(shader->id, "fragTintColor");
     shader->mapDiffuseLoc = glGetUniformLocation(shader->id, "texture0");
-    shader->mapNormalLoc = glGetUniformLocation(shader->id, "texture1");      // -1 if not found
-    shader->mapSpecularLoc = glGetUniformLocation(shader->id, "texture2");    // -1 if not found
+    shader->mapNormalLoc = glGetUniformLocation(shader->id, "texture1");
+    shader->mapSpecularLoc = glGetUniformLocation(shader->id, "texture2");
 }
 
 // Read text file

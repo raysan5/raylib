@@ -94,7 +94,7 @@ int main()
             
             SetCustomShader(shader);
             // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-            DrawTextureRec(target.texture, (Rectangle){ 0, target.texture.height, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
             SetDefaultShader();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
