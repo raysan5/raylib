@@ -36,10 +36,10 @@ int main()
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
     SetModelTexture(&dwarf, texture);                                       // Bind texture to model
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };                                   // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
     
-    Shader shader = LoadShader("resources/shaders/base.vs", 
-                               "resources/shaders/swirl.fs");               // Load postpro shader
+    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
+                               "resources/shaders/glsl330/swirl.fs");       // Load postpro shader
     
     // Get variable (uniform) location on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1

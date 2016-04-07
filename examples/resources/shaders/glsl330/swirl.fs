@@ -1,11 +1,15 @@
 #version 330
 
+// Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
+in vec4 fragColor;
 
-out vec4 fragColor;
-
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
+
+// Output fragment color
+out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
@@ -22,6 +26,7 @@ void main (void)
     vec2 texSize = vec2(renderWidth, renderHeight);
     vec2 tc = fragTexCoord*texSize;
     tc -= center;
+    
     float dist = length(tc);
 
     if (dist < radius) 
@@ -37,5 +42,5 @@ void main (void)
     tc += center;
     vec3 color = texture2D(texture0, tc/texSize).rgb;
 
-    fragColor = vec4(color, 1.0);;
+    finalColor = vec4(color, 1.0);;
 }

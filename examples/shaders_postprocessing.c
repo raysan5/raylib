@@ -38,8 +38,8 @@ int main()
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
     
-    Shader shader = LoadShader("resources/shaders/base.vs", 
-                               "resources/shaders/bloom.fs");               // Load postpro shader
+    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
+                               "resources/shaders/glsl330/bloom.fs");       // Load postpro shader
 
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
@@ -76,7 +76,7 @@ int main()
 
                 End3dMode();
           
-                DrawText("HELLO TEXTURE!!!", 120, 200, 60, RED);
+                DrawText("HELLO POSTPROCESSING!", 70, 190, 50, RED);
                 
             EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
             

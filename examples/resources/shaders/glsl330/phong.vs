@@ -1,25 +1,25 @@
 #version 330
 
-// Vertex input data
+// Input vertex attributes
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec3 vertexNormal;
 
-// Projection and model data
+// Input uniform values
 uniform mat4 mvpMatrix;
 
-uniform mat4 modelMatrix;
-//uniform mat4 viewMatrix;  // Not used
-
-// Attributes to fragment shader
+// Output vertex attributes (to fragment shader)
 out vec2 fragTexCoord;
 out vec3 fragNormal;
 
+// NOTE: Add here your custom variables
+uniform mat4 modelMatrix;
+
 void main()
 {
-    // Send texture coord to fragment shader
+    // Send vertex attributes to fragment shader
     fragTexCoord = vertexTexCoord;
-    
+
     // Calculate view vector normal from model
     mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
     fragNormal = normalize(normalMatrix*vertexNormal);
