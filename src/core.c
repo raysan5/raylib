@@ -568,17 +568,6 @@ void BeginDrawingEx(Camera2D camera)
     rlMultMatrixf(MatrixToFloat(matTransform));
 }
 
-// Setup drawing canvas with pro parameters
-void BeginDrawingPro(int blendMode, Shader shader, Matrix transform)
-{
-    BeginDrawing();
-    
-    SetBlendMode(blendMode);
-    SetCustomShader(shader);
-    
-    rlMultMatrixf(MatrixToFloat(transform));
-}
-
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing(void)
 {

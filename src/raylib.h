@@ -567,7 +567,6 @@ int GetScreenHeight(void);                                  // Get current scree
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
 void BeginDrawingEx(Camera2D camera);                       // Setup drawing canvas with 2d camera
-void BeginDrawingPro(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with pro parameters
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
 void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
