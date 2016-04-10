@@ -1688,7 +1688,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     target.depth.id = 0;
     target.depth.width = width;
     target.depth.height = height;
-    target.depth.format = 19;       //DEPTH_COMPONENT_16BIT
+    target.depth.format = 19;       //DEPTH_COMPONENT_24BIT
     target.depth.mipmaps = 1;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1701,14 +1701,18 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
-
-#define USE_DEPTH_RENDERBUFFER
+    
+#if defined(GRAPHICS_API_OPENGL_33)
+    #define USE_DEPTH_TEXTURE
+#else
+    #define USE_DEPTH_RENDERBUFFER
+#endif
+    
 #if defined(USE_DEPTH_RENDERBUFFER)
     // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
     glGenRenderbuffers(1, &target.depth.id);
     glBindRenderbuffer(GL_RENDERBUFFER, target.depth.id);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
-    
 #elif defined(USE_DEPTH_TEXTURE)
     // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extension required)
     // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
@@ -1718,7 +1722,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 
