@@ -1712,7 +1712,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     // Create the renderbuffer that will serve as the depth attachment for the framebuffer.
     glGenRenderbuffers(1, &target.depth.id);
     glBindRenderbuffer(GL_RENDERBUFFER, target.depth.id);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);    // GL_DEPTH_COMPONENT24 not supported on Android
 #elif defined(USE_DEPTH_TEXTURE)
     // NOTE: We can also use a texture for depth buffer (GL_ARB_depth_texture/GL_OES_depth_texture extension required)
     // A renderbuffer is simpler than a texture and could offer better performance on embedded devices
@@ -2032,8 +2032,9 @@ void *rlglReadTexturePixels(Texture2D texture)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    FBO fbo = rlglLoadFBO(texture.width, texture.height);
-    
+
+    RenderTexture2D fbo = rlglLoadRenderTexture(texture.width, texture.height);
+
     // NOTE: Two possible Options:
     // 1 - Bind texture to color fbo attachment and glReadPixels()
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
@@ -2054,7 +2055,7 @@ void *rlglReadTexturePixels(Texture2D texture)
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     
     // Re-attach internal FBO color texture before deleting it
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.colorTextureId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo.texture.id, 0);
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
@@ -2093,7 +2094,8 @@ void *rlglReadTexturePixels(Texture2D texture)
 #endif // GET_TEXTURE_FBO_OPTION
 
     // Clean up temporal fbo
-    rlglUnloadFBO(fbo);
+    rlDeleteRenderTextures(fbo);
+
 #endif
 
     return pixels;
