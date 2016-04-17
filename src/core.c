@@ -195,25 +195,18 @@ static int renderOffsetY = 0;               // Offset Y from render area (must b
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
-static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
-
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
-
-static bool customCursor = false;           // Tracks if custom cursor has been set
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
-static Texture2D cursor;                    // Cursor texture
-
-static Vector2 mousePosition;               // Mouse position on screen
 
 static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
 static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
 
-static char previousMouseState[3] = { 0 };  // Required to check if mouse btn pressed/released once
-static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pressed/released once
-
 static char previousGamepadState[32] = {0}; // Required to check if gamepad btn pressed/released once
 static char currentGamepadState[32] = {0};  // Required to check if gamepad btn pressed/released once
+
+static char previousMouseState[3] = { 0 };  // Required to check if mouse btn pressed/released once
+static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pressed/released once
 
 static int previousMouseWheelY = 0;         // Required to track mouse wheel variation
 static int currentMouseWheelY = 0;          // Required to track mouse wheel variation
@@ -223,6 +216,9 @@ static int lastKeyPressed = -1;             // Register last key pressed
 
 static bool cursorHidden;                   // Track if cursor is hidden
 #endif
+
+static Vector2 mousePosition;               // Mouse position on screen
+static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
 
 #if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -493,29 +489,6 @@ void ToggleFullscreen(void)
     TraceLog(WARNING, "Could not toggle to windowed mode");
 #endif
 }
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-// Set a custom cursor icon/image
-void SetCustomCursor(const char *cursorImage)
-{
-    if (customCursor) UnloadTexture(cursor);
-
-    cursor = LoadTexture(cursorImage);
-
-#if defined(PLATFORM_DESKTOP)
-    // NOTE: emscripten not implemented
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-#endif
-    customCursor = true;
-}
-
-// Set a custom key to exit program
-// NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
-{
-    exitKey = key;
-}
-#endif
 
 // Get current screen width
 int GetScreenWidth(void)
@@ -1032,78 +1005,11 @@ int GetKeyPressed(void)
     return lastKeyPressed;
 }
 
-// Detect if a mouse button has been pressed once
-bool IsMouseButtonPressed(int button)
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
 {
-    bool pressed = false;
-
-    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
-    else pressed = false;
-
-    return pressed;
-}
-
-// Detect if a mouse button is being pressed
-bool IsMouseButtonDown(int button)
-{
-    if (GetMouseButtonStatus(button) == 1) return true;
-    else return false;
-}
-
-// Detect if a mouse button has been released once
-bool IsMouseButtonReleased(int button)
-{
-    bool released = false;
-
-    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 0)) released = true;
-    else released = false;
-
-    return released;
-}
-
-// Detect if a mouse button is NOT being pressed
-bool IsMouseButtonUp(int button)
-{
-    if (GetMouseButtonStatus(button) == 0) return true;
-    else return false;
-}
-
-// Returns mouse position X
-int GetMouseX(void)
-{
-    return (int)mousePosition.x;
-}
-
-// Returns mouse position Y
-int GetMouseY(void)
-{
-    return (int)mousePosition.y;
-}
-
-// Returns mouse position XY
-Vector2 GetMousePosition(void)
-{
-    return mousePosition;
-}
-
-// Set mouse position XY
-void SetMousePosition(Vector2 position)
-{
-    mousePosition = position;
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // NOTE: emscripten not implemented
-    glfwSetCursorPos(window, position.x, position.y);
-#endif
-}
-
-// Returns mouse wheel movement Y
-int GetMouseWheelMove(void)
-{
-#if defined(PLATFORM_WEB)
-    return previousMouseWheelY/100;
-#else
-    return previousMouseWheelY;
-#endif
+    exitKey = key;
 }
 
 // Hide mouse cursor
@@ -1280,6 +1186,111 @@ bool IsGamepadButtonUp(int gamepad, int button)
 }
 #endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 
+
+// Detect if a mouse button has been pressed once
+bool IsMouseButtonPressed(int button)
+{
+    bool pressed = false;
+    
+#if defined(PLATFORM_ANDROID)
+    if (IsGestureDetected() && (GetGestureType() == GESTURE_TAP)) pressed = true;
+#else
+    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
+#endif
+
+    return pressed;
+}
+
+// Detect if a mouse button is being pressed
+bool IsMouseButtonDown(int button)
+{
+    bool down = false;
+    
+#if defined(PLATFORM_ANDROID)
+    if (IsGestureDetected() && (GetGestureType() == GESTURE_HOLD)) down = true;
+#else
+    if (GetMouseButtonStatus(button) == 1) down = true;
+#endif
+    
+    return down;
+}
+
+// Detect if a mouse button has been released once
+bool IsMouseButtonReleased(int button)
+{
+    bool released = false;
+    
+#if !defined(PLATFORM_ANDROID)
+    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 0)) released = true;
+#endif
+
+    return released;
+}
+
+// Detect if a mouse button is NOT being pressed
+bool IsMouseButtonUp(int button)
+{
+    bool up = false;
+    
+#if !defined(PLATFORM_ANDROID)
+    if (GetMouseButtonStatus(button) == 0) up = true;
+#endif
+
+    return up;
+}
+
+// Returns mouse position X
+int GetMouseX(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return (int)touchPosition[0].x;
+#else
+    return (int)mousePosition.x;
+#endif
+}
+
+// Returns mouse position Y
+int GetMouseY(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return (int)touchPosition[0].x;
+#else
+    return (int)mousePosition.y;
+#endif
+}
+
+// Returns mouse position XY
+Vector2 GetMousePosition(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return GetTouchPosition(0);
+#else
+    return mousePosition;
+#endif
+}
+
+// Set mouse position XY
+void SetMousePosition(Vector2 position)
+{
+    mousePosition = position;
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    // NOTE: emscripten not implemented
+    glfwSetCursorPos(window, position.x, position.y);
+#endif
+}
+
+// Returns mouse wheel movement Y
+int GetMouseWheelMove(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return 0;
+#elif defined(PLATFORM_WEB)
+    return previousMouseWheelY/100;
+#else
+    return previousMouseWheelY;
+#endif
+}
+
 // Returns touch position X
 int GetTouchX(void)
 {
@@ -1376,7 +1387,7 @@ static void InitDisplay(int width, int height)
 
     // Downscale matrix is required in case desired screen area is bigger than display area
     downscaleView = MatrixIdentity();
-
+    
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 
@@ -1393,10 +1404,12 @@ static void InitDisplay(int width, int height)
     // Screen size security check
     if (screenWidth <= 0) screenWidth = displayWidth;
     if (screenHeight <= 0) screenHeight = displayHeight;
-#elif defined(PLATFORM_WEB)
+#endif  // defined(PLATFORM_DESKTOP)
+
+#if defined(PLATFORM_WEB)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
-#endif
+#endif  // defined(PLATFORM_WEB)
 
     glfwDefaultWindowHints();                     // Set default windows hints
 
@@ -1447,7 +1460,7 @@ static void InitDisplay(int width, int height)
             // TODO: Check modes[i]->width;
             // TODO: Check modes[i]->height;
         }
-
+        
         window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
     }
     else
@@ -1543,8 +1556,9 @@ static void InitDisplay(int width, int height)
     }
 
     //glfwGetFramebufferSize(window, &renderWidth, &renderHeight);    // Get framebuffer size of current window
+#endif // defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     fullscreen = true;
 
     // Screen size security check
@@ -1629,8 +1643,9 @@ static void InitDisplay(int width, int height)
     //ANativeWindow_setBuffersGeometry(app->window, 0, 0, displayFormat);       // Force use of native display size
 
     surface = eglCreateWindowSurface(display, config, app->window, NULL);
+#endif  // defined(PLATFORM_ANDROID)
 
-#elif defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI)
     graphics_get_display_size(0, &displayWidth, &displayHeight);
 
     // At this point we need to manage render size vs screen size
@@ -1668,7 +1683,7 @@ static void InitDisplay(int width, int height)
 
     surface = eglCreateWindowSurface(display, config, &nativeWindow, NULL);
     //---------------------------------------------------------------------------------
-#endif
+#endif  // defined(PLATFORM_RPI)
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(display, 1);
 
@@ -1688,13 +1703,17 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Screen size: %i x %i", screenWidth, screenHeight);
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
-#endif
+#endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 }
 
 // Initialize OpenGL graphics
 static void InitGraphics(void)
 {
     rlglInit();                     // Init rlgl
+    
+#if defined(PLATFORM_OCULUS)
+    //rlglInitOculus();             // Init rlgl for Oculus Rift (required textures)
+#endif
 
     rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
 
@@ -2153,7 +2172,7 @@ static bool GetMouseButtonStatus(int button)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetMouseButton(window, button);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual keyboard
+    // TODO: Check for virtual mouse
     return false;
 #elif defined(PLATFORM_RPI)
     // NOTE: Mouse buttons states are filled in PollInputEvents()

@@ -557,12 +557,14 @@ void CloseWindow(void);                                     // Close Window and 
 bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)
 void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
-void SetExitKey(int key);                                   // Set a custom key to exit program (default is ESC)
-#endif
 int GetScreenWidth(void);                                   // Get current screen width
 int GetScreenHeight(void);                                  // Get current screen height
+
+void ShowCursor(void);                                      // Shows cursor
+void HideCursor(void);                                      // Hides cursor
+bool IsCursorHidden(void);                                  // Returns true if cursor is not visible
+void EnableCursor(void);                                    // Enables cursor
+void DisableCursor(void);                                   // Disables cursor
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
@@ -610,6 +612,15 @@ bool IsKeyDown(int key);                                // Detect if a key is be
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
 bool IsKeyUp(int key);                                  // Detect if a key is NOT being pressed
 int GetKeyPressed(void);                                // Get latest key pressed
+void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
+
+bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
+float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
+bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
+bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
+bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
+bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
+#endif
 
 bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
 bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
@@ -620,20 +631,6 @@ int GetMouseY(void);                                    // Returns mouse positio
 Vector2 GetMousePosition(void);                         // Returns mouse position XY
 void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
-
-void ShowCursor(void);                                  // Shows cursor
-void HideCursor(void);                                  // Hides cursor
-void EnableCursor(void);                                // Enables cursor
-void DisableCursor(void);                               // Disables cursor
-bool IsCursorHidden(void);                              // Returns true if cursor is not visible
-
-bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
-float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
-bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
-bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
-bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
-bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
-#endif
 
 int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
 int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)                   
@@ -649,7 +646,7 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
-void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
+void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
 bool IsGestureDetected(void);                           // Check if a gesture have been detected
 int GetGestureType(void);                               // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
