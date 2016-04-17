@@ -34,7 +34,7 @@ int main()
     
     //SetGesturesEnabled(0b0000000000001001);   // Enable only some gestures to be detected
     
-    SetTargetFPS(30);
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -62,6 +62,8 @@ int main()
                     case GESTURE_SWIPE_LEFT: strcpy(gestureStrings[gesturesCount], "GESTURE SWIPE LEFT"); break;
                     case GESTURE_SWIPE_UP: strcpy(gestureStrings[gesturesCount], "GESTURE SWIPE UP"); break;
                     case GESTURE_SWIPE_DOWN: strcpy(gestureStrings[gesturesCount], "GESTURE SWIPE DOWN"); break;
+                    case GESTURE_PINCH_IN: strcpy(gestureStrings[gesturesCount], "GESTURE PINCH IN"); break;
+                    case GESTURE_PINCH_OUT: strcpy(gestureStrings[gesturesCount], "GESTURE PINCH OUT"); break;
                     default: break;
                 }
                 
