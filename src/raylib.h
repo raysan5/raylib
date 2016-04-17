@@ -647,8 +647,8 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
-bool IsGestureDetected(void);                           // Check if a gesture have been detected
-int GetGestureType(void);                               // Get latest detected gesture
+bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
+int GetGestureDetected(void);                           // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
 int GetTouchPointsCount(void);                          // Get touch points count
 

@@ -292,14 +292,14 @@ void UpdateGestures(void)
 }
 
 // Check if a gesture have been detected
-bool IsGestureDetected(void)
+bool IsGestureDetected(int gesture)
 {
-    if ((enabledGestures & currentGesture) != GESTURE_NONE) return true;
+    if ((enabledGestures & currentGesture) == gesture) return true;
     else return false;
 }
 
 // Check gesture type
-int GetGestureType(void)
+int GetGestureDetected(void)
 {
     // Get current gesture only if enabled
     return (enabledGestures & currentGesture);

@@ -43,12 +43,11 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         lastGesture = currentGesture;
+        currentGesture = GetGestureDetected();
         touchPosition = GetTouchPosition(0);
-        
-        if (CheckCollisionPointRec(touchPosition, touchArea) &&  IsGestureDetected())
+
+        if (CheckCollisionPointRec(touchPosition, touchArea) && (currentGesture != GESTURE_NONE))
         {
-            currentGesture = GetGestureType();
-            
             if (currentGesture != lastGesture)
             {
                 // Store gesture string
@@ -78,7 +77,6 @@ int main()
                 }
             }
         }
-        else currentGesture = GESTURE_NONE;
         //----------------------------------------------------------------------------------
 
         // Draw

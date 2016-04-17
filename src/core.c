@@ -1193,7 +1193,7 @@ bool IsMouseButtonPressed(int button)
     bool pressed = false;
     
 #if defined(PLATFORM_ANDROID)
-    if (IsGestureDetected() && (GetGestureType() == GESTURE_TAP)) pressed = true;
+    if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
     if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
 #endif
@@ -1207,7 +1207,7 @@ bool IsMouseButtonDown(int button)
     bool down = false;
     
 #if defined(PLATFORM_ANDROID)
-    if (IsGestureDetected() && (GetGestureType() == GESTURE_HOLD)) down = true;
+    if (IsGestureDetected(GESTURE_HOLD)) down = true;
 #else
     if (GetMouseButtonStatus(button) == 1) down = true;
 #endif
