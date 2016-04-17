@@ -57,8 +57,8 @@
 //----------------------------------------------------------------------------------
 #define MUSIC_STREAM_BUFFERS        2
 
-#if defined(PLATFORM_RPI)
-    // NOTE: On RPI should be lower to avoid frame-stalls
+#if defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
+    // NOTE: On RPI and Android should be lower to avoid frame-stalls
     #define MUSIC_BUFFER_SIZE      4096*2   // PCM data buffer (short) - 16Kb (RPI)
 #else
     // NOTE: On HTML5 (emscripten) this is allocated on heap, by default it's only 16MB!...just take care...
