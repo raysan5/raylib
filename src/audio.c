@@ -42,6 +42,8 @@
 #include <string.h>         // Required for strcmp()
 #include <stdio.h>          // Used for .WAV loading
 
+#include "jar_xm.h"         // For playing .xm files
+
 #if defined(AUDIO_STANDALONE)
     #include <stdarg.h>     // Used for functions with variable number of parameters (TraceLog())
 #else
@@ -73,6 +75,7 @@
 // NOTE: Anything longer than ~10 seconds should be streamed...
 typedef struct Music {
     stb_vorbis *stream;
+	jar_xm_context_t *chipctx; // Stores jar_xm context
 
     ALuint buffers[MUSIC_STREAM_BUFFERS];
     ALuint source;
@@ -82,7 +85,7 @@ typedef struct Music {
     int sampleRate;
     int totalSamplesLeft;
     bool loop;
-
+	bool chipTune; // True if chiptune is loaded
 } Music;
 
 #if defined(AUDIO_STANDALONE)
@@ -564,6 +567,22 @@ void PlayMusicStream(char *fileName)
             currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
         }
     }
+	else if (strcmp(GetExtension(fileName),"xm") == 0)
+	{
+		currentMusic.chipTune = true;
+		currentMusic.channels = 2;
+		currentMusic.sampleRate = 48000;
+		currentMusic.loop = true;
+		
+		// only stereo/float is supported for xm
+		if(info.channels == 2 && !jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
+		{
+			currentMusic.format = AL_FORMAT_STEREO_FLOAT32;
+			jar_xm_set_max_loop_count(currentMusic.chipctx, 0); //infinite number of loops
+			//currentMusic.totalSamplesLeft =  ; // Unsure of how to calculate this
+			musicEnabled = true;
+		}
+	}
     else TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
 }
 
@@ -572,14 +591,19 @@ void StopMusicStream(void)
 {
     if (musicEnabled)
     {
-        alSourceStop(currentMusic.source);
-
-        EmptyMusicStream();     // Empty music buffers
-
-        alDeleteSources(1, &currentMusic.source);
-        alDeleteBuffers(2, currentMusic.buffers);
-
-        stb_vorbis_close(currentMusic.stream);
+		alSourceStop(currentMusic.source);
+		EmptyMusicStream(); // Empty music buffers
+		alDeleteSources(1, &currentMusic.source);
+		alDeleteBuffers(2, currentMusic.buffers);
+		
+		if (currentMusic.chipTune)
+		{
+			jar_xm_free_context(currentMusic.chipctx);
+		}
+		else
+		{
+			stb_vorbis_close(currentMusic.stream);
+		}
     }
 
     musicEnabled = false;
@@ -633,7 +657,15 @@ void SetMusicVolume(float volume)
 // Get current music time length (in seconds)
 float GetMusicTimeLength(void)
 {
-    float totalSeconds = stb_vorbis_stream_length_in_seconds(currentMusic.stream);
+	float totalSeconds;
+	if (currentMusic.chipTune)
+	{
+		//totalSeconds = (float)samples; // Need to figure out how toget this
+	}
+	else
+	{
+		totalSeconds = stb_vorbis_stream_length_in_seconds(currentMusic.stream);
+	}
 
     return totalSeconds;
 }
@@ -641,11 +673,20 @@ float GetMusicTimeLength(void)
 // Get current music time played (in seconds)
 float GetMusicTimePlayed(void)
 {
-    int totalSamples = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
-
-    int samplesPlayed = totalSamples - currentMusic.totalSamplesLeft;
-
-    float secondsPlayed = (float)samplesPlayed / (currentMusic.sampleRate * currentMusic.channels);
+	float secondsPlayed;
+	if (currentMusic.chipTune)
+	{
+		uint64_t* samples;
+		jar_xm_get_position(currentMusic.chipctx, NULL, NULL, NULL, samples); // Unsure if this is the desired value
+		secondsPlayed = (float)samples;
+	}
+	else
+	{
+		int totalSamples = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
+		int samplesPlayed = totalSamples - currentMusic.totalSamplesLeft;
+		secondsPlayed = (float)samplesPlayed / (currentMusic.sampleRate * currentMusic.channels);
+	}
+    
 
     return secondsPlayed;
 }
@@ -668,7 +709,15 @@ static bool BufferMusicStream(ALuint buffer)
     {
         while (size < MUSIC_BUFFER_SIZE)
         {
-            streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic.stream, currentMusic.channels, pcm + size, MUSIC_BUFFER_SIZE - size);
+			if (currentMusic.chipTune)
+			{
+				jar_xm_generate_samples(currentMusic.chipctx, pcm + size, (MUSIC_BUFFER_SIZE - size)/2);
+				streamedBytes = (MUSIC_BUFFER_SIZE - size)/2; // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
+			}
+			else
+			{
+				streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic.stream, currentMusic.channels, pcm + size, MUSIC_BUFFER_SIZE - size);
+			}
 
             if (streamedBytes > 0) size += (streamedBytes*currentMusic.channels);
             else break;
