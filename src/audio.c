@@ -42,6 +42,7 @@
 #include <string.h>         // Required for strcmp()
 #include <stdio.h>          // Used for .WAV loading
 
+#define JAR_XM_IMPLEMENTATION
 #include "jar_xm.h"         // For playing .xm files
 
 #if defined(AUDIO_STANDALONE)
