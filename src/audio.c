@@ -676,9 +676,9 @@ float GetMusicTimePlayed(void)
     float secondsPlayed;
     if (currentMusic.chipTune)
     {
-        uint64_t* samples;
-        jar_xm_get_position(currentMusic.chipctx, NULL, NULL, NULL, samples); // Unsure if this is the desired value
-        secondsPlayed = (float)samples;
+        uint64_t samples;
+        jar_xm_get_position(currentMusic.chipctx, NULL, NULL, NULL, &samples); // Unsure if this is the desired value
+        secondsPlayed = (float)samples / (currentMusic.sampleRate * currentMusic.channels);
     }
     else
     {
@@ -711,7 +711,7 @@ static bool BufferMusicStream(ALuint buffer)
         {
             if (currentMusic.chipTune)
             {
-                jar_xm_generate_samples(currentMusic.chipctx, pcm + size, (MUSIC_BUFFER_SIZE - size)/2);
+                jar_xm_generate_samples(currentMusic.chipctx, pcm + size, (MUSIC_BUFFER_SIZE - size) / 2);
                 streamedBytes = (MUSIC_BUFFER_SIZE - size)/2; // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
             }
             else
