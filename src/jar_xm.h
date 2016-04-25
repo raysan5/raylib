@@ -288,6 +288,13 @@ uint64_t jar_xm_get_latest_trigger_of_sample(jar_xm_context_t*, uint16_t instr, 
  */
 uint64_t jar_xm_get_latest_trigger_of_channel(jar_xm_context_t*, uint16_t);
 
+/** Get the number of remaining samples. Divide by 2 to get the number of individual LR data samples.
+ *
+ * @note This is the remaining number of samples before the loop starts module again, or halts if on last pass.
+ * @note This function is very slow and should only be run once, if at all.
+ */
+uint64_t jar_xm_get_remaining_samples(jar_xm_context_t*);
+
 #ifdef __cplusplus
 }
 #endif
@@ -2543,7 +2550,22 @@ void jar_xm_generate_samples(jar_xm_context_t* ctx, float* output, size_t numsam
     }
 }
 
-
+uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx)
+{
+    uint64_t total = 0;
+    uint8_t currentLoopCount = jar_xm_get_loop_count(ctx);
+    jar_xm_set_max_loop_count(ctx, 0);
+    
+    while(jar_xm_get_loop_count(ctx) == currentLoopCount)
+    {
+        total += ctx->remaining_samples_in_tick;
+        ctx->remaining_samples_in_tick = 0;
+        jar_xm_tick(ctx);
+    }
+    
+    ctx->loop_count = currentLoopCount;
+    return total;
+}
 
 
 
