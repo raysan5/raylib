@@ -584,11 +584,14 @@ void PlayMusicStream(char *fileName)
         // only stereo is supported for xm
         if(!jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
         {
-            currentMusic.format = AL_FORMAT_STEREO16; // AL_FORMAT_STEREO_FLOAT32;
+            currentMusic.format = AL_FORMAT_STEREO16;
             jar_xm_set_max_loop_count(currentMusic.chipctx, 0); // infinite number of loops
             currentMusic.totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic.chipctx);
-            currentMusic.totalLengthSeconds = currentMusic.totalSamplesLeft / (currentMusic.sampleRate * currentMusic.channels);
+            currentMusic.totalLengthSeconds = ((float)currentMusic.totalSamplesLeft) / ((float)currentMusic.sampleRate);
             musicEnabled = true;
+            
+            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic.totalSamplesLeft);
+            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, currentMusic.totalLengthSeconds);
             
             // Set up OpenAL
             alGenSources(1, &currentMusic.source);
@@ -601,7 +604,10 @@ void PlayMusicStream(char *fileName)
             BufferMusicStream(currentMusic.buffers[1]);
             alSourceQueueBuffers(currentMusic.source, 2, currentMusic.buffers);
             alSourcePlay(currentMusic.source);
+            
+            // NOTE: Regularly, we must check if a buffer has been processed and refill it: UpdateMusicStream()
         }
+        else TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
     }
     else TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
 }
@@ -680,7 +686,7 @@ float GetMusicTimeLength(void)
     float totalSeconds;
     if (currentMusic.chipTune)
     {
-        totalSeconds = currentMusic.totalLengthSeconds; // Not sure if this is the correct value
+        totalSeconds = currentMusic.totalLengthSeconds;
     }
     else
     {
@@ -801,7 +807,7 @@ void UpdateMusicStream(void)
             {
                 if(currentMusic.chipTune)
                 {
-                    currentMusic.totalSamplesLeft = jar_xm_get_remaining_samples(currentMusic.chipctx);
+                    currentMusic.totalSamplesLeft = currentMusic.totalLengthSeconds * currentMusic.sampleRate;
                 }
                 else
                 {
