@@ -567,10 +567,15 @@ void PlayMusicStream(char *fileName)
             // NOTE: Regularly, we must check if a buffer has been processed and refill it: UpdateMusicStream()
 
             currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
+            currentMusic.totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic.stream);
         }
     }
     else if (strcmp(GetExtension(fileName),"xm") == 0)
     {
+        // Stop current music, clean buffers, unload current stream
+        StopMusicStream();
+        
+        // new song settings for xm chiptune
         currentMusic.chipTune = true;
         currentMusic.channels = 2;
         currentMusic.sampleRate = 48000;
@@ -714,39 +719,37 @@ float GetMusicTimePlayed(void)
 static bool BufferMusicStream(ALuint buffer)
 {
     short pcm[MUSIC_BUFFER_SIZE];
-
+    
     int  size = 0;              // Total size of data steamed (in bytes)
-    int  streamedBytes = 0;     // Bytes of data obtained in one samples get
-
+    int  streamedBytes = 0;     // samples of data obtained, channels are not included in calculation
     bool active = true;         // We can get more data from stream (not finished)
 
     if (musicEnabled)
     {
-        while (size < MUSIC_BUFFER_SIZE)
+        if (currentMusic.chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
         {
-            if (currentMusic.chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
-            {
-                int readlen = (MUSIC_BUFFER_SIZE - size) / 2;
-                jar_xm_generate_samples_16bit(currentMusic.chipctx, pcm + size, readlen); // reads 2*readlen shorts and moves them to buffer+size memory location
-                streamedBytes = readlen * 4; // Not sure if this is what it needs
-            }
-            else
+            int readlen = MUSIC_BUFFER_SIZE / 2;
+            jar_xm_generate_samples_16bit(currentMusic.chipctx, pcm, readlen); // reads 2*readlen shorts and moves them to buffer+size memory location
+            size += readlen * currentMusic.channels; // Not sure if this is what it needs
+        }
+        else
+        {
+            while (size < MUSIC_BUFFER_SIZE)
             {
                 streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic.stream, currentMusic.channels, pcm + size, MUSIC_BUFFER_SIZE - size);
+                if (streamedBytes > 0) size += (streamedBytes*currentMusic.channels);
+                else break;
             }
-
-            if (streamedBytes > 0) size += (streamedBytes*currentMusic.channels);
-            else break;
         }
-
-        //TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
+        TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
     }
 
     if (size > 0)
     {
         alBufferData(buffer, currentMusic.format, pcm, size*sizeof(short), currentMusic.sampleRate);
-
         currentMusic.totalSamplesLeft -= size;
+        
+        if(currentMusic.totalSamplesLeft <= 0) active = false; // end if no more samples left
     }
     else
     {
