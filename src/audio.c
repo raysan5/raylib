@@ -85,6 +85,7 @@ typedef struct Music {
     int channels;
     int sampleRate;
     int totalSamplesLeft;
+    float totalLengthSeconds;
     bool loop;
     bool chipTune; // True if chiptune is loaded
 } Music;
@@ -575,13 +576,26 @@ void PlayMusicStream(char *fileName)
         currentMusic.sampleRate = 48000;
         currentMusic.loop = true;
         
-        // only stereo/float is supported for xm
+        // only stereo is supported for xm
         if(!jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
         {
             currentMusic.format = AL_FORMAT_STEREO16; // AL_FORMAT_STEREO_FLOAT32;
             jar_xm_set_max_loop_count(currentMusic.chipctx, 0); // infinite number of loops
             currentMusic.totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic.chipctx);
+            currentMusic.totalLengthSeconds = currentMusic.totalSamplesLeft / (currentMusic.sampleRate * currentMusic.channels);
             musicEnabled = true;
+            
+            // Set up OpenAL
+            alGenSources(1, &currentMusic.source);
+            alSourcef(currentMusic.source, AL_PITCH, 1);
+            alSourcef(currentMusic.source, AL_GAIN, 1);
+            alSource3f(currentMusic.source, AL_POSITION, 0, 0, 0);
+            alSource3f(currentMusic.source, AL_VELOCITY, 0, 0, 0);
+            alGenBuffers(2, currentMusic.buffers);
+            BufferMusicStream(currentMusic.buffers[0]);
+            BufferMusicStream(currentMusic.buffers[1]);
+            alSourceQueueBuffers(currentMusic.source, 2, currentMusic.buffers);
+            alSourcePlay(currentMusic.source);
         }
     }
     else TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
@@ -661,7 +675,7 @@ float GetMusicTimeLength(void)
     float totalSeconds;
     if (currentMusic.chipTune)
     {
-        //totalSeconds = (float)samples; // Need to figure out how toget this
+        totalSeconds = currentMusic.totalLengthSeconds; // Not sure if this is the correct value
     }
     else
     {
@@ -678,8 +692,8 @@ float GetMusicTimePlayed(void)
     if (currentMusic.chipTune)
     {
         uint64_t samples;
-        jar_xm_get_position(currentMusic.chipctx, NULL, NULL, NULL, &samples); // Unsure if this is the desired value
-        secondsPlayed = (float)samples / (currentMusic.sampleRate * currentMusic.channels);
+        jar_xm_get_position(currentMusic.chipctx, NULL, NULL, NULL, &samples);
+        secondsPlayed = (float)samples / (currentMusic.sampleRate * currentMusic.channels); // Not sure if this is the correct value
     }
     else
     {
@@ -710,10 +724,11 @@ static bool BufferMusicStream(ALuint buffer)
     {
         while (size < MUSIC_BUFFER_SIZE)
         {
-            if (currentMusic.chipTune)
+            if (currentMusic.chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
             {
-                jar_xm_generate_samples_16bit(currentMusic.chipctx, pcm + size, (MUSIC_BUFFER_SIZE - size) / 2);
-                streamedBytes = (MUSIC_BUFFER_SIZE - size) * 2; // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
+                int readlen = (MUSIC_BUFFER_SIZE - size) / 2;
+                jar_xm_generate_samples_16bit(currentMusic.chipctx, pcm + size, readlen); // reads 2*readlen shorts and moves them to buffer+size memory location
+                streamedBytes = readlen * 4; // Not sure if this is what it needs
             }
             else
             {
@@ -781,9 +796,15 @@ void UpdateMusicStream(void)
             // If no more data to stream, restart music (if loop)
             if ((!active) && (currentMusic.loop))
             {
-                stb_vorbis_seek_start(currentMusic.stream);
-                currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream)*currentMusic.channels;
-
+                if(currentMusic.chipTune)
+                {
+                    currentMusic.totalSamplesLeft = jar_xm_get_remaining_samples(currentMusic.chipctx);
+                }
+                else
+                {
+                    stb_vorbis_seek_start(currentMusic.stream);
+                    currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream)*currentMusic.channels;
+                }
                 active = BufferMusicStream(buffer);
             }
 
