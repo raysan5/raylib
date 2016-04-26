@@ -59,9 +59,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <limits.h>
 #include <string.h>
+
+
 
 //-------------------------------------------------------------------------------
 #ifdef __cplusplus

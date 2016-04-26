@@ -42,9 +42,6 @@
 #include <string.h>         // Required for strcmp()
 #include <stdio.h>          // Used for .WAV loading
 
-#define JAR_XM_IMPLEMENTATION
-#include "jar_xm.h"         // For playing .xm files
-
 #if defined(AUDIO_STANDALONE)
     #include <stdarg.h>     // Used for functions with variable number of parameters (TraceLog())
 #else
@@ -53,7 +50,10 @@
 #endif
 
 //#define STB_VORBIS_HEADER_ONLY
-#include "stb_vorbis.h"     // OGG loading functions 
+#include "stb_vorbis.h"     // OGG loading functions
+
+#define JAR_XM_IMPLEMENTATION
+#include "jar_xm.h"         // For playing .xm files
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -576,11 +576,11 @@ void PlayMusicStream(char *fileName)
         currentMusic.loop = true;
         
         // only stereo/float is supported for xm
-        if(info.channels == 2 && !jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
+        if(!jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
         {
-            currentMusic.format = AL_FORMAT_STEREO_FLOAT32;
-            jar_xm_set_max_loop_count(currentMusic.chipctx, 0); //infinite number of loops
-            //currentMusic.totalSamplesLeft =  ; // Unsure of how to calculate this
+            currentMusic.format = AL_FORMAT_STEREO16; // AL_FORMAT_STEREO_FLOAT32;
+            jar_xm_set_max_loop_count(currentMusic.chipctx, 0); // infinite number of loops
+            currentMusic.totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic.chipctx);
             musicEnabled = true;
         }
     }
@@ -712,8 +712,8 @@ static bool BufferMusicStream(ALuint buffer)
         {
             if (currentMusic.chipTune)
             {
-                jar_xm_generate_samples(currentMusic.chipctx, pcm + size, (MUSIC_BUFFER_SIZE - size) / 2);
-                streamedBytes = (MUSIC_BUFFER_SIZE - size)/2; // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
+                jar_xm_generate_samples_16bit(currentMusic.chipctx, pcm + size, (MUSIC_BUFFER_SIZE - size) / 2);
+                streamedBytes = (MUSIC_BUFFER_SIZE - size) * 2; // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
             }
             else
             {
