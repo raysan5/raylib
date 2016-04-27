@@ -261,7 +261,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-typedef enum { false, true } bool;
+    #ifndef true
+        typedef enum { false, true } bool;
+    #endif
 #endif
 
 // byte type

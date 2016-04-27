@@ -59,9 +59,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <limits.h>
 #include <string.h>
+
+
 
 //-------------------------------------------------------------------------------
 #ifdef __cplusplus
@@ -120,51 +121,47 @@ void jar_xm_free_context(jar_xm_context_t*);
 
 /** Play the module and put the sound samples in an output buffer.
  *
- * @param output buffer of 2*numsamples elements
+ * @param output buffer of 2*numsamples elements (A left and right value for each sample)
  * @param numsamples number of samples to generate
  */
 void jar_xm_generate_samples(jar_xm_context_t*, float* output, size_t numsamples);
 
 /** Play the module, resample from 32 bit to 16 bit, and put the sound samples in an output buffer.
  *
- * @param output buffer of 2*numsamples elements
+ * @param output buffer of 2*numsamples elements (A left and right value for each sample)
  * @param numsamples number of samples to generate
  */
 void jar_xm_generate_samples_16bit(jar_xm_context_t* ctx, short* output, size_t numsamples)
 {
     float* musicBuffer = malloc((2*numsamples)*sizeof(float));
-    short* musicBuffer2 = malloc((2*numsamples)*sizeof(short));
-
     jar_xm_generate_samples(ctx, musicBuffer, numsamples);
 
-    int x;
-    for(x=0;x<2*numsamples;x++)
-        musicBuffer2[x] = musicBuffer[x] * SHRT_MAX;
+    if(output){
+        int x;
+        for(x=0;x<2*numsamples;x++)
+            output[x] = musicBuffer[x] * SHRT_MAX;
+    }
 
-    memcpy(output, musicBuffer2, (2*numsamples)*sizeof(short));
     free(musicBuffer);
-    free(musicBuffer2);
 }
 
 /** Play the module, resample from 32 bit to 8 bit, and put the sound samples in an output buffer.
  *
- * @param output buffer of 2*numsamples elements
+ * @param output buffer of 2*numsamples elements (A left and right value for each sample)
  * @param numsamples number of samples to generate
  */
 void jar_xm_generate_samples_8bit(jar_xm_context_t* ctx, char* output, size_t numsamples)
 {
     float* musicBuffer = malloc((2*numsamples)*sizeof(float));
-    char* musicBuffer2 = malloc((2*numsamples)*sizeof(char));
-
     jar_xm_generate_samples(ctx, musicBuffer, numsamples);
 
-    int x;
-    for(x=0;x<2*numsamples;x++)
-        musicBuffer2[x] = musicBuffer[x] * CHAR_MAX;
+    if(output){
+        int x;
+        for(x=0;x<2*numsamples;x++)
+            output[x] = musicBuffer[x] * CHAR_MAX;
+    }
 
-    memcpy(output, musicBuffer2, (2*numsamples)*sizeof(char));
     free(musicBuffer);
-    free(musicBuffer2);
 }
 
 

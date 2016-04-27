@@ -42,9 +42,6 @@
 #include <string.h>         // Required for strcmp()
 #include <stdio.h>          // Used for .WAV loading
 
-#define JAR_XM_IMPLEMENTATION
-#include "jar_xm.h"         // For playing .xm files
-
 #if defined(AUDIO_STANDALONE)
     #include <stdarg.h>     // Used for functions with variable number of parameters (TraceLog())
 #else
@@ -53,7 +50,10 @@
 #endif
 
 //#define STB_VORBIS_HEADER_ONLY
-#include "stb_vorbis.h"     // OGG loading functions 
+#include "stb_vorbis.h"     // OGG loading functions
+
+#define JAR_XM_IMPLEMENTATION
+#include "jar_xm.h"         // For playing .xm files
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -85,6 +85,7 @@ typedef struct Music {
     int channels;
     int sampleRate;
     int totalSamplesLeft;
+    float totalLengthSeconds;
     bool loop;
     bool chipTune; // True if chiptune is loaded
 } Music;
@@ -566,23 +567,47 @@ void PlayMusicStream(char *fileName)
             // NOTE: Regularly, we must check if a buffer has been processed and refill it: UpdateMusicStream()
 
             currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
+            currentMusic.totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic.stream);
         }
     }
     else if (strcmp(GetExtension(fileName),"xm") == 0)
     {
+        // Stop current music, clean buffers, unload current stream
+        StopMusicStream();
+        
+        // new song settings for xm chiptune
         currentMusic.chipTune = true;
         currentMusic.channels = 2;
         currentMusic.sampleRate = 48000;
         currentMusic.loop = true;
         
-        // only stereo/float is supported for xm
-        if(info.channels == 2 && !jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
+        // only stereo is supported for xm
+        if(!jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
         {
-            currentMusic.format = AL_FORMAT_STEREO_FLOAT32;
-            jar_xm_set_max_loop_count(currentMusic.chipctx, 0); //infinite number of loops
-            //currentMusic.totalSamplesLeft =  ; // Unsure of how to calculate this
+            currentMusic.format = AL_FORMAT_STEREO16;
+            jar_xm_set_max_loop_count(currentMusic.chipctx, 0); // infinite number of loops
+            currentMusic.totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic.chipctx);
+            currentMusic.totalLengthSeconds = ((float)currentMusic.totalSamplesLeft) / ((float)currentMusic.sampleRate);
             musicEnabled = true;
+            
+            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic.totalSamplesLeft);
+            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, currentMusic.totalLengthSeconds);
+            
+            // Set up OpenAL
+            alGenSources(1, &currentMusic.source);
+            alSourcef(currentMusic.source, AL_PITCH, 1);
+            alSourcef(currentMusic.source, AL_GAIN, 1);
+            alSource3f(currentMusic.source, AL_POSITION, 0, 0, 0);
+            alSource3f(currentMusic.source, AL_VELOCITY, 0, 0, 0);
+            alGenBuffers(2, currentMusic.buffers);
+            BufferMusicStream(currentMusic.buffers[0]);
+            BufferMusicStream(currentMusic.buffers[1]);
+            alSourceQueueBuffers(currentMusic.source, 2, currentMusic.buffers);
+            alSourcePlay(currentMusic.source);
+            
+            // NOTE: Regularly, we must check if a buffer has been processed and refill it: UpdateMusicStream()
         }
+        else TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
     }
     else TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
 }
@@ -661,7 +686,7 @@ float GetMusicTimeLength(void)
     float totalSeconds;
     if (currentMusic.chipTune)
     {
-        //totalSeconds = (float)samples; // Need to figure out how toget this
+        totalSeconds = currentMusic.totalLengthSeconds;
     }
     else
     {
@@ -678,8 +703,8 @@ float GetMusicTimePlayed(void)
     if (currentMusic.chipTune)
     {
         uint64_t samples;
-        jar_xm_get_position(currentMusic.chipctx, NULL, NULL, NULL, &samples); // Unsure if this is the desired value
-        secondsPlayed = (float)samples / (currentMusic.sampleRate * currentMusic.channels);
+        jar_xm_get_position(currentMusic.chipctx, NULL, NULL, NULL, &samples);
+        secondsPlayed = (float)samples / (currentMusic.sampleRate * currentMusic.channels); // Not sure if this is the correct value
     }
     else
     {
@@ -700,38 +725,37 @@ float GetMusicTimePlayed(void)
 static bool BufferMusicStream(ALuint buffer)
 {
     short pcm[MUSIC_BUFFER_SIZE];
-
+    
     int  size = 0;              // Total size of data steamed (in bytes)
-    int  streamedBytes = 0;     // Bytes of data obtained in one samples get
-
+    int  streamedBytes = 0;     // samples of data obtained, channels are not included in calculation
     bool active = true;         // We can get more data from stream (not finished)
 
     if (musicEnabled)
     {
-        while (size < MUSIC_BUFFER_SIZE)
+        if (currentMusic.chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
         {
-            if (currentMusic.chipTune)
-            {
-                jar_xm_generate_samples(currentMusic.chipctx, pcm + size, (MUSIC_BUFFER_SIZE - size) / 2);
-                streamedBytes = (MUSIC_BUFFER_SIZE - size)/2; // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
-            }
-            else
+            int readlen = MUSIC_BUFFER_SIZE / 2;
+            jar_xm_generate_samples_16bit(currentMusic.chipctx, pcm, readlen); // reads 2*readlen shorts and moves them to buffer+size memory location
+            size += readlen * currentMusic.channels; // Not sure if this is what it needs
+        }
+        else
+        {
+            while (size < MUSIC_BUFFER_SIZE)
             {
                 streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic.stream, currentMusic.channels, pcm + size, MUSIC_BUFFER_SIZE - size);
+                if (streamedBytes > 0) size += (streamedBytes*currentMusic.channels);
+                else break;
             }
-
-            if (streamedBytes > 0) size += (streamedBytes*currentMusic.channels);
-            else break;
         }
-
-        //TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
+        TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
     }
 
     if (size > 0)
     {
         alBufferData(buffer, currentMusic.format, pcm, size*sizeof(short), currentMusic.sampleRate);
-
         currentMusic.totalSamplesLeft -= size;
+        
+        if(currentMusic.totalSamplesLeft <= 0) active = false; // end if no more samples left
     }
     else
     {
@@ -781,16 +805,22 @@ void UpdateMusicStream(void)
             // If no more data to stream, restart music (if loop)
             if ((!active) && (currentMusic.loop))
             {
-                stb_vorbis_seek_start(currentMusic.stream);
-                currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream)*currentMusic.channels;
-
+                if(currentMusic.chipTune)
+                {
+                    currentMusic.totalSamplesLeft = currentMusic.totalLengthSeconds * currentMusic.sampleRate;
+                }
+                else
+                {
+                    stb_vorbis_seek_start(currentMusic.stream);
+                    currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream)*currentMusic.channels;
+                }
                 active = BufferMusicStream(buffer);
             }
 
             // Add refilled buffer to queue again... don't let the music stop!
             alSourceQueueBuffers(currentMusic.source, 1, &buffer);
 
-            if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Ogg playing, error buffering data...");
+            if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Error buffering data...");
 
             processed--;
         }
