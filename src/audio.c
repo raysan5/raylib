@@ -820,7 +820,7 @@ void UpdateMusicStream(void)
             // Add refilled buffer to queue again... don't let the music stop!
             alSourceQueueBuffers(currentMusic.source, 1, &buffer);
 
-            if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Ogg playing, error buffering data...");
+            if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Error buffering data...");
 
             processed--;
         }
