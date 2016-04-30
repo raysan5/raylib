@@ -66,12 +66,7 @@ typedef struct Wave {
 // Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
 // no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
 // a dedicated mix channel.
-typedef struct AudioContext {
-    unsigned short sampleRate;         // default is 48000
-    unsigned char bitsPerSample;       // 16 is default
-    mix_t mixChannel;                  // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
-    channel_t channels;                // 1=mono, 2=stereo
-} AudioContext;
+typedef void* AudioContext;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -92,8 +87,9 @@ bool AudioDeviceReady(void);                                    // True if call 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
 // exmple usage is InitAudioContext(48000, 16, mixA, stereo);
-AudioContext* InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels);
-void CloseAudioContext(AudioContext *ctx);                      // Frees audio context
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels);
+void CloseAudioContext(AudioContext ctx);                      // Frees audio context
+void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength); // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data

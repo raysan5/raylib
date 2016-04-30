@@ -90,6 +90,16 @@ typedef struct Music {
     bool chipTune; // True if chiptune is loaded
 } Music;
 
+// Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
+// no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
+// a dedicated mix channel.
+typedef struct AudioContext_t {
+    unsigned short sampleRate;         // default is 48000
+    unsigned char bitsPerSample;       // 16 is default
+    mix_t mixChannel;                  // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
+    channel_t channels;                // 1=mono, 2=stereo
+} AudioContext_t;
+
 #if defined(AUDIO_STANDALONE)
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 #endif
@@ -97,10 +107,10 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static bool mixChannelsActive_g[4]; // What mix channels are currently active
+static AudioContext_t* mixChannelsActive_g[4]; // What mix channels are currently active
 static bool musicEnabled = false;
-static Music currentMusic;        // Current music loaded
-                                  // NOTE: Only one music file playing at a time
+static Music currentMusic;                   // Current music loaded
+                                             // NOTE: Only one music file playing at a time
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -184,30 +194,37 @@ bool AudioDeviceReady(void)
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
 // exmple usage is InitAudioContext(48000, 16, mixA, stereo);
-AudioContext* InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels)
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels)
 {
     if(!AudioDeviceReady()) InitAudioDevice();
     else StopMusicStream();
     
     if(!mixChannelsActive_g[mixChannel]){
-        AudioContext *ac = malloc(sizeof(AudioContext));
+        AudioContext_t *ac = malloc(sizeof(AudioContext_t));
         ac->sampleRate = sampleRate;
         ac->bitsPerSample = bitsPerSample;
         ac->mixChannel = mixChannel;
         ac->channels = channels;
-        mixChannelsActive_g[mixChannel] = true;
+        mixChannelsActive_g[mixChannel] = ac;
         return ac;
     }
     return NULL;
 }
 
 // Frees buffer in audio context
-void CloseAudioContext(AudioContext *ctx)
+void CloseAudioContext(AudioContext ctx)
 {
-    if(ctx){
-        mixChannelsActive_g[ctx->mixChannel] = false;
-        free(ctx);
+    AudioContext_t *context = (AudioContext_t*)ctx;
+    if(context){
+        mixChannelsActive_g[context->mixChannel] = NULL;
+        free(context);
     }
+}
+
+// Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
+void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength)
+{
+    ;
 }
 
 
