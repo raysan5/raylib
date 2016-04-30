@@ -41,8 +41,12 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-typedef enum { false, true } bool;
+    #ifndef true
+        typedef enum { false, true } bool;
+    #endif
 #endif
+typedef enum { silence, mono, stereo } channel_t;
+typedef enum { mixA, mixB, mixC, mixD } mix_t; // Used for mixing/muxing up to four diferent audio streams
 
 // Sound source type
 typedef struct Sound {
@@ -59,6 +63,16 @@ typedef struct Wave {
     short channels;
 } Wave;
 
+// Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
+// no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
+// a dedicated mix channel.
+typedef struct AudioContext {
+    unsigned short sampleRate;         // default is 48000
+    unsigned char bitsPerSample;       // 16 is default
+    mix_t mixChannel;                  // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
+    channel_t channels;                // 1=mono, 2=stereo
+} AudioContext;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -73,6 +87,13 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
+bool AudioDeviceReady(void);                                    // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
+
+// Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
+// The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
+// exmple usage is InitAudioContext(48000, 16, mixA, stereo);
+AudioContext* InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels);
+void CloseAudioContext(AudioContext *ctx);                      // Frees audio context
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -92,7 +113,7 @@ void PauseMusicStream(void);                                    // Pause music p
 void ResumeMusicStream(void);                                   // Resume playing paused music
 bool MusicIsPlaying(void);                                      // Check if music is playing
 void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
-float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
+float GetMusicTimeLength(void);                                 // Get music time length (in seconds)
 float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
 
 #ifdef __cplusplus

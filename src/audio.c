@@ -97,9 +97,10 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
+static bool mixChannelsActive_g[4]; // What mix channels are currently active
 static bool musicEnabled = false;
-static Music currentMusic;      // Current music loaded
-                                // NOTE: Only one music file playing at a time
+static Music currentMusic;        // Current music loaded
+                                  // NOTE: Only one music file playing at a time
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -163,6 +164,53 @@ void CloseAudioDevice(void)
     alcDestroyContext(context);
     alcCloseDevice(device);
 }
+
+// True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
+bool AudioDeviceReady(void)
+{
+    ALCcontext *context = alcGetCurrentContext();
+    if (context == NULL) return false;
+    else{
+        ALCdevice *device = alcGetContextsDevice(context);
+        if (device == NULL) return false;
+        else return true;
+    }
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Custom audio output
+//----------------------------------------------------------------------------------
+
+// Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
+// The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
+// exmple usage is InitAudioContext(48000, 16, mixA, stereo);
+AudioContext* InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels)
+{
+    if(!AudioDeviceReady()) InitAudioDevice();
+    else StopMusicStream();
+    
+    if(!mixChannelsActive_g[mixChannel]){
+        AudioContext *ac = malloc(sizeof(AudioContext));
+        ac->sampleRate = sampleRate;
+        ac->bitsPerSample = bitsPerSample;
+        ac->mixChannel = mixChannel;
+        ac->channels = channels;
+        mixChannelsActive_g[mixChannel] = true;
+        return ac;
+    }
+    return NULL;
+}
+
+// Frees buffer in audio context
+void CloseAudioContext(AudioContext *ctx)
+{
+    if(ctx){
+        mixChannelsActive_g[ctx->mixChannel] = false;
+        free(ctx);
+    }
+}
+
+
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Sounds loading and playing (.WAV)
