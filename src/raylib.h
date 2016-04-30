@@ -265,9 +265,6 @@
         typedef enum { false, true } bool;
     #endif
 #endif
-typedef enum { silence, mono, stereo } channel_t;    // number of audio sources per sample
-typedef enum { mixA, mixB, mixC, mixD } mix_t;       // Used for mixing/muxing up to four diferent audio samples
-typedef enum { eightBPS, sixteenBPS } BPS;           // Either 8 or 16 bit quality samples
 
 // byte type
 typedef unsigned char byte;
@@ -871,13 +868,13 @@ void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize);  
 //------------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
-bool AudioDeviceReady(void);                                    // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
+bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
-// The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 16, mixA, stereo);
-AudioContext InitAudioContext(unsigned short sampleRate, BPS bitsPerSample, mix_t mixChannel, channel_t channels);
-void CloseAudioContext(AudioContext ctx);                      // Frees audio context
+// The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
+// exmple usage is InitAudioContext(48000, 16, 0, 2); // stereo, mixchannel 1, 16bit, 48khz
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, unsigned char mixChannel, unsigned char channels);
+void CloseAudioContext(AudioContext ctx);                       // Frees audio context
 void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength); // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
 
 Sound LoadSound(char *fileName);                                // Load sound to memory

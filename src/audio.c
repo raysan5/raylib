@@ -59,6 +59,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define MUSIC_STREAM_BUFFERS        2
+#define MAX_AUDIO_CONTEXTS          4
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
     // NOTE: On RPI and Android should be lower to avoid frame-stalls
@@ -95,9 +96,9 @@ typedef struct Music {
 // a dedicated mix channel.
 typedef struct AudioContext_t {
     unsigned short sampleRate;         // default is 48000
-    BPS bitsPerSample;                 // 16 is default
-    mix_t mixChannel;                  // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
-    channel_t channels;                // 1=mono, 2=stereo
+    unsigned char bitsPerSample;       // 16 is default
+    unsigned char mixChannel;          // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
+    unsigned char channels;            // 1=mono, 2=stereo
     ALenum alFormat;                   // openAL format specifier
     ALuint alSource;                   // openAL source
     ALuint alBuffer[2];                // openAL sample buffer
@@ -110,10 +111,10 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static AudioContext_t* mixChannelsActive_g[4]; // What mix channels are currently active
+static AudioContext_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS]; // What mix channels are currently active
 static bool musicEnabled = false;
-static Music currentMusic;                   // Current music loaded
-                                             // NOTE: Only one music file playing at a time
+static Music currentMusic;          // Current music loaded
+                                    // NOTE: Only one music file playing at a time
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -179,7 +180,7 @@ void CloseAudioDevice(void)
 }
 
 // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
-bool AudioDeviceReady(void)
+bool IsAudioDeviceReady(void)
 {
     ALCcontext *context = alcGetCurrentContext();
     if (context == NULL) return false;
@@ -195,11 +196,12 @@ bool AudioDeviceReady(void)
 //----------------------------------------------------------------------------------
 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
-// The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, sixteenBPS, mixA, stereo);
-AudioContext InitAudioContext(unsigned short sampleRate, BPS bitsPerSample, mix_t mixChannel, channel_t channels)
+// The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
+// exmple usage is InitAudioContext(48000, 16, 0, 2); // stereo, mixchannel 1, 16bit, 48khz
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, unsigned char mixChannel, unsigned char channels)
 {
-    if(!AudioDeviceReady()) InitAudioDevice();
+    if(mixChannel > MAX_AUDIO_CONTEXTS) return NULL;
+    if(!IsAudioDeviceReady()) InitAudioDevice();
     else StopMusicStream();
     
     if(!mixChannelsActive_g[mixChannel]){
@@ -211,15 +213,15 @@ AudioContext InitAudioContext(unsigned short sampleRate, BPS bitsPerSample, mix_
         mixChannelsActive_g[mixChannel] = ac;
         
         // setup openAL format
-        if (channels == mono)
+        if (channels == 1)
         {
-            if (bitsPerSample == eightBPS ) ac->alFormat = AL_FORMAT_MONO8;
-            else if (bitsPerSample == sixteenBPS) ac->alFormat = AL_FORMAT_MONO16;
+            if (bitsPerSample == 8 ) ac->alFormat = AL_FORMAT_MONO8;
+            else if (bitsPerSample == 16) ac->alFormat = AL_FORMAT_MONO16;
         }
-        else if (channels == stereo)
+        else if (channels == 2)
         {
-            if (bitsPerSample == eightBPS ) ac->alFormat = AL_FORMAT_STEREO8;
-            else if (bitsPerSample == sixteenBPS) ac->alFormat = AL_FORMAT_STEREO16;
+            if (bitsPerSample == 8 ) ac->alFormat = AL_FORMAT_STEREO8;
+            else if (bitsPerSample == 16) ac->alFormat = AL_FORMAT_STEREO16;
         }
         
         // Create an audio source
