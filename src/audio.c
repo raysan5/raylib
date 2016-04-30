@@ -95,9 +95,12 @@ typedef struct Music {
 // a dedicated mix channel.
 typedef struct AudioContext_t {
     unsigned short sampleRate;         // default is 48000
-    unsigned char bitsPerSample;       // 16 is default
+    BPS bitsPerSample;                 // 16 is default
     mix_t mixChannel;                  // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
     channel_t channels;                // 1=mono, 2=stereo
+    ALenum alFormat;                   // openAL format specifier
+    ALuint alSource;                   // openAL source
+    ALuint alBuffer[2];                // openAL sample buffer
 } AudioContext_t;
 
 #if defined(AUDIO_STANDALONE)
@@ -193,8 +196,8 @@ bool AudioDeviceReady(void)
 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 16, mixA, stereo);
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels)
+// exmple usage is InitAudioContext(48000, sixteenBPS, mixA, stereo);
+AudioContext InitAudioContext(unsigned short sampleRate, BPS bitsPerSample, mix_t mixChannel, channel_t channels)
 {
     if(!AudioDeviceReady()) InitAudioDevice();
     else StopMusicStream();
@@ -206,6 +209,30 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSa
         ac->mixChannel = mixChannel;
         ac->channels = channels;
         mixChannelsActive_g[mixChannel] = ac;
+        
+        // setup openAL format
+        if (channels == mono)
+        {
+            if (bitsPerSample == eightBPS ) ac->alFormat = AL_FORMAT_MONO8;
+            else if (bitsPerSample == sixteenBPS) ac->alFormat = AL_FORMAT_MONO16;
+        }
+        else if (channels == stereo)
+        {
+            if (bitsPerSample == eightBPS ) ac->alFormat = AL_FORMAT_STEREO8;
+            else if (bitsPerSample == sixteenBPS) ac->alFormat = AL_FORMAT_STEREO16;
+        }
+        
+        // Create an audio source
+        alGenSources(1, &ac->alSource);
+        alSourcef(ac->alSource, AL_PITCH, 1);
+        alSourcef(ac->alSource, AL_GAIN, 1);
+        alSource3f(ac->alSource, AL_POSITION, 0, 0, 0);
+        alSource3f(ac->alSource, AL_VELOCITY, 0, 0, 0);
+        
+        // Create Buffer
+        alGenBuffers(2, &ac->alBuffer);
+        
+        
         return ac;
     }
     return NULL;
@@ -216,15 +243,22 @@ void CloseAudioContext(AudioContext ctx)
 {
     AudioContext_t *context = (AudioContext_t*)ctx;
     if(context){
+        alDeleteSources(1, &context->alSource);
+        alDeleteBuffers(2, &context->alBuffer);
         mixChannelsActive_g[context->mixChannel] = NULL;
         free(context);
+        ctx = NULL;
     }
 }
 
 // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
 void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength)
 {
-    ;
+    AudioContext_t *context = (AudioContext_t*)ctx;
+    if(!musicEnabled && context && mixChannelsActive_g[context->mixChannel] == context)
+    {
+        ;
+    }
 }
 
 

@@ -265,8 +265,9 @@
         typedef enum { false, true } bool;
     #endif
 #endif
-typedef enum { silence, mono, stereo } channel_t;
-typedef enum { mixA, mixB, mixC, mixD } mix_t; // Used for mixing/muxing up to four diferent audio streams
+typedef enum { silence, mono, stereo } channel_t;    // number of audio sources per sample
+typedef enum { mixA, mixB, mixC, mixD } mix_t;       // Used for mixing/muxing up to four diferent audio samples
+typedef enum { eightBPS, sixteenBPS } BPS;           // Either 8 or 16 bit quality samples
 
 // byte type
 typedef unsigned char byte;
@@ -875,7 +876,7 @@ bool AudioDeviceReady(void);                                    // True if call 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mix_t is what mix channel you want to operate on, mixA->mixD are the ones available. Each mix channel can only be used one at a time.
 // exmple usage is InitAudioContext(48000, 16, mixA, stereo);
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, mix_t mixChannel, channel_t channels);
+AudioContext InitAudioContext(unsigned short sampleRate, BPS bitsPerSample, mix_t mixChannel, channel_t channels);
 void CloseAudioContext(AudioContext ctx);                      // Frees audio context
 void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength); // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
 
