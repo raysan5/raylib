@@ -59,6 +59,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define MUSIC_STREAM_BUFFERS        2
+#define MAX_AUDIO_CONTEXTS          4
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
     // NOTE: On RPI and Android should be lower to avoid frame-stalls
@@ -90,6 +91,19 @@ typedef struct Music {
     bool chipTune; // True if chiptune is loaded
 } Music;
 
+// Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
+// no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
+// a dedicated mix channel.
+typedef struct AudioContext_t {
+    unsigned short sampleRate;         // default is 48000
+    unsigned char bitsPerSample;       // 16 is default
+    unsigned char mixChannel;          // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
+    unsigned char channels;            // 1=mono, 2=stereo
+    ALenum alFormat;                   // openAL format specifier
+    ALuint alSource;                   // openAL source
+    ALuint alBuffer[2];                // openAL sample buffer
+} AudioContext_t;
+
 #if defined(AUDIO_STANDALONE)
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 #endif
@@ -97,9 +111,10 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
+static AudioContext_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS]; // What mix channels are currently active
 static bool musicEnabled = false;
-static Music currentMusic;      // Current music loaded
-                                // NOTE: Only one music file playing at a time
+static Music currentMusic;          // Current music loaded
+                                    // NOTE: Only one music file playing at a time
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -163,6 +178,92 @@ void CloseAudioDevice(void)
     alcDestroyContext(context);
     alcCloseDevice(device);
 }
+
+// True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
+bool IsAudioDeviceReady(void)
+{
+    ALCcontext *context = alcGetCurrentContext();
+    if (context == NULL) return false;
+    else{
+        ALCdevice *device = alcGetContextsDevice(context);
+        if (device == NULL) return false;
+        else return true;
+    }
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Custom audio output
+//----------------------------------------------------------------------------------
+
+// Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
+// The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
+// exmple usage is InitAudioContext(48000, 16, 0, 2); // stereo, mixchannel 1, 16bit, 48khz
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, unsigned char mixChannel, unsigned char channels)
+{
+    if(mixChannel > MAX_AUDIO_CONTEXTS) return NULL;
+    if(!IsAudioDeviceReady()) InitAudioDevice();
+    else StopMusicStream();
+    
+    if(!mixChannelsActive_g[mixChannel]){
+        AudioContext_t *ac = malloc(sizeof(AudioContext_t));
+        ac->sampleRate = sampleRate;
+        ac->bitsPerSample = bitsPerSample;
+        ac->mixChannel = mixChannel;
+        ac->channels = channels;
+        mixChannelsActive_g[mixChannel] = ac;
+        
+        // setup openAL format
+        if (channels == 1)
+        {
+            if (bitsPerSample == 8 ) ac->alFormat = AL_FORMAT_MONO8;
+            else if (bitsPerSample == 16) ac->alFormat = AL_FORMAT_MONO16;
+        }
+        else if (channels == 2)
+        {
+            if (bitsPerSample == 8 ) ac->alFormat = AL_FORMAT_STEREO8;
+            else if (bitsPerSample == 16) ac->alFormat = AL_FORMAT_STEREO16;
+        }
+        
+        // Create an audio source
+        alGenSources(1, &ac->alSource);
+        alSourcef(ac->alSource, AL_PITCH, 1);
+        alSourcef(ac->alSource, AL_GAIN, 1);
+        alSource3f(ac->alSource, AL_POSITION, 0, 0, 0);
+        alSource3f(ac->alSource, AL_VELOCITY, 0, 0, 0);
+        
+        // Create Buffer
+        alGenBuffers(2, &ac->alBuffer);
+        
+        
+        return ac;
+    }
+    return NULL;
+}
+
+// Frees buffer in audio context
+void CloseAudioContext(AudioContext ctx)
+{
+    AudioContext_t *context = (AudioContext_t*)ctx;
+    if(context){
+        alDeleteSources(1, &context->alSource);
+        alDeleteBuffers(2, &context->alBuffer);
+        mixChannelsActive_g[context->mixChannel] = NULL;
+        free(context);
+        ctx = NULL;
+    }
+}
+
+// Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
+void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength)
+{
+    AudioContext_t *context = (AudioContext_t*)ctx;
+    if(!musicEnabled && context && mixChannelsActive_g[context->mixChannel] == context)
+    {
+        ;
+    }
+}
+
+
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Sounds loading and playing (.WAV)

@@ -41,7 +41,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-typedef enum { false, true } bool;
+    #ifndef true
+        typedef enum { false, true } bool;
+    #endif
 #endif
 
 // Sound source type
@@ -59,6 +61,11 @@ typedef struct Wave {
     short channels;
 } Wave;
 
+// Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
+// no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
+// a dedicated mix channel.
+typedef void* AudioContext;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -73,6 +80,14 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
+bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
+
+// Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
+// The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
+// exmple usage is InitAudioContext(48000, 16, 0, 2); // stereo, mixchannel 1, 16bit, 48khz
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, unsigned char mixChannel, unsigned char channels);
+void CloseAudioContext(AudioContext ctx);                       // Frees audio context
+void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength); // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -92,7 +107,7 @@ void PauseMusicStream(void);                                    // Pause music p
 void ResumeMusicStream(void);                                   // Resume playing paused music
 bool MusicIsPlaying(void);                                      // Check if music is playing
 void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
-float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
+float GetMusicTimeLength(void);                                 // Get music time length (in seconds)
 float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
 
 #ifdef __cplusplus
