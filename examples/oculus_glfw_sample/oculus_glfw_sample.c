@@ -91,12 +91,13 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
+    ovrSession session;
+    ovrGraphicsLuid luid;   // Useless for OpenGL since SDK 0.7
+    ovrHmdDesc hmdDesc;
+    
     ovrResult result = ovr_Initialize(NULL);
     if (OVR_FAILURE(result)) TraceLog(LOG_ERROR, "OVR: Could not initialize Oculus device");
 
-    ovrSession session;
-    ovrGraphicsLuid luid;   // Useless for OpenGL since SDK 0.7
-    
     result = ovr_Create(&session, &luid);
     if (OVR_FAILURE(result))
     {
@@ -104,7 +105,7 @@ int main()
         ovr_Shutdown();
     }
 
-    ovrHmdDesc hmdDesc = ovr_GetHmdDesc(session);
+    hmdDesc = ovr_GetHmdDesc(session);
     
     TraceLog(LOG_INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
     TraceLog(LOG_INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
@@ -129,10 +130,12 @@ int main()
     }
     else TraceLog(LOG_INFO, "GLFW3: GLFW initialized successfully");
     
+    glfwWindowHint(GLFW_DEPTH_BITS, 16);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_DECORATED, GL_FALSE);   // Mandatory on Oculus Rift to avoid program crash!
    
     window = glfwCreateWindow(screenWidth, screenHeight, "rlgl standalone", NULL, NULL);
@@ -209,6 +212,10 @@ int main()
         TraceLog(LOG_WARNING, "OVR: Could not initialize mirror framebuffers");
     }
     
+    glClearColor(1.0f, 0.1f, 0.1f, 0.0f);
+    glEnable(GL_DEPTH_TEST);
+    ovr_RecenterTrackingOrigin(session);
+    
     // FloorLevel will give tracking poses where the floor height is 0
     ovr_SetTrackingOriginType(session, ovrTrackingOrigin_FloorLevel);
     //--------------------------------------------------------------------------------------
@@ -218,7 +225,8 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-
+        frameIndex++;
+        
         // TODO: Update game here!
         
 	    // Call ovr_GetRenderDesc each frame to get the ovrEyeRenderDesc, as the returned values (e.g. HmdToEyeOffset) may change at runtime.
@@ -238,15 +246,15 @@ int main()
         //----------------------------------------------------------------------------------
         
         // Clear screen to red color
-        glClearColor(1.0f, 0.1f, 0.1f, 0.0f);   
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glClearColor(1.0f, 0.1f, 0.1f, 0.0f);   
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         if (isVisible)
         {
             for (int eye = 0; eye < 2; ++eye)
             {
                 SetOculusBuffer(session, eyeRenderBuffer[eye]);
-                
+
                 // TODO: Get view and projection matrices for the eye
                 // Sample using Oculus OVR_Math.h (C++)
                 /*
@@ -322,8 +330,6 @@ int main()
         
         glfwSwapBuffers(window);
         glfwPollEvents();
-    
-        //frameIndex++;     //?
         //----------------------------------------------------------------------------------
     }
 
@@ -398,7 +404,7 @@ static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, buffer.width, buffer.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, buffer.width, buffer.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
 
     return buffer;
 }
