@@ -355,7 +355,7 @@ typedef struct Camera {
 // Camera2D type, defines a 2d camera
 typedef struct Camera2D {
     Vector2 offset;         // Camera offset (displacement from target)
-    Vector2 target;         // Camera target (for rotation and zoom)
+    Vector2 target;         // Camera target (rotation and zoom origin)
     float rotation;         // Camera rotation in degrees
     float zoom;             // Camera zoom (scaling), should be 1.0f by default
 } Camera2D;
@@ -386,16 +386,17 @@ typedef struct Mesh {
 typedef struct Shader {
     unsigned int id;      // Shader program id
     
-    // Variable attributes
+    // Variable attributes locations
     int vertexLoc;        // Vertex attribute location point (vertex shader)
     int texcoordLoc;      // Texcoord attribute location point (vertex shader)
     int normalLoc;        // Normal attribute location point (vertex shader)
     int colorLoc;         // Color attibute location point (vertex shader)
 
-    // Uniforms
+    // Uniform locations
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
     int tintColorLoc;     // Color uniform location point (fragment shader)
     
+    // Texture map locations
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
     int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
     int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
@@ -832,18 +833,14 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
 unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shaders strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
+void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
 
-int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
-void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);                   // Set shader uniform value (matrix 4x4)
-//void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
-//void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
-//void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
-//void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
+void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 

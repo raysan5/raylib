@@ -1350,14 +1350,14 @@ void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float ro
     glBindTexture(GL_TEXTURE_2D, model.material.texDiffuse.id);
     glUniform1i(model.material.shader.mapDiffuseLoc, 0);        // Texture fits in active texture unit 0
     
-    if (model.material.texNormal.id != 0)
+    if ((model.material.texNormal.id != 0) && (model.material.shader.mapNormalLoc != -1))
     {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, model.material.texNormal.id);
         glUniform1i(model.material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
     }
     
-    if (model.material.texSpecular.id != 0)
+    if ((model.material.texSpecular.id != 0) && (model.material.shader.mapSpecularLoc != -1))
     {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, model.material.texSpecular.id);
@@ -2125,17 +2125,13 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
         // After shader loading, we try to load default location names
         if (shader.id != 0) LoadDefaultShaderLocations(&shader);
-        else
-        {
-            TraceLog(WARNING, "Custom shader could not be loaded");
-            shader = defaultShader;
-        }
         
         // Shader strings must be freed
         free(vShaderStr);
         free(fShaderStr);
     }
-    else
+    
+    if (shader.id == 0)
     {
         TraceLog(WARNING, "Custom shader could not be loaded");
         shader = defaultShader;
@@ -2494,7 +2490,7 @@ static Shader LoadDefaultShader(void)
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
-    LoadDefaultShaderLocations(&shader);
+    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
 
     return shader;
 }
