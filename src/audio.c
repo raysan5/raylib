@@ -232,7 +232,7 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSa
         alSource3f(ac->alSource, AL_VELOCITY, 0, 0, 0);
         
         // Create Buffer
-        alGenBuffers(2, &ac->alBuffer);
+        alGenBuffers(2, ac->alBuffer);
         
         
         return ac;
@@ -246,7 +246,7 @@ void CloseAudioContext(AudioContext ctx)
     AudioContext_t *context = (AudioContext_t*)ctx;
     if(context){
         alDeleteSources(1, &context->alSource);
-        alDeleteBuffers(2, &context->alBuffer);
+        alDeleteBuffers(2, context->alBuffer);
         mixChannelsActive_g[context->mixChannel] = NULL;
         free(context);
         ctx = NULL;
