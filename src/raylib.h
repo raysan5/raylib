@@ -576,9 +576,10 @@ void DisableCursor(void);                                   // Disables cursor
 
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
-void BeginDrawingEx(Camera2D camera);                       // Setup drawing canvas with 2d camera
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
+void Begin2dMode(Camera2D camera);                          // Initialize 2D mode with custom camera
+void End2dMode(void);                                       // Ends 2D mode custom camera usage
 void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
 void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
