@@ -870,9 +870,9 @@ bool IsAudioDeviceReady(void);                                  // True if call 
 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 0); // mixchannel 1, 48khz
-// all samples are floating point stereo by default
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel);
+// exmple usage is InitAudioContext(48000, 0, 2); // mixchannel 1, 48khz, stereo
+// all samples are floating point by default
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels);
 void CloseAudioContext(AudioContext ctx);                       // Frees audio context
 bool UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength); // Pushes more audio data into context mix channel, if NULL is passed to data then zeros are played
 

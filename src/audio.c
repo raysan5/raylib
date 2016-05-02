@@ -97,6 +97,7 @@ typedef struct Music {
 // a dedicated mix channel. All audio is 32bit floating point in stereo.
 typedef struct AudioContext_t {
     unsigned short sampleRate;         // default is 48000
+    unsigned char channels;            // 1=mono,2=stereo
     unsigned char mixChannel;          // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
     ALenum alFormat;                   // openAL format specifier
     ALuint alSource;                   // openAL source
@@ -125,8 +126,9 @@ static void UnloadWave(Wave wave);                  // Unload wave data
 static bool BufferMusicStream(ALuint buffer);       // Fill music buffers with data
 static void EmptyMusicStream(void);                 // Empty music buffers
 
-// fill buffer with zeros
-static void FillAlBufferWithSilence(AudioContext_t *ac, ALuint buffer);
+static void FillAlBufferWithSilence(AudioContext_t *ac, ALuint buffer);// fill buffer with zeros
+static void ResampleShortToFloat(short *shorts, float *floats, unsigned short len); // pass two arrays of the same legnth in
+static void ResampleByteToFloat(char *chars, float *floats, unsigned short len); // pass two arrays of same length in
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -199,9 +201,9 @@ bool IsAudioDeviceReady(void)
 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 0); // mixchannel 1, 48khz
-// all samples are floating point stereo by default
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel)
+// exmple usage is InitAudioContext(48000, 0, 2); // mixchannel 1, 48khz, stereo
+// all samples are floating point by default
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels)
 {
     if(mixChannel > MAX_AUDIO_CONTEXTS) return NULL;
     if(!IsAudioDeviceReady()) InitAudioDevice();
@@ -210,11 +212,15 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChanne
     if(!mixChannelsActive_g[mixChannel]){
         AudioContext_t *ac = malloc(sizeof(AudioContext_t));
         ac->sampleRate = sampleRate;
+        ac->channels = channels;
         ac->mixChannel = mixChannel;
         mixChannelsActive_g[mixChannel] = ac;
         
         // setup openAL format
-        ac->alFormat = AL_FORMAT_STEREO_FLOAT32;
+        if(channels == 1)
+            ac->alFormat = AL_FORMAT_MONO_FLOAT32;
+        else
+            ac->alFormat = AL_FORMAT_STEREO_FLOAT32;
         
         // Create an audio source
         alGenSources(1, &ac->alSource);
@@ -289,6 +295,7 @@ bool UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength
             }
         return true;
     }
+    return false;
 }
 
 // fill buffer with zeros
@@ -296,6 +303,36 @@ static void FillAlBufferWithSilence(AudioContext_t *ac, ALuint buffer)
 {
     float pcm[MUSIC_BUFFER_SIZE] = {0.f};
     alBufferData(buffer, ac->alFormat, pcm, MUSIC_BUFFER_SIZE*sizeof(float), ac->sampleRate);
+}
+
+// example usage:
+// short sh[3] = {1,2,3};float fl[3];
+// ResampleShortToFloat(sh,fl,3);
+static void ResampleShortToFloat(short *shorts, float *floats, unsigned short len)
+{
+    int x;
+    for(x=0;x<len;x++)
+    {
+        if(shorts[x] < 0)
+            floats[x] = (float)shorts[x] / 32766.f;
+        else
+            floats[x] = (float)shorts[x] / 32767.f;
+    }
+}
+
+// example usage:
+// char ch[3] = {1,2,3};float fl[3];
+// ResampleShortToFloat(ch,fl,3);
+static void ResampleByteToFloat(char *chars, float *floats, unsigned short len)
+{
+    int x;
+    for(x=0;x<len;x++)
+    {
+        if(chars[x] < 0)
+            floats[x] = (float)chars[x] / 127.f;
+        else
+            floats[x] = (float)chars[x] / 128.f;
+    }
 }
 
 
