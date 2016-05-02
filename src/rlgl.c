@@ -2377,18 +2377,6 @@ void SetBlendMode(int mode)
     }
 }
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-void PrintProjectionMatrix(void)
-{
-    PrintMatrix(projection);
-}
-
-void PrintModelviewMatrix(void)
-{
-    PrintMatrix(modelview);
-}
-#endif
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
