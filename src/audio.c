@@ -37,6 +37,7 @@
 
 #include "AL/al.h"          // OpenAL basic header
 #include "AL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+#include "AL/alext.h"       // extensions for other format types
 
 #include <stdlib.h>         // Declares malloc() and free() for memory management
 #include <string.h>         // Required for strcmp()
@@ -93,12 +94,10 @@ typedef struct Music {
 
 // Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
 // no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
-// a dedicated mix channel.
+// a dedicated mix channel. All audio is 32bit floating point in stereo.
 typedef struct AudioContext_t {
     unsigned short sampleRate;         // default is 48000
-    unsigned char bitsPerSample;       // 16 is default
     unsigned char mixChannel;          // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
-    unsigned char channels;            // 1=mono, 2=stereo
     ALenum alFormat;                   // openAL format specifier
     ALuint alSource;                   // openAL source
     ALuint alBuffer[2];                // openAL sample buffer
@@ -125,6 +124,9 @@ static void UnloadWave(Wave wave);                  // Unload wave data
 
 static bool BufferMusicStream(ALuint buffer);       // Fill music buffers with data
 static void EmptyMusicStream(void);                 // Empty music buffers
+
+// fill buffer with zeros
+static void FillAlBufferWithSilence(AudioContext_t *ac, ALuint buffer);
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -197,8 +199,9 @@ bool IsAudioDeviceReady(void)
 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 16, 0, 2); // stereo, mixchannel 1, 16bit, 48khz
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSample, unsigned char mixChannel, unsigned char channels)
+// exmple usage is InitAudioContext(48000, 0); // mixchannel 1, 48khz
+// all samples are floating point stereo by default
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel)
 {
     if(mixChannel > MAX_AUDIO_CONTEXTS) return NULL;
     if(!IsAudioDeviceReady()) InitAudioDevice();
@@ -207,22 +210,11 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSa
     if(!mixChannelsActive_g[mixChannel]){
         AudioContext_t *ac = malloc(sizeof(AudioContext_t));
         ac->sampleRate = sampleRate;
-        ac->bitsPerSample = bitsPerSample;
         ac->mixChannel = mixChannel;
-        ac->channels = channels;
         mixChannelsActive_g[mixChannel] = ac;
         
         // setup openAL format
-        if (channels == 1)
-        {
-            if (bitsPerSample == 8 ) ac->alFormat = AL_FORMAT_MONO8;
-            else if (bitsPerSample == 16) ac->alFormat = AL_FORMAT_MONO16;
-        }
-        else if (channels == 2)
-        {
-            if (bitsPerSample == 8 ) ac->alFormat = AL_FORMAT_STEREO8;
-            else if (bitsPerSample == 16) ac->alFormat = AL_FORMAT_STEREO16;
-        }
+        ac->alFormat = AL_FORMAT_STEREO_FLOAT32;
         
         // Create an audio source
         alGenSources(1, &ac->alSource);
@@ -232,7 +224,14 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char bitsPerSa
         alSource3f(ac->alSource, AL_VELOCITY, 0, 0, 0);
         
         // Create Buffer
-        alGenBuffers(2, &ac->alBuffer);
+        alGenBuffers(2, ac->alBuffer);
+        
+        //fill buffers
+        FillAlBufferWithSilence(ac, ac->alBuffer[0]);
+        FillAlBufferWithSilence(ac, ac->alBuffer[1]);
+        alSourceQueueBuffers(ac->alSource, 2, ac->alBuffer);
+        alSourcei(ac->alSource, AL_LOOPING, AL_FALSE); // this could cause errors
+        alSourcePlay(ac->alSource);
         
         
         return ac;
@@ -245,8 +244,20 @@ void CloseAudioContext(AudioContext ctx)
 {
     AudioContext_t *context = (AudioContext_t*)ctx;
     if(context){
+        alSourceStop(context->alSource);
+        
+        //flush out all queued buffers
+        ALuint buffer = 0;
+        int queued = 0;
+        alGetSourcei(context->alSource, AL_BUFFERS_QUEUED, &queued);
+        while (queued > 0)
+        {
+            alSourceUnqueueBuffers(context->alSource, 1, &buffer);
+            queued--;
+        }
+        
         alDeleteSources(1, &context->alSource);
-        alDeleteBuffers(2, &context->alBuffer);
+        alDeleteBuffers(2, context->alBuffer);
         mixChannelsActive_g[context->mixChannel] = NULL;
         free(context);
         ctx = NULL;
@@ -254,13 +265,32 @@ void CloseAudioContext(AudioContext ctx)
 }
 
 // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
-void UpdateAudioContext(AudioContext ctx, void *data, unsigned short *dataLength)
+// Call "UpdateAudioContext(ctx, NULL, 0)" every game tick if you want to pause the audio
+void UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength)
 {
     AudioContext_t *context = (AudioContext_t*)ctx;
-    if(!musicEnabled && context && mixChannelsActive_g[context->mixChannel] == context)
+    if (context && mixChannelsActive_g[context->mixChannel] == context)
     {
-        ;
+        ALint processed = 0;
+        ALuint buffer = 0;
+        alGetSourcei(context->alSource, AL_BUFFERS_PROCESSED, &processed); // Get the number of already processed buffers (if any)
+
+        if (!data || !dataLength)// play silence
+            while (processed > 0)
+            {
+                alSourceUnqueueBuffers(context->alSource, 1, &buffer);
+                FillAlBufferWithSilence(context, buffer);
+                alSourceQueueBuffers(context->alSource, 1, &buffer);
+                processed--;
+            }
     }
+}
+
+// fill buffer with zeros
+static void FillAlBufferWithSilence(AudioContext_t *ac, ALuint buffer)
+{
+    float pcm[MUSIC_BUFFER_SIZE] = {0.f};
+    alBufferData(buffer, ac->alFormat, pcm, MUSIC_BUFFER_SIZE*sizeof(float), ac->sampleRate);
 }
 
 
