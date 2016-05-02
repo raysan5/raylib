@@ -244,23 +244,16 @@ extern void UnloadDefaultFont(void);            // [Module: text] Unloads defaul
 //----------------------------------------------------------------------------------
 static void InitDisplay(int width, int height);         // Initialize display device and framebuffer
 static void InitGraphics(void);                         // Initialize OpenGL graphics
+static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
-static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void PollInputEvents(void);                      // Register user events
+static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
-static void SetupFramebufferSize(int displayWidth, int displayHeight);
-
-#if defined(PLATFORM_RPI)
-static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
-static void ProcessKeyboard(void);                      // Process keyboard events
-static void RestoreKeyboard(void);                      // Restore keyboard system
-static void InitMouse(void);                            // Mouse initialization (including mouse thread)
-static void *MouseThread(void *arg);                    // Mouse reading thread
-static void InitGamepad(void);                          // Init raw gamepad input
-static void *GamepadThread(void *arg);                  // Mouse reading thread
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+static void TakeScreenshot(void);                       // Takes a screenshot and saves it in the same folder as executable
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -279,10 +272,6 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified);           
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
 #endif
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-static void TakeScreenshot(void);                                                          // Takes a screenshot and saves it in the same folder as executable
-#endif
-
 #if defined(PLATFORM_ANDROID)
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);          // Process Android inputs
@@ -291,6 +280,16 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
+#endif
+
+#if defined(PLATFORM_RPI)
+static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
+static void ProcessKeyboard(void);                      // Process keyboard events
+static void RestoreKeyboard(void);                      // Restore keyboard system
+static void InitMouse(void);                            // Mouse initialization (including mouse thread)
+static void *MouseThread(void *arg);                    // Mouse reading thread
+static void InitGamepad(void);                          // Init raw gamepad input
+static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1734,6 +1733,239 @@ static void InitGraphics(void)
 #endif
 }
 
+// Compute framebuffer size relative to screen size and display size
+// NOTE: Global variables renderWidth/renderHeight can be modified
+static void SetupFramebufferSize(int displayWidth, int displayHeight)
+{
+    // TODO: SetupFramebufferSize() does not consider properly display video modes.
+    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
+    // and so, framebuffer is not scaled properly to some monitors.
+    
+    // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
+    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
+    {
+        TraceLog(WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
+
+        // Downscaling to fit display with border-bars
+        float widthRatio = (float)displayWidth/(float)screenWidth;
+        float heightRatio = (float)displayHeight/(float)screenHeight;
+
+        if (widthRatio <= heightRatio)
+        {
+            renderWidth = displayWidth;
+            renderHeight = (int)round((float)screenHeight*widthRatio);
+            renderOffsetX = 0;
+            renderOffsetY = (displayHeight - renderHeight);
+        }
+        else
+        {
+            renderWidth = (int)round((float)screenWidth*heightRatio);
+            renderHeight = displayHeight;
+            renderOffsetX = (displayWidth - renderWidth);
+            renderOffsetY = 0;
+        }
+
+        // NOTE: downscale matrix required!
+        float scaleRatio = (float)renderWidth/(float)screenWidth;
+
+        downscaleView = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
+
+        // NOTE: We render to full display resolution!
+        // We just need to calculate above parameters for downscale matrix and offsets
+        renderWidth = displayWidth;
+        renderHeight = displayHeight;
+
+        TraceLog(WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", renderWidth, renderHeight);
+    }
+    else if ((screenWidth < displayWidth) || (screenHeight < displayHeight))
+    {
+        // Required screen size is smaller than display size
+        TraceLog(INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
+
+        // Upscaling to fit display with border-bars
+        float displayRatio = (float)displayWidth/(float)displayHeight;
+        float screenRatio = (float)screenWidth/(float)screenHeight;
+
+        if (displayRatio <= screenRatio)
+        {
+            renderWidth = screenWidth;
+            renderHeight = (int)round((float)screenWidth/displayRatio);
+            renderOffsetX = 0;
+            renderOffsetY = (renderHeight - screenHeight);
+        }
+        else
+        {
+            renderWidth = (int)round((float)screenHeight*displayRatio);
+            renderHeight = screenHeight;
+            renderOffsetX = (renderWidth - screenWidth);
+            renderOffsetY = 0;
+        }
+    }
+    else    // screen == display
+    {
+        renderWidth = screenWidth;
+        renderHeight = screenHeight;
+        renderOffsetX = 0;
+        renderOffsetY = 0;
+    }
+}
+
+// Initialize hi-resolution timer
+static void InitTimer(void)
+{
+    srand(time(NULL));              // Initialize random seed
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec now;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    {
+        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+    }
+    else TraceLog(WARNING, "No hi-resolution timer available");
+#endif
+
+    previousTime = GetTime();       // Get time as double
+}
+
+// Get current time measure (in seconds) since InitTimer()
+static double GetTime(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetTime();
+#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+
+    return (double)(time - baseTime)*1e-9;
+#endif
+}
+
+// Get one key state
+static bool GetKeyStatus(int key)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetKey(window, key);
+#elif defined(PLATFORM_ANDROID)
+    // TODO: Check for virtual keyboard
+    return false;
+#elif defined(PLATFORM_RPI)
+    // NOTE: Keys states are filled in PollInputEvents()
+    if (key < 0 || key > 511) return false;
+    else return currentKeyState[key];
+#endif
+}
+
+// Get one mouse button state
+static bool GetMouseButtonStatus(int button)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetMouseButton(window, button);
+#elif defined(PLATFORM_ANDROID)
+    // TODO: Check for virtual mouse
+    return false;
+#elif defined(PLATFORM_RPI)
+    // NOTE: Mouse buttons states are filled in PollInputEvents()
+    return currentMouseState[button];
+#endif
+}
+
+// Poll (store) all input events
+static void PollInputEvents(void)
+{
+    // NOTE: Gestures update must be called every frame to reset gestures correctly
+    // because ProcessGestureEvent() is just called on an event, not every frame
+    UpdateGestures();
+    
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    // Mouse input polling
+    double mouseX;
+    double mouseY;
+
+    glfwGetCursorPos(window, &mouseX, &mouseY);
+
+    mousePosition.x = (float)mouseX;
+    mousePosition.y = (float)mouseY;
+
+    // Keyboard input polling (automatically managed by GLFW3 through callback)
+    lastKeyPressed = -1;
+
+    // Register previous keys states
+    for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
+
+    // Register previous mouse states
+    for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
+
+    previousMouseWheelY = currentMouseWheelY;
+    currentMouseWheelY = 0;
+
+    glfwPollEvents();       // Register keyboard/mouse events... and window events!
+#elif defined(PLATFORM_ANDROID)
+
+    // Register previous keys states
+    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
+
+    // Poll Events (registered events)
+    // NOTE: Activity is paused if not enabled (appEnabled)
+    while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
+    {
+        // Process this event
+        if (source != NULL) source->process(app, source);
+
+        // NOTE: Never close window, native activity is controlled by the system!
+        if (app->destroyRequested != 0)
+        {
+            //TraceLog(INFO, "Closing Window...");
+            //windowShouldClose = true;
+            //ANativeActivity_finish(app->activity);
+        }
+    }
+#elif defined(PLATFORM_RPI)
+
+    // NOTE: Mouse input events polling is done asynchonously in another pthread - MouseThread()
+
+    // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
+    // we use method 2 (stdin) but maybe in a future we should change to method 1...
+    ProcessKeyboard();
+
+    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
+
+#endif
+}
+
+// Copy back buffer to front buffers
+static void SwapBuffers(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    glfwSwapBuffers(window);
+#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    eglSwapBuffers(display, surface);
+#endif
+}
+
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+// Takes a screenshot and saves it in the same folder as executable
+static void TakeScreenshot(void)
+{
+    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
+    char buffer[20];            // Buffer to store file name
+
+    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
+
+    sprintf(buffer, "screenshot%03i.png", shotNum);
+    
+    // Save image as PNG
+    WritePNG(buffer, imgData, renderWidth, renderHeight, 4);
+
+    free(imgData);
+
+    shotNum++;
+
+    TraceLog(INFO, "[%s] Screenshot taken!", buffer);
+}
+#endif
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
 static void ErrorCallback(int error, const char *description)
@@ -2107,151 +2339,95 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 }
 #endif
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-// Takes a screenshot and saves it in the same folder as executable
-static void TakeScreenshot(void)
+#if defined(PLATFORM_WEB)
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
 {
-    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
-    char buffer[20];            // Buffer to store file name
-
-    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
-
-    sprintf(buffer, "screenshot%03i.png", shotNum);
+    //isFullscreen: int e->isFullscreen 
+    //fullscreenEnabled: int e->fullscreenEnabled 
+    //fs element nodeName: (char *) e->nodeName
+    //fs element id: (char *) e->id
+    //Current element size: (int) e->elementWidth, (int) e->elementHeight
+    //Screen size:(int) e->screenWidth, (int) e->screenHeight
     
-    // Save image as PNG
-    WritePNG(buffer, imgData, renderWidth, renderHeight, 4);
-
-    free(imgData);
-
-    shotNum++;
-
-    TraceLog(INFO, "[%s] Screenshot taken!", buffer);
-}
-#endif
-
-// Initialize hi-resolution timer
-static void InitTimer(void)
-{
-    srand(time(NULL));              // Initialize random seed
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec now;
-
-    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    if (e->isFullscreen)
     {
-        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+        TraceLog(INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
     }
-    else TraceLog(WARNING, "No hi-resolution timer available");
-#endif
-
-    previousTime = GetTime();       // Get time as double
-}
-
-// Get current time measure (in seconds) since InitTimer()
-static double GetTime(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetTime();
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
-
-    return (double)(time - baseTime)*1e-9;
-#endif
-}
-
-// Get one key state
-static bool GetKeyStatus(int key)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetKey(window, key);
-#elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual keyboard
-    return false;
-#elif defined(PLATFORM_RPI)
-    // NOTE: Keys states are filled in PollInputEvents()
-    if (key < 0 || key > 511) return false;
-    else return currentKeyState[key];
-#endif
-}
-
-// Get one mouse button state
-static bool GetMouseButtonStatus(int button)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetMouseButton(window, button);
-#elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual mouse
-    return false;
-#elif defined(PLATFORM_RPI)
-    // NOTE: Mouse buttons states are filled in PollInputEvents()
-    return currentMouseState[button];
-#endif
-}
-
-// Poll (store) all input events
-static void PollInputEvents(void)
-{
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
-    UpdateGestures();
+    else
+    {
+        TraceLog(INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
+    }
     
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // Mouse input polling
-    double mouseX;
-    double mouseY;
+    // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
 
-    glfwGetCursorPos(window, &mouseX, &mouseY);
-
-    mousePosition.x = (float)mouseX;
-    mousePosition.y = (float)mouseY;
-
-    // Keyboard input polling (automatically managed by GLFW3 through callback)
-    lastKeyPressed = -1;
-
-    // Register previous keys states
-    for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
-
-    // Register previous mouse states
-    for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
-
-    previousMouseWheelY = currentMouseWheelY;
-    currentMouseWheelY = 0;
-
-    glfwPollEvents();       // Register keyboard/mouse events... and window events!
-#elif defined(PLATFORM_ANDROID)
-
-    // Register previous keys states
-    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
-
-    // Poll Events (registered events)
-    // NOTE: Activity is paused if not enabled (appEnabled)
-    while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
-    {
-        // Process this event
-        if (source != NULL) source->process(app, source);
-
-        // NOTE: Never close window, native activity is controlled by the system!
-        if (app->destroyRequested != 0)
-        {
-            //TraceLog(INFO, "Closing Window...");
-            //windowShouldClose = true;
-            //ANativeActivity_finish(app->activity);
-        }
-    }
-#elif defined(PLATFORM_RPI)
-
-    // NOTE: Mouse input events polling is done asynchonously in another pthread - MouseThread()
-
-    // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
-    // we use method 2 (stdin) but maybe in a future we should change to method 1...
-    ProcessKeyboard();
-
-    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
-
-#endif
+    return 0;
 }
+
+// Web: Get input events
+static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
+{
+    /*
+    for (int i = 0; i < touchEvent->numTouches; i++)
+    {
+        long x, y, id;
+
+        if (!touchEvent->touches[i].isChanged) continue;
+
+        id = touchEvent->touches[i].identifier;
+        x = touchEvent->touches[i].canvasX;
+        y = touchEvent->touches[i].canvasY;
+    }
+    
+    printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
+           event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
+
+    for(int i = 0; i < event->numTouches; ++i)
+    {
+        const EmscriptenTouchPoint *t = &event->touches[i];
+        
+        printf("  %ld: screen: (%ld,%ld), client: (%ld,%ld), page: (%ld,%ld), isChanged: %d, onTarget: %d, canvas: (%ld, %ld)\n",
+          t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
+    }
+    */
+    
+    GestureEvent gestureEvent;
+
+    // Register touch actions
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_UP;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Register touch points count
+    gestureEvent.pointCount = touchEvent->numTouches;
+    
+    // Register touch points id
+    gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
+    gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
+    
+    // Register touch points position
+    // NOTE: Only two points registered
+    // TODO: Touch data should be scaled accordingly!
+    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
+    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
+    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
+    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
+
+    touchPosition[0] = gestureEvent.position[0];
+    touchPosition[1] = gestureEvent.position[1];
+    
+    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+    
+    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[1].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
+
+    return 1;
+}
+#endif
 
 #if defined(PLATFORM_RPI)
 // Initialize Keyboard system (using standard input)
@@ -2568,183 +2744,6 @@ static void *GamepadThread(void *arg)
 	}
     
     return NULL;
-}
-#endif
-
-// Copy back buffer to front buffers
-static void SwapBuffers(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    glfwSwapBuffers(window);
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    eglSwapBuffers(display, surface);
-#endif
-}
-
-// Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables renderWidth/renderHeight can be modified
-static void SetupFramebufferSize(int displayWidth, int displayHeight)
-{
-    // TODO: SetupFramebufferSize() does not consider properly display video modes.
-    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
-    // and so, framebuffer is not scaled properly to some monitors.
-    
-    // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
-    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
-    {
-        TraceLog(WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
-
-        // Downscaling to fit display with border-bars
-        float widthRatio = (float)displayWidth/(float)screenWidth;
-        float heightRatio = (float)displayHeight/(float)screenHeight;
-
-        if (widthRatio <= heightRatio)
-        {
-            renderWidth = displayWidth;
-            renderHeight = (int)round((float)screenHeight*widthRatio);
-            renderOffsetX = 0;
-            renderOffsetY = (displayHeight - renderHeight);
-        }
-        else
-        {
-            renderWidth = (int)round((float)screenWidth*heightRatio);
-            renderHeight = displayHeight;
-            renderOffsetX = (displayWidth - renderWidth);
-            renderOffsetY = 0;
-        }
-
-        // NOTE: downscale matrix required!
-        float scaleRatio = (float)renderWidth/(float)screenWidth;
-
-        downscaleView = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
-
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
-        renderWidth = displayWidth;
-        renderHeight = displayHeight;
-
-        TraceLog(WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", renderWidth, renderHeight);
-    }
-    else if ((screenWidth < displayWidth) || (screenHeight < displayHeight))
-    {
-        // Required screen size is smaller than display size
-        TraceLog(INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
-
-        // Upscaling to fit display with border-bars
-        float displayRatio = (float)displayWidth/(float)displayHeight;
-        float screenRatio = (float)screenWidth/(float)screenHeight;
-
-        if (displayRatio <= screenRatio)
-        {
-            renderWidth = screenWidth;
-            renderHeight = (int)round((float)screenWidth/displayRatio);
-            renderOffsetX = 0;
-            renderOffsetY = (renderHeight - screenHeight);
-        }
-        else
-        {
-            renderWidth = (int)round((float)screenHeight*displayRatio);
-            renderHeight = screenHeight;
-            renderOffsetX = (renderWidth - screenWidth);
-            renderOffsetY = 0;
-        }
-    }
-    else    // screen == display
-    {
-        renderWidth = screenWidth;
-        renderHeight = screenHeight;
-        renderOffsetX = 0;
-        renderOffsetY = 0;
-    }
-}
-
-#if defined(PLATFORM_WEB)
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
-{
-    //isFullscreen: int e->isFullscreen 
-    //fullscreenEnabled: int e->fullscreenEnabled 
-    //fs element nodeName: (char *) e->nodeName
-    //fs element id: (char *) e->id
-    //Current element size: (int) e->elementWidth, (int) e->elementHeight
-    //Screen size:(int) e->screenWidth, (int) e->screenHeight
-    
-    if (e->isFullscreen)
-    {
-        TraceLog(INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
-    }
-    else
-    {
-        TraceLog(INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
-    }
-    
-    // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
-
-    return 0;
-}
-
-// Web: Get input events
-static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
-{
-    /*
-    for (int i = 0; i < touchEvent->numTouches; i++)
-    {
-        long x, y, id;
-
-        if (!touchEvent->touches[i].isChanged) continue;
-
-        id = touchEvent->touches[i].identifier;
-        x = touchEvent->touches[i].canvasX;
-        y = touchEvent->touches[i].canvasY;
-    }
-    
-    printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
-           event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
-
-    for(int i = 0; i < event->numTouches; ++i)
-    {
-        const EmscriptenTouchPoint *t = &event->touches[i];
-        
-        printf("  %ld: screen: (%ld,%ld), client: (%ld,%ld), page: (%ld,%ld), isChanged: %d, onTarget: %d, canvas: (%ld, %ld)\n",
-          t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
-    }
-    */
-    
-    GestureEvent gestureEvent;
-
-    // Register touch actions
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_UP;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_MOVE;
-    
-    // Register touch points count
-    gestureEvent.pointCount = touchEvent->numTouches;
-    
-    // Register touch points id
-    gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
-    gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
-    
-    // Register touch points position
-    // NOTE: Only two points registered
-    // TODO: Touch data should be scaled accordingly!
-    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
-    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
-    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
-    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
-
-    touchPosition[0] = gestureEvent.position[0];
-    touchPosition[1] = gestureEvent.position[1];
-    
-    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
-    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-    
-    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
-    gestureEvent.position[1].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
-
-    return 1;
 }
 #endif
 
