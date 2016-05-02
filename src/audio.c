@@ -273,17 +273,20 @@ void CloseAudioContext(AudioContext ctx)
 
 // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
 // Call "UpdateAudioContext(ctx, NULL, 0)" every game tick if you want to pause the audio
-// Returns true if data was pushed onto queue, otherwise if queue is full then no data is added and false is returned
-bool UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength)
+// Returns number of floats that where processed
+unsigned short UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength)
 {
+    unsigned short numberProcessed = 0;
+    unsigned short numberRemaining = dataLength;
     AudioContext_t *context = (AudioContext_t*)ctx;
+    
     if (context && mixChannelsActive_g[context->mixChannel] == context)
     {
         ALint processed = 0;
         ALuint buffer = 0;
         alGetSourcei(context->alSource, AL_BUFFERS_PROCESSED, &processed); // Get the number of already processed buffers (if any)
         
-        if(!processed) return false;//nothing to process, queue is still full
+        if(!processed) return 0;//nothing to process, queue is still full
         
         if (!data || !dataLength)// play silence
             while (processed > 0)
@@ -292,17 +295,37 @@ bool UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength
                 FillAlBufferWithSilence(context, buffer);
                 alSourceQueueBuffers(context->alSource, 1, &buffer);
                 processed--;
+                numberProcessed+=MUSIC_BUFFER_SIZE;
             }
-        return true;
+        if(numberRemaining)// buffer data stream in increments of MUSIC_BUFFER_SIZE
+            while (processed > 0)
+            {
+                alSourceUnqueueBuffers(context->alSource, 1, &buffer);
+                if(numberRemaining >= MUSIC_BUFFER_SIZE)
+                {
+                    float pcm[MUSIC_BUFFER_SIZE];
+                    memcpy(pcm, &data[numberProcessed], MUSIC_BUFFER_SIZE);
+                    alBufferData(buffer, context->alFormat, pcm, MUSIC_BUFFER_SIZE*sizeof(float), context->sampleRate);
+                    alSourceQueueBuffers(context->alSource, 1, &buffer);
+                    numberProcessed+=MUSIC_BUFFER_SIZE;
+                    numberRemaining-=MUSIC_BUFFER_SIZE;
+                }
+                else // less than MUSIC_BUFFER_SIZE number of samples left to buffer, the remaining data is padded with zeros
+                {
+                    float pcm[MUSIC_BUFFER_SIZE] = {0.f}; // pad with zeros
+                }
+                
+                processed--;
+            }
     }
-    return false;
+    return numberProcessed;
 }
 
 // fill buffer with zeros
-static void FillAlBufferWithSilence(AudioContext_t *ac, ALuint buffer)
+static void FillAlBufferWithSilence(AudioContext_t *context, ALuint buffer)
 {
     float pcm[MUSIC_BUFFER_SIZE] = {0.f};
-    alBufferData(buffer, ac->alFormat, pcm, MUSIC_BUFFER_SIZE*sizeof(float), ac->sampleRate);
+    alBufferData(buffer, context->alFormat, pcm, MUSIC_BUFFER_SIZE*sizeof(float), context->sampleRate);
 }
 
 // example usage:
@@ -322,7 +345,7 @@ static void ResampleShortToFloat(short *shorts, float *floats, unsigned short le
 
 // example usage:
 // char ch[3] = {1,2,3};float fl[3];
-// ResampleShortToFloat(ch,fl,3);
+// ResampleByteToFloat(ch,fl,3);
 static void ResampleByteToFloat(char *chars, float *floats, unsigned short len)
 {
     int x;

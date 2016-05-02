@@ -874,7 +874,7 @@ bool IsAudioDeviceReady(void);                                  // True if call 
 // all samples are floating point by default
 AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels);
 void CloseAudioContext(AudioContext ctx);                       // Frees audio context
-bool UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength); // Pushes more audio data into context mix channel, if NULL is passed to data then zeros are played
+unsigned short UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength); // Pushes more audio data into context mix channel, if NULL is passed to data then zeros are played
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
