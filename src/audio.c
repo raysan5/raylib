@@ -256,6 +256,7 @@ void CloseAudioContext(AudioContext ctx)
             queued--;
         }
         
+        //delete source and buffers
         alDeleteSources(1, &context->alSource);
         alDeleteBuffers(2, context->alBuffer);
         mixChannelsActive_g[context->mixChannel] = NULL;
@@ -266,7 +267,8 @@ void CloseAudioContext(AudioContext ctx)
 
 // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
 // Call "UpdateAudioContext(ctx, NULL, 0)" every game tick if you want to pause the audio
-void UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength)
+// Returns true if data was pushed onto queue, otherwise if queue is full then no data is added and false is returned
+bool UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength)
 {
     AudioContext_t *context = (AudioContext_t*)ctx;
     if (context && mixChannelsActive_g[context->mixChannel] == context)
@@ -274,7 +276,9 @@ void UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength
         ALint processed = 0;
         ALuint buffer = 0;
         alGetSourcei(context->alSource, AL_BUFFERS_PROCESSED, &processed); // Get the number of already processed buffers (if any)
-
+        
+        if(!processed) return false;//nothing to process, queue is still full
+        
         if (!data || !dataLength)// play silence
             while (processed > 0)
             {
@@ -283,6 +287,7 @@ void UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength
                 alSourceQueueBuffers(context->alSource, 1, &buffer);
                 processed--;
             }
+        return true;
     }
 }
 
