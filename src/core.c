@@ -524,23 +524,6 @@ void BeginDrawing(void)
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
-// Setup drawing canvas with 2d camera
-void BeginDrawingEx(Camera2D camera)
-{
-    BeginDrawing();
-    
-    // Camera rotation and scaling is always relative to target
-    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
-    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
-    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
-    
-    Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
-
-    Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
-    
-    rlMultMatrixf(MatrixToFloat(matTransform));
-}
-
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing(void)
 {
@@ -567,6 +550,33 @@ void EndDrawing(void)
         previousTime = currentTime;
         frameTime += extraTime;
     }
+}
+
+// Initialize 2D mode with custom camera
+void Begin2dMode(Camera2D camera)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+
+    // Camera rotation and scaling is always relative to target
+    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
+    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
+    
+    Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
+
+    Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
+    
+    rlMultMatrixf(MatrixToFloat(matTransform));
+}
+
+// Ends 2D mode custom camera usage
+void End2dMode(void)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 }
 
 // Initializes 3D mode for drawing (Camera setup)
