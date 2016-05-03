@@ -905,7 +905,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     Vector3 farPoint = rlglUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
 #else   // OPTION 2: Compute unprojection directly here
-    
+
     // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
     Matrix matProjView = MatrixMultiply(matProj, matView);
     MatrixInvert(&matProjView);
@@ -935,7 +935,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 }
 
 // Returns the screen space position from a 3d world space position
-Vector2 WorldToScreen(Vector3 position, Camera camera)
+Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {    
     // Calculate projection matrix (from perspective instead of frustum
     Matrix matProj = MatrixPerspective(camera.fovy, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);

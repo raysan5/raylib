@@ -43,7 +43,7 @@ int main()
         UpdateCamera(&camera);          // Update internal camera and our camera
         
         // Calculate cube screen space position (with a little offset to be in top)
-        cubeScreenPosition = WorldToScreen((Vector3){cubePosition.x, cubePosition.y + 2.5f, cubePosition.z}, camera);
+        cubeScreenPosition = GetWorldToScreen((Vector3){cubePosition.x, cubePosition.y + 2.5f, cubePosition.z}, camera);
         //----------------------------------------------------------------------------------
 
         // Draw

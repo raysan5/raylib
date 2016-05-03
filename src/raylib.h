@@ -586,7 +586,7 @@ void BeginTextureMode(RenderTexture2D target);              // Initializes rende
 void EndTextureMode(void);                                  // Ends drawing to render texture
 
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
-Vector2 WorldToScreen(Vector3 position, Camera camera);     // Returns the screen space position from a 3d world space position
+Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position from a 3d world space position
 Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
