@@ -585,7 +585,7 @@ void StopSound(Sound sound)
 }
 
 // Check if a sound is playing
-bool SoundIsPlaying(Sound sound)
+bool IsSoundPlaying(Sound sound)
 {
     bool playing = false;
     ALint state;
@@ -764,7 +764,7 @@ void ResumeMusicStream(void)
 }
 
 // Check if music is playing
-bool MusicIsPlaying(void)
+bool IsMusicPlaying(void)
 {
     bool playing = false;
     ALint state;
