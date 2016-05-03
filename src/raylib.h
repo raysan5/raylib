@@ -586,7 +586,7 @@ void BeginTextureMode(RenderTexture2D target);              // Initializes rende
 void EndTextureMode(void);                                  // Ends drawing to render texture
 
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
-Vector2 WorldToScreen(Vector3 position, Camera camera);     // Returns the screen space position from a 3d world space position
+Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position from a 3d world space position
 Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
@@ -882,7 +882,7 @@ void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound
 void StopSound(Sound sound);                                    // Stop playing a sound
-bool SoundIsPlaying(Sound sound);                               // Check if a sound is currently playing
+bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
@@ -891,7 +891,7 @@ void UpdateMusicStream(void);                                   // Updates buffe
 void StopMusicStream(void);                                     // Stop music playing (close stream)
 void PauseMusicStream(void);                                    // Pause music playing
 void ResumeMusicStream(void);                                   // Resume playing paused music
-bool MusicIsPlaying(void);                                      // Check if music is playing
+bool IsMusicPlaying(void);                                      // Check if music is playing
 void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
 float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
