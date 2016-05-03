@@ -59,15 +59,17 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MUSIC_STREAM_BUFFERS        2
-#define MAX_AUDIO_CONTEXTS          4
+#define MAX_STREAM_BUFFERS          2
+#define MAX_AUDIO_CONTEXTS          4             // Number of open AL sources
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
     // NOTE: On RPI and Android should be lower to avoid frame-stalls
-    #define MUSIC_BUFFER_SIZE      4096*2   // PCM data buffer (short) - 16Kb (RPI)
+    #define MUSIC_BUFFER_SIZE_SHORT      4096*2   // PCM data buffer (short) - 16Kb (RPI)
+    #define MUSIC_BUFFER_SIZE_FLOAT      4096     // PCM data buffer (float) - 16Kb (RPI)
 #else
     // NOTE: On HTML5 (emscripten) this is allocated on heap, by default it's only 16MB!...just take care...
-    #define MUSIC_BUFFER_SIZE      4096*8   // PCM data buffer (short) - 64Kb
+    #define MUSIC_BUFFER_SIZE_SHORT      4096*8   // PCM data buffer (short) - 64Kb
+    #define MUSIC_BUFFER_SIZE_FLOAT      4096*4   // PCM data buffer (float) - 64Kb
 #endif
 
 //----------------------------------------------------------------------------------
@@ -80,7 +82,7 @@ typedef struct Music {
     stb_vorbis *stream;
     jar_xm_context_t *chipctx; // Stores jar_xm context
 
-    ALuint buffers[MUSIC_STREAM_BUFFERS];
+    ALuint buffers[MAX_STREAM_BUFFERS];
     ALuint source;
     ALenum format;
 
@@ -96,12 +98,13 @@ typedef struct Music {
 // no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
 // a dedicated mix channel. All audio is 32bit floating point in stereo.
 typedef struct AudioContext_t {
-    unsigned short sampleRate;         // default is 48000
-    unsigned char channels;            // 1=mono,2=stereo
-    unsigned char mixChannel;          // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
-    ALenum alFormat;                   // openAL format specifier
-    ALuint alSource;                   // openAL source
-    ALuint alBuffer[2];                // openAL sample buffer
+    unsigned short sampleRate;           // default is 48000
+    unsigned char channels;              // 1=mono,2=stereo
+    unsigned char mixChannel;            // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
+    bool floatingPoint;                  // if false then the short datatype is used instead
+    ALenum alFormat;                     // openAL format specifier
+    ALuint alSource;                     // openAL source
+    ALuint alBuffer[MAX_STREAM_BUFFERS]; // openAL sample buffer
 } AudioContext_t;
 
 #if defined(AUDIO_STANDALONE)
@@ -126,7 +129,7 @@ static void UnloadWave(Wave wave);                  // Unload wave data
 static bool BufferMusicStream(ALuint buffer);       // Fill music buffers with data
 static void EmptyMusicStream(void);                 // Empty music buffers
 
-static void FillAlBufferWithSilence(AudioContext_t *ac, ALuint buffer);// fill buffer with zeros
+static unsigned short FillAlBufferWithSilence(AudioContext_t *context, ALuint buffer);// fill buffer with zeros, returns number processed
 static void ResampleShortToFloat(short *shorts, float *floats, unsigned short len); // pass two arrays of the same legnth in
 static void ResampleByteToFloat(char *chars, float *floats, unsigned short len); // pass two arrays of same length in
 
@@ -201,11 +204,10 @@ bool IsAudioDeviceReady(void)
 
 // Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
 // The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 0, 2); // mixchannel 1, 48khz, stereo
-// all samples are floating point by default
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels)
+// exmple usage is InitAudioContext(48000, 0, 2, true); // mixchannel 1, 48khz, stereo, floating point
+AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels, bool floatingPoint)
 {
-    if(mixChannel > MAX_AUDIO_CONTEXTS) return NULL;
+    if(mixChannel >= MAX_AUDIO_CONTEXTS) return NULL;
     if(!IsAudioDeviceReady()) InitAudioDevice();
     else StopMusicStream();
     
@@ -214,13 +216,24 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChanne
         ac->sampleRate = sampleRate;
         ac->channels = channels;
         ac->mixChannel = mixChannel;
+        ac->floatingPoint = floatingPoint;
         mixChannelsActive_g[mixChannel] = ac;
         
         // setup openAL format
         if(channels == 1)
-            ac->alFormat = AL_FORMAT_MONO_FLOAT32;
-        else
-            ac->alFormat = AL_FORMAT_STEREO_FLOAT32;
+        {
+            if(floatingPoint)
+                ac->alFormat = AL_FORMAT_MONO_FLOAT32;
+            else
+                ac->alFormat = AL_FORMAT_MONO16;
+        }
+        else if(channels == 2)
+        {
+            if(floatingPoint)
+                ac->alFormat = AL_FORMAT_STEREO_FLOAT32;
+            else
+                ac->alFormat = AL_FORMAT_STEREO16;
+        }
         
         // Create an audio source
         alGenSources(1, &ac->alSource);
@@ -230,15 +243,16 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChanne
         alSource3f(ac->alSource, AL_VELOCITY, 0, 0, 0);
         
         // Create Buffer
-        alGenBuffers(2, ac->alBuffer);
+        alGenBuffers(MAX_STREAM_BUFFERS, ac->alBuffer);
         
         //fill buffers
-        FillAlBufferWithSilence(ac, ac->alBuffer[0]);
-        FillAlBufferWithSilence(ac, ac->alBuffer[1]);
-        alSourceQueueBuffers(ac->alSource, 2, ac->alBuffer);
+        int x;
+        for(x=0;x<MAX_STREAM_BUFFERS;x++)
+            FillAlBufferWithSilence(ac, ac->alBuffer[x]);
+        
+        alSourceQueueBuffers(ac->alSource, MAX_STREAM_BUFFERS, ac->alBuffer);
         alSourcei(ac->alSource, AL_LOOPING, AL_FALSE); // this could cause errors
         alSourcePlay(ac->alSource);
-        
         
         return ac;
     }
@@ -264,20 +278,22 @@ void CloseAudioContext(AudioContext ctx)
         
         //delete source and buffers
         alDeleteSources(1, &context->alSource);
-        alDeleteBuffers(2, context->alBuffer);
+        alDeleteBuffers(MAX_STREAM_BUFFERS, context->alBuffer);
         mixChannelsActive_g[context->mixChannel] = NULL;
         free(context);
         ctx = NULL;
     }
 }
 
-// Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in
-// Call "UpdateAudioContext(ctx, NULL, 0)" every game tick if you want to pause the audio
-// Returns number of floats that where processed
-unsigned short UpdateAudioContext(AudioContext ctx, float *data, unsigned short dataLength)
+// Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in.
+// Call "UpdateAudioContext(ctx, NULL, 0)" every game tick if you want to pause the audio.
+// @Returns number of samples that where processed.
+// All data streams should be of a length that is evenly divisible by MUSIC_BUFFER_SIZE,
+// otherwise the remaining data will not be pushed.
+unsigned short UpdateAudioContext(AudioContext ctx, void *data, unsigned short numberElements)
 {
     unsigned short numberProcessed = 0;
-    unsigned short numberRemaining = dataLength;
+    unsigned short numberRemaining = numberElements;
     AudioContext_t *context = (AudioContext_t*)ctx;
     
     if (context && mixChannelsActive_g[context->mixChannel] == context)
@@ -288,44 +304,60 @@ unsigned short UpdateAudioContext(AudioContext ctx, float *data, unsigned short 
         
         if(!processed) return 0;//nothing to process, queue is still full
         
-        if (!data || !dataLength)// play silence
+        if (!data || !numberElements)// play silence
+        {
             while (processed > 0)
             {
                 alSourceUnqueueBuffers(context->alSource, 1, &buffer);
-                FillAlBufferWithSilence(context, buffer);
+                numberProcessed += FillAlBufferWithSilence(context, buffer);
                 alSourceQueueBuffers(context->alSource, 1, &buffer);
                 processed--;
-                numberProcessed+=MUSIC_BUFFER_SIZE;
             }
+        }
         if(numberRemaining)// buffer data stream in increments of MUSIC_BUFFER_SIZE
+        {
             while (processed > 0)
             {
-                alSourceUnqueueBuffers(context->alSource, 1, &buffer);
-                if(numberRemaining >= MUSIC_BUFFER_SIZE)
+                if(context->floatingPoint && numberRemaining >= MUSIC_BUFFER_SIZE_FLOAT) // process float buffers
                 {
-                    float pcm[MUSIC_BUFFER_SIZE];
-                    memcpy(pcm, &data[numberProcessed], MUSIC_BUFFER_SIZE);
-                    alBufferData(buffer, context->alFormat, pcm, MUSIC_BUFFER_SIZE*sizeof(float), context->sampleRate);
+                    float *ptr = (float*)data;
+                    alSourceUnqueueBuffers(context->alSource, 1, &buffer);
+                    alBufferData(buffer, context->alFormat, &ptr[numberProcessed], MUSIC_BUFFER_SIZE_FLOAT*sizeof(float), context->sampleRate);
                     alSourceQueueBuffers(context->alSource, 1, &buffer);
-                    numberProcessed+=MUSIC_BUFFER_SIZE;
-                    numberRemaining-=MUSIC_BUFFER_SIZE;
+                    numberProcessed+=MUSIC_BUFFER_SIZE_FLOAT;
+                    numberRemaining-=MUSIC_BUFFER_SIZE_FLOAT;
                 }
-                else // less than MUSIC_BUFFER_SIZE number of samples left to buffer, the remaining data is padded with zeros
+                else if(!context->floatingPoint && numberRemaining >= MUSIC_BUFFER_SIZE_SHORT) // process short buffers
                 {
-                    float pcm[MUSIC_BUFFER_SIZE] = {0.f}; // pad with zeros
+                    short *ptr = (short*)data;
+                    alSourceUnqueueBuffers(context->alSource, 1, &buffer);
+                    alBufferData(buffer, context->alFormat, &ptr[numberProcessed], MUSIC_BUFFER_SIZE_SHORT*sizeof(short), context->sampleRate);
+                    alSourceQueueBuffers(context->alSource, 1, &buffer);
+                    numberProcessed+=MUSIC_BUFFER_SIZE_SHORT;
+                    numberRemaining-=MUSIC_BUFFER_SIZE_SHORT;
                 }
                 
                 processed--;
             }
+        }
     }
     return numberProcessed;
 }
 
-// fill buffer with zeros
-static void FillAlBufferWithSilence(AudioContext_t *context, ALuint buffer)
+// fill buffer with zeros, returns number processed
+static unsigned short FillAlBufferWithSilence(AudioContext_t *context, ALuint buffer)
 {
-    float pcm[MUSIC_BUFFER_SIZE] = {0.f};
-    alBufferData(buffer, context->alFormat, pcm, MUSIC_BUFFER_SIZE*sizeof(float), context->sampleRate);
+    if(context->floatingPoint){
+        float pcm[MUSIC_BUFFER_SIZE_FLOAT] = {0.f};
+        alBufferData(buffer, context->alFormat, pcm, MUSIC_BUFFER_SIZE_FLOAT*sizeof(float), context->sampleRate);
+        return MUSIC_BUFFER_SIZE_FLOAT;
+    }
+    else
+    {
+        short pcm[MUSIC_BUFFER_SIZE_SHORT] = {0};
+        alBufferData(buffer, context->alFormat, pcm, MUSIC_BUFFER_SIZE_SHORT*sizeof(short), context->sampleRate);
+        return MUSIC_BUFFER_SIZE_SHORT;
+    }
 }
 
 // example usage:
@@ -920,7 +952,7 @@ float GetMusicTimePlayed(void)
 // Fill music buffers with new data from music stream
 static bool BufferMusicStream(ALuint buffer)
 {
-    short pcm[MUSIC_BUFFER_SIZE];
+    short pcm[MUSIC_BUFFER_SIZE_SHORT];
     
     int  size = 0;              // Total size of data steamed (in bytes)
     int  streamedBytes = 0;     // samples of data obtained, channels are not included in calculation
@@ -930,15 +962,15 @@ static bool BufferMusicStream(ALuint buffer)
     {
         if (currentMusic.chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
         {
-            int readlen = MUSIC_BUFFER_SIZE / 2;
+            int readlen = MUSIC_BUFFER_SIZE_SHORT / 2;
             jar_xm_generate_samples_16bit(currentMusic.chipctx, pcm, readlen); // reads 2*readlen shorts and moves them to buffer+size memory location
             size += readlen * currentMusic.channels; // Not sure if this is what it needs
         }
         else
         {
-            while (size < MUSIC_BUFFER_SIZE)
+            while (size < MUSIC_BUFFER_SIZE_SHORT)
             {
-                streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic.stream, currentMusic.channels, pcm + size, MUSIC_BUFFER_SIZE - size);
+                streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic.stream, currentMusic.channels, pcm + size, MUSIC_BUFFER_SIZE_SHORT - size);
                 if (streamedBytes > 0) size += (streamedBytes*currentMusic.channels);
                 else break;
             }
