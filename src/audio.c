@@ -114,11 +114,10 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static AudioContext_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS]; // What mix channels are currently active
+static AudioContext_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS];      // What mix channels are currently active
 static bool musicEnabled = false;
 static Music currentMusic;          // Current music loaded
                                     // NOTE: Only one music file playing at a time
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -286,34 +285,34 @@ void CloseAudioContext(AudioContext ctx)
 }
 
 // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in.
-// Call "UpdateAudioContext(ctx, NULL, 0)" every game tick if you want to pause the audio.
+// Call "UpdateAudioContext(ctx, NULL, 0)" if you want to pause the audio.
 // @Returns number of samples that where processed.
 // All data streams should be of a length that is evenly divisible by MUSIC_BUFFER_SIZE,
 // otherwise the remaining data will not be pushed.
 unsigned short UpdateAudioContext(AudioContext ctx, void *data, unsigned short numberElements)
 {
-    unsigned short numberProcessed = 0;
-    unsigned short numberRemaining = numberElements;
     AudioContext_t *context = (AudioContext_t*)ctx;
+    
+    if(context && context->channels == 2 && numberElements % 2 != 0) return 0; // when there is two channels there must be an even number of samples
+    
+    if (!data || !numberElements) alSourcePause(context->alSource); // pauses audio until data is given
+    else{ // restart audio otherwise
+        ALint state;
+        alGetSourcei(context->alSource, AL_SOURCE_STATE, &state);
+        if (state != AL_PLAYING) alSourcePlay(context->alSource);
+    }
     
     if (context && mixChannelsActive_g[context->mixChannel] == context)
     {
         ALint processed = 0;
         ALuint buffer = 0;
-        alGetSourcei(context->alSource, AL_BUFFERS_PROCESSED, &processed); // Get the number of already processed buffers (if any)
+        unsigned short numberProcessed = 0;
+        unsigned short numberRemaining = numberElements;
         
+        
+        alGetSourcei(context->alSource, AL_BUFFERS_PROCESSED, &processed); // Get the number of already processed buffers (if any)
         if(!processed) return 0;//nothing to process, queue is still full
         
-        if (!data || !numberElements)// play silence
-        {
-            while (processed > 0)
-            {
-                alSourceUnqueueBuffers(context->alSource, 1, &buffer);
-                numberProcessed += FillAlBufferWithSilence(context, buffer);
-                alSourceQueueBuffers(context->alSource, 1, &buffer);
-                processed--;
-            }
-        }
         if(numberRemaining)// buffer data stream in increments of MUSIC_BUFFER_SIZE
         {
             while (processed > 0)
