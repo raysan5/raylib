@@ -69,8 +69,7 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static bool PixelIsMagenta(Color p);                // Check if a pixel is magenta
-static int ParseImageData(Image image, int **charValues, Rectangle **charSet);    // Parse image pixel data to obtain characters data
+static SpriteFont LoadImageFont(Image image, Color key, int firstChar); // Load a Image font file (XNA style)
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
 static SpriteFont LoadBMFont(const char *fileName); // Load a BMFont file (AngelCode font file)
 static SpriteFont LoadTTF(const char *fileName, int fontSize); // Generate a sprite font image from TTF data (font size required)
@@ -210,7 +209,7 @@ extern void LoadDefaultFont(void)
         if (testPosX >= defaultFont.texture.width)
         {
             currentLine++;
-            currentPosX = 2 * charsDivisor + charsWidth[i];
+            currentPosX = 2*charsDivisor + charsWidth[i];
             testPosX = currentPosX;
 
             defaultFont.charRecs[i].x = charsDivisor;
@@ -246,7 +245,7 @@ SpriteFont GetDefaultFont()
 // Load a SpriteFont image into GPU memory
 SpriteFont LoadSpriteFont(const char *fileName)
 {
-    SpriteFont spriteFont;
+    SpriteFont spriteFont = { 0 };
 
     // Check file extension
     if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);
@@ -255,36 +254,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
     else
     {
         Image image = LoadImage(fileName);
-        
-        if (image.data != NULL)
-        {     
-            // Process bitmap font pixel data to get characters measures
-            // spriteFont chars data is filled inside the function and memory is allocated!
-            int numChars = ParseImageData(image, &spriteFont.charValues, &spriteFont.charRecs);
-
-            TraceLog(DEBUG, "[%s] SpriteFont data parsed correctly", fileName);
-            TraceLog(DEBUG, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
-
-            spriteFont.numChars = numChars;
-            spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
-            spriteFont.size = spriteFont.charRecs[0].height;
-            
-            spriteFont.charOffsets = (Vector2 *)malloc(spriteFont.numChars*sizeof(Vector2));
-            spriteFont.charAdvanceX = (int *)malloc(spriteFont.numChars*sizeof(int));
-            
-            for (int i = 0; i < spriteFont.numChars; i++)
-            {
-                // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
-                spriteFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
-                spriteFont.charAdvanceX[i] = 0;
-            }
-        }
-        else
-        {
-            TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
-            spriteFont = GetDefaultFont();
-        }
-
+        if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, 32);
         UnloadImage(image);
     }
     
@@ -309,7 +279,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
         free(spriteFont.charOffsets);
         free(spriteFont.charAdvanceX);
 
-        TraceLog(INFO, "Unloaded sprite font data");
+        TraceLog(DEBUG, "Unloaded sprite font data");
     }
 }
 
@@ -517,15 +487,11 @@ void DrawFPS(int posX, int posY)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-// Check if a pixel is magenta
-static bool PixelIsMagenta(Color p)
+// Load a Image font file (XNA style)
+static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 {
-    return ((p.r == 255) && (p.g == 0) && (p.b == 255) && (p.a == 255));
-}
-
-// Parse image pixel data to obtain characters data (measures)
-static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
-{
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+    
     int charSpacing = 0;
     int lineSpacing = 0;
 
@@ -539,13 +505,14 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
     
     Color *pixels = GetImageData(image);
 
+    // Parse image data to get charSpacing and lineSpacing
     for(y = 0; y < image.height; y++)
     {
         for(x = 0; x < image.width; x++)
         {
-            if (!PixelIsMagenta(pixels[y*image.width + x])) break;
+            if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
         }
-        if (!PixelIsMagenta(pixels[y*image.width + x])) break;
+        if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
     }
 
     charSpacing = x;
@@ -554,7 +521,7 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
     int charHeight = 0;
     int j = 0;
 
-    while(!PixelIsMagenta(pixels[(lineSpacing + j)*image.width + charSpacing])) j++;
+    while(!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
 
     charHeight = j;
 
@@ -563,12 +530,13 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
     int lineToRead = 0;
     int xPosToRead = charSpacing;
 
+    // Parse image data to get rectangle sizes
     while((lineSpacing + lineToRead * (charHeight + lineSpacing)) < image.height)
     {
         while((xPosToRead < image.width) &&
-              !PixelIsMagenta((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead])))
+              !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
         {
-            tempCharValues[index] = FONT_FIRST_CHAR + index;
+            tempCharValues[index] = firstChar + index;
             
             tempCharRecs[index].x = xPosToRead;
             tempCharRecs[index].y = lineSpacing + lineToRead * (charHeight + lineSpacing);
@@ -576,7 +544,7 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
 
             int charWidth = 0;
 
-            while(!PixelIsMagenta(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth])) charWidth++;
+            while(!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
 
             tempCharRecs[index].width = charWidth;
 
@@ -590,20 +558,35 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
     }
     
     free(pixels);
+    
+    TraceLog(DEBUG, "SpriteFont data parsed correctly from image");
+    
+    // Create spritefont with all data parsed from image
+    SpriteFont spriteFont = { 0 };
+    
+    spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
+    spriteFont.numChars = index;
 
     // We got tempCharValues and tempCharsRecs populated with chars data
-    // Now we move temp data to sized charValues and charRecs arrays (passed as parameter to the function)
-    // NOTE: This memory should be freed!
-    (*charRecs) = (Rectangle *)malloc(index*sizeof(Rectangle));
-    (*charValues) = (int *)malloc(index*sizeof(int));
+    // Now we move temp data to sized charValues and charRecs arrays
+    spriteFont.charRecs = (Rectangle *)malloc(spriteFont.numChars*sizeof(Rectangle));
+    spriteFont.charValues = (int *)malloc(spriteFont.numChars*sizeof(int));
+    spriteFont.charOffsets = (Vector2 *)malloc(spriteFont.numChars*sizeof(Vector2));
+    spriteFont.charAdvanceX = (int *)malloc(spriteFont.numChars*sizeof(int));
 
-    for (int i = 0; i < index; i++)
+    for (int i = 0; i < spriteFont.numChars; i++)
     {
-        (*charValues)[i] = tempCharValues[i];
-        (*charRecs)[i] = tempCharRecs[i];
+        spriteFont.charValues[i] = tempCharValues[i];
+        spriteFont.charRecs[i] = tempCharRecs[i];
+        
+        // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
+        spriteFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
+        spriteFont.charAdvanceX[i] = 0;
     }
+    
+    spriteFont.size = spriteFont.charRecs[0].height;
 
-    return index;
+    return spriteFont;
 }
 
 // Load a rBMF font file (raylib BitMap Font)
@@ -687,6 +670,7 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         TraceLog(DEBUG, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
+        // Create spritefont with all data read from rbmf file
         spriteFont.texture = LoadTextureFromImage(image);
         UnloadImage(image);     // Unload image data
 
