@@ -196,23 +196,20 @@ static DrawMode currentDrawMode;
 
 static float currentDepth = -1.0f;
 
-// Vertex arrays for lines, triangles and quads
+// Default vertex buffers for lines, triangles and quads
 static VertexPositionColorBuffer lines;         // No texture support
 static VertexPositionColorBuffer triangles;     // No texture support
 static VertexPositionColorTextureIndexBuffer quads;
 
-// Shader Programs
-static Shader defaultShader;
-static Shader currentShader;                    // By default, defaultShader
-
-// Vertex Array Objects (VAO)
+// Default vertex buffers VAOs (if supported)
 static GLuint vaoLines, vaoTriangles, vaoQuads;
 
-// Vertex Buffer Objects (VBO)
-static GLuint linesBuffer[2];
-static GLuint trianglesBuffer[2];
-static GLuint quadsBuffer[4];
+// Default vertex buffers VBOs
+static GLuint linesBuffer[2];           // Lines buffers (position, color)
+static GLuint trianglesBuffer[2];       // Triangles buffers (position, color)
+static GLuint quadsBuffer[4];           // Quads buffers (position, texcoord, color, index)
 
+// Default buffers draw calls
 static DrawCall *draws;
 static int drawsCounter;
 
@@ -221,11 +218,14 @@ static Vector3 *tempBuffer;
 static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
+// Shader Programs
+static Shader defaultShader;
+static Shader currentShader;            // By default, defaultShader
+
 // Flags for supported extensions
 static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support VAO extension)
 
 // Compressed textures support flags
-//static bool texCompDXTSupported = false;     // DDS texture compression support
 static bool texCompETC1Supported = false;    // ETC1 texture compression support
 static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;    // PVR texture compression support
@@ -233,8 +233,8 @@ static bool texCompASTCSupported = false;    // ASTC texture compression support
 #endif
 
 // Compressed textures support flags
-static bool texCompDXTSupported = false;   // DDS texture compression support
-static bool npotSupported = false;         // NPOT textures full support
+static bool texCompDXTSupported = false;     // DDS texture compression support
+static bool npotSupported = false;           // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -254,14 +254,17 @@ unsigned int whiteTexture;
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
+
 static Shader LoadDefaultShader(void);
 static void LoadDefaultShaderLocations(Shader *shader);
-static void InitializeBuffers(void);
-static void InitializeBuffersGPU(void);
-static void UpdateBuffers(void);
-static char *TextFileRead(char *fn);
+static void UnloadDefaultShader(void);
 
-static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
+static void LoadDefaultBuffers(void);
+static void UpdateDefaultBuffers(void);
+static void UnloadDefaultBuffers(void);
+
+static char *ReadTextFile(const char *fileName);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -272,20 +275,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 #if defined(RLGL_STANDALONE)
 static void TraceLog(int msgType, const char *text, ...);
 float *MatrixToFloat(Matrix mat);   // Converts Matrix to float array
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-// NOTE: strdup() functions replacement (not C99, POSIX function, not available on emscripten)
-// Duplicates a string, returning an identical malloc'd string
-char *mystrdup(const char *str)
-{
-  size_t len = strlen(str) + 1;
-  void *newstr = malloc(len);
-
-  if (newstr == NULL) return NULL;
-
-  return (char *)memcpy(newstr, str, len);
-}
 #endif
 
 //----------------------------------------------------------------------------------
@@ -919,13 +908,18 @@ void rlglInit(void)
     
     // NOTE: We have to duplicate string because glGetString() returns a const value
     // If not duplicated, it fails in some systems (Raspberry Pi)
-    char *extensionsDup = mystrdup(extensions);
+    // Equivalent to function: char *strdup(const char *str)
+    char *extensionsDup;
+    size_t len = strlen(extensions) + 1;
+    void *newstr = malloc(len);
+    if (newstr == NULL) extensionsDup = NULL;
+    extensionsDup = (char *)memcpy(newstr, extensions, len);
     
     // NOTE: String could be splitted using strtok() function (string.h)
     // NOTE: strtok() modifies the received string, it can not be const
     
     char *extList[512];     // Allocate 512 strings pointers (2 KB)
-
+    
     extList[numExt] = strtok(extensionsDup, " ");
 
     while (extList[numExt] != NULL)
@@ -1024,12 +1018,9 @@ void rlglInit(void)
 
     // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
-    //customShader = LoadShader("custom.vs", "custom.fs");     // Works ok
-    
     currentShader = defaultShader;
 
-    InitializeBuffers();        // Init vertex arrays
-    InitializeBuffersGPU();     // Init VBO and VAO
+    LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
 
     // Init temp vertex buffer, used when transformation required (translate, rotate, scale)
     tempBuffer = (Vector3 *)malloc(sizeof(Vector3)*TEMP_VERTEX_BUFFER_SIZE);
@@ -1054,54 +1045,10 @@ void rlglInit(void)
 void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Unbind everything
-    if (vaoSupported) glBindVertexArray(0);
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
-    glDisableVertexAttribArray(3);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    glUseProgram(0);
-
-    // Delete VBOs
-    glDeleteBuffers(1, &linesBuffer[0]);
-    glDeleteBuffers(1, &linesBuffer[1]);
-    glDeleteBuffers(1, &trianglesBuffer[0]);
-    glDeleteBuffers(1, &trianglesBuffer[1]);
-    glDeleteBuffers(1, &quadsBuffer[0]);
-    glDeleteBuffers(1, &quadsBuffer[1]);
-    glDeleteBuffers(1, &quadsBuffer[2]);
-    glDeleteBuffers(1, &quadsBuffer[3]);
-
-    if (vaoSupported)
-    {
-        // Delete VAOs
-        glDeleteVertexArrays(1, &vaoLines);
-        glDeleteVertexArrays(1, &vaoTriangles);
-        glDeleteVertexArrays(1, &vaoQuads);
-    }
-
-    //glDetachShader(defaultShaderProgram, vertexShader);
-    //glDetachShader(defaultShaderProgram, fragmentShader);
-    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
-    //glDeleteShader(fragmentShader);   // Already deleted on sahder compilation
-    glDeleteProgram(defaultShader.id);
-
-    // Free vertex arrays memory
-    free(lines.vertices);
-    free(lines.colors);
-
-    free(triangles.vertices);
-    free(triangles.colors);
-
-    free(quads.vertices);
-    free(quads.texcoords);
-    free(quads.colors);
-    free(quads.indices);
-
-    // Free GPU texture
+    UnloadDefaultShader();
+    UnloadDefaultBuffers();
+    
+    // Delete default white texture
     glDeleteTextures(1, &whiteTexture);
     TraceLog(INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
 
@@ -1113,7 +1060,7 @@ void rlglClose(void)
 void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    UpdateBuffers();
+    UpdateDefaultBuffers();
 
     if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
     {
@@ -1846,7 +1793,9 @@ void rlglGenerateMipmaps(Texture2D texture)
         // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
         free(data);
         
-#elif defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
         TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
 
@@ -2116,8 +2065,8 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
-    char *vShaderStr = TextFileRead(vsFileName);
-    char *fShaderStr = TextFileRead(fsFileName);
+    char *vShaderStr = ReadTextFile(vsFileName);
+    char *fShaderStr = ReadTextFile(fsFileName);
     
     if ((vShaderStr != NULL) && (fShaderStr != NULL))
     {
@@ -2418,7 +2367,7 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
     }
 }
 
-// Load Shader (Vertex and Fragment)
+// Load default shader (Vertex and Fragment)
 // NOTE: This shader program is used for batch buffers (lines, triangles, quads)
 static Shader LoadDefaultShader(void)
 {
@@ -2503,43 +2452,24 @@ static void LoadDefaultShaderLocations(Shader *shader)
     shader->mapSpecularLoc = glGetUniformLocation(shader->id, "texture2");
 }
 
-// Read text file
-// NOTE: text chars array should be freed manually
-static char *TextFileRead(char *fileName)
+// Unload default shader 
+static void UnloadDefaultShader(void)
 {
-    FILE *textFile;
-    char *text = NULL;
+    glUseProgram(0);
 
-    int count = 0;
-
-    if (fileName != NULL)
-    {
-        textFile = fopen(fileName,"rt");
-
-        if (textFile != NULL)
-        {
-            fseek(textFile, 0, SEEK_END);
-            count = ftell(textFile);
-            rewind(textFile);
-
-            if (count > 0)
-            {
-                text = (char *)malloc(sizeof(char)*(count + 1));
-                count = fread(text, sizeof(char), count, textFile);
-                text[count] = '\0';
-            }
-
-            fclose(textFile);
-        }
-        else TraceLog(WARNING, "[%s] Text file could not be opened", fileName);
-    }
-
-    return text;
+    //glDetachShader(defaultShaderProgram, vertexShader);
+    //glDetachShader(defaultShaderProgram, fragmentShader);
+    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on sahder compilation
+    glDeleteProgram(defaultShader.id);
 }
 
-// Allocate and initialize float array buffers to store vertex data (lines, triangles, quads)
-static void InitializeBuffers(void)
+// Load default internal buffers (lines, triangles, quads)
+static void LoadDefaultBuffers(void)
 {
+    // [CPU] Allocate and initialize float array buffers to store vertex data (lines, triangles, quads)
+    //--------------------------------------------------------------------------------------------
+    
     // Initialize lines arrays (vertex position and color data)
     lines.vertices = (float *)malloc(sizeof(float)*3*2*MAX_LINES_BATCH);        // 3 float by vertex, 2 vertex by line
     lines.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*2*MAX_LINES_BATCH);  // 4 float by color, 2 colors by line
@@ -2593,13 +2523,14 @@ static void InitializeBuffers(void)
     quads.tcCounter = 0;
     quads.cCounter = 0;
 
-    TraceLog(INFO, "CPU buffers (lines, triangles, quads) initialized successfully");
-}
-
-// Initialize Vertex Array Objects (Contain VBO)
-// NOTE: lines, triangles and quads buffers use currentShader
-static void InitializeBuffersGPU(void)
-{
+    TraceLog(INFO, "Default buffers initialized successfully in CPU (lines, triangles, quads)");
+    //--------------------------------------------------------------------------------------------
+    
+    // [GPU] Upload vertex data and initialize VAOs/VBOs (lines, triangles, quads)
+    // NOTE: Default buffers are linked to use currentShader (defaultShader)
+    //--------------------------------------------------------------------------------------------
+    
+    // Upload and link lines vertex buffers
     if (vaoSupported)
     {
         // Initialize Lines VAO
@@ -2622,10 +2553,10 @@ static void InitializeBuffersGPU(void)
     glEnableVertexAttribArray(currentShader.colorLoc);
     glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
-    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Lines VAO initialized successfully", vaoLines);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Lines VBOs initialized successfully", linesBuffer[0], linesBuffer[1]);
-    //--------------------------------------------------------------
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers (lines) VAO initialized successfully", vaoLines);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers (lines) VBOs initialized successfully", linesBuffer[0], linesBuffer[1]);
 
+    // Upload and link triangles vertex buffers
     if (vaoSupported)
     {
         // Initialize Triangles VAO
@@ -2647,10 +2578,10 @@ static void InitializeBuffersGPU(void)
     glEnableVertexAttribArray(currentShader.colorLoc);
     glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
-    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Triangles VAO initialized successfully", vaoTriangles);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Triangles VBOs initialized successfully", trianglesBuffer[0], trianglesBuffer[1]);
-    //--------------------------------------------------------------
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers (triangles) VAO initialized successfully", vaoTriangles);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers (triangles) VBOs initialized successfully", trianglesBuffer[0], trianglesBuffer[1]);
 
+    // Upload and link quads vertex buffers
     if (vaoSupported)
     {
         // Initialize Quads VAO
@@ -2685,18 +2616,20 @@ static void InitializeBuffersGPU(void)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(short)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
 #endif
 
-    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Quads VAO initialized successfully", vaoQuads);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i][VBO ID %i] Quads VBOs initialized successfully", quadsBuffer[0], quadsBuffer[1], quadsBuffer[2], quadsBuffer[3]);
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers (quads) VAO initialized successfully", vaoQuads);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i][VBO ID %i] Default buffers (quads) VBOs initialized successfully", quadsBuffer[0], quadsBuffer[1], quadsBuffer[2], quadsBuffer[3]);
 
     // Unbind the current VAO
     if (vaoSupported) glBindVertexArray(0);
+    //--------------------------------------------------------------------------------------------
 }
 
-// Update VBOs with vertex array data
+// Update default buffers (VAOs/VBOs) with vertex array data
 // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
-// TODO: If no data changed on the CPU arrays --> No need to update GPU arrays (change flag required)
-static void UpdateBuffers(void)
+// TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (change flag required)
+static void UpdateDefaultBuffers(void)
 {
+    // Update lines vertex buffers
     if (lines.vCounter > 0)
     {
         // Activate Lines VAO
@@ -2712,8 +2645,8 @@ static void UpdateBuffers(void)
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*lines.cCounter, lines.colors);
     }
-    //--------------------------------------------------------------
 
+    // Update triangles vertex buffers
     if (triangles.vCounter > 0)
     {
         // Activate Triangles VAO
@@ -2729,8 +2662,8 @@ static void UpdateBuffers(void)
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*triangles.cCounter, triangles.colors);
     }
-    //--------------------------------------------------------------
 
+    // Update quads vertex buffers
     if (quads.vCounter > 0)
     {
         // Activate Quads VAO
@@ -2752,7 +2685,7 @@ static void UpdateBuffers(void)
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*quads.vCounter, quads.colors);
 
         // Another option would be using buffer mapping...
-        //triangles.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+        //quads.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
         // Now we can modify vertices
         //glUnmapBuffer(GL_ARRAY_BUFFER);
     }
@@ -2760,6 +2693,83 @@ static void UpdateBuffers(void)
 
     // Unbind the current VAO
     if (vaoSupported) glBindVertexArray(0);
+}
+
+// Unload default buffers vertex data from CPU and GPU
+static void UnloadDefaultBuffers(void)
+{
+    // Unbind everything
+    if (vaoSupported) glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Delete VBOs from GPU (VRAM)
+    glDeleteBuffers(1, &linesBuffer[0]);
+    glDeleteBuffers(1, &linesBuffer[1]);
+    glDeleteBuffers(1, &trianglesBuffer[0]);
+    glDeleteBuffers(1, &trianglesBuffer[1]);
+    glDeleteBuffers(1, &quadsBuffer[0]);
+    glDeleteBuffers(1, &quadsBuffer[1]);
+    glDeleteBuffers(1, &quadsBuffer[2]);
+    glDeleteBuffers(1, &quadsBuffer[3]);
+
+    if (vaoSupported)
+    {
+        // Delete VAOs from GPU (VRAM)
+        glDeleteVertexArrays(1, &vaoLines);
+        glDeleteVertexArrays(1, &vaoTriangles);
+        glDeleteVertexArrays(1, &vaoQuads);
+    }
+
+    // Free vertex arrays memory from CPU (RAM)
+    free(lines.vertices);
+    free(lines.colors);
+
+    free(triangles.vertices);
+    free(triangles.colors);
+
+    free(quads.vertices);
+    free(quads.texcoords);
+    free(quads.colors);
+    free(quads.indices);
+}
+
+// Read text data from file
+// NOTE: text chars array should be freed manually
+static char *ReadTextFile(const char *fileName)
+{
+    FILE *textFile;
+    char *text = NULL;
+
+    int count = 0;
+
+    if (fileName != NULL)
+    {
+        textFile = fopen(fileName,"rt");
+
+        if (textFile != NULL)
+        {
+            fseek(textFile, 0, SEEK_END);
+            count = ftell(textFile);
+            rewind(textFile);
+
+            if (count > 0)
+            {
+                text = (char *)malloc(sizeof(char)*(count + 1));
+                count = fread(text, sizeof(char), count, textFile);
+                text[count] = '\0';
+            }
+
+            fclose(textFile);
+        }
+        else TraceLog(WARNING, "[%s] Text file could not be opened", fileName);
+    }
+
+    return text;
 }
 #endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
@@ -2891,7 +2901,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_STANDALONE)
-
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
 static void TraceLog(int msgType, const char *text, ...)
