@@ -387,10 +387,10 @@ typedef struct Shader {
     unsigned int id;      // Shader program id
     
     // Variable attributes locations
-    int vertexLoc;        // Vertex attribute location point (vertex shader)
-    int texcoordLoc;      // Texcoord attribute location point (vertex shader)
-    int normalLoc;        // Normal attribute location point (vertex shader)
-    int colorLoc;         // Color attibute location point (vertex shader)
+    int vertexLoc;        // Vertex attribute location point (default-location = 0)
+    int texcoordLoc;      // Texcoord attribute location point (default-location = 1)
+    int normalLoc;        // Normal attribute location point (default-location = 2)
+    int colorLoc;         // Color attibute location point (default-location = 3)
 
     // Uniform locations
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
@@ -801,17 +801,20 @@ void DrawGizmo(Vector3 position);                                               
 //------------------------------------------------------------------------------------
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
-Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
-Model LoadModelEx(Mesh data);                                                                      // Load a 3d model (from mesh data)
-//Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
-Model LoadHeightmap(Image heightmap, Vector3 size);                                                // Load a heightmap image as a 3d model
-Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
-void UnloadModel(Model model);                                                                     // Unload 3d model from memory
-void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
+Model LoadModel(const char *fileName);                          // Load a 3d model (.OBJ)
+Model LoadModelEx(Mesh data);                                   // Load a 3d model (from mesh data)
+//Model LoadModelFromRES(const char *rresName, int resId);      // TODO: Load a 3d model from rRES file (raylib Resource)
+Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
+Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
+void UnloadModel(Model model);                                  // Unload 3d model from memory
+void SetModelTexture(Model *model, Texture2D texture);          // Link a texture to a model
+
+Material LoadMaterial(const char *fileName);                    // Load material data (from file)
+Material LoadDefaultMaterial(void);                              // Load default material (uses default models shader)
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model with extended parameters
-void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
+void DrawModelWires(Model model, Vector3 position, float scale, Color tint);                      // Draw a model wires (with texture if set)
 void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
 void DrawBoundingBox(BoundingBox box, Color color);                                                // Draw bounding box (wires)
 
@@ -832,11 +835,11 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shaders strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
 void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
-void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
+Shader GetDefaultShader(void);                                      // Get default shader
+Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)

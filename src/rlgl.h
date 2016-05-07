@@ -280,17 +280,16 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
-
-// NOTE: There is a set of shader related functions that are available to end user,
-// to avoid creating function wrappers through core module, they have been directly declared in raylib.h
-
-Model rlglLoadModel(Mesh mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color color, bool wires);
+void rlglLoadMesh(Mesh *mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
+void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires);
 
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 
 unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
 void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
+
+// NOTE: There is a set of shader related functions that are available to end user,
+// to avoid creating function wrappers through core module, they have been directly declared in raylib.h
 
 #if defined(RLGL_STANDALONE)
 //------------------------------------------------------------------------------------
@@ -298,11 +297,11 @@ void *rlglReadTexturePixels(Texture2D texture);                     // Read text
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shader strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
 void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
-void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
+Shader GetDefaultShader(void);                                      // Get default shader
+Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)

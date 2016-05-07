@@ -55,7 +55,9 @@ extern unsigned int whiteTexture;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Mesh LoadOBJ(const char *fileName);
+static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
+static Material LoadMTL(const char *fileName);  // Load MTL material data
+
 static Mesh GenMeshHeightmap(Image image, Vector3 size);
 static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 
@@ -542,24 +544,19 @@ void DrawGizmo(Vector3 position)
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
-    Mesh mesh = { 0 };
     
-    // NOTE: Initialize default data for model in case loading fails, maybe a cube?
+    // TODO: Initialize default data for model in case loading fails, maybe a cube?
 
-    if (strcmp(GetExtension(fileName),"obj") == 0) mesh = LoadOBJ(fileName);
+    if (strcmp(GetExtension(fileName),"obj") == 0) model.mesh = LoadOBJ(fileName);
     else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-    
-    if (mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
+    if (model.mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
     else
     {
-        // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
-        model = rlglLoadModel(mesh);     // Upload vertex data to GPU
-
-        // NOTE: Now that vertex data is uploaded to GPU VRAM, we can free arrays from CPU RAM
-        // We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
-        // ...but we could keep CPU vertex data in case we need to update the mesh
+        rlglLoadMesh(&model.mesh);     // Upload vertex data to GPU
+        
+        model.transform = MatrixIdentity();
+        model.material = LoadDefaultMaterial();
     }
 
     return model;
@@ -568,12 +565,12 @@ Model LoadModel(const char *fileName)
 // Load a 3d model (from vertex data)
 Model LoadModelEx(Mesh data)
 {
-    Model model;
+    Model model = { 0 };
 
-    // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
-    model = rlglLoadModel(data);     // Upload vertex data to GPU
+    rlglLoadMesh(&data);     // Upload vertex data to GPU
     
-    // NOTE: Vertex data is managed externally, must be deallocated manually
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
     
     return model;
 }
@@ -582,8 +579,14 @@ Model LoadModelEx(Mesh data)
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
 {
-    Mesh mesh = GenMeshHeightmap(heightmap, size);
-    Model model = rlglLoadModel(mesh);
+    Model model = { 0 };
+    
+    model.mesh = GenMeshHeightmap(heightmap, size);
+    
+    rlglLoadMesh(&model.mesh);
+    
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
 
     return model;
 }
@@ -591,8 +594,14 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
 // Load a map image as a 3d model (cubes based)
 Model LoadCubicmap(Image cubicmap)
 {
-    Mesh mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0, 1.0, 1.5f });
-    Model model = rlglLoadModel(mesh);
+    Model model = { 0 };
+    
+    model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0, 1.0, 1.5f });
+    
+    rlglLoadMesh(&model.mesh);
+    
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
 
     return model;
 }
@@ -613,11 +622,42 @@ void UnloadModel(Model model)
     rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
     rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
     rlDeleteBuffers(model.mesh.vboId[2]);   // normals
-    //rlDeleteBuffers(model.mesh.vboId[3]);   // texcoords2 (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[3]);   // colors (NOT USED)
     //rlDeleteBuffers(model.mesh.vboId[4]);   // tangents (NOT USED)
-    //rlDeleteBuffers(model.mesh.vboId[5]);   // colors (NOT USED)
+    //rlDeleteBuffers(model.mesh.vboId[5]);   // texcoords2 (NOT USED)
 
     rlDeleteVertexArrays(model.mesh.vaoId);
+}
+
+// Load material data (from file)
+Material LoadMaterial(const char *fileName)
+{
+    Material material = { 0 };
+    
+    if (strcmp(GetExtension(fileName),"mtl") == 0) material = LoadMTL(fileName);
+    else TraceLog(WARNING, "[%s] Material extension not recognized, it can't be loaded", fileName);
+    
+    return material;
+}
+
+// Load default material (uses default models shader)
+Material LoadDefaultMaterial(void)
+{
+    Material material = { 0 };
+    
+    material.shader = GetDefaultShader();
+    material.texDiffuse = GetDefaultTexture();      // White texture (1x1 pixel)
+    //material.texNormal;           // NOTE: By default, not set
+    //material.texSpecular;         // NOTE: By default, not set
+    
+    material.colDiffuse = WHITE;    // Diffuse color
+    material.colAmbient = WHITE;    // Ambient color
+    material.colSpecular = WHITE;   // Specular color
+    
+    material.glossiness = 100.0f;   // Glossiness level
+    material.normalDepth = 1.0f;    // Normal map depth
+    
+    return material;
 }
 
 // Link a texture to a model
@@ -1100,31 +1140,59 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
-
+    
     DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
 // Draw a model with extended parameters
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
-    // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
-    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, false);
+    // Calculate transformation matrix from function parameters
+    // Get transform matrix (rotation -> scale -> translation)
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
+    Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
+    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
+    
+    // Combine model transformation matrix (model.transform) with matrix generated by function parameters (matTransform)
+    //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
+    
+    model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+    model.material.colDiffuse = tint;
+    
+    rlglDrawEx(model.mesh, model.material, model.transform, false);
 }
 
 // Draw a model wires (with texture if set)
-void DrawModelWires(Model model, Vector3 position, float scale, Color color)
+void DrawModelWires(Model model, Vector3 position, float scale, Color tint)
 {
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
 
-    rlglDrawModel(model, position, rotationAxis, 0.0f, vScale, color, true);
+    // Calculate transformation matrix from function parameters
+    // Get transform matrix (rotation -> scale -> translation)
+    Matrix matRotation = MatrixRotate(rotationAxis, 0.0f);
+    Matrix matScale = MatrixScale(vScale.x, vScale.y, vScale.z);
+    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
+    
+    model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+    model.material.colDiffuse = tint;
+    
+    rlglDrawEx(model.mesh, model.material, model.transform, true);
 }
 
 // Draw a model wires (with texture if set) with extended parameters
 void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
-    // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
-    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, true);
+    // Calculate transformation matrix from function parameters
+    // Get transform matrix (rotation -> scale -> translation)
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
+    Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
+    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
+    
+    model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+    model.material.colDiffuse = tint;
+    
+    rlglDrawEx(model.mesh, model.material, model.transform, true);
 }
 
 // Draw a billboard
@@ -1855,4 +1923,40 @@ static Mesh LoadOBJ(const char *fileName)
     TraceLog(INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return mesh;
+}
+
+// Load MTL material data
+static Material LoadMTL(const char *fileName)
+{
+    Material material = { 0 };
+    
+    // TODO: Load mtl file
+    
+    char dataType;
+    char comments[200];
+
+    FILE *mtlFile;
+
+    mtlFile = fopen(fileName, "rt");
+
+    if (mtlFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] MTL file could not be opened", fileName);
+        return material;
+    }
+
+    // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
+    // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
+    // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
+    while(!feof(mtlFile))
+    {
+        fscanf(mtlFile, "%c", &dataType);
+    }
+
+    fclose(mtlFile);
+
+    // NOTE: At this point we have all material data
+    TraceLog(INFO, "[%s] Material loaded successfully", fileName);
+    
+    return material;
 }
