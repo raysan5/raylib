@@ -1080,22 +1080,24 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
 
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
-    glEnableClientState(GL_VERTEX_ARRAY);                     // Enable vertex array
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);              // Enable texture coords array
-    glEnableClientState(GL_NORMAL_ARRAY);                     // Enable normals array
+    glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
+    glEnableClientState(GL_NORMAL_ARRAY);                   // Enable normals array
 
-    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);     // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);  // Pointer to texture coords array
-    glNormalPointer(GL_FLOAT, 0, mesh.normals);         // Pointer to normals array
+    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
+    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
+    glNormalPointer(GL_FLOAT, 0, mesh.normals);             // Pointer to normals array
     //glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array (NOT USED)
 
-    rlMultMatrixf(MatrixToFloat(transform));
-    
-    glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(transform));
+        rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
+        glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    rlPopMatrix();
 
-    glDisableClientState(GL_VERTEX_ARRAY);                     // Disable vertex array
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);              // Disable texture coords array
-    glDisableClientState(GL_NORMAL_ARRAY);                     // Disable normals array
+    glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
+    glDisableClientState(GL_NORMAL_ARRAY);                  // Disable normals array
 
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -1865,6 +1867,20 @@ void *rlglReadTexturePixels(Texture2D texture)
 // NOTE: Those functions are exposed directly to the user in raylib.h
 //----------------------------------------------------------------------------------
 
+// Get default internal texture (white texture)
+Texture2D GetDefaultTexture(void)
+{
+    Texture2D texture;
+    
+    texture.id = whiteTexture;
+    texture.width = 1;
+    texture.height = 1;
+    texture.mipmaps = 1;
+    texture.format = UNCOMPRESSED_R8G8B8A8;
+    
+    return texture;
+}
+
 // Load a custom shader and bind default locations
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
@@ -1930,7 +1946,12 @@ void SetDefaultShader(void)
 // Get default shader
 Shader GetDefaultShader(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     return defaultShader;
+#else
+    Shader shader = { 0 };
+    return shader;
+#endif
 }
 
 // Get shader uniform location
@@ -2048,19 +2069,6 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
         if (width < 1) width = 1;
         if (height < 1) height = 1;
     }
-}
-
-Texture2D GetDefaultTexture(void)
-{
-    Texture2D texture;
-    
-    texture.id = whiteTexture;
-    texture.width = 1;
-    texture.height = 1;
-    texture.mipmaps = 1;
-    texture.format = UNCOMPRESSED_R8G8B8A8;
-    
-    return texture;
 }
 
 // Load custom shader strings and return program id
