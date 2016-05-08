@@ -1084,12 +1084,13 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
-    glEnableClientState(GL_NORMAL_ARRAY);                   // Enable normals array
+    if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
+    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array          
 
     glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
     glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
-    glNormalPointer(GL_FLOAT, 0, mesh.normals);             // Pointer to normals array
-    //glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array (NOT USED)
+    if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
+    if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
@@ -1099,7 +1100,8 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
 
     glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
-    glDisableClientState(GL_NORMAL_ARRAY);                  // Disable normals array
+    if (mesh.normals != NULL) glDisableClientState(GL_NORMAL_ARRAY);    // Disable normals array
+    if (mesh.colors != NULL) glDisableClientState(GL_NORMAL_ARRAY);     // Disable colors array
 
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -1170,7 +1172,29 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
             glEnableVertexAttribArray(material.shader.normalLoc);
         }
         
-        // TODO: Bind mesh VBO data: colors, tangents, texcoords2 (if available)
+        // Bind mesh VBO data: vertex colors (shader-location = 3, if available) , tangents, texcoords2 (if available)
+        if (material.shader.colorLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
+            glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(material.shader.colorLoc);
+        }
+        
+        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
+        if (material.shader.tangentLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
+            glVertexAttribPointer(material.shader.tangentLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.tangentLoc);
+        }
+        
+        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
+        if (material.shader.texcoord2Loc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
+            glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.texcoord2Loc);
+        }
     }
 
     // Draw call!
@@ -1640,16 +1664,15 @@ void rlglGenerateMipmaps(Texture2D texture)
 }
 
 // Upload vertex data into a VAO (if supported) and VBO
-// TODO: Consider attributes: color, texcoords2, tangents (if available)
 void rlglLoadMesh(Mesh *mesh)
 {
     mesh->vaoId = 0;        // Vertex Array Object
     mesh->vboId[0] = 0;     // Vertex positions VBO
     mesh->vboId[1] = 0;     // Vertex texcoords VBO
     mesh->vboId[2] = 0;     // Vertex normals VBO
-    mesh->vboId[3] = 0;     // Vertex color VBO
-    mesh->vboId[4] = 0;     // Vertex tangent VBO
-    mesh->vboId[5] = 0;     // Vertex texcoord2 VBO
+    mesh->vboId[3] = 0;     // Vertex colors VBO
+    mesh->vboId[4] = 0;     // Vertex tangents VBO
+    mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
     
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2314,12 +2337,16 @@ static void LoadDefaultShaderLocations(Shader *shader)
     //          vertex texcoord location = 1
     //          vertex normal location = 2
     //          vertex color location = 3
+    //          vertex tangent location = 4
+    //          vertex texcoord2 location = 5
     
     // Get handles to GLSL input attibute locations
     shader->vertexLoc = glGetAttribLocation(shader->id, "vertexPosition");
     shader->texcoordLoc = glGetAttribLocation(shader->id, "vertexTexCoord");
     shader->normalLoc = glGetAttribLocation(shader->id, "vertexNormal");
     shader->colorLoc = glGetAttribLocation(shader->id, "vertexColor");
+    shader->tangentLoc = glGetAttribLocation(shader->id, "vertexTangent");
+    shader->texcoord2Loc = glGetAttribLocation(shader->id, "vertexTexCoord2");
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");

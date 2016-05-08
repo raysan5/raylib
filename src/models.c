@@ -695,7 +695,7 @@ void UnloadModel(Model model)
     // Unload mesh data
     free(model.mesh.vertices);
     free(model.mesh.texcoords);
-    free(model.mesh.normals);
+    if (model.mesh.normals != NULL) free(model.mesh.normals);
     if (model.mesh.colors != NULL) free(model.mesh.colors);
     if (model.mesh.tangents != NULL) free(model.mesh.tangents);
     if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2);

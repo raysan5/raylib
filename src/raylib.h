@@ -369,12 +369,12 @@ typedef struct BoundingBox {
 // Vertex data definning a mesh
 typedef struct Mesh {
     int vertexCount;            // num vertices
-    float *vertices;            // vertex position (XYZ - 3 components per vertex)
-    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
-    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
-    float *normals;             // vertex normals (XYZ - 3 components per vertex)
-    float *tangents;            // vertex tangents (XYZ - 3 components per vertex)
-    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex)
+    float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;             // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     
     BoundingBox bounds;         // mesh limits defined by min and max points
     
@@ -391,6 +391,8 @@ typedef struct Shader {
     int texcoordLoc;      // Texcoord attribute location point (default-location = 1)
     int normalLoc;        // Normal attribute location point (default-location = 2)
     int colorLoc;         // Color attibute location point (default-location = 3)
+    int tangentLoc;       // Tangent attribute location point (default-location = 4)
+    int texcoord2Loc;     // Texcoord2 attribute location point (default-location = 5)
 
     // Uniform locations
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
