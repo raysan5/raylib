@@ -2001,7 +2001,26 @@ static Material LoadMTL(const char *fileName)
 {
     Material material = { 0 };
     
-    // TODO: Load mtl file
+    // TODO: Load mtl file (multiple variations of .mtl format)
+    /*
+    newmtl string           Material newmtl (material name). Begins a new material description.
+    Ka float float float    Ambient color Ka (red) (green) (blue)
+    Kd float float float    Diffuse color Kd (red) (green) (blue)
+    Ks float float float    Specular color Ks (red) (green) (blue)
+    Ke float float float    Emmisive color
+    d float Tr float        Dissolve factor. Transparency Tr (alpha). d is inverse of Tr
+    Ns int                  Shininess Ns (specular power). Ranges from 0 to 1000. Specular exponent.
+    Ni int                  Refraction index. 
+    illum int               Illumination model illum (1 / 2); 1 if specular disabled, 2 if specular enabled (lambertian model)
+    map_Kd string           Texture map_Kd (filename)
+    map_Kd string           Diffuse color texture map.
+    map_Ks string           Specular color texture map.
+    map_Ka string           Ambient color texture map.
+    map_Bump string         Bump texture map. Alternative: bump string / map_bump string
+    map_d string            Opacity texture map.
+    disp string             Displacement map
+    refl                    Reflection type and map
+    */
     
     char dataType;
     char comments[200];
