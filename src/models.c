@@ -575,6 +575,89 @@ Model LoadModelEx(Mesh data)
     return model;
 }
 
+// Load a 3d model from rRES file (raylib Resource)
+Model LoadModelFromRES(const char *rresName, int resId)
+{
+    Model model = { 0 };
+    bool found = false;
+
+    char id[4];             // rRES file identifier
+    unsigned char version;  // rRES file version and subversion
+    char useless;           // rRES header reserved data
+    short numRes;
+
+    ResInfoHeader infoHeader;
+
+    FILE *rresFile = fopen(rresName, "rb");
+
+    if (rresFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
+    }
+    else
+    {
+        // Read rres file (basic file check - id)
+        fread(&id[0], sizeof(char), 1, rresFile);
+        fread(&id[1], sizeof(char), 1, rresFile);
+        fread(&id[2], sizeof(char), 1, rresFile);
+        fread(&id[3], sizeof(char), 1, rresFile);
+        fread(&version, sizeof(char), 1, rresFile);
+        fread(&useless, sizeof(char), 1, rresFile);
+
+        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
+        {
+            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
+        }
+        else
+        {
+            // Read number of resources embedded
+            fread(&numRes, sizeof(short), 1, rresFile);
+
+            for (int i = 0; i < numRes; i++)
+            {
+                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
+
+                if (infoHeader.id == resId)
+                {
+                    found = true;
+
+                    // Check data is of valid MODEL type
+                    if (infoHeader.type == 8)
+                    {
+                        // TODO: Load model data
+                    }
+                    else
+                    {
+                        TraceLog(WARNING, "[%s] Required resource do not seem to be a valid MODEL resource", rresName);
+                    }
+                }
+                else
+                {
+                    // Depending on type, skip the right amount of parameters
+                    switch (infoHeader.type)
+                    {
+                        case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
+                        case 1: fseek(rresFile, 6, SEEK_CUR); break;    // SOUND: Jump 6 bytes of parameters
+                        case 2: fseek(rresFile, 5, SEEK_CUR); break;    // MODEL: Jump 5 bytes of parameters (TODO: Review)
+                        case 3: break;                                  // TEXT: No parameters
+                        case 4: break;                                  // RAW: No parameters
+                        default: break;
+                    }
+
+                    // Jump DATA to read next infoHeader
+                    fseek(rresFile, infoHeader.size, SEEK_CUR);
+                }
+            }
+        }
+
+        fclose(rresFile);
+    }
+
+    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
+
+    return model;
+}
+
 // Load a heightmap image as a 3d model
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
@@ -613,18 +696,18 @@ void UnloadModel(Model model)
     free(model.mesh.vertices);
     free(model.mesh.texcoords);
     free(model.mesh.normals);
-    free(model.mesh.colors);
-    //if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2); // Not used
-    //if (model.mesh.tangents != NULL) free(model.mesh.tangents); // Not used
+    if (model.mesh.colors != NULL) free(model.mesh.colors);
+    if (model.mesh.tangents != NULL) free(model.mesh.tangents);
+    if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2);
     
     TraceLog(INFO, "Unloaded model data from RAM (CPU)");
     
     rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
     rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
     rlDeleteBuffers(model.mesh.vboId[2]);   // normals
-    //rlDeleteBuffers(model.mesh.vboId[3]);   // colors (NOT USED)
-    //rlDeleteBuffers(model.mesh.vboId[4]);   // tangents (NOT USED)
-    //rlDeleteBuffers(model.mesh.vboId[5]);   // texcoords2 (NOT USED)
+    rlDeleteBuffers(model.mesh.vboId[3]);   // colors
+    rlDeleteBuffers(model.mesh.vboId[4]);   // tangents
+    rlDeleteBuffers(model.mesh.vboId[5]);   // texcoords2
 
     rlDeleteVertexArrays(model.mesh.vaoId);
 }
@@ -672,7 +755,7 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
     
-    Mesh mesh;
+    Mesh mesh = { 0 };
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
@@ -687,7 +770,7 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
-    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char)); // Not used...
+    mesh.colors = NULL;
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -770,16 +853,12 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     
     free(pixels);
 
-    // Fill color data
-    // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
-
     return mesh;
 }
 
 static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
-    Mesh mesh;
+    Mesh mesh = { 0 };
 
     Color *cubicmapPixels = GetImageData(cubicmap);
     
@@ -1088,11 +1167,7 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
-    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char));  // Not used...
-
-    // Fill color data
-    // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
+    mesh.colors = NULL;
 
     int fCounter = 0;
 
@@ -1810,7 +1885,7 @@ static Mesh LoadOBJ(const char *fileName)
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char));
+    mesh.colors = NULL;
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -1909,10 +1984,6 @@ static Mesh LoadOBJ(const char *fileName)
 
     // Security check, just in case no normals or no texcoords defined in OBJ
     if (numTexCoords == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
-    
-    // NOTE: We set all vertex colors to white
-    // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
 
     // Now we can free temp mid* arrays
     free(midVertices);
@@ -1945,9 +2016,6 @@ static Material LoadMTL(const char *fileName)
         return material;
     }
 
-    // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
-    // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
-    // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
     while(!feof(mtlFile))
     {
         fscanf(mtlFile, "%c", &dataType);

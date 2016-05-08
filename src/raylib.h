@@ -386,7 +386,7 @@ typedef struct Mesh {
 typedef struct Shader {
     unsigned int id;      // Shader program id
     
-    // Variable attributes locations
+    // Vertex attributes locations (default locations)
     int vertexLoc;        // Vertex attribute location point (default-location = 0)
     int texcoordLoc;      // Texcoord attribute location point (default-location = 1)
     int normalLoc;        // Normal attribute location point (default-location = 2)
@@ -803,14 +803,14 @@ void DrawGizmo(Vector3 position);                                               
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                          // Load a 3d model (.OBJ)
 Model LoadModelEx(Mesh data);                                   // Load a 3d model (from mesh data)
-//Model LoadModelFromRES(const char *rresName, int resId);      // TODO: Load a 3d model from rRES file (raylib Resource)
+Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
 void SetModelTexture(Model *model, Texture2D texture);          // Link a texture to a model
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
-Material LoadDefaultMaterial(void);                              // Load default material (uses default models shader)
+Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model with extended parameters

@@ -811,9 +811,11 @@ void rlDeleteVertexArrays(unsigned int id)
 void rlDeleteBuffers(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDeleteBuffers(1, &id);
-    
-    if (!vaoSupported) TraceLog(INFO, "[VBO ID %i] Unloaded model vertex data from VRAM (GPU)", id);
+    if (id != 0)
+    {
+        glDeleteBuffers(1, &id);
+        if (!vaoSupported) TraceLog(INFO, "[VBO ID %i] Unloaded model vertex data from VRAM (GPU)", id);
+    }
 #endif
 }
 
@@ -1638,6 +1640,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 }
 
 // Upload vertex data into a VAO (if supported) and VBO
+// TODO: Consider attributes: color, texcoords2, tangents (if available)
 void rlglLoadMesh(Mesh *mesh)
 {
     mesh->vaoId = 0;        // Vertex Array Object
@@ -1648,11 +1651,10 @@ void rlglLoadMesh(Mesh *mesh)
     mesh->vboId[4] = 0;     // Vertex tangent VBO
     mesh->vboId[5] = 0;     // Vertex texcoord2 VBO
     
-    // TODO: Consider attributes: color, texcoords2, tangents (if available)
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vaoId = 0;       // Vertex Array Objects (VAO)
-    GLuint vboId[3];        // Vertex Buffer Objects (VBOs)
+    GLuint vboId[6];        // Vertex Buffer Objects (VBOs)
 
     if (vaoSupported)
     {
@@ -1661,36 +1663,92 @@ void rlglLoadMesh(Mesh *mesh)
         glBindVertexArray(vaoId);
     }
 
-    // Create buffers for our vertex data (positions, texcoords, normals)
-    glGenBuffers(3, vboId);
-    
     // NOTE: Attributes must be uploaded considering default locations points 
     
     // Enable vertex attributes: position (shader-location = 0)
+    glGenBuffers(1, &vboId[0]);
     glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(0);
 
     // Enable vertex attributes: texcoords (shader-location = 1)
+    glGenBuffers(1, &vboId[1]);
     glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(1);
 
     // Enable vertex attributes: normals (shader-location = 2)
-    glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->normals, GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 3, GL_FLOAT, 0, 0, 0);
-    glEnableVertexAttribArray(2);
+    if (mesh->normals != NULL)
+    {
+        glGenBuffers(1, &vboId[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->normals, GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(2);
+    }
+    else
+    {
+        // Default color vertex attribute set to WHITE
+        glVertexAttrib3f(2, 1.0f, 1.0f, 1.0f);
+        glDisableVertexAttribArray(2);
+    }
     
     // Default color vertex attribute (shader-location = 3)
-    glVertexAttrib4f(3, 1.0f, 1.0f, 1.0f, 1.0f);    // Color vertex attribute set to default: WHITE
-    glDisableVertexAttribArray(3);
+    if (mesh->colors != NULL)
+    {
+        glGenBuffers(1, &vboId[3]);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId[3]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*mesh->vertexCount, mesh->colors, GL_STATIC_DRAW);
+        glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+        glEnableVertexAttribArray(3);
+    }
+    else
+    {
+        // Default color vertex attribute set to WHITE
+        glVertexAttrib4f(3, 1.0f, 1.0f, 1.0f, 1.0f);
+        glDisableVertexAttribArray(3);
+    }
+    
+    // Default tangent vertex attribute (shader-location = 4)
+    if (mesh->tangents != NULL)
+    {
+        glGenBuffers(1, &vboId[4]);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId[4]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->tangents, GL_STATIC_DRAW);
+        glVertexAttribPointer(4, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(4);
+    }
+    else
+    {
+        // Default tangents vertex attribute
+        glVertexAttrib3f(4, 0.0f, 0.0f, 0.0f);
+        glDisableVertexAttribArray(4);
+    }
+    
+    // Default texcoord2 vertex attribute (shader-location = 5)
+    if (mesh->texcoords2 != NULL)
+    {
+        glGenBuffers(1, &vboId[5]);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId[5]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords2, GL_STATIC_DRAW);
+        glVertexAttribPointer(5, 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(5);
+    }
+    else
+    {
+        // Default tangents vertex attribute
+        glVertexAttrib2f(5, 0.0f, 0.0f);
+        glDisableVertexAttribArray(5);
+    }
     
     mesh->vboId[0] = vboId[0];     // Vertex position VBO
     mesh->vboId[1] = vboId[1];     // Texcoords VBO
     mesh->vboId[2] = vboId[2];     // Normals VBO
+    mesh->vboId[3] = vboId[3];     // Colors VBO
+    mesh->vboId[4] = vboId[4];     // Tangents VBO
+    mesh->vboId[5] = vboId[5];     // Texcoords2 VBO
 
     if (vaoSupported)
     {
@@ -1703,7 +1761,7 @@ void rlglLoadMesh(Mesh *mesh)
     }
     else
     {
-        TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vboId[0], mesh->vboId[1], mesh->vboId[2]);
+        TraceLog(INFO, "[VBOs] Mesh uploaded successfully to VRAM (GPU)");
     }
 #endif
 }
