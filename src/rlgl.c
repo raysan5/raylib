@@ -115,6 +115,15 @@
     #define GL_UNSIGNED_SHORT_5_5_5_1   0x8034
     #define GL_UNSIGNED_SHORT_4_4_4_4   0x8033
 #endif
+
+// Default vertex attribute names on shader to set location points
+#define DEFAULT_ATTRIB_POSITION_NAME    "vertexPosition"    // shader-location = 0
+#define DEFAULT_ATTRIB_TEXCOORD_NAME    "vertexTexCoord"    // shader-location = 1
+#define DEFAULT_ATTRIB_NORMAL_NAME      "vertexNormal"      // shader-location = 2
+#define DEFAULT_ATTRIB_COLOR_NAME       "vertexColor"       // shader-location = 3
+#define DEFAULT_ATTRIB_TANGENT_NAME     "vertexTangent"     // shader-location = 4
+#define DEFAULT_ATTRIB_TEXCOORD2_NAME   "vertexTexCoord2"   // shader-location = 5
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -2220,12 +2229,12 @@ static unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
     glAttachShader(program, fragmentShader);
     
     // NOTE: Default attribute shader locations must be binded before linking
-    glBindAttribLocation(program, 0, "vertexPosition");
-    glBindAttribLocation(program, 1, "vertexTexCoord");
-    glBindAttribLocation(program, 2, "vertexNormal");
-    glBindAttribLocation(program, 3, "vertexColor");
-    glBindAttribLocation(program, 4, "vertexTangent");
-    glBindAttribLocation(program, 5, "vertexTexCoord2");
+    glBindAttribLocation(program, 0, DEFAULT_ATTRIB_POSITION_NAME);
+    glBindAttribLocation(program, 1, DEFAULT_ATTRIB_TEXCOORD_NAME);
+    glBindAttribLocation(program, 2, DEFAULT_ATTRIB_NORMAL_NAME);
+    glBindAttribLocation(program, 3, DEFAULT_ATTRIB_COLOR_NAME);
+    glBindAttribLocation(program, 4, DEFAULT_ATTRIB_TANGENT_NAME);
+    glBindAttribLocation(program, 5, DEFAULT_ATTRIB_TEXCOORD2_NAME);
     
     // NOTE: If some attrib name is no found on the shader, it locations becomes -1
     
