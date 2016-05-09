@@ -1997,33 +1997,16 @@ static Mesh LoadOBJ(const char *fileName)
 }
 
 // Load MTL material data
+// NOTE: Texture map parameters are not supported
 static Material LoadMTL(const char *fileName)
 {
-    Material material = { 0 };
+    #define MAX_BUFFER_SIZE     128
     
-    // TODO: Load mtl file (multiple variations of .mtl format)
-    /*
-    newmtl string           Material newmtl (material name). Begins a new material description.
-    Ka float float float    Ambient color Ka (red) (green) (blue)
-    Kd float float float    Diffuse color Kd (red) (green) (blue)
-    Ks float float float    Specular color Ks (red) (green) (blue)
-    Ke float float float    Emmisive color
-    d float Tr float        Dissolve factor. Transparency Tr (alpha). d is inverse of Tr
-    Ns int                  Shininess Ns (specular power). Ranges from 0 to 1000. Specular exponent.
-    Ni int                  Refraction index. 
-    illum int               Illumination model illum (1 / 2); 1 if specular disabled, 2 if specular enabled (lambertian model)
-    map_Kd string           Texture map_Kd (filename)
-    map_Kd string           Diffuse color texture map.
-    map_Ks string           Specular color texture map.
-    map_Ka string           Ambient color texture map.
-    map_Bump string         Bump texture map. Alternative: bump string / map_bump string
-    map_d string            Opacity texture map.
-    disp string             Displacement map
-    refl                    Reflection type and map
-    */
+    Material material = { 0 };  // LoadDefaultMaterial();
     
-    char dataType;
-    char comments[200];
+    char buffer[MAX_BUFFER_SIZE];
+    Vector3 color = { 1.0f, 1.0f, 1.0f };
+    char *mapFileName;
 
     FILE *mtlFile;
 
@@ -2037,7 +2020,132 @@ static Material LoadMTL(const char *fileName)
 
     while(!feof(mtlFile))
     {
-        fscanf(mtlFile, "%c", &dataType);
+        fgets(buffer, MAX_BUFFER_SIZE, mtlFile);
+        
+        switch (buffer[0])
+        {
+            case 'n':   // newmtl string    Material name. Begins a new material description.
+            {
+                // TODO: Support multiple materials in a single .mtl
+                sscanf(buffer, "newmtl %s", mapFileName);
+                
+                TraceLog(INFO, "[%s] Loading material...", mapFileName);
+            }
+            case 'i':   // illum int        Illumination model
+            {
+                // illum = 1 if specular disabled
+                // illum = 2 if specular enabled (lambertian model)
+                // ...
+            }
+            case 'K':   // Ka, Kd, Ks, Ke
+            {
+                switch (buffer[1])
+                {
+                    case 'a':   // Ka float float float    Ambient color (RGB)
+                    {
+                        sscanf(buffer, "Ka %f %f %f", &color.x, &color.y, &color.z);
+                        material.colAmbient.r = (unsigned char)(color.x*255);
+                        material.colAmbient.g = (unsigned char)(color.y*255);
+                        material.colAmbient.b = (unsigned char)(color.z*255);
+                    } break;
+                    case 'd':   // Kd float float float     Diffuse color (RGB)
+                    {
+                        sscanf(buffer, "Kd %f %f %f", &color.x, &color.y, &color.z);
+                        material.colDiffuse.r = (unsigned char)(color.x*255);
+                        material.colDiffuse.g = (unsigned char)(color.y*255);
+                        material.colDiffuse.b = (unsigned char)(color.z*255);
+                    } break;
+                    case 's':   // Ks float float float     Specular color (RGB)
+                    {
+                        sscanf(buffer, "Ks %f %f %f", &color.x, &color.y, &color.z);
+                        material.colSpecular.r = (unsigned char)(color.x*255);
+                        material.colSpecular.g = (unsigned char)(color.y*255);
+                        material.colSpecular.b = (unsigned char)(color.z*255);
+                    } break;
+                    case 'e':   // Ke float float float     Emmisive color (RGB)
+                    {
+                        // TODO: Support Ke ?
+                    } break;
+                    default: break;
+                }
+            } break;
+            case 'N':   // Ns, Ni
+            {
+                if (buffer[1] == 's')       // Ns int   Shininess (specular exponent). Ranges from 0 to 1000.
+                {
+                    sscanf(buffer, "Ns %i", &material.glossiness);
+                }
+                else if (buffer[1] == 'i')  // Ni int   Refraction index.
+                {
+                    // Not supported...
+                }
+            } break;
+            case 'm':   // map_Kd, map_Ks, map_Ka, map_Bump, map_d
+            {
+                switch (buffer[4])
+                {
+                    case 'K':   // Color texture maps
+                    {
+                        if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
+                        {
+                            sscanf(buffer, "map_Kd %s", mapFileName);
+                            if (mapFileName != NULL) material.texDiffuse = LoadTexture(mapFileName);
+                        }
+                        else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
+                        {
+                            sscanf(buffer, "map_Ks %s", mapFileName);
+                            if (mapFileName != NULL) material.texSpecular = LoadTexture(mapFileName);
+                        }
+                        else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
+                        {
+                            // Not supported...
+                        }
+                    } break;
+                    case 'B':       // map_Bump string      Bump texture map.
+                    {
+                        sscanf(buffer, "map_Bump %s", mapFileName);
+                        if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+                    } break;
+                    case 'b':       // map_bump string      Bump texture map.
+                    {
+                        sscanf(buffer, "map_bump %s", mapFileName);
+                        if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+                    } break;
+                    case 'd':       // map_d string         Opacity texture map.
+                    {
+                        // Not supported...
+                    } break;
+                    default: break;
+                }
+            } break;
+            case 'd':   // d, disp
+            {
+                if (buffer[1] == ' ')       // d float      Dissolve factor. d is inverse of Tr
+                {
+                    float alpha = 1.0f;
+                    sscanf(buffer, "d %f", &alpha);
+                    material.colDiffuse.a = (unsigned char)(alpha*255);
+                }
+                else if (buffer[1] == 'i')  // disp string  Displacement map
+                {
+                    // Not supported...
+                }
+            } break;
+            case 'b':   // bump string      Bump texture map
+            {
+                sscanf(buffer, "bump %s", mapFileName);
+                if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+            } break;
+            case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
+            {
+                float ialpha = 0.0f;
+                sscanf(buffer, "Tr %f", &ialpha);
+                material.colDiffuse.a = (unsigned char)((1.0f - ialpha)*255);
+                
+            } break;
+            case 'r':   // refl string      Reflection texture map
+            default: break;
+        }
     }
 
     fclose(mtlFile);
