@@ -1996,7 +1996,7 @@ static Mesh LoadOBJ(const char *fileName)
     return mesh;
 }
 
-// Load MTL material data
+// Load MTL material data (specs: http://paulbourke.net/dataformats/mtl/)
 // NOTE: Texture map parameters are not supported
 static Material LoadMTL(const char *fileName)
 {
