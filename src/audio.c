@@ -102,6 +102,7 @@ typedef struct AudioContext_t {
     unsigned char channels;              // 1=mono,2=stereo
     unsigned char mixChannel;            // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
     bool floatingPoint;                  // if false then the short datatype is used instead
+    bool playing;
     ALenum alFormat;                     // openAL format specifier
     ALuint alSource;                     // openAL source
     ALuint alBuffer[MAX_STREAM_BUFFERS]; // openAL sample buffer
@@ -211,7 +212,7 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChanne
     else StopMusicStream();
     
     if(!mixChannelsActive_g[mixChannel]){
-        AudioContext_t *ac = malloc(sizeof(AudioContext_t));
+        AudioContext_t *ac = (AudioContext_t*)malloc(sizeof(AudioContext_t));
         ac->sampleRate = sampleRate;
         ac->channels = channels;
         ac->mixChannel = mixChannel;
@@ -250,8 +251,8 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChanne
             FillAlBufferWithSilence(ac, ac->alBuffer[x]);
         
         alSourceQueueBuffers(ac->alSource, MAX_STREAM_BUFFERS, ac->alBuffer);
-        alSourcei(ac->alSource, AL_LOOPING, AL_FALSE); // this could cause errors
         alSourcePlay(ac->alSource);
+        ac->playing = true;
         
         return ac;
     }
@@ -264,6 +265,7 @@ void CloseAudioContext(AudioContext ctx)
     AudioContext_t *context = (AudioContext_t*)ctx;
     if(context){
         alSourceStop(context->alSource);
+        context->playing = false;
         
         //flush out all queued buffers
         ALuint buffer = 0;
@@ -287,22 +289,29 @@ void CloseAudioContext(AudioContext ctx)
 // Pushes more audio data into context mix channel, if none are ever pushed then zeros are fed in.
 // Call "UpdateAudioContext(ctx, NULL, 0)" if you want to pause the audio.
 // @Returns number of samples that where processed.
-// All data streams should be of a length that is evenly divisible by MUSIC_BUFFER_SIZE,
-// otherwise the remaining data will not be pushed.
 unsigned short UpdateAudioContext(AudioContext ctx, void *data, unsigned short numberElements)
 {
     AudioContext_t *context = (AudioContext_t*)ctx;
     
-    if(context && context->channels == 2 && numberElements % 2 != 0) return 0; // when there is two channels there must be an even number of samples
+    if(!context || (context->channels == 2 && numberElements % 2 != 0)) return 0; // when there is two channels there must be an even number of samples
     
-    if (!data || !numberElements) alSourcePause(context->alSource); // pauses audio until data is given
-    else{ // restart audio otherwise
+    if (!data || !numberElements)
+    { // pauses audio until data is given
+        alSourcePause(context->alSource);
+        context->playing = false;
+        return 0;
+    }
+    else
+    { // restart audio otherwise
         ALint state;
         alGetSourcei(context->alSource, AL_SOURCE_STATE, &state);
-        if (state != AL_PLAYING) alSourcePlay(context->alSource);
+        if (state != AL_PLAYING){
+            alSourcePlay(context->alSource);
+            context->playing = true;
+        }
     }
     
-    if (context && mixChannelsActive_g[context->mixChannel] == context)
+    if (context && context->playing && mixChannelsActive_g[context->mixChannel] == context)
     {
         ALint processed = 0;
         ALuint buffer = 0;
@@ -311,36 +320,55 @@ unsigned short UpdateAudioContext(AudioContext ctx, void *data, unsigned short n
         
         
         alGetSourcei(context->alSource, AL_BUFFERS_PROCESSED, &processed); // Get the number of already processed buffers (if any)
-        if(!processed) return 0;//nothing to process, queue is still full
+        if(!processed) return 0; // nothing to process, queue is still full
         
-        if(numberRemaining)// buffer data stream in increments of MUSIC_BUFFER_SIZE
+        
+        while (processed > 0)
         {
-            while (processed > 0)
+            if(context->floatingPoint) // process float buffers
             {
-                if(context->floatingPoint && numberRemaining >= MUSIC_BUFFER_SIZE_FLOAT) // process float buffers
+                float *ptr = (float*)data;
+                alSourceUnqueueBuffers(context->alSource, 1, &buffer);
+                if(numberRemaining >= MUSIC_BUFFER_SIZE_FLOAT)
                 {
-                    float *ptr = (float*)data;
-                    alSourceUnqueueBuffers(context->alSource, 1, &buffer);
                     alBufferData(buffer, context->alFormat, &ptr[numberProcessed], MUSIC_BUFFER_SIZE_FLOAT*sizeof(float), context->sampleRate);
-                    alSourceQueueBuffers(context->alSource, 1, &buffer);
                     numberProcessed+=MUSIC_BUFFER_SIZE_FLOAT;
                     numberRemaining-=MUSIC_BUFFER_SIZE_FLOAT;
                 }
-                else if(!context->floatingPoint && numberRemaining >= MUSIC_BUFFER_SIZE_SHORT) // process short buffers
+                else
                 {
-                    short *ptr = (short*)data;
-                    alSourceUnqueueBuffers(context->alSource, 1, &buffer);
-                    alBufferData(buffer, context->alFormat, &ptr[numberProcessed], MUSIC_BUFFER_SIZE_SHORT*sizeof(short), context->sampleRate);
-                    alSourceQueueBuffers(context->alSource, 1, &buffer);
+                    alBufferData(buffer, context->alFormat, &ptr[numberProcessed], numberRemaining*sizeof(float), context->sampleRate);
+                    numberProcessed+=numberRemaining;
+                    numberRemaining=0;
+                }
+                alSourceQueueBuffers(context->alSource, 1, &buffer);
+                processed--;
+            }
+            else if(!context->floatingPoint) // process short buffers
+            {
+                short *ptr = (short*)data;
+                alSourceUnqueueBuffers(context->alSource, 1, &buffer);
+                if(numberRemaining >= MUSIC_BUFFER_SIZE_SHORT)
+                {
+                    alBufferData(buffer, context->alFormat, &ptr[numberProcessed], MUSIC_BUFFER_SIZE_FLOAT*sizeof(short), context->sampleRate);
                     numberProcessed+=MUSIC_BUFFER_SIZE_SHORT;
                     numberRemaining-=MUSIC_BUFFER_SIZE_SHORT;
                 }
-                
+                else
+                {
+                    alBufferData(buffer, context->alFormat, &ptr[numberProcessed], numberRemaining*sizeof(short), context->sampleRate);
+                    numberProcessed+=numberRemaining;
+                    numberRemaining=0;
+                }
+                alSourceQueueBuffers(context->alSource, 1, &buffer);
                 processed--;
             }
+            else
+                break;
         }
+        return numberProcessed;
     }
-    return numberProcessed;
+    return 0;
 }
 
 // fill buffer with zeros, returns number processed
