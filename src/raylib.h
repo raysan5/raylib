@@ -376,7 +376,7 @@ typedef struct Mesh {
     float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
     unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     unsigned short *indices;    // vertex indices (in case vertex data comes indexed)
-    int trianglesCount;         // number of triangles to draw
+    int triangleCount;         // number of triangles to draw
     
     BoundingBox bounds;         // mesh limits defined by min and max points
     
