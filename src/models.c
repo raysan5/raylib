@@ -2019,7 +2019,7 @@ static Material LoadMTL(const char *fileName)
     
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };
-    char *mapFileName;
+    char *mapFileName = NULL;
 
     FILE *mtlFile;
 
