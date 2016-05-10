@@ -273,7 +273,7 @@ int rlGetVersion(void);                         // Returns current OpenGL versio
 //------------------------------------------------------------------------------------
 void rlglInit(void);                            // Initialize rlgl (shaders, VAO, VBO...)
 void rlglClose(void);                           // De-init rlgl
-void rlglDraw(void);                            // Draw VAO/VBO
+void rlglDraw(Matrix mvp);                      // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
@@ -292,11 +292,6 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world
 unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
 void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-void PrintProjectionMatrix(void);       // DEBUG: Print projection matrix
-void PrintModelviewMatrix(void);        // DEBUG: Print modelview matrix
-#endif
-
 #if defined(RLGL_STANDALONE)
 //------------------------------------------------------------------------------------
 // Shaders System Functions (Module: rlgl)
@@ -309,13 +304,10 @@ void SetCustomShader(Shader shader);                                // Set custo
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
 void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
 
-int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
-void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
-void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
-void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
-void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
+void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 #endif
