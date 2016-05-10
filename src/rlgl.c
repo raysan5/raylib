@@ -783,16 +783,16 @@ void rlDisableDepthTest(void)
 // Unload texture from GPU memory
 void rlDeleteTextures(unsigned int id)
 {
-    glDeleteTextures(1, &id);
+    if (id != 0) glDeleteTextures(1, &id);
 }
 
 // Unload render texture from GPU memory
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDeleteFramebuffers(1, &target.id);
-    glDeleteTextures(1, &target.texture.id);
-    glDeleteTextures(1, &target.depth.id);
+    if (target.id != 0) glDeleteFramebuffers(1, &target.id);
+    if (target.texture.id != 0) glDeleteTextures(1, &target.texture.id);
+    if (target.depth.id != 0) glDeleteTextures(1, &target.depth.id);
 #endif
 }
 
@@ -800,7 +800,7 @@ void rlDeleteRenderTextures(RenderTexture2D target)
 void rlDeleteShader(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDeleteProgram(id);
+    if (id != 0) glDeleteProgram(id);
 #endif
 }
 
@@ -810,7 +810,7 @@ void rlDeleteVertexArrays(unsigned int id)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (vaoSupported) 
     {
-        glDeleteVertexArrays(1, &id);
+        if (id != 0) glDeleteVertexArrays(1, &id);
         TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", id);
     }
 #endif
@@ -1204,10 +1204,13 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
             glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(material.shader.texcoord2Loc);
         }
+        
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
     }
 
     // Draw call!
-    glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.trianglesCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
+    else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     
     if (material.texNormal.id != 0)
     {
@@ -1225,7 +1228,11 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-    else glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
 
     glUseProgram(0);        // Unbind shader program
 #endif
@@ -1682,11 +1689,12 @@ void rlglLoadMesh(Mesh *mesh)
     mesh->vboId[3] = 0;     // Vertex colors VBO
     mesh->vboId[4] = 0;     // Vertex tangents VBO
     mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
+    mesh->vboId[6] = 0;     // Vertex indices VBO
     
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vaoId = 0;       // Vertex Array Objects (VAO)
-    GLuint vboId[6];        // Vertex Buffer Objects (VBOs)
+    GLuint vboId[7];        // Vertex Buffer Objects (VBOs)
 
     if (vaoSupported)
     {
@@ -1775,12 +1783,21 @@ void rlglLoadMesh(Mesh *mesh)
         glDisableVertexAttribArray(5);
     }
     
+    if (mesh->indices != NULL)
+    {
+        glGenBuffers(1, &vboId[6]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId[6]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->trianglesCount*3, mesh->indices, GL_STATIC_DRAW);
+    }
+
+    
     mesh->vboId[0] = vboId[0];     // Vertex position VBO
     mesh->vboId[1] = vboId[1];     // Texcoords VBO
     mesh->vboId[2] = vboId[2];     // Normals VBO
     mesh->vboId[3] = vboId[3];     // Colors VBO
     mesh->vboId[4] = vboId[4];     // Tangents VBO
     mesh->vboId[5] = vboId[5];     // Texcoords2 VBO
+    mesh->vboId[6] = vboId[6];     // Indices VBO
 
     if (vaoSupported)
     {
@@ -2733,9 +2750,9 @@ static void DrawDefaultBuffers(void)
 
             // NOTE: The final parameter tells the GPU the offset in bytes from the start of the index buffer to the location of the first index to process
 #if defined(GRAPHICS_API_OPENGL_33)
-            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid*) (sizeof(GLuint) * indicesOffset));
+            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid *)(sizeof(GLuint)*indicesOffset));
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_SHORT, (GLvoid*) (sizeof(GLushort) * indicesOffset));
+            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)*indicesOffset));
 #endif
             //GLenum err;
             //if ((err = glGetError()) != GL_NO_ERROR) TraceLog(INFO, "OpenGL error: %i", (int)err);    //GL_INVALID_ENUM!

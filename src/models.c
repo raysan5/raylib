@@ -553,7 +553,7 @@ Model LoadModel(const char *fileName)
     if (model.mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
     else
     {
-        rlglLoadMesh(&model.mesh);     // Upload vertex data to GPU
+        rlglLoadMesh(&model.mesh);  // Upload vertex data to GPU
         
         model.transform = MatrixIdentity();
         model.material = LoadDefaultMaterial();
@@ -567,7 +567,9 @@ Model LoadModelEx(Mesh data)
 {
     Model model = { 0 };
 
-    rlglLoadMesh(&data);     // Upload vertex data to GPU
+    model.mesh = data;
+    
+    rlglLoadMesh(&model.mesh);      // Upload vertex data to GPU
     
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
@@ -693,12 +695,13 @@ Model LoadCubicmap(Image cubicmap)
 void UnloadModel(Model model)
 {
     // Unload mesh data
-    free(model.mesh.vertices);
-    free(model.mesh.texcoords);
+    if (model.mesh.vertices != NULL) free(model.mesh.vertices);
+    if (model.mesh.texcoords != NULL) free(model.mesh.texcoords);
     if (model.mesh.normals != NULL) free(model.mesh.normals);
     if (model.mesh.colors != NULL) free(model.mesh.colors);
     if (model.mesh.tangents != NULL) free(model.mesh.tangents);
     if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2);
+    if (model.mesh.indices != NULL) free(model.mesh.indices);
     
     TraceLog(INFO, "Unloaded model data from RAM (CPU)");
     
@@ -708,8 +711,11 @@ void UnloadModel(Model model)
     rlDeleteBuffers(model.mesh.vboId[3]);   // colors
     rlDeleteBuffers(model.mesh.vboId[4]);   // tangents
     rlDeleteBuffers(model.mesh.vboId[5]);   // texcoords2
+    rlDeleteBuffers(model.mesh.vboId[6]);   // indices
 
     rlDeleteVertexArrays(model.mesh.vaoId);
+    
+    UnloadMaterial(model.material);
 }
 
 // Load material data (from file)
@@ -741,6 +747,13 @@ Material LoadDefaultMaterial(void)
     material.normalDepth = 1.0f;    // Normal map depth
     
     return material;
+}
+
+void UnloadMaterial(Material material)
+{
+    rlDeleteTextures(material.texDiffuse.id);
+    rlDeleteTextures(material.texNormal.id);
+    rlDeleteTextures(material.texSpecular.id);
 }
 
 // Link a texture to a model
