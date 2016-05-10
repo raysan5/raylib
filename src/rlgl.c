@@ -1094,7 +1094,7 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
     if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
-    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array          
+    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
 
     glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
     glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
@@ -1104,7 +1104,9 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
         rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
-        glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+        
+        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
+        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     rlPopMatrix();
 
     glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
@@ -1209,7 +1211,7 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     }
 
     // Draw call!
-    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.trianglesCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
+    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
     else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     
     if (material.texNormal.id != 0)
@@ -1787,7 +1789,7 @@ void rlglLoadMesh(Mesh *mesh)
     {
         glGenBuffers(1, &vboId[6]);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId[6]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->trianglesCount*3, mesh->indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, GL_STATIC_DRAW);
     }
 
     
