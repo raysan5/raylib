@@ -137,37 +137,41 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Vector3 max;
     } BoundingBox;
 
-    // Mesh with vertex data type
-    // NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
+    // Vertex data definning a mesh
     typedef struct Mesh {
-        int vertexCount;            // num vertices
-        float *vertices;            // vertex position (XYZ - 3 components per vertex)
-        float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
-        float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
-        float *normals;             // vertex normals (XYZ - 3 components per vertex)
-        float *tangents;            // vertex tangents (XYZ - 3 components per vertex)
-        unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex)
+        int vertexCount;            // number of vertices stored in arrays
+        float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+        float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+        float *texcoords2;          // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+        float *normals;             // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+        float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+        unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+        unsigned short *indices;    // vertex indices (in case vertex data comes indexed)
+        int triangleCount;         // number of triangles to draw
         
         BoundingBox bounds;         // mesh limits defined by min and max points
         
         unsigned int vaoId;         // OpenGL Vertex Array Object id
-        unsigned int vboId[6];      // OpenGL Vertex Buffer Objects id (6 types of vertex data)
+        unsigned int vboId[7];      // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
 
-    // Shader type
+    // Shader type (generic shader)
     typedef struct Shader {
-        unsigned int id;                // Shader program id
+        unsigned int id;      // Shader program id
+        
+        // Vertex attributes locations (default locations)
+        int vertexLoc;        // Vertex attribute location point (default-location = 0)
+        int texcoordLoc;      // Texcoord attribute location point (default-location = 1)
+        int normalLoc;        // Normal attribute location point (default-location = 2)
+        int colorLoc;         // Color attibute location point (default-location = 3)
+        int tangentLoc;       // Tangent attribute location point (default-location = 4)
+        int texcoord2Loc;     // Texcoord2 attribute location point (default-location = 5)
 
-        // Variable attributes
-        int vertexLoc;        // Vertex attribute location point (vertex shader)
-        int texcoordLoc;      // Texcoord attribute location point (vertex shader)
-        int normalLoc;        // Normal attribute location point (vertex shader)
-        int colorLoc;         // Color attibute location point (vertex shader)
-
-        // Uniforms
+        // Uniform locations
         int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
         int tintColorLoc;     // Color uniform location point (fragment shader)
         
+        // Texture map locations
         int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
         int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
         int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
@@ -205,13 +209,6 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         float glossiness;
         float normalDepth;
     } Material;
-
-    // 3d Model type
-    typedef struct Model {
-        Mesh mesh;
-        Matrix transform;
-        Material material;
-    } Model;
 	
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
