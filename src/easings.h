@@ -7,6 +7,23 @@
 *   This header uses:
 *       #define EASINGS_STATIC_INLINE       // Inlines all functions code, so it runs faster.
 *                                           // This requires lots of memory on system.
+*   How to use:
+*   The four inputs t,b,c,d are defined as follows:
+*   t = current time in milliseconds
+*   b = starting position in only one dimension [X || Y || Z] your choice
+*   c = the total change in value of b that needs to occur
+*   d = total time it should take to complete
+*
+*   Example:
+*   float speed = 1.f;
+*   float currentTime = 0.f;
+*   float currentPos[2] = {0,0};
+*   float newPos[2] = {1,1};
+*   float tempPosition[2] = currentPos;//x,y positions
+*   while(currentPos[0] < newPos[0])
+*       currentPos[0] = EaseSineIn(currentTime, tempPosition[0], tempPosition[0]-newPos[0], speed);
+*       currentPos[1] = EaseSineIn(currentTime, tempPosition[1], tempPosition[1]-newPos[0], speed);
+*       currentTime += diffTime();
 *
 *   A port of Robert Penner's easing equations to C (http://robertpenner.com/easing/)
 *
