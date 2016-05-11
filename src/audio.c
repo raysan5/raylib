@@ -61,6 +61,7 @@
 //----------------------------------------------------------------------------------
 #define MAX_STREAM_BUFFERS          2
 #define MAX_AUDIO_CONTEXTS          4             // Number of open AL sources
+#define MAX_MUSIC_STREAMS           2
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
     // NOTE: On RPI and Android should be lower to avoid frame-stalls
@@ -81,13 +82,8 @@
 typedef struct Music {
     stb_vorbis *stream;
     jar_xm_context_t *chipctx; // Stores jar_xm context
-
-    ALuint buffers[MAX_STREAM_BUFFERS];
-    ALuint source;
-    ALenum format;
-
-    int channels;
-    int sampleRate;
+    AudioContext_t *ctx; // audio context
+    
     int totalSamplesLeft;
     float totalLengthSeconds;
     bool loop;
@@ -117,8 +113,8 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 static AudioContext_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS];      // What mix channels are currently active
 static bool musicEnabled = false;
-static Music currentMusic;          // Current music loaded
-                                    // NOTE: Only one music file playing at a time
+static Music currentMusic[2];                                        // Current music loaded, up to two can play at the same time
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -769,151 +765,129 @@ void SetSoundPitch(Sound sound, float pitch)
 // Start music playing (open stream)
 void PlayMusicStream(char *fileName)
 {
+    int musicIndex;
+    int mixIndex;
+    for(musicIndex = 0; musicIndex < MAX_MUSIC_STREAMS; musicIndex++) // find empty music slot
+    {
+        if(currentMusic[musicIndex].stream == NULL && !currentMusic[musicIndex].chipTune) break;
+        else if(musicIndex = MAX_MUSIC_STREAMS - 1) return;
+    }
+    for(mixIndex = 0; mixIndex < MAX_AUDIO_CONTEXTS; mixIndex++) // find empty mix channel slot
+    {
+        if(mixChannelsActive_g[mixIndex] == NULL) break;
+        else if(musicIndex = MAX_AUDIO_CONTEXTS - 1) return;
+    }
+    
+    
     if (strcmp(GetExtension(fileName),"ogg") == 0)
     {
-        // Stop current music, clean buffers, unload current stream
-        StopMusicStream();
-
         // Open audio stream
-        currentMusic.stream = stb_vorbis_open_filename(fileName, NULL, NULL);
+        currentMusic[musicIndex].stream = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (currentMusic.stream == NULL)
+        if (currentMusic[musicIndex].stream == NULL)
         {
             TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
         }
         else
         {
             // Get file info
-            stb_vorbis_info info = stb_vorbis_get_info(currentMusic.stream);
-
-            currentMusic.channels = info.channels;
-            currentMusic.sampleRate = info.sample_rate;
+            stb_vorbis_info info = stb_vorbis_get_info(currentMusic[musicIndex].stream);
 
             TraceLog(INFO, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
             TraceLog(INFO, "[%s] Ogg channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
-            if (info.channels == 2) currentMusic.format = AL_FORMAT_STEREO16;
-            else currentMusic.format = AL_FORMAT_MONO16;
+            if (info.channels == 2){
+                currentMusic[musicIndex].ctx = InitAudioContext(info.sample_rate, mixIndex, 2, false);
+            }
+            else{
+                currentMusic[musicIndex].ctx = InitAudioContext(info.sample_rate, mixIndex, 1, false);
+            }
 
-            currentMusic.loop = true;                  // We loop by default
+            currentMusic[musicIndex].loop = true;                  // We loop by default
             musicEnabled = true;
 
-            // Create an audio source
-            alGenSources(1, &currentMusic.source);     // Generate pointer to audio source
-
-            alSourcef(currentMusic.source, AL_PITCH, 1);
-            alSourcef(currentMusic.source, AL_GAIN, 1);
-            alSource3f(currentMusic.source, AL_POSITION, 0, 0, 0);
-            alSource3f(currentMusic.source, AL_VELOCITY, 0, 0, 0);
-            //alSourcei(currentMusic.source, AL_LOOPING, AL_TRUE);     // ERROR: Buffers do not queue!
-
-            // Generate two OpenAL buffers
-            alGenBuffers(2, currentMusic.buffers);
-
-            // Fill buffers with music...
-            BufferMusicStream(currentMusic.buffers[0]);
-            BufferMusicStream(currentMusic.buffers[1]);
-
-            // Queue buffers and start playing
-            alSourceQueueBuffers(currentMusic.source, 2, currentMusic.buffers);
-            alSourcePlay(currentMusic.source);
-
-            // NOTE: Regularly, we must check if a buffer has been processed and refill it: UpdateMusicStream()
-
-            currentMusic.totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic.stream) * currentMusic.channels;
-            currentMusic.totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic.stream);
+            currentMusic[musicIndex].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[musicIndex].stream) * currentMusic[musicIndex].channels;
+            currentMusic[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic[musicIndex].stream);
         }
     }
     else if (strcmp(GetExtension(fileName),"xm") == 0)
     {
-        // Stop current music, clean buffers, unload current stream
-        StopMusicStream();
-        
-        // new song settings for xm chiptune
-        currentMusic.chipTune = true;
-        currentMusic.channels = 2;
-        currentMusic.sampleRate = 48000;
-        currentMusic.loop = true;
-        
         // only stereo is supported for xm
-        if(!jar_xm_create_context_from_file(&currentMusic.chipctx, currentMusic.sampleRate, fileName))
+        if(!jar_xm_create_context_from_file(&currentMusic[musicIndex].chipctx, 48000, fileName))
         {
-            currentMusic.format = AL_FORMAT_STEREO16;
-            jar_xm_set_max_loop_count(currentMusic.chipctx, 0); // infinite number of loops
-            currentMusic.totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic.chipctx);
-            currentMusic.totalLengthSeconds = ((float)currentMusic.totalSamplesLeft) / ((float)currentMusic.sampleRate);
+            currentMusic[musicIndex].chipTune = true;
+            currentMusic[musicIndex].loop = true;
+            jar_xm_set_max_loop_count(currentMusic[musicIndex].chipctx, 0); // infinite number of loops
+            currentMusic[musicIndex].totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic[musicIndex].chipctx);
+            currentMusic[musicIndex].totalLengthSeconds = ((float)currentMusic[musicIndex].totalSamplesLeft) / ((float)currentMusic[musicIndex].sampleRate);
             musicEnabled = true;
             
-            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic.totalSamplesLeft);
-            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, currentMusic.totalLengthSeconds);
+            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic[musicIndex].totalSamplesLeft);
+            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, currentMusic[musicIndex].totalLengthSeconds);
             
-            // Set up OpenAL
-            alGenSources(1, &currentMusic.source);
-            alSourcef(currentMusic.source, AL_PITCH, 1);
-            alSourcef(currentMusic.source, AL_GAIN, 1);
-            alSource3f(currentMusic.source, AL_POSITION, 0, 0, 0);
-            alSource3f(currentMusic.source, AL_VELOCITY, 0, 0, 0);
-            alGenBuffers(2, currentMusic.buffers);
-            BufferMusicStream(currentMusic.buffers[0]);
-            BufferMusicStream(currentMusic.buffers[1]);
-            alSourceQueueBuffers(currentMusic.source, 2, currentMusic.buffers);
-            alSourcePlay(currentMusic.source);
-            
-            // NOTE: Regularly, we must check if a buffer has been processed and refill it: UpdateMusicStream()
+            currentMusic[musicIndex].ctx = InitAudioContext(48000, mixIndex, 2, true);
         }
         else TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
     }
     else TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
 }
 
-// Stop music playing (close stream)
-void StopMusicStream(void)
+// Stop music playing for individual music index of currentMusic array (close stream)
+void StopMusicStream(int index)
 {
-    if (musicEnabled)
+    if (index < MAX_MUSIC_STREAMS && currentMusic[index].ctx)
     {
-        alSourceStop(currentMusic.source);
-        EmptyMusicStream(); // Empty music buffers
-        alDeleteSources(1, &currentMusic.source);
-        alDeleteBuffers(2, currentMusic.buffers);
+        CloseAudioContext(currentMusic[index].ctx);
         
-        if (currentMusic.chipTune)
+        if (currentMusic[index].chipTune)
         {
-            jar_xm_free_context(currentMusic.chipctx);
+            jar_xm_free_context(currentMusic[index].chipctx);
         }
         else
         {
-            stb_vorbis_close(currentMusic.stream);
+            stb_vorbis_close(currentMusic[index].stream);
         }
+        
+        if(!getMusicStreamCount()) musicEnabled = false;
     }
+}
 
-    musicEnabled = false;
+//get number of music channels active at this time, this does not mean they are playing
+int getMusicStreamCount(void)
+{
+    int musicCount;
+    for(int musicIndex = 0; musicIndex < MAX_MUSIC_STREAMS; musicIndex++) // find empty music slot
+        if(currentMusic[musicIndex].stream != NULL || currentMusic[musicIndex].chipTune) musicCount++;
+        
+    return musicCount;
 }
 
 // Pause music playing
-void PauseMusicStream(void)
+void PauseMusicStream(int index)
 {
     // Pause music stream if music available!
     if (musicEnabled)
     {
         TraceLog(INFO, "Pausing music stream");
-        alSourcePause(currentMusic.source);
+        UpdateAudioContext(currentMusic[index].ctx, NULL, 0); // pushing null data auto pauses stream
         musicEnabled = false;
     }
 }
 
 // Resume music playing
-void ResumeMusicStream(void)
+void ResumeMusicStream(int index)
 {
     // Resume music playing... if music available!
     ALenum state;
-    alGetSourcei(currentMusic.source, AL_SOURCE_STATE, &state);
-
-    if (state == AL_PAUSED)
-    {
-        TraceLog(INFO, "Resuming music stream");
-        alSourcePlay(currentMusic.source);
-        musicEnabled = true;
+    if(currentMusic[musicIndex].ctx){
+        alGetSourcei(currentMusic[musicIndex].ctx->alSource, AL_SOURCE_STATE, &state);
+        if (state == AL_PAUSED)
+        {
+            TraceLog(INFO, "Resuming music stream");
+            alSourcePlay(currentMusic[musicIndex].ctx->alSource);
+            musicEnabled = true;
+        }
     }
 }
 
@@ -922,17 +896,24 @@ bool IsMusicPlaying(void)
 {
     bool playing = false;
     ALint state;
-
-    alGetSourcei(currentMusic.source, AL_SOURCE_STATE, &state);
-    if (state == AL_PLAYING) playing = true;
+    
+    for(int musicIndex = 0; musicIndex < MAX_MUSIC_STREAMS; musicIndex++)
+    {
+        if(currentMusic[musicIndex].ctx){
+            alGetSourcei(currentMusic[musicIndex].ctx->alSource, AL_SOURCE_STATE, &state);
+            if (state == AL_PLAYING) playing = true;
+        }
+    }
 
     return playing;
 }
 
 // Set volume for music
-void SetMusicVolume(float volume)
+void SetMusicVolume(int index, float volume)
 {
-    alSourcef(currentMusic.source, AL_GAIN, volume);
+    if(currentMusic[musicIndex].ctx){
+        alSourcef(currentMusic[musicIndex].ctx->alSource, AL_GAIN, volume);
+    }
 }
 
 // Get current music time length (in seconds)

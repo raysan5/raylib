@@ -102,13 +102,14 @@ void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for
 
 void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
 void UpdateMusicStream(void);                                   // Updates buffers for music streaming
-void StopMusicStream(void);                                     // Stop music playing (close stream)
-void PauseMusicStream(void);                                    // Pause music playing
-void ResumeMusicStream(void);                                   // Resume playing paused music
+void StopMusicStream(int index);                                // Stop music playing (close stream)
+void PauseMusicStream(int index);                               // Pause music playing
+void ResumeMusicStream(int index);                              // Resume playing paused music
 bool IsMusicPlaying(void);                                      // Check if music is playing
-void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
+void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(void);                                 // Get music time length (in seconds)
 float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
+int getMusicStreamCount(void);
 
 #ifdef __cplusplus
 }
