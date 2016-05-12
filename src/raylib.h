@@ -896,11 +896,12 @@ void UpdateMusicStream(void);                                   // Updates buffe
 void StopMusicStream(int index);                                // Stop music playing (close stream)
 void PauseMusicStream(int index);                               // Pause music playing
 void ResumeMusicStream(int index);                              // Resume playing paused music
-bool IsMusicPlaying(void);                                      // Check if music is playing
+bool IsMusicPlaying(int index);                                 // Check if music is playing
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
 float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
 int getMusicStreamCount(void);
+void SetMusicPitch(int index, float pitch);
 
 #ifdef __cplusplus
 }

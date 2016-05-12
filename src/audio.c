@@ -113,7 +113,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 static AudioContext_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS];      // What mix channels are currently active
 static bool musicEnabled = false;
-static Music currentMusic[2];                                        // Current music loaded, up to two can play at the same time
+static Music currentMusic[MAX_MUSIC_STREAMS];                        // Current music loaded, up to two can play at the same time
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -797,18 +797,18 @@ void PlayMusicStream(char *fileName)
             TraceLog(INFO, "[%s] Ogg channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
+            currentMusic[musicIndex].loop = true;                  // We loop by default
+            musicEnabled = true;
+
+            currentMusic[musicIndex].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[musicIndex].stream) * info.channels;
+            currentMusic[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic[musicIndex].stream);
+            
             if (info.channels == 2){
                 currentMusic[musicIndex].ctx = InitAudioContext(info.sample_rate, mixIndex, 2, false);
             }
             else{
                 currentMusic[musicIndex].ctx = InitAudioContext(info.sample_rate, mixIndex, 1, false);
             }
-
-            currentMusic[musicIndex].loop = true;                  // We loop by default
-            musicEnabled = true;
-
-            currentMusic[musicIndex].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[musicIndex].stream) * currentMusic[musicIndex].channels;
-            currentMusic[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic[musicIndex].stream);
         }
     }
     else if (strcmp(GetExtension(fileName),"xm") == 0)
@@ -820,7 +820,7 @@ void PlayMusicStream(char *fileName)
             currentMusic[musicIndex].loop = true;
             jar_xm_set_max_loop_count(currentMusic[musicIndex].chipctx, 0); // infinite number of loops
             currentMusic[musicIndex].totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic[musicIndex].chipctx);
-            currentMusic[musicIndex].totalLengthSeconds = ((float)currentMusic[musicIndex].totalSamplesLeft) / ((float)currentMusic[musicIndex].sampleRate);
+            currentMusic[musicIndex].totalLengthSeconds = ((float)currentMusic[musicIndex].totalSamplesLeft) / 48000.f;
             musicEnabled = true;
             
             TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic[musicIndex].totalSamplesLeft);
@@ -891,18 +891,15 @@ void ResumeMusicStream(int index)
     }
 }
 
-// Check if music is playing
-bool IsMusicPlaying(void)
+// Check if any music is playing
+bool IsMusicPlaying(int index)
 {
     bool playing = false;
     ALint state;
     
-    for(int musicIndex = 0; musicIndex < MAX_MUSIC_STREAMS; musicIndex++)
-    {
-        if(currentMusic[musicIndex].ctx){
-            alGetSourcei(currentMusic[musicIndex].ctx->alSource, AL_SOURCE_STATE, &state);
-            if (state == AL_PLAYING) playing = true;
-        }
+    if(index < MAX_MUSIC_STREAMS && currentMusic[index].ctx){
+        alGetSourcei(currentMusic[index].ctx->alSource, AL_SOURCE_STATE, &state);
+        if (state == AL_PLAYING) playing = true;
     }
 
     return playing;
@@ -911,8 +908,15 @@ bool IsMusicPlaying(void)
 // Set volume for music
 void SetMusicVolume(int index, float volume)
 {
-    if(currentMusic[musicIndex].ctx){
-        alSourcef(currentMusic[musicIndex].ctx->alSource, AL_GAIN, volume);
+    if(index < MAX_MUSIC_STREAMS && currentMusic[index].ctx){
+        alSourcef(currentMusic[index].ctx->alSource, AL_GAIN, volume);
+    }
+}
+
+void SetMusicPitch(int index, float pitch)
+{
+    if(index < MAX_MUSIC_STREAMS && currentMusic[index].ctx){
+        alSourcef(currentMusic[index].ctx->alSource, AL_PITCH, pitch);
     }
 }
 
