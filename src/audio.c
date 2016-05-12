@@ -763,19 +763,18 @@ void SetSoundPitch(Sound sound, float pitch)
 //----------------------------------------------------------------------------------
 
 // Start music playing (open stream)
-void PlayMusicStream(char *fileName)
+// returns 0 on success
+int PlayMusicStream(int musicIndex, char *fileName)
 {
-    int musicIndex;
+    int musicIndex = index;
     int mixIndex;
-    for(musicIndex = 0; musicIndex < MAX_MUSIC_STREAMS; musicIndex++) // find empty music slot
-    {
-        if(currentMusic[musicIndex].stream == NULL && !currentMusic[musicIndex].chipTune) break;
-        else if(musicIndex = MAX_MUSIC_STREAMS - 1) return;
-    }
+    
+    if(currentMusic[musicIndex].stream != NULL || currentMusic[musicIndex].chipTune) return 1; // error
+    
     for(mixIndex = 0; mixIndex < MAX_AUDIO_CONTEXTS; mixIndex++) // find empty mix channel slot
     {
         if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(musicIndex = MAX_AUDIO_CONTEXTS - 1) return;
+        else if(musicIndex = MAX_AUDIO_CONTEXTS - 1) return 2; // error
     }
     
     
@@ -787,6 +786,7 @@ void PlayMusicStream(char *fileName)
         if (currentMusic[musicIndex].stream == NULL)
         {
             TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
+            return 3; // error
         }
         else
         {
@@ -828,9 +828,18 @@ void PlayMusicStream(char *fileName)
             
             currentMusic[musicIndex].ctx = InitAudioContext(48000, mixIndex, 2, true);
         }
-        else TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
+        else
+        {
+            TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
+            return 4; // error
+        }
     }
-    else TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
+    else
+    {
+        TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
+        return 5; // error
+    }
+    return 0; // normal return
 }
 
 // Stop music playing for individual music index of currentMusic array (close stream)

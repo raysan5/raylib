@@ -894,7 +894,7 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
+int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
 void UpdateMusicStream(void);                                   // Updates buffers for music streaming
 void StopMusicStream(int index);                                // Stop music playing (close stream)
 void PauseMusicStream(int index);                               // Pause music playing
