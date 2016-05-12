@@ -18,11 +18,11 @@
 *   float speed = 1.f;
 *   float currentTime = 0.f;
 *   float currentPos[2] = {0,0};
-*   float newPos[2] = {1,1};
-*   float tempPosition[2] = currentPos;//x,y positions
-*   while(currentPos[0] < newPos[0])
-*       currentPos[0] = EaseSineIn(currentTime, tempPosition[0], tempPosition[0]-newPos[0], speed);
-*       currentPos[1] = EaseSineIn(currentTime, tempPosition[1], tempPosition[1]-newPos[0], speed);
+*   float finalPos[2] = {1,1};
+*   float startPosition[2] = currentPos;//x,y positions
+*   while(currentPos[0] < finalPos[0])
+*       currentPos[0] = EaseSineIn(currentTime, startPosition[0], startPosition[0]-finalPos[0], speed);
+*       currentPos[1] = EaseSineIn(currentTime, startPosition[1], startPosition[1]-finalPos[0], speed);
 *       currentTime += diffTime();
 *
 *   A port of Robert Penner's easing equations to C (http://robertpenner.com/easing/)

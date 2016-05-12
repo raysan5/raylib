@@ -118,12 +118,12 @@ static Music currentMusic[MAX_MUSIC_STREAMS];                        // Current 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Wave LoadWAV(const char *fileName);                // Load WAV file
-static Wave LoadOGG(char *fileName);                      // Load OGG file
-static void UnloadWave(Wave wave);                        // Unload wave data
+static Wave LoadWAV(const char *fileName);         // Load WAV file
+static Wave LoadOGG(char *fileName);               // Load OGG file
+static void UnloadWave(Wave wave);                 // Unload wave data
 
-static bool BufferMusicStream(int index, ALuint buffer);  // Fill music buffers with data
-static void EmptyMusicStream(int index);                  // Empty music buffers
+static bool BufferMusicStream(int index);          // Fill music buffers with data
+static void EmptyMusicStream(int index);           // Empty music buffers
 
 static unsigned short FillAlBufferWithSilence(AudioContext_t *context, ALuint buffer);// fill buffer with zeros, returns number processed
 static void ResampleShortToFloat(short *shorts, float *floats, unsigned short len); // pass two arrays of the same legnth in
@@ -970,7 +970,7 @@ float GetMusicTimePlayed(int index)
 //----------------------------------------------------------------------------------
 
 // Fill music buffers with new data from music stream
-static bool BufferMusicStream(int index, ALuint buffer)
+static bool BufferMusicStream(int index)
 {
     short pcm[MUSIC_BUFFER_SIZE_SHORT];
     float pcmf[MUSIC_BUFFER_SIZE_FLOAT];
@@ -985,33 +985,17 @@ static bool BufferMusicStream(int index, ALuint buffer)
         {
             int readlen = MUSIC_BUFFER_SIZE_FLOAT / 2;
             jar_xm_generate_samples(currentMusic[index].chipctx, pcmf, readlen); // reads 2*readlen shorts and moves them to buffer+size memory location
+            UpdateAudioContext(currentMusic[index].ctx, pcmf, MUSIC_BUFFER_SIZE_FLOAT);
             size += readlen * currentMusic[index].ctx->channels; // Not sure if this is what it needs
-            
-            alBufferData(buffer, currentMusic[index].ctx->alFormat, pcmf, size*sizeof(float), 48000);
             currentMusic[index].totalSamplesLeft -= size;
             if(currentMusic[index].totalSamplesLeft <= 0) active = false;
         }
         else
         {
-            while (size < MUSIC_BUFFER_SIZE_SHORT)
-            {
-                streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic[index].stream, currentMusic[index].ctx->channels, pcm + size, MUSIC_BUFFER_SIZE_SHORT - size);
-                if (streamedBytes > 0) size += (streamedBytes*currentMusic[index].ctx->channels);
-                else break;
-            }
-            
-            if (size > 0)
-            {
-                alBufferData(buffer, currentMusic[index].ctx->alFormat, pcm, size*sizeof(short), currentMusic[index].ctx->sampleRate);
-                currentMusic[index].totalSamplesLeft -= size;
-                
-                if(currentMusic[index].totalSamplesLeft <= 0) active = false; // end if no more samples left
-            }
-            else
-            {
-                active = false;
-                TraceLog(WARNING, "No more data obtained from stream");
-            }
+            streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic[index].stream, currentMusic[index].ctx->channels, pcm, MUSIC_BUFFER_SIZE_SHORT);
+            UpdateAudioContext(currentMusic[index].ctx, pcm, MUSIC_BUFFER_SIZE_SHORT);
+            currentMusic[index].totalSamplesLeft -= MUSIC_BUFFER_SIZE_SHORT;
+            if(currentMusic[index].totalSamplesLeft <= 0) active = false;
         }
         TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
     }
@@ -1038,53 +1022,39 @@ static void EmptyMusicStream(int index)
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(int index)
 {
-    ALuint buffer = 0;
-    ALint processed = 0;
+    ALenum state;
     bool active = true;
 
     if (index < MAX_MUSIC_STREAMS && musicEnabled)
     {
-        // Get the number of already processed buffers (if any)
-        alGetSourcei(currentMusic[index].source, AL_BUFFERS_PROCESSED, &processed);
-
-        while (processed > 0)
+        active = BufferMusicStream(index);
+        
+        if ((!active) && (currentMusic[index].loop))
         {
-            // Recover processed buffer for refill
-            alSourceUnqueueBuffers(currentMusic[index].source, 1, &buffer);
-
-            // Refill buffer
-            active = BufferMusicStream(buffer);
-
-            // If no more data to stream, restart music (if loop)
-            if ((!active) && (currentMusic[index].loop))
+            if(currentMusic[index].chipTune)
             {
-                if(currentMusic[index].chipTune)
-                {
-                    currentMusic[index].totalSamplesLeft = currentMusic[index].totalLengthSeconds * currentMusic[index].ctx->sampleRate;
-                }
-                else
-                {
-                    stb_vorbis_seek_start(currentMusic[index].stream);
-                    currentMusic[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[index].stream)*currentMusic[index].ctx->channels;
-                }
-                active = BufferMusicStream(buffer);
+                currentMusic[index].totalSamplesLeft = currentMusic[index].totalLengthSeconds * currentMusic[index].ctx->sampleRate;
             }
-
-            // Add refilled buffer to queue again... don't let the music stop!
-            alSourceQueueBuffers(currentMusic[index].source, 1, &buffer);
-
-            if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Error buffering data...");
-
-            processed--;
+            else
+            {
+                stb_vorbis_seek_start(currentMusic[index].stream);
+                currentMusic[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[index].stream)*currentMusic[index].ctx->channels;
+            }
+            active = BufferMusicStream(index);
         }
+        
 
-        ALenum state;
-        alGetSourcei(currentMusic[index].source, AL_SOURCE_STATE, &state);
+        if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Error buffering data...");
 
-        if ((state != AL_PLAYING) && active) alSourcePlay(currentMusic[index].source);
-
-        if (!active) StopMusicStream();
+        processed--;
     }
+
+    
+    alGetSourcei(currentMusic[index].source, AL_SOURCE_STATE, &state);
+
+    if ((state != AL_PLAYING) && active) alSourcePlay(currentMusic[index].source);
+
+    if (!active) StopMusicStream();
 }
 
 // Load WAV file into Wave structure
