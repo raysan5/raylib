@@ -77,19 +77,6 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-// Music type (file streaming from memory)
-// NOTE: Anything longer than ~10 seconds should be streamed...
-typedef struct Music {
-    stb_vorbis *stream;
-    jar_xm_context_t *chipctx; // Stores jar_xm context
-    AudioContext_t *ctx; // audio context
-    
-    int totalSamplesLeft;
-    float totalLengthSeconds;
-    bool loop;
-    bool chipTune; // True if chiptune is loaded
-} Music;
-
 // Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
 // no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
 // a dedicated mix channel. All audio is 32bit floating point in stereo.
@@ -103,6 +90,19 @@ typedef struct AudioContext_t {
     ALuint alSource;                     // openAL source
     ALuint alBuffer[MAX_STREAM_BUFFERS]; // openAL sample buffer
 } AudioContext_t;
+
+// Music type (file streaming from memory)
+// NOTE: Anything longer than ~10 seconds should be streamed...
+typedef struct Music {
+    stb_vorbis *stream;
+    jar_xm_context_t *chipctx; // Stores jar_xm context
+    AudioContext_t *ctx; // audio context
+    
+    int totalSamplesLeft;
+    float totalLengthSeconds;
+    bool loop;
+    bool chipTune; // True if chiptune is loaded
+} Music;
 
 #if defined(AUDIO_STANDALONE)
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
@@ -168,7 +168,10 @@ void InitAudioDevice(void)
 // Close the audio device for the current context, and destroys the context
 void CloseAudioDevice(void)
 {
-    StopMusicStream();      // Stop music streaming and close current stream
+    for(int index=0; index<MAX_MUSIC_STREAMS; index++)
+    {
+        if(currentMusic[index].ctx) StopMusicStream(index);      // Stop music streaming and close current stream
+    }
 
     ALCdevice *device;
     ALCcontext *context = alcGetCurrentContext();
@@ -205,7 +208,6 @@ AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChanne
 {
     if(mixChannel >= MAX_AUDIO_CONTEXTS) return NULL;
     if(!IsAudioDeviceReady()) InitAudioDevice();
-    else StopMusicStream();
     
     if(!mixChannelsActive_g[mixChannel]){
         AudioContext_t *ac = (AudioContext_t*)malloc(sizeof(AudioContext_t));
@@ -776,7 +778,6 @@ int PlayMusicStream(int musicIndex, char *fileName)
         else if(musicIndex = MAX_AUDIO_CONTEXTS - 1) return 2; // error
     }
     
-    
     if (strcmp(GetExtension(fileName),"ogg") == 0)
     {
         // Open audio stream
@@ -888,12 +889,12 @@ void ResumeMusicStream(int index)
 {
     // Resume music playing... if music available!
     ALenum state;
-    if(currentMusic[musicIndex].ctx){
-        alGetSourcei(currentMusic[musicIndex].ctx->alSource, AL_SOURCE_STATE, &state);
+    if(currentMusic[index].ctx){
+        alGetSourcei(currentMusic[index].ctx->alSource, AL_SOURCE_STATE, &state);
         if (state == AL_PAUSED)
         {
             TraceLog(INFO, "Resuming music stream");
-            alSourcePlay(currentMusic[musicIndex].ctx->alSource);
+            alSourcePlay(currentMusic[index].ctx->alSource);
             musicEnabled = true;
         }
     }
@@ -976,9 +977,8 @@ static bool BufferMusicStream(int index)
     float pcmf[MUSIC_BUFFER_SIZE_FLOAT];
     
     int  size = 0;              // Total size of data steamed (in bytes)
-    int  streamedBytes = 0;     // samples of data obtained, channels are not included in calculation
     bool active = true;         // We can get more data from stream (not finished)
-
+        
     if (musicEnabled)
     {
         if (currentMusic[index].chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
@@ -992,12 +992,12 @@ static bool BufferMusicStream(int index)
         }
         else
         {
-            streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic[index].stream, currentMusic[index].ctx->channels, pcm, MUSIC_BUFFER_SIZE_SHORT);
-            UpdateAudioContext(currentMusic[index].ctx, pcm, MUSIC_BUFFER_SIZE_SHORT);
-            currentMusic[index].totalSamplesLeft -= MUSIC_BUFFER_SIZE_SHORT;
+            int streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic[index].stream, currentMusic[index].ctx->channels, pcm, MUSIC_BUFFER_SIZE_SHORT);
+            UpdateAudioContext(currentMusic[index].ctx, pcm, streamedBytes);
+            currentMusic[index].totalSamplesLeft -= streamedBytes*currentMusic[index].ctx->channels;
             if(currentMusic[index].totalSamplesLeft <= 0) active = false;
         }
-        TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
+        // TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
     }
 
     return active;
@@ -1009,11 +1009,11 @@ static void EmptyMusicStream(int index)
     ALuint buffer = 0;
     int queued = 0;
 
-    alGetSourcei(currentMusic[index].source, AL_BUFFERS_QUEUED, &queued);
+    alGetSourcei(currentMusic[index].ctx->alSource, AL_BUFFERS_QUEUED, &queued);
 
     while (queued > 0)
     {
-        alSourceUnqueueBuffers(currentMusic[index].source, 1, &buffer);
+        alSourceUnqueueBuffers(currentMusic[index].ctx->alSource, 1, &buffer);
 
         queued--;
     }
@@ -1045,16 +1045,17 @@ void UpdateMusicStream(int index)
         
 
         if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Error buffering data...");
+        
+        alGetSourcei(currentMusic[index].ctx->alSource, AL_SOURCE_STATE, &state);
 
-        processed--;
+        if ((state != AL_PLAYING) && active) alSourcePlay(currentMusic[index].ctx->alSource);
+
+        if (!active) StopMusicStream(index);
+        
     }
+    else
+        return;
 
-    
-    alGetSourcei(currentMusic[index].source, AL_SOURCE_STATE, &state);
-
-    if ((state != AL_PLAYING) && active) alSourcePlay(currentMusic[index].source);
-
-    if (!active) StopMusicStream();
 }
 
 // Load WAV file into Wave structure
