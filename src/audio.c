@@ -112,7 +112,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 static AudioContext_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS];      // What mix channels are currently active
-static bool musicEnabled = false;
+static bool musicEnabled_g = false;
 static Music currentMusic[MAX_MUSIC_STREAMS];                        // Current music loaded, up to two can play at the same time
 
 //----------------------------------------------------------------------------------
@@ -126,8 +126,9 @@ static bool BufferMusicStream(int index);          // Fill music buffers with da
 static void EmptyMusicStream(int index);           // Empty music buffers
 
 static unsigned short FillAlBufferWithSilence(AudioContext_t *context, ALuint buffer);// fill buffer with zeros, returns number processed
-static void ResampleShortToFloat(short *shorts, float *floats, unsigned short len); // pass two arrays of the same legnth in
-static void ResampleByteToFloat(char *chars, float *floats, unsigned short len); // pass two arrays of same length in
+static void ResampleShortToFloat(short *shorts, float *floats, unsigned short len);   // pass two arrays of the same legnth in
+static void ResampleByteToFloat(char *chars, float *floats, unsigned short len);      // pass two arrays of same length in
+static bool isMusicStreamReady(int index);                                            // Checks if music buffer is ready to be refilled
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -799,18 +800,21 @@ int PlayMusicStream(int musicIndex, char *fileName)
             TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
             currentMusic[musicIndex].loop = true;                  // We loop by default
-            musicEnabled = true;
-            currentMusic[musicIndex].ctx->playing = true;
+            musicEnabled_g = true;
+            
 
             currentMusic[musicIndex].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[musicIndex].stream) * info.channels;
             currentMusic[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic[musicIndex].stream);
             
             if (info.channels == 2){
                 currentMusic[musicIndex].ctx = InitAudioContext(info.sample_rate, mixIndex, 2, false);
+                currentMusic[musicIndex].ctx->playing = true;
             }
             else{
                 currentMusic[musicIndex].ctx = InitAudioContext(info.sample_rate, mixIndex, 1, false);
+                currentMusic[musicIndex].ctx->playing = true;
             }
+            if(!currentMusic[musicIndex].ctx) return 4; // error
         }
     }
     else if (strcmp(GetExtension(fileName),"xm") == 0)
@@ -823,24 +827,25 @@ int PlayMusicStream(int musicIndex, char *fileName)
             jar_xm_set_max_loop_count(currentMusic[musicIndex].chipctx, 0); // infinite number of loops
             currentMusic[musicIndex].totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic[musicIndex].chipctx);
             currentMusic[musicIndex].totalLengthSeconds = ((float)currentMusic[musicIndex].totalSamplesLeft) / 48000.f;
-            musicEnabled = true;
-            currentMusic[musicIndex].ctx->playing = true;
+            musicEnabled_g = true;
             
             TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic[musicIndex].totalSamplesLeft);
             TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, currentMusic[musicIndex].totalLengthSeconds);
             
             currentMusic[musicIndex].ctx = InitAudioContext(48000, mixIndex, 2, true);
+            if(!currentMusic[musicIndex].ctx) return 5; // error
+            currentMusic[musicIndex].ctx->playing = true;
         }
         else
         {
             TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
-            return 4; // error
+            return 6; // error
         }
     }
     else
     {
         TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
-        return 5; // error
+        return 7; // error
     }
     return 0; // normal return
 }
@@ -861,7 +866,7 @@ void StopMusicStream(int index)
             stb_vorbis_close(currentMusic[index].stream);
         }
         
-        if(!getMusicStreamCount()) musicEnabled = false;
+        if(!getMusicStreamCount()) musicEnabled_g = false;
         if(currentMusic[index].stream || currentMusic[index].chipctx)
         {
             currentMusic[index].stream = NULL;
@@ -884,7 +889,7 @@ int getMusicStreamCount(void)
 void PauseMusicStream(int index)
 {
     // Pause music stream if music available!
-    if (currentMusic[index].ctx && musicEnabled)
+    if (currentMusic[index].ctx && musicEnabled_g)
     {
         TraceLog(INFO, "Pausing music stream");
         alSourcePause(currentMusic[index].ctx->alSource);
@@ -987,7 +992,7 @@ static bool BufferMusicStream(int index)
     int  size = 0;              // Total size of data steamed (in bytes)
     bool active = true;         // We can get more data from stream (not finished)
         
-    if (musicEnabled)
+    if (musicEnabled_g)
     {
         if(!currentMusic[index].ctx->playing)
         {
@@ -1031,13 +1036,25 @@ static void EmptyMusicStream(int index)
     }
 }
 
+//determine if a music stream is ready to be written to
+static bool isMusicStreamReady(int index)
+{
+    ALint processed = 0;
+    alGetSourcei(currentMusic[index].ctx->alSource, AL_BUFFERS_PROCESSED, &processed);
+    
+    if(processed)
+        return true;
+    
+    return false;
+}
+
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(int index)
 {
     ALenum state;
     bool active = true;
 
-    if (index < MAX_MUSIC_STREAMS && musicEnabled)
+    if (index < MAX_MUSIC_STREAMS && musicEnabled_g && isMusicStreamReady(index))
     {
         active = BufferMusicStream(index);
         
