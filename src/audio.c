@@ -889,7 +889,7 @@ int getMusicStreamCount(void)
 void PauseMusicStream(int index)
 {
     // Pause music stream if music available!
-    if (currentMusic[index].ctx && musicEnabled_g)
+    if (index < MAX_MUSIC_STREAMS && currentMusic[index].ctx && musicEnabled_g)
     {
         TraceLog(INFO, "Pausing music stream");
         alSourcePause(currentMusic[index].ctx->alSource);
@@ -902,7 +902,7 @@ void ResumeMusicStream(int index)
 {
     // Resume music playing... if music available!
     ALenum state;
-    if(currentMusic[index].ctx){
+    if(index < MAX_MUSIC_STREAMS && currentMusic[index].ctx){
         alGetSourcei(currentMusic[index].ctx->alSource, AL_SOURCE_STATE, &state);
         if (state == AL_PAUSED)
         {
@@ -962,17 +962,20 @@ float GetMusicTimeLength(int index)
 float GetMusicTimePlayed(int index)
 {
     float secondsPlayed;
-    if (currentMusic[index].chipTune)
+    if(index < MAX_MUSIC_STREAMS && currentMusic[index].ctx)
     {
-        uint64_t samples;
-        jar_xm_get_position(currentMusic[index].chipctx, NULL, NULL, NULL, &samples);
-        secondsPlayed = (float)samples / (48000 * currentMusic[index].ctx->channels); // Not sure if this is the correct value
-    }
-    else
-    {
-        int totalSamples = stb_vorbis_stream_length_in_samples(currentMusic[index].stream) * currentMusic[index].ctx->channels;
-        int samplesPlayed = totalSamples - currentMusic[index].totalSamplesLeft;
-        secondsPlayed = (float)samplesPlayed / (currentMusic[index].ctx->sampleRate * currentMusic[index].ctx->channels);
+        if (currentMusic[index].chipTune)
+        {
+            uint64_t samples;
+            jar_xm_get_position(currentMusic[index].chipctx, NULL, NULL, NULL, &samples);
+            secondsPlayed = (float)samples / (48000 * currentMusic[index].ctx->channels); // Not sure if this is the correct value
+        }
+        else
+        {
+            int totalSamples = stb_vorbis_stream_length_in_samples(currentMusic[index].stream) * currentMusic[index].ctx->channels;
+            int samplesPlayed = totalSamples - currentMusic[index].totalSamplesLeft;
+            secondsPlayed = (float)samplesPlayed / (currentMusic[index].ctx->sampleRate * currentMusic[index].ctx->channels);
+        }
     }
     
 
@@ -989,33 +992,42 @@ static bool BufferMusicStream(int index)
     short pcm[MUSIC_BUFFER_SIZE_SHORT];
     float pcmf[MUSIC_BUFFER_SIZE_FLOAT];
     
-    int  size = 0;              // Total size of data steamed (in bytes)
+    int  size = 0;              // Total size of data steamed in L+R samples
     bool active = true;         // We can get more data from stream (not finished)
         
-    if (musicEnabled_g)
+    
+    if(!currentMusic[index].ctx->playing && currentMusic[index].totalSamplesLeft > 0)
     {
-        if(!currentMusic[index].ctx->playing)
-        {
-            UpdateAudioContext(currentMusic[index].ctx, NULL, 0);
-            return false;
-        }
-        
-        if (currentMusic[index].chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
-        {
-            jar_xm_generate_samples(currentMusic[index].chipctx, pcmf, MUSIC_BUFFER_SIZE_FLOAT / 2); // reads 2*readlen shorts and moves them to buffer+size memory location
-            UpdateAudioContext(currentMusic[index].ctx, pcmf, MUSIC_BUFFER_SIZE_FLOAT);
-            currentMusic[index].totalSamplesLeft -= MUSIC_BUFFER_SIZE_FLOAT;
-            if(currentMusic[index].totalSamplesLeft <= 0) active = false;
-        }
-        else
-        {
-            int streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic[index].stream, currentMusic[index].ctx->channels, pcm, MUSIC_BUFFER_SIZE_SHORT);
-            UpdateAudioContext(currentMusic[index].ctx, pcm, streamedBytes);
-            currentMusic[index].totalSamplesLeft -= streamedBytes*currentMusic[index].ctx->channels;
-            if(currentMusic[index].totalSamplesLeft <= 0) active = false;
-        }
-        TraceLog(DEBUG, "Buffering index:%i, chiptune:%i", index, (int)currentMusic[index].chipTune);
+        UpdateAudioContext(currentMusic[index].ctx, NULL, 0);
+        return true; // it is still active, only it is paused
     }
+    
+    
+    if (currentMusic[index].chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
+    {
+        if(currentMusic[index].totalSamplesLeft >= MUSIC_BUFFER_SIZE_FLOAT / 2)
+            size = MUSIC_BUFFER_SIZE_FLOAT / 2;
+        else
+            size = currentMusic[index].totalSamplesLeft / 2;
+    
+        jar_xm_generate_samples(currentMusic[index].chipctx, pcmf, size); // reads 2*readlen shorts and moves them to buffer+size memory location
+        UpdateAudioContext(currentMusic[index].ctx, pcmf, size * 2);
+        currentMusic[index].totalSamplesLeft -= size * 2;
+    }
+    else
+    {
+        if(currentMusic[index].totalSamplesLeft >= MUSIC_BUFFER_SIZE_SHORT)
+            size = MUSIC_BUFFER_SIZE_SHORT;
+        else
+            size = currentMusic[index].totalSamplesLeft;
+        
+        int streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic[index].stream, currentMusic[index].ctx->channels, pcm, size);
+        UpdateAudioContext(currentMusic[index].ctx, pcm, streamedBytes * currentMusic[index].ctx->channels);
+        currentMusic[index].totalSamplesLeft -= streamedBytes * currentMusic[index].ctx->channels;
+    }
+    
+    TraceLog(DEBUG, "Buffering index:%i, chiptune:%i", index, (int)currentMusic[index].chipTune);
+    if(currentMusic[index].totalSamplesLeft <= 0) active = false;
 
     return active;
 }
@@ -1042,8 +1054,7 @@ static bool isMusicStreamReady(int index)
     ALint processed = 0;
     alGetSourcei(currentMusic[index].ctx->alSource, AL_BUFFERS_PROCESSED, &processed);
     
-    if(processed)
-        return true;
+    if(processed) return true;
     
     return false;
 }
@@ -1054,11 +1065,11 @@ void UpdateMusicStream(int index)
     ALenum state;
     bool active = true;
 
-    if (index < MAX_MUSIC_STREAMS && musicEnabled_g && isMusicStreamReady(index))
+    if (index < MAX_MUSIC_STREAMS && musicEnabled_g && currentMusic[index].ctx && isMusicStreamReady(index))
     {
         active = BufferMusicStream(index);
         
-        if ((!active) && (currentMusic[index].loop))
+        if (!active && currentMusic[index].loop && currentMusic[index].ctx->playing)
         {
             if(currentMusic[index].chipTune)
             {
@@ -1067,7 +1078,7 @@ void UpdateMusicStream(int index)
             else
             {
                 stb_vorbis_seek_start(currentMusic[index].stream);
-                currentMusic[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[index].stream)*currentMusic[index].ctx->channels;
+                currentMusic[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[index].stream) * currentMusic[index].ctx->channels;
             }
             active = BufferMusicStream(index);
         }
