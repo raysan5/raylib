@@ -85,7 +85,7 @@ typedef struct AudioContext_t {
     unsigned char channels;              // 1=mono,2=stereo
     unsigned char mixChannel;            // 0-3 or mixA-mixD, each mix channel can receive up to one dedicated audio stream
     bool floatingPoint;                  // if false then the short datatype is used instead
-    bool playing;
+    bool playing;                        // false if paused
     ALenum alFormat;                     // openAL format specifier
     ALuint alSource;                     // openAL source
     ALuint alBuffer[MAX_STREAM_BUFFERS]; // openAL sample buffer
@@ -165,13 +165,14 @@ void InitAudioDevice(void)
     alListener3f(AL_ORIENTATION, 0, 0, -1);
 }
 
-// Close the audio device for the current context, and destroys the context
+// Close the audio device for all contexts
 void CloseAudioDevice(void)
 {
     for(int index=0; index<MAX_MUSIC_STREAMS; index++)
     {
         if(currentMusic[index].ctx) StopMusicStream(index);      // Stop music streaming and close current stream
     }
+    
 
     ALCdevice *device;
     ALCcontext *context = alcGetCurrentContext();
@@ -770,12 +771,12 @@ int PlayMusicStream(int musicIndex, char *fileName)
 {
     int mixIndex;
     
-    if(currentMusic[musicIndex].stream != NULL || currentMusic[musicIndex].chipTune) return 1; // error
+    if(currentMusic[musicIndex].stream || currentMusic[musicIndex].chipctx) return 1; // error
     
     for(mixIndex = 0; mixIndex < MAX_AUDIO_CONTEXTS; mixIndex++) // find empty mix channel slot
     {
         if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(musicIndex = MAX_AUDIO_CONTEXTS - 1) return 2; // error
+        else if(mixIndex = MAX_AUDIO_CONTEXTS - 1) return 2; // error
     }
     
     if (strcmp(GetExtension(fileName),"ogg") == 0)
@@ -799,6 +800,7 @@ int PlayMusicStream(int musicIndex, char *fileName)
 
             currentMusic[musicIndex].loop = true;                  // We loop by default
             musicEnabled = true;
+            currentMusic[musicIndex].ctx->playing = true;
 
             currentMusic[musicIndex].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[musicIndex].stream) * info.channels;
             currentMusic[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic[musicIndex].stream);
@@ -822,6 +824,7 @@ int PlayMusicStream(int musicIndex, char *fileName)
             currentMusic[musicIndex].totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic[musicIndex].chipctx);
             currentMusic[musicIndex].totalLengthSeconds = ((float)currentMusic[musicIndex].totalSamplesLeft) / 48000.f;
             musicEnabled = true;
+            currentMusic[musicIndex].ctx->playing = true;
             
             TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic[musicIndex].totalSamplesLeft);
             TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, currentMusic[musicIndex].totalLengthSeconds);
@@ -859,16 +862,21 @@ void StopMusicStream(int index)
         }
         
         if(!getMusicStreamCount()) musicEnabled = false;
+        if(currentMusic[index].stream || currentMusic[index].chipctx)
+        {
+            currentMusic[index].stream = NULL;
+            currentMusic[index].chipctx = NULL;
+        }
     }
 }
 
 //get number of music channels active at this time, this does not mean they are playing
 int getMusicStreamCount(void)
 {
-    int musicCount;
+    int musicCount = 0;
     for(int musicIndex = 0; musicIndex < MAX_MUSIC_STREAMS; musicIndex++) // find empty music slot
         if(currentMusic[musicIndex].stream != NULL || currentMusic[musicIndex].chipTune) musicCount++;
-        
+    
     return musicCount;
 }
 
@@ -876,11 +884,11 @@ int getMusicStreamCount(void)
 void PauseMusicStream(int index)
 {
     // Pause music stream if music available!
-    if (musicEnabled)
+    if (currentMusic[index].ctx && musicEnabled)
     {
         TraceLog(INFO, "Pausing music stream");
-        UpdateAudioContext(currentMusic[index].ctx, NULL, 0); // pushing null data auto pauses stream
-        musicEnabled = false;
+        alSourcePause(currentMusic[index].ctx->alSource);
+        currentMusic[index].ctx->playing = false;
     }
 }
 
@@ -895,7 +903,7 @@ void ResumeMusicStream(int index)
         {
             TraceLog(INFO, "Resuming music stream");
             alSourcePlay(currentMusic[index].ctx->alSource);
-            musicEnabled = true;
+            currentMusic[index].ctx->playing = true;
         }
     }
 }
@@ -981,13 +989,17 @@ static bool BufferMusicStream(int index)
         
     if (musicEnabled)
     {
+        if(!currentMusic[index].ctx->playing)
+        {
+            UpdateAudioContext(currentMusic[index].ctx, NULL, 0);
+            return false;
+        }
+        
         if (currentMusic[index].chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
         {
-            int readlen = MUSIC_BUFFER_SIZE_FLOAT / 2;
-            jar_xm_generate_samples(currentMusic[index].chipctx, pcmf, readlen); // reads 2*readlen shorts and moves them to buffer+size memory location
+            jar_xm_generate_samples(currentMusic[index].chipctx, pcmf, MUSIC_BUFFER_SIZE_FLOAT / 2); // reads 2*readlen shorts and moves them to buffer+size memory location
             UpdateAudioContext(currentMusic[index].ctx, pcmf, MUSIC_BUFFER_SIZE_FLOAT);
-            size += readlen * currentMusic[index].ctx->channels; // Not sure if this is what it needs
-            currentMusic[index].totalSamplesLeft -= size;
+            currentMusic[index].totalSamplesLeft -= MUSIC_BUFFER_SIZE_FLOAT;
             if(currentMusic[index].totalSamplesLeft <= 0) active = false;
         }
         else
@@ -997,7 +1009,7 @@ static bool BufferMusicStream(int index)
             currentMusic[index].totalSamplesLeft -= streamedBytes*currentMusic[index].ctx->channels;
             if(currentMusic[index].totalSamplesLeft <= 0) active = false;
         }
-        // TraceLog(DEBUG, "Streaming music data to buffer. Bytes streamed: %i", size);
+        TraceLog(DEBUG, "Buffering index:%i, chiptune:%i", index, (int)currentMusic[index].chipTune);
     }
 
     return active;
