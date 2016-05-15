@@ -55,7 +55,7 @@
 
 #if defined(PLATFORM_DESKTOP)
     #define GLAD_EXTENSIONS_LOADER
-    #if defined(GLEW_EXTENSIONS_LOADER)
+    #if defined(GLEW_EXTENSIONS_LOADER) || defined(GRAPHICS_API_OPENGL_21)
         #define GLEW_STATIC
         #include <GL/glew.h>        // GLEW extensions loading lib
     #elif defined(GLAD_EXTENSIONS_LOADER)
@@ -1504,7 +1504,7 @@ static void InitDisplay(int width, int height)
 
             // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
             // Alternatives: glLoadGen, glad, libepoxy
-        #elif defined(GLAD_EXTENSIONS_LOADER)
+        #elif defined(GLAD_EXTENSIONS_LOADER) && defined(GRAPHICS_API_OPENGL_33)
             // NOTE: glad is generated and contains only required OpenGL version and Core extensions
             //if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
             if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n"); // No GLFW3 in this module...
@@ -1516,6 +1516,15 @@ static void InitDisplay(int width, int height)
             //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
         #endif
     }
+    #if defined(GRAPHICS_API_OPENGL_21)
+    else if(rlGetVersion() == OPENGL_21)
+    {
+        GLenum error = glewInit();
+	if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
+	if (glewIsSupported("GL_VERSION_2_1")) TraceLog(INFO, "OpenGL 2.1 profile supported");
+	else TraceLog(ERROR, "OpenGL 2.1 profile not supported");
+    }
+    #endif
 #endif
     
     // Enables GPU v-sync, so frames are not limited to screen refresh rate (60Hz -> 60 FPS)

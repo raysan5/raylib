@@ -44,11 +44,12 @@
 
 // Choose opengl version here or just define it at compile time: -DGRAPHICS_API_OPENGL_33
 //#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP
+//#define GRAPHICS_API_OPENGL_21     // Only available on PLATFORM_DESKTOP
 //#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP
 //#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI or PLATFORM_WEB
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
-#if !defined(GRAPHICS_API_OPENGL_11) && !defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_11) && !defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_ES2) && !defined(GRAPHICS_API_OPENGL_21)
     #define GRAPHICS_API_OPENGL_11
 #endif
 
@@ -56,6 +57,10 @@
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(GRAPHICS_API_OPENGL_33)
         #undef GRAPHICS_API_OPENGL_33
+    #endif
+
+    #if defined(GRAPHICS_API_OPENGL_21)
+        #undef GRAPHICS_API_OPENGL_21
     #endif
 
     #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -66,7 +71,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_21)
     // NOTE: This is the maximum amount of lines, triangles and quads per frame, be careful!
     #define MAX_LINES_BATCH         8192
     #define MAX_TRIANGLES_BATCH     4096
@@ -86,7 +91,7 @@ typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
-typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
+typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20, OPENGL_21 } GlVersion;
 
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
@@ -269,7 +274,7 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world
 unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
 void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
 void PrintProjectionMatrix(void);       // DEBUG: Print projection matrix
 void PrintModelviewMatrix(void);        // DEBUG: Print modelview matrix
 #endif
