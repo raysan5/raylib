@@ -996,10 +996,10 @@ static bool BufferMusicStream(int index)
     bool active = true;         // We can get more data from stream (not finished)
         
     
-    if(!currentMusic[index].ctx->playing && currentMusic[index].totalSamplesLeft > 0)
+    if (!currentMusic[index].ctx->playing && currentMusic[index].totalSamplesLeft > 0)
     {
         UpdateAudioContext(currentMusic[index].ctx, NULL, 0);
-        return true; // it is still active, only it is paused
+        return true; // it is still active but it is paused
     }
     
     
@@ -1071,7 +1071,7 @@ void UpdateMusicStream(int index)
         
         if (!active && currentMusic[index].loop && currentMusic[index].ctx->playing)
         {
-            if(currentMusic[index].chipTune)
+            if (currentMusic[index].chipTune)
             {
                 currentMusic[index].totalSamplesLeft = currentMusic[index].totalLengthSeconds * currentMusic[index].ctx->sampleRate;
             }
@@ -1080,7 +1080,7 @@ void UpdateMusicStream(int index)
                 stb_vorbis_seek_start(currentMusic[index].stream);
                 currentMusic[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[index].stream) * currentMusic[index].ctx->channels;
             }
-            active = BufferMusicStream(index);
+            active = true;
         }
         
 
@@ -1088,7 +1088,7 @@ void UpdateMusicStream(int index)
         
         alGetSourcei(currentMusic[index].ctx->alSource, AL_SOURCE_STATE, &state);
 
-        if ((state != AL_PLAYING) && active) alSourcePlay(currentMusic[index].ctx->alSource);
+        if (state != AL_PLAYING && active && currentMusic[index].ctx->playing) alSourcePlay(currentMusic[index].ctx->alSource);
 
         if (!active) StopMusicStream(index);
         
