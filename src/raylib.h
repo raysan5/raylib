@@ -451,10 +451,7 @@ typedef struct Wave {
     short channels;
 } Wave;
 
-// Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
-// no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
-// a dedicated mix channel.
-typedef void* AudioContext;
+typedef int RawAudioContext;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -876,13 +873,6 @@ void InitAudioDevice(void);                                     // Initialize au
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
 
-// Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
-// The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 0, 2, true); // mixchannel 1, 48khz, stereo, floating point
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels, bool floatingPoint);
-void CloseAudioContext(AudioContext ctx);                       // Frees audio context
-unsigned short UpdateAudioContext(AudioContext ctx, void *data, unsigned short numberElements); // Pushes more audio data into context mix channel, if NULL is passed to data then zeros are played
-
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
@@ -905,6 +895,9 @@ float GetMusicTimeLength(int index);                            // Get current m
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
 int getMusicStreamCount(void);
 void SetMusicPitch(int index, float pitch);
+
+RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint); // used to output raw audio streams, returns negative numbers on error
+void CloseRawAudioContext(RawAudioContext ctx);
 
 #ifdef __cplusplus
 }
