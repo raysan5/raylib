@@ -109,7 +109,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         LFLAGS = -L. -L../../src
     else
-        LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
+        LFLAGS = -L. -L../../src
+        ifeq ($(PLATFORM_OS),WINDOWS)
+            LFLAGS += -LC:/raylib/raylib/src
+        endif
         # external libraries to link with
         # GLFW3
             LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
