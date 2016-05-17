@@ -368,18 +368,20 @@ typedef struct BoundingBox {
 
 // Vertex data definning a mesh
 typedef struct Mesh {
-    int vertexCount;            // num vertices
+    int vertexCount;            // number of vertices stored in arrays
     float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
     float *texcoords2;          // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
     float *normals;             // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
     float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
     unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;    // vertex indices (in case vertex data comes indexed)
+    int triangleCount;          // number of triangles stored (indexed or not)
     
     BoundingBox bounds;         // mesh limits defined by min and max points
     
     unsigned int vaoId;         // OpenGL Vertex Array Object id
-    unsigned int vboId[6];      // OpenGL Vertex Buffer Objects id (6 types of vertex data)
+    unsigned int vboId[7];      // OpenGL Vertex Buffer Objects id (7 types of vertex data)
 } Mesh;
 
 // Shader type (generic shader)
@@ -813,6 +815,7 @@ void SetModelTexture(Model *model, Texture2D texture);          // Link a textur
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
+void UnloadMaterial(Material material);                         // Unload material textures from VRAM
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model with extended parameters

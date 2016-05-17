@@ -128,54 +128,23 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-// Vertex buffer (position + color arrays)
-// NOTE: Used for lines and triangles VAOs
+// Dynamic vertex buffers (position + texcoords + colors + indices arrays)
 typedef struct {
-    int vCounter;
-    int cCounter;
-    float *vertices;            // 3 components per vertex
-    unsigned char *colors;      // 4 components per vertex
-} VertexPositionColorBuffer;
-
-// Vertex buffer (position + texcoords + color arrays)
-// NOTE: Not used
-typedef struct {
-    int vCounter;
-    int tcCounter;
-    int cCounter;
-    float *vertices;            // 3 components per vertex
-    float *texcoords;           // 2 components per vertex
-    unsigned char *colors;      // 4 components per vertex
-} VertexPositionColorTextureBuffer;
-
-// Vertex buffer (position + texcoords + normals arrays)
-// NOTE: Not used
-typedef struct {
-    int vCounter;
-    int tcCounter;
-    int nCounter;
-    float *vertices;            // 3 components per vertex
-    float *texcoords;           // 2 components per vertex
-    float *normals;             // 3 components per vertex
-    //short *normals;           // NOTE: Less data load... but padding issues and normalizing required!
-} VertexPositionTextureNormalBuffer;
-
-// Vertex buffer (position + texcoords + colors + indices arrays)
-// NOTE: Used for quads VAO
-typedef struct {
-    int vCounter;
-    int tcCounter;
-    int cCounter;
-    float *vertices;            // 3 components per vertex
-    float *texcoords;           // 2 components per vertex
-    unsigned char *colors;      // 4 components per vertex
+    int vCounter;               // vertex position counter to process (and draw) from full buffer
+    int tcCounter;              // vertex texcoord counter to process (and draw) from full buffer
+    int cCounter;               // vertex color counter to process (and draw) from full buffer
+    float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
 #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    unsigned int *indices;      // 6 indices per quad (could be int)
+    unsigned int *indices;      // vertex indices (in case vertex data comes indexed) (6 indices per quad)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    unsigned short *indices;    // 6 indices per quad (must be short)
+    unsigned short *indices;    // vertex indices (in case vertex data comes indexed) (6 indices per quad)
                                 // NOTE: 6*2 byte = 12 byte, not alignment problem!
 #endif
-} VertexPositionColorTextureIndexBuffer;
+    unsigned int vaoId;         // OpenGL Vertex Array Object id
+    unsigned int vboId[4];      // OpenGL Vertex Buffer Objects id (4 types of vertex data)
+} DynamicBuffer;
 
 // Draw call type
 // NOTE: Used to track required draw-calls, organized by texture
@@ -205,18 +174,9 @@ static DrawMode currentDrawMode;
 
 static float currentDepth = -1.0f;
 
-// Default vertex buffers for lines, triangles and quads
-static VertexPositionColorBuffer lines;         // No texture support
-static VertexPositionColorBuffer triangles;     // No texture support
-static VertexPositionColorTextureIndexBuffer quads;
-
-// Default vertex buffers VAOs (if supported)
-static GLuint vaoLines, vaoTriangles, vaoQuads;
-
-// Default vertex buffers VBOs
-static GLuint linesBuffer[2];           // Lines buffers (position, color)
-static GLuint trianglesBuffer[2];       // Triangles buffers (position, color)
-static GLuint quadsBuffer[4];           // Quads buffers (position, texcoord, color, index)
+static DynamicBuffer lines;
+static DynamicBuffer triangles;
+static DynamicBuffer quads;
 
 // Default buffers draw calls
 static DrawCall *draws;
@@ -783,16 +743,16 @@ void rlDisableDepthTest(void)
 // Unload texture from GPU memory
 void rlDeleteTextures(unsigned int id)
 {
-    glDeleteTextures(1, &id);
+    if (id != 0) glDeleteTextures(1, &id);
 }
 
 // Unload render texture from GPU memory
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDeleteFramebuffers(1, &target.id);
-    glDeleteTextures(1, &target.texture.id);
-    glDeleteTextures(1, &target.depth.id);
+    if (target.id != 0) glDeleteFramebuffers(1, &target.id);
+    if (target.texture.id != 0) glDeleteTextures(1, &target.texture.id);
+    if (target.depth.id != 0) glDeleteTextures(1, &target.depth.id);
 #endif
 }
 
@@ -800,7 +760,7 @@ void rlDeleteRenderTextures(RenderTexture2D target)
 void rlDeleteShader(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glDeleteProgram(id);
+    if (id != 0) glDeleteProgram(id);
 #endif
 }
 
@@ -810,7 +770,7 @@ void rlDeleteVertexArrays(unsigned int id)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (vaoSupported) 
     {
-        glDeleteVertexArrays(1, &id);
+        if (id != 0) glDeleteVertexArrays(1, &id);
         TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", id);
     }
 #endif
@@ -1094,7 +1054,7 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
     if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
-    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array          
+    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
 
     glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
     glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
@@ -1104,7 +1064,9 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
         rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
-        glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+        
+        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
+        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     rlPopMatrix();
 
     glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
@@ -1204,10 +1166,13 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
             glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(material.shader.texcoord2Loc);
         }
+        
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
     }
 
     // Draw call!
-    glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
+    else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     
     if (material.texNormal.id != 0)
     {
@@ -1225,7 +1190,11 @@ void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
     glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
 
     if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-    else glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
 
     glUseProgram(0);        // Unbind shader program
 #endif
@@ -1682,11 +1651,11 @@ void rlglLoadMesh(Mesh *mesh)
     mesh->vboId[3] = 0;     // Vertex colors VBO
     mesh->vboId[4] = 0;     // Vertex tangents VBO
     mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
-    
+    mesh->vboId[6] = 0;     // Vertex indices VBO
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vaoId = 0;       // Vertex Array Objects (VAO)
-    GLuint vboId[6];        // Vertex Buffer Objects (VBOs)
+    GLuint vboId[7];        // Vertex Buffer Objects (VBOs)
 
     if (vaoSupported)
     {
@@ -1775,12 +1744,21 @@ void rlglLoadMesh(Mesh *mesh)
         glDisableVertexAttribArray(5);
     }
     
+    if (mesh->indices != NULL)
+    {
+        glGenBuffers(1, &vboId[6]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId[6]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, GL_STATIC_DRAW);
+    }
+
+    
     mesh->vboId[0] = vboId[0];     // Vertex position VBO
     mesh->vboId[1] = vboId[1];     // Texcoords VBO
     mesh->vboId[2] = vboId[2];     // Normals VBO
     mesh->vboId[3] = vboId[3];     // Colors VBO
     mesh->vboId[4] = vboId[4];     // Tangents VBO
     mesh->vboId[5] = vboId[5];     // Texcoords2 VBO
+    mesh->vboId[6] = vboId[6];     // Indices VBO
 
     if (vaoSupported)
     {
@@ -2388,22 +2366,28 @@ static void LoadDefaultBuffers(void)
     // Lines - Initialize arrays (vertex position and color data)
     lines.vertices = (float *)malloc(sizeof(float)*3*2*MAX_LINES_BATCH);        // 3 float by vertex, 2 vertex by line
     lines.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*2*MAX_LINES_BATCH);  // 4 float by color, 2 colors by line
+    lines.texcoords = NULL;
+    lines.indices = NULL;
 
     for (int i = 0; i < (3*2*MAX_LINES_BATCH); i++) lines.vertices[i] = 0.0f;
     for (int i = 0; i < (4*2*MAX_LINES_BATCH); i++) lines.colors[i] = 0;
 
     lines.vCounter = 0;
     lines.cCounter = 0;
+    lines.tcCounter = 0;
 
     // Triangles - Initialize arrays (vertex position and color data)
     triangles.vertices = (float *)malloc(sizeof(float)*3*3*MAX_TRIANGLES_BATCH);        // 3 float by vertex, 3 vertex by triangle
     triangles.colors = (unsigned char *)malloc(sizeof(unsigned char)*4*3*MAX_TRIANGLES_BATCH);  // 4 float by color, 3 colors by triangle
+    triangles.texcoords = NULL;
+    triangles.indices = NULL;
 
     for (int i = 0; i < (3*3*MAX_TRIANGLES_BATCH); i++) triangles.vertices[i] = 0.0f;
     for (int i = 0; i < (4*3*MAX_TRIANGLES_BATCH); i++) triangles.colors[i] = 0;
 
     triangles.vCounter = 0;
     triangles.cCounter = 0;
+    triangles.tcCounter = 0;
 
     // Quads - Initialize arrays (vertex position, texcoord, color data and indexes)
     quads.vertices = (float *)malloc(sizeof(float)*3*4*MAX_QUADS_BATCH);        // 3 float by vertex, 4 vertex by quad
@@ -2449,96 +2433,95 @@ static void LoadDefaultBuffers(void)
     if (vaoSupported)
     {
         // Initialize Lines VAO
-        glGenVertexArrays(1, &vaoLines);
-        glBindVertexArray(vaoLines);
+        glGenVertexArrays(1, &lines.vaoId);
+        glBindVertexArray(lines.vaoId);
     }
-
-    // Create buffers for our vertex data
-    glGenBuffers(2, linesBuffer);
 
     // Lines - Vertex buffers binding and attributes enable 
     // Vertex position buffer (shader-location = 0)
-    glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
+    glGenBuffers(2, &lines.vboId[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*2*MAX_LINES_BATCH, lines.vertices, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(currentShader.vertexLoc);
     glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     // Vertex color buffer (shader-location = 3)
-    glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+    glGenBuffers(2, &lines.vboId[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(currentShader.colorLoc);
     glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
-    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (lines)", vaoLines);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully (lines)", linesBuffer[0], linesBuffer[1]);
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (lines)", lines.vaoId);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully (lines)", lines.vboId[0], lines.vboId[1]);
 
     // Upload and link triangles vertex buffers
     if (vaoSupported)
     {
         // Initialize Triangles VAO
-        glGenVertexArrays(1, &vaoTriangles);
-        glBindVertexArray(vaoTriangles);
+        glGenVertexArrays(1, &triangles.vaoId);
+        glBindVertexArray(triangles.vaoId);
     }
-
-    // Create buffers for our vertex data
-    glGenBuffers(2, trianglesBuffer);
 
     // Triangles - Vertex buffers binding and attributes enable 
     // Vertex position buffer (shader-location = 0)
-    glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
+    glGenBuffers(1, &triangles.vboId[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*3*MAX_TRIANGLES_BATCH, triangles.vertices, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(currentShader.vertexLoc);
     glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     // Vertex color buffer (shader-location = 3)
-    glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
+    glGenBuffers(1, &triangles.vboId[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(currentShader.colorLoc);
     glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
-    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (triangles)", vaoTriangles);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully(triangles)", trianglesBuffer[0], trianglesBuffer[1]);
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (triangles)", triangles.vaoId);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully(triangles)", triangles.vboId[0], triangles.vboId[1]);
 
     // Upload and link quads vertex buffers
     if (vaoSupported)
     {
         // Initialize Quads VAO
-        glGenVertexArrays(1, &vaoQuads);
-        glBindVertexArray(vaoQuads);
+        glGenVertexArrays(1, &quads.vaoId);
+        glBindVertexArray(quads.vaoId);
     }
-
-    // Create buffers for our vertex data
-    glGenBuffers(4, quadsBuffer);
 
     // Quads - Vertex buffers binding and attributes enable 
     // Vertex position buffer (shader-location = 0)
-    glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
+    glGenBuffers(1, &quads.vboId[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(currentShader.vertexLoc);
     glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 
     // Vertex texcoord buffer (shader-location = 1)
-    glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
+    glGenBuffers(1, &quads.vboId[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(currentShader.texcoordLoc);
     glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
 
     // Vertex color buffer (shader-location = 3)
-    glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
+    glGenBuffers(1, &quads.vboId[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(currentShader.colorLoc);
     glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     // Fill index buffer
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
+    glGenBuffers(1, &quads.vboId[3]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
 #if defined(GRAPHICS_API_OPENGL_33)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(short)*6*MAX_QUADS_BATCH, quads.indices, GL_STATIC_DRAW);
 #endif
 
-    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (quads)", vaoQuads);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully (quads)", quadsBuffer[0], quadsBuffer[1], quadsBuffer[2], quadsBuffer[3]);
+    if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (quads)", quads.vaoId);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully (quads)", quads.vboId[0], quads.vboId[1], quads.vboId[2], quads.vboId[3]);
 
     // Unbind the current VAO
     if (vaoSupported) glBindVertexArray(0);
@@ -2554,15 +2537,15 @@ static void UpdateDefaultBuffers(void)
     if (lines.vCounter > 0)
     {
         // Activate Lines VAO
-        if (vaoSupported) glBindVertexArray(vaoLines);
+        if (vaoSupported) glBindVertexArray(lines.vaoId);
 
         // Lines - vertex positions buffer
-        glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[0]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*2*MAX_LINES_BATCH, lines.vertices, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*lines.vCounter, lines.vertices);    // target - offset (in bytes) - size (in bytes) - data pointer
 
         // Lines - colors buffer
-        glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[1]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*lines.cCounter, lines.colors);
     }
@@ -2571,15 +2554,15 @@ static void UpdateDefaultBuffers(void)
     if (triangles.vCounter > 0)
     {
         // Activate Triangles VAO
-        if (vaoSupported) glBindVertexArray(vaoTriangles);
+        if (vaoSupported) glBindVertexArray(triangles.vaoId);
 
         // Triangles - vertex positions buffer
-        glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[0]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*3*MAX_TRIANGLES_BATCH, triangles.vertices, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*triangles.vCounter, triangles.vertices);
 
         // Triangles - colors buffer
-        glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[1]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*triangles.cCounter, triangles.colors);
     }
@@ -2588,20 +2571,20 @@ static void UpdateDefaultBuffers(void)
     if (quads.vCounter > 0)
     {
         // Activate Quads VAO
-        if (vaoSupported) glBindVertexArray(vaoQuads);
+        if (vaoSupported) glBindVertexArray(quads.vaoId);
 
         // Quads - vertex positions buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[0]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*quads.vCounter, quads.vertices);
 
         // Quads - texture coordinates buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[1]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*quads.vCounter, quads.texcoords);
 
         // Quads - colors buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[2]);
         //glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*quads.vCounter, quads.colors);
 
@@ -2640,17 +2623,17 @@ static void DrawDefaultBuffers(void)
 
         if (vaoSupported)
         {
-            glBindVertexArray(vaoLines);
+            glBindVertexArray(lines.vaoId);
         }
         else
         {
             // Bind vertex attrib: position (shader-location = 0)
-            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[0]);
             glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(currentShader.vertexLoc);
 
             // Bind vertex attrib: color (shader-location = 3)
-            glBindBuffer(GL_ARRAY_BUFFER, linesBuffer[1]);
+            glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[1]);
             glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
             glEnableVertexAttribArray(currentShader.colorLoc);
         }
@@ -2668,17 +2651,17 @@ static void DrawDefaultBuffers(void)
 
         if (vaoSupported)
         {
-            glBindVertexArray(vaoTriangles);
+            glBindVertexArray(triangles.vaoId);
         }
         else
         {
             // Bind vertex attrib: position (shader-location = 0)
-            glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[0]);
             glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(currentShader.vertexLoc);
 
             // Bind vertex attrib: color (shader-location = 3)
-            glBindBuffer(GL_ARRAY_BUFFER, trianglesBuffer[1]);
+            glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[1]);
             glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
             glEnableVertexAttribArray(currentShader.colorLoc);
         }
@@ -2698,26 +2681,26 @@ static void DrawDefaultBuffers(void)
 
         if (vaoSupported)
         {
-            glBindVertexArray(vaoQuads);
+            glBindVertexArray(quads.vaoId);
         }
         else
         {
             // Bind vertex attrib: position (shader-location = 0)
-            glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[0]);
             glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(currentShader.vertexLoc);
 
             // Bind vertex attrib: texcoord (shader-location = 1)
-            glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[1]);
+            glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[1]);
             glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(currentShader.texcoordLoc);
 
             // Bind vertex attrib: color (shader-location = 3)
-            glBindBuffer(GL_ARRAY_BUFFER, quadsBuffer[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[2]);
             glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
             glEnableVertexAttribArray(currentShader.colorLoc);
             
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadsBuffer[3]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
         }
 
         //TraceLog(DEBUG, "Draws required per frame: %i", drawsCounter);
@@ -2733,9 +2716,9 @@ static void DrawDefaultBuffers(void)
 
             // NOTE: The final parameter tells the GPU the offset in bytes from the start of the index buffer to the location of the first index to process
 #if defined(GRAPHICS_API_OPENGL_33)
-            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid*) (sizeof(GLuint) * indicesOffset));
+            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid *)(sizeof(GLuint)*indicesOffset));
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_SHORT, (GLvoid*) (sizeof(GLushort) * indicesOffset));
+            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)*indicesOffset));
 #endif
             //GLenum err;
             //if ((err = glGetError()) != GL_NO_ERROR) TraceLog(INFO, "OpenGL error: %i", (int)err);    //GL_INVALID_ENUM!
@@ -2787,21 +2770,21 @@ static void UnloadDefaultBuffers(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Delete VBOs from GPU (VRAM)
-    glDeleteBuffers(1, &linesBuffer[0]);
-    glDeleteBuffers(1, &linesBuffer[1]);
-    glDeleteBuffers(1, &trianglesBuffer[0]);
-    glDeleteBuffers(1, &trianglesBuffer[1]);
-    glDeleteBuffers(1, &quadsBuffer[0]);
-    glDeleteBuffers(1, &quadsBuffer[1]);
-    glDeleteBuffers(1, &quadsBuffer[2]);
-    glDeleteBuffers(1, &quadsBuffer[3]);
+    glDeleteBuffers(1, &lines.vboId[0]);
+    glDeleteBuffers(1, &lines.vboId[1]);
+    glDeleteBuffers(1, &triangles.vboId[0]);
+    glDeleteBuffers(1, &triangles.vboId[1]);
+    glDeleteBuffers(1, &quads.vboId[0]);
+    glDeleteBuffers(1, &quads.vboId[1]);
+    glDeleteBuffers(1, &quads.vboId[2]);
+    glDeleteBuffers(1, &quads.vboId[3]);
 
     if (vaoSupported)
     {
         // Delete VAOs from GPU (VRAM)
-        glDeleteVertexArrays(1, &vaoLines);
-        glDeleteVertexArrays(1, &vaoTriangles);
-        glDeleteVertexArrays(1, &vaoQuads);
+        glDeleteVertexArrays(1, &lines.vaoId);
+        glDeleteVertexArrays(1, &triangles.vaoId);
+        glDeleteVertexArrays(1, &quads.vaoId);
     }
 
     // Free vertex arrays memory from CPU (RAM)
