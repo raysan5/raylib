@@ -85,6 +85,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
         INCLUDES = -I. -I../src -I/usr/local/include/raylib/
+    else ifeq ($(PLATFORM_OS),OSX)
+        INCLUDES = -I. -I../src
     else
         INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
         # external libraries headers
@@ -103,6 +105,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
         LFLAGS = -L. -L../../src
+    else ifeq ($(PLATFORM_OS),OSX)
+        LFLAGS = -L. -L../src
     else
         LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
         # external libraries to link with
@@ -129,7 +133,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for OS X 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
+        LIBS = -lraylib -lglfw3 -framework OpenGL -framework OpenAl -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed

@@ -40,7 +40,7 @@ void main (void)
     }
 
     tc += center;
-    vec3 color = texture2D(texture0, tc/texSize).rgb;
+    vec3 color = texture(texture0, tc/texSize).rgb;
 
     finalColor = vec4(color, 1.0);;
 }

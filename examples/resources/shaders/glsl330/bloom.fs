@@ -22,7 +22,7 @@ void main()
     {
         for (int j = -3; j < 3; j++)
         {
-            sum += texture2D(texture0, fragTexCoord + vec2(j, i)*0.004)*0.25;
+            sum += texture(texture0, fragTexCoord + vec2(j, i)*0.004)*0.25;
         }
     }
     
