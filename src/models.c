@@ -691,31 +691,14 @@ Model LoadCubicmap(Image cubicmap)
     return model;
 }
 
-// Unload 3d model from memory
+// Unload 3d model from memory (mesh and material)
 void UnloadModel(Model model)
 {
-    // Unload mesh data
-    if (model.mesh.vertices != NULL) free(model.mesh.vertices);
-    if (model.mesh.texcoords != NULL) free(model.mesh.texcoords);
-    if (model.mesh.normals != NULL) free(model.mesh.normals);
-    if (model.mesh.colors != NULL) free(model.mesh.colors);
-    if (model.mesh.tangents != NULL) free(model.mesh.tangents);
-    if (model.mesh.texcoords2 != NULL) free(model.mesh.texcoords2);
-    if (model.mesh.indices != NULL) free(model.mesh.indices);
-    
-    TraceLog(INFO, "Unloaded model data from RAM (CPU)");
-    
-    rlDeleteBuffers(model.mesh.vboId[0]);   // vertex
-    rlDeleteBuffers(model.mesh.vboId[1]);   // texcoords
-    rlDeleteBuffers(model.mesh.vboId[2]);   // normals
-    rlDeleteBuffers(model.mesh.vboId[3]);   // colors
-    rlDeleteBuffers(model.mesh.vboId[4]);   // tangents
-    rlDeleteBuffers(model.mesh.vboId[5]);   // texcoords2
-    rlDeleteBuffers(model.mesh.vboId[6]);   // indices
+    rlglUnloadMesh(&model.mesh);
 
-    rlDeleteVertexArrays(model.mesh.vaoId);
-    
     UnloadMaterial(model.material);
+    
+    TraceLog(INFO, "Unloaded model data from RAM and VRAM");
 }
 
 // Load material data (from file)
@@ -1247,40 +1230,27 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
     model.material.colDiffuse = tint;
     
-    rlglDrawEx(model.mesh, model.material, model.transform, false);
+    rlglDrawMesh(model.mesh, model.material, model.transform);
 }
 
 // Draw a model wires (with texture if set)
 void DrawModelWires(Model model, Vector3 position, float scale, Color tint)
 {
-    Vector3 vScale = { scale, scale, scale };
-    Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
-
-    // Calculate transformation matrix from function parameters
-    // Get transform matrix (rotation -> scale -> translation)
-    Matrix matRotation = MatrixRotate(rotationAxis, 0.0f);
-    Matrix matScale = MatrixScale(vScale.x, vScale.y, vScale.z);
-    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
+    rlEnableWireMode();
     
-    model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
-    model.material.colDiffuse = tint;
+    DrawModel(model, position, scale, tint);
     
-    rlglDrawEx(model.mesh, model.material, model.transform, true);
+    rlDisableWireMode();
 }
 
 // Draw a model wires (with texture if set) with extended parameters
 void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
-    // Calculate transformation matrix from function parameters
-    // Get transform matrix (rotation -> scale -> translation)
-    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
-    Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
-    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
+    rlEnableWireMode();
     
-    model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
-    model.material.colDiffuse = tint;
+    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
     
-    rlglDrawEx(model.mesh, model.material, model.transform, true);
+    rlDisableWireMode();
 }
 
 // Draw a billboard

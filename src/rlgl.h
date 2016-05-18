@@ -256,6 +256,8 @@ void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
 void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
 void rlEnableDepthTest(void);                   // Enable depth test
 void rlDisableDepthTest(void);                  // Disable depth test
+void rlEnableWireMode(void);                    // Enable wire mode
+void rlDisableWireMode(void);                   // Disable wire mode
 void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
 void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
 void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
@@ -277,8 +279,11 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
-void rlglLoadMesh(Mesh *mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires);
+
+void rlglLoadMesh(Mesh *mesh);                                      // Upload vertex data into GPU and provided VAO/VBO ids
+void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
+void rlglDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
+void rlglUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU
 
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 

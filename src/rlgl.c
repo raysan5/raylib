@@ -740,6 +740,24 @@ void rlDisableDepthTest(void)
     glDisable(GL_DEPTH_TEST);
 }
 
+// Enable wire mode
+void rlEnableWireMode(void)
+{
+#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
+}
+
+// Disable wire mode
+void rlDisableWireMode(void)
+{
+#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
+}
+
 // Unload texture from GPU memory
 void rlDeleteTextures(unsigned int id)
 {
@@ -1033,175 +1051,15 @@ void rlglClose(void)
 void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+/*
+    for (int i = 0; i < modelsCount; i++)
+    {
+        rlglDrawMesh(models[i]->mesh, models[i]->material, models[i]->transform);
+    }
+*/
+    // NOTE: Default buffers always drawn at the end
     UpdateDefaultBuffers();
     DrawDefaultBuffers();
-#endif
-}
-
-// Draw a 3d mesh with material and transform
-void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
-{
-#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    // NOTE: glPolygonMode() not available on OpenGL ES
-    if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
-
-    // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
-    glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
-    if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
-    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
-
-    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
-    if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
-    if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
-
-    rlPushMatrix();
-        rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
-        
-        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
-        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
-    rlPopMatrix();
-
-    glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
-    if (mesh.normals != NULL) glDisableClientState(GL_NORMAL_ARRAY);    // Disable normals array
-    if (mesh.colors != NULL) glDisableClientState(GL_NORMAL_ARRAY);     // Disable colors array
-
-    glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(material.shader.id);
-    
-    // At this point the modelview matrix just contains the view matrix (camera)
-    // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
-    Matrix matView = modelview;         // View matrix (camera)
-    Matrix matProjection = projection;  // Projection matrix (perspective)
-
-    // Calculate model-view matrix combining matModel and matView
-    Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
-
-    // Calculate model-view-projection matrix (MVP)
-    Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
-
-    // Send combined model-view-projection matrix to shader
-    glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-
-    // Apply color tinting (material.colDiffuse)
-    // NOTE: Just update one uniform on fragment shader
-    float vColor[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
-    glUniform4fv(material.shader.tintColorLoc, 1, vColor);
-
-    // Set shader textures (diffuse, normal, specular)
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
-    glUniform1i(material.shader.mapDiffuseLoc, 0);        // Texture fits in active texture unit 0
-    
-    if ((material.texNormal.id != 0) && (material.shader.mapNormalLoc != -1))
-    {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
-        glUniform1i(material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
-    }
-    
-    if ((material.texSpecular.id != 0) && (material.shader.mapSpecularLoc != -1))
-    {
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
-        glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
-    }
-
-    if (vaoSupported)
-    {
-        glBindVertexArray(mesh.vaoId);
-    }
-    else
-    {
-        // Bind mesh VBO data: vertex position (shader-location = 0)
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-        glVertexAttribPointer(material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.vertexLoc);
-
-        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-        glVertexAttribPointer(material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.texcoordLoc);
-
-        // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
-        if (material.shader.normalLoc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            glVertexAttribPointer(material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.normalLoc);
-        }
-        
-        // Bind mesh VBO data: vertex colors (shader-location = 3, if available) , tangents, texcoords2 (if available)
-        if (material.shader.colorLoc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-            glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(material.shader.colorLoc);
-        }
-        
-        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
-        if (material.shader.tangentLoc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            glVertexAttribPointer(material.shader.tangentLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.tangentLoc);
-        }
-        
-        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
-        if (material.shader.texcoord2Loc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.texcoord2Loc);
-        }
-        
-        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
-    }
-
-    // Draw call!
-    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
-    else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
-    
-    if (material.texNormal.id != 0)
-    {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    
-    if (material.texSpecular.id != 0)
-    {
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    glActiveTexture(GL_TEXTURE0);               // Set shader active texture to default 0
-    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
-
-    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-    else
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
-        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
-
-    glUseProgram(0);        // Unbind shader program
-#endif
-
-#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    // NOTE: glPolygonMode() not available on OpenGL ES
-    if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 }
 
@@ -1774,6 +1632,245 @@ void rlglLoadMesh(Mesh *mesh)
         TraceLog(INFO, "[VBOs] Mesh uploaded successfully to VRAM (GPU)");
     }
 #endif
+}
+
+// Update vertex data on GPU (upload new data to one buffer)
+void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
+{
+    // Activate mesh VAO
+    if (vaoSupported) glBindVertexArray(mesh.vaoId);
+        
+    switch (buffer)
+    {
+        case 0:     // Update vertices (vertex position)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.vertices, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.vertices);
+            
+        } break;
+        case 1:     // Update texcoords (vertex texture coordinates)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords);
+            
+        } break;
+        case 2:     // Update normals (vertex normals)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.normals, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.normals);
+            
+        } break;
+        case 3:     // Update colors (vertex colors)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.colors, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*numVertex, mesh.colors);
+            
+        } break;
+        case 4:     // Update tangents (vertex tangents)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.tangents, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.tangents);
+        } break;
+        case 5:     // Update texcoords2 (vertex second texture coordinates)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords2, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords2);
+        } break;
+        default: break;
+    }
+    
+    // Unbind the current VAO
+    if (vaoSupported) glBindVertexArray(0);
+
+    // Another option would be using buffer mapping...
+    //mesh.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+    // Now we can modify vertices
+    //glUnmapBuffer(GL_ARRAY_BUFFER);
+}
+
+// Draw a 3d mesh with material and transform
+void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
+
+    // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
+    glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
+    if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
+    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
+
+    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
+    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
+    if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
+    if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
+
+    rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(transform));
+        rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
+        
+        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
+        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    rlPopMatrix();
+
+    glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
+    if (mesh.normals != NULL) glDisableClientState(GL_NORMAL_ARRAY);    // Disable normals array
+    if (mesh.colors != NULL) glDisableClientState(GL_NORMAL_ARRAY);     // Disable colors array
+
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glUseProgram(material.shader.id);
+    
+    // At this point the modelview matrix just contains the view matrix (camera)
+    // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matView = modelview;         // View matrix (camera)
+    Matrix matProjection = projection;  // Projection matrix (perspective)
+
+    // Calculate model-view matrix combining matModel and matView
+    Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
+
+    // Calculate model-view-projection matrix (MVP)
+    Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
+
+    // Send combined model-view-projection matrix to shader
+    glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
+
+    // Apply color tinting (material.colDiffuse)
+    // NOTE: Just update one uniform on fragment shader
+    float vColor[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
+    glUniform4fv(material.shader.tintColorLoc, 1, vColor);
+
+    // Set shader textures (diffuse, normal, specular)
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
+    glUniform1i(material.shader.mapDiffuseLoc, 0);        // Texture fits in active texture unit 0
+    
+    if ((material.texNormal.id != 0) && (material.shader.mapNormalLoc != -1))
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
+        glUniform1i(material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
+    }
+    
+    if ((material.texSpecular.id != 0) && (material.shader.mapSpecularLoc != -1))
+    {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
+        glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
+    }
+
+    if (vaoSupported)
+    {
+        glBindVertexArray(mesh.vaoId);
+    }
+    else
+    {
+        // Bind mesh VBO data: vertex position (shader-location = 0)
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+        glVertexAttribPointer(material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.vertexLoc);
+
+        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+        glVertexAttribPointer(material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.texcoordLoc);
+
+        // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
+        if (material.shader.normalLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
+            glVertexAttribPointer(material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.normalLoc);
+        }
+        
+        // Bind mesh VBO data: vertex colors (shader-location = 3, if available) , tangents, texcoords2 (if available)
+        if (material.shader.colorLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
+            glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(material.shader.colorLoc);
+        }
+        
+        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
+        if (material.shader.tangentLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
+            glVertexAttribPointer(material.shader.tangentLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.tangentLoc);
+        }
+        
+        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
+        if (material.shader.texcoord2Loc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
+            glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.texcoord2Loc);
+        }
+        
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
+    }
+
+    // Draw call!
+    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
+    else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    
+    if (material.texNormal.id != 0)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    
+    if (material.texSpecular.id != 0)
+    {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    glActiveTexture(GL_TEXTURE0);               // Set shader active texture to default 0
+    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
+
+    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    glUseProgram(0);        // Unbind shader program
+#endif
+}
+
+// Unload mesh data from CPU and GPU
+void rlglUnloadMesh(Mesh *mesh)
+{
+    if (mesh->vertices != NULL) free(mesh->vertices);
+    if (mesh->texcoords != NULL) free(mesh->texcoords);
+    if (mesh->normals != NULL) free(mesh->normals);
+    if (mesh->colors != NULL) free(mesh->colors);
+    if (mesh->tangents != NULL) free(mesh->tangents);
+    if (mesh->texcoords2 != NULL) free(mesh->texcoords2);
+    if (mesh->indices != NULL) free(mesh->indices);
+
+    rlDeleteBuffers(mesh->vboId[0]);   // vertex
+    rlDeleteBuffers(mesh->vboId[1]);   // texcoords
+    rlDeleteBuffers(mesh->vboId[2]);   // normals
+    rlDeleteBuffers(mesh->vboId[3]);   // colors
+    rlDeleteBuffers(mesh->vboId[4]);   // tangents
+    rlDeleteBuffers(mesh->vboId[5]);   // texcoords2
+    rlDeleteBuffers(mesh->vboId[6]);   // indices
+
+    rlDeleteVertexArrays(mesh->vaoId);
 }
 
 // Read screen pixel data (color buffer)
