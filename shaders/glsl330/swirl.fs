@@ -1,27 +1,32 @@
 #version 330
 
+// Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
+in vec4 fragColor;
 
-out vec4 fragColor;
-
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
+// Output fragment color
+out vec4 finalColor;
+
 // NOTE: Add here your custom variables
 
-const float renderWidth = 1280.0; 
-const float renderHeight = 720.0; 
+const float renderWidth = 800.0;      // HARDCODED for example!
+const float renderHeight = 480.0;     // Use uniforms instead...
 
 float radius = 250.0;
 float angle = 0.8;
 
 uniform vec2 center = vec2(200.0, 200.0);
 
-void main (void)
+void main()
 {
     vec2 texSize = vec2(renderWidth, renderHeight);
     vec2 tc = fragTexCoord*texSize;
     tc -= center;
+    
     float dist = length(tc);
 
     if (dist < radius) 
@@ -37,5 +42,5 @@ void main (void)
     tc += center;
     vec3 color = texture(texture0, tc/texSize).rgb;
 
-    fragColor = vec4(color, 1.0);;
+    finalColor = vec4(color, 1.0);;
 }

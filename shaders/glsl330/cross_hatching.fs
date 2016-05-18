@@ -1,13 +1,17 @@
 #version 330
 
+// Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
+in vec4 fragColor;
 
-out vec4 fragColor;
-
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
-// NOTE: Add here your custom variables 
+// Output fragment color
+out vec4 finalColor;
+
+// NOTE: Add here your custom variables
 
 float hatchOffsetY = 5.0;
 float lumThreshold01 = 0.9;
@@ -27,18 +31,18 @@ void main()
 
     if (lum < lumThreshold02) 
     {
-        if (mod(gl_FragCoord .x - gl_FragCoord .y, 10.0) == 0.0) tc = vec3(0.0, 0.0, 0.0);
+        if (mod(gl_FragCoord.x - gl_FragCoord.y, 10.0) == 0.0) tc = vec3(0.0, 0.0, 0.0);
     }
 
     if (lum < lumThreshold03) 
     {
-        if (mod(gl_FragCoord .x + gl_FragCoord .y - hatchOffsetY, 10.0) == 0.0) tc = vec3(0.0, 0.0, 0.0);
+        if (mod(gl_FragCoord.x + gl_FragCoord.y - hatchOffsetY, 10.0) == 0.0) tc = vec3(0.0, 0.0, 0.0);
     }
 
     if (lum < lumThreshold04) 
     {
-        if (mod(gl_FragCoord .x - gl_FragCoord .y - hatchOffsetY, 10.0) == 0.0) tc = vec3(0.0, 0.0, 0.0);
+        if (mod(gl_FragCoord.x - gl_FragCoord.y - hatchOffsetY, 10.0) == 0.0) tc = vec3(0.0, 0.0, 0.0);
     }
 
-    fragColor = vec4(tc, 1.0);
+    finalColor = vec4(tc, 1.0);
 }

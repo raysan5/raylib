@@ -1,11 +1,15 @@
 #version 330
 
+// Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
+in vec4 fragColor;
 
-out vec4 fragColor;
-
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
+
+// Output fragment color
+out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
@@ -14,13 +18,14 @@ float numColors = 8.0;
 
 void main()
 {
-    vec3 color = texture(texture0, fragTexCoord.xy).rgb;
+    // Texel color fetching from texture sampler
+    vec3 texelColor = texture(texture0, fragTexCoord.xy).rgb;
     
-    color = pow(color, vec3(gamma, gamma, gamma));
-    color = color*numColors;
-    color = floor(color);
-    color = color/numColors;
-    color = pow(color, vec3(1.0/gamma));
+    texelColor = pow(texelColor, vec3(gamma, gamma, gamma));
+    texelColor = texelColor*numColors;
+    texelColor = floor(texelColor);
+    texelColor = texelColor/numColors;
+    texelColor = pow(texelColor, vec3(1.0/gamma));
     
-    fragColor = vec4(color, 1.0);
+    finalColor = vec4(texelColor, 1.0);
 }

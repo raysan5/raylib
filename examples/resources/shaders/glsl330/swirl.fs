@@ -21,7 +21,7 @@ float angle = 0.8;
 
 uniform vec2 center = vec2(200.0, 200.0);
 
-void main (void)
+void main()
 {
     vec2 texSize = vec2(renderWidth, renderHeight);
     vec2 tc = fragTexCoord*texSize;

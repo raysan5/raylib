@@ -2,12 +2,15 @@
 
 precision mediump float;
 
+// Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
-// NOTE: Add here your custom variables 
+// NOTE: Add here your custom variables
 
 const float PI = 3.1415926535;
 

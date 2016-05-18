@@ -2,8 +2,11 @@
 
 precision mediump float;
 
+// Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
@@ -14,7 +17,7 @@ float frequency = 720/3.0;
 
 uniform float time;
 
-void main (void)
+void main()
 {
 /*
     // Scanlines method 1

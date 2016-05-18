@@ -17,7 +17,7 @@ void main()
 {
     vec4 sum = vec4(0);
     vec4 tc = vec4(0);
-    
+
     for (int i = -4; i < 4; i++)
     {
         for (int j = -3; j < 3; j++)

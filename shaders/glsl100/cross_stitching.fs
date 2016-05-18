@@ -2,8 +2,11 @@
 
 precision mediump float;
 
+// Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
@@ -46,7 +49,7 @@ vec4 PostFX(sampler2D tex, vec2 uv)
     return c;
 }
 
-void main(void)
+void main()
 {
     vec3 tc = PostFX(texture0, fragTexCoord).rgb;
 

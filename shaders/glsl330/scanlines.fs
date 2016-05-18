@@ -1,11 +1,15 @@
 #version 330
 
+// Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
+in vec4 fragColor;
 
-out vec4 fragColor;
-
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
+
+// Output fragment color
+out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
@@ -14,7 +18,7 @@ float frequency = 720.0/3.0;
 
 uniform float time;
 
-void main (void)
+void main()
 {
 /*
     // Scanlines method 1
@@ -35,7 +39,8 @@ void main (void)
     float globalPos = (fragTexCoord.y + offset) * frequency;
     float wavePos = cos((fract(globalPos) - 0.5)*3.14);
     
-    vec4 color = texture(texture0, fragTexCoord);
+    // Texel color fetching from texture sampler
+    vec4 texelColor = texture(texture0, fragTexCoord);
 
-    fragColor = mix(vec4(0.0, 0.3, 0.0, 0.0), color, wavePos);
+    finalColor = mix(vec4(0.0, 0.3, 0.0, 0.0), texelColor, wavePos);
 }
