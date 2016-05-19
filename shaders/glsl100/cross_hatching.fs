@@ -2,12 +2,15 @@
 
 precision mediump float;
 
+// Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
-// NOTE: Add here your custom variables 
+// NOTE: Add here your custom variables
 
 float hatchOffsetY = 5.0f;
 float lumThreshold01 = 0.9f;

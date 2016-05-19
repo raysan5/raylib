@@ -33,5 +33,5 @@ void main()
     else if (texelColor.r < 0.5) tc = sum*sum*0.009 + texelColor;
     else tc = sum*sum*0.0075 + texelColor;
     
-    finalColor = tc;
+    gl_FragColor = tc;
 }

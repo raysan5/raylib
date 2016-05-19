@@ -29,6 +29,9 @@ uniform float matGlossiness = 50.0;
 uniform vec3 lightPosition;
 uniform vec3 cameraPosition;
 
+// Fragment shader output data
+out vec4 fragColor;
+
 // Calculate ambient lighting component
 vec3 AmbientLighting()
 {

@@ -2,8 +2,11 @@
 
 precision mediump float;
 
+// Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
@@ -22,21 +25,13 @@ void main()
         }
     }
     
-    if (texture2D(texture0, fragTexCoord).r < 0.3)
-    {
-        tc = sum*sum*0.012 + texture2D(texture0, fragTexCoord);
-    }
-    else
-    {
-        if (texture2D(texture0, fragTexCoord).r < 0.5)
-        {
-            tc = sum*sum*0.009 + texture2D(texture0, fragTexCoord);
-        }
-        else
-        {
-            tc = sum*sum*0.0075 + texture2D(texture0, fragTexCoord);
-        }
-    }
+    // Texel color fetching from texture sampler
+    vec4 texelColor = texture(texture0, fragTexCoord);
+    
+    // Calculate final fragment color
+    if (texelColor.r < 0.3) tc = sum*sum*0.012 + texelColor;
+    else if (texelColor.r < 0.5) tc = sum*sum*0.009 + texelColor;
+    else tc = sum*sum*0.0075 + texelColor;
     
     gl_FragColor = tc;
 }

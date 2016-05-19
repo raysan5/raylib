@@ -21,7 +21,7 @@ float angle = 0.8;
 
 uniform vec2 center = vec2(200.0, 200.0);
 
-void main (void)
+void main()
 {
     vec2 texSize = vec2(renderWidth, renderHeight);
     vec2 tc = fragTexCoord*texSize;
@@ -40,7 +40,7 @@ void main (void)
     }
 
     tc += center;
-    vec3 color = texture2D(texture0, tc/texSize).rgb;
+    vec3 color = texture(texture0, tc/texSize).rgb;
 
     finalColor = vec4(color, 1.0);;
 }
