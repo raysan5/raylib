@@ -59,9 +59,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_STREAM_BUFFERS          2
-#define MAX_AUDIO_CONTEXTS          4             // Number of open AL sources
-#define MAX_MUSIC_STREAMS           2
+#define MAX_STREAM_BUFFERS          2             // Number of buffers for each alSource
+#define MAX_MIX_CHANNELS            4             // Number of open AL sources
+#define MAX_MUSIC_STREAMS           2             // Number of simultanious music sources
 
 #if defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
     // NOTE: On RPI and Android should be lower to avoid frame-stalls
@@ -96,12 +96,12 @@ typedef struct MixChannel_t {
 typedef struct Music {
     stb_vorbis *stream;
     jar_xm_context_t *chipctx; // Stores jar_xm mixc
-    MixChannel_t *mixc; // mix channel
+    MixChannel_t *mixc;        // mix channel
     
     int totalSamplesLeft;
     float totalLengthSeconds;
     bool loop;
-    bool chipTune; // True if chiptune is loaded
+    bool chipTune;             // True if chiptune is loaded
 } Music;
 
 #if defined(AUDIO_STANDALONE)
@@ -111,7 +111,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static MixChannel_t* mixChannelsActive_g[MAX_AUDIO_CONTEXTS];      // What mix channels are currently active
+static MixChannel_t* mixChannelsActive_g[MAX_MIX_CHANNELS];        // What mix channels are currently active
 static bool musicEnabled_g = false;
 static Music currentMusic[MAX_MUSIC_STREAMS];                      // Current music loaded, up to two can play at the same time
 
@@ -123,7 +123,7 @@ static Wave LoadOGG(char *fileName);               // Load OGG file
 static void UnloadWave(Wave wave);                 // Unload wave data
 
 static bool BufferMusicStream(int index, int numBuffers); // Fill music buffers with data
-static void EmptyMusicStream(int index); // Empty music buffers
+static void EmptyMusicStream(int index);                  // Empty music buffers
 
 
 static MixChannel_t* InitMixChannel(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels, bool floatingPoint); // For streaming into mix channels.
@@ -212,7 +212,7 @@ bool IsAudioDeviceReady(void)
 // exmple usage is InitMixChannel(48000, 0, 2, true); // mixchannel 1, 48khz, stereo, floating point
 static MixChannel_t* InitMixChannel(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels, bool floatingPoint)
 {
-    if(mixChannel >= MAX_AUDIO_CONTEXTS) return NULL;
+    if(mixChannel >= MAX_MIX_CHANNELS) return NULL;
     if(!IsAudioDeviceReady()) InitAudioDevice();
     
     if(!mixChannelsActive_g[mixChannel]){
@@ -380,10 +380,10 @@ static void ResampleByteToFloat(char *chars, float *floats, unsigned short len)
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint)
 {
     int mixIndex;
-    for(mixIndex = 0; mixIndex < MAX_AUDIO_CONTEXTS; mixIndex++) // find empty mix channel slot
+    for(mixIndex = 0; mixIndex < MAX_MIX_CHANNELS; mixIndex++) // find empty mix channel slot
     {
         if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(mixIndex = MAX_AUDIO_CONTEXTS - 1) return -1; // error
+        else if(mixIndex = MAX_MIX_CHANNELS - 1) return -1; // error
     }
     
     if(InitMixChannel(sampleRate, mixIndex, channels, floatingPoint))
@@ -755,10 +755,10 @@ int PlayMusicStream(int musicIndex, char *fileName)
     
     if(currentMusic[musicIndex].stream || currentMusic[musicIndex].chipctx) return 1; // error
     
-    for(mixIndex = 0; mixIndex < MAX_AUDIO_CONTEXTS; mixIndex++) // find empty mix channel slot
+    for(mixIndex = 0; mixIndex < MAX_MIX_CHANNELS; mixIndex++) // find empty mix channel slot
     {
         if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(mixIndex = MAX_AUDIO_CONTEXTS - 1) return 2; // error
+        else if(mixIndex = MAX_MIX_CHANNELS - 1) return 2; // error
     }
     
     if (strcmp(GetExtension(fileName),"ogg") == 0)
