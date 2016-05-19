@@ -2425,12 +2425,12 @@ static void LoadDefaultShaderLocations(Shader *shader)
     //          vertex texcoord2 location = 5
     
     // Get handles to GLSL input attibute locations
-    shader->vertexLoc = glGetAttribLocation(shader->id, "vertexPosition");
-    shader->texcoordLoc = glGetAttribLocation(shader->id, "vertexTexCoord");
-    shader->normalLoc = glGetAttribLocation(shader->id, "vertexNormal");
-    shader->colorLoc = glGetAttribLocation(shader->id, "vertexColor");
-    shader->tangentLoc = glGetAttribLocation(shader->id, "vertexTangent");
-    shader->texcoord2Loc = glGetAttribLocation(shader->id, "vertexTexCoord2");
+    shader->vertexLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
+    shader->texcoordLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD_NAME);
+    shader->normalLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_NORMAL_NAME);
+    shader->colorLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
+    shader->tangentLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TANGENT_NAME);
+    shader->texcoord2Loc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD2_NAME);
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");
@@ -2447,8 +2447,8 @@ static void UnloadDefaultShader(void)
 {
     glUseProgram(0);
 
-    //glDetachShader(defaultShaderProgram, vertexShader);
-    //glDetachShader(defaultShaderProgram, fragmentShader);
+    //glDetachShader(defaultShader, vertexShader);
+    //glDetachShader(defaultShader, fragmentShader);
     //glDeleteShader(vertexShader);     // Already deleted on shader compilation
     //glDeleteShader(fragmentShader);   // Already deleted on sahder compilation
     glDeleteProgram(defaultShader.id);
