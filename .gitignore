@@ -6,6 +6,7 @@ src_android/obj/
 templates/android_project/bin/
 templates/android_project/obj/
 templates/android_project/libs/
+local.properties
 
 # Ignore thumbnails created by windows
 Thumbs.db
