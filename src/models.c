@@ -553,7 +553,7 @@ Model LoadModel(const char *fileName)
     if (model.mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
     else
     {
-        rlglLoadMesh(&model.mesh);  // Upload vertex data to GPU
+        rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
         
         model.transform = MatrixIdentity();
         model.material = LoadDefaultMaterial();
@@ -563,13 +563,13 @@ Model LoadModel(const char *fileName)
 }
 
 // Load a 3d model (from vertex data)
-Model LoadModelEx(Mesh data)
+Model LoadModelEx(Mesh data, bool dynamic)
 {
     Model model = { 0 };
 
     model.mesh = data;
     
-    rlglLoadMesh(&model.mesh);      // Upload vertex data to GPU
+    rlglLoadMesh(&model.mesh, dynamic);  // Upload vertex data to GPU
     
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
@@ -668,7 +668,7 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
     
     model.mesh = GenMeshHeightmap(heightmap, size);
     
-    rlglLoadMesh(&model.mesh);
+    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
     
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
@@ -683,7 +683,7 @@ Model LoadCubicmap(Image cubicmap)
     
     model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0, 1.0, 1.5f });
     
-    rlglLoadMesh(&model.mesh);
+    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
     
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();

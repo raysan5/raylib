@@ -280,7 +280,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a textur
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
 
-void rlglLoadMesh(Mesh *mesh);                                      // Upload vertex data into GPU and provided VAO/VBO ids
+void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
 void rlglDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
 void rlglUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU

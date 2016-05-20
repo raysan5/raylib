@@ -803,7 +803,7 @@ void DrawGizmo(Vector3 position);                                               
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                          // Load a 3d model (.OBJ)
-Model LoadModelEx(Mesh data);                                   // Load a 3d model (from mesh data)
+Model LoadModelEx(Mesh data, bool dynamic);                     // Load a 3d model (from mesh data)
 Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
