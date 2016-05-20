@@ -1797,7 +1797,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
     
     // Setup shader uniforms for lights
-    SetShaderLights(material.shader);
+    //SetShaderLights(material.shader);
 
     if (vaoSupported)
     {
