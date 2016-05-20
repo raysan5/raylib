@@ -102,8 +102,12 @@ float GetMusicTimePlayed(int index);                            // Get current m
 int getMusicStreamCount(void);
 void SetMusicPitch(int index, float pitch);
 
+// used to output raw audio streams, returns negative numbers on error
+// if floating point is false the data size is 16bit short, otherwise it is float 32bit
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
+
 void CloseRawAudioContext(RawAudioContext ctx);
+int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }

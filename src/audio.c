@@ -128,8 +128,8 @@ static void EmptyMusicStream(int index);                  // Empty music buffers
 
 static MixChannel_t* InitMixChannel(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels, bool floatingPoint); // For streaming into mix channels.
 static void CloseMixChannel(MixChannel_t* mixc); // Frees mix channel
-static unsigned short BufferMixChannel(MixChannel_t* mixc, void *data, int numberElements); // Pushes more audio data into mixc mix channel, if NULL is passed it pauses
-static unsigned short FillAlBufferWithSilence(MixChannel_t *mixc, ALuint buffer); // Fill buffer with zeros, returns number processed
+static int BufferMixChannel(MixChannel_t* mixc, void *data, int numberElements); // Pushes more audio data into mixc mix channel, if NULL is passed it pauses
+static int FillAlBufferWithSilence(MixChannel_t *mixc, ALuint buffer); // Fill buffer with zeros, returns number processed
 static void ResampleShortToFloat(short *shorts, float *floats, unsigned short len); // Pass two arrays of the same legnth in
 static void ResampleByteToFloat(char *chars, float *floats, unsigned short len); // Pass two arrays of same length in
 static int IsMusicStreamReadyForBuffering(int index); // Checks if music buffer is ready to be refilled
@@ -292,7 +292,7 @@ static void CloseMixChannel(MixChannel_t* mixc)
 // Pushes more audio data into mixc mix channel, only one buffer per call
 // Call "BufferMixChannel(mixc, NULL, 0)" if you want to pause the audio.
 // @Returns number of samples that where processed.
-static unsigned short BufferMixChannel(MixChannel_t* mixc, void *data, int numberElements)
+static int BufferMixChannel(MixChannel_t* mixc, void *data, int numberElements)
 {
     if(!mixc || mixChannelsActive_g[mixc->mixChannel] != mixc) return 0; // when there is two channels there must be an even number of samples
     
@@ -331,7 +331,7 @@ static unsigned short BufferMixChannel(MixChannel_t* mixc, void *data, int numbe
 }
 
 // fill buffer with zeros, returns number processed
-static unsigned short FillAlBufferWithSilence(MixChannel_t *mixc, ALuint buffer)
+static int FillAlBufferWithSilence(MixChannel_t *mixc, ALuint buffer)
 {
     if(mixc->floatingPoint){
         float pcm[MUSIC_BUFFER_SIZE_FLOAT] = {0.f};
@@ -377,6 +377,7 @@ static void ResampleByteToFloat(char *chars, float *floats, unsigned short len)
 }
 
 // used to output raw audio streams, returns negative numbers on error
+// if floating point is false the data size is 16bit short, otherwise it is float 32bit
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint)
 {
     int mixIndex;
@@ -397,6 +398,19 @@ void CloseRawAudioContext(RawAudioContext ctx)
     if(mixChannelsActive_g[ctx])
         CloseMixChannel(mixChannelsActive_g[ctx]);
 }
+
+int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements)
+{
+    int numBuffered = 0;
+    if(ctx >= 0)
+    {
+        MixChannel_t* mixc = mixChannelsActive_g[ctx];
+        numBuffered = BufferMixChannel(mixc, data, numberElements);
+    }
+    return numBuffered;
+}
+
+
 
 
 
