@@ -49,7 +49,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static PhysicObject *physicObjects[MAX_PHYSIC_OBJECTS];             // Physic objects pool
+static PhysicObject physicObjects[MAX_PHYSIC_OBJECTS];              // Physic objects pool
 static int physicObjectsCount;                                      // Counts current enabled physic objects
 static Vector2 gravityForce;                                        // Gravity force
 
@@ -463,10 +463,10 @@ void ClosePhysics()
 }
 
 // Create a new physic object dinamically, initialize it and add to pool
-PhysicObject *CreatePhysicObject(Vector2 position, float rotation, Vector2 scale)
+PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale)
 {
     // Allocate dynamic memory
-    PhysicObject *obj = (PhysicObject *)malloc(sizeof(PhysicObject));
+    PhysicObject obj = (PhysicObject)malloc(sizeof(PhysicObjectData));
     
     // Initialize physic object values with generic values
     obj->id = physicObjectsCount;
@@ -498,7 +498,7 @@ PhysicObject *CreatePhysicObject(Vector2 position, float rotation, Vector2 scale
 }
 
 // Destroy a specific physic object and take it out of the list
-void DestroyPhysicObject(PhysicObject *pObj)
+void DestroyPhysicObject(PhysicObject pObj)
 {
     // Free dynamic memory allocation
     free(physicObjects[pObj->id]);
@@ -520,7 +520,7 @@ void DestroyPhysicObject(PhysicObject *pObj)
 }
 
 // Apply directional force to a physic object
-void ApplyForce(PhysicObject *pObj, Vector2 force)
+void ApplyForce(PhysicObject pObj, Vector2 force)
 {
     if (pObj->rigidbody.enabled)
     {
@@ -571,7 +571,7 @@ Rectangle TransformToRectangle(Transform transform)
 }
 
 // Draw physic object information at screen position
-void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize)
+void DrawPhysicObjectInfo(PhysicObject pObj, Vector2 position, int fontSize)
 {
     // Draw physic object ID
     DrawText(FormatText("PhysicObject ID: %i - Enabled: %i", pObj->id, pObj->enabled), position.x, position.y, fontSize, BLACK);

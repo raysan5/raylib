@@ -17,7 +17,7 @@
 #define LINE_LENGTH         75
 #define TRIANGLE_LENGTH     12
 
-void DrawRigidbodyCircle(PhysicObject *obj, Color color);
+void DrawRigidbodyCircle(PhysicObject obj, Color color);
 
 int main()
 {
@@ -36,7 +36,7 @@ int main()
     bool isDebug = false;
     
     // Create rectangle physic objects
-    PhysicObject *rectangles[3];
+    PhysicObject rectangles[3];
     for (int i = 0; i < 3; i++)
     {
         rectangles[i] = CreatePhysicObject((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/3) : (screenHeight/1.5f)) }, 0.0f, (Vector2){ 50, 50 });
@@ -46,7 +46,7 @@ int main()
     
     // Create circles physic objects
     // NOTE: when creating circle physic objects, transform.scale must be { 0, 0 } and object radius must be defined in collider.radius and use this value to draw the circle.
-    PhysicObject *circles[3];
+    PhysicObject circles[3];
     for (int i = 0; i < 3; i++)
     {
         circles[i] = CreatePhysicObject((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/1.5f) : (screenHeight/4)) }, 0.0f, (Vector2){ 0, 0 });
@@ -57,10 +57,10 @@ int main()
     }
     
     // Create walls physic objects
-    PhysicObject *leftWall = CreatePhysicObject((Vector2){ -25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
-    PhysicObject *rightWall = CreatePhysicObject((Vector2){ screenWidth + 25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
-    PhysicObject *topWall = CreatePhysicObject((Vector2){ screenWidth/2, -25 }, 0.0f, (Vector2){ screenWidth, 50 });
-    PhysicObject *bottomWall = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight + 25 }, 0.0f, (Vector2){ screenWidth, 50 });
+    PhysicObject leftWall = CreatePhysicObject((Vector2){ -25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
+    PhysicObject rightWall = CreatePhysicObject((Vector2){ screenWidth + 25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
+    PhysicObject topWall = CreatePhysicObject((Vector2){ screenWidth/2, -25 }, 0.0f, (Vector2){ screenWidth, 50 });
+    PhysicObject bottomWall = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight + 25 }, 0.0f, (Vector2){ screenWidth, 50 });
     
     //--------------------------------------------------------------------------------------
 

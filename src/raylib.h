@@ -535,13 +535,13 @@ typedef struct Collider {
     int radius;             // Used for COLLIDER_CIRCLE
 } Collider;
 
-typedef struct PhysicObject {
+typedef struct PhysicObjectData {
     unsigned int id;
     Transform transform;
     Rigidbody rigidbody;
     Collider collider;
     bool enabled;
-} PhysicObject;
+} PhysicObjectData, *PhysicObject;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -856,14 +856,14 @@ void InitPhysics(Vector2 gravity);                                              
 void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
 void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
 
-PhysicObject *CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);      // Create a new physic object dinamically, initialize it and add to pool
-void DestroyPhysicObject(PhysicObject *pObj);                                           // Destroy a specific physic object and take it out of the list
+PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);       // Create a new physic object dinamically, initialize it and add to pool
+void DestroyPhysicObject(PhysicObject pObj);                                            // Destroy a specific physic object and take it out of the list
 
-void ApplyForce(PhysicObject *pObj, Vector2 force);                                     // Apply directional force to a physic object
+void ApplyForce(PhysicObject pObj, Vector2 force);                                      // Apply directional force to a physic object
 void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
 
 Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
-void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize);          // Draw physic object information at screen position
+void DrawPhysicObjectInfo(PhysicObject pObj, Vector2 position, int fontSize);           // Draw physic object information at screen position
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

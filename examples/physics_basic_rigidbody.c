@@ -30,26 +30,26 @@ int main()
     bool isDebug = false;
     
     // Create rectangle physic object
-    PhysicObject *rectangle = CreatePhysicObject((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
+    PhysicObject rectangle = CreatePhysicObject((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
     rectangle->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
     rectangle->rigidbody.applyGravity = true;
     rectangle->rigidbody.friction = 0.1f;
     rectangle->rigidbody.bounciness = 6.0f;
     
     // Create square physic object
-    PhysicObject *square = CreatePhysicObject((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
+    PhysicObject square = CreatePhysicObject((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
     square->rigidbody.enabled = true;      // Enable physic object rigidbody behaviour
     square->rigidbody.applyGravity = true;
     square->rigidbody.friction = 0.1f;
     
     // Create walls physic objects
-    PhysicObject *floor = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
-    PhysicObject *leftWall = CreatePhysicObject((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    PhysicObject *rightWall = CreatePhysicObject((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    PhysicObject *roof = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    PhysicObject floor = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    PhysicObject leftWall = CreatePhysicObject((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicObject rightWall = CreatePhysicObject((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicObject roof = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
     
     // Create pplatform physic object
-    PhysicObject *platform = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
+    PhysicObject platform = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
     
     //--------------------------------------------------------------------------------------
 
@@ -114,7 +114,8 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    ClosePhysics();       // Unitialize physics module
+    ClosePhysics();       // Unitialize physics (including all loaded objects)
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
