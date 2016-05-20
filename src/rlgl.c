@@ -191,6 +191,7 @@ static bool useTempBuffer = false;
 
 // Shader Programs
 static Shader defaultShader;
+static Shader standardShader;
 static Shader currentShader;            // By default, defaultShader
 
 // Flags for supported extensions
@@ -236,6 +237,7 @@ static Shader LoadDefaultShader(void);      // Load default shader (just vertex 
 static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
 static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadDefaultShader(void);      // Unload default shader
+static void UnloadStandardShader(void);      // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
@@ -1018,6 +1020,7 @@ void rlglInit(void)
 
     // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
+    standardShader = LoadStandardShader();
     currentShader = defaultShader;
 
     LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
@@ -1046,6 +1049,7 @@ void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UnloadDefaultShader();
+    UnloadStandardShader();
     UnloadDefaultBuffers();
     
     // Delete default white texture
@@ -1757,19 +1761,30 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Send combined model-view-projection matrix to shader
     glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-
-    // Setup shader uniforms for material related data
-    // TODO: Check if using standard shader to get location points
     
     // Upload to shader material.colDiffuse
     float vColorDiffuse[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
     glUniform4fv(material.shader.tintColorLoc, 1, vColorDiffuse);
+
+    // Check if using standard shader to get location points
+    // NOTE: standard shader specific locations are got at render time to keep Shader struct as simple as possible (with just default shader locations)
+    if(material.shader.id == standardShader.id)
+    {
+        // Send model transformations matrix to shader
+        glUniformMatrix4fv(glGetUniformLocation(material.shader.id, "modelMatrix"), 1, false, MatrixToFloat(transform));
+        
+        // Setup shader uniforms for lights
+        SetShaderLights(material.shader);
+        
+        // Upload to shader material.colAmbient
+        glUniform4f(glGetUniformLocation(material.shader.id, "colAmbient"), (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
+        
+        // Upload to shader material.colSpecular
+        glUniform4f(glGetUniformLocation(material.shader.id, "colSpecular"), (float)material.colSpecular.r/255, (float)material.colSpecular.g/255, (float)material.colSpecular.b/255, (float)material.colSpecular.a/255);
     
-    // TODO: Upload to shader material.colAmbient
-    // glUniform4f(???, (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
-    
-    // TODO: Upload to shader material.colSpecular
-    // glUniform4f(???, (float)material.colSpecular.r/255, (float)material.colSpecular.g/255, (float)material.colSpecular.b/255, (float)material.colSpecular.a/255);
+        // TODO: Upload to shader glossiness
+        //glUniform1f(???, material.glossiness);
+    }    
     
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
@@ -1791,13 +1806,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
         glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
-        
-        // TODO: Upload to shader glossiness
-        //glUniform1f(???, material.glossiness);
     }
-    
-    // Setup shader uniforms for lights
-    //SetShaderLights(material.shader);
 
     if (vaoSupported)
     {
@@ -2142,6 +2151,17 @@ Shader GetDefaultShader(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     return defaultShader;
+#else
+    Shader shader = { 0 };
+    return shader;
+#endif
+}
+
+// Get default shader
+Shader GetStandardShader(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return standardShader;
 #else
     Shader shader = { 0 };
     return shader;
@@ -2499,13 +2519,75 @@ static Shader LoadStandardShader(void)
 {
     Shader shader;
     
-    char *vShaderStr;
-    char *fShaderStr;
-    
-    // TODO: Implement standard uber-shader, supporting all features (GLSL 100 / GLSL 330)
-    
-    // NOTE: Shader could be quite extensive so it could be implemented in external files (standard.vs/standard.fs)
-    
+    // Vertex shader directly defined, no external file required
+#if defined(GRAPHICS_API_OPENGL_33)
+    char vShaderStr[] = "#version 330       \n"
+        "in vec3 vertexPosition;            \n"
+        "in vec3 vertexNormal;              \n"
+        "in vec2 vertexTexCoord;            \n"
+        "in vec4 vertexColor;               \n"
+        "out vec2 fragTexCoord;             \n"
+        "out vec4 fragColor;                \n"
+        "out vec3 fragNormal;               \n"
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    char vShaderStr[] = "#version 100       \n"
+        "attribute vec3 vertexPosition;     \n"
+        "attribute vec3 vertexNormal;       \n"
+        "attribute vec2 vertexTexCoord;     \n"
+        "attribute vec4 vertexColor;        \n"
+        "varying vec2 fragTexCoord;         \n"
+        "varying vec4 fragColor;            \n"
+        "varying vec3 fragNormal;           \n"
+#endif
+        "uniform mat4 mvpMatrix;            \n"
+        "uniform mat4 modelMatrix;          \n"
+        "void main()                        \n"
+        "{                                  \n"
+        "   fragTexCoord = vertexTexCoord; \n"
+        "   fragColor = vertexColor;       \n"
+        "   mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));  \n"
+        "   fragNormal = normalize(normalMatrix*vertexNormal);  \n"
+        "   gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);  \n"
+        "}                                  \n";
+
+    // TODO: add specular calculation, multi-lights structs and light type calculations (directional, point, spot)
+    // Fragment shader directly defined, no external file required
+#if defined(GRAPHICS_API_OPENGL_33)
+    char fShaderStr[] = "#version 330       \n"
+        "in vec2 fragTexCoord;              \n"
+        "in vec4 fragColor;                 \n"
+        "in vec3 fragNormal;                \n"
+        "out vec4 finalColor;               \n"
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    char fShaderStr[] = "#version 100       \n"
+        "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
+        "varying vec2 fragTexCoord;         \n"
+        "varying vec4 fragColor;            \n"
+        "varying vec3 fragNormal;           \n"
+#endif
+        "uniform sampler2D texture0;        \n"
+        "uniform vec4 fragTintColor;        \n"
+        "uniform vec4 colAmbient;           \n"
+        "uniform vec4 colSpecular;          \n"
+        "uniform vec3 lightDir;             \n"
+        "vec3 LambertLighting(in vec3 n, in vec3 l)     \n"
+        "{                                  \n"
+        "   return clamp(dot(n, l), 0, 1)*fragTintColor.rgb;  \n"
+        "}                                  \n"
+        
+        "void main()                        \n"
+        "{                                  \n"
+        "   vec3 n = normalize(fragNormal); \n"
+        "   vec3 l = normalize(lightDir);   \n"
+#if defined(GRAPHICS_API_OPENGL_33)
+        "   vec4 texelColor = texture(texture0, fragTexCoord);   \n"
+        "   finalColor = vec4(texelColor.rgb*(colAmbient.rgb + LambertLighting(n, l)) - colSpecular.rgb + colSpecular.rgb, texelColor.a*fragTintColor.a);     \n"   // Stupid specular color operation to avoid shader location errors
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+        "   vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
+        "   gl_FragColor = texelColor*fragTintColor*fragColor;   \n"
+#endif
+        "}                                  \n";
+
     shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
@@ -2554,9 +2636,22 @@ static void UnloadDefaultShader(void)
     //glDetachShader(defaultShader, vertexShader);
     //glDetachShader(defaultShader, fragmentShader);
     //glDeleteShader(vertexShader);     // Already deleted on shader compilation
-    //glDeleteShader(fragmentShader);   // Already deleted on sahder compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
     glDeleteProgram(defaultShader.id);
 }
+
+// Unload standard shader 
+static void UnloadStandardShader(void)
+{
+    glUseProgram(0);
+
+    //glDetachShader(defaultShader, vertexShader);
+    //glDetachShader(defaultShader, fragmentShader);
+    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
+    glDeleteProgram(standardShader.id);
+}
+
 
 // Load default internal buffers (lines, triangles, quads)
 static void LoadDefaultBuffers(void)
@@ -3006,6 +3101,9 @@ static void UnloadDefaultBuffers(void)
 // TODO: Review memcpy() and parameters pass
 static void SetShaderLights(Shader shader)
 {
+    // Note: currently working with one light (index 0)
+    // TODO: add multi-lights feature (http://www.learnopengl.com/#!Lighting/Multiple-lights)
+    
     /*
     // NOTE: Standard Shader must include the following data:
         
@@ -3023,7 +3121,7 @@ static void SetShaderLights(Shader shader)
     uniform Light lights[maxLights];
     */
     
-    int locPoint;
+    /*int locPoint;
     char locName[32] = "lights[x].position\0";
     
     glUseProgram(shader.id);
@@ -3052,9 +3150,10 @@ static void SetShaderLights(Shader shader)
         glUniform1f(locPoint, lights[i]->intensity);
         
         // TODO: Pass to the shader any other required data from LightData struct
-    }
+    }*/
     
-    glUseProgram(0);
+    int locPoint = GetShaderLocation(shader, "lightDir");
+    glUniform3f(locPoint, lights[0]->position.x, lights[0]->position.y, lights[0]->position.z);
 }
 
 // Read text data from file

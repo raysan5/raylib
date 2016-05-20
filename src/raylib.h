@@ -398,7 +398,7 @@ typedef struct Shader {
 
     // Uniform locations
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
-    int tintColorLoc;     // Color uniform location point (fragment shader)
+    int tintColorLoc;     // Diffuse color uniform location point (fragment shader)
     
     // Texture map locations
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
@@ -444,11 +444,8 @@ typedef struct LightData {
     float intensity;
     
     Color specular;
-    //float specFactor;   // Specular intensity ?
-
-    //Color ambient;    // Required?
     
-    float coneAngle;         // SpotLight
+    float coneAngle;    // SpotLight
 } LightData, *Light;
 
 // Light types
@@ -836,6 +833,7 @@ void SetModelTexture(Model *model, Texture2D texture);          // Link a textur
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
+Material LoadStandardMaterial(void);                            // Load standard material (uses material attributes and lighting shader)
 void UnloadMaterial(Material material);                         // Unload material textures from VRAM
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
@@ -865,6 +863,7 @@ void UnloadShader(Shader shader);                                   // Unload a 
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
 void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 Shader GetDefaultShader(void);                                      // Get default shader
+Shader GetStandardShader(void);                                     // Get default shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location

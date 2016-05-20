@@ -732,13 +732,13 @@ Material LoadDefaultMaterial(void)
     return material;
 }
 
-// Load standard material (uses standard models shader)
+// Load standard material (uses material attributes and lighting shader)
 // NOTE: Standard shader supports multiple maps and lights
 Material LoadStandardMaterial(void)
 {
     Material material = LoadDefaultMaterial();
     
-    //material.shader = GetStandardShader();
+    material.shader = GetStandardShader();
 
     return material;
 }
@@ -1240,7 +1240,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
     
     model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
-    model.material.colDiffuse = tint;
+    // model.material.colDiffuse = tint;
     
     rlglDrawMesh(model.mesh, model.material, model.transform);
 }
