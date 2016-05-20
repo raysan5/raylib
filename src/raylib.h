@@ -423,7 +423,6 @@ typedef struct Material {
 } Material;
 
 // 3d Model type
-// TODO: Replace shader/testure by material
 typedef struct Model {
     Mesh mesh;                  // Vertex data buffers (RAM and VRAM)
     Matrix transform;           // Local transform matrix
