@@ -32,10 +32,9 @@ int main()
     
     Texture2D sonic = LoadTexture("resources/texture_formats/sonic.png");
 
-    // NOTE: This shader is a bit different than model/postprocessing shaders,
-    // it requires the color data for every vertice to use it in every shape or texture independently
-    Shader shader = LoadShader("resources/shaders/shapes_base.vs", 
-                               "resources/shaders/shapes_grayscale.fs");
+    // NOTE: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version 
+    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
+                               "resources/shaders/glsl330/grayscale.fs");
                                
     // Shader usage is also different than models/postprocessing, shader is just activated when required
     

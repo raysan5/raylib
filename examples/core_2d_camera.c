@@ -22,10 +22,13 @@ int main()
     
     Camera2D camera;
     
-    camera.position = (Vector2){ 0, 0 };
-    camera.origin = (Vector2){ 100, 100 };
+    camera.offset = (Vector2){ 0, 0 };
+    camera.target = (Vector2){ 400, 200 };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
+    
+    Rectangle player = { 400, 200, 40, 40 };
+    camera.target = (Vector2){ player.x + 20, player.y + 20 };
     
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -35,16 +38,28 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyDown(KEY_RIGHT)) camera.position.x--;
-        else if (IsKeyDown(KEY_LEFT)) camera.position.x++;
-        else if (IsKeyDown(KEY_UP)) camera.position.y++;
-        else if (IsKeyDown(KEY_DOWN)) camera.position.y--;
+        if (IsKeyDown(KEY_RIGHT)) player.x -= 2;
+        else if (IsKeyDown(KEY_LEFT)) player.x += 2;
+        else if (IsKeyDown(KEY_UP)) player.y -= 2;
+        else if (IsKeyDown(KEY_DOWN)) player.y += 2;
+        
+        // Camera target follows player
+        camera.target = (Vector2){ player.x + 20, player.y + 20 };
         
         if (IsKeyDown(KEY_R)) camera.rotation--;
         else if (IsKeyDown(KEY_F)) camera.rotation++;
         
-        if (IsKeyDown(KEY_W)) camera.zoom += 0.005f;
-        if (IsKeyDown(KEY_S)) camera.zoom -= 0.005f;
+        // Camera controls
+        if (IsKeyDown(KEY_R)) camera.rotation--;
+        else if (IsKeyDown(KEY_F)) camera.rotation++;
+        
+        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
+        
+        if (IsKeyPressed(KEY_Z)) 
+        {
+            camera.zoom = 1.0f;
+            camera.rotation = 0.0f;
+        }
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -56,7 +71,10 @@ int main()
             DrawText("2D CAMERA TEST", 20, 20, 20, GRAY);
             
             DrawRectangle(0, 300, screenWidth, 50, GRAY);
-            DrawRectangle(400, 250, 40, 40, RED);
+            DrawRectangleRec(player, RED);
+            
+            DrawRectangle(camera.origin.x, 0, 1, screenHeight, GREEN);
+            DrawRectangle(0, camera.origin.y, screenWidth, 1, GREEN);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

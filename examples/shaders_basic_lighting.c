@@ -41,23 +41,23 @@ int main()
     // Model initialization
     Vector3 position = { 0.0f, 0.0f, 0.0f };
     Model model = LoadModel("resources/model/dwarf.obj");
-    Shader shader = LoadShader("resources/shaders/phong.vs", "resources/shaders/phong.fs");
+    Shader shader = LoadShader("resources/shaders/glsl330/phong.vs", "resources/shaders/glsl330/phong.fs");
     SetModelShader(&model, shader);
     
     // Shader locations initialization
-    int lIntensityLoc = GetShaderLocation(shader, "light_intensity");
-    int lAmbientLoc = GetShaderLocation(shader, "light_ambientColor");
-    int lDiffuseLoc = GetShaderLocation(shader, "light_diffuseColor");
-    int lSpecularLoc = GetShaderLocation(shader, "light_specularColor");
-    int lSpecIntensityLoc = GetShaderLocation(shader, "light_specIntensity");
+    int lIntensityLoc = GetShaderLocation(shader, "lightIntensity");
+    int lAmbientLoc = GetShaderLocation(shader, "lightAmbientColor");
+    int lDiffuseLoc = GetShaderLocation(shader, "lightDiffuseColor");
+    int lSpecularLoc = GetShaderLocation(shader, "lightSpecularColor");
+    int lSpecIntensityLoc = GetShaderLocation(shader, "lightSpecIntensity");
     
-    int mAmbientLoc = GetShaderLocation(shader, "mat_ambientColor");
-    int mSpecularLoc = GetShaderLocation(shader, "mat_specularColor");
-    int mGlossLoc = GetShaderLocation(shader, "mat_glossiness");
+    int mAmbientLoc = GetShaderLocation(shader, "matAmbientColor");
+    int mSpecularLoc = GetShaderLocation(shader, "matSpecularColor");
+    int mGlossLoc = GetShaderLocation(shader, "matGlossiness");
     
     // Camera and light vectors shader locations
-    int cameraLoc = GetShaderLocation(shader, "cameraPos");
-    int lightLoc = GetShaderLocation(shader, "lightPos");
+    int cameraLoc = GetShaderLocation(shader, "cameraPosition");
+    int lightLoc = GetShaderLocation(shader, "lightPosition");
     
     // Model and View matrix locations (required for lighting)
     int modelLoc = GetShaderLocation(shader, "modelMatrix");

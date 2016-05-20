@@ -85,13 +85,13 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
         INCLUDES = -I. -I../src -I/usr/local/include/raylib/
+    else ifeq ($(PLATFORM_OS),OSX)
+        INCLUDES = -I. -I../src
     else
         INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
         # external libraries headers
         # GLFW3
             INCLUDES += -I../../external/glfw3/include
-        # GLEW - Not required any more, replaced by GLAD
-            #INCLUDES += -I../external/glew/include
         # OpenAL Soft
             INCLUDES += -I../../external/openal_soft/include
     endif
@@ -105,6 +105,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
         LFLAGS = -L. -L../../src
+    else ifeq ($(PLATFORM_OS),OSX)
+        LFLAGS = -L. -L../src
     else
         LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
         # external libraries to link with
@@ -113,30 +115,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifneq ($(PLATFORM_OS),OSX)
         # OpenAL Soft
             LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-        # GLEW: Not used, replaced by GLAD
-            #LFLAGS += -L../../external/glew/lib/$(LIBPATH)
-        endif
-    endif
-endif
-
-# define library paths containing required libs
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    LFLAGS = -L. -L../../src -L/opt/vc/lib
-endif
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),LINUX)
-        LFLAGS = -L. -L../../src
-    else
-        LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
-        # external libraries to link with
-        # GLFW3
-        LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
-        ifneq ($(PLATFORM_OS),OSX)
-        # OpenAL Soft
-            LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-        # GLEW
-            LFLAGS += -L../../external/glew/lib/$(LIBPATH)
         endif
     endif
 endif
@@ -147,15 +125,15 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
-        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
+        # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl -lX11 \
                -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
         # requires the following packages:
-        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
+        # libglfw3-dev libopenal-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw3 -framework OpenGL -framework OpenAl -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed

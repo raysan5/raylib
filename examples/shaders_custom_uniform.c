@@ -36,10 +36,10 @@ int main()
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
     SetModelTexture(&dwarf, texture);                                       // Bind texture to model
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };                                   // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
     
-    Shader shader = LoadShader("resources/shaders/base.vs", 
-                               "resources/shaders/swirl.fs");               // Load postpro shader
+    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
+                               "resources/shaders/glsl330/swirl.fs");       // Load postpro shader
     
     // Get variable (uniform) location on the shader to connect with the program
     // NOTE: If uniform variable could not be found in the shader, function returns -1
@@ -47,7 +47,8 @@ int main()
     
     float swirlCenter[2] = { (float)screenWidth/2, (float)screenHeight/2 };
     
-    SetPostproShader(shader);               // Set fullscreen postprocessing shader
+    // Create a RenderTexture2D to be used for render to texture
+    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
     
     // Setup orbital camera
     SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
@@ -78,14 +79,23 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+            
+            BeginTextureMode(target);   // Enable drawing to texture
 
-            Begin3dMode(camera);
+                Begin3dMode(camera);
 
-                DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
+                    DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10, 1.0f);     // Draw a grid
+                    DrawGrid(10, 1.0f);     // Draw a grid
 
-            End3dMode();
+                End3dMode();
+            
+            EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
+            
+            SetCustomShader(shader);
+            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
+            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            SetDefaultShader();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
@@ -97,11 +107,12 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);       // Unload shader
-    UnloadTexture(texture);     // Unload texture
-    UnloadModel(dwarf);         // Unload model
+    UnloadShader(shader);           // Unload shader
+    UnloadTexture(texture);         // Unload texture
+    UnloadModel(dwarf);             // Unload model
+    UnloadRenderTexture(target);    // Unload render texture
 
-    CloseWindow();              // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

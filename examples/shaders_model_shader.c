@@ -34,11 +34,11 @@ int main()
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
-    Shader shader = LoadShader("resources/shaders/base.vs", 
-                               "resources/shaders/grayscale.fs");           // Load model shader
+    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
+                               "resources/shaders/glsl330/grayscale.fs");   // Load model shader
 
-    SetModelShader(&dwarf, shader);         // Set shader effect to 3d model
-    SetModelTexture(&dwarf, texture);       // Bind texture to model
+    dwarf.material.shader = shader;            // Set shader effect to 3d model
+    dwarf.material.texDiffuse = texture;       // Bind texture to model
     
     Vector3 position = { 0.0f, 0.0f, 0.0f };   // Set model position
     

@@ -29,21 +29,21 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>          // Declares malloc() and free() for memory management
-#include <string.h>          // Required for strcmp(), strrchr(), strncmp()
+#include <stdlib.h>             // Declares malloc() and free() for memory management
+#include <string.h>             // Required for strcmp(), strrchr(), strncmp()
 
-#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                             // Required: rlglLoadTexture() rlDeleteTextures(), 
-                             //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+#include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+                                // Required: rlglLoadTexture() rlDeleteTextures(), 
+                                //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"           // rRES data decompression utility function
-                             // NOTE: Includes Android fopen function map
+#include "utils.h"              // rRES data decompression utility function
+                                // NOTE: Includes Android fopen function map
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"       // Used to read image data (multiple formats support)
+#include "stb_image.h"          // Used to read image data (multiple formats support)
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"
+#include "stb_image_resize.h"   // Used on image scaling function: ImageResize()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -130,6 +130,7 @@ Image LoadImage(const char *fileName)
 }
 
 // Load image data from Color array data (RGBA - 32bit)
+// NOTE: Creates a copy of pixels data array
 Image LoadImageEx(Color *pixels, int width, int height)
 {
     Image image;
@@ -388,6 +389,14 @@ Texture2D LoadTextureFromImage(Image image)
     return texture;
 }
 
+// Load a texture to be used for rendering
+RenderTexture2D LoadRenderTexture(int width, int height)
+{
+    RenderTexture2D target = rlglLoadRenderTexture(width, height);
+    
+    return target;
+}
+
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
@@ -405,6 +414,17 @@ void UnloadTexture(Texture2D texture)
         rlDeleteTextures(texture.id);
         
         TraceLog(INFO, "[TEX ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
+    }
+}
+
+// Unload render texture from GPU memory
+void UnloadRenderTexture(RenderTexture2D target)
+{
+    if (target.id != 0)
+    {
+        rlDeleteRenderTextures(target);
+        
+        TraceLog(INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
     }
 }
 
@@ -1365,6 +1385,10 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
     Rectangle destRec = { (int)position.x, (int)position.y, abs(sourceRec.width), abs(sourceRec.height) };
+    
+    if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
+    if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
+    
     Vector2 origin = { 0, 0 };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);

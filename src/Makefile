@@ -21,6 +21,8 @@
 #
 #**************************************************************************************************
 
+.PHONY: all clean
+
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
@@ -84,8 +86,6 @@ else
 # external libraries headers
 # GLFW3
     INCLUDES += -I../external/glfw3/include
-# GLEW
-    INCLUDES += -I../external/glew/include
 # OpenAL Soft
     INCLUDES += -I../external/openal_soft/include
 endif
@@ -99,9 +99,9 @@ else
 endif
 
 
-# typing 'make' will invoke the first target entry in the file,
-# in this case, the 'default' target entry is raylib
-default: raylib
+# typing 'make' will invoke the default target entry called 'all',
+# in this case, the 'default' target entry is basic_game
+all: raylib
 
 # compile raylib library
 raylib: $(OBJS)
@@ -143,7 +143,7 @@ models.o: models.c
 # compile audio module
 audio.o: audio.c
 	$(CC) -c audio.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-	
+
 # compile stb_vorbis library
 stb_vorbis.o: stb_vorbis.c
 	$(CC) -c stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
@@ -163,21 +163,21 @@ gestures.o: gestures.c
 # clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),OSX)
-		rm -f *.o libraylib.a
-    else
-    ifeq ($(PLATFORM_OS),LINUX)
-		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
-    else
+    ifeq ($(PLATFORM_OS),WINDOWS)
 		del *.o libraylib.a
+    else
+		rm -f *.o libraylib.a
     endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+		del *.o libraylib.bc
+    else
+		rm -f *.o libraylib.bc
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o libraylib.a
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-	del *.o libraylib.bc
 endif
 	@echo Cleaning done
 

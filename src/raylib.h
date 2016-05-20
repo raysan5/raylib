@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.4.0 (www.raylib.com)
+*   raylib 1.5.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -261,7 +261,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-typedef enum { false, true } bool;
+    #ifndef true
+        typedef enum { false, true } bool;
+    #endif
 #endif
 
 // byte type
@@ -324,6 +326,13 @@ typedef struct Texture2D {
     int format;             // Data format (TextureFormat)
 } Texture2D;
 
+// RenderTexture2D type, for texture rendering
+typedef struct RenderTexture2D {
+    unsigned int id;        // Render texture (fbo) id
+    Texture2D texture;      // Color buffer attachment texture
+    Texture2D depth;        // Depth buffer attachment texture
+} RenderTexture2D;
+
 // SpriteFont type, includes texture and charSet array data
 typedef struct SpriteFont {
     Texture2D texture;      // Font texture
@@ -345,8 +354,8 @@ typedef struct Camera {
 
 // Camera2D type, defines a 2d camera
 typedef struct Camera2D {
-    Vector2 position;       // Camera position
-    Vector2 origin;         // Camera origin (for rotation and zoom)
+    Vector2 offset;         // Camera offset (displacement from target)
+    Vector2 target;         // Camera target (rotation and zoom origin)
     float rotation;         // Camera rotation in degrees
     float zoom;             // Camera zoom (scaling), should be 1.0f by default
 } Camera2D;
@@ -359,34 +368,39 @@ typedef struct BoundingBox {
 
 // Vertex data definning a mesh
 typedef struct Mesh {
-    int vertexCount;            // num vertices
-    float *vertices;            // vertex position (XYZ - 3 components per vertex)
-    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
-    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
-    float *normals;             // vertex normals (XYZ - 3 components per vertex)
-    float *tangents;            // vertex tangents (XYZ - 3 components per vertex)
-    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex)
+    int vertexCount;            // number of vertices stored in arrays
+    float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;             // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;    // vertex indices (in case vertex data comes indexed)
+    int triangleCount;          // number of triangles stored (indexed or not)
     
     BoundingBox bounds;         // mesh limits defined by min and max points
     
     unsigned int vaoId;         // OpenGL Vertex Array Object id
-    unsigned int vboId[6];      // OpenGL Vertex Buffer Objects id (6 types of vertex data)
+    unsigned int vboId[7];      // OpenGL Vertex Buffer Objects id (7 types of vertex data)
 } Mesh;
 
 // Shader type (generic shader)
 typedef struct Shader {
-    unsigned int id;            // Shader program id
+    unsigned int id;      // Shader program id
     
-    // Variable attributes
-    int vertexLoc;        // Vertex attribute location point (vertex shader)
-    int texcoordLoc;      // Texcoord attribute location point (vertex shader)
-    int normalLoc;        // Normal attribute location point (vertex shader)
-    int colorLoc;         // Color attibute location point (vertex shader)
+    // Vertex attributes locations (default locations)
+    int vertexLoc;        // Vertex attribute location point (default-location = 0)
+    int texcoordLoc;      // Texcoord attribute location point (default-location = 1)
+    int normalLoc;        // Normal attribute location point (default-location = 2)
+    int colorLoc;         // Color attibute location point (default-location = 3)
+    int tangentLoc;       // Tangent attribute location point (default-location = 4)
+    int texcoord2Loc;     // Texcoord2 attribute location point (default-location = 5)
 
-    // Uniforms
+    // Uniform locations
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
     int tintColorLoc;     // Color uniform location point (fragment shader)
     
+    // Texture map locations
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
     int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
     int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
@@ -408,13 +422,37 @@ typedef struct Material {
     float normalDepth;          // Normal map depth
 } Material;
 
-// 3d Model type
-// TODO: Replace shader/testure by material
+// Model type
 typedef struct Model {
-    Mesh mesh;
-    Matrix transform;
-    Material material;
+    Mesh mesh;                  // Vertex data buffers (RAM and VRAM)
+    Matrix transform;           // Local transform matrix
+    Material material;          // Shader and textures data
 } Model;
+
+// Light type
+// TODO: Review contained data to support different light types and features
+typedef struct LightData {
+    int id;
+    int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+    bool enabled;
+    
+    Vector3 position;
+    Vector3 direction;  // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction)
+    float attenuation;  // Lost of light intensity with distance (use radius?)
+    
+    Color diffuse;      // Use Vector3 diffuse (including intensities)?
+    float intensity;
+    
+    Color specular;
+    //float specFactor;   // Specular intensity ?
+
+    //Color ambient;    // Required?
+    
+    float coneAngle;         // SpotLight
+} LightData, *Light;
+
+// Light types
+typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
 
 // Ray type (useful for raycast)
 typedef struct Ray {
@@ -432,10 +470,12 @@ typedef struct Sound {
 typedef struct Wave {
     void *data;                 // Buffer data pointer
     unsigned int dataSize;      // Data size in bytes
-    unsigned int sampleRate;
-    short bitsPerSample;
+    unsigned int sampleRate;    // Samples per second to be played
+    short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
+
+typedef int RawAudioContext;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -484,7 +524,7 @@ typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
 
 // Gesture events
 // NOTE: MAX_TOUCH_POINTS fixed to 2
-typedef struct {
+typedef struct GestureEvent {
     int touchAction;
     int pointCount;
     int pointerId[MAX_TOUCH_POINTS];
@@ -520,13 +560,13 @@ typedef struct Collider {
     int radius;             // Used for COLLIDER_CIRCLE
 } Collider;
 
-typedef struct PhysicObject {
+typedef struct PhysicObjectData {
     unsigned int id;
     Transform transform;
     Rigidbody rigidbody;
     Collider collider;
     bool enabled;
-} PhysicObject;
+} PhysicObjectData, *PhysicObject;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -550,24 +590,28 @@ void CloseWindow(void);                                     // Close Window and 
 bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)
 void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-void SetCustomCursor(const char *cursorImage);              // Set a custom cursor icon/image
-void SetExitKey(int key);                                   // Set a custom key to exit program (default is ESC)
-#endif
 int GetScreenWidth(void);                                   // Get current screen width
 int GetScreenHeight(void);                                  // Get current screen height
 
+void ShowCursor(void);                                      // Shows cursor
+void HideCursor(void);                                      // Hides cursor
+bool IsCursorHidden(void);                                  // Returns true if cursor is not visible
+void EnableCursor(void);                                    // Enables cursor
+void DisableCursor(void);                                   // Disables cursor
+
 void ClearBackground(Color color);                          // Sets Background Color
 void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
-void BeginDrawingEx(Camera2D camera);                       // Setup drawing canvas with 2d camera
-void BeginDrawingPro(int blendMode, Shader shader, Matrix transform);   // Setup drawing canvas with pro parameters
 void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
 
+void Begin2dMode(Camera2D camera);                          // Initialize 2D mode with custom camera
+void End2dMode(void);                                       // Ends 2D mode custom camera usage
 void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
 void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
+void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
+void EndTextureMode(void);                                  // Ends drawing to render texture
 
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
-Vector2 WorldToScreen(Vector3 position, Camera camera);     // Returns the screen space position from a 3d world space position
+Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position from a 3d world space position
 Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
@@ -602,6 +646,15 @@ bool IsKeyDown(int key);                                // Detect if a key is be
 bool IsKeyReleased(int key);                            // Detect if a key has been released once
 bool IsKeyUp(int key);                                  // Detect if a key is NOT being pressed
 int GetKeyPressed(void);                                // Get latest key pressed
+void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
+
+bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
+float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
+bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
+bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
+bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
+bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
+#endif
 
 bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
 bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
@@ -612,20 +665,6 @@ int GetMouseY(void);                                    // Returns mouse positio
 Vector2 GetMousePosition(void);                         // Returns mouse position XY
 void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
-
-void ShowCursor(void);                                  // Shows cursor
-void HideCursor(void);                                  // Hides cursor
-void EnableCursor(void);                                // Enables cursor
-void DisableCursor(void);                               // Disables cursor
-bool IsCursorHidden(void);                              // Returns true if cursor is not visible
-
-bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
-float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
-bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
-bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
-bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
-bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
-#endif
 
 int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
 int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)                   
@@ -641,9 +680,9 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
-void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
-bool IsGestureDetected(void);                           // Check if a gesture have been detected
-int GetGestureType(void);                               // Get latest detected gesture
+void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
+bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
+int GetGestureDetected(void);                           // Get latest detected gesture
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
 int GetTouchPointsCount(void);                          // Get touch points count
 
@@ -714,8 +753,10 @@ Texture2D LoadTexture(const char *fileName);                                    
 Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat);                     // Load a texture from raw data into GPU memory
 Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
 Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data
+RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load a texture to be used for rendering
 void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory
+void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory
 Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
@@ -785,17 +826,21 @@ void DrawGizmo(Vector3 position);                                               
 //------------------------------------------------------------------------------------
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
-Model LoadModel(const char *fileName);                                                             // Load a 3d model (.OBJ)
-Model LoadModelEx(Mesh data);                                                                      // Load a 3d model (from mesh data)
-//Model LoadModelFromRES(const char *rresName, int resId);                                         // TODO: Load a 3d model from rRES file (raylib Resource)
-Model LoadHeightmap(Image heightmap, Vector3 size);                                                // Load a heightmap image as a 3d model
-Model LoadCubicmap(Image cubicmap);                                                                // Load a map image as a 3d model (cubes based)
-void UnloadModel(Model model);                                                                     // Unload 3d model from memory
-void SetModelTexture(Model *model, Texture2D texture);                                             // Link a texture to a model
+Model LoadModel(const char *fileName);                          // Load a 3d model (.OBJ)
+Model LoadModelEx(Mesh data, bool dynamic);                     // Load a 3d model (from mesh data)
+Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d model from rRES file (raylib Resource)
+Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
+Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
+void UnloadModel(Model model);                                  // Unload 3d model from memory
+void SetModelTexture(Model *model, Texture2D texture);          // Link a texture to a model
+
+Material LoadMaterial(const char *fileName);                    // Load material data (from file)
+Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
+void UnloadMaterial(Material material);                         // Unload material textures from VRAM
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint);      // Draw a model with extended parameters
-void DrawModelWires(Model model, Vector3 position, float scale, Color color);                      // Draw a model wires (with texture if set)
+void DrawModelWires(Model model, Vector3 position, float scale, Color tint);                      // Draw a model wires (with texture if set)
 void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
 void DrawBoundingBox(BoundingBox box, Color color);                                                // Draw bounding box (wires)
 
@@ -816,24 +861,21 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shaders strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetPostproShader(Shader shader);                               // Set fullscreen postproduction shader
-void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
-void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
-bool IsPosproShaderEnabled(void);                                   // Check if postprocessing shader is enabled
+void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
+Shader GetDefaultShader(void);                                      // Get default shader
+Texture2D GetDefaultTexture(void);                                  // Get default texture
 
-int GetShaderLocation(Shader shader, const char *uniformName);                          // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size);             // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);              // Set shader uniform value (int)
-void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);                   // Set shader uniform value (matrix 4x4)
-//void SetShaderMapDiffuse(Shader *shader, Texture2D texture);                            // Default diffuse shader map texture assignment
-//void SetShaderMapNormal(Shader *shader, const char *uniformName, Texture2D texture);    // Normal map texture shader assignment
-//void SetShaderMapSpecular(Shader *shader, const char *uniformName, Texture2D texture);  // Specular map texture shader assignment
-//void SetShaderMap(Shader *shader, int mapLocation, Texture2D texture, int textureUnit); // TODO: Generic shader map assignment
+int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
+void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
+void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+
+Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
+void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 //----------------------------------------------------------------------------------
 // Physics System Functions (Module: physac)
@@ -842,20 +884,21 @@ void InitPhysics(Vector2 gravity);                                              
 void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
 void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
 
-PhysicObject *CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);      // Create a new physic object dinamically, initialize it and add to pool
-void DestroyPhysicObject(PhysicObject *pObj);                                           // Destroy a specific physic object and take it out of the list
+PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);       // Create a new physic object dinamically, initialize it and add to pool
+void DestroyPhysicObject(PhysicObject pObj);                                            // Destroy a specific physic object and take it out of the list
 
-void ApplyForce(PhysicObject *pObj, Vector2 force);                                     // Apply directional force to a physic object
+void ApplyForce(PhysicObject pObj, Vector2 force);                                      // Apply directional force to a physic object
 void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
 
 Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
-void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize);          // Draw physic object information at screen position
+void DrawPhysicObjectInfo(PhysicObject pObj, Vector2 position, int fontSize);           // Draw physic object information at screen position
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
+bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -864,19 +907,28 @@ void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound
 void StopSound(Sound sound);                                    // Stop playing a sound
-bool SoundIsPlaying(Sound sound);                               // Check if a sound is currently playing
+bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
-void UpdateMusicStream(void);                                   // Updates buffers for music streaming
-void StopMusicStream(void);                                     // Stop music playing (close stream)
-void PauseMusicStream(void);                                    // Pause music playing
-void ResumeMusicStream(void);                                   // Resume playing paused music
-bool MusicIsPlaying(void);                                      // Check if music is playing
-void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
-float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
-float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
+int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
+void UpdateMusicStream(int index);                              // Updates buffers for music streaming
+void StopMusicStream(int index);                                // Stop music playing (close stream)
+void PauseMusicStream(int index);                               // Pause music playing
+void ResumeMusicStream(int index);                              // Resume playing paused music
+bool IsMusicPlaying(int index);                                 // Check if music is playing
+void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
+float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
+float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
+int getMusicStreamCount(void);
+void SetMusicPitch(int index, float pitch);
+
+// used to output raw audio streams, returns negative numbers on error
+// if floating point is false the data size is 16bit short, otherwise it is float 32bit
+RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
+
+void CloseRawAudioContext(RawAudioContext ctx);
+int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }

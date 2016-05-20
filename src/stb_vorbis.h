@@ -1,4 +1,4 @@
-// Ogg Vorbis audio decoder - v1.07 - public domain
+// Ogg Vorbis audio decoder - v1.09 - public domain
 // http://nothings.org/stb_vorbis/
 //
 // Original version written by Sean Barrett in 2007.
@@ -9,9 +9,9 @@
 //
 // LICENSE
 //
-//   This software is in the public domain. Where that dedication is not
-//   recognized, you are granted a perpetual, irrevocable license to copy,
-//   distribute, and modify this file as you see fit.
+//   This software is dual-licensed to the public domain and under the following
+//   license: you are granted a perpetual, irrevocable license to copy, modify,
+//   publish, and distribute this file as you see fit.
 //
 // No warranty for any purpose is expressed or implied by the author (nor
 // by RAD Game Tools). Report bugs and send enhancements to the author.
@@ -31,11 +31,14 @@
 //    Terje Mathisen     Niklas Frykholm     Andy Hill
 //    Casey Muratori     John Bolton         Gargaj
 //    Laurent Gomila     Marc LeBlanc        Ronny Chevalier
-//    Bernhard Wodo      Evan Balster        "alxprd"@github
+//    Bernhard Wodo      Evan Balster        alxprd@github
 //    Tom Beaumont       Ingo Leitgeb        Nicolas Guillemot
-//    Phillip Bennefall  Rohit
+//    Phillip Bennefall  Rohit               Thiago Goulart
+//    manxorist@github   saga musix
 //
 // Partial history:
+//    1.09    - 2016/04/04 - back out 'truncation of last frame' fix from previous version
+//    1.08    - 2016/04/02 - warnings; setup memory leaks; truncation of last frame
 //    1.07    - 2015/01/16 - fixes for crashes on invalid files; warning fixes; const
 //    1.06    - 2015/08/31 - full, correct support for seeking API (Dougall Johnson)
 //                           some crash fixes when out of memory or with corrupt files
@@ -70,11 +73,6 @@
 // NOTE: Added to work with raylib on Android
 #if defined(PLATFORM_ANDROID)
     #include "utils.h"  // Android fopen function map
-#endif
-
-// RaySan: Added for Linux
-#ifdef __linux
-    #include <alloca.h>
 #endif
 
 #ifdef __cplusplus

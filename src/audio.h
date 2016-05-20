@@ -41,7 +41,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-typedef enum { false, true } bool;
+    #ifndef true
+        typedef enum { false, true } bool;
+    #endif
 #endif
 
 // Sound source type
@@ -59,6 +61,8 @@ typedef struct Wave {
     short channels;
 } Wave;
 
+typedef int RawAudioContext;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -73,6 +77,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
+bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -81,19 +86,28 @@ void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound
 void StopSound(Sound sound);                                    // Stop playing a sound
-bool SoundIsPlaying(Sound sound);                               // Check if a sound is currently playing
+bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
-void UpdateMusicStream(void);                                   // Updates buffers for music streaming
-void StopMusicStream(void);                                     // Stop music playing (close stream)
-void PauseMusicStream(void);                                    // Pause music playing
-void ResumeMusicStream(void);                                   // Resume playing paused music
-bool MusicIsPlaying(void);                                      // Check if music is playing
-void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
-float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
-float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
+int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
+void UpdateMusicStream(int index);                              // Updates buffers for music streaming
+void StopMusicStream(int index);                                // Stop music playing (close stream)
+void PauseMusicStream(int index);                               // Pause music playing
+void ResumeMusicStream(int index);                              // Resume playing paused music
+bool IsMusicPlaying(int index);                                 // Check if music is playing
+void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
+float GetMusicTimeLength(int index);                            // Get music time length (in seconds)
+float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
+int getMusicStreamCount(void);
+void SetMusicPitch(int index, float pitch);
+
+// used to output raw audio streams, returns negative numbers on error
+// if floating point is false the data size is 16bit short, otherwise it is float 32bit
+RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
+
+void CloseRawAudioContext(RawAudioContext ctx);
+int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }
