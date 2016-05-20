@@ -2068,7 +2068,11 @@ static Material LoadMTL(const char *fileName)
             {
                 if (buffer[1] == 's')       // Ns int   Shininess (specular exponent). Ranges from 0 to 1000.
                 {
-                    sscanf(buffer, "Ns %i", &material.glossiness);
+                    int shininess = 0;
+                    sscanf(buffer, "Ns %i", &shininess);
+                    
+                    // Normalize shininess value to material glossiness attribute
+                    material.glossiness = (float)shininess/1000;
                 }
                 else if (buffer[1] == 'i')  // Ni int   Refraction index.
                 {
