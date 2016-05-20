@@ -71,6 +71,8 @@
 #define MAX_DRAWS_BY_TEXTURE      256   // Draws are organized by texture changes
 #define TEMP_VERTEX_BUFFER_SIZE  4096   // Temporal Vertex Buffer (required for vertex-transformations)
                                         // NOTE: Every vertex are 3 floats (12 bytes)
+                                        
+#define MAX_LIGHTS                  8   // Max lights supported by standard shader
 
 #ifndef GL_SHADING_LANGUAGE_VERSION
     #define GL_SHADING_LANGUAGE_VERSION         0x8B8C
@@ -199,6 +201,10 @@ static bool texCompETC1Supported = false;    // ETC1 texture compression support
 static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;    // PVR texture compression support
 static bool texCompASTCSupported = false;    // ASTC texture compression support
+
+// Lighting data
+static Light lights[MAX_LIGHTS];              // Lights pool
+static int lightsCount;                       // Counts current enabled physic objects
 #endif
 
 // Compressed textures support flags
@@ -227,6 +233,7 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
 static unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr);  // Load custom shader strings and return program id
 
 static Shader LoadDefaultShader(void);      // Load default shader (just vertex positioning and texture coloring)
+static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
 static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadDefaultShader(void);      // Unload default shader
 
@@ -234,6 +241,8 @@ static void LoadDefaultBuffers(void);       // Load default internal buffers (li
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
 static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
+
+static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
 
 static char *ReadTextFile(const char *fileName);
 #endif
@@ -1749,11 +1758,19 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     // Send combined model-view-projection matrix to shader
     glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
 
-    // Apply color tinting (material.colDiffuse)
-    // NOTE: Just update one uniform on fragment shader
-    float vColor[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
-    glUniform4fv(material.shader.tintColorLoc, 1, vColor);
-
+    // Setup shader uniforms for material related data
+    // TODO: Check if using standard shader to get location points
+    
+    // Upload to shader material.colDiffuse
+    float vColorDiffuse[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
+    glUniform4fv(material.shader.tintColorLoc, 1, vColorDiffuse);
+    
+    // TODO: Upload to shader material.colAmbient
+    // glUniform4f(???, (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
+    
+    // TODO: Upload to shader material.colSpecular
+    // glUniform4f(???, (float)material.colSpecular.r/255, (float)material.colSpecular.g/255, (float)material.colSpecular.b/255, (float)material.colSpecular.a/255);
+    
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
@@ -1764,6 +1781,9 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
         glUniform1i(material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
+        
+        // TODO: Upload to shader normalDepth
+        //glUniform1f(???, material.normalDepth);
     }
     
     if ((material.texSpecular.id != 0) && (material.shader.mapSpecularLoc != -1))
@@ -1771,7 +1791,13 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
         glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
+        
+        // TODO: Upload to shader glossiness
+        //glUniform1f(???, material.glossiness);
     }
+    
+    // Setup shader uniforms for lights
+    SetShaderLights(material.shader);
 
     if (vaoSupported)
     {
@@ -2198,6 +2224,55 @@ void SetBlendMode(int mode)
     }
 }
 
+// Create a new light, initialize it and add to pool
+// TODO: Review creation parameters (only generic ones)
+Light CreateLight(int type, Vector3 position, Color diffuse)
+{
+    // Allocate dynamic memory
+    Light light = (Light)malloc(sizeof(LightData));
+    
+    // Initialize light values with generic values
+    light->id = lightsCount;
+    light->type = type;
+    light->enabled = true;
+    
+    light->position = position;
+    light->direction = (Vector3){ 0.0f, 0.0f, 0.0f };
+    light->intensity = 1.0f;
+    light->diffuse = diffuse;
+    light->specular = WHITE;
+    
+    // Add new light to the array
+    lights[lightsCount] = light;
+    
+    // Increase enabled lights count
+    lightsCount++;
+    
+    return light;
+}
+
+// Destroy a light and take it out of the list
+void DestroyLight(Light light)
+{
+    // Free dynamic memory allocation
+    free(lights[light->id]);
+    
+    // Remove *obj from the pointers array
+    for (int i = light->id; i < lightsCount; i++)
+    {
+        // Resort all the following pointers of the array
+        if ((i + 1) < lightsCount)
+        {
+            lights[i] = lights[i + 1];
+            lights[i]->id = lights[i + 1]->id;
+        }
+        else free(lights[i]);
+    }
+    
+    // Decrease enabled physic objects count
+    lightsCount--;
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -2411,6 +2486,32 @@ static Shader LoadDefaultShader(void)
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
     if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+
+    return shader;
+}
+
+// Load standard shader
+// NOTE: This shader supports: 
+//      - Up to 3 different maps: diffuse, normal, specular
+//      - Material properties: colDiffuse, colAmbient, colSpecular, glossiness, normalDepth
+//      - Up to 8 lights: Point, Directional or Spot
+static Shader LoadStandardShader(void)
+{
+    Shader shader;
+    
+    char *vShaderStr;
+    char *fShaderStr;
+    
+    // TODO: Implement standard uber-shader, supporting all features (GLSL 100 / GLSL 330)
+    
+    // NOTE: Shader could be quite extensive so it could be implemented in external files (standard.vs/standard.fs)
+    
+    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
+
+    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
+    else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
+
+    if (shader.id != 0) LoadDefaultShaderLocations(&shader);    // TODO: Review locations fetching
 
     return shader;
 }
@@ -2898,6 +2999,62 @@ static void UnloadDefaultBuffers(void)
     free(quads.texcoords);
     free(quads.colors);
     free(quads.indices);
+}
+
+// Sets shader uniform values for lights array
+// NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
+// TODO: Review memcpy() and parameters pass
+static void SetShaderLights(Shader shader)
+{
+    /*
+    // NOTE: Standard Shader must include the following data:
+        
+    // Shader Light struct
+    struct Light {
+        vec3 position;
+        vec3 direction;
+        
+        vec3 diffuse;
+        float intensity;
+    }
+
+    const int maxLights = 8;
+    uniform int lightsCount;            // Number of lights
+    uniform Light lights[maxLights];
+    */
+    
+    int locPoint;
+    char locName[32] = "lights[x].position\0";
+    
+    glUseProgram(shader.id);
+
+    locPoint = glGetUniformLocation(shader.id, "lightsCount");
+    glUniform1i(locPoint, lightsCount);
+
+    for (int i = 0; i < lightsCount; i++)
+    {
+        locName[7] = '0' + i;
+        
+        memcpy(&locName[10], "position\0", strlen("position\0"));
+        locPoint = glGetUniformLocation(shader.id, locName);
+        glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+        
+        memcpy(&locName[10], "direction\0", strlen("direction\0"));
+        locPoint = glGetUniformLocation(shader.id, locName);       
+        glUniform3f(locPoint, lights[i]->direction.x, lights[i]->direction.y, lights[i]->direction.z);
+
+        memcpy(&locName[10], "diffuse\0", strlen("diffuse\0"));
+        locPoint = glGetUniformLocation(shader.id, locName);
+        glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255 );
+        
+        memcpy(&locName[10], "intensity\0", strlen("intensity\0"));
+        locPoint = glGetUniformLocation(shader.id, locName);
+        glUniform1f(locPoint, lights[i]->intensity);
+        
+        // TODO: Pass to the shader any other required data from LightData struct
+    }
+    
+    glUseProgram(0);
 }
 
 // Read text data from file

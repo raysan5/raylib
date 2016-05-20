@@ -732,6 +732,18 @@ Material LoadDefaultMaterial(void)
     return material;
 }
 
+// Load standard material (uses standard models shader)
+// NOTE: Standard shader supports multiple maps and lights
+Material LoadStandardMaterial(void)
+{
+    Material material = LoadDefaultMaterial();
+    
+    //material.shader = GetStandardShader();
+
+    return material;
+}
+
+// Unload material from memory
 void UnloadMaterial(Material material)
 {
     rlDeleteTextures(material.texDiffuse.id);

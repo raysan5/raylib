@@ -209,6 +209,28 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         float glossiness;
         float normalDepth;
     } Material;
+    
+    // Light type
+    // TODO: Review contained data to support different light types and features
+    typedef struct LightData {
+        int id;
+        int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+        bool enabled;
+        
+        Vector3 position;
+        Vector3 direction;  // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction)
+        float attenuation;  // Lost of light intensity with distance (use radius?)
+        
+        Color diffuse;      // Use Vector3 diffuse (including intensities)?
+        float intensity;
+        
+        Color specular;
+        //float specFactor;   // Specular intensity ?
+
+        //Color ambient;    // Required?
+        
+        float coneAngle;         // SpotLight
+    } LightData, *Light;
 	
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
@@ -311,6 +333,9 @@ void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // S
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+
+Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
+void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 #endif
 
 #ifdef __cplusplus
