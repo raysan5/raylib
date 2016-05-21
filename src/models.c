@@ -65,6 +65,16 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
+// Draw a line in 3D world space
+void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
+{
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex3f(startPos.x, startPos.y, startPos.z);
+        rlVertex3f(endPos.x, endPos.y, endPos.z);
+    rlEnd();
+}
+
 // Draw cube
 // NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float length, Color color)
@@ -2071,8 +2081,7 @@ static Material LoadMTL(const char *fileName)
                     int shininess = 0;
                     sscanf(buffer, "Ns %i", &shininess);
                     
-                    // Normalize shininess value to material glossiness attribute
-                    material.glossiness = (float)shininess/1000;
+                    material.glossiness = (float)shininess;
                 }
                 else if (buffer[1] == 'i')  // Ni int   Refraction index.
                 {
