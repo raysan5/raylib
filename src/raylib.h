@@ -418,7 +418,7 @@ typedef struct Material {
     Color colAmbient;           // Ambient color
     Color colSpecular;          // Specular color
     
-    float glossiness;           // Glossiness level
+    float glossiness;           // Glossiness level (Ranges from 0 to 1000)
     float normalDepth;          // Normal map depth
 } Material;
 
@@ -430,22 +430,19 @@ typedef struct Model {
 } Model;
 
 // Light type
-// TODO: Review contained data to support different light types and features
 typedef struct LightData {
     int id;
     int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     bool enabled;
     
     Vector3 position;
-    Vector3 direction;  // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction)
-    float attenuation;  // Lost of light intensity with distance (use radius?)
+    Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+    float attenuation;  // Lost of light intensity with distance (world distance)
     
-    Color diffuse;      // Use Vector3 diffuse (including intensities)?
+    Color diffuse;      // Use Vector3 diffuse
     float intensity;
     
-    Color specular;
-    
-    float coneAngle;    // SpotLight
+    float coneAngle;    // Spot light max angle
 } LightData, *Light;
 
 // Light types
@@ -805,6 +802,7 @@ const char *SubText(const char *text, int position, int length);                
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
+void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires
@@ -874,6 +872,7 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // S
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
+void DrawLights(void);                                              // Draw all created lights in 3D world
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 //----------------------------------------------------------------------------------

@@ -196,40 +196,34 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // Material type
     typedef struct Material {
-        Shader shader;
+        Shader shader;              // Standard shader (supports 3 map types: diffuse, normal, specular)
 
-        Texture2D texDiffuse;      // Diffuse texture
-        Texture2D texNormal;       // Normal texture
-        Texture2D texSpecular;     // Specular texture
+        Texture2D texDiffuse;       // Diffuse texture
+        Texture2D texNormal;        // Normal texture
+        Texture2D texSpecular;      // Specular texture
         
-        Color colDiffuse;
-        Color colAmbient;
-        Color colSpecular;
+        Color colDiffuse;           // Diffuse color
+        Color colAmbient;           // Ambient color
+        Color colSpecular;          // Specular color
         
-        float glossiness;
-        float normalDepth;
+        float glossiness;           // Glossiness level (Ranges from 0 to 1000)
+        float normalDepth;          // Normal map depth
     } Material;
     
     // Light type
-    // TODO: Review contained data to support different light types and features
     typedef struct LightData {
         int id;
         int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
         bool enabled;
         
         Vector3 position;
-        Vector3 direction;  // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction)
-        float attenuation;  // Lost of light intensity with distance (use radius?)
+        Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+        float attenuation;  // Lost of light intensity with distance (world distance)
         
-        Color diffuse;      // Use Vector3 diffuse (including intensities)?
+        Color diffuse;      // Use Vector3 diffuse
         float intensity;
         
-        Color specular;
-        //float specFactor;   // Specular intensity ?
-
-        //Color ambient;    // Required?
-        
-        float coneAngle;         // SpotLight
+        float coneAngle;    // Spot light max angle
     } LightData, *Light;
 	
     // Color blending modes (pre-defined)
