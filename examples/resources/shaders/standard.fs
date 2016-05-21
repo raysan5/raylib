@@ -43,7 +43,7 @@ vec3 CalcPointLight(Light l, vec3 n, vec3 v)
     
     // Specular shading
     float spec = 0.0;
-    if(diff > 0.0)
+    if (diff > 0.0)
     {
         vec3 h = normalize(-l.direction + v);
         spec = pow(dot(n, h), 3 + glossiness);
@@ -61,7 +61,7 @@ vec3 CalcDirectionalLight(Light l, vec3 n, vec3 v)
     
     // Specular shading
     float spec = 0.0;
-    if(diff > 0.0)
+    if (diff > 0.0)
     {
         vec3 h = normalize(lightDir + v);
         spec = pow(dot(n, h), 3 + glossiness);
@@ -84,7 +84,7 @@ vec3 CalcSpotLight(Light l, vec3 n, vec3 v)
     float attenuation = clamp(dot(n, lightToSurface), 0.0, 1.0);
     attenuation = dot(lightToSurface, -lightDir);
     float lightToSurfaceAngle = degrees(acos(attenuation));
-    if(lightToSurfaceAngle > l.coneAngle) attenuation = 0.0;
+    if (lightToSurfaceAngle > l.coneAngle) attenuation = 0.0;
     float falloff = (l.coneAngle - lightToSurfaceAngle)/l.coneAngle;
     
     // Combine diffuse and attenuation
@@ -92,7 +92,7 @@ vec3 CalcSpotLight(Light l, vec3 n, vec3 v)
     
     // Specular shading
     float spec = 0.0;
-    if(diffAttenuation > 0.0)
+    if (diffAttenuation > 0.0)
     {
         vec3 h = normalize(lightDir + v);
         spec = pow(dot(n, h), 3 + glossiness);
@@ -115,13 +115,13 @@ void main()
     vec4 texelColor = texture(texture0, fragTexCoord);
     vec3 lighting = colAmbient.rgb;
     
-    for(int i = 0; i < lightsCount; i++)
+    for (int i = 0; i < lightsCount; i++)
     {
         // Check if light is enabled
-        if(lights[i].enabled == 1)
+        if (lights[i].enabled == 1)
         {
             // Calculate lighting based on light type
-            switch(lights[i].type)
+            switch (lights[i].type)
             {
                 case 0: lighting += CalcPointLight(lights[i], n, v); break;
                 case 1: lighting += CalcDirectionalLight(lights[i], n, v); break;

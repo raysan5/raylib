@@ -302,9 +302,9 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for(int i = 0; i < (rings + 2); i++)
+            for (int i = 0; i < (rings + 2); i++)
             {
-                for(int j = 0; j < slices; j++)
+                for (int j = 0; j < slices; j++)
                 {
                     rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
@@ -341,9 +341,9 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for(int i = 0; i < (rings + 2); i++)
+            for (int i = 0; i < (rings + 2); i++)
             {
-                for(int j = 0; j < slices; j++)
+                for (int j = 0; j < slices; j++)
                 {
                     rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
@@ -386,7 +386,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             if (radiusTop > 0)
             {
                 // Draw Body -------------------------------------------------------------------------------------
-                for(int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
                     rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom); //Bottom Right
@@ -398,7 +398,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
-                for(int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
@@ -408,7 +408,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             else
             {
                 // Draw Cone -------------------------------------------------------------------------------------
-                for(int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
@@ -417,7 +417,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             }
 
             // Draw Base -----------------------------------------------------------------------------------------
-            for(int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
                 rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
@@ -431,7 +431,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 // NOTE: It could be also used for pyramid and cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
-    if(sides < 3) sides = 3;
+    if (sides < 3) sides = 3;
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -439,7 +439,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for(int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
                 rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
@@ -500,7 +500,7 @@ void DrawGrid(int slices, float spacing)
     int halfSlices = slices / 2;
 
     rlBegin(RL_LINES);
-        for(int i = -halfSlices; i <= halfSlices; i++)
+        for (int i = -halfSlices; i <= halfSlices; i++)
         {
             if (i == 0)
             {
@@ -798,9 +798,9 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
-    for(int z = 0; z < mapZ-1; z++)
+    for (int z = 0; z < mapZ-1; z++)
     {
-        for(int x = 0; x < mapX-1; x++)
+        for (int x = 0; x < mapX-1; x++)
         {
             // Fill vertices array with data
             //----------------------------------------------------------
@@ -1417,7 +1417,7 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
     
-    if(d >= 0.0f) collision = true;
+    if (d >= 0.0f) collision = true;
     
     return collision;
 }
@@ -1432,14 +1432,14 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
     
-    if(d >= 0.0f) collision = true;
+    if (d >= 0.0f) collision = true;
     
     // Calculate collision point
     Vector3 offset = ray.direction;
     float collisionDistance = 0;
     
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    if(distance < sphereRadius) collisionDistance = vector + sqrt(d);
+    if (distance < sphereRadius) collisionDistance = vector + sqrt(d);
     else collisionDistance = vector - sqrt(d);
     
     VectorScale(&offset, collisionDistance);
@@ -1777,11 +1777,11 @@ static Mesh LoadOBJ(const char *fileName)
     // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
     // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
-    while(!feof(objFile))
+    while (!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
 
-        switch(dataType)
+        switch (dataType)
         {
             case '#':   // Comments
             case 'o':   // Object name (One OBJ file can contain multible named meshes)
@@ -1842,11 +1842,11 @@ static Mesh LoadOBJ(const char *fileName)
     // Second reading pass: Get vertex data to fill intermediate arrays
     // NOTE: This second pass is required in case of multiple meshes defined in same OBJ
     // TODO: Consider that different meshes can have different vertex data available (position, texcoords, normals)
-    while(!feof(objFile))
+    while (!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
 
-        switch(dataType)
+        switch (dataType)
         {
             case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'f': fgets(comments, 200, objFile); break;
             case 'v':
@@ -1903,11 +1903,11 @@ static Mesh LoadOBJ(const char *fileName)
     if (numNormals == 0) TraceLog(INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
 
     // Third reading pass: Get faces (triangles) data and fill VertexArray
-    while(!feof(objFile))
+    while (!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
 
-        switch(dataType)
+        switch (dataType)
         {
             case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'v': fgets(comments, 200, objFile); break;
             case 'f':
@@ -2023,7 +2023,7 @@ static Material LoadMTL(const char *fileName)
         return material;
     }
 
-    while(!feof(mtlFile))
+    while (!feof(mtlFile))
     {
         fgets(buffer, MAX_BUFFER_SIZE, mtlFile);
         

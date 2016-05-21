@@ -1397,7 +1397,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     {
         TraceLog(WARNING, "Framebuffer object could not be created...");
         
-        switch(status)
+        switch (status)
         {
             case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
             case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
@@ -1768,7 +1768,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Check if using standard shader to get location points
     // NOTE: standard shader specific locations are got at render time to keep Shader struct as simple as possible (with just default shader locations)
-    if(material.shader.id == standardShader.id)
+    if (material.shader.id == standardShader.id)
     {
         // Send model transformations matrix to shader
         glUniformMatrix4fv(glGetUniformLocation(material.shader.id, "modelMatrix"), 1, false, MatrixToFloat(transform));
@@ -2285,7 +2285,7 @@ void DrawLights(void)
                 Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
                 DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
                 DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-            }
+            } break;
             case LIGHT_SPOT:
             {                
                 Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
@@ -3081,7 +3081,7 @@ static void SetShaderLights(Shader shader)
         locPoint = glGetUniformLocation(shader.id, locName);
         glUniform1f(locPoint, lights[i]->intensity);
         
-        switch(lights[i]->type)
+        switch (lights[i]->type)
         {
             case LIGHT_POINT:
             {
@@ -3295,7 +3295,7 @@ static void TraceLog(int msgType, const char *text, ...)
     va_list args;
     va_start(args, text);
 
-    switch(msgType)
+    switch (msgType)
     {
         case INFO: fprintf(stdout, "INFO: "); break;
         case ERROR: fprintf(stdout, "ERROR: "); break;
