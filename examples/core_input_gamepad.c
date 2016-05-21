@@ -36,7 +36,8 @@ int main()
         //----------------------------------------------------------------------------------
         if (IsGamepadAvailable(GAMEPAD_PLAYER1))
         {
-            gamepadMovement = GetGamepadMovement(GAMEPAD_PLAYER1);
+            gamepadMovement.x = GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_XBOX_AXIS_LEFT_X);
+            gamepadMovement.y = GetGamepadAxisMovement(GAMEPAD_PLAYER1, GAMEPAD_XBOX_AXIS_LEFT_Y);
 
             ballPosition.x += gamepadMovement.x;
             ballPosition.y -= gamepadMovement.y;
