@@ -384,7 +384,7 @@ RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingP
     for(mixIndex = 0; mixIndex < MAX_MIX_CHANNELS; mixIndex++) // find empty mix channel slot
     {
         if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(mixIndex = MAX_MIX_CHANNELS - 1) return -1; // error
+        else if(mixIndex == MAX_MIX_CHANNELS - 1) return -1; // error
     }
     
     if(InitMixChannel(sampleRate, mixIndex, channels, floatingPoint))
@@ -772,7 +772,7 @@ int PlayMusicStream(int musicIndex, char *fileName)
     for(mixIndex = 0; mixIndex < MAX_MIX_CHANNELS; mixIndex++) // find empty mix channel slot
     {
         if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(mixIndex = MAX_MIX_CHANNELS - 1) return 2; // error
+        else if(mixIndex == MAX_MIX_CHANNELS - 1) return 2; // error
     }
     
     if (strcmp(GetExtension(fileName),"ogg") == 0)
@@ -956,7 +956,7 @@ float GetMusicTimeLength(int index)
 // Get current music time played (in seconds)
 float GetMusicTimePlayed(int index)
 {
-    float secondsPlayed;
+    float secondsPlayed = 0.0f;
     if(index < MAX_MUSIC_STREAMS && currentMusic[index].mixc)
     {
         if (currentMusic[index].chipTune)
@@ -972,7 +972,6 @@ float GetMusicTimePlayed(int index)
             secondsPlayed = (float)samplesPlayed / (currentMusic[index].mixc->sampleRate * currentMusic[index].mixc->channels);
         }
     }
-    
 
     return secondsPlayed;
 }

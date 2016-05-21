@@ -191,6 +191,7 @@ static bool useTempBuffer = false;
 
 // Shader Programs
 static Shader defaultShader;
+static Shader standardShader;
 static Shader currentShader;            // By default, defaultShader
 
 // Flags for supported extensions
@@ -236,6 +237,7 @@ static Shader LoadDefaultShader(void);      // Load default shader (just vertex 
 static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
 static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadDefaultShader(void);      // Unload default shader
+static void UnloadStandardShader(void);      // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
@@ -1018,6 +1020,7 @@ void rlglInit(void)
 
     // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
+    standardShader = LoadStandardShader();
     currentShader = defaultShader;
 
     LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
@@ -1046,6 +1049,7 @@ void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UnloadDefaultShader();
+    UnloadStandardShader();
     UnloadDefaultBuffers();
     
     // Delete default white texture
@@ -1393,7 +1397,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     {
         TraceLog(WARNING, "Framebuffer object could not be created...");
         
-        switch(status)
+        switch (status)
         {
             case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
             case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
@@ -1757,19 +1761,33 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Send combined model-view-projection matrix to shader
     glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-
-    // Setup shader uniforms for material related data
-    // TODO: Check if using standard shader to get location points
     
     // Upload to shader material.colDiffuse
     float vColorDiffuse[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
     glUniform4fv(material.shader.tintColorLoc, 1, vColorDiffuse);
+
+    // Check if using standard shader to get location points
+    // NOTE: standard shader specific locations are got at render time to keep Shader struct as simple as possible (with just default shader locations)
+    if (material.shader.id == standardShader.id)
+    {
+        // Send model transformations matrix to shader
+        glUniformMatrix4fv(glGetUniformLocation(material.shader.id, "modelMatrix"), 1, false, MatrixToFloat(transform));
+        
+        // Send view transformation matrix to shader. View matrix 8, 9 and 10 are view direction vector axis values (target - position)
+        glUniform3f(glGetUniformLocation(material.shader.id, "viewDir"), matView.m8, matView.m9, matView.m10);
+        
+        // Setup shader uniforms for lights
+        SetShaderLights(material.shader);
+        
+        // Upload to shader material.colAmbient
+        glUniform4f(glGetUniformLocation(material.shader.id, "colAmbient"), (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
+        
+        // Upload to shader material.colSpecular
+        glUniform4f(glGetUniformLocation(material.shader.id, "colSpecular"), (float)material.colSpecular.r/255, (float)material.colSpecular.g/255, (float)material.colSpecular.b/255, (float)material.colSpecular.a/255);
     
-    // TODO: Upload to shader material.colAmbient
-    // glUniform4f(???, (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
-    
-    // TODO: Upload to shader material.colSpecular
-    // glUniform4f(???, (float)material.colSpecular.r/255, (float)material.colSpecular.g/255, (float)material.colSpecular.b/255, (float)material.colSpecular.a/255);
+        // Upload to shader glossiness
+        glUniform1f(glGetUniformLocation(material.shader.id, "glossiness"), material.glossiness);
+    }    
     
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
@@ -1791,13 +1809,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
         glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
-        
-        // TODO: Upload to shader glossiness
-        //glUniform1f(???, material.glossiness);
     }
-    
-    // Setup shader uniforms for lights
-    //SetShaderLights(material.shader);
 
     if (vaoSupported)
     {
@@ -2148,6 +2160,17 @@ Shader GetDefaultShader(void)
 #endif
 }
 
+// Get default shader
+Shader GetStandardShader(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return standardShader;
+#else
+    Shader shader = { 0 };
+    return shader;
+#endif
+}
+
 // Get shader uniform location
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
@@ -2225,7 +2248,6 @@ void SetBlendMode(int mode)
 }
 
 // Create a new light, initialize it and add to pool
-// TODO: Review creation parameters (only generic ones)
 Light CreateLight(int type, Vector3 position, Color diffuse)
 {
     // Allocate dynamic memory
@@ -2237,10 +2259,9 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
     light->enabled = true;
     
     light->position = position;
-    light->direction = (Vector3){ 0.0f, 0.0f, 0.0f };
+    light->target = (Vector3){ 0.0f, 0.0f, 0.0f };
     light->intensity = 1.0f;
     light->diffuse = diffuse;
-    light->specular = WHITE;
     
     // Add new light to the array
     lights[lightsCount] = light;
@@ -2249,6 +2270,31 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
     lightsCount++;
     
     return light;
+}
+
+// Draw all created lights in 3D world
+void DrawLights(void)
+{
+    for (int i = 0; i < lightsCount; i++)
+    {
+        switch (lights[i]->type)
+        {
+            case LIGHT_POINT: DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK)); break;
+            case LIGHT_DIRECTIONAL:
+            {                
+                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+            } break;
+            case LIGHT_SPOT:
+            {                
+                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawCylinderWires(lights[i]->position, 0.0f, 0.3f*lights[i]->coneAngle/50, 0.6f, 5, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+            } break;
+            default: break;
+        }
+    }
 }
 
 // Destroy a light and take it out of the list
@@ -2468,15 +2514,15 @@ static Shader LoadDefaultShader(void)
         "varying vec4 fragColor;            \n"
 #endif
         "uniform sampler2D texture0;        \n"
-        "uniform vec4 fragTintColor;        \n"
+        "uniform vec4 colDiffuse;           \n"
         "void main()                        \n"
         "{                                  \n"
 #if defined(GRAPHICS_API_OPENGL_33)
         "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
-        "    finalColor = texelColor*fragTintColor*fragColor;     \n"
+        "    finalColor = texelColor*colDiffuse*fragColor;        \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
         "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
-        "    gl_FragColor = texelColor*fragTintColor*fragColor;   \n"
+        "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
 #endif
         "}                                  \n";
 
@@ -2493,25 +2539,17 @@ static Shader LoadDefaultShader(void)
 // Load standard shader
 // NOTE: This shader supports: 
 //      - Up to 3 different maps: diffuse, normal, specular
-//      - Material properties: colDiffuse, colAmbient, colSpecular, glossiness, normalDepth
+//      - Material properties: colAmbient, colDiffuse, colSpecular, glossiness, normalDepth
 //      - Up to 8 lights: Point, Directional or Spot
 static Shader LoadStandardShader(void)
 {
-    Shader shader;
-    
-    char *vShaderStr;
-    char *fShaderStr;
-    
-    // TODO: Implement standard uber-shader, supporting all features (GLSL 100 / GLSL 330)
-    
-    // NOTE: Shader could be quite extensive so it could be implemented in external files (standard.vs/standard.fs)
-    
-    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
+    // Load standard shader (TODO: rewrite as char pointers)
+    Shader shader = LoadShader("resources/shaders/standard.vs", "resources/shaders/standard.fs");
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
 
-    if (shader.id != 0) LoadDefaultShaderLocations(&shader);    // TODO: Review locations fetching
+    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
 
     return shader;
 }
@@ -2540,7 +2578,7 @@ static void LoadDefaultShaderLocations(Shader *shader)
     shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader->tintColorLoc = glGetUniformLocation(shader->id, "fragTintColor");
+    shader->tintColorLoc = glGetUniformLocation(shader->id, "colDiffuse");
     shader->mapDiffuseLoc = glGetUniformLocation(shader->id, "texture0");
     shader->mapNormalLoc = glGetUniformLocation(shader->id, "texture1");
     shader->mapSpecularLoc = glGetUniformLocation(shader->id, "texture2");
@@ -2554,9 +2592,22 @@ static void UnloadDefaultShader(void)
     //glDetachShader(defaultShader, vertexShader);
     //glDetachShader(defaultShader, fragmentShader);
     //glDeleteShader(vertexShader);     // Already deleted on shader compilation
-    //glDeleteShader(fragmentShader);   // Already deleted on sahder compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
     glDeleteProgram(defaultShader.id);
 }
+
+// Unload standard shader 
+static void UnloadStandardShader(void)
+{
+    glUseProgram(0);
+
+    //glDetachShader(defaultShader, vertexShader);
+    //glDetachShader(defaultShader, fragmentShader);
+    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
+    glDeleteProgram(standardShader.id);
+}
+
 
 // Load default internal buffers (lines, triangles, quads)
 static void LoadDefaultBuffers(void)
@@ -3003,58 +3054,75 @@ static void UnloadDefaultBuffers(void)
 
 // Sets shader uniform values for lights array
 // NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
-// TODO: Review memcpy() and parameters pass
 static void SetShaderLights(Shader shader)
 {
-    /*
-    // NOTE: Standard Shader must include the following data:
-        
-    // Shader Light struct
-    struct Light {
-        vec3 position;
-        vec3 direction;
-        
-        vec3 diffuse;
-        float intensity;
-    }
-
-    const int maxLights = 8;
-    uniform int lightsCount;            // Number of lights
-    uniform Light lights[maxLights];
-    */
-    
-    int locPoint;
-    char locName[32] = "lights[x].position\0";
-    
-    glUseProgram(shader.id);
-
-    locPoint = glGetUniformLocation(shader.id, "lightsCount");
+    int locPoint = glGetUniformLocation(shader.id, "lightsCount");
     glUniform1i(locPoint, lightsCount);
+    
+    char locName[32] = "lights[x].position\0";
 
     for (int i = 0; i < lightsCount; i++)
     {
         locName[7] = '0' + i;
         
-        memcpy(&locName[10], "position\0", strlen("position\0"));
-        locPoint = glGetUniformLocation(shader.id, locName);
-        glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+        memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
+        locPoint = GetShaderLocation(shader, locName);
+        glUniform1i(locPoint, lights[i]->enabled);
         
-        memcpy(&locName[10], "direction\0", strlen("direction\0"));
-        locPoint = glGetUniformLocation(shader.id, locName);       
-        glUniform3f(locPoint, lights[i]->direction.x, lights[i]->direction.y, lights[i]->direction.z);
-
-        memcpy(&locName[10], "diffuse\0", strlen("diffuse\0"));
+        memcpy(&locName[10], "type\0", strlen("type\0") + 1);
+        locPoint = GetShaderLocation(shader, locName);
+        glUniform1i(locPoint, lights[i]->type);
+        
+        memcpy(&locName[10], "diffuse\0", strlen("diffuse\0") + 2);
         locPoint = glGetUniformLocation(shader.id, locName);
-        glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255 );
+        glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
         
         memcpy(&locName[10], "intensity\0", strlen("intensity\0"));
         locPoint = glGetUniformLocation(shader.id, locName);
         glUniform1f(locPoint, lights[i]->intensity);
         
+        switch (lights[i]->type)
+        {
+            case LIGHT_POINT:
+            {
+                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                
+                memcpy(&locName[10], "attenuation\0", strlen("attenuation\0"));
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform1f(locPoint, lights[i]->attenuation);
+            } break;
+            case LIGHT_DIRECTIONAL:
+            {
+                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                locPoint = GetShaderLocation(shader, locName);
+                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                VectorNormalize(&direction);
+                glUniform3f(locPoint, direction.x, direction.y, direction.z);
+            } break;
+            case LIGHT_SPOT:
+            {
+                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                
+                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                locPoint = GetShaderLocation(shader, locName);
+                
+                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                VectorNormalize(&direction);
+                glUniform3f(locPoint, direction.x, direction.y, direction.z);
+                
+                memcpy(&locName[10], "coneAngle\0", strlen("coneAngle\0"));
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform1f(locPoint, lights[i]->coneAngle);
+            } break;
+            default: break;
+        }
+        
         // TODO: Pass to the shader any other required data from LightData struct
     }
-    
-    glUseProgram(0);
 }
 
 // Read text data from file
@@ -3227,7 +3295,7 @@ static void TraceLog(int msgType, const char *text, ...)
     va_list args;
     va_start(args, text);
 
-    switch(msgType)
+    switch (msgType)
     {
         case INFO: fprintf(stdout, "INFO: "); break;
         case ERROR: fprintf(stdout, "ERROR: "); break;
