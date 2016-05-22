@@ -196,19 +196,35 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // Material type
     typedef struct Material {
-        Shader shader;
+        Shader shader;              // Standard shader (supports 3 map types: diffuse, normal, specular)
 
-        Texture2D texDiffuse;      // Diffuse texture
-        Texture2D texNormal;       // Normal texture
-        Texture2D texSpecular;     // Specular texture
+        Texture2D texDiffuse;       // Diffuse texture
+        Texture2D texNormal;        // Normal texture
+        Texture2D texSpecular;      // Specular texture
         
-        Color colDiffuse;
-        Color colAmbient;
-        Color colSpecular;
+        Color colDiffuse;           // Diffuse color
+        Color colAmbient;           // Ambient color
+        Color colSpecular;          // Specular color
         
-        float glossiness;
-        float normalDepth;
+        float glossiness;           // Glossiness level (Ranges from 0 to 1000)
+        float normalDepth;          // Normal map depth
     } Material;
+    
+    // Light type
+    typedef struct LightData {
+        int id;
+        int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+        bool enabled;
+        
+        Vector3 position;
+        Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+        float attenuation;  // Lost of light intensity with distance (world distance)
+        
+        Color diffuse;      // Use Vector3 diffuse
+        float intensity;
+        
+        float coneAngle;    // Spot light max angle
+    } LightData, *Light;
 	
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
@@ -256,6 +272,8 @@ void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
 void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
 void rlEnableDepthTest(void);                   // Enable depth test
 void rlDisableDepthTest(void);                  // Disable depth test
+void rlEnableWireMode(void);                    // Enable wire mode
+void rlDisableWireMode(void);                   // Disable wire mode
 void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
 void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
 void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
@@ -277,8 +295,11 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
-void rlglLoadMesh(Mesh *mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires);
+
+void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
+void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
+void rlglDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
+void rlglUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU
 
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 
@@ -306,6 +327,9 @@ void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // S
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+
+Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
+void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 #endif
 
 #ifdef __cplusplus

@@ -1,20 +1,26 @@
 #version 100
 
+// Input vertex attributes
 attribute vec3 vertexPosition;
 attribute vec2 vertexTexCoord;
 attribute vec3 vertexNormal;
+attribute vec4 vertexColor;
 
-varying vec2 fragTexCoord;
-
+// Input uniform values
 uniform mat4 mvpMatrix;
+
+// Output vertex attributes (to fragment shader)
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
 
 // NOTE: Add here your custom variables 
 
 void main()
 {
-    vec3 normal = vertexNormal;
-    
+    // Send vertex attributes to fragment shader
     fragTexCoord = vertexTexCoord;
+    fragColor = vertexColor;
     
+    // Calculate final vertex position
     gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);
 }

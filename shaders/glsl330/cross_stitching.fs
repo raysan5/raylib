@@ -1,11 +1,15 @@
 #version 330
 
+// Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
+in vec4 fragColor;
 
-out vec4 fragColor;
-
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
+
+// Output fragment color
+out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
@@ -46,9 +50,9 @@ vec4 PostFX(sampler2D tex, vec2 uv)
     return c;
 }
 
-void main(void)
+void main()
 {
     vec3 tc = PostFX(texture0, fragTexCoord).rgb;
 
-    fragColor = vec4(tc, 1.0);
+    finalColor = vec4(tc, 1.0);
 }

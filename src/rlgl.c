@@ -71,6 +71,8 @@
 #define MAX_DRAWS_BY_TEXTURE      256   // Draws are organized by texture changes
 #define TEMP_VERTEX_BUFFER_SIZE  4096   // Temporal Vertex Buffer (required for vertex-transformations)
                                         // NOTE: Every vertex are 3 floats (12 bytes)
+                                        
+#define MAX_LIGHTS                  8   // Max lights supported by standard shader
 
 #ifndef GL_SHADING_LANGUAGE_VERSION
     #define GL_SHADING_LANGUAGE_VERSION         0x8B8C
@@ -189,6 +191,7 @@ static bool useTempBuffer = false;
 
 // Shader Programs
 static Shader defaultShader;
+static Shader standardShader;
 static Shader currentShader;            // By default, defaultShader
 
 // Flags for supported extensions
@@ -199,6 +202,10 @@ static bool texCompETC1Supported = false;    // ETC1 texture compression support
 static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;    // PVR texture compression support
 static bool texCompASTCSupported = false;    // ASTC texture compression support
+
+// Lighting data
+static Light lights[MAX_LIGHTS];              // Lights pool
+static int lightsCount;                       // Counts current enabled physic objects
 #endif
 
 // Compressed textures support flags
@@ -227,13 +234,17 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
 static unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr);  // Load custom shader strings and return program id
 
 static Shader LoadDefaultShader(void);      // Load default shader (just vertex positioning and texture coloring)
+static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
 static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadDefaultShader(void);      // Unload default shader
+static void UnloadStandardShader(void);      // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
 static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
+
+static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
 
 static char *ReadTextFile(const char *fileName);
 #endif
@@ -740,6 +751,24 @@ void rlDisableDepthTest(void)
     glDisable(GL_DEPTH_TEST);
 }
 
+// Enable wire mode
+void rlEnableWireMode(void)
+{
+#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
+}
+
+// Disable wire mode
+void rlDisableWireMode(void)
+{
+#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glPolygonMode() not available on OpenGL ES
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
+}
+
 // Unload texture from GPU memory
 void rlDeleteTextures(unsigned int id)
 {
@@ -991,6 +1020,7 @@ void rlglInit(void)
 
     // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
+    standardShader = LoadStandardShader();
     currentShader = defaultShader;
 
     LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
@@ -1019,6 +1049,7 @@ void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UnloadDefaultShader();
+    UnloadStandardShader();
     UnloadDefaultBuffers();
     
     // Delete default white texture
@@ -1033,175 +1064,15 @@ void rlglClose(void)
 void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+/*
+    for (int i = 0; i < modelsCount; i++)
+    {
+        rlglDrawMesh(models[i]->mesh, models[i]->material, models[i]->transform);
+    }
+*/
+    // NOTE: Default buffers always drawn at the end
     UpdateDefaultBuffers();
     DrawDefaultBuffers();
-#endif
-}
-
-// Draw a 3d mesh with material and transform
-void rlglDrawEx(Mesh mesh, Material material, Matrix transform, bool wires)
-{
-#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    // NOTE: glPolygonMode() not available on OpenGL ES
-    if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
-
-    // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
-    glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
-    if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
-    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
-
-    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
-    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
-    if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
-    if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
-
-    rlPushMatrix();
-        rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
-        
-        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
-        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
-    rlPopMatrix();
-
-    glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
-    if (mesh.normals != NULL) glDisableClientState(GL_NORMAL_ARRAY);    // Disable normals array
-    if (mesh.colors != NULL) glDisableClientState(GL_NORMAL_ARRAY);     // Disable colors array
-
-    glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#endif
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(material.shader.id);
-    
-    // At this point the modelview matrix just contains the view matrix (camera)
-    // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
-    Matrix matView = modelview;         // View matrix (camera)
-    Matrix matProjection = projection;  // Projection matrix (perspective)
-
-    // Calculate model-view matrix combining matModel and matView
-    Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
-
-    // Calculate model-view-projection matrix (MVP)
-    Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
-
-    // Send combined model-view-projection matrix to shader
-    glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-
-    // Apply color tinting (material.colDiffuse)
-    // NOTE: Just update one uniform on fragment shader
-    float vColor[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
-    glUniform4fv(material.shader.tintColorLoc, 1, vColor);
-
-    // Set shader textures (diffuse, normal, specular)
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
-    glUniform1i(material.shader.mapDiffuseLoc, 0);        // Texture fits in active texture unit 0
-    
-    if ((material.texNormal.id != 0) && (material.shader.mapNormalLoc != -1))
-    {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
-        glUniform1i(material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
-    }
-    
-    if ((material.texSpecular.id != 0) && (material.shader.mapSpecularLoc != -1))
-    {
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
-        glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
-    }
-
-    if (vaoSupported)
-    {
-        glBindVertexArray(mesh.vaoId);
-    }
-    else
-    {
-        // Bind mesh VBO data: vertex position (shader-location = 0)
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-        glVertexAttribPointer(material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.vertexLoc);
-
-        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-        glVertexAttribPointer(material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.texcoordLoc);
-
-        // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
-        if (material.shader.normalLoc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            glVertexAttribPointer(material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.normalLoc);
-        }
-        
-        // Bind mesh VBO data: vertex colors (shader-location = 3, if available) , tangents, texcoords2 (if available)
-        if (material.shader.colorLoc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-            glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(material.shader.colorLoc);
-        }
-        
-        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
-        if (material.shader.tangentLoc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            glVertexAttribPointer(material.shader.tangentLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.tangentLoc);
-        }
-        
-        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
-        if (material.shader.texcoord2Loc != -1)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.texcoord2Loc);
-        }
-        
-        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
-    }
-
-    // Draw call!
-    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
-    else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
-    
-    if (material.texNormal.id != 0)
-    {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    
-    if (material.texSpecular.id != 0)
-    {
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    glActiveTexture(GL_TEXTURE0);               // Set shader active texture to default 0
-    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
-
-    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
-    else
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
-        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
-
-    glUseProgram(0);        // Unbind shader program
-#endif
-
-#if defined (GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
-    // NOTE: glPolygonMode() not available on OpenGL ES
-    if (wires) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 }
 
@@ -1526,7 +1397,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     {
         TraceLog(WARNING, "Framebuffer object could not be created...");
         
-        switch(status)
+        switch (status)
         {
             case GL_FRAMEBUFFER_UNSUPPORTED: TraceLog(WARNING, "Framebuffer is unsupported"); break;
             case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: TraceLog(WARNING, "Framebuffer incomplete attachment"); break;
@@ -1642,7 +1513,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 }
 
 // Upload vertex data into a VAO (if supported) and VBO
-void rlglLoadMesh(Mesh *mesh)
+void rlglLoadMesh(Mesh *mesh, bool dynamic)
 {
     mesh->vaoId = 0;        // Vertex Array Object
     mesh->vboId[0] = 0;     // Vertex positions VBO
@@ -1652,6 +1523,9 @@ void rlglLoadMesh(Mesh *mesh)
     mesh->vboId[4] = 0;     // Vertex tangents VBO
     mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
     mesh->vboId[6] = 0;     // Vertex indices VBO
+    
+    int drawHint = GL_STATIC_DRAW;
+    if (dynamic) drawHint = GL_DYNAMIC_DRAW;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vaoId = 0;       // Vertex Array Objects (VAO)
@@ -1669,14 +1543,14 @@ void rlglLoadMesh(Mesh *mesh)
     // Enable vertex attributes: position (shader-location = 0)
     glGenBuffers(1, &vboId[0]);
     glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->vertices, drawHint);
     glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(0);
 
     // Enable vertex attributes: texcoords (shader-location = 1)
     glGenBuffers(1, &vboId[1]);
     glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords, drawHint);
     glVertexAttribPointer(1, 2, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(1);
 
@@ -1685,7 +1559,7 @@ void rlglLoadMesh(Mesh *mesh)
     {
         glGenBuffers(1, &vboId[2]);
         glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->normals, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->normals, drawHint);
         glVertexAttribPointer(2, 3, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(2);
     }
@@ -1701,7 +1575,7 @@ void rlglLoadMesh(Mesh *mesh)
     {
         glGenBuffers(1, &vboId[3]);
         glBindBuffer(GL_ARRAY_BUFFER, vboId[3]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*mesh->vertexCount, mesh->colors, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*mesh->vertexCount, mesh->colors, drawHint);
         glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
         glEnableVertexAttribArray(3);
     }
@@ -1717,7 +1591,7 @@ void rlglLoadMesh(Mesh *mesh)
     {
         glGenBuffers(1, &vboId[4]);
         glBindBuffer(GL_ARRAY_BUFFER, vboId[4]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->tangents, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->tangents, drawHint);
         glVertexAttribPointer(4, 3, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(4);
     }
@@ -1733,7 +1607,7 @@ void rlglLoadMesh(Mesh *mesh)
     {
         glGenBuffers(1, &vboId[5]);
         glBindBuffer(GL_ARRAY_BUFFER, vboId[5]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords2, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords2, drawHint);
         glVertexAttribPointer(5, 2, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(5);
     }
@@ -1774,6 +1648,270 @@ void rlglLoadMesh(Mesh *mesh)
         TraceLog(INFO, "[VBOs] Mesh uploaded successfully to VRAM (GPU)");
     }
 #endif
+}
+
+// Update vertex data on GPU (upload new data to one buffer)
+void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
+{
+    // Activate mesh VAO
+    if (vaoSupported) glBindVertexArray(mesh.vaoId);
+        
+    switch (buffer)
+    {
+        case 0:     // Update vertices (vertex position)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.vertices, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.vertices);
+            
+        } break;
+        case 1:     // Update texcoords (vertex texture coordinates)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords);
+            
+        } break;
+        case 2:     // Update normals (vertex normals)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.normals, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.normals);
+            
+        } break;
+        case 3:     // Update colors (vertex colors)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.colors, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*numVertex, mesh.colors);
+            
+        } break;
+        case 4:     // Update tangents (vertex tangents)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.tangents, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.tangents);
+        } break;
+        case 5:     // Update texcoords2 (vertex second texture coordinates)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords2, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords2);
+        } break;
+        default: break;
+    }
+    
+    // Unbind the current VAO
+    if (vaoSupported) glBindVertexArray(0);
+
+    // Another option would be using buffer mapping...
+    //mesh.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+    // Now we can modify vertices
+    //glUnmapBuffer(GL_ARRAY_BUFFER);
+}
+
+// Draw a 3d mesh with material and transform
+void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
+
+    // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
+    glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);            // Enable texture coords array
+    if (mesh.normals != NULL) glEnableClientState(GL_NORMAL_ARRAY);     // Enable normals array
+    if (mesh.colors != NULL) glEnableClientState(GL_COLOR_ARRAY);       // Enable colors array
+
+    glVertexPointer(3, GL_FLOAT, 0, mesh.vertices);         // Pointer to vertex coords array
+    glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
+    if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
+    if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
+
+    rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(transform));
+        rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
+        
+        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
+        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    rlPopMatrix();
+
+    glDisableClientState(GL_VERTEX_ARRAY);                  // Disable vertex array
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);           // Disable texture coords array
+    if (mesh.normals != NULL) glDisableClientState(GL_NORMAL_ARRAY);    // Disable normals array
+    if (mesh.colors != NULL) glDisableClientState(GL_NORMAL_ARRAY);     // Disable colors array
+
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glUseProgram(material.shader.id);
+    
+    // At this point the modelview matrix just contains the view matrix (camera)
+    // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
+    Matrix matView = modelview;         // View matrix (camera)
+    Matrix matProjection = projection;  // Projection matrix (perspective)
+
+    // Calculate model-view matrix combining matModel and matView
+    Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
+
+    // Calculate model-view-projection matrix (MVP)
+    Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
+
+    // Send combined model-view-projection matrix to shader
+    glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
+    
+    // Upload to shader material.colDiffuse
+    float vColorDiffuse[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
+    glUniform4fv(material.shader.tintColorLoc, 1, vColorDiffuse);
+
+    // Check if using standard shader to get location points
+    // NOTE: standard shader specific locations are got at render time to keep Shader struct as simple as possible (with just default shader locations)
+    if (material.shader.id == standardShader.id)
+    {
+        // Send model transformations matrix to shader
+        glUniformMatrix4fv(glGetUniformLocation(material.shader.id, "modelMatrix"), 1, false, MatrixToFloat(transform));
+        
+        // Send view transformation matrix to shader. View matrix 8, 9 and 10 are view direction vector axis values (target - position)
+        glUniform3f(glGetUniformLocation(material.shader.id, "viewDir"), matView.m8, matView.m9, matView.m10);
+        
+        // Setup shader uniforms for lights
+        SetShaderLights(material.shader);
+        
+        // Upload to shader material.colAmbient
+        glUniform4f(glGetUniformLocation(material.shader.id, "colAmbient"), (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
+        
+        // Upload to shader material.colSpecular
+        glUniform4f(glGetUniformLocation(material.shader.id, "colSpecular"), (float)material.colSpecular.r/255, (float)material.colSpecular.g/255, (float)material.colSpecular.b/255, (float)material.colSpecular.a/255);
+    
+        // Upload to shader glossiness
+        glUniform1f(glGetUniformLocation(material.shader.id, "glossiness"), material.glossiness);
+    }    
+    
+    // Set shader textures (diffuse, normal, specular)
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
+    glUniform1i(material.shader.mapDiffuseLoc, 0);        // Texture fits in active texture unit 0
+    
+    if ((material.texNormal.id != 0) && (material.shader.mapNormalLoc != -1))
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
+        glUniform1i(material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
+        
+        // TODO: Upload to shader normalDepth
+        //glUniform1f(???, material.normalDepth);
+    }
+    
+    if ((material.texSpecular.id != 0) && (material.shader.mapSpecularLoc != -1))
+    {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
+        glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
+    }
+
+    if (vaoSupported)
+    {
+        glBindVertexArray(mesh.vaoId);
+    }
+    else
+    {
+        // Bind mesh VBO data: vertex position (shader-location = 0)
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+        glVertexAttribPointer(material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.vertexLoc);
+
+        // Bind mesh VBO data: vertex texcoords (shader-location = 1)
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+        glVertexAttribPointer(material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.texcoordLoc);
+
+        // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
+        if (material.shader.normalLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
+            glVertexAttribPointer(material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.normalLoc);
+        }
+        
+        // Bind mesh VBO data: vertex colors (shader-location = 3, if available) , tangents, texcoords2 (if available)
+        if (material.shader.colorLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
+            glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+            glEnableVertexAttribArray(material.shader.colorLoc);
+        }
+        
+        // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
+        if (material.shader.tangentLoc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
+            glVertexAttribPointer(material.shader.tangentLoc, 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.tangentLoc);
+        }
+        
+        // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
+        if (material.shader.texcoord2Loc != -1)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
+            glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.texcoord2Loc);
+        }
+        
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
+    }
+
+    // Draw call!
+    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
+    else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    
+    if (material.texNormal.id != 0)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    
+    if (material.texSpecular.id != 0)
+    {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    glActiveTexture(GL_TEXTURE0);               // Set shader active texture to default 0
+    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
+
+    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    glUseProgram(0);        // Unbind shader program
+#endif
+}
+
+// Unload mesh data from CPU and GPU
+void rlglUnloadMesh(Mesh *mesh)
+{
+    if (mesh->vertices != NULL) free(mesh->vertices);
+    if (mesh->texcoords != NULL) free(mesh->texcoords);
+    if (mesh->normals != NULL) free(mesh->normals);
+    if (mesh->colors != NULL) free(mesh->colors);
+    if (mesh->tangents != NULL) free(mesh->tangents);
+    if (mesh->texcoords2 != NULL) free(mesh->texcoords2);
+    if (mesh->indices != NULL) free(mesh->indices);
+
+    rlDeleteBuffers(mesh->vboId[0]);   // vertex
+    rlDeleteBuffers(mesh->vboId[1]);   // texcoords
+    rlDeleteBuffers(mesh->vboId[2]);   // normals
+    rlDeleteBuffers(mesh->vboId[3]);   // colors
+    rlDeleteBuffers(mesh->vboId[4]);   // tangents
+    rlDeleteBuffers(mesh->vboId[5]);   // texcoords2
+    rlDeleteBuffers(mesh->vboId[6]);   // indices
+
+    rlDeleteVertexArrays(mesh->vaoId);
 }
 
 // Read screen pixel data (color buffer)
@@ -2022,6 +2160,17 @@ Shader GetDefaultShader(void)
 #endif
 }
 
+// Get default shader
+Shader GetStandardShader(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return standardShader;
+#else
+    Shader shader = { 0 };
+    return shader;
+#endif
+}
+
 // Get shader uniform location
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
@@ -2096,6 +2245,78 @@ void SetBlendMode(int mode)
         
         blendMode = mode;
     }
+}
+
+// Create a new light, initialize it and add to pool
+Light CreateLight(int type, Vector3 position, Color diffuse)
+{
+    // Allocate dynamic memory
+    Light light = (Light)malloc(sizeof(LightData));
+    
+    // Initialize light values with generic values
+    light->id = lightsCount;
+    light->type = type;
+    light->enabled = true;
+    
+    light->position = position;
+    light->target = (Vector3){ 0.0f, 0.0f, 0.0f };
+    light->intensity = 1.0f;
+    light->diffuse = diffuse;
+    
+    // Add new light to the array
+    lights[lightsCount] = light;
+    
+    // Increase enabled lights count
+    lightsCount++;
+    
+    return light;
+}
+
+// Draw all created lights in 3D world
+void DrawLights(void)
+{
+    for (int i = 0; i < lightsCount; i++)
+    {
+        switch (lights[i]->type)
+        {
+            case LIGHT_POINT: DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK)); break;
+            case LIGHT_DIRECTIONAL:
+            {                
+                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+            } break;
+            case LIGHT_SPOT:
+            {                
+                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawCylinderWires(lights[i]->position, 0.0f, 0.3f*lights[i]->coneAngle/50, 0.6f, 5, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+            } break;
+            default: break;
+        }
+    }
+}
+
+// Destroy a light and take it out of the list
+void DestroyLight(Light light)
+{
+    // Free dynamic memory allocation
+    free(lights[light->id]);
+    
+    // Remove *obj from the pointers array
+    for (int i = light->id; i < lightsCount; i++)
+    {
+        // Resort all the following pointers of the array
+        if ((i + 1) < lightsCount)
+        {
+            lights[i] = lights[i + 1];
+            lights[i]->id = lights[i + 1]->id;
+        }
+        else free(lights[i]);
+    }
+    
+    // Decrease enabled physic objects count
+    lightsCount--;
 }
 
 //----------------------------------------------------------------------------------
@@ -2293,15 +2514,15 @@ static Shader LoadDefaultShader(void)
         "varying vec4 fragColor;            \n"
 #endif
         "uniform sampler2D texture0;        \n"
-        "uniform vec4 fragTintColor;        \n"
+        "uniform vec4 colDiffuse;           \n"
         "void main()                        \n"
         "{                                  \n"
 #if defined(GRAPHICS_API_OPENGL_33)
         "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
-        "    finalColor = texelColor*fragTintColor*fragColor;     \n"
+        "    finalColor = texelColor*colDiffuse*fragColor;        \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
         "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
-        "    gl_FragColor = texelColor*fragTintColor*fragColor;   \n"
+        "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
 #endif
         "}                                  \n";
 
@@ -2309,6 +2530,24 @@ static Shader LoadDefaultShader(void)
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
+
+    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+
+    return shader;
+}
+
+// Load standard shader
+// NOTE: This shader supports: 
+//      - Up to 3 different maps: diffuse, normal, specular
+//      - Material properties: colAmbient, colDiffuse, colSpecular, glossiness, normalDepth
+//      - Up to 8 lights: Point, Directional or Spot
+static Shader LoadStandardShader(void)
+{
+    // Load standard shader (TODO: rewrite as char pointers)
+    Shader shader = LoadShader("resources/shaders/standard.vs", "resources/shaders/standard.fs");
+
+    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
+    else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
 
     if (shader.id != 0) LoadDefaultShaderLocations(&shader);
 
@@ -2328,18 +2567,18 @@ static void LoadDefaultShaderLocations(Shader *shader)
     //          vertex texcoord2 location = 5
     
     // Get handles to GLSL input attibute locations
-    shader->vertexLoc = glGetAttribLocation(shader->id, "vertexPosition");
-    shader->texcoordLoc = glGetAttribLocation(shader->id, "vertexTexCoord");
-    shader->normalLoc = glGetAttribLocation(shader->id, "vertexNormal");
-    shader->colorLoc = glGetAttribLocation(shader->id, "vertexColor");
-    shader->tangentLoc = glGetAttribLocation(shader->id, "vertexTangent");
-    shader->texcoord2Loc = glGetAttribLocation(shader->id, "vertexTexCoord2");
+    shader->vertexLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
+    shader->texcoordLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD_NAME);
+    shader->normalLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_NORMAL_NAME);
+    shader->colorLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
+    shader->tangentLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TANGENT_NAME);
+    shader->texcoord2Loc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD2_NAME);
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader->tintColorLoc = glGetUniformLocation(shader->id, "fragTintColor");
+    shader->tintColorLoc = glGetUniformLocation(shader->id, "colDiffuse");
     shader->mapDiffuseLoc = glGetUniformLocation(shader->id, "texture0");
     shader->mapNormalLoc = glGetUniformLocation(shader->id, "texture1");
     shader->mapSpecularLoc = glGetUniformLocation(shader->id, "texture2");
@@ -2350,12 +2589,25 @@ static void UnloadDefaultShader(void)
 {
     glUseProgram(0);
 
-    //glDetachShader(defaultShaderProgram, vertexShader);
-    //glDetachShader(defaultShaderProgram, fragmentShader);
+    //glDetachShader(defaultShader, vertexShader);
+    //glDetachShader(defaultShader, fragmentShader);
     //glDeleteShader(vertexShader);     // Already deleted on shader compilation
-    //glDeleteShader(fragmentShader);   // Already deleted on sahder compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
     glDeleteProgram(defaultShader.id);
 }
+
+// Unload standard shader 
+static void UnloadStandardShader(void)
+{
+    glUseProgram(0);
+
+    //glDetachShader(defaultShader, vertexShader);
+    //glDetachShader(defaultShader, fragmentShader);
+    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
+    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
+    glDeleteProgram(standardShader.id);
+}
+
 
 // Load default internal buffers (lines, triangles, quads)
 static void LoadDefaultBuffers(void)
@@ -2800,6 +3052,79 @@ static void UnloadDefaultBuffers(void)
     free(quads.indices);
 }
 
+// Sets shader uniform values for lights array
+// NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
+static void SetShaderLights(Shader shader)
+{
+    int locPoint = glGetUniformLocation(shader.id, "lightsCount");
+    glUniform1i(locPoint, lightsCount);
+    
+    char locName[32] = "lights[x].position\0";
+
+    for (int i = 0; i < lightsCount; i++)
+    {
+        locName[7] = '0' + i;
+        
+        memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
+        locPoint = GetShaderLocation(shader, locName);
+        glUniform1i(locPoint, lights[i]->enabled);
+        
+        memcpy(&locName[10], "type\0", strlen("type\0") + 1);
+        locPoint = GetShaderLocation(shader, locName);
+        glUniform1i(locPoint, lights[i]->type);
+        
+        memcpy(&locName[10], "diffuse\0", strlen("diffuse\0") + 2);
+        locPoint = glGetUniformLocation(shader.id, locName);
+        glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
+        
+        memcpy(&locName[10], "intensity\0", strlen("intensity\0"));
+        locPoint = glGetUniformLocation(shader.id, locName);
+        glUniform1f(locPoint, lights[i]->intensity);
+        
+        switch (lights[i]->type)
+        {
+            case LIGHT_POINT:
+            {
+                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                
+                memcpy(&locName[10], "attenuation\0", strlen("attenuation\0"));
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform1f(locPoint, lights[i]->attenuation);
+            } break;
+            case LIGHT_DIRECTIONAL:
+            {
+                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                locPoint = GetShaderLocation(shader, locName);
+                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                VectorNormalize(&direction);
+                glUniform3f(locPoint, direction.x, direction.y, direction.z);
+            } break;
+            case LIGHT_SPOT:
+            {
+                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                
+                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                locPoint = GetShaderLocation(shader, locName);
+                
+                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                VectorNormalize(&direction);
+                glUniform3f(locPoint, direction.x, direction.y, direction.z);
+                
+                memcpy(&locName[10], "coneAngle\0", strlen("coneAngle\0"));
+                locPoint = GetShaderLocation(shader, locName);
+                glUniform1f(locPoint, lights[i]->coneAngle);
+            } break;
+            default: break;
+        }
+        
+        // TODO: Pass to the shader any other required data from LightData struct
+    }
+}
+
 // Read text data from file
 // NOTE: text chars array should be freed manually
 static char *ReadTextFile(const char *fileName)
@@ -2970,7 +3295,7 @@ static void TraceLog(int msgType, const char *text, ...)
     va_list args;
     va_start(args, text);
 
-    switch(msgType)
+    switch (msgType)
     {
         case INFO: fprintf(stdout, "INFO: "); break;
         case ERROR: fprintf(stdout, "ERROR: "); break;

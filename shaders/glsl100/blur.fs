@@ -2,7 +2,11 @@
 
 precision mediump float;
 
+// Input vertex attributes (from vertex shader)
 varying vec2 fragTexCoord;
+varying vec4 fragColor;
+
+// Input uniform values
 uniform sampler2D texture0;
 uniform vec4 fragTintColor;
 
@@ -16,6 +20,7 @@ float weight[3] = float[]( 0.2270270270, 0.3162162162, 0.0702702703 );
 
 void main() 
 { 
+    // Texel color fetching from texture sampler
     vec3 tc = texture2D(texture0, fragTexCoord).rgb*weight[0];
 
     for (int i = 1; i < 3; i++) 

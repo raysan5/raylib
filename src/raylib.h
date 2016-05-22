@@ -398,7 +398,7 @@ typedef struct Shader {
 
     // Uniform locations
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
-    int tintColorLoc;     // Color uniform location point (fragment shader)
+    int tintColorLoc;     // Diffuse color uniform location point (fragment shader)
     
     // Texture map locations
     int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
@@ -418,17 +418,35 @@ typedef struct Material {
     Color colAmbient;           // Ambient color
     Color colSpecular;          // Specular color
     
-    float glossiness;           // Glossiness level
+    float glossiness;           // Glossiness level (Ranges from 0 to 1000)
     float normalDepth;          // Normal map depth
 } Material;
 
-// 3d Model type
-// TODO: Replace shader/testure by material
+// Model type
 typedef struct Model {
     Mesh mesh;                  // Vertex data buffers (RAM and VRAM)
     Matrix transform;           // Local transform matrix
     Material material;          // Shader and textures data
 } Model;
+
+// Light type
+typedef struct LightData {
+    int id;
+    int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+    bool enabled;
+    
+    Vector3 position;
+    Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+    float attenuation;  // Lost of light intensity with distance (world distance)
+    
+    Color diffuse;      // Use Vector3 diffuse
+    float intensity;
+    
+    float coneAngle;    // Spot light max angle
+} LightData, *Light;
+
+// Light types
+typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
 
 // Ray type (useful for raycast)
 typedef struct Ray {
@@ -451,10 +469,7 @@ typedef struct Wave {
     short channels;
 } Wave;
 
-// Audio Context, used to create custom audio streams that are not bound to a sound file. There can be
-// no more than 4 concurrent audio contexts in use. This is due to each active context being tied to
-// a dedicated mix channel.
-typedef void* AudioContext;
+typedef int RawAudioContext;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -539,13 +554,13 @@ typedef struct Collider {
     int radius;             // Used for COLLIDER_CIRCLE
 } Collider;
 
-typedef struct PhysicObject {
+typedef struct PhysicObjectData {
     unsigned int id;
     Transform transform;
     Rigidbody rigidbody;
     Collider collider;
     bool enabled;
-} PhysicObject;
+} PhysicObjectData, *PhysicObject;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -787,6 +802,7 @@ const char *SubText(const char *text, int position, int length);                
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
+void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires
@@ -806,7 +822,7 @@ void DrawGizmo(Vector3 position);                                               
 // Model 3d Loading and Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 Model LoadModel(const char *fileName);                          // Load a 3d model (.OBJ)
-Model LoadModelEx(Mesh data);                                   // Load a 3d model (from mesh data)
+Model LoadModelEx(Mesh data, bool dynamic);                     // Load a 3d model (from mesh data)
 Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d model from rRES file (raylib Resource)
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
@@ -815,6 +831,7 @@ void SetModelTexture(Model *model, Texture2D texture);          // Link a textur
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
+Material LoadStandardMaterial(void);                            // Load standard material (uses material attributes and lighting shader)
 void UnloadMaterial(Material material);                         // Unload material textures from VRAM
 
 void DrawModel(Model model, Vector3 position, float scale, Color tint);                            // Draw a model (with texture if set)
@@ -844,6 +861,7 @@ void UnloadShader(Shader shader);                                   // Unload a 
 void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
 void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
 Shader GetDefaultShader(void);                                      // Get default shader
+Shader GetStandardShader(void);                                     // Get default shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
@@ -853,6 +871,10 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // S
 
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 
+Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
+void DrawLights(void);                                              // Draw all created lights in 3D world
+void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
+
 //----------------------------------------------------------------------------------
 // Physics System Functions (Module: physac)
 //----------------------------------------------------------------------------------
@@ -860,14 +882,14 @@ void InitPhysics(Vector2 gravity);                                              
 void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
 void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
 
-PhysicObject *CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);      // Create a new physic object dinamically, initialize it and add to pool
-void DestroyPhysicObject(PhysicObject *pObj);                                           // Destroy a specific physic object and take it out of the list
+PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);       // Create a new physic object dinamically, initialize it and add to pool
+void DestroyPhysicObject(PhysicObject pObj);                                            // Destroy a specific physic object and take it out of the list
 
-void ApplyForce(PhysicObject *pObj, Vector2 force);                                     // Apply directional force to a physic object
+void ApplyForce(PhysicObject pObj, Vector2 force);                                      // Apply directional force to a physic object
 void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
 
 Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
-void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize);          // Draw physic object information at screen position
+void DrawPhysicObjectInfo(PhysicObject pObj, Vector2 position, int fontSize);           // Draw physic object information at screen position
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
@@ -875,13 +897,6 @@ void DrawPhysicObjectInfo(PhysicObject *pObj, Vector2 position, int fontSize);  
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
-
-// Audio contexts are for outputing custom audio waveforms, This will shut down any other sound sources currently playing
-// The mixChannel is what mix channel you want to operate on, 0-3 are the ones available. Each mix channel can only be used one at a time.
-// exmple usage is InitAudioContext(48000, 0, 2, true); // mixchannel 1, 48khz, stereo, floating point
-AudioContext InitAudioContext(unsigned short sampleRate, unsigned char mixChannel, unsigned char channels, bool floatingPoint);
-void CloseAudioContext(AudioContext ctx);                       // Frees audio context
-unsigned short UpdateAudioContext(AudioContext ctx, void *data, unsigned short numberElements); // Pushes more audio data into context mix channel, if NULL is passed to data then zeros are played
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -894,15 +909,24 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-void PlayMusicStream(char *fileName);                           // Start music playing (open stream)
-void UpdateMusicStream(void);                                   // Updates buffers for music streaming
-void StopMusicStream(void);                                     // Stop music playing (close stream)
-void PauseMusicStream(void);                                    // Pause music playing
-void ResumeMusicStream(void);                                   // Resume playing paused music
-bool IsMusicPlaying(void);                                      // Check if music is playing
-void SetMusicVolume(float volume);                              // Set volume for music (1.0 is max level)
-float GetMusicTimeLength(void);                                 // Get current music time length (in seconds)
-float GetMusicTimePlayed(void);                                 // Get current music time played (in seconds)
+int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
+void UpdateMusicStream(int index);                              // Updates buffers for music streaming
+void StopMusicStream(int index);                                // Stop music playing (close stream)
+void PauseMusicStream(int index);                               // Pause music playing
+void ResumeMusicStream(int index);                              // Resume playing paused music
+bool IsMusicPlaying(int index);                                 // Check if music is playing
+void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
+float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
+float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
+int getMusicStreamCount(void);
+void SetMusicPitch(int index, float pitch);
+
+// used to output raw audio streams, returns negative numbers on error
+// if floating point is false the data size is 16bit short, otherwise it is float 32bit
+RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
+
+void CloseRawAudioContext(RawAudioContext ctx);
+int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }

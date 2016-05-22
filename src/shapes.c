@@ -446,7 +446,6 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 }
 
 // Get collision rectangle for two rectangles collision
-// TODO: Depending on rec1 and rec2 order, it fails -> Review!
 Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 {
     Rectangle retRec = { 0, 0, 0, 0 };
