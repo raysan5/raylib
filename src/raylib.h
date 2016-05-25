@@ -369,6 +369,7 @@ typedef struct BoundingBox {
 // Vertex data definning a mesh
 typedef struct Mesh {
     int vertexCount;            // number of vertices stored in arrays
+    int triangleCount;          // number of triangles stored (indexed or not)
     float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
     float *texcoords2;          // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
@@ -376,8 +377,7 @@ typedef struct Mesh {
     float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
     unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     unsigned short *indices;    // vertex indices (in case vertex data comes indexed)
-    int triangleCount;          // number of triangles stored (indexed or not)
-    
+
     BoundingBox bounds;         // mesh limits defined by min and max points
     
     unsigned int vaoId;         // OpenGL Vertex Array Object id
@@ -389,30 +389,30 @@ typedef struct Shader {
     unsigned int id;      // Shader program id
     
     // Vertex attributes locations (default locations)
-    int vertexLoc;        // Vertex attribute location point (default-location = 0)
-    int texcoordLoc;      // Texcoord attribute location point (default-location = 1)
-    int normalLoc;        // Normal attribute location point (default-location = 2)
-    int colorLoc;         // Color attibute location point (default-location = 3)
-    int tangentLoc;       // Tangent attribute location point (default-location = 4)
+    int vertexLoc;        // Vertex attribute location point    (default-location = 0)
+    int texcoordLoc;      // Texcoord attribute location point  (default-location = 1)
     int texcoord2Loc;     // Texcoord2 attribute location point (default-location = 5)
+    int normalLoc;        // Normal attribute location point    (default-location = 2)
+    int tangentLoc;       // Tangent attribute location point   (default-location = 4)
+    int colorLoc;         // Color attibute location point      (default-location = 3)
 
     // Uniform locations
     int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
     int tintColorLoc;     // Diffuse color uniform location point (fragment shader)
     
-    // Texture map locations
-    int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
-    int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
-    int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
+    // Texture map locations (generic for any kind of map)
+    int mapTexture0Loc;  // Map texture uniform location point (default-texture-unit = 0)
+    int mapTexture1Loc;  // Map texture uniform location point (default-texture-unit = 1)
+    int mapTexture2Loc;  // Map texture uniform location point (default-texture-unit = 2)
 } Shader;
 
 // Material type
 typedef struct Material {
-    Shader shader;              // Standard shader (supports 3 map types: diffuse, normal, specular)
+    Shader shader;              // Standard shader (supports 3 map textures)
 
-    Texture2D texDiffuse;       // Diffuse texture
-    Texture2D texNormal;        // Normal texture
-    Texture2D texSpecular;      // Specular texture
+    Texture2D texDiffuse;       // Diffuse texture  (binded to shader mapTexture0Loc)
+    Texture2D texNormal;        // Normal texture   (binded to shader mapTexture1Loc)
+    Texture2D texSpecular;      // Specular texture (binded to shader mapTexture2Loc)
     
     Color colDiffuse;           // Diffuse color
     Color colAmbient;           // Ambient color
@@ -439,8 +439,8 @@ typedef struct LightData {
     Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
     float attenuation;  // Lost of light intensity with distance (world distance)
     
-    Color diffuse;      // Use Vector3 diffuse
-    float intensity;
+    Color diffuse;      // Light color
+    float intensity;    // Light intensity level
     
     float coneAngle;    // Spot light max angle
 } LightData, *Light;
