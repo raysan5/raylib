@@ -404,6 +404,12 @@ void rlOrtho(double left, double right, double bottom, double top, double near, 
 
 #endif
 
+// Set the viewport area (trasnformation from normalized device coordinates to window coordinates)
+void rlViewport(int x, int y, int width, int height)
+{
+    glViewport(x, y, width, height);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vertex level operations
 //----------------------------------------------------------------------------------
@@ -725,17 +731,25 @@ void rlDisableTexture(void)
 #endif
 }
 
+// Enable rendering to texture (fbo)
 void rlEnableRenderTexture(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+    //glDisable(GL_CULL_FACE);    // Allow double side drawing for texture flipping
+    //glCullFace(GL_FRONT);
 #endif
 }
 
+// Disable rendering to texture
 void rlDisableRenderTexture(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
 #endif
 }
 
@@ -1792,23 +1806,23 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
-    glUniform1i(material.shader.mapDiffuseLoc, 0);        // Texture fits in active texture unit 0
+    glUniform1i(material.shader.mapTexture0Loc, 0);         // Diffuse texture fits in active texture unit 0
     
-    if ((material.texNormal.id != 0) && (material.shader.mapNormalLoc != -1))
+    if ((material.texNormal.id != 0) && (material.shader.mapTexture1Loc != -1))
     {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
-        glUniform1i(material.shader.mapNormalLoc, 1);     // Texture fits in active texture unit 1
+        glUniform1i(material.shader.mapTexture1Loc, 1);     // Normal texture fits in active texture unit 1
         
         // TODO: Upload to shader normalDepth
         //glUniform1f(???, material.normalDepth);
     }
     
-    if ((material.texSpecular.id != 0) && (material.shader.mapSpecularLoc != -1))
+    if ((material.texSpecular.id != 0) && (material.shader.mapTexture2Loc != -1))
     {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
-        glUniform1i(material.shader.mapSpecularLoc, 2);   // Texture fits in active texture unit 2
+        glUniform1i(material.shader.mapTexture2Loc, 2);    // Specular texture fits in active texture unit 2
     }
 
     if (vaoSupported)
@@ -2569,19 +2583,19 @@ static void LoadDefaultShaderLocations(Shader *shader)
     // Get handles to GLSL input attibute locations
     shader->vertexLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
     shader->texcoordLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD_NAME);
-    shader->normalLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_NORMAL_NAME);
-    shader->colorLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
-    shader->tangentLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TANGENT_NAME);
     shader->texcoord2Loc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD2_NAME);
+    shader->normalLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_NORMAL_NAME);
+    shader->tangentLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TANGENT_NAME);
+    shader->colorLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
 
     // Get handles to GLSL uniform locations (vertex shader)
     shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
     shader->tintColorLoc = glGetUniformLocation(shader->id, "colDiffuse");
-    shader->mapDiffuseLoc = glGetUniformLocation(shader->id, "texture0");
-    shader->mapNormalLoc = glGetUniformLocation(shader->id, "texture1");
-    shader->mapSpecularLoc = glGetUniformLocation(shader->id, "texture2");
+    shader->mapTexture0Loc = glGetUniformLocation(shader->id, "texture0");
+    shader->mapTexture1Loc = glGetUniformLocation(shader->id, "texture1");
+    shader->mapTexture2Loc = glGetUniformLocation(shader->id, "texture2");
 }
 
 // Unload default shader 
@@ -2864,8 +2878,10 @@ static void DrawDefaultBuffers(void)
         Matrix matMVP = MatrixMultiply(modelview, projection);
 
         glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-        glUniform1i(currentShader.mapDiffuseLoc, 0);
         glUniform4f(currentShader.tintColorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
+        glUniform1i(currentShader.mapTexture0Loc, 0);
+        
+        // NOTE: Additional map textures not considered for default buffers drawing
     }
    
     // Draw lines buffers

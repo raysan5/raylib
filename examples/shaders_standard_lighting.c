@@ -17,7 +17,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
 
 int main()
 {
@@ -35,27 +34,27 @@ int main()
     Vector3 position = { 0.0f, 0.0f, 0.0f };   // Set model position
     
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
-    Texture2D texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model diffuse texture
 
     Material material = LoadStandardMaterial();
-    material.texDiffuse = texDiffuse;
+    material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png"); // Load model diffuse texture
     material.colDiffuse = (Color){255, 255, 255, 255};
     material.colAmbient = (Color){0, 0, 10, 255};
     material.colSpecular = (Color){255, 255, 255, 255};
     material.glossiness = 50.0f;
-    dwarf.material = material;      // Apply material to model
     
+    dwarf.material = material;      // Apply material to model
+
     Light spotLight = CreateLight(LIGHT_SPOT, (Vector3){3.0f, 5.0f, 2.0f}, (Color){255, 255, 255, 255});
     spotLight->target = (Vector3){0.0f, 0.0f, 0.0f};
     spotLight->intensity = 2.0f;
     spotLight->diffuse = (Color){255, 100, 100, 255};
     spotLight->coneAngle = 60.0f;
-    
+
     Light dirLight = CreateLight(LIGHT_DIRECTIONAL, (Vector3){0.0f, -3.0f, -3.0f}, (Color){255, 255, 255, 255});
     dirLight->target = (Vector3){1.0f, -2.0f, -2.0f};
     dirLight->intensity = 2.0f;
     dirLight->diffuse = (Color){100, 255, 100, 255};
-    
+
     Light pointLight = CreateLight(LIGHT_POINT, (Vector3){0.0f, 4.0f, 5.0f}, (Color){255, 255, 255, 255});
     pointLight->intensity = 2.0f;
     pointLight->diffuse = (Color){100, 100, 255, 255};

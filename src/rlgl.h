@@ -171,10 +171,10 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
         int tintColorLoc;     // Color uniform location point (fragment shader)
         
-        // Texture map locations
-        int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
-        int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
-        int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
+        // Texture map locations (generic for any kind of map)
+        int mapTexture0Loc;  // Map texture uniform location point (default-texture-unit = 0)
+        int mapTexture1Loc;  // Map texture uniform location point (default-texture-unit = 1)
+        int mapTexture2Loc;  // Map texture uniform location point (default-texture-unit = 2)
     } Shader;
 
     // Texture2D type
@@ -247,6 +247,7 @@ void rlScalef(float x, float y, float z);       // Multiply the current matrix b
 void rlMultMatrixf(float *mat);                 // Multiply the current matrix by another matrix
 void rlFrustum(double left, double right, double bottom, double top, double near, double far);
 void rlOrtho(double left, double right, double bottom, double top, double near, double far);
+void rlViewport(int x, int y, int width, int height); // Set the viewport area
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations
