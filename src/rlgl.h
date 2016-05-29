@@ -247,6 +247,7 @@ void rlScalef(float x, float y, float z);       // Multiply the current matrix b
 void rlMultMatrixf(float *mat);                 // Multiply the current matrix by another matrix
 void rlFrustum(double left, double right, double bottom, double top, double near, double far);
 void rlOrtho(double left, double right, double bottom, double top, double near, double far);
+void rlViewport(int x, int y, int width, int height); // Set the viewport area
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations

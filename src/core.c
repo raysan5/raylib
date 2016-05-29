@@ -562,9 +562,8 @@ void Begin2dMode(Camera2D camera)
     Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
     Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
     Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
-    
     Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
-
+    
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
     
     rlMultMatrixf(MatrixToFloat(matTransform));
@@ -627,11 +626,24 @@ void BeginTextureMode(RenderTexture2D target)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlEnableRenderTexture(target.id);
-    
-    rlClearScreenBuffers();             // Clear render texture buffers
+    rlEnableRenderTexture(target.id);   // Enable render target
 
+    rlClearScreenBuffers();             // Clear render texture buffers
+    
+    // Set viewport to framebuffer size
+    rlViewport(0, 0, target.texture.width, target.texture.height); 
+    
+    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
+    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+
+    // Set orthographic projection to current framebuffer size
+    // NOTE: Configured top-left corner as (0, 0)
+    rlOrtho(0, target.texture.width, target.texture.height, 0, 0.0f, 1.0f);        
+
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+
+    //rlScalef(0.0f, -1.0f, 0.0f);      // Flip Y-drawing (?)
 }
 
 // Ends drawing to render texture
@@ -639,7 +651,21 @@ void EndTextureMode(void)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlDisableRenderTexture();
+    rlDisableRenderTexture();           // Disable render target
+
+    // Set viewport to default framebuffer size (screen size)
+    // TODO: consider possible viewport offsets
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    
+    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
+    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+    
+    // Set orthographic projection to current framebuffer size
+    // NOTE: Configured top-left corner as (0, 0)
+    rlOrtho(0, GetScreenWidth(), GetScreenHeight(), 0, 0.0f, 1.0f);
+
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 }
 
 // Set target FPS for the game

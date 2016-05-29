@@ -1385,10 +1385,6 @@ void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float sc
 void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
 {
     Rectangle destRec = { (int)position.x, (int)position.y, abs(sourceRec.width), abs(sourceRec.height) };
-    
-    if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
-    if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
-    
     Vector2 origin = { 0, 0 };
 
     DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
@@ -1398,6 +1394,9 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Co
 // NOTE: origin is relative to destination rectangle size
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
+    if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
+    if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
+    
     rlEnableTexture(texture.id);
 
     rlPushMatrix();

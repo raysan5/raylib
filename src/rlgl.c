@@ -404,6 +404,12 @@ void rlOrtho(double left, double right, double bottom, double top, double near, 
 
 #endif
 
+// Set the viewport area (trasnformation from normalized device coordinates to window coordinates)
+void rlViewport(int x, int y, int width, int height)
+{
+    glViewport(x, y, width, height);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vertex level operations
 //----------------------------------------------------------------------------------
@@ -725,17 +731,25 @@ void rlDisableTexture(void)
 #endif
 }
 
+// Enable rendering to texture (fbo)
 void rlEnableRenderTexture(unsigned int id)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+    //glDisable(GL_CULL_FACE);    // Allow double side drawing for texture flipping
+    //glCullFace(GL_FRONT);
 #endif
 }
 
+// Disable rendering to texture
 void rlDisableRenderTexture(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
 #endif
 }
 
