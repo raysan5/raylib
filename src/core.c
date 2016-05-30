@@ -147,6 +147,7 @@ static bool windowMinimized = false;
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       // Android ALooper_pollAll() variables
+static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
 
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
@@ -363,6 +364,7 @@ void InitWindow(int width, int height, struct android_app *state)
     screenHeight = height;
 
     app = state;
+    internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
@@ -838,12 +840,21 @@ void ClearDroppedFiles(void)
 void StorageSaveValue(int position, int value)
 {
     FILE *storageFile = NULL;
+    
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
 
     // Try open existing file to append data
-    storageFile = fopen(STORAGE_FILENAME, "rb+");      
+    storageFile = fopen(path, "rb+");      
 
     // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen(STORAGE_FILENAME, "wb");
+    if (!storageFile) storageFile = fopen(path, "wb");
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
     else
@@ -870,8 +881,17 @@ int StorageLoadValue(int position)
 {
     int value = 0;
     
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
+    
     // Try open existing file to append data
-    FILE *storageFile = fopen(STORAGE_FILENAME, "rb");      
+    FILE *storageFile = fopen(path, "rb");      
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
     else
