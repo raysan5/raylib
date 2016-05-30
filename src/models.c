@@ -75,6 +75,25 @@ void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
     rlEnd();
 }
 
+// Draw a circle in 3D world space
+void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
+{
+    rlPushMatrix();
+        rlTranslatef(center.x, center.y, center.z);
+        rlRotatef(rotationAngle, rotation.x, rotation.y, rotation.z);
+        
+        rlBegin(RL_LINES);
+            for (int i = 0; i < 360; i += 10)
+            {
+                rlColor4ub(color.r, color.g, color.b, color.a);
+                
+                rlVertex3f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius, 0.0f);
+                rlVertex3f(sin(DEG2RAD*(i + 10)) * radius, cos(DEG2RAD*(i + 10)) * radius, 0.0f);
+            }
+        rlEnd();
+    rlPopMatrix();
+}
+
 // Draw cube
 // NOTE: Cube position is the center position
 void DrawCube(Vector3 position, float width, float height, float length, Color color)

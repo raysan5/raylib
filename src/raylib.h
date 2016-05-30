@@ -437,7 +437,7 @@ typedef struct LightData {
     
     Vector3 position;
     Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-    float attenuation;  // Lost of light intensity with distance (world distance)
+    float radius;       // Lost of light intensity with distance (world distance)
     
     Color diffuse;      // Light color
     float intensity;    // Light intensity level
@@ -803,6 +803,7 @@ const char *SubText(const char *text, int position, int length);                
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
+void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires

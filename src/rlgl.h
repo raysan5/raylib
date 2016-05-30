@@ -218,7 +218,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         
         Vector3 position;
         Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-        float attenuation;  // Lost of light intensity with distance (world distance)
+        float radius;       // Lost of light intensity with distance (world distance)
         
         Color diffuse;      // Use Vector3 diffuse
         float intensity;
