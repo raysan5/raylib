@@ -69,8 +69,6 @@ int main()
     SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
     SetCameraPosition(camera.position);     // Set internal camera position to match our camera position
     SetCameraTarget(camera.target);         // Set internal camera target to match our camera target
-    
-    float framesCounter = 0;                // Define frames counter to update model rotation
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -81,8 +79,6 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update internal camera and our camera
-        
-        framesCounter += 0.5f;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -93,7 +89,7 @@ int main()
 
             Begin3dMode(camera);
                 
-                DrawModelEx(dwarf, position, (Vector3){ 0.0f, 1.0f, 0.0f }, framesCounter, (Vector3){ 2.0f, 2.0f, 2.0f}, RED);   // Draw 3d model with texture
+                DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
                 
                 DrawLights();   // Draw all created lights in 3D world
 
@@ -102,6 +98,8 @@ int main()
             End3dMode();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
