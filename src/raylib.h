@@ -414,6 +414,7 @@ typedef struct Material {
     Texture2D texNormal;        // Normal texture   (binded to shader mapTexture1Loc)
     Texture2D texSpecular;      // Specular texture (binded to shader mapTexture2Loc)
     
+    Color colTint;              // Tint color
     Color colDiffuse;           // Diffuse color
     Color colAmbient;           // Ambient color
     Color colSpecular;          // Specular color

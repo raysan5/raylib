@@ -751,6 +751,7 @@ Material LoadDefaultMaterial(void)
     //material.texNormal;           // NOTE: By default, not set
     //material.texSpecular;         // NOTE: By default, not set
     
+    material.colTint = WHITE;       // Tint color
     material.colDiffuse = WHITE;    // Diffuse color
     material.colAmbient = WHITE;    // Ambient color
     material.colSpecular = WHITE;   // Specular color
@@ -1268,7 +1269,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
     
     model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
-    // model.material.colDiffuse = tint;
+    model.material.colTint = tint;
     
     rlglDrawMesh(model.mesh, model.material, model.transform);
 }

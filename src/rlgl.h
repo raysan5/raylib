@@ -202,6 +202,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Texture2D texNormal;        // Normal texture
         Texture2D texSpecular;      // Specular texture
         
+        Color colTint;              // Tint color
         Color colDiffuse;           // Diffuse color
         Color colAmbient;           // Ambient color
         Color colSpecular;          // Specular color
