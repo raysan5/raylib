@@ -204,8 +204,8 @@ static bool texCompPVRTSupported = false;    // PVR texture compression support
 static bool texCompASTCSupported = false;    // ASTC texture compression support
 
 // Lighting data
-static Light lights[MAX_LIGHTS];              // Lights pool
-static int lightsCount;                       // Counts current enabled physic objects
+static Light lights[MAX_LIGHTS];             // Lights pool
+static int lightsCount;                      // Counts current enabled physic objects
 #endif
 
 // Compressed textures support flags
@@ -1810,6 +1810,9 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     
     if ((material.texNormal.id != 0) && (material.shader.mapTexture1Loc != -1))
     {
+        // Upload to shader specular map flag
+        glUniform1i(glGetUniformLocation(material.shader.id, "useNormal"), 1);
+        
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
         glUniform1i(material.shader.mapTexture1Loc, 1);     // Normal texture fits in active texture unit 1
@@ -1820,6 +1823,9 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     
     if ((material.texSpecular.id != 0) && (material.shader.mapTexture2Loc != -1))
     {
+        // Upload to shader specular map flag
+        glUniform1i(glGetUniformLocation(material.shader.id, "useSpecular"), 1);
+        
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
         glUniform1i(material.shader.mapTexture2Loc, 2);    // Specular texture fits in active texture unit 2
@@ -2293,7 +2299,13 @@ void DrawLights(void)
     {
         switch (lights[i]->type)
         {
-            case LIGHT_POINT: DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK)); break;
+            case LIGHT_POINT:
+            {
+                DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                Draw3DCircle(lights[i]->position, lights[i]->radius, 0.0f, (Vector3){ 0, 0, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                Draw3DCircle(lights[i]->position, lights[i]->radius, 90.0f, (Vector3){ 1, 0, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+                Draw3DCircle(lights[i]->position, lights[i]->radius, 90.0f, (Vector3){ 0, 1, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
+            } break;
             case LIGHT_DIRECTIONAL:
             {                
                 Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
@@ -3105,9 +3117,9 @@ static void SetShaderLights(Shader shader)
                 locPoint = GetShaderLocation(shader, locName);
                 glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
                 
-                memcpy(&locName[10], "attenuation\0", strlen("attenuation\0"));
+                memcpy(&locName[10], "radius\0", strlen("radius\0") + 2);
                 locPoint = GetShaderLocation(shader, locName);
-                glUniform1f(locPoint, lights[i]->attenuation);
+                glUniform1f(locPoint, lights[i]->radius);
             } break;
             case LIGHT_DIRECTIONAL:
             {
