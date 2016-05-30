@@ -926,7 +926,7 @@ void SetMusicPitch(int index, float pitch);
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
 
 void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
+int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }

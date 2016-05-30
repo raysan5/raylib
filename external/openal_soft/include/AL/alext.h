@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  *  License along with this library; if not, write to the
- *  Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- *  Boston, MA  02111-1307, USA.
+ *  Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * Or go to http://www.gnu.org/copyleft/lgpl.html
  */
 
@@ -345,6 +345,89 @@ AL_API void AL_APIENTRY alSourcei64vSOFT(ALuint source, ALenum param, const ALin
 AL_API void AL_APIENTRY alGetSourcei64SOFT(ALuint source, ALenum param, ALint64SOFT *value);
 AL_API void AL_APIENTRY alGetSource3i64SOFT(ALuint source, ALenum param, ALint64SOFT *value1, ALint64SOFT *value2, ALint64SOFT *value3);
 AL_API void AL_APIENTRY alGetSourcei64vSOFT(ALuint source, ALenum param, ALint64SOFT *values);
+#endif
+#endif
+
+#ifndef ALC_EXT_DEFAULT_FILTER_ORDER
+#define ALC_EXT_DEFAULT_FILTER_ORDER 1
+#define ALC_DEFAULT_FILTER_ORDER                 0x1100
+#endif
+
+#ifndef AL_SOFT_deferred_updates
+#define AL_SOFT_deferred_updates 1
+#define AL_DEFERRED_UPDATES_SOFT                 0xC002
+typedef ALvoid (AL_APIENTRY*LPALDEFERUPDATESSOFT)(void);
+typedef ALvoid (AL_APIENTRY*LPALPROCESSUPDATESSOFT)(void);
+#ifdef AL_ALEXT_PROTOTYPES
+AL_API ALvoid AL_APIENTRY alDeferUpdatesSOFT(void);
+AL_API ALvoid AL_APIENTRY alProcessUpdatesSOFT(void);
+#endif
+#endif
+
+#ifndef AL_SOFT_block_alignment
+#define AL_SOFT_block_alignment 1
+#define AL_UNPACK_BLOCK_ALIGNMENT_SOFT           0x200C
+#define AL_PACK_BLOCK_ALIGNMENT_SOFT             0x200D
+#endif
+
+#ifndef AL_SOFT_MSADPCM
+#define AL_SOFT_MSADPCM 1
+#define AL_FORMAT_MONO_MSADPCM_SOFT              0x1302
+#define AL_FORMAT_STEREO_MSADPCM_SOFT            0x1303
+#endif
+
+#ifndef AL_SOFT_source_length
+#define AL_SOFT_source_length 1
+/*#define AL_BYTE_LENGTH_SOFT                      0x2009*/
+/*#define AL_SAMPLE_LENGTH_SOFT                    0x200A*/
+/*#define AL_SEC_LENGTH_SOFT                       0x200B*/
+#endif
+
+#ifndef ALC_SOFT_pause_device
+#define ALC_SOFT_pause_device 1
+typedef void (ALC_APIENTRY*LPALCDEVICEPAUSESOFT)(ALCdevice *device);
+typedef void (ALC_APIENTRY*LPALCDEVICERESUMESOFT)(ALCdevice *device);
+#ifdef AL_ALEXT_PROTOTYPES
+ALC_API void ALC_APIENTRY alcDevicePauseSOFT(ALCdevice *device);
+ALC_API void ALC_APIENTRY alcDeviceResumeSOFT(ALCdevice *device);
+#endif
+#endif
+
+#ifndef AL_EXT_BFORMAT
+#define AL_EXT_BFORMAT 1
+#define AL_FORMAT_BFORMAT2D_8                    0x20021
+#define AL_FORMAT_BFORMAT2D_16                   0x20022
+#define AL_FORMAT_BFORMAT2D_FLOAT32              0x20023
+#define AL_FORMAT_BFORMAT3D_8                    0x20031
+#define AL_FORMAT_BFORMAT3D_16                   0x20032
+#define AL_FORMAT_BFORMAT3D_FLOAT32              0x20033
+#endif
+
+#ifndef AL_EXT_MULAW_BFORMAT
+#define AL_EXT_MULAW_BFORMAT 1
+#define AL_FORMAT_BFORMAT2D_MULAW                0x10031
+#define AL_FORMAT_BFORMAT3D_MULAW                0x10032
+#endif
+
+#ifndef ALC_SOFT_HRTF
+#define ALC_SOFT_HRTF 1
+#define ALC_HRTF_SOFT                            0x1992
+#define ALC_DONT_CARE_SOFT                       0x0002
+#define ALC_HRTF_STATUS_SOFT                     0x1993
+#define ALC_HRTF_DISABLED_SOFT                   0x0000
+#define ALC_HRTF_ENABLED_SOFT                    0x0001
+#define ALC_HRTF_DENIED_SOFT                     0x0002
+#define ALC_HRTF_REQUIRED_SOFT                   0x0003
+#define ALC_HRTF_HEADPHONES_DETECTED_SOFT        0x0004
+#define ALC_HRTF_UNSUPPORTED_FORMAT_SOFT         0x0005
+#define ALC_NUM_HRTF_SPECIFIERS_SOFT             0x1994
+#define ALC_HRTF_SPECIFIER_SOFT                  0x1995
+#define ALC_HRTF_ID_SOFT                         0x1996
+typedef const ALCchar* (ALC_APIENTRY*LPALCGETSTRINGISOFT)(ALCdevice *device, ALCenum paramName, ALCsizei index);
+typedef ALCboolean (ALC_APIENTRY*LPALCRESETDEVICESOFT)(ALCdevice *device, const ALCint *attribs);
+#ifdef AL_ALEXT_PROTOTYPES
+ALC_API const ALCchar* ALC_APIENTRY alcGetStringiSOFT(ALCdevice *device, ALCenum paramName, ALCsizei index);
+ALC_API ALCboolean ALC_APIENTRY alcResetDeviceSOFT(ALCdevice *device, const ALCint *attribs);
 #endif
 #endif
 

@@ -399,7 +399,7 @@ void CloseRawAudioContext(RawAudioContext ctx)
         CloseMixChannel(mixChannelsActive_g[ctx]);
 }
 
-int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements)
+int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements)
 {
     int numBuffered = 0;
     if(ctx >= 0)

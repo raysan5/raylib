@@ -8,7 +8,7 @@ set(CMAKE_C_FLAGS "-O1 -Wall -std=gnu99 -fgnu89-inline")
 IF(${PLATFORM_TO_USE} MATCHES "PLATFORM_DESKTOP")
 
      add_definitions(-DPLATFORM_DESKTOP, -DGRAPHICS_API_OPENGL_33)
-     include_directories("." "src/" "external/openal_soft/include" "external/glew/include" "external/glfw3/include")
+     include_directories("." "src/" "external/openal_soft/include" "external/glfw3/include")
 
 ENDIF()
 
@@ -22,7 +22,7 @@ ENDIF()
 IF(${PLATFORM_TO_USE} MATCHES "PLATFORM_WEB")
 
      add_definitions(-DPLATFORM_WEB, -GRAPHICS_API_OPENGL_ES2)
-     include_directories("." "src/" "external/openal_soft/include" "external/glew/include" "external/glfw3/include")
+     include_directories("." "src/" "external/openal_soft/include" "external/glfw3/include")
 
 ENDIF()
 
