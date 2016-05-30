@@ -33,12 +33,12 @@ int main()
     Camera camera = {{ 4.0f, 4.0f, 4.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
     Vector3 position = { 0.0f, 0.0f, 0.0f };   // Set model position
     
-    Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
+    Model dwarf = LoadModel("resources/model/dwarf.obj");                     // Load OBJ model
 
     Material material = LoadStandardMaterial();
     
-    material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png"); // Load model diffuse texture
-    material.texNormal = LoadTexture("resources/model/dwarf_normal.png"); // Load model normal texture
+    material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model diffuse texture
+    material.texNormal = LoadTexture("resources/model/dwarf_normal.png");     // Load model normal texture
     material.texSpecular = LoadTexture("resources/model/dwarf_specular.png"); // Load model specular texture
     material.colDiffuse = (Color){255, 255, 255, 255};
     material.colAmbient = (Color){0, 0, 10, 255};
@@ -46,8 +46,6 @@ int main()
     material.glossiness = 50.0f;
     
     dwarf.material = material;      // Apply material to model
-    
-    Model dwarf2 = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
 
     Light spotLight = CreateLight(LIGHT_SPOT, (Vector3){3.0f, 5.0f, 2.0f}, (Color){255, 255, 255, 255});
     spotLight->target = (Vector3){0.0f, 0.0f, 0.0f};
@@ -91,7 +89,9 @@ int main()
                 
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
                 
-                DrawLights();   // Draw all created lights in 3D world
+                DrawLight(spotLight);   // Draw spot light
+                DrawLight(dirLight);    // Draw directional light
+                DrawLight(pointLight);  // Draw point light
 
                 DrawGrid(10, 1.0f);     // Draw a grid
 

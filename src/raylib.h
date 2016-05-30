@@ -431,18 +431,18 @@ typedef struct Model {
 
 // Light type
 typedef struct LightData {
-    int id;
-    int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-    bool enabled;
+    unsigned int id;    // Light id
+    int type;           // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+    bool enabled;       // Light enabled
     
-    Vector3 position;
-    Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-    float radius;       // Lost of light intensity with distance (world distance)
+    Vector3 position;   // Light position
+    Vector3 target;     // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+    float radius;       // Light attenuation radius light intensity reduced with distance (world distance)
     
-    Color diffuse;      // Light color
+    Color diffuse;      // Light diffuse color
     float intensity;    // Light intensity level
     
-    float coneAngle;    // Spot light max angle
+    float coneAngle;    // Light cone max angle: LIGHT_SPOT
 } LightData, *Light;
 
 // Light types
@@ -817,6 +817,7 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                   
 void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
+void DrawLight(Light light);                                                                       // Draw light in 3D world
 //DrawTorus(), DrawTeapot() are useless...
 
 //------------------------------------------------------------------------------------
@@ -873,7 +874,6 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // S
 void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
-void DrawLights(void);                                              // Draw all created lights in 3D world
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 //----------------------------------------------------------------------------------
