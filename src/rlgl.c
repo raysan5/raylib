@@ -1816,9 +1816,6 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
         glUniform1i(material.shader.mapTexture1Loc, 1);     // Normal texture fits in active texture unit 1
-        
-        // TODO: Upload to shader normalDepth
-        //glUniform1f(???, material.normalDepth);
     }
     
     if ((material.texSpecular.id != 0) && (material.shader.mapTexture2Loc != -1))
@@ -2565,7 +2562,7 @@ static Shader LoadDefaultShader(void)
 // Load standard shader
 // NOTE: This shader supports: 
 //      - Up to 3 different maps: diffuse, normal, specular
-//      - Material properties: colAmbient, colDiffuse, colSpecular, glossiness, normalDepth
+//      - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
 //      - Up to 8 lights: Point, Directional or Spot
 static Shader LoadStandardShader(void)
 {

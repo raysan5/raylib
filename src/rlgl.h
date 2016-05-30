@@ -207,7 +207,6 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Color colSpecular;          // Specular color
         
         float glossiness;           // Glossiness level (Ranges from 0 to 1000)
-        float normalDepth;          // Normal map depth
     } Material;
     
     // Light type

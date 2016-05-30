@@ -756,7 +756,6 @@ Material LoadDefaultMaterial(void)
     material.colSpecular = WHITE;   // Specular color
     
     material.glossiness = 100.0f;   // Glossiness level
-    material.normalDepth = 1.0f;    // Normal map depth
     
     return material;
 }

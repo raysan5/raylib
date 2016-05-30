@@ -419,7 +419,6 @@ typedef struct Material {
     Color colSpecular;          // Specular color
     
     float glossiness;           // Glossiness level (Ranges from 0 to 1000)
-    float normalDepth;          // Normal map depth
 } Material;
 
 // Model type
