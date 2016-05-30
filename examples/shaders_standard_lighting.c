@@ -22,8 +22,8 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 800;
-    int screenHeight = 450;
+    int screenWidth = 1280;
+    int screenHeight = 720;
     
     SetConfigFlags(FLAG_MSAA_4X_HINT);      // Enable Multi Sampling Anti Aliasing 4x (if available)
 
@@ -36,13 +36,18 @@ int main()
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
 
     Material material = LoadStandardMaterial();
+    
     material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png"); // Load model diffuse texture
+    material.texNormal = LoadTexture("resources/model/dwarf_normal.png"); // Load model normal texture
+    material.texSpecular = LoadTexture("resources/model/dwarf_specular.png"); // Load model specular texture
     material.colDiffuse = (Color){255, 255, 255, 255};
     material.colAmbient = (Color){0, 0, 10, 255};
     material.colSpecular = (Color){255, 255, 255, 255};
     material.glossiness = 50.0f;
     
     dwarf.material = material;      // Apply material to model
+    
+    Model dwarf2 = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
 
     Light spotLight = CreateLight(LIGHT_SPOT, (Vector3){3.0f, 5.0f, 2.0f}, (Color){255, 255, 255, 255});
     spotLight->target = (Vector3){0.0f, 0.0f, 0.0f};
@@ -58,10 +63,10 @@ int main()
     Light pointLight = CreateLight(LIGHT_POINT, (Vector3){0.0f, 4.0f, 5.0f}, (Color){255, 255, 255, 255});
     pointLight->intensity = 2.0f;
     pointLight->diffuse = (Color){100, 100, 255, 255};
-    pointLight->attenuation = 3.0f;
+    pointLight->radius = 3.0f;
 
     // Setup orbital camera
-    SetCameraMode(CAMERA_ORBITAL);          // Set a orbital camera mode
+    SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
     SetCameraPosition(camera.position);     // Set internal camera position to match our camera position
     SetCameraTarget(camera.target);         // Set internal camera target to match our camera target
 
@@ -83,7 +88,7 @@ int main()
             ClearBackground(RAYWHITE);
 
             Begin3dMode(camera);
-
+                
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
                 
                 DrawLights();   // Draw all created lights in 3D world
@@ -93,7 +98,7 @@ int main()
             End3dMode();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
-
+            
             DrawFPS(10, 10);
 
         EndDrawing();

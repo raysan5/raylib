@@ -247,7 +247,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
 
     AAsset *asset = AAssetManager_open(assetManager, fileName, 0);
 
-    if(!asset) return NULL;
+    if (!asset) return NULL;
 
     return funopen(asset, android_read, android_write, android_seek, android_close);
 }

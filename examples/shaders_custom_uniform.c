@@ -89,6 +89,8 @@ int main()
                     DrawGrid(10, 1.0f);     // Draw a grid
 
                 End3dMode();
+                
+                DrawText("TEXT DRAWN IN RENDER TEXTURE", 200, 10, 30, RED);
             
             EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
             

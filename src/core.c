@@ -147,6 +147,7 @@ static bool windowMinimized = false;
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       // Android ALooper_pollAll() variables
+static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
 
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
@@ -363,6 +364,7 @@ void InitWindow(int width, int height, struct android_app *state)
     screenHeight = height;
 
     app = state;
+    internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
@@ -562,9 +564,8 @@ void Begin2dMode(Camera2D camera)
     Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
     Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
     Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
-    
     Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
-
+    
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
     
     rlMultMatrixf(MatrixToFloat(matTransform));
@@ -627,11 +628,24 @@ void BeginTextureMode(RenderTexture2D target)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlEnableRenderTexture(target.id);
-    
-    rlClearScreenBuffers();             // Clear render texture buffers
+    rlEnableRenderTexture(target.id);   // Enable render target
 
+    rlClearScreenBuffers();             // Clear render texture buffers
+    
+    // Set viewport to framebuffer size
+    rlViewport(0, 0, target.texture.width, target.texture.height); 
+    
+    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
+    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+
+    // Set orthographic projection to current framebuffer size
+    // NOTE: Configured top-left corner as (0, 0)
+    rlOrtho(0, target.texture.width, target.texture.height, 0, 0.0f, 1.0f);        
+
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+
+    //rlScalef(0.0f, -1.0f, 0.0f);      // Flip Y-drawing (?)
 }
 
 // Ends drawing to render texture
@@ -639,7 +653,21 @@ void EndTextureMode(void)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    rlDisableRenderTexture();
+    rlDisableRenderTexture();           // Disable render target
+
+    // Set viewport to default framebuffer size (screen size)
+    // TODO: consider possible viewport offsets
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    
+    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
+    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+    
+    // Set orthographic projection to current framebuffer size
+    // NOTE: Configured top-left corner as (0, 0)
+    rlOrtho(0, GetScreenWidth(), GetScreenHeight(), 0, 0.0f, 1.0f);
+
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 }
 
 // Set target FPS for the game
@@ -812,12 +840,21 @@ void ClearDroppedFiles(void)
 void StorageSaveValue(int position, int value)
 {
     FILE *storageFile = NULL;
+    
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
 
     // Try open existing file to append data
-    storageFile = fopen(STORAGE_FILENAME, "rb+");      
+    storageFile = fopen(path, "rb+");      
 
     // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen(STORAGE_FILENAME, "wb");
+    if (!storageFile) storageFile = fopen(path, "wb");
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
     else
@@ -844,8 +881,17 @@ int StorageLoadValue(int position)
 {
     int value = 0;
     
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
+    
     // Try open existing file to append data
-    FILE *storageFile = fopen(STORAGE_FILENAME, "rb");      
+    FILE *storageFile = fopen(path, "rb");      
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
     else

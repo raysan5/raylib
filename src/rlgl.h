@@ -202,12 +202,12 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Texture2D texNormal;        // Normal texture
         Texture2D texSpecular;      // Specular texture
         
+        Color colTint;              // Tint color
         Color colDiffuse;           // Diffuse color
         Color colAmbient;           // Ambient color
         Color colSpecular;          // Specular color
         
         float glossiness;           // Glossiness level (Ranges from 0 to 1000)
-        float normalDepth;          // Normal map depth
     } Material;
     
     // Light type
@@ -218,7 +218,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         
         Vector3 position;
         Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-        float attenuation;  // Lost of light intensity with distance (world distance)
+        float radius;       // Lost of light intensity with distance (world distance)
         
         Color diffuse;      // Use Vector3 diffuse
         float intensity;
@@ -247,6 +247,7 @@ void rlScalef(float x, float y, float z);       // Multiply the current matrix b
 void rlMultMatrixf(float *mat);                 // Multiply the current matrix by another matrix
 void rlFrustum(double left, double right, double bottom, double top, double near, double far);
 void rlOrtho(double left, double right, double bottom, double top, double near, double far);
+void rlViewport(int x, int y, int width, int height); // Set the viewport area
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations
