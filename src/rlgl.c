@@ -1069,6 +1069,13 @@ void rlglClose(void)
     // Delete default white texture
     glDeleteTextures(1, &whiteTexture);
     TraceLog(INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
+    
+    // Unload lights
+    if (lightsCount > 0)
+    {
+        for (int i = 0; i < lightsCount; i++) free(lights[i]);
+        lightsCount = 0;
+    }
 
     free(draws);
 #endif
@@ -2290,37 +2297,6 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
     lightsCount++;
     
     return light;
-}
-
-// Draw all created lights in 3D world
-void DrawLights(void)
-{
-    for (int i = 0; i < lightsCount; i++)
-    {
-        switch (lights[i]->type)
-        {
-            case LIGHT_POINT:
-            {
-                DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                Draw3DCircle(lights[i]->position, lights[i]->radius, 0.0f, (Vector3){ 0, 0, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                Draw3DCircle(lights[i]->position, lights[i]->radius, 90.0f, (Vector3){ 1, 0, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                Draw3DCircle(lights[i]->position, lights[i]->radius, 90.0f, (Vector3){ 0, 1, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-            } break;
-            case LIGHT_DIRECTIONAL:
-            {                
-                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-            } break;
-            case LIGHT_SPOT:
-            {                
-                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawCylinderWires(lights[i]->position, 0.0f, 0.3f*lights[i]->coneAngle/50, 0.6f, 5, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-            } break;
-            default: break;
-        }
-    }
 }
 
 // Destroy a light and take it out of the list
