@@ -11,7 +11,6 @@ uniform sampler2D texture0;
 uniform sampler2D texture1;
 uniform sampler2D texture2;
 
-uniform vec4 colTint;
 uniform vec4 colAmbient;
 uniform vec4 colDiffuse;
 uniform vec4 colSpecular;
@@ -55,7 +54,7 @@ vec3 CalcPointLight(Light l, vec3 n, vec3 v, float s)
         spec = pow(dot(n, h), 3 + glossiness)*s;
     }
     
-    return (diff*l.diffuse.rgb*colDiffuse.rgb + spec*colSpecular.rgb);
+    return (diff*l.diffuse.rgb + spec*colSpecular.rgb);
 }
 
 vec3 CalcDirectionalLight(Light l, vec3 n, vec3 v, float s)
@@ -74,7 +73,7 @@ vec3 CalcDirectionalLight(Light l, vec3 n, vec3 v, float s)
     }
     
     // Combine results
-    return (diff*l.intensity*l.diffuse.rgb*colDiffuse.rgb + spec*colSpecular.rgb);
+    return (diff*l.intensity*l.diffuse.rgb + spec*colSpecular.rgb);
 }
 
 vec3 CalcSpotLight(Light l, vec3 n, vec3 v, float s)
@@ -150,5 +149,5 @@ void main()
     }
     
     // Calculate final fragment color
-    finalColor = vec4(texelColor.rgb*lighting*colTint.rgb, texelColor.a*colTint.a);
+    finalColor = vec4(texelColor.rgb*lighting*colDiffuse.rgb, texelColor.a*colDiffuse.a);
 }

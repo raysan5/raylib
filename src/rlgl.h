@@ -201,8 +201,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Texture2D texDiffuse;       // Diffuse texture
         Texture2D texNormal;        // Normal texture
         Texture2D texSpecular;      // Specular texture
-        
-        Color colTint;              // Tint color
+
         Color colDiffuse;           // Diffuse color
         Color colAmbient;           // Ambient color
         Color colSpecular;          // Specular color
@@ -212,18 +211,18 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // Light type
     typedef struct LightData {
-        int id;
-        int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-        bool enabled;
+        unsigned int id;    // Light id
+        int type;           // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+        bool enabled;       // Light enabled
         
-        Vector3 position;
-        Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-        float radius;       // Lost of light intensity with distance (world distance)
+        Vector3 position;   // Light position
+        Vector3 target;     // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+        float radius;       // Light attenuation radius light intensity reduced with distance (world distance)
         
-        Color diffuse;      // Use Vector3 diffuse
-        float intensity;
+        Color diffuse;      // Light diffuse color
+        float intensity;    // Light intensity level
         
-        float coneAngle;    // Spot light max angle
+        float coneAngle;    // Light cone max angle: LIGHT_SPOT
     } LightData, *Light;
 	
     // Color blending modes (pre-defined)

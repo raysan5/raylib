@@ -1800,9 +1800,6 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         // Setup shader uniforms for lights
         SetShaderLights(material.shader);
         
-        // Upload to shader material.colSpecular
-        glUniform4f(glGetUniformLocation(material.shader.id, "colTint"), (float)material.colTint.r/255, (float)material.colTint.g/255, (float)material.colTint.b/255, (float)material.colTint.a/255);
-        
         // Upload to shader material.colAmbient
         glUniform4f(glGetUniformLocation(material.shader.id, "colAmbient"), (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
         
