@@ -860,8 +860,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
-void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
+
 Shader GetDefaultShader(void);                                      // Get default shader
 Shader GetStandardShader(void);                                     // Get default shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
@@ -871,7 +870,10 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // S
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
-void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
+void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
+void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
+void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list

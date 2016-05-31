@@ -2157,7 +2157,7 @@ void UnloadShader(Shader shader)
 }
 
 // Set custom shader to be used on batch draw
-void SetCustomShader(Shader shader)
+void BeginShaderMode(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (currentShader.id != shader.id)
@@ -2169,10 +2169,10 @@ void SetCustomShader(Shader shader)
 }
 
 // Set default shader to be used in batch draw
-void SetDefaultShader(void)
+void EndShaderMode(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    SetCustomShader(defaultShader);
+    BeginShaderMode(defaultShader);
 #endif
 }
 
@@ -2254,9 +2254,9 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
 #endif
 }
 
-// Set blending mode (alpha, additive, multiplied)
-// NOTE: Only 3 blending modes predefined
-void SetBlendMode(int mode)
+// Begin blending mode (alpha, additive, multiplied)
+// NOTE: Only 3 blending modes supported, default blend mode is alpha
+void BeginBlendMode(int mode)
 {
     if ((blendMode != mode) && (mode < 3))
     {
@@ -2272,6 +2272,12 @@ void SetBlendMode(int mode)
         
         blendMode = mode;
     }
+}
+
+// End blending mode (reset to default: alpha blending)
+void EndBlendMode(void)
+{
+    BeginBlendMode(BLEND_ALPHA);
 }
 
 // Create a new light, initialize it and add to pool
