@@ -4,11 +4,11 @@
 *
 *   NOTE: This example requires raylib module [rlgl]
 *
-*   Compile rlgl using:
+*   Compile rlgl module using:
 *   gcc -c rlgl.c -Wall -std=c99 -DRLGL_STANDALONE -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33
 *
 *   Compile example using:
-*   gcc -o oculus_glfw_sample.exe oculus_glfw_sample.c rlgl.o glad.o -L. -lLibOVRRT32_1 -lglfw3 -lopengl32 -lgdi32 -std=c99
+*   gcc -o oculus_glfw_sample.exe oculus_glfw_sample.c rlgl.o -L. -lLibOVRRT32_1 -lglfw3 -lopengl32 -lgdi32 -std=c99
 *
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -21,72 +21,103 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
+#define GLAD_IMPLEMENTATION
 #include "glad.h"               // Extensions loading library
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
-
-#include "OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
 
 #define RLGL_STANDALONE
 #include "rlgl.h"
 
+//#define PLATFORM_OCULUS
+
+#if defined(PLATFORM_OCULUS)
+    #include "OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
+#endif
+
+#if defined(PLATFORM_OCULUS)
 // OVR device variables
 ovrSession session;
 ovrHmdDesc hmdDesc;
 ovrGraphicsLuid luid;
+#endif
 
-// OVR OpenGL required variables
-GLuint fbo = 0;
-GLuint depthBuffer = 0;
-ovrTextureSwapChain eyeTexture;
+unsigned int frameIndex = 0;
 
-GLuint mirrorFbo = 0;
-ovrMirrorTexture mirrorTexture;
-ovrEyeRenderDesc eyeRenderDescs[2];
-Matrix eyeProjections[2];
-
-ovrLayerEyeFov eyeLayer;
-ovrViewScaleDesc viewScaleDesc;
-
-Vector2 renderTargetSize = { 0, 0 };
-Vector2 mirrorSize;
-unsigned int frame = 0;
-
-// GLFW variables
-GLFWwindow *window = NULL;
+#define RED        (Color){ 230, 41, 55, 255 }     // Red
+#define MAROON     (Color){ 190, 33, 55, 255 }     // Maroon
+#define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
+#define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+#if defined(PLATFORM_OCULUS)
+typedef struct OculusBuffer {
+    ovrTextureSwapChain textureChain;
+    GLuint depthId;
+    GLuint fboId;
+    int width;
+    int height;
+} OculusBuffer;
+
+typedef struct OculusMirror {
+    ovrMirrorTexture texture;
+    GLuint fboId;
+    int width;
+    int height;
+} OculusMirror;
+
+typedef struct OculusLayer {
+    ovrViewScaleDesc viewScaleDesc;
+    ovrLayerEyeFov eyeLayer;      // layer 0
+    //ovrLayerQuad quadLayer;     // layer 1
+    Matrix eyeProjections[2];
+    int width;
+    int height;
+} OculusLayer;
+#endif
+
 typedef enum { LOG_INFO = 0, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_OTHER } TraceLogType;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void ErrorCallback(int error, const char* description)
-{
-    fputs(description, stderr);
-}
-
-static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, GL_TRUE);
-    }
-}
-
-static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
+static void ErrorCallback(int error, const char* description);
+static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 static void TraceLog(int msgType, const char *text, ...);
+
+// Drawing functions (uses rlgl functionality)
+static void DrawGrid(int slices, float spacing);
+static void DrawCube(Vector3 position, float width, float height, float length, Color color);
+static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
+static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
+
+#if defined(PLATFORM_OCULUS)
+// Oculus Rift functions
 static Matrix FromOvrMatrix(ovrMatrix4f ovrM);
-void DrawGrid(int slices, float spacing);
-void DrawCube(Vector3 position, float width, float height, float length, Color color);
+static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);
+static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);
+static void SetOculusBuffer(ovrSession session, OculusBuffer buffer);
+static void UnsetOculusBuffer(OculusBuffer buffer);
+static OculusMirror LoadOculusMirror(ovrSession session, int width, int height);    // Load Oculus mirror buffers
+static void UnloadOculusMirror(ovrSession session, OculusMirror mirror);            // Unload Oculus mirror buffers
+static void BlitOculusMirror(ovrSession session, OculusMirror mirror);
+static OculusLayer InitOculusLayer(ovrSession session);
+#endif
 
 //----------------------------------------------------------------------------------
 // Main Entry point
 //----------------------------------------------------------------------------------
-int main() 
+int main(void)
 {
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    int screenWidth = 1080;
+    int screenHeight = 600;
+    
+#if defined(PLATFORM_OCULUS)
     ovrResult result = ovr_Initialize(NULL);
     if (OVR_FAILURE(result)) TraceLog(LOG_ERROR, "OVR: Could not initialize Oculus device");
 
@@ -106,37 +137,14 @@ int main()
     TraceLog(LOG_INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
     TraceLog(LOG_INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
     
-    
-    viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
-    memset(&eyeLayer, 0, sizeof(ovrLayerEyeFov));
-    eyeLayer.Header.Type = ovrLayerType_EyeFov;
-    eyeLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
-    
-    for (int eye = 0; eye < 2; eye++)
-    {
-        eyeRenderDescs[eye] = ovr_GetRenderDesc(session, eye, hmdDesc.DefaultEyeFov[eye]);
-        ovrMatrix4f ovrPerspectiveProjection = ovrMatrix4f_Projection(eyeRenderDescs[eye].Fov, 0.01f, 1000.0f, ovrProjection_ClipRangeOpenGL);
-        // NOTE struct ovrMatrix4f { float M[4][4] }
-        eyeProjections[eye] = FromOvrMatrix(ovrPerspectiveProjection);
-        viewScaleDesc.HmdToEyeOffset[eye] = eyeRenderDescs[eye].HmdToEyeOffset;
-
-        eyeLayer.Fov[eye] = eyeRenderDescs[eye].Fov;
-        ovrSizei eyeSize = ovr_GetFovTextureSize(session, eye, eyeLayer.Fov[eye], 1.0f);
-        eyeLayer.Viewport[eye].Size = eyeSize;
-        eyeLayer.Viewport[eye].Pos.x = renderTargetSize.x;
-        eyeLayer.Viewport[eye].Pos.y = 0;
-
-        renderTargetSize.y = eyeSize.h;     //std::max(renderTargetSize.y, (uint32_t)eyeSize.h);
-        renderTargetSize.x += eyeSize.w;
-    }
-    
-    // Make the on screen window 1/2 the resolution of the device
-    mirrorSize.x = hmdDesc.Resolution.w/2;
-    mirrorSize.y = hmdDesc.Resolution.h/2;
-
+    screenWidth = hmdDesc.Resolution.w/2;
+    screenHeight = hmdDesc.Resolution.h/2;
+#endif
     
     // GLFW3 Initialization + OpenGL 3.3 Context + Extensions
     //--------------------------------------------------------
+    glfwSetErrorCallback(ErrorCallback);
+    
     if (!glfwInit())
     {
         TraceLog(LOG_WARNING, "GLFW3: Can not initialize GLFW");
@@ -149,9 +157,8 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    //glfwWindowHint(GLFW_DECORATED, GL_FALSE);   // Mandatory on Oculus Rift to avoid program crash? --> NO
    
-    window = glfwCreateWindow(mirrorSize.x, mirrorSize.y, "raylib oculus sample", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "raylib oculus sample", NULL, NULL);
     
     if (!window)
     {
@@ -160,146 +167,129 @@ int main()
     }
     else TraceLog(LOG_INFO, "GLFW3: Window created successfully");
     
-    glfwSetErrorCallback(ErrorCallback);
     glfwSetKeyCallback(window, KeyCallback);
     
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
 
+    // Load OpenGL 3.3 extensions
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         TraceLog(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
         exit(1);
     }
     else TraceLog(LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
+    //--------------------------------------------------------
     
-    // Initialize OVR OpenGL swap chain textures
-    ovrTextureSwapChainDesc desc = {};
-    desc.Type = ovrTexture_2D;
-    desc.ArraySize = 1;
-    desc.Width = renderTargetSize.x;
-    desc.Height = renderTargetSize.y;
-    desc.MipLevels = 1;
-    desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-    desc.SampleCount = 1;
-    desc.StaticImage = ovrFalse;
-    
-    result = ovr_CreateTextureSwapChainGL(session, &desc, &eyeTexture);
-    eyeLayer.ColorTexture[0] = eyeTexture;
-    
-    if (!OVR_SUCCESS(result)) TraceLog(LOG_WARNING, "Failed to create swap textures");
-    
-    int length = 0;
-    result = ovr_GetTextureSwapChainLength(session, eyeTexture, &length);
-    
-    if (!OVR_SUCCESS(result) || !length) TraceLog(LOG_WARNING, "Unable to count swap chain textures");
-
-    for (int i = 0; i < length; ++i) 
-    {
-        GLuint chainTexId;
-        ovr_GetTextureSwapChainBufferGL(session, eyeTexture, i, &chainTexId);
-        glBindTexture(GL_TEXTURE_2D, chainTexId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-    
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Setup framebuffer object
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &depthBuffer);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, renderTargetSize.x, renderTargetSize.y);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    // Setup mirror texture
-    ovrMirrorTextureDesc mirrorDesc;
-    memset(&mirrorDesc, 0, sizeof(mirrorDesc));
-    mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-    mirrorDesc.Width = mirrorSize.x;
-    mirrorDesc.Height = mirrorSize.y;
-    
-    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirrorTexture))) TraceLog(LOG_WARNING, "Could not create mirror texture");
-
-    glGenFramebuffers(1, &mirrorFbo);
+#if defined(PLATFORM_OCULUS)
+    // Initialize Oculus Buffers
+    OculusLayer layer = InitOculusLayer(session);   
+    OculusBuffer buffer = LoadOculusBuffer(session, layer.width, layer.height);
+    OculusMirror mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
+    layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
 
     // Recenter OVR tracking origin
     ovr_RecenterTrackingOrigin(session);
-    
+#endif
+
     // Initialize rlgl internal buffers and OpenGL state
     rlglInit();
-    rlglInitGraphics(0, 0, mirrorSize.x, mirrorSize.y);
-    rlClearColor(245, 245, 245, 255); // Define clear color
-    glEnable(GL_DEPTH_TEST);
+    rlglInitGraphics(0, 0, screenWidth, screenHeight);
+    rlClearColor(245, 245, 245, 255);   // Define clear color
+    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
     
-    Vector2 position = { mirrorSize.x/2 - 100, mirrorSize.y/2 - 100 };
     Vector2 size = { 200, 200 };
-    Color color = { 180, 20, 20, 255 };
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+    
+    Camera camera;
+    camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    //--------------------------------------------------------------------------------------    
 
+    // Main game loop    
     while (!glfwWindowShouldClose(window)) 
     {
         // Update
         //----------------------------------------------------------------------------------
-        frame++;
+#if defined(PLATFORM_OCULUS)
+        frameIndex++;
         
         ovrPosef eyePoses[2];
-        ovr_GetEyePoses(session, frame, ovrTrue, viewScaleDesc.HmdToEyeOffset, eyePoses, &eyeLayer.SensorSampleTime);
+        ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
+        
+        layer.eyeLayer.RenderPose[0] = eyePoses[0];
+        layer.eyeLayer.RenderPose[1] = eyePoses[1];
+#endif
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
-        int curIndex;
-        ovr_GetTextureSwapChainCurrentIndex(session, eyeTexture, &curIndex);
-        GLuint curTexId;
-        ovr_GetTextureSwapChainBufferGL(session, eyeTexture, curIndex, &curTexId);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, curTexId, 0);
-        
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
+#if defined(PLATFORM_OCULUS)
+        SetOculusBuffer(session, buffer);
+#endif
+
+        rlClearScreenBuffers();             // Clear current framebuffers
+
+#if defined(PLATFORM_OCULUS)
         for (int eye = 0; eye < 2; eye++)
         {
-            glViewport(eyeLayer.Viewport[eye].Pos.x, eyeLayer.Viewport[eye].Pos.y, 
-                       eyeLayer.Viewport[eye].Size.w, eyeLayer.Viewport[eye].Size.h);
-            eyeLayer.RenderPose[eye] = eyePoses[eye];
-            
-            // Convert struct ovrPosef { ovrQuatf Orientation; ovrVector3f Position; } to Matrix 
-            // TODO: Review maths!
-            Matrix eyeOrientation = QuaternionToMatrix((Quaternion){ -eyePoses[eye].Orientation.x, -eyePoses[eye].Orientation.y, -eyePoses[eye].Orientation.z, -eyePoses[eye].Orientation.w });
-            Matrix eyePosition = MatrixTranslate(-eyePoses[eye].Position.x, -eyePoses[eye].Position.y, -eyePoses[eye].Position.z);
-            Matrix mvp = MatrixMultiply(eyeProjections[eye], MatrixMultiply(eyeOrientation, eyePosition));
+            glViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
-            // NOTE: Nothing is drawn until rlglDraw()
-            DrawRectangleV(position, size, color);
-            //DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, color);
-            //DrawGrid(10, 1.0f);
-            
-            // NOTE: rlglDraw() must be modified to support an external modelview-projection matrix
-            // TODO: Still working on it (now uses internal mvp)
+            Quaternion eyeRPose = (Quaternion){ eyePoses[eye].Orientation.x, eyePoses[eye].Orientation.y, eyePoses[eye].Orientation.z, eyePoses[eye].Orientation.w };
+            QuaternionInvert(&eyeRPose);
+            Matrix eyeOrientation = QuaternionToMatrix(eyeRPose);
+            Matrix eyeTranslation = MatrixTranslate(-eyePoses[eye].Position.x, -eyePoses[eye].Position.y, -eyePoses[eye].Position.z);
+
+            Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);
+            Matrix modelview = MatrixMultiply(matView, eyeView);
+            Matrix mvp = MatrixMultiply(modelview, layer.eyeProjections[eye]);
+#else
+            // Calculate projection matrix (from perspective) and view matrix from camera look at
+            Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
+            MatrixTranspose(&matProj);
+            Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+            Matrix mvp = MatrixMultiply(matView, matProj);
+#endif
+            DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+            DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
+            DrawGrid(10, 1.0f);
+
+            // NOTE: Internal buffers drawing (3D data)
             rlglDraw(mvp);
+            
+            matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
+            MatrixTranspose(&matProj);
+            matView = MatrixIdentity();
+            mvp = MatrixMultiply(matView, matProj);
+            
+            // TODO: 2D drawing on Oculus Rift: requires an ovrLayerQuad layer
+            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 300.0f, 20.0f }, DARKGRAY);
+
+            // NOTE: Internal buffers drawing (2D data)
+            rlglDraw(mvp);
+            
+#if defined(PLATFORM_OCULUS)
         }
         
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        ovr_CommitTextureSwapChain(session, eyeTexture);
-        ovrLayerHeader *headerList = &eyeLayer.Header;
-        ovr_SubmitFrame(session, frame, &viewScaleDesc, &headerList, 1);
+        UnsetOculusBuffer(buffer);
+        
+        ovr_CommitTextureSwapChain(session, buffer.textureChain);
+        
+        ovrLayerHeader *layers = &layer.eyeLayer.Header;
+        ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
 
         // Blit mirror texture to back buffer
-        GLuint mirrorTextureId;
-        ovr_GetMirrorTextureBufferGL(session, mirrorTexture, &mirrorTextureId);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, mirrorFbo);
-        glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
-        glBlitFramebuffer(0, 0, mirrorSize.x, mirrorSize.y, 0, mirrorSize.y, mirrorSize.x, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        BlitOculusMirror(session, mirror);
 
-        
+        // Get session status information
+        ovrSessionStatus sessionStatus;
+        ovr_GetSessionStatus(session, &sessionStatus);
+        if (sessionStatus.ShouldQuit) TraceLog(LOG_WARNING, "OVR: Session should quit...");
+        if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
+#endif
+
         glfwSwapBuffers(window);
         glfwPollEvents();
         //----------------------------------------------------------------------------------
@@ -307,20 +297,20 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    if (mirrorFbo) glDeleteFramebuffers(1, &mirrorFbo);
-    if (mirrorTexture) ovr_DestroyMirrorTexture(session, mirrorTexture);
+#if defined(PLATFORM_OCULUS)
+    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
+    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
+#endif
 
-    if (fbo) glDeleteFramebuffers(1, &fbo);
-    if (depthBuffer) glDeleteTextures(1, &depthBuffer);
-    if (eyeTexture) ovr_DestroyTextureSwapChain(session, eyeTexture);
-
-    rlglClose();
+    rlglClose();                            // Unload rlgl internal buffers and default shader/texture
     
     glfwDestroyWindow(window);
     glfwTerminate();
     
+#if defined(PLATFORM_OCULUS)
     ovr_Destroy(session);   // Must be called after glfwTerminate()
     ovr_Shutdown();
+#endif
     //--------------------------------------------------------------------------------------
     
     return 0;
@@ -330,24 +320,22 @@ int main()
 // Module specific Functions Definitions
 //----------------------------------------------------------------------------------
 
-// Draw rectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)
-static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
+// GLFW3: Error callback
+static void ErrorCallback(int error, const char* description)
 {
-    rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+    TraceLog(LOG_ERROR, description);
+}
 
-        rlVertex2i(position.x, position.y);
-        rlVertex2i(position.x, position.y + size.y);
-        rlVertex2i(position.x + size.x, position.y + size.y);
-
-        rlVertex2i(position.x, position.y);
-        rlVertex2i(position.x + size.x, position.y + size.y);
-        rlVertex2i(position.x + size.x, position.y);
-    rlEnd();
+// GLFW3: Keyboard callback
+static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
 }
 
 // Output a trace log message
-// NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
 static void TraceLog(int msgType, const char *text, ...)
 {
     va_list args;
@@ -370,30 +358,52 @@ static void TraceLog(int msgType, const char *text, ...)
     //if (msgType == LOG_ERROR) exit(1);
 }
 
-static Matrix FromOvrMatrix(ovrMatrix4f ovrmat)
+// Draw rectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)
+static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
-    Matrix rmat;
-    
-    rmat.m0 = ovrmat.M[0][0];
-    rmat.m1 = ovrmat.M[1][0];
-    rmat.m2 = ovrmat.M[2][0];
-    rmat.m3 = ovrmat.M[3][0];
-    rmat.m4 = ovrmat.M[0][1];
-    rmat.m5 = ovrmat.M[1][1];
-    rmat.m6 = ovrmat.M[2][1];
-    rmat.m7 = ovrmat.M[3][1];
-    rmat.m8 = ovrmat.M[0][2];
-    rmat.m9 = ovrmat.M[1][2];
-    rmat.m10 = ovrmat.M[2][2];
-    rmat.m11 = ovrmat.M[3][2];
-    rmat.m12 = ovrmat.M[0][3];
-    rmat.m13 = ovrmat.M[1][3];
-    rmat.m14 = ovrmat.M[2][3];
-    rmat.m15 = ovrmat.M[3][3];
-    
-    //MatrixTranspose(&rmat);
-    
-    return rmat;
+    rlBegin(RL_TRIANGLES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        rlVertex2i(position.x, position.y);
+        rlVertex2i(position.x, position.y + size.y);
+        rlVertex2i(position.x + size.x, position.y + size.y);
+
+        rlVertex2i(position.x, position.y);
+        rlVertex2i(position.x + size.x, position.y + size.y);
+        rlVertex2i(position.x + size.x, position.y);
+    rlEnd();
+}
+
+// Draw a grid centered at (0, 0, 0)
+static void DrawGrid(int slices, float spacing)
+{
+    int halfSlices = slices / 2;
+
+    rlBegin(RL_LINES);
+        for(int i = -halfSlices; i <= halfSlices; i++)
+        {
+            if (i == 0)
+            {
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.5f, 0.5f, 0.5f);
+            }
+            else
+            {
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.75f, 0.75f, 0.75f);
+            }
+
+            rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
+            rlVertex3f((float)i*spacing, 0.0f, (float)halfSlices*spacing);
+
+            rlVertex3f((float)-halfSlices*spacing, 0.0f, (float)i*spacing);
+            rlVertex3f((float)halfSlices*spacing, 0.0f, (float)i*spacing);
+        }
+    rlEnd();
 }
 
 // Draw cube
@@ -471,34 +481,279 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     rlPopMatrix();
 }
 
-// Draw a grid centered at (0, 0, 0)
-void DrawGrid(int slices, float spacing)
+// Draw cube wires
+void DrawCubeWires(Vector3 position, float width, float height, float length, Color color)
 {
-    int halfSlices = slices / 2;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
 
-    rlBegin(RL_LINES);
-        for(int i = -halfSlices; i <= halfSlices; i++)
-        {
-            if (i == 0)
-            {
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-            }
-            else
-            {
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-            }
+    rlPushMatrix();
 
-            rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
-            rlVertex3f((float)i*spacing, 0.0f, (float)halfSlices*spacing);
+        rlTranslatef(position.x, position.y, position.z);
+        //rlRotatef(45, 0, 1, 0);
 
-            rlVertex3f((float)-halfSlices*spacing, 0.0f, (float)i*spacing);
-            rlVertex3f((float)halfSlices*spacing, 0.0f, (float)i*spacing);
-        }
-    rlEnd();
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            // Front Face -----------------------------------------------------
+            // Bottom Line
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
+
+            // Left Line
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right
+
+            // Top Line
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
+
+            // Right Line
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
+
+            // Back Face ------------------------------------------------------
+            // Bottom Line
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
+
+            // Left Line
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
+
+            // Top Line
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
+
+            // Right Line
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left
+
+            // Top Face -------------------------------------------------------
+            // Left Line
+            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left Front
+            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Back
+
+            // Right Line
+            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right Front
+            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Back
+
+            // Bottom Face  ---------------------------------------------------
+            // Left Line
+            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Top Left Front
+            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Left Back
+
+            // Right Line
+            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Top Right Front
+            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Right Back
+        rlEnd();
+    rlPopMatrix();
 }
+
+#if defined(PLATFORM_OCULUS)
+// Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
+static Matrix FromOvrMatrix(ovrMatrix4f ovrmat)
+{
+    Matrix rmat;
+    
+    rmat.m0 = ovrmat.M[0][0];
+    rmat.m1 = ovrmat.M[1][0];
+    rmat.m2 = ovrmat.M[2][0];
+    rmat.m3 = ovrmat.M[3][0];
+    rmat.m4 = ovrmat.M[0][1];
+    rmat.m5 = ovrmat.M[1][1];
+    rmat.m6 = ovrmat.M[2][1];
+    rmat.m7 = ovrmat.M[3][1];
+    rmat.m8 = ovrmat.M[0][2];
+    rmat.m9 = ovrmat.M[1][2];
+    rmat.m10 = ovrmat.M[2][2];
+    rmat.m11 = ovrmat.M[3][2];
+    rmat.m12 = ovrmat.M[0][3];
+    rmat.m13 = ovrmat.M[1][3];
+    rmat.m14 = ovrmat.M[2][3];
+    rmat.m15 = ovrmat.M[3][3];
+    
+    MatrixTranspose(&rmat);
+    
+    return rmat;
+}
+
+// Load Oculus required buffers: texture-swap-chain, fbo, texture-depth
+static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
+{
+    OculusBuffer buffer;
+    buffer.width = width;
+    buffer.height = height;
+    
+    // Create OVR texture chain
+    ovrTextureSwapChainDesc desc = {};
+    desc.Type = ovrTexture_2D;
+    desc.ArraySize = 1;
+    desc.Width = width;
+    desc.Height = height;
+    desc.MipLevels = 1;
+    desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+    desc.SampleCount = 1;
+    desc.StaticImage = ovrFalse;
+
+    ovrResult result = ovr_CreateTextureSwapChainGL(session, &desc, &buffer.textureChain);
+    
+    //eyeLayer.ColorTexture[0] = buffer.textureChain;      // <------------------- ???
+    
+    if (!OVR_SUCCESS(result)) TraceLog(LOG_WARNING, "OVR: Failed to create swap textures buffer");
+
+    int textureCount = 0;
+    ovr_GetTextureSwapChainLength(session, buffer.textureChain, &textureCount);
+    
+    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(LOG_WARNING, "OVR: Unable to count swap chain textures");
+
+    for (int i = 0; i < textureCount; ++i)
+    {
+        GLuint chainTexId;
+        ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, i, &chainTexId);
+        glBindTexture(GL_TEXTURE_2D, chainTexId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    /*
+    // Setup framebuffer object (using depth texture)
+    glGenFramebuffers(1, &buffer.fboId);
+    glGenTextures(1, &buffer.depthId);
+    glBindTexture(GL_TEXTURE_2D, buffer.depthId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, buffer.width, buffer.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
+    */
+    
+    // Setup framebuffer object (using depth renderbuffer)
+    glGenFramebuffers(1, &buffer.fboId);
+    glGenRenderbuffers(1, &buffer.depthId);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
+    glBindRenderbuffer(GL_RENDERBUFFER, buffer.depthId);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, buffer.width, buffer.height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer.depthId);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+    return buffer;
+}
+
+// Unload texture required buffers
+static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer)
+{
+    if (buffer.textureChain)
+    {
+        ovr_DestroyTextureSwapChain(session, buffer.textureChain);
+        buffer.textureChain = NULL;
+    }
+
+    if (buffer.depthId != 0) glDeleteTextures(1, &buffer.depthId);
+    if (buffer.fboId != 0) glDeleteFramebuffers(1, &buffer.fboId);
+}
+
+// Set current Oculus buffer
+static void SetOculusBuffer(ovrSession session, OculusBuffer buffer)
+{
+    GLuint currentTexId;
+    int currentIndex;
+    
+    ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
+    ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
+
+    //glViewport(0, 0, buffer.width, buffer.height);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glEnable(GL_FRAMEBUFFER_SRGB);
+}
+
+// Unset Oculus buffer
+static void UnsetOculusBuffer(OculusBuffer buffer)
+{
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+// Load Oculus mirror buffers
+static OculusMirror LoadOculusMirror(ovrSession session, int width, int height)
+{
+    OculusMirror mirror;
+    mirror.width = width;
+    mirror.height = height;
+    
+    ovrMirrorTextureDesc mirrorDesc;
+    memset(&mirrorDesc, 0, sizeof(mirrorDesc));
+    mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+    mirrorDesc.Width = mirror.width;
+    mirrorDesc.Height = mirror.height;
+    
+    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(LOG_WARNING, "Could not create mirror texture");
+
+    glGenFramebuffers(1, &mirror.fboId);
+
+    return mirror;
+}
+
+// Unload Oculus mirror buffers
+static void UnloadOculusMirror(ovrSession session, OculusMirror mirror)
+{
+    if (mirror.fboId != 0) glDeleteFramebuffers(1, &mirror.fboId);
+    if (mirror.texture) ovr_DestroyMirrorTexture(session, mirror.texture);
+}
+
+static void BlitOculusMirror(ovrSession session, OculusMirror mirror)
+{
+    GLuint mirrorTextureId;
+    
+    ovr_GetMirrorTextureBufferGL(session, mirror.texture, &mirrorTextureId);
+    
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, mirror.fboId);
+    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
+    glBlitFramebuffer(0, 0, mirror.width, mirror.height, 0, mirror.height, mirror.width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+}
+
+// Requires: session, hmdDesc
+static OculusLayer InitOculusLayer(ovrSession session)
+{
+    OculusLayer layer = { 0 };
+    
+    layer.viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
+
+    memset(&layer.eyeLayer, 0, sizeof(ovrLayerEyeFov));
+    layer.eyeLayer.Header.Type = ovrLayerType_EyeFov;
+    layer.eyeLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
+
+    ovrEyeRenderDesc eyeRenderDescs[2];
+    
+    for (int eye = 0; eye < 2; eye++)
+    {
+        eyeRenderDescs[eye] = ovr_GetRenderDesc(session, eye, hmdDesc.DefaultEyeFov[eye]);
+        ovrMatrix4f ovrPerspectiveProjection = ovrMatrix4f_Projection(eyeRenderDescs[eye].Fov, 0.01f, 10000.0f, ovrProjection_None); //ovrProjection_ClipRangeOpenGL);
+        layer.eyeProjections[eye] = FromOvrMatrix(ovrPerspectiveProjection);      // NOTE: struct ovrMatrix4f { float M[4][4] } --> struct Matrix
+
+        layer.viewScaleDesc.HmdToEyeOffset[eye] = eyeRenderDescs[eye].HmdToEyeOffset;
+        layer.eyeLayer.Fov[eye] = eyeRenderDescs[eye].Fov;
+        
+        ovrSizei eyeSize = ovr_GetFovTextureSize(session, eye, layer.eyeLayer.Fov[eye], 1.0f);
+        layer.eyeLayer.Viewport[eye].Size = eyeSize;
+        layer.eyeLayer.Viewport[eye].Pos.x = layer.width;
+        layer.eyeLayer.Viewport[eye].Pos.y = 0;
+
+        layer.height = eyeSize.h;     //std::max(renderTargetSize.y, (uint32_t)eyeSize.h);
+        layer.width += eyeSize.w;
+    }
+    
+    return layer;
+}
+#endif

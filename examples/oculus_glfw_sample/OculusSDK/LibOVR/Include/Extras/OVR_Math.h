@@ -1,7 +1,7 @@
 /********************************************************************************//**
 \file      OVR_Math.h
 \brief     Implementation of 3D primitives such as vectors, matrices.
-\copyright Copyright 2015 Oculus VR, LLC All Rights reserved.
+\copyright Copyright 2014-2016 Oculus VR, LLC All Rights reserved.
 *************************************************************************************/
 
 #ifndef OVR_Math_h
@@ -1754,7 +1754,7 @@ public:
         : Rotation(s.Rotation), Translation(s.Translation)
     {
         // Ensure normalized rotation if converting from float to double
-        if (sizeof(T) > sizeof(Math<T>::OtherFloatType))
+        if (sizeof(T) > sizeof(typename Math<T>::OtherFloatType))
             Rotation.Normalize();
     }
 
