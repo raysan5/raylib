@@ -2369,7 +2369,7 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
 static unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 {
     unsigned int program = 0;
-	
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vertexShader;
     GLuint fragmentShader;

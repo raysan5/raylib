@@ -489,7 +489,7 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
                 retRec.height = rec2.height - dyy;
             }
         }
-		
+
         if (rec1.width > rec2.width)
         {
             if (retRec.width >= rec2.width) retRec.width = rec2.width;
