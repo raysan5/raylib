@@ -32,15 +32,15 @@
 //#define RLGL_STANDALONE       // NOTE: To use rlgl as standalone lib, just uncomment this line
 
 #ifndef RLGL_STANDALONE
-    #include "raylib.h"         // Required for typedef(s): Model, Shader, Texture2D
-    #include "utils.h"          // Required for function TraceLog()
+    #include "raylib.h"         // Required for: Model, Shader, Texture2D
+    #include "utils.h"          // Required for: TraceLog()
 #endif
 
 #ifdef RLGL_STANDALONE
     #define RAYMATH_STANDALONE
 #endif
 
-#include "raymath.h"            // Required for types: Vector3, Matrix
+#include "raymath.h"            // Required for: Vector3, Matrix
 
 // Select desired OpenGL version
 // NOTE: Those preprocessor defines are only used on rlgl module,

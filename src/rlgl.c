@@ -28,41 +28,41 @@
 
 #include "rlgl.h"
 
-#include <stdio.h>          // Standard input / output lib
-#include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
-#include <string.h>         // Declares strcmp(), strlen(), strtok()
+#include <stdio.h>                  // Standard input / output lib
+#include <stdlib.h>                 // Required for: malloc(), free(), rand()
+#include <string.h>                 // Required for: strcmp(), strlen(), strtok()
 
 #ifndef RLGL_STANDALONE
-    #include "raymath.h"    // Required for Vector3 and Matrix functions
+    #include "raymath.h"            // Required for Vector3 and Matrix functions
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #ifdef __APPLE__                // OpenGL include for OSX
-        #include <OpenGL/gl.h>
+    #ifdef __APPLE__                
+        #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
     #else
-        #include <GL/gl.h>          // Basic OpenGL include
+        #include <GL/gl.h>          // OpenGL 1.1 library
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #ifdef __APPLE__                // OpenGL include for OSX
-        #include <OpenGL/gl3.h>
+    #ifdef __APPLE__ 
+        #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
         //#define GLEW_STATIC
         //#include <GL/glew.h>        // GLEW header, includes OpenGL headers
-        #include "glad.h"         // glad header, includes OpenGL headers
+        #include "glad.h"           // GLAD library, includes OpenGL headers
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    #include <EGL/egl.h>
-    #include <GLES2/gl2.h>
-    #include <GLES2/gl2ext.h>
+    #include <EGL/egl.h>            // EGL library
+    #include <GLES2/gl2.h>          // OpenGL ES 2.0 library
+    #include <GLES2/gl2ext.h>       // OpenGL ES 2.0 extensions library
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #include <stdarg.h>         // Used for functions with variable number of parameters (TraceLog())
-#endif
+    #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end()
+#endif                              // NOTE: Used on TraceLog()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

@@ -35,14 +35,14 @@
     #include <android/asset_manager.h>
 #endif
 
-#include <stdlib.h>             // malloc(), free()
-#include <stdio.h>              // printf(), fprintf()
-#include <stdarg.h>             // Used for functions with variable number of parameters (TraceLog())
-//#include <string.h>           // String management functions: strlen(), strrchr(), strcmp()
+#include <stdlib.h>                 // Required for: malloc(), free()
+#include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
+#include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end()
+//#include <string.h>               // Required for: strlen(), strrchr(), strcmp()
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     #define STB_IMAGE_WRITE_IMPLEMENTATION
-    #include "stb_image_write.h"    // Create PNG file
+    #include "stb_image_write.h"    // Required for: stbi_write_png()
 #endif
 
 #include "tinfl.c"

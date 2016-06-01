@@ -26,16 +26,16 @@
 #include "raylib.h"
 
 #if defined(PLATFORM_ANDROID)
-    #include "utils.h"  // Android fopen function map
+    #include "utils.h"      // Android fopen function map
 #endif
 
-#include <stdio.h>      // Standard input/output functions, used to read model files data
-#include <stdlib.h>     // Declares malloc() and free() for memory management
-#include <string.h>     // Required for strcmp()
-#include <math.h>       // Used for sin, cos, tan
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <string.h>         // Required for: strcmp()
+#include <math.h>           // Required for: sin(), cos()
 
-#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "raymath.h"    // Required for data type Matrix and Matrix functions
+#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "raymath.h"        // Matrix data type and Matrix functions
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -605,7 +605,7 @@ Model LoadModel(const char *fileName)
     
     // TODO: Initialize default data for model in case loading fails, maybe a cube?
 
-    if (strcmp(GetExtension(fileName),"obj") == 0) model.mesh = LoadOBJ(fileName);
+    if (strcmp(GetExtension(fileName), "obj") == 0) model.mesh = LoadOBJ(fileName);
     else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
 
     if (model.mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
@@ -764,7 +764,7 @@ Material LoadMaterial(const char *fileName)
 {
     Material material = { 0 };
     
-    if (strcmp(GetExtension(fileName),"mtl") == 0) material = LoadMTL(fileName);
+    if (strcmp(GetExtension(fileName), "mtl") == 0) material = LoadMTL(fileName);
     else TraceLog(WARNING, "[%s] Material extension not recognized, it can't be loaded", fileName);
     
     return material;

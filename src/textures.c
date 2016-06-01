@@ -29,8 +29,8 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>             // Declares malloc() and free() for memory management
-#include <string.h>             // Required for strcmp(), strrchr(), strncmp()
+#include <stdlib.h>             // Required for: malloc(), free()
+#include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
                                 // Required: rlglLoadTexture() rlDeleteTextures(), 
@@ -40,10 +40,12 @@
                                 // NOTE: Includes Android fopen function map
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"          // Used to read image data (multiple formats support)
+#include "stb_image.h"          // Required for: stbi_load()
+                                // NOTE: Used to read image data (multiple formats support)
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"   // Used on image scaling function: ImageResize()
+#include "stb_image_resize.h"   // Required for: stbir_resize_uint8() 
+                                // NOTE: Used for image scaling on ImageResize()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

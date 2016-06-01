@@ -27,8 +27,8 @@
 #define UTILS_H
 
 #if defined(PLATFORM_ANDROID)
-    #include <stdio.h>                      // Defines FILE struct
-    #include <android/asset_manager.h>      // defines AAssetManager struct
+    #include <stdio.h>                      // Required for: FILE
+    #include <android/asset_manager.h>      // Required for: AAssetManager
 #endif
 
 //----------------------------------------------------------------------------------
