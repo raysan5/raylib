@@ -28,19 +28,19 @@
 #if defined(GESTURES_STANDALONE)
     #include "gestures.h"
 #else
-    #include "raylib.h"         // Required for typedef(s): Vector2, Gestures
+    #include "raylib.h"         // Required for: Vector2, Gestures
 #endif
 
-#include <math.h>               // Used for: atan2(), sqrt()
-#include <stdint.h>             // Defines int32_t, int64_t
+#include <math.h>               // Required for: atan2(), sqrt()
+#include <stdint.h>             // Required for: uint64_t
 
 #if defined(_WIN32)
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
 #elif defined(__linux)
-    #include <sys/time.h>       // Declares storage size of ‘now’
-    #include <time.h>           // Used for clock functions
+    #include <sys/time.h>       // Required for: timespec
+    #include <time.h>           // Required for: clock_gettime()
 #endif
 
 //----------------------------------------------------------------------------------

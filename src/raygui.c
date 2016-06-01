@@ -5,6 +5,13 @@
 *   Initial design by Kevin Gato and Daniel Nicolás
 *   Reviewed by Albert Martos, Ian Eito, Sergio Martinez and Ramon Santamaria (@raysan5)
 *
+*   The following functions from raylib are required for drawing and input reading:
+        GetColor(), GetHexValue() --> Used on SetStyleProperty()
+        MeasureText(), GetDefaultFont()
+        DrawRectangleRec(), DrawRectangle(), DrawText(), DrawLine()
+        GetMousePosition(), (), IsMouseButtonDown(), IsMouseButtonReleased()
+        'FormatText(), IsKeyDown(), 'IsMouseButtonUp()
+*
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
 *
@@ -22,12 +29,20 @@
 *
 **********************************************************************************************/
 
-#include "raygui.h"
+#define RAYGUI_STANDALONE     // NOTE: To use the raygui module as standalone lib, just uncomment this line
+                              // NOTE: Some external funtions are required for drawing and input management
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>     // Required for malloc(), free()
-#include <string.h>     // Required for strcmp()
+#if defined(RAYGUI_STANDALONE)
+    #include "raygui.h"
+#else
+    #include "raylib.h"
+#endif
+
+#include <stdio.h>      // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf()
+                        // NOTE: Those functions are only used in SaveGuiStyle() and LoadGuiStyle()
+                        
+#include <stdlib.h>     // Required for: malloc(), free()
+#include <string.h>     // Required for: strcmp()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -157,6 +172,21 @@ static int style[NUM_PROPERTIES] = {
 //----------------------------------------------------------------------------------
 static Color ColorMultiply(Color baseColor, float value);
 
+#if defined RAYGUI_STANDALONE
+static Color GetColor(int hexValue);   // Returns a Color struct from hexadecimal value
+static int GetHexValue(Color color);   // Returns hexadecimal value for a Color
+static bool CheckCollisionPointRec(Vector2 point, Rectangle rec);  // Check if point is inside rectangle
+
+// NOTE: raygui depend on some raylib input and drawing functions
+// TODO: Set your own input functions (used in ProcessCamera())
+static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
+static int IsMouseButtonDown(int button) { return 0; }
+static int IsMouseButtonPressed(int button) { return 0; }
+static int IsMouseButtonReleased(int button) { return 0; }
+static int IsMouseButtonUp(int button) { return 0; }
+static int IsKeyDown(int key) { return 0; }
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -164,7 +194,7 @@ static Color ColorMultiply(Color baseColor, float value);
 // Label element, show text
 void GuiLabel(Rectangle bounds, const char *text)
 {
-    GuiLabelEx(bounds,text, GetColor(style[LABEL_TEXT_COLOR]), BLANK, BLANK);
+    GuiLabelEx(bounds, text, GetColor(style[LABEL_TEXT_COLOR]), BLANK, BLANK);
 }
 
 // Label element extended, configurable colors
@@ -1052,3 +1082,47 @@ static Color ColorMultiply(Color baseColor, float value)
     
     return multColor;
 }
+
+#if defined (RAYGUI_STANDALONE)
+// Returns a Color struct from hexadecimal value
+static Color GetColor(int hexValue)
+{
+    Color color;
+
+    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
+    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
+    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
+    color.a = (unsigned char)hexValue & 0xFF;
+
+    return color;
+}
+
+// Returns hexadecimal value for a Color
+static int GetHexValue(Color color)
+{
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Check if point is inside rectangle
+static bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
+{
+    bool collision = false;
+
+    if ((point.x >= rec.x) && (point.x <= (rec.x + rec.width)) && (point.y >= rec.y) && (point.y <= (rec.y + rec.height))) collision = true;
+
+    return collision;
+}
+
+// Formatting of text with variables to 'embed'
+static const char *FormatText(const char *text, ...)
+{
+    static char buffer[MAX_FORMATTEXT_LENGTH];
+
+    va_list args;
+    va_start(args, text);
+    vsprintf(buffer, text, args);
+    va_end(args);
+
+    return buffer;
+}
+#endif

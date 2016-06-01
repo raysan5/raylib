@@ -30,7 +30,7 @@
     #include "raylib.h"
 #endif
 
-#include <math.h>
+#include <math.h>               // Required for: sqrt(), sin(), cos()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
