@@ -237,7 +237,7 @@ static Shader LoadDefaultShader(void);      // Load default shader (just vertex 
 static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
 static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadDefaultShader(void);      // Unload default shader
-static void UnloadStandardShader(void);      // Unload standard shader
+static void UnloadStandardShader(void);     // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
@@ -256,7 +256,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 
 #if defined(RLGL_STANDALONE)
 static void TraceLog(int msgType, const char *text, ...);
-float *MatrixToFloat(Matrix mat);   // Converts Matrix to float array
+float *MatrixToFloat(Matrix mat);           // Converts Matrix to float array
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1545,10 +1545,10 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
     mesh->vboId[6] = 0;     // Vertex indices VBO
     
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vaoId = 0;       // Vertex Array Objects (VAO)
     GLuint vboId[7];        // Vertex Buffer Objects (VBOs)
 
@@ -1674,6 +1674,7 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
 // Update vertex data on GPU (upload new data to one buffer)
 void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Activate mesh VAO
     if (vaoSupported) glBindVertexArray(mesh.vaoId);
         
@@ -1729,6 +1730,7 @@ void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
     //mesh.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
     // Now we can modify vertices
     //glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 }
 
 // Draw a 3d mesh with material and transform
@@ -2280,8 +2282,11 @@ void EndBlendMode(void)
 // Create a new light, initialize it and add to pool
 Light CreateLight(int type, Vector3 position, Color diffuse)
 {
+    Light light = NULL;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Allocate dynamic memory
-    Light light = (Light)malloc(sizeof(LightData));
+    light = (Light)malloc(sizeof(LightData));
     
     // Initialize light values with generic values
     light->id = lightsCount;
@@ -2298,13 +2303,18 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
     
     // Increase enabled lights count
     lightsCount++;
-    
+#else
+    // TODO: Support OpenGL 1.1 lighting system
+    TraceLog(WARNING, "Lighting currently not supported on OpenGL 1.1");
+#endif
+
     return light;
 }
 
 // Destroy a light and take it out of the list
 void DestroyLight(Light light)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Free dynamic memory allocation
     free(lights[light->id]);
     
@@ -2322,6 +2332,7 @@ void DestroyLight(Light light)
     
     // Decrease enabled physic objects count
     lightsCount--;
+#endif
 }
 
 //----------------------------------------------------------------------------------
