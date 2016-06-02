@@ -261,8 +261,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #ifndef true
+    #if !defined(_STDBOOL_H)
         typedef enum { false, true } bool;
+        #define _STDBOOL_H
     #endif
 #endif
 
@@ -451,10 +452,29 @@ typedef struct Ray {
     Vector3 direction;
 } Ray;
 
+typedef enum { // allows errors to be & together
+    ERROR_RAW_CONTEXT_CREATION = 1,
+    ERROR_XM_CONTEXT_CREATION = 2,
+    ERROR_MOD_CONTEXT_CREATION = 4,
+    ERROR_MIX_CHANNEL_CREATION = 8,
+    ERROR_MUSIC_CHANNEL_CREATION = 16,
+    ERROR_LOADING_XM = 32,
+    ERROR_LOADING_MOD = 64,
+    ERROR_LOADING_WAV = 128,
+    ERROR_LOADING_OGG = 256,
+    ERROR_OUT_OF_MIX_CHANNELS = 512,
+    ERROR_EXTENSION_NOT_RECOGNIZED = 1024,
+    ERROR_UNABLE_TO_OPEN_RRES_FILE = 2048,
+    ERROR_INVALID_RRES_FILE = 4096,
+    ERROR_INVALID_RRES_RESOURCE = 8192,
+    ERROR_UNINITIALIZED_CHANNELS = 16384
+} AudioError;
+
 // Sound source type
 typedef struct Sound {
     unsigned int source;
     unsigned int buffer;
+    AudioError error; // if there was any error during the creation or use of this Sound
 } Sound;
 
 // Wave type, defines audio wave data
@@ -467,6 +487,8 @@ typedef struct Wave {
 } Wave;
 
 typedef int RawAudioContext;
+
+
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -926,7 +948,7 @@ void SetMusicPitch(int index, float pitch);
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
 
 void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
+int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }

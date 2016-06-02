@@ -56,6 +56,9 @@
 #define JAR_XM_IMPLEMENTATION
 #include "jar_xm.h"         // XM loading functions
 
+#define JAR_MOD_IMPLEMENTATION
+#include "jar_mod.h"        // For playing .mod files
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -95,10 +98,11 @@ typedef struct MixChannel_t {
 // NOTE: Anything longer than ~10 seconds should be streamed into a mix channel...
 typedef struct Music {
     stb_vorbis *stream;
-    jar_xm_context_t *chipctx; // Stores jar_xm mixc
+    jar_xm_context_t *xmctx;   // Stores jar_xm mixc, XM chiptune context
+    jar_mod_context_t modctx;  // Stores mod chiptune context
     MixChannel_t *mixc;        // mix channel
     
-    int totalSamplesLeft;
+    unsigned int totalSamplesLeft;
     float totalLengthSeconds;
     bool loop;
     bool chipTune;             // True if chiptune is loaded
@@ -111,9 +115,9 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static MixChannel_t* mixChannelsActive_g[MAX_MIX_CHANNELS];        // What mix channels are currently active
+static MixChannel_t* mixChannels_g[MAX_MIX_CHANNELS];        // What mix channels are currently active
 static bool musicEnabled_g = false;
-static Music currentMusic[MAX_MUSIC_STREAMS];                      // Current music loaded, up to two can play at the same time
+static Music musicChannels_g[MAX_MUSIC_STREAMS];             // Current music loaded, up to two can play at the same time
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -175,7 +179,7 @@ void CloseAudioDevice(void)
 {
     for(int index=0; index<MAX_MUSIC_STREAMS; index++)
     {
-        if(currentMusic[index].mixc) StopMusicStream(index);      // Stop music streaming and close current stream
+        if(musicChannels_g[index].mixc) StopMusicStream(index);      // Stop music streaming and close current stream
     }
     
 
@@ -215,13 +219,13 @@ static MixChannel_t* InitMixChannel(unsigned short sampleRate, unsigned char mix
     if(mixChannel >= MAX_MIX_CHANNELS) return NULL;
     if(!IsAudioDeviceReady()) InitAudioDevice();
     
-    if(!mixChannelsActive_g[mixChannel]){
+    if(!mixChannels_g[mixChannel]){
         MixChannel_t *mixc = (MixChannel_t*)malloc(sizeof(MixChannel_t));
         mixc->sampleRate = sampleRate;
         mixc->channels = channels;
         mixc->mixChannel = mixChannel;
         mixc->floatingPoint = floatingPoint;
-        mixChannelsActive_g[mixChannel] = mixc;
+        mixChannels_g[mixChannel] = mixc;
         
         // setup openAL format
         if(channels == 1)
@@ -283,7 +287,7 @@ static void CloseMixChannel(MixChannel_t* mixc)
         //delete source and buffers
         alDeleteSources(1, &mixc->alSource);
         alDeleteBuffers(MAX_STREAM_BUFFERS, mixc->alBuffer);
-        mixChannelsActive_g[mixc->mixChannel] = NULL;
+        mixChannels_g[mixc->mixChannel] = NULL;
         free(mixc);
         mixc = NULL;
     }
@@ -294,7 +298,7 @@ static void CloseMixChannel(MixChannel_t* mixc)
 // @Returns number of samples that where processed.
 static int BufferMixChannel(MixChannel_t* mixc, void *data, int numberElements)
 {
-    if(!mixc || mixChannelsActive_g[mixc->mixChannel] != mixc) return 0; // when there is two channels there must be an even number of samples
+    if(!mixc || mixChannels_g[mixc->mixChannel] != mixc) return 0; // when there is two channels there must be an even number of samples
     
     if (!data || !numberElements)
     { // pauses audio until data is given
@@ -376,35 +380,38 @@ static void ResampleByteToFloat(char *chars, float *floats, unsigned short len)
     }
 }
 
-// used to output raw audio streams, returns negative numbers on error
+// used to output raw audio streams, returns negative numbers on error, + number represents the mix channel index
 // if floating point is false the data size is 16bit short, otherwise it is float 32bit
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint)
 {
     int mixIndex;
     for(mixIndex = 0; mixIndex < MAX_MIX_CHANNELS; mixIndex++) // find empty mix channel slot
     {
-        if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(mixIndex == MAX_MIX_CHANNELS - 1) return -1; // error
+        if(mixChannels_g[mixIndex] == NULL) break;
+        else if(mixIndex == MAX_MIX_CHANNELS - 1) return ERROR_OUT_OF_MIX_CHANNELS; // error
     }
     
     if(InitMixChannel(sampleRate, mixIndex, channels, floatingPoint))
         return mixIndex;
     else
-        return -2; // error
+        return ERROR_RAW_CONTEXT_CREATION; // error
 }
 
 void CloseRawAudioContext(RawAudioContext ctx)
 {
-    if(mixChannelsActive_g[ctx])
-        CloseMixChannel(mixChannelsActive_g[ctx]);
+    if(mixChannels_g[ctx])
+        CloseMixChannel(mixChannels_g[ctx]);
 }
 
-int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements)
+// if 0 is returned, the buffers are still full and you need to keep trying with the same data until a + number is returned.
+// any + number returned is the number of samples that was processed and passed into buffer.
+// data either needs to be array of floats or shorts.
+int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements)
 {
     int numBuffered = 0;
     if(ctx >= 0)
     {
-        MixChannel_t* mixc = mixChannelsActive_g[ctx];
+        MixChannel_t* mixc = mixChannels_g[ctx];
         numBuffered = BufferMixChannel(mixc, data, numberElements);
     }
     return numBuffered;
@@ -431,7 +438,10 @@ Sound LoadSound(char *fileName)
 
     if (strcmp(GetExtension(fileName),"wav") == 0) wave = LoadWAV(fileName);
     else if (strcmp(GetExtension(fileName),"ogg") == 0) wave = LoadOGG(fileName);
-    else TraceLog(WARNING, "[%s] Sound extension not recognized, it can't be loaded", fileName);
+    else{
+        TraceLog(WARNING, "[%s] Sound extension not recognized, it can't be loaded", fileName);
+        sound.error = ERROR_EXTENSION_NOT_RECOGNIZED; //error
+    }
 
     if (wave.data != NULL)
     {
@@ -558,6 +568,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
     if (rresFile == NULL)
     {
         TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
+        sound.error = ERROR_UNABLE_TO_OPEN_RRES_FILE; //error
     }
     else
     {
@@ -572,6 +583,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
         if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
         {
             TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
+            sound.error = ERROR_INVALID_RRES_FILE;
         }
         else
         {
@@ -662,6 +674,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
                     else
                     {
                         TraceLog(WARNING, "[%s] Required resource do not seem to be a valid SOUND resource", rresName);
+                        sound.error = ERROR_INVALID_RRES_RESOURCE;
                     }
                 }
                 else
@@ -767,105 +780,134 @@ int PlayMusicStream(int musicIndex, char *fileName)
 {
     int mixIndex;
     
-    if(currentMusic[musicIndex].stream || currentMusic[musicIndex].chipctx) return 1; // error
+    if(musicChannels_g[musicIndex].stream || musicChannels_g[musicIndex].xmctx) return ERROR_UNINITIALIZED_CHANNELS; // error
     
     for(mixIndex = 0; mixIndex < MAX_MIX_CHANNELS; mixIndex++) // find empty mix channel slot
     {
-        if(mixChannelsActive_g[mixIndex] == NULL) break;
-        else if(mixIndex == MAX_MIX_CHANNELS - 1) return 2; // error
+        if(mixChannels_g[mixIndex] == NULL) break;
+        else if(mixIndex == MAX_MIX_CHANNELS - 1) return ERROR_OUT_OF_MIX_CHANNELS; // error
     }
     
     if (strcmp(GetExtension(fileName),"ogg") == 0)
     {
         // Open audio stream
-        currentMusic[musicIndex].stream = stb_vorbis_open_filename(fileName, NULL, NULL);
+        musicChannels_g[musicIndex].stream = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (currentMusic[musicIndex].stream == NULL)
+        if (musicChannels_g[musicIndex].stream == NULL)
         {
             TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
-            return 3; // error
+            return ERROR_LOADING_OGG; // error
         }
         else
         {
             // Get file info
-            stb_vorbis_info info = stb_vorbis_get_info(currentMusic[musicIndex].stream);
+            stb_vorbis_info info = stb_vorbis_get_info(musicChannels_g[musicIndex].stream);
 
             TraceLog(INFO, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
             TraceLog(INFO, "[%s] Ogg channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
-            currentMusic[musicIndex].loop = true;                  // We loop by default
+            musicChannels_g[musicIndex].loop = true;                  // We loop by default
             musicEnabled_g = true;
             
 
-            currentMusic[musicIndex].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[musicIndex].stream) * info.channels;
-            currentMusic[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(currentMusic[musicIndex].stream);
+            musicChannels_g[musicIndex].totalSamplesLeft = (unsigned int)stb_vorbis_stream_length_in_samples(musicChannels_g[musicIndex].stream) * info.channels;
+            musicChannels_g[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(musicChannels_g[musicIndex].stream);
             
             if (info.channels == 2){
-                currentMusic[musicIndex].mixc = InitMixChannel(info.sample_rate, mixIndex, 2, false);
-                currentMusic[musicIndex].mixc->playing = true;
+                musicChannels_g[musicIndex].mixc = InitMixChannel(info.sample_rate, mixIndex, 2, false);
+                musicChannels_g[musicIndex].mixc->playing = true;
             }
             else{
-                currentMusic[musicIndex].mixc = InitMixChannel(info.sample_rate, mixIndex, 1, false);
-                currentMusic[musicIndex].mixc->playing = true;
+                musicChannels_g[musicIndex].mixc = InitMixChannel(info.sample_rate, mixIndex, 1, false);
+                musicChannels_g[musicIndex].mixc->playing = true;
             }
-            if(!currentMusic[musicIndex].mixc) return 4; // error
+            if(!musicChannels_g[musicIndex].mixc) return ERROR_LOADING_OGG; // error
         }
     }
     else if (strcmp(GetExtension(fileName),"xm") == 0)
     {
         // only stereo is supported for xm
-        if(!jar_xm_create_context_from_file(&currentMusic[musicIndex].chipctx, 48000, fileName))
+        if(!jar_xm_create_context_from_file(&musicChannels_g[musicIndex].xmctx, 48000, fileName))
         {
-            currentMusic[musicIndex].chipTune = true;
-            currentMusic[musicIndex].loop = true;
-            jar_xm_set_max_loop_count(currentMusic[musicIndex].chipctx, 0); // infinite number of loops
-            currentMusic[musicIndex].totalSamplesLeft =  jar_xm_get_remaining_samples(currentMusic[musicIndex].chipctx);
-            currentMusic[musicIndex].totalLengthSeconds = ((float)currentMusic[musicIndex].totalSamplesLeft) / 48000.f;
+            musicChannels_g[musicIndex].chipTune = true;
+            musicChannels_g[musicIndex].loop = true;
+            jar_xm_set_max_loop_count(musicChannels_g[musicIndex].xmctx, 0); // infinite number of loops
+            musicChannels_g[musicIndex].totalSamplesLeft =  (unsigned int)jar_xm_get_remaining_samples(musicChannels_g[musicIndex].xmctx);
+            musicChannels_g[musicIndex].totalLengthSeconds = ((float)musicChannels_g[musicIndex].totalSamplesLeft) / 48000.f;
             musicEnabled_g = true;
             
-            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, currentMusic[musicIndex].totalSamplesLeft);
-            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, currentMusic[musicIndex].totalLengthSeconds);
+            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, musicChannels_g[musicIndex].totalSamplesLeft);
+            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, musicChannels_g[musicIndex].totalLengthSeconds);
             
-            currentMusic[musicIndex].mixc = InitMixChannel(48000, mixIndex, 2, false);
-            if(!currentMusic[musicIndex].mixc) return 5; // error
-            currentMusic[musicIndex].mixc->playing = true;
+            musicChannels_g[musicIndex].mixc = InitMixChannel(48000, mixIndex, 2, true);
+            if(!musicChannels_g[musicIndex].mixc) return ERROR_XM_CONTEXT_CREATION; // error
+            musicChannels_g[musicIndex].mixc->playing = true;
         }
         else
         {
             TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
-            return 6; // error
+            return ERROR_LOADING_XM; // error
+        }
+    }
+    else if (strcmp(GetExtension(fileName),"mod") == 0)
+    {
+        jar_mod_init(&musicChannels_g[musicIndex].modctx);
+        if(jar_mod_load_file(&musicChannels_g[musicIndex].modctx, fileName))
+        {
+            musicChannels_g[musicIndex].chipTune = true;
+            musicChannels_g[musicIndex].loop = true;
+            musicChannels_g[musicIndex].totalSamplesLeft = (unsigned int)jar_mod_max_samples(&musicChannels_g[musicIndex].modctx);
+            musicChannels_g[musicIndex].totalLengthSeconds = ((float)musicChannels_g[musicIndex].totalSamplesLeft) / 48000.f;
+            musicEnabled_g = true;
+            
+            TraceLog(INFO, "[%s] MOD number of samples: %i", fileName, musicChannels_g[musicIndex].totalSamplesLeft);
+            TraceLog(INFO, "[%s] MOD track length: %11.6f sec", fileName, musicChannels_g[musicIndex].totalLengthSeconds);
+            
+            musicChannels_g[musicIndex].mixc = InitMixChannel(48000, mixIndex, 2, false);
+            if(!musicChannels_g[musicIndex].mixc) return ERROR_MOD_CONTEXT_CREATION; // error
+            musicChannels_g[musicIndex].mixc->playing = true;
+        }
+        else
+        {
+            TraceLog(WARNING, "[%s] MOD file could not be opened", fileName);
+            return ERROR_LOADING_MOD; // error
         }
     }
     else
     {
         TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
-        return 7; // error
+        return ERROR_EXTENSION_NOT_RECOGNIZED; // error
     }
     return 0; // normal return
 }
 
-// Stop music playing for individual music index of currentMusic array (close stream)
+// Stop music playing for individual music index of musicChannels_g array (close stream)
 void StopMusicStream(int index)
 {
-    if (index < MAX_MUSIC_STREAMS && currentMusic[index].mixc)
+    if (index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc)
     {
-        CloseMixChannel(currentMusic[index].mixc);
+        CloseMixChannel(musicChannels_g[index].mixc);
         
-        if (currentMusic[index].chipTune)
+        if (musicChannels_g[index].chipTune && musicChannels_g[index].xmctx)
         {
-            jar_xm_free_context(currentMusic[index].chipctx);
+            jar_xm_free_context(musicChannels_g[index].xmctx);
+            musicChannels_g[index].xmctx = 0;
+        }
+        else if(musicChannels_g[index].chipTune && musicChannels_g[index].modctx.mod_loaded)
+        {
+            jar_mod_unload(&musicChannels_g[index].modctx);
         }
         else
         {
-            stb_vorbis_close(currentMusic[index].stream);
+            stb_vorbis_close(musicChannels_g[index].stream);
         }
         
         if(!getMusicStreamCount()) musicEnabled_g = false;
-        if(currentMusic[index].stream || currentMusic[index].chipctx)
+        if(musicChannels_g[index].stream || musicChannels_g[index].xmctx)
         {
-            currentMusic[index].stream = NULL;
-            currentMusic[index].chipctx = NULL;
+            musicChannels_g[index].stream = NULL;
+            musicChannels_g[index].xmctx = NULL;
         }
     }
 }
@@ -875,7 +917,7 @@ int getMusicStreamCount(void)
 {
     int musicCount = 0;
     for(int musicIndex = 0; musicIndex < MAX_MUSIC_STREAMS; musicIndex++) // find empty music slot
-        if(currentMusic[musicIndex].stream != NULL || currentMusic[musicIndex].chipTune) musicCount++;
+        if(musicChannels_g[musicIndex].stream != NULL || musicChannels_g[musicIndex].chipTune) musicCount++;
     
     return musicCount;
 }
@@ -884,11 +926,11 @@ int getMusicStreamCount(void)
 void PauseMusicStream(int index)
 {
     // Pause music stream if music available!
-    if (index < MAX_MUSIC_STREAMS && currentMusic[index].mixc && musicEnabled_g)
+    if (index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc && musicEnabled_g)
     {
         TraceLog(INFO, "Pausing music stream");
-        alSourcePause(currentMusic[index].mixc->alSource);
-        currentMusic[index].mixc->playing = false;
+        alSourcePause(musicChannels_g[index].mixc->alSource);
+        musicChannels_g[index].mixc->playing = false;
     }
 }
 
@@ -897,13 +939,13 @@ void ResumeMusicStream(int index)
 {
     // Resume music playing... if music available!
     ALenum state;
-    if(index < MAX_MUSIC_STREAMS && currentMusic[index].mixc){
-        alGetSourcei(currentMusic[index].mixc->alSource, AL_SOURCE_STATE, &state);
+    if(index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc){
+        alGetSourcei(musicChannels_g[index].mixc->alSource, AL_SOURCE_STATE, &state);
         if (state == AL_PAUSED)
         {
             TraceLog(INFO, "Resuming music stream");
-            alSourcePlay(currentMusic[index].mixc->alSource);
-            currentMusic[index].mixc->playing = true;
+            alSourcePlay(musicChannels_g[index].mixc->alSource);
+            musicChannels_g[index].mixc->playing = true;
         }
     }
 }
@@ -914,8 +956,8 @@ bool IsMusicPlaying(int index)
     bool playing = false;
     ALint state;
     
-    if(index < MAX_MUSIC_STREAMS && currentMusic[index].mixc){
-        alGetSourcei(currentMusic[index].mixc->alSource, AL_SOURCE_STATE, &state);
+    if(index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc){
+        alGetSourcei(musicChannels_g[index].mixc->alSource, AL_SOURCE_STATE, &state);
         if (state == AL_PLAYING) playing = true;
     }
 
@@ -925,29 +967,29 @@ bool IsMusicPlaying(int index)
 // Set volume for music
 void SetMusicVolume(int index, float volume)
 {
-    if(index < MAX_MUSIC_STREAMS && currentMusic[index].mixc){
-        alSourcef(currentMusic[index].mixc->alSource, AL_GAIN, volume);
+    if(index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc){
+        alSourcef(musicChannels_g[index].mixc->alSource, AL_GAIN, volume);
     }
 }
 
 void SetMusicPitch(int index, float pitch)
 {
-    if(index < MAX_MUSIC_STREAMS && currentMusic[index].mixc){
-        alSourcef(currentMusic[index].mixc->alSource, AL_PITCH, pitch);
+    if(index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc){
+        alSourcef(musicChannels_g[index].mixc->alSource, AL_PITCH, pitch);
     }
 }
 
-// Get current music time length (in seconds)
+// Get music time length (in seconds)
 float GetMusicTimeLength(int index)
 {
     float totalSeconds;
-    if (currentMusic[index].chipTune)
+    if (musicChannels_g[index].chipTune)
     {
-        totalSeconds = currentMusic[index].totalLengthSeconds;
+        totalSeconds = (float)musicChannels_g[index].totalLengthSeconds;
     }
     else
     {
-        totalSeconds = stb_vorbis_stream_length_in_seconds(currentMusic[index].stream);
+        totalSeconds = stb_vorbis_stream_length_in_seconds(musicChannels_g[index].stream);
     }
 
     return totalSeconds;
@@ -957,19 +999,24 @@ float GetMusicTimeLength(int index)
 float GetMusicTimePlayed(int index)
 {
     float secondsPlayed = 0.0f;
-    if(index < MAX_MUSIC_STREAMS && currentMusic[index].mixc)
+    if(index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc)
     {
-        if (currentMusic[index].chipTune)
+        if (musicChannels_g[index].chipTune && musicChannels_g[index].xmctx)
         {
             uint64_t samples;
-            jar_xm_get_position(currentMusic[index].chipctx, NULL, NULL, NULL, &samples);
-            secondsPlayed = (float)samples / (48000 * currentMusic[index].mixc->channels); // Not sure if this is the correct value
+            jar_xm_get_position(musicChannels_g[index].xmctx, NULL, NULL, NULL, &samples);
+            secondsPlayed = (float)samples / (48000.f * musicChannels_g[index].mixc->channels); // Not sure if this is the correct value
+        }
+        else if(musicChannels_g[index].chipTune && musicChannels_g[index].modctx.mod_loaded)
+        {
+            long numsamp = jar_mod_current_samples(&musicChannels_g[index].modctx);
+            secondsPlayed = (float)numsamp / (48000.f);
         }
         else
         {
-            int totalSamples = stb_vorbis_stream_length_in_samples(currentMusic[index].stream) * currentMusic[index].mixc->channels;
-            int samplesPlayed = totalSamples - currentMusic[index].totalSamplesLeft;
-            secondsPlayed = (float)samplesPlayed / (currentMusic[index].mixc->sampleRate * currentMusic[index].mixc->channels);
+            int totalSamples = stb_vorbis_stream_length_in_samples(musicChannels_g[index].stream) * musicChannels_g[index].mixc->channels;
+            int samplesPlayed = totalSamples - musicChannels_g[index].totalSamplesLeft;
+            secondsPlayed = (float)samplesPlayed / (musicChannels_g[index].mixc->sampleRate * musicChannels_g[index].mixc->channels);
         }
     }
 
@@ -989,19 +1036,30 @@ static bool BufferMusicStream(int index, int numBuffers)
     int  size = 0;              // Total size of data steamed in L+R samples for xm floats, individual L or R for ogg shorts
     bool active = true;         // We can get more data from stream (not finished)
     
-    if (currentMusic[index].chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
+    if (musicChannels_g[index].chipTune) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
     {
-        if(currentMusic[index].totalSamplesLeft >= MUSIC_BUFFER_SIZE_SHORT)
-            size = MUSIC_BUFFER_SIZE_SHORT / 2;
-        else
-            size = currentMusic[index].totalSamplesLeft / 2;
-        
         for(int x=0; x<numBuffers; x++)
         {
-            jar_xm_generate_samples_16bit(currentMusic[index].chipctx, pcm, size); // reads 2*readlen shorts and moves them to buffer+size memory location
-            BufferMixChannel(currentMusic[index].mixc, pcm, size * 2);
-            currentMusic[index].totalSamplesLeft -= size * 2;
-            if(currentMusic[index].totalSamplesLeft <= 0)
+            if(musicChannels_g[index].modctx.mod_loaded){
+                if(musicChannels_g[index].totalSamplesLeft >= MUSIC_BUFFER_SIZE_SHORT)
+                    size = MUSIC_BUFFER_SIZE_SHORT / 2;
+                else
+                    size = musicChannels_g[index].totalSamplesLeft / 2;
+                jar_mod_fillbuffer(&musicChannels_g[index].modctx, pcm, size, 0 );
+                BufferMixChannel(musicChannels_g[index].mixc, pcm, size * 2);
+            }
+            else if(musicChannels_g[index].xmctx){
+                if(musicChannels_g[index].totalSamplesLeft >= MUSIC_BUFFER_SIZE_FLOAT)
+                    size = MUSIC_BUFFER_SIZE_FLOAT / 2;
+                else
+                    size = musicChannels_g[index].totalSamplesLeft / 2;
+                jar_xm_generate_samples(musicChannels_g[index].xmctx, pcmf, size); // reads 2*readlen shorts and moves them to buffer+size memory location
+                BufferMixChannel(musicChannels_g[index].mixc, pcmf, size * 2);
+            }
+            
+
+            musicChannels_g[index].totalSamplesLeft -= size;
+            if(musicChannels_g[index].totalSamplesLeft <= 0)
             {
                 active = false;
                 break;
@@ -1010,17 +1068,17 @@ static bool BufferMusicStream(int index, int numBuffers)
     }
     else
     {
-        if(currentMusic[index].totalSamplesLeft >= MUSIC_BUFFER_SIZE_SHORT)
+        if(musicChannels_g[index].totalSamplesLeft >= MUSIC_BUFFER_SIZE_SHORT)
             size = MUSIC_BUFFER_SIZE_SHORT;
         else
-            size = currentMusic[index].totalSamplesLeft;
+            size = musicChannels_g[index].totalSamplesLeft;
         
         for(int x=0; x<numBuffers; x++)
         {
-            int streamedBytes = stb_vorbis_get_samples_short_interleaved(currentMusic[index].stream, currentMusic[index].mixc->channels, pcm, size);
-            BufferMixChannel(currentMusic[index].mixc, pcm, streamedBytes * currentMusic[index].mixc->channels);
-            currentMusic[index].totalSamplesLeft -= streamedBytes * currentMusic[index].mixc->channels;
-            if(currentMusic[index].totalSamplesLeft <= 0)
+            int streamedBytes = stb_vorbis_get_samples_short_interleaved(musicChannels_g[index].stream, musicChannels_g[index].mixc->channels, pcm, size);
+            BufferMixChannel(musicChannels_g[index].mixc, pcm, streamedBytes * musicChannels_g[index].mixc->channels);
+            musicChannels_g[index].totalSamplesLeft -= streamedBytes * musicChannels_g[index].mixc->channels;
+            if(musicChannels_g[index].totalSamplesLeft <= 0)
             {
                 active = false;
                 break;
@@ -1037,11 +1095,11 @@ static void EmptyMusicStream(int index)
     ALuint buffer = 0;
     int queued = 0;
 
-    alGetSourcei(currentMusic[index].mixc->alSource, AL_BUFFERS_QUEUED, &queued);
+    alGetSourcei(musicChannels_g[index].mixc->alSource, AL_BUFFERS_QUEUED, &queued);
 
     while (queued > 0)
     {
-        alSourceUnqueueBuffers(currentMusic[index].mixc->alSource, 1, &buffer);
+        alSourceUnqueueBuffers(musicChannels_g[index].mixc->alSource, 1, &buffer);
 
         queued--;
     }
@@ -1051,7 +1109,7 @@ static void EmptyMusicStream(int index)
 static int IsMusicStreamReadyForBuffering(int index)
 {
     ALint processed = 0;
-    alGetSourcei(currentMusic[index].mixc->alSource, AL_BUFFERS_PROCESSED, &processed);
+    alGetSourcei(musicChannels_g[index].mixc->alSource, AL_BUFFERS_PROCESSED, &processed);
     return processed;
 }
 
@@ -1062,20 +1120,21 @@ void UpdateMusicStream(int index)
     bool active = true;
     int numBuffers = IsMusicStreamReadyForBuffering(index);
     
-    if (currentMusic[index].mixc->playing && index < MAX_MUSIC_STREAMS && musicEnabled_g && currentMusic[index].mixc && numBuffers)
+    if (musicChannels_g[index].mixc->playing && index < MAX_MUSIC_STREAMS && musicEnabled_g && musicChannels_g[index].mixc && numBuffers)
     {
         active = BufferMusicStream(index, numBuffers);
         
-        if (!active && currentMusic[index].loop)
+        if (!active && musicChannels_g[index].loop)
         {
-            if (currentMusic[index].chipTune)
+            if (musicChannels_g[index].chipTune)
             {
-                currentMusic[index].totalSamplesLeft = currentMusic[index].totalLengthSeconds * 48000;
+                if(musicChannels_g[index].modctx.mod_loaded) jar_mod_seek_start(&musicChannels_g[index].modctx);
+                musicChannels_g[index].totalSamplesLeft = musicChannels_g[index].totalLengthSeconds * 48000;
             }
             else
             {
-                stb_vorbis_seek_start(currentMusic[index].stream);
-                currentMusic[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(currentMusic[index].stream) * currentMusic[index].mixc->channels;
+                stb_vorbis_seek_start(musicChannels_g[index].stream);
+                musicChannels_g[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(musicChannels_g[index].stream) * musicChannels_g[index].mixc->channels;
             }
             active = true;
         }
@@ -1083,9 +1142,9 @@ void UpdateMusicStream(int index)
 
         if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Error buffering data...");
         
-        alGetSourcei(currentMusic[index].mixc->alSource, AL_SOURCE_STATE, &state);
+        alGetSourcei(musicChannels_g[index].mixc->alSource, AL_SOURCE_STATE, &state);
 
-        if (state != AL_PLAYING && active) alSourcePlay(currentMusic[index].mixc->alSource);
+        if (state != AL_PLAYING && active) alSourcePlay(musicChannels_g[index].mixc->alSource);
 
         if (!active) StopMusicStream(index);
         
