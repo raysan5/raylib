@@ -48,8 +48,6 @@
     #ifdef __APPLE__ 
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        //#define GLEW_STATIC
-        //#include <GL/glew.h>        // GLEW header, includes OpenGL headers
         #include "glad.h"           // GLAD library, includes OpenGL headers
     #endif
 #endif
@@ -912,8 +910,8 @@ void rlglInit(void)
     vaoSupported = true;
     npotSupported = true;
 
-    // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
+    // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
     const char *extList[numExt];
     
