@@ -452,10 +452,29 @@ typedef struct Ray {
     Vector3 direction;
 } Ray;
 
+typedef enum {
+    ERROR_RAW_CONTEXT_CREATION = -20,
+    ERROR_XM_CONTEXT_CREATION,
+    ERROR_MOD_CONTEXT_CREATION,
+    ERROR_MIX_CHANNEL_CREATION,
+    ERROR_MUSIC_CHANNEL_CREATION,
+    ERROR_LOADING_XM,
+    ERROR_LOADING_MOD,
+    ERROR_LOADING_WAV,
+    ERROR_LOADING_OGG,
+    ERROR_OUT_OF_MIX_CHANNELS,
+    ERROR_EXTENSION_NOT_RECOGNIZED,
+    ERROR_UNABLE_TO_OPEN_RRES_FILE,
+    ERROR_INVALID_RRES_FILE,
+    ERROR_INVALID_RRES_RESOURCE,
+    ERROR_UNINITIALIZED_CHANNELS
+} AudioError;
+
 // Sound source type
 typedef struct Sound {
     unsigned int source;
     unsigned int buffer;
+    AudioError error; // if there was any error during the creation or use of this Sound
 } Sound;
 
 // Wave type, defines audio wave data
@@ -468,6 +487,8 @@ typedef struct Wave {
 } Wave;
 
 typedef int RawAudioContext;
+
+
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform

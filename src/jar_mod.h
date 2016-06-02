@@ -15,7 +15,7 @@
 // Other source files should just include jar_mod.h
 //
 // SAMPLE CODE:
-// modcontext modctx;
+// jar_mod_context_t modctx;
 // short samplebuff[4096];
 // bool bufferFull = false;
 // int intro_load(void)
@@ -54,17 +54,17 @@
 ///////////////////////////////////////////////////////////////////////////////////
 // HxCMOD Core API:
 // -------------------------------------------
-// int  jar_mod_init(modcontext * modctx)
+// int  jar_mod_init(jar_mod_context_t * modctx)
 //
-// - Initialize the modcontext buffer. Must be called before doing anything else.
+// - Initialize the jar_mod_context_t buffer. Must be called before doing anything else.
 //   Return 1 if success. 0 in case of error.
 // -------------------------------------------
-// mulong jar_mod_load_file(modcontext * modctx, char* filename)
+// mulong jar_mod_load_file(jar_mod_context_t * modctx, char* filename)
 //
 // - "Load" a MOD from file, context must already be initialized.
 //   Return size of file in bytes.
 // -------------------------------------------
-// void jar_mod_fillbuffer( modcontext * modctx, unsigned short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf )
+// void jar_mod_fillbuffer( jar_mod_context_t * modctx, unsigned short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf )
 //
 // - Generate and return the next samples chunk to outbuffer.
 //   nbsample specify the number of stereo 16bits samples you want.
@@ -72,7 +72,7 @@
 //   The output buffer size in bytes must be equal to ( nbsample * 2 * channels ).
 //   The optional trkbuf parameter can be used to get detailed status of the player. Put NULL/0 is unused.
 // -------------------------------------------
-// void jar_mod_unload( modcontext * modctx )
+// void jar_mod_unload( jar_mod_context_t * modctx )
 // - "Unload" / clear the player status.
 // -------------------------------------------
 ///////////////////////////////////////////////////////////////////////////////////
@@ -198,7 +198,7 @@ typedef struct {
     muchar *modfile; // the raw mod file
     mulong  modfilesize;
     muint   loopcount;
-} modcontext;
+} jar_mod_context_t;
 
 //
 // Player states structures
@@ -243,14 +243,14 @@ typedef struct jar_mod_tracker_buffer_state_
 
 
 
-bool   jar_mod_init(modcontext * modctx);
-bool   jar_mod_setcfg(modcontext * modctx, int samplerate, int bits, int stereo, int stereo_separation, int filter);
-void   jar_mod_fillbuffer(modcontext * modctx, short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf);
-void   jar_mod_unload(modcontext * modctx);
-mulong jar_mod_load_file(modcontext * modctx, char* filename);
-mulong jar_mod_current_samples(modcontext * modctx);
-mulong jar_mod_max_samples(modcontext * modctx);
-void   jar_mod_seek_start(modcontext * ctx);
+bool   jar_mod_init(jar_mod_context_t * modctx);
+bool   jar_mod_setcfg(jar_mod_context_t * modctx, int samplerate, int bits, int stereo, int stereo_separation, int filter);
+void   jar_mod_fillbuffer(jar_mod_context_t * modctx, short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf);
+void   jar_mod_unload(jar_mod_context_t * modctx);
+mulong jar_mod_load_file(jar_mod_context_t * modctx, char* filename);
+mulong jar_mod_current_samples(jar_mod_context_t * modctx);
+mulong jar_mod_max_samples(jar_mod_context_t * modctx);
+void   jar_mod_seek_start(jar_mod_context_t * ctx);
 
 #ifdef __cplusplus
 }
@@ -398,7 +398,7 @@ static int memcompare( unsigned char * buf1, unsigned char * buf2, unsigned int 
     return 1;
 }
 
-static int getnote( modcontext * mod, unsigned short period, int finetune )
+static int getnote( jar_mod_context_t * mod, unsigned short period, int finetune )
 {
     int i;
 
@@ -413,7 +413,7 @@ static int getnote( modcontext * mod, unsigned short period, int finetune )
     return MAXNOTES;
 }
 
-static void worknote( note * nptr, channel * cptr, char t, modcontext * mod )
+static void worknote( note * nptr, channel * cptr, char t, jar_mod_context_t * mod )
 {
     muint sample, period, effect, operiod;
     muint curnote, arpnote;
@@ -1051,13 +1051,13 @@ static void workeffect( note * nptr, channel * cptr )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-bool jar_mod_init(modcontext * modctx)
+bool jar_mod_init(jar_mod_context_t * modctx)
 {
     muint i,j;
 
     if( modctx )
     {
-        memclear(modctx, 0, sizeof(modcontext));
+        memclear(modctx, 0, sizeof(jar_mod_context_t));
         modctx->playrate = DEFAULT_SAMPLE_RATE;
         modctx->stereo = 1;
         modctx->stereo_separation = 1;
@@ -1079,7 +1079,7 @@ bool jar_mod_init(modcontext * modctx)
     return 0;
 }
 
-bool jar_mod_setcfg(modcontext * modctx, int samplerate, int bits, int stereo, int stereo_separation, int filter)
+bool jar_mod_setcfg(jar_mod_context_t * modctx, int samplerate, int bits, int stereo, int stereo_separation, int filter)
 {
     if( modctx )
     {
@@ -1112,7 +1112,7 @@ bool jar_mod_setcfg(modcontext * modctx, int samplerate, int bits, int stereo, i
 }
 
 // make certain that mod_data stays in memory while playing
-static bool jar_mod_load( modcontext * modctx, void * mod_data, int mod_data_size )
+static bool jar_mod_load( jar_mod_context_t * modctx, void * mod_data, int mod_data_size )
 {
     muint i, max;
     unsigned short t;
@@ -1230,7 +1230,7 @@ static bool jar_mod_load( modcontext * modctx, void * mod_data, int mod_data_siz
     return 0;
 }
 
-void jar_mod_fillbuffer( modcontext * modctx, short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf )
+void jar_mod_fillbuffer( jar_mod_context_t * modctx, short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf )
 {
     unsigned long i, j;
     unsigned long k;
@@ -1472,7 +1472,7 @@ void jar_mod_fillbuffer( modcontext * modctx, short * outbuffer, unsigned long n
 }
 
 //resets internals for mod context
-static void jar_mod_reset( modcontext * modctx)
+static void jar_mod_reset( jar_mod_context_t * modctx)
 {
     if(modctx)
     {
@@ -1500,7 +1500,7 @@ static void jar_mod_reset( modcontext * modctx)
     }
 }
 
-void jar_mod_unload( modcontext * modctx)
+void jar_mod_unload( jar_mod_context_t * modctx)
 {
     if(modctx)
     {
@@ -1515,7 +1515,7 @@ void jar_mod_unload( modcontext * modctx)
 
 
 
-mulong jar_mod_load_file(modcontext * modctx, char* filename)
+mulong jar_mod_load_file(jar_mod_context_t * modctx, char* filename)
 {
     mulong fsize = 0;
     if(modctx->modfile)
@@ -1545,7 +1545,7 @@ mulong jar_mod_load_file(modcontext * modctx, char* filename)
     return fsize;
 }
 
-mulong jar_mod_current_samples(modcontext * modctx)
+mulong jar_mod_current_samples(jar_mod_context_t * modctx)
 {
     if(modctx)
         return modctx->samplenb;
@@ -1554,9 +1554,9 @@ mulong jar_mod_current_samples(modcontext * modctx)
 }
 
 // Works, however it is very slow, this data should be cached to ensure it is run only once per file
-mulong jar_mod_max_samples(modcontext * ctx)
+mulong jar_mod_max_samples(jar_mod_context_t * ctx)
 {
-    modcontext tmpctx;
+    jar_mod_context_t tmpctx;
     jar_mod_init(&tmpctx);
     if(!jar_mod_load(&tmpctx, (void*)ctx->modfile, ctx->modfilesize)) return 0;
     
@@ -1571,7 +1571,7 @@ mulong jar_mod_max_samples(modcontext * ctx)
 }
 
 // move seek_val to sample index, 0 -> jar_mod_max_samples is the range
-void jar_mod_seek_start(modcontext * ctx)
+void jar_mod_seek_start(jar_mod_context_t * ctx)
 {
     if(ctx)
     {
