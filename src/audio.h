@@ -41,8 +41,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #ifndef true
+    #if !defined(_STDBOOL_H)
         typedef enum { false, true } bool;
+        #define _STDBOOL_H
     #endif
 #endif
 
