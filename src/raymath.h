@@ -339,14 +339,13 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
     return result;
 }
 
-// Transforms a Vector3 with a given Matrix
+// Transforms a Vector3 by a given Matrix
+// TODO: Review math (matrix transpose required?)
 RMDEF void VectorTransform(Vector3 *v, Matrix mat)
 {
     float x = v->x;
     float y = v->y;
     float z = v->z;
-
-    //MatrixTranspose(&mat);
 
     v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
