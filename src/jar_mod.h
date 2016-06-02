@@ -1057,7 +1057,7 @@ bool jar_mod_init(modcontext * modctx)
 
     if( modctx )
     {
-        memclear(modctx,0,sizeof(modcontext));
+        memclear(modctx, 0, sizeof(modcontext));
         modctx->playrate = DEFAULT_SAMPLE_RATE;
         modctx->stereo = 1;
         modctx->stereo_separation = 1;
@@ -1065,9 +1065,9 @@ bool jar_mod_init(modcontext * modctx)
         modctx->filter = 1;
         modctx->loopcount = 0;
 
-        for(i=0;i<PERIOD_TABLE_LENGTH - 1;i++)
+        for(i=0; i < PERIOD_TABLE_LENGTH - 1; i++)
         {
-            for(j=0;j<8;j++)
+            for(j=0; j < 8; j++)
             {
                 modctx->fullperiod[(i*8) + j] = periodtable[i] - ((( periodtable[i] - periodtable[i+1] ) / 8) * j);
             }
@@ -1471,15 +1471,11 @@ void jar_mod_fillbuffer( modcontext * modctx, short * outbuffer, unsigned long n
     }
 }
 
-void jar_mod_unload( modcontext * modctx)
+//resets internals for mod context
+static void jar_mod_reset( modcontext * modctx)
 {
     if(modctx)
     {
-        if(modctx->modfile)
-        {
-            free(modctx->modfile);
-            modctx->modfile = 0;
-        }
         memclear(&modctx->song, 0, sizeof(modctx->song));
         memclear(&modctx->sampledata, 0, sizeof(modctx->sampledata));
         memclear(&modctx->patterndata, 0, sizeof(modctx->patterndata));
@@ -1493,19 +1489,31 @@ void jar_mod_unload( modcontext * modctx)
         modctx->patternticksaim = 0;
         modctx->sampleticksconst = 0;
         modctx->loopcount = 0;
-
         modctx->samplenb = 0;
-
         memclear(modctx->channels, 0, sizeof(modctx->channels));
-
         modctx->number_of_channels = 0;
-
         modctx->mod_loaded = 0;
-
         modctx->last_r_sample = 0;
         modctx->last_l_sample = 0;
+        
+        jar_mod_init(modctx);
     }
 }
+
+void jar_mod_unload( modcontext * modctx)
+{
+    if(modctx)
+    {
+        if(modctx->modfile)
+        {
+            free(modctx->modfile);
+            modctx->modfile = 0;
+        }
+        jar_mod_reset(modctx);
+    }
+}
+
+
 
 mulong jar_mod_load_file(modcontext * modctx, char* filename)
 {
@@ -1567,12 +1575,8 @@ void jar_mod_seek_start(modcontext * ctx)
 {
     if(ctx)
     {
-        char* tmpmodfile = ctx->modfile;
-        long size = ctx->modfilesize;
-        jar_mod_init(ctx);
-        jar_mod_load(ctx, tmpmodfile, size);
-        ctx->modfilesize = size;
-        ctx->modfile = tmpmodfile;
+        jar_mod_reset(ctx);
+        jar_mod_load(ctx, ctx->modfile, ctx->modfilesize);
     }
 }
 
