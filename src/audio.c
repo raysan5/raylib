@@ -799,11 +799,11 @@ void SetSoundPitch(Sound sound, float pitch)
 
 // Start music playing (open stream)
 // returns 0 on success
-int PlayMusicStream(int musicIndex, char *fileName)
+int PlayMusicStream(int index, char *fileName)
 {
     int mixIndex;
     
-    if (musicChannels_g[musicIndex].stream || musicChannels_g[musicIndex].xmctx) return ERROR_UNINITIALIZED_CHANNELS; // error
+    if (musicChannels_g[index].stream || musicChannels_g[index].xmctx) return ERROR_UNINITIALIZED_CHANNELS; // error
     
     for (mixIndex = 0; mixIndex < MAX_MIX_CHANNELS; mixIndex++) // find empty mix channel slot
     {
@@ -814,9 +814,9 @@ int PlayMusicStream(int musicIndex, char *fileName)
     if (strcmp(GetExtension(fileName),"ogg") == 0)
     {
         // Open audio stream
-        musicChannels_g[musicIndex].stream = stb_vorbis_open_filename(fileName, NULL, NULL);
+        musicChannels_g[index].stream = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (musicChannels_g[musicIndex].stream == NULL)
+        if (musicChannels_g[index].stream == NULL)
         {
             TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
             return ERROR_LOADING_OGG; // error
@@ -824,53 +824,53 @@ int PlayMusicStream(int musicIndex, char *fileName)
         else
         {
             // Get file info
-            stb_vorbis_info info = stb_vorbis_get_info(musicChannels_g[musicIndex].stream);
+            stb_vorbis_info info = stb_vorbis_get_info(musicChannels_g[index].stream);
 
             TraceLog(INFO, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
             TraceLog(INFO, "[%s] Ogg channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
-            musicChannels_g[musicIndex].loop = true;                  // We loop by default
+            musicChannels_g[index].loop = true;                  // We loop by default
             musicEnabled_g = true;
             
 
-            musicChannels_g[musicIndex].totalSamplesLeft = (unsigned int)stb_vorbis_stream_length_in_samples(musicChannels_g[musicIndex].stream) * info.channels;
-            musicChannels_g[musicIndex].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(musicChannels_g[musicIndex].stream);
+            musicChannels_g[index].totalSamplesLeft = (unsigned int)stb_vorbis_stream_length_in_samples(musicChannels_g[index].stream) * info.channels;
+            musicChannels_g[index].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(musicChannels_g[index].stream);
             
             if (info.channels == 2)
             {
-                musicChannels_g[musicIndex].mixc = InitMixChannel(info.sample_rate, mixIndex, 2, false);
-                musicChannels_g[musicIndex].mixc->playing = true;
+                musicChannels_g[index].mixc = InitMixChannel(info.sample_rate, mixIndex, 2, false);
+                musicChannels_g[index].mixc->playing = true;
             }
             else
             {
-                musicChannels_g[musicIndex].mixc = InitMixChannel(info.sample_rate, mixIndex, 1, false);
-                musicChannels_g[musicIndex].mixc->playing = true;
+                musicChannels_g[index].mixc = InitMixChannel(info.sample_rate, mixIndex, 1, false);
+                musicChannels_g[index].mixc->playing = true;
             }
             
-            if (!musicChannels_g[musicIndex].mixc) return ERROR_LOADING_OGG; // error
+            if (!musicChannels_g[index].mixc) return ERROR_LOADING_OGG; // error
         }
     }
     else if (strcmp(GetExtension(fileName),"xm") == 0)
     {
         // only stereo is supported for xm
-        if (!jar_xm_create_context_from_file(&musicChannels_g[musicIndex].xmctx, 48000, fileName))
+        if (!jar_xm_create_context_from_file(&musicChannels_g[index].xmctx, 48000, fileName))
         {
-            musicChannels_g[musicIndex].chipTune = true;
-            musicChannels_g[musicIndex].loop = true;
-            jar_xm_set_max_loop_count(musicChannels_g[musicIndex].xmctx, 0); // infinite number of loops
-            musicChannels_g[musicIndex].totalSamplesLeft =  (unsigned int)jar_xm_get_remaining_samples(musicChannels_g[musicIndex].xmctx);
-            musicChannels_g[musicIndex].totalLengthSeconds = ((float)musicChannels_g[musicIndex].totalSamplesLeft) / 48000.f;
+            musicChannels_g[index].chipTune = true;
+            musicChannels_g[index].loop = true;
+            jar_xm_set_max_loop_count(musicChannels_g[index].xmctx, 0); // infinite number of loops
+            musicChannels_g[index].totalSamplesLeft =  (unsigned int)jar_xm_get_remaining_samples(musicChannels_g[index].xmctx);
+            musicChannels_g[index].totalLengthSeconds = ((float)musicChannels_g[index].totalSamplesLeft) / 48000.f;
             musicEnabled_g = true;
             
-            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, musicChannels_g[musicIndex].totalSamplesLeft);
-            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, musicChannels_g[musicIndex].totalLengthSeconds);
+            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, musicChannels_g[index].totalSamplesLeft);
+            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, musicChannels_g[index].totalLengthSeconds);
             
-            musicChannels_g[musicIndex].mixc = InitMixChannel(48000, mixIndex, 2, true);
+            musicChannels_g[index].mixc = InitMixChannel(48000, mixIndex, 2, true);
             
-            if (!musicChannels_g[musicIndex].mixc) return ERROR_XM_CONTEXT_CREATION; // error
+            if (!musicChannels_g[index].mixc) return ERROR_XM_CONTEXT_CREATION; // error
             
-            musicChannels_g[musicIndex].mixc->playing = true;
+            musicChannels_g[index].mixc->playing = true;
         }
         else
         {
@@ -880,24 +880,24 @@ int PlayMusicStream(int musicIndex, char *fileName)
     }
     else if (strcmp(GetExtension(fileName),"mod") == 0)
     {
-        jar_mod_init(&musicChannels_g[musicIndex].modctx);
+        jar_mod_init(&musicChannels_g[index].modctx);
         
-        if (jar_mod_load_file(&musicChannels_g[musicIndex].modctx, fileName))
+        if (jar_mod_load_file(&musicChannels_g[index].modctx, fileName))
         {
-            musicChannels_g[musicIndex].chipTune = true;
-            musicChannels_g[musicIndex].loop = true;
-            musicChannels_g[musicIndex].totalSamplesLeft = (unsigned int)jar_mod_max_samples(&musicChannels_g[musicIndex].modctx);
-            musicChannels_g[musicIndex].totalLengthSeconds = ((float)musicChannels_g[musicIndex].totalSamplesLeft) / 48000.f;
+            musicChannels_g[index].chipTune = true;
+            musicChannels_g[index].loop = true;
+            musicChannels_g[index].totalSamplesLeft = (unsigned int)jar_mod_max_samples(&musicChannels_g[index].modctx);
+            musicChannels_g[index].totalLengthSeconds = ((float)musicChannels_g[index].totalSamplesLeft) / 48000.f;
             musicEnabled_g = true;
             
-            TraceLog(INFO, "[%s] MOD number of samples: %i", fileName, musicChannels_g[musicIndex].totalSamplesLeft);
-            TraceLog(INFO, "[%s] MOD track length: %11.6f sec", fileName, musicChannels_g[musicIndex].totalLengthSeconds);
+            TraceLog(INFO, "[%s] MOD number of samples: %i", fileName, musicChannels_g[index].totalSamplesLeft);
+            TraceLog(INFO, "[%s] MOD track length: %11.6f sec", fileName, musicChannels_g[index].totalLengthSeconds);
             
-            musicChannels_g[musicIndex].mixc = InitMixChannel(48000, mixIndex, 2, false);
+            musicChannels_g[index].mixc = InitMixChannel(48000, mixIndex, 2, false);
             
-            if (!musicChannels_g[musicIndex].mixc) return ERROR_MOD_CONTEXT_CREATION; // error
+            if (!musicChannels_g[index].mixc) return ERROR_MOD_CONTEXT_CREATION; // error
             
-            musicChannels_g[musicIndex].mixc->playing = true;
+            musicChannels_g[index].mixc->playing = true;
         }
         else
         {
