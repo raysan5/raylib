@@ -237,15 +237,19 @@ int main(void)
         {
             rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
-            Quaternion eyeRPose = (Quaternion){ eyePoses[eye].Orientation.x, eyePoses[eye].Orientation.y, eyePoses[eye].Orientation.z, eyePoses[eye].Orientation.w };
+            Quaternion eyeRPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
+                                            layer.eyeLayer.RenderPose[eye].Orientation.y, 
+                                            layer.eyeLayer.RenderPose[eye].Orientation.z, 
+                                            layer.eyeLayer.RenderPose[eye].Orientation.w };
             QuaternionInvert(&eyeRPose);
             Matrix eyeOrientation = QuaternionToMatrix(eyeRPose);
-            Matrix eyeTranslation = MatrixTranslate(-eyePoses[eye].Position.x, -eyePoses[eye].Position.y, -eyePoses[eye].Position.z);
-
+            Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.y, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.z);
+                                                
             Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);
             Matrix modelview = MatrixMultiply(matView, eyeView);
-            //Matrix mvp = MatrixMultiply(modelview, layer.eyeProjections[eye]);
-			
+
 			SetMatrixModelview(modelview);
 			SetMatrixProjection(layer.eyeProjections[eye]);
 #else
