@@ -135,11 +135,11 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static MixChannel_t* mixChannels_g[MAX_MIX_CHANNELS];        // What mix channels are currently active
-static bool musicEnabled_g = false;
 static Music musicChannels_g[MAX_MUSIC_STREAMS];             // Current music loaded, up to two can play at the same time
+static MixChannel_t *mixChannels_g[MAX_MIX_CHANNELS];        // What mix channels are currently active
+static bool musicEnabled_g = false;
 
-static lastAudioError = 0;                          // Registers last audio error
+static int lastAudioError = 0;                               // Registers last audio error
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -388,8 +388,8 @@ static void ResampleShortToFloat(short *shorts, float *floats, unsigned short le
 {
     for (int i = 0; i < len; i++)
     {
-        if (shorts[x] < 0) floats[x] = (float)shorts[x]/32766.0f;
-        else floats[x] = (float)shorts[x]/32767.0f;
+        if (shorts[i] < 0) floats[i] = (float)shorts[i]/32766.0f;
+        else floats[i] = (float)shorts[i]/32767.0f;
     }
 }
 
@@ -400,8 +400,8 @@ static void ResampleByteToFloat(char *chars, float *floats, unsigned short len)
 {
     for (int i = 0; i < len; i++)
     {
-        if (chars[x] < 0) floats[x] = (float)chars[x]/127.0f;
-        else floats[x] = (float)chars[x]/128.0f;
+        if (chars[i] < 0) floats[i] = (float)chars[i]/127.0f;
+        else floats[i] = (float)chars[i]/128.0f;
     }
 }
 
