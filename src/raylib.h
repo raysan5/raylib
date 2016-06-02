@@ -350,7 +350,7 @@ typedef struct Camera {
     Vector3 position;       // Camera position
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
-    float fovy;             // Field-Of-View apperture in Y (degrees)
+    float fovy;             // Camera field-of-view apperture in Y (degrees)
 } Camera;
 
 // Camera2D type, defines a 2d camera
@@ -363,87 +363,84 @@ typedef struct Camera2D {
 
 // Bounding box type
 typedef struct BoundingBox {
-    Vector3 min;
-    Vector3 max;
+    Vector3 min;            // minimum vertex box-corner
+    Vector3 max;            // maximum vertex box-corner
 } BoundingBox;
 
 // Vertex data definning a mesh
 typedef struct Mesh {
-    int vertexCount;            // number of vertices stored in arrays
-    int triangleCount;          // number of triangles stored (indexed or not)
-    float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;             // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
-    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-    unsigned short *indices;    // vertex indices (in case vertex data comes indexed)
+    int vertexCount;        // number of vertices stored in arrays
+    int triangleCount;      // number of triangles stored (indexed or not)
+    float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;        // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+    unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;// vertex indices (in case vertex data comes indexed)
 
-    BoundingBox bounds;         // mesh limits defined by min and max points
-    
-    unsigned int vaoId;         // OpenGL Vertex Array Object id
-    unsigned int vboId[7];      // OpenGL Vertex Buffer Objects id (7 types of vertex data)
+    unsigned int vaoId;     // OpenGL Vertex Array Object id
+    unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
 } Mesh;
 
 // Shader type (generic shader)
 typedef struct Shader {
-    unsigned int id;      // Shader program id
+    unsigned int id;        // Shader program id
     
     // Vertex attributes locations (default locations)
-    int vertexLoc;        // Vertex attribute location point    (default-location = 0)
-    int texcoordLoc;      // Texcoord attribute location point  (default-location = 1)
-    int texcoord2Loc;     // Texcoord2 attribute location point (default-location = 5)
-    int normalLoc;        // Normal attribute location point    (default-location = 2)
-    int tangentLoc;       // Tangent attribute location point   (default-location = 4)
-    int colorLoc;         // Color attibute location point      (default-location = 3)
+    int vertexLoc;          // Vertex attribute location point    (default-location = 0)
+    int texcoordLoc;        // Texcoord attribute location point  (default-location = 1)
+    int texcoord2Loc;       // Texcoord2 attribute location point (default-location = 5)
+    int normalLoc;          // Normal attribute location point    (default-location = 2)
+    int tangentLoc;         // Tangent attribute location point   (default-location = 4)
+    int colorLoc;           // Color attibute location point      (default-location = 3)
 
     // Uniform locations
-    int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
-    int tintColorLoc;     // Diffuse color uniform location point (fragment shader)
+    int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
+    int tintColorLoc;       // Diffuse color uniform location point (fragment shader)
     
     // Texture map locations (generic for any kind of map)
-    int mapTexture0Loc;  // Map texture uniform location point (default-texture-unit = 0)
-    int mapTexture1Loc;  // Map texture uniform location point (default-texture-unit = 1)
-    int mapTexture2Loc;  // Map texture uniform location point (default-texture-unit = 2)
+    int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
+    int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
+    int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
 } Shader;
 
 // Material type
 typedef struct Material {
-    Shader shader;              // Standard shader (supports 3 map textures)
+    Shader shader;          // Standard shader (supports 3 map textures)
 
-    Texture2D texDiffuse;       // Diffuse texture  (binded to shader mapTexture0Loc)
-    Texture2D texNormal;        // Normal texture   (binded to shader mapTexture1Loc)
-    Texture2D texSpecular;      // Specular texture (binded to shader mapTexture2Loc)
+    Texture2D texDiffuse;   // Diffuse texture  (binded to shader mapTexture0Loc)
+    Texture2D texNormal;    // Normal texture   (binded to shader mapTexture1Loc)
+    Texture2D texSpecular;  // Specular texture (binded to shader mapTexture2Loc)
     
-    Color colTint;              // Tint color
-    Color colDiffuse;           // Diffuse color
-    Color colAmbient;           // Ambient color
-    Color colSpecular;          // Specular color
+    Color colDiffuse;       // Diffuse color
+    Color colAmbient;       // Ambient color
+    Color colSpecular;      // Specular color
     
-    float glossiness;           // Glossiness level (Ranges from 0 to 1000)
+    float glossiness;       // Glossiness level (Ranges from 0 to 1000)
 } Material;
 
 // Model type
 typedef struct Model {
-    Mesh mesh;                  // Vertex data buffers (RAM and VRAM)
-    Matrix transform;           // Local transform matrix
-    Material material;          // Shader and textures data
+    Mesh mesh;              // Vertex data buffers (RAM and VRAM)
+    Matrix transform;       // Local transform matrix
+    Material material;      // Shader and textures data
 } Model;
 
 // Light type
 typedef struct LightData {
-    unsigned int id;    // Light id
-    int type;           // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-    bool enabled;       // Light enabled
+    unsigned int id;        // Light unique id
+    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+    bool enabled;           // Light enabled
     
-    Vector3 position;   // Light position
-    Vector3 target;     // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-    float radius;       // Light attenuation radius light intensity reduced with distance (world distance)
+    Vector3 position;       // Light position
+    Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+    float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
     
-    Color diffuse;      // Light diffuse color
-    float intensity;    // Light intensity level
+    Color diffuse;          // Light diffuse color
+    float intensity;        // Light intensity level
     
-    float coneAngle;    // Light cone max angle: LIGHT_SPOT
+    float coneAngle;        // Light cone max angle: LIGHT_SPOT
 } LightData, *Light;
 
 // Light types
@@ -861,8 +858,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
-void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
+
 Shader GetDefaultShader(void);                                      // Get default shader
 Shader GetStandardShader(void);                                     // Get default shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
@@ -872,7 +868,10 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // S
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
-void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
+void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
+void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
+void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list

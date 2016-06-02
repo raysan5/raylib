@@ -67,8 +67,8 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainDX(ovrSession session,
 ///
 /// <b>Example code</b>
 ///     \code{.cpp}
-///         ovr_GetTextureSwapChainBuffer(session, chain, 0, IID_ID3D11Texture2D, &d3d11Texture);
-///         ovr_GetTextureSwapChainBuffer(session, chain, 1, IID_PPV_ARGS(&dxgiResource));
+///         ovr_GetTextureSwapChainBufferDX(session, chain, 0, IID_ID3D11Texture2D, &d3d11Texture);
+///         ovr_GetTextureSwapChainBufferDX(session, chain, 1, IID_PPV_ARGS(&dxgiResource));
 ///     \endcode
 ///
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferDX(ovrSession session,
@@ -102,6 +102,21 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferDX(ovrSession sessio
 /// compositor continues to treat is as sRGB. Failure to do so will cause the compositor to apply unexpected gamma conversions leading to 
 /// gamma-curve artifacts.
 ///
+///
+/// <b>Example code</b>
+///     \code{.cpp}
+///         ovrMirrorTexture     mirrorTexture = nullptr;
+///         ovrMirrorTextureDesc mirrorDesc = {};
+///         mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+///         mirrorDesc.Width  = mirrorWindowWidth;
+///         mirrorDesc.Height = mirrorWindowHeight;
+///         ovrResult result = ovr_CreateMirrorTextureDX(session, d3d11Device, &mirrorDesc, &mirrorTexture);
+///         [...]
+///         // Destroy the texture when done with it.
+///         ovr_DestroyMirrorTexture(session, mirrorTexture);
+///         mirrorTexture = nullptr;
+///     \endcode
+///
 /// \see ovr_GetMirrorTextureBufferDX
 /// \see ovr_DestroyMirrorTexture
 ///
@@ -119,6 +134,15 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureDX(ovrSession session,
 ///
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.
+///
+/// <b>Example code</b>
+///     \code{.cpp}
+///         ID3D11Texture2D* d3d11Texture = nullptr;
+///         ovr_GetMirrorTextureBufferDX(session, mirrorTexture, IID_PPV_ARGS(&d3d11Texture));
+///         d3d11DeviceContext->CopyResource(d3d11TextureBackBuffer, d3d11Texture);
+///         d3d11Texture->Release();
+///         dxgiSwapChain->Present(0, 0);
+///     \endcode
 ///
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetMirrorTextureBufferDX(ovrSession session,
                                                             ovrMirrorTexture mirrorTexture,

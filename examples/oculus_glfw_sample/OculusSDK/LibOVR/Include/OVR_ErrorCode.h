@@ -91,6 +91,7 @@ typedef enum ovrErrorType_
     ovrError_InvalidHeadsetOrientation  = -1011,   ///< The headset was in an invalid orientation for the requested operation (e.g. vertically oriented during ovr_RecenterPose).
     ovrError_ClientSkippedDestroy       = -1012,   ///< The client failed to call ovr_Destroy on an active session before calling ovr_Shutdown. Or the client crashed.
     ovrError_ClientSkippedShutdown      = -1013,   ///< The client failed to call ovr_Shutdown or the client crashed.
+    ovrError_ServiceDeadlockDetected    = -1014,   ///< The service watchdog discovered a deadlock.
 
     /* Audio error range, reserved for Audio errors. */
     ovrError_AudioReservedBegin         = -2000,   ///< First Audio error.
@@ -140,25 +141,42 @@ typedef enum ovrErrorType_
     ovrError_NordicEnabledNoSync        = -4015,   ///< The nordic indicates that sync is enabled but it is not sending sync pulses
     ovrError_NordicSyncNoFrames         = -4016,   ///< It looks like we're getting a sync signal, but no camera frames have been received
     ovrError_CatastrophicFailure        = -4017,   ///< A catastrophic failure has occurred.  We will attempt to recover by resetting the device
+    ovrError_CatastrophicTimeout        = -4018,   ///< The catastrophic recovery has timed out.
+    ovrError_RepeatCatastrophicFail     = -4019,   ///< Catastrophic failure has repeated too many times.
+    ovrError_USBOpenDeviceFailure       = -4020,   ///< Could not open handle for Rift device (likely already in use by another process).
+    ovrError_HMDGeneralFailure          = -4021,   ///< Unexpected HMD issues that don't fit a specific bucket.
 
     ovrError_HMDFirmwareMismatch        = -4100,   ///< The HMD Firmware is out of date and is unacceptable.
     ovrError_TrackerFirmwareMismatch    = -4101,   ///< The sensor Firmware is out of date and is unacceptable.
     ovrError_BootloaderDeviceDetected   = -4102,   ///< A bootloader HMD is detected by the service.
     ovrError_TrackerCalibrationError    = -4103,   ///< The sensor calibration is missing or incorrect.
     ovrError_ControllerFirmwareMismatch = -4104,   ///< The controller firmware is out of date and is unacceptable.
+    ovrError_DevManDeviceDetected       = -4105,   ///< A DeviceManagement mode HMD is detected by the service.
+    ovrError_RebootedBootloaderDevice   = -4106,   ///< Had to reboot bootloader device, which succeeded.
+    ovrError_FailedRebootBootloaderDev  = -4107,   ///< Had to reboot bootloader device, which failed.  Device is stuck in bootloader mode.
 
     ovrError_IMUTooManyLostSamples      = -4200,   ///< Too many lost IMU samples.
     ovrError_IMURateError               = -4201,   ///< IMU rate is outside of the expected range.
     ovrError_FeatureReportFailure       = -4202,   ///< A feature report has failed.
+    ovrError_HMDWirelessTimeout         = -4203,   ///< HMD wireless interface never returned from busy state.
+
+    ovrError_BootloaderAssertLog        = -4300,   ///< HMD Bootloader Assert Log was not empty.
+    ovrError_AppAssertLog               = -4301,   ///< HMD App Assert Log was not empty.
 
     /* Synchronization errors */
-    ovrError_Incomplete                 = -5000,   ///<Requested async work not yet complete.
-    ovrError_Abandoned                  = -5001,   ///<Requested async work was abandoned and result is incomplete.
+    ovrError_Incomplete                 = -5000,   ///< Requested async work not yet complete.
+    ovrError_Abandoned                  = -5001,   ///< Requested async work was abandoned and result is incomplete.
 
     /* Rendering errors */
-    ovrError_DisplayLost                = -6000,   ///<In the event of a system-wide graphics reset or cable unplug this is returned to the app.
-    ovrError_TextureSwapChainFull       = -6001,   ///<ovr_CommitTextureSwapChain was called too many times on a texture swapchain without calling submit to use the chain.
-    ovrError_TextureSwapChainInvalid    = -6002,   ///<The ovrTextureSwapChain is in an incomplete or inconsistent state. Ensure ovr_CommitTextureSwapChain was called at least once first.
+    ovrError_DisplayLost                = -6000,   ///< In the event of a system-wide graphics reset or cable unplug this is returned to the app.
+    ovrError_TextureSwapChainFull       = -6001,   ///< ovr_CommitTextureSwapChain was called too many times on a texture swapchain without calling submit to use the chain.
+    ovrError_TextureSwapChainInvalid    = -6002,   ///< The ovrTextureSwapChain is in an incomplete or inconsistent state. Ensure ovr_CommitTextureSwapChain was called at least once first.
+    ovrError_GraphicsDeviceReset        = -6003,   ///< Graphics device has been reset (TDR, etc...)
+    ovrError_DisplayRemoved             = -6004,   ///< HMD removed from the display adapter
+    ovrError_ContentProtectionNotAvailable = -6005,///<Content protection is not available for the display
+    ovrError_ApplicationInvisible       = -6006,   ///< Application declared itself as an invisible type and is not allowed to submit frames.
+    ovrError_Disallowed                 = -6007,   ///< The given request is disallowed under the current conditions.
+    ovrError_DisplayPluggedIncorrectly  = -6008,   ///< Display portion of HMD is plugged into an incompatible port (ex: IGP)
 
     /* Fatal errors */
     ovrError_RuntimeException           = -7000,   ///< A runtime exception occurred. The application is required to shutdown LibOVR and re-initialize it before this error state will be cleared.

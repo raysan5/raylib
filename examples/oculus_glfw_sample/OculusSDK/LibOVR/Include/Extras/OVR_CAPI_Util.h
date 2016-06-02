@@ -137,14 +137,14 @@ OVR_PUBLIC_FUNCTION(ovrMatrix4f) ovrMatrix4f_OrthoSubProjection(ovrMatrix4f proj
 /// Computes offset eye poses based on headPose returned by ovrTrackingState.
 ///
 /// \param[in] headPose Indicates the HMD position and orientation to use for the calculation.
-/// \param[in] HmdToEyeOffset Can be ovrEyeRenderDesc.HmdToEyeOffset returned from 
+/// \param[in] hmdToEyeOffset Can be ovrEyeRenderDesc.HmdToEyeOffset returned from
 ///            ovr_GetRenderDesc. For monoscopic rendering, use a vector that is the average 
 ///            of the two vectors for both eyes.
 /// \param[out] outEyePoses If outEyePoses are used for rendering, they should be passed to 
 ///             ovr_SubmitFrame in ovrLayerEyeFov::RenderPose or ovrLayerEyeFovDepth::RenderPose.
 ///
 OVR_PUBLIC_FUNCTION(void) ovr_CalcEyePoses(ovrPosef headPose,
-                                           const ovrVector3f HmdToEyeOffset[2],
+                                           const ovrVector3f hmdToEyeOffset[2],
                                            ovrPosef outEyePoses[2]);
 
 
@@ -158,17 +158,17 @@ OVR_PUBLIC_FUNCTION(void) ovr_CalcEyePoses(ovrPosef headPose,
 /// \param[in]  hmd Specifies an ovrSession previously returned by ovr_Create.
 /// \param[in]  frameIndex Specifies the targeted frame index, or 0 to refer to one frame after 
 ///             the last time ovr_SubmitFrame was called.
-/// \param[in]  HmdToEyeOffset Can be ovrEyeRenderDesc.HmdToEyeOffset returned from 
-///             ovr_GetRenderDesc. For monoscopic rendering, use a vector that is the average 
-///             of the two vectors for both eyes.
 /// \param[in]  latencyMarker Specifies that this call is the point in time where
 ///             the "App-to-Mid-Photon" latency timer starts from. If a given ovrLayer
 ///             provides "SensorSampleTimestamp", that will override the value stored here.
+/// \param[in]  hmdToEyeOffset Can be ovrEyeRenderDesc.HmdToEyeOffset returned from
+///             ovr_GetRenderDesc. For monoscopic rendering, use a vector that is the average
+///             of the two vectors for both eyes.
 /// \param[out] outEyePoses The predicted eye poses.
 /// \param[out] outSensorSampleTime The time when this function was called. May be NULL, in which case it is ignored.
 ///
 OVR_PUBLIC_FUNCTION(void) ovr_GetEyePoses(ovrSession session, long long frameIndex, ovrBool latencyMarker,
-                                             const ovrVector3f HmdToEyeOffset[2],
+                                             const ovrVector3f hmdToEyeOffset[2],
                                              ovrPosef outEyePoses[2],
                                              double* outSensorSampleTime);
 

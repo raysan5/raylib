@@ -65,16 +65,16 @@ int main()
 
             
             // Activate our custom shader to be applied on next shapes/textures drawings
-            SetCustomShader(shader);
+            BeginShaderMode(shader);
             
-            DrawText("USING CUSTOM SHADER", 190, 40, 10, RED);
+                DrawText("USING CUSTOM SHADER", 190, 40, 10, RED);
 
-            DrawRectangle(250 - 60, 90, 120, 60, RED);
-            DrawRectangleGradient(250 - 90, 170, 180, 130, MAROON, GOLD);
-            DrawRectangleLines(250 - 40, 320, 80, 60, ORANGE);
+                DrawRectangle(250 - 60, 90, 120, 60, RED);
+                DrawRectangleGradient(250 - 90, 170, 180, 130, MAROON, GOLD);
+                DrawRectangleLines(250 - 40, 320, 80, 60, ORANGE);
 
             // Activate our default shader for next drawings
-            SetDefaultShader();
+            EndShaderMode();
             
             DrawText("USING DEFAULT SHADER", 370, 40, 10, RED);
             
@@ -89,12 +89,12 @@ int main()
             DrawPoly((Vector2){430, 320}, 6, 80, 0, BROWN);
             
             // Activate our custom shader to be applied on next shapes/textures drawings
-            SetCustomShader(shader);
+            BeginShaderMode(shader);
 
-            DrawTexture(sonic, 380, -10, WHITE);    // Using custom shader
+                DrawTexture(sonic, 380, -10, WHITE);    // Using custom shader
             
             // Activate our default shader for next drawings
-            SetDefaultShader();
+            EndShaderMode();
             
         EndDrawing();
         //----------------------------------------------------------------------------------

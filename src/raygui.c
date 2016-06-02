@@ -22,17 +22,30 @@
 *
 **********************************************************************************************/
 
+//#define RAYGUI_STANDALONE     // To use the raygui module as standalone lib, just uncomment this line
+                              // NOTE: Some external funtions are required for drawing and input management
+
+#if !defined(RAYGUI_STANDALONE)
+    #include "raylib.h"
+#endif
+
 #include "raygui.h"
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>     // Required for malloc(), free()
-#include <string.h>     // Required for strcmp()
+#include <stdio.h>      // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf()
+                        // NOTE: Those functions are only used in SaveGuiStyle() and LoadGuiStyle()
+                        
+#include <stdlib.h>     // Required for: malloc(), free()
+#include <string.h>     // Required for: strcmp()
+#include <stdarg.h>     // Required for: va_list, va_start(), vfprintf(), va_end()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//...
+#if defined(RAYGUI_STANDALONE)
+    #define KEY_LEFT            263
+    #define KEY_RIGHT           262
+    #define MOUSE_LEFT_BUTTON     0
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -50,7 +63,7 @@ typedef enum { SLIDER_DEFAULT, SLIDER_HOVER, SLIDER_ACTIVE } SliderState;
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
-//Current GUI style (default light)
+// Current GUI style (default light)
 static int style[NUM_PROPERTIES] = {
     0xf5f5f5ff,         // GLOBAL_BASE_COLOR,
     0xf5f5f5ff,         // GLOBAL_BORDER_COLOR,
@@ -157,6 +170,30 @@ static int style[NUM_PROPERTIES] = {
 //----------------------------------------------------------------------------------
 static Color ColorMultiply(Color baseColor, float value);
 
+#if defined RAYGUI_STANDALONE
+static Color GetColor(int hexValue);   // Returns a Color struct from hexadecimal value
+static int GetHexValue(Color color);   // Returns hexadecimal value for a Color
+static bool CheckCollisionPointRec(Vector2 point, Rectangle rec);  // Check if point is inside rectangle
+static const char *FormatText(const char *text, ...);   // Formatting of text with variables to 'embed'
+
+// NOTE: raygui depend on some raylib input and drawing functions
+// TODO: Set your own functions
+static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
+static int IsMouseButtonDown(int button) { return 0; }
+static int IsMouseButtonPressed(int button) { return 0; }
+static int IsMouseButtonReleased(int button) { return 0; }
+static int IsMouseButtonUp(int button) { return 0; }
+
+static int GetKeyPressed(void) { return 0; }    // NOTE: Only used by GuiTextBox()
+static int IsKeyDown(int key) { return 0; }     // NOTE: Only used by GuiSpinner()
+
+static int MeasureText(const char *text, int fontSize) { return 0; }
+static void DrawText(const char *text, int posX, int posY, int fontSize, Color color) { }
+static void DrawRectangleRec(Rectangle rec, Color color) { }
+static void DrawRectangle(int posX, int posY, int width, int height, Color color) { DrawRectangleRec((Rectangle){ posX, posY, width, height }, color); }
+
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -164,7 +201,9 @@ static Color ColorMultiply(Color baseColor, float value);
 // Label element, show text
 void GuiLabel(Rectangle bounds, const char *text)
 {
-    GuiLabelEx(bounds,text, GetColor(style[LABEL_TEXT_COLOR]), BLANK, BLANK);
+    #define BLANK (Color){ 0, 0, 0, 0 } // Blank (Transparent)
+
+    GuiLabelEx(bounds, text, GetColor(style[LABEL_TEXT_COLOR]), BLANK, BLANK);
 }
 
 // Label element extended, configurable colors
@@ -173,7 +212,7 @@ void GuiLabelEx(Rectangle bounds, const char *text, Color textColor, Color borde
     // Update control
     //--------------------------------------------------------------------
     int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
 
     if (bounds.width < textWidth) bounds.width = textWidth + style[LABEL_TEXT_PADDING];
     if (bounds.height < textHeight) bounds.height = textHeight + style[LABEL_TEXT_PADDING]/2;
@@ -194,7 +233,7 @@ bool GuiButton(Rectangle bounds, const char *text)
     Vector2 mousePoint = GetMousePosition();
     
     int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
     
     // Update control
     //--------------------------------------------------------------------
@@ -252,7 +291,7 @@ bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle)
     Vector2 mousePoint = GetMousePosition();
     
     int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
     
     // Update control
     //--------------------------------------------------------------------   
@@ -337,7 +376,7 @@ int GuiComboBox(Rectangle bounds, int comboNum, char **comboText, int comboActiv
     Rectangle click = { bounds.x + bounds.width + style[COMBOBOX_PADDING], bounds.y, style[COMBOBOX_BUTTON_WIDTH], style[COMBOBOX_BUTTON_HEIGHT] };
     Vector2 mousePoint = GetMousePosition();
 
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
      
     for (int i = 0; i < comboNum; i++)
     {
@@ -627,9 +666,8 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
     Rectangle rightButtonBound = { bounds.x + bounds.width - bounds.width/4 + 1, bounds.y, bounds.width/4, bounds.height };
     Vector2 mousePoint = GetMousePosition();
 
-    int textHeight = GetDefaultFont().size;
-
     int textWidth = MeasureText(FormatText("%i", value), style[GLOBAL_TEXT_FONTSIZE]);
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
     
     int buttonSide = 0;
     
@@ -864,10 +902,11 @@ char *GuiTextBox(Rectangle bounds, char *text)
         
         DrawText(FormatText("%c", text[i]), initPos, bounds.y + style[TEXTBOX_TEXT_FONTSIZE], style[TEXTBOX_TEXT_FONTSIZE], GetColor(style[TEXTBOX_TEXT_COLOR]));
         
-        initPos += ((GetDefaultFont().charRecs[(int)text[i] - 32].width + 2));
+        initPos += (MeasureText(FormatText("%c", text[i]), style[GLOBAL_TEXT_FONTSIZE]) + 2);
+        //initPos += ((GetDefaultFont().charRecs[(int)text[i] - 32].width + 2));
     }
 
-    if ((framesCounter/20)%2 && CheckCollisionPointRec(mousePoint, bounds)) DrawLine(initPos + 2, bounds.y + 5, initPos + 2, bounds.y + 10 + 15, GetColor(style[TEXTBOX_LINE_COLOR]));
+    if ((framesCounter/20)%2 && CheckCollisionPointRec(mousePoint, bounds)) DrawRectangle(initPos + 2, bounds.y + 5, 1, 20, GetColor(style[TEXTBOX_LINE_COLOR]));
     //--------------------------------------------------------------------    
 
     return text;
@@ -1052,3 +1091,49 @@ static Color ColorMultiply(Color baseColor, float value)
     
     return multColor;
 }
+
+#if defined (RAYGUI_STANDALONE)
+// Returns a Color struct from hexadecimal value
+static Color GetColor(int hexValue)
+{
+    Color color;
+
+    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
+    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
+    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
+    color.a = (unsigned char)hexValue & 0xFF;
+
+    return color;
+}
+
+// Returns hexadecimal value for a Color
+static int GetHexValue(Color color)
+{
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Check if point is inside rectangle
+static bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
+{
+    bool collision = false;
+
+    if ((point.x >= rec.x) && (point.x <= (rec.x + rec.width)) && (point.y >= rec.y) && (point.y <= (rec.y + rec.height))) collision = true;
+
+    return collision;
+}
+
+// Formatting of text with variables to 'embed'
+static const char *FormatText(const char *text, ...)
+{
+    #define MAX_FORMATTEXT_LENGTH   64
+    
+    static char buffer[MAX_FORMATTEXT_LENGTH];
+
+    va_list args;
+    va_start(args, text);
+    vsprintf(buffer, text, args);
+    va_end(args);
+
+    return buffer;
+}
+#endif

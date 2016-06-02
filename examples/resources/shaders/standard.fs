@@ -11,7 +11,6 @@ uniform sampler2D texture0;
 uniform sampler2D texture1;
 uniform sampler2D texture2;
 
-uniform vec4 colTint;
 uniform vec4 colAmbient;
 uniform vec4 colDiffuse;
 uniform vec4 colSpecular;
@@ -55,7 +54,7 @@ vec3 CalcPointLight(Light l, vec3 n, vec3 v, float s)
         spec = pow(dot(n, h), 3 + glossiness)*s;
     }
     
-    return (diff*l.diffuse.rgb*colDiffuse.rgb + spec*colSpecular.rgb);
+    return (diff*l.diffuse.rgb + spec*colSpecular.rgb);
 }
 
 vec3 CalcDirectionalLight(Light l, vec3 n, vec3 v, float s)
@@ -74,7 +73,7 @@ vec3 CalcDirectionalLight(Light l, vec3 n, vec3 v, float s)
     }
     
     // Combine results
-    return (diff*l.intensity*l.diffuse.rgb*colDiffuse.rgb + spec*colSpecular.rgb);
+    return (diff*l.intensity*l.diffuse.rgb + spec*colSpecular.rgb);
 }
 
 vec3 CalcSpotLight(Light l, vec3 n, vec3 v, float s)
@@ -89,8 +88,10 @@ vec3 CalcSpotLight(Light l, vec3 n, vec3 v, float s)
     // Spot attenuation
     float attenuation = clamp(dot(n, lightToSurface), 0.0, 1.0);
     attenuation = dot(lightToSurface, -lightDir);
+    
     float lightToSurfaceAngle = degrees(acos(attenuation));
     if (lightToSurfaceAngle > l.coneAngle) attenuation = 0.0;
+    
     float falloff = (l.coneAngle - lightToSurfaceAngle)/l.coneAngle;
     
     // Combine diffuse and attenuation
@@ -104,7 +105,7 @@ vec3 CalcSpotLight(Light l, vec3 n, vec3 v, float s)
         spec = pow(dot(n, h), 3 + glossiness)*s;
     }
     
-    return falloff*(diffAttenuation*l.diffuse.rgb + spec*colSpecular.rgb);
+    return (falloff*(diffAttenuation*l.diffuse.rgb + spec*colSpecular.rgb));
 }
 
 void main()
@@ -123,7 +124,7 @@ void main()
     vec3 lighting = colAmbient.rgb;
     
     // Calculate normal texture color fetching or set to maximum normal value by default
-    if(useNormal == 1)
+    if (useNormal == 1)
     {
         n *= texture(texture1, fragTexCoord).rgb;
         n = normalize(n);
@@ -131,7 +132,7 @@ void main()
     
     // Calculate specular texture color fetching or set to maximum specular value by default
     float spec = 1.0;
-    if(useSpecular == 1) spec *= normalize(texture(texture2, fragTexCoord).r);
+    if (useSpecular == 1) spec *= normalize(texture(texture2, fragTexCoord).r);
     
     for (int i = 0; i < lightsCount; i++)
     {
@@ -150,5 +151,5 @@ void main()
     }
     
     // Calculate final fragment color
-    finalColor = vec4(texelColor.rgb*lighting*colTint.rgb, texelColor.a*colTint.a);
+    finalColor = vec4(texelColor.rgb*lighting*colDiffuse.rgb, texelColor.a*colDiffuse.a);
 }

@@ -29,8 +29,8 @@
     #include "raylib.h"
 #endif
 
-#include <stdlib.h>         // Declares malloc() and free() for memory management
-#include <math.h>           // Declares cos(), sin(), abs() and fminf() for math operations
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <math.h>           // Required for: cos(), sin(), abs(), fminf()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

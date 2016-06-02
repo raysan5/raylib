@@ -37,24 +37,24 @@
 
 #include "AL/al.h"          // OpenAL basic header
 #include "AL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
-#include "AL/alext.h"       // extensions for other format types
+#include "AL/alext.h"       // OpenAL extensions for other format types
 
-#include <stdlib.h>         // Declares malloc() and free() for memory management
-#include <string.h>         // Required for strcmp()
-#include <stdio.h>          // Used for .WAV loading
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <string.h>         // Required for: strcmp(), strncmp()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fread()
 
 #if defined(AUDIO_STANDALONE)
-    #include <stdarg.h>     // Used for functions with variable number of parameters (TraceLog())
+    #include <stdarg.h>     // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
-    #include "utils.h"      // rRES data decompression utility function
-                            // NOTE: Includes Android fopen function map
+    #include "utils.h"      // Required for: DecompressData()
+                            // NOTE: Includes Android fopen() function map
 #endif
 
 //#define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.h"     // OGG loading functions
 
 #define JAR_XM_IMPLEMENTATION
-#include "jar_xm.h"         // For playing .xm files
+#include "jar_xm.h"         // XM loading functions
 
 #define JAR_MOD_IMPLEMENTATION
 #include "jar_mod.h"        // For playing .mod files

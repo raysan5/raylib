@@ -33,7 +33,7 @@ int main()
     Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
-    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
+    Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture (diffuse map)
     SetModelTexture(&dwarf, texture);                                       // Bind texture to model
 
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
@@ -94,10 +94,12 @@ int main()
             
             EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
             
-            SetCustomShader(shader);
-            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-            SetDefaultShader();
+            BeginShaderMode(shader);
+            
+                // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
+                DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+            
+            EndShaderMode();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
 

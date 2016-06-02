@@ -40,9 +40,9 @@ int main()
     material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model diffuse texture
     material.texNormal = LoadTexture("resources/model/dwarf_normal.png");     // Load model normal texture
     material.texSpecular = LoadTexture("resources/model/dwarf_specular.png"); // Load model specular texture
-    material.colDiffuse = (Color){255, 255, 255, 255};
+    material.colDiffuse = WHITE;
     material.colAmbient = (Color){0, 0, 10, 255};
-    material.colSpecular = (Color){255, 255, 255, 255};
+    material.colSpecular = WHITE;
     material.glossiness = 50.0f;
     
     dwarf.material = material;      // Apply material to model

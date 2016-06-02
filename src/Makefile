@@ -69,12 +69,13 @@ else
 endif
 
 # define compiler flags:
-#  -O1              defines optimization level
-#  -Wall            turns on most, but not all, compiler warnings
-#  -std=c99         defines C language mode (standard C from 1999 revision)
-#  -std=gnu99       defines C language mode (GNU C from 1999 revision)
-#  -fgnu89-inline   declaring inline functions support (GCC optimized, faster)
-CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline
+#  -O1                  defines optimization level
+#  -Wall                turns on most, but not all, compiler warnings
+#  -std=c99             defines C language mode (standard C from 1999 revision)
+#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline       declaring inline functions support (GCC optimized, faster)
+#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
+CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 

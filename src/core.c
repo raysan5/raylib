@@ -2078,10 +2078,10 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     gestureEvent.position[0] = GetMousePosition();
     
     // Normalize gestureEvent.position[0] for screenWidth and screenHeight
-    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
     gestureEvent.position[0].y /= (float)GetScreenHeight();
-	
-	// Gesture data is sent to gestures system for processing
+
+    // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
 }
@@ -2223,10 +2223,10 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Load default font for convenience
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();
-                    
+
                     // TODO: GPU assets reload in case of lost focus (lost context)
                     // NOTE: This problem has been solved just unbinding and rebinding context from display
-					/*
+                    /*
                     if (assetsReloadRequired)
                     {
                         for (int i = 0; i < assetsCount; i++)
@@ -2759,9 +2759,9 @@ static void *GamepadThread(void *arg)
     };
 
     // Read gamepad event
-	struct js_event gamepadEvent;
+    struct js_event gamepadEvent;
     
-	while (1) 
+    while (1) 
     {
         for (int i = 0; i < MAX_GAMEPADS; i++)
         {
@@ -2792,8 +2792,8 @@ static void *GamepadThread(void *arg)
                 }
             }
         }
-	}
-    
+    }
+
     return NULL;
 }
 #endif

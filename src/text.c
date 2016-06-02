@@ -25,16 +25,16 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>       // Declares malloc() and free() for memory management
-#include <string.h>       // String management functions (just strlen() is used)
-#include <stdarg.h>       // Used for functions with variable number of parameters (FormatText())
-#include <stdio.h>        // Standard input / output lib
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <string.h>         // Required for: strlen()
+#include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 
-#include "utils.h"        // Required for function GetExtension()
+#include "utils.h"          // Required for: GetExtension()
 
 // Following libs are used on LoadTTF()
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
+#include "stb_truetype.h"   // Required for: stbtt_BakeFontBitmap()
 
 // Rectangle packing functions (not used at the moment)
 //#define STB_RECT_PACK_IMPLEMENTATION

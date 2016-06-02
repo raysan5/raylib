@@ -130,47 +130,43 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
         COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
         COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
     } TextureFormat;
-    
-    // Bounding box type
-    typedef struct BoundingBox {
-        Vector3 min;
-        Vector3 max;
-    } BoundingBox;
 
-    // Mesh with vertex data type
-    // NOTE: If using OpenGL 1.1, data loaded in CPU; if OpenGL 3.3+ data loaded in GPU (vaoId)
+    // Vertex data definning a mesh
     typedef struct Mesh {
-        int vertexCount;            // num vertices
-        float *vertices;            // vertex position (XYZ - 3 components per vertex)
-        float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex)
-        float *texcoords2;          // vertex second texture coordinates (useful for lightmaps)
-        float *normals;             // vertex normals (XYZ - 3 components per vertex)
-        float *tangents;            // vertex tangents (XYZ - 3 components per vertex)
-        unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex)
-        
-        BoundingBox bounds;         // mesh limits defined by min and max points
-        
-        unsigned int vaoId;         // OpenGL Vertex Array Object id
-        unsigned int vboId[6];      // OpenGL Vertex Buffer Objects id (6 types of vertex data)
+        int vertexCount;        // number of vertices stored in arrays
+        int triangleCount;      // number of triangles stored (indexed or not)
+        float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+        float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+        float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+        float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+        float *tangents;        // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+        unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+        unsigned short *indices;// vertex indices (in case vertex data comes indexed)
+
+        unsigned int vaoId;     // OpenGL Vertex Array Object id
+        unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
 
-    // Shader type
+    // Shader type (generic shader)
     typedef struct Shader {
-        unsigned int id;                // Shader program id
-
-        // Variable attributes
-        int vertexLoc;        // Vertex attribute location point (vertex shader)
-        int texcoordLoc;      // Texcoord attribute location point (vertex shader)
-        int normalLoc;        // Normal attribute location point (vertex shader)
-        int colorLoc;         // Color attibute location point (vertex shader)
-
-        // Uniforms
-        int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
-        int tintColorLoc;     // Color uniform location point (fragment shader)
+        unsigned int id;        // Shader program id
         
-        int mapDiffuseLoc;    // Diffuse map texture uniform location point (fragment shader)
-        int mapNormalLoc;     // Normal map texture uniform location point (fragment shader)
-        int mapSpecularLoc;   // Specular map texture uniform location point (fragment shader)
+        // Vertex attributes locations (default locations)
+        int vertexLoc;          // Vertex attribute location point (default-location = 0)
+        int texcoordLoc;        // Texcoord attribute location point (default-location = 1)
+        int normalLoc;          // Normal attribute location point (default-location = 2)
+        int colorLoc;           // Color attibute location point (default-location = 3)
+        int tangentLoc;         // Tangent attribute location point (default-location = 4)
+        int texcoord2Loc;       // Texcoord2 attribute location point (default-location = 5)
+
+        // Uniform locations
+        int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
+        int tintColorLoc;       // Color uniform location point (fragment shader)
+        
+        // Texture map locations (generic for any kind of map)
+        int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
+        int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
+        int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
     } Shader;
 
     // Texture2D type
@@ -192,27 +188,46 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // Material type
     typedef struct Material {
-        Shader shader;
+        Shader shader;          // Standard shader (supports 3 map types: diffuse, normal, specular)
 
-        Texture2D texDiffuse;      // Diffuse texture
-        Texture2D texNormal;       // Normal texture
-        Texture2D texSpecular;     // Specular texture
+        Texture2D texDiffuse;   // Diffuse texture
+        Texture2D texNormal;    // Normal texture
+        Texture2D texSpecular;  // Specular texture
+
+        Color colDiffuse;       // Diffuse color
+        Color colAmbient;       // Ambient color
+        Color colSpecular;      // Specular color
         
-        Color colDiffuse;
-        Color colAmbient;
-        Color colSpecular;
-        
-        float glossiness;
-        float normalDepth;
+        float glossiness;       // Glossiness level (Ranges from 0 to 1000)
     } Material;
+    
+    // Camera type, defines a camera position/orientation in 3d space
+    typedef struct Camera {
+        Vector3 position;       // Camera position
+        Vector3 target;         // Camera target it looks-at
+        Vector3 up;             // Camera up vector (rotation over its axis)
+        float fovy;             // Camera field-of-view apperture in Y (degrees)
+    } Camera;
 
-    // 3d Model type
-    typedef struct Model {
-        Mesh mesh;
-        Matrix transform;
-        Material material;
-    } Model;
-	
+    // Light type
+    typedef struct LightData {
+        unsigned int id;        // Light unique id
+        int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+        bool enabled;           // Light enabled
+        
+        Vector3 position;       // Light position
+        Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+        float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
+        
+        Color diffuse;          // Light diffuse color
+        float intensity;        // Light intensity level
+        
+        float coneAngle;        // Light cone max angle: LIGHT_SPOT
+    } LightData, *Light;
+    
+    // Light types
+    typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
+
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
 #endif
@@ -234,6 +249,7 @@ void rlScalef(float x, float y, float z);       // Multiply the current matrix b
 void rlMultMatrixf(float *mat);                 // Multiply the current matrix by another matrix
 void rlFrustum(double left, double right, double bottom, double top, double near, double far);
 void rlOrtho(double left, double right, double bottom, double top, double near, double far);
+void rlViewport(int x, int y, int width, int height); // Set the viewport area
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations
@@ -259,6 +275,8 @@ void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
 void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
 void rlEnableDepthTest(void);                   // Enable depth test
 void rlDisableDepthTest(void);                  // Disable depth test
+void rlEnableWireMode(void);                    // Enable wire mode
+void rlDisableWireMode(void);                   // Disable wire mode
 void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
 void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
 void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
@@ -273,7 +291,7 @@ int rlGetVersion(void);                         // Returns current OpenGL versio
 //------------------------------------------------------------------------------------
 void rlglInit(void);                            // Initialize rlgl (shaders, VAO, VBO...)
 void rlglClose(void);                           // De-init rlgl
-void rlglDraw(Matrix mvp);                      // Draw VAO/VBO
+void rlglDraw(Matrix mvp);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
@@ -281,16 +299,18 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a textur
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
 
-// NOTE: There is a set of shader related functions that are available to end user,
-// to avoid creating function wrappers through core module, they have been directly declared in raylib.h
-
-Model rlglLoadModel(Mesh mesh);           // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglDrawModel(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color color, bool wires);
+void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
+void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
+void rlglDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
+void rlglUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU
 
 Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 
 unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
 void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
+
+// NOTE: There is a set of shader related functions that are available to end user,
+// to avoid creating function wrappers through core module, they have been directly declared in raylib.h
 
 #if defined(RLGL_STANDALONE)
 //------------------------------------------------------------------------------------
@@ -298,18 +318,24 @@ void *rlglReadTexturePixels(Texture2D texture);                     // Read text
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr); // Load custom shader strings and return program id
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
-void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
-void SetModelShader(Model *model, Shader shader);                   // Link a shader to a model
+
+Shader GetDefaultShader(void);                                      // Get default shader
+Shader GetStandardShader(void);                                     // Get default shader
+Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
-void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
+void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
+void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
+void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
+
+Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
+void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 #endif
 
 #ifdef __cplusplus
