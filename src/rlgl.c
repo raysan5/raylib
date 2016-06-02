@@ -28,7 +28,7 @@
 
 #include "rlgl.h"
 
-#include <stdio.h>                  // Standard input / output lib
+#include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on ReadTextFile()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
 #include <string.h>                 // Required for: strcmp(), strlen(), strtok()
 
@@ -48,8 +48,6 @@
     #ifdef __APPLE__ 
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        //#define GLEW_STATIC
-        //#include <GL/glew.h>        // GLEW header, includes OpenGL headers
         #include "glad.h"           // GLAD library, includes OpenGL headers
     #endif
 #endif
@@ -61,8 +59,8 @@
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end()
-#endif                              // NOTE: Used on TraceLog()
+    #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -357,7 +355,6 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     Vector3 axis = (Vector3){ x, y, z };
     VectorNormalize(&axis);
     matRotation = MatrixRotate(axis, angleDeg*DEG2RAD);
-
     MatrixTranspose(&matRotation);
 
     *currentMatrix = MatrixMultiply(*currentMatrix, matRotation);
@@ -912,8 +909,8 @@ void rlglInit(void)
     vaoSupported = true;
     npotSupported = true;
 
-    // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
+    // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
     const char *extList[numExt];
     
@@ -2155,7 +2152,7 @@ void UnloadShader(Shader shader)
     }
 }
 
-// Set custom shader to be used on batch draw
+// Begin custom shader mode
 void BeginShaderMode(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2167,7 +2164,7 @@ void BeginShaderMode(Shader shader)
 #endif
 }
 
-// Set default shader to be used in batch draw
+// End custom shader mode (returns to default shader)
 void EndShaderMode(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2251,6 +2248,18 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
     
     glUseProgram(0);
 #endif
+}
+
+// Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixProjection(Matrix proj)
+{
+    projection = proj;
+}
+
+// Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixModelview(Matrix view)
+{
+    modelview = view;
 }
 
 // Begin blending mode (alpha, additive, multiplied)
@@ -3070,7 +3079,7 @@ static void UnloadDefaultBuffers(void)
     free(quads.indices);
 }
 
-// Sets shader uniform values for lights array
+// Setup shader uniform values for lights array
 // NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
 static void SetShaderLights(Shader shader)
 {

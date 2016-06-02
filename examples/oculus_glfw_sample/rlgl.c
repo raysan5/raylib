@@ -28,40 +28,38 @@
 
 #include "rlgl.h"
 
-#include <stdio.h>          // Standard input / output lib
-#include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
-#include <string.h>         // Declares strcmp(), strlen(), strtok()
+#include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on ReadTextFile()]
+#include <stdlib.h>                 // Required for: malloc(), free(), rand()
+#include <string.h>                 // Required for: strcmp(), strlen(), strtok()
 
 #ifndef RLGL_STANDALONE
-    #include "raymath.h"    // Required for Vector3 and Matrix functions
+    #include "raymath.h"            // Required for Vector3 and Matrix functions
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #ifdef __APPLE__                // OpenGL include for OSX
-        #include <OpenGL/gl.h>
+    #ifdef __APPLE__                
+        #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
     #else
-        #include <GL/gl.h>          // Basic OpenGL include
+        #include <GL/gl.h>          // OpenGL 1.1 library
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #ifdef __APPLE__                // OpenGL include for OSX
-        #include <OpenGL/gl3.h>
+    #ifdef __APPLE__ 
+        #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        //#define GLEW_STATIC
-        //#include <GL/glew.h>        // GLEW header, includes OpenGL headers
-        #include "glad.h"         // glad header, includes OpenGL headers
+        #include "glad.h"           // GLAD library, includes OpenGL headers
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    #include <EGL/egl.h>
-    #include <GLES2/gl2.h>
-    #include <GLES2/gl2ext.h>
+    #include <EGL/egl.h>            // EGL library
+    #include <GLES2/gl2.h>          // OpenGL ES 2.0 library
+    #include <GLES2/gl2ext.h>       // OpenGL ES 2.0 extensions library
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #include <stdarg.h>         // Used for functions with variable number of parameters (TraceLog())
+    #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
 #endif
 
 //----------------------------------------------------------------------------------
@@ -171,7 +169,6 @@ static Matrix modelview;
 static Matrix projection;
 static Matrix *currentMatrix;
 static int currentMatrixMode;
-static Matrix customMVP;
 
 static DrawMode currentDrawMode;
 
@@ -913,8 +910,8 @@ void rlglInit(void)
     vaoSupported = true;
     npotSupported = true;
 
-    // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
+    // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
     const char *extList[numExt];
     
@@ -1083,10 +1080,8 @@ void rlglClose(void)
 }
 
 // Drawing batches: triangles, quads, lines
-void rlglDraw(Matrix mvp)
+void rlglDraw(void)
 {
-    customMVP = mvp;
-    
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 /*
     for (int i = 0; i < modelsCount; i++)
@@ -1548,10 +1543,10 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
     mesh->vboId[6] = 0;     // Vertex indices VBO
     
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vaoId = 0;       // Vertex Array Objects (VAO)
     GLuint vboId[7];        // Vertex Buffer Objects (VBOs)
 
@@ -1677,6 +1672,7 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
 // Update vertex data on GPU (upload new data to one buffer)
 void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Activate mesh VAO
     if (vaoSupported) glBindVertexArray(mesh.vaoId);
         
@@ -1732,6 +1728,7 @@ void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
     //mesh.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
     // Now we can modify vertices
     //glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 }
 
 // Draw a 3d mesh with material and transform
@@ -2156,19 +2153,19 @@ void UnloadShader(Shader shader)
     }
 }
 
-// Set custom shader to be used on batch draw
+// Begin custom shader mode
 void BeginShaderMode(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (currentShader.id != shader.id)
     {
-        //rlglDraw();
+        rlglDraw();
         currentShader = shader;
     }
 #endif
 }
 
-// Set default shader to be used in batch draw
+// End custom shader mode (returns to default shader)
 void EndShaderMode(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -2254,13 +2251,25 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
 #endif
 }
 
+// Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixProjection(Matrix proj)
+{
+    projection = proj;
+}
+
+// Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixModelview(Matrix view)
+{
+    modelview = view;
+}
+
 // Begin blending mode (alpha, additive, multiplied)
 // NOTE: Only 3 blending modes supported, default blend mode is alpha
 void BeginBlendMode(int mode)
 {
     if ((blendMode != mode) && (mode < 3))
     {
-        //rlglDraw();
+        rlglDraw();
         
         switch (mode)
         {
@@ -2283,8 +2292,11 @@ void EndBlendMode(void)
 // Create a new light, initialize it and add to pool
 Light CreateLight(int type, Vector3 position, Color diffuse)
 {
+    Light light = NULL;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Allocate dynamic memory
-    Light light = (Light)malloc(sizeof(LightData));
+    light = (Light)malloc(sizeof(LightData));
     
     // Initialize light values with generic values
     light->id = lightsCount;
@@ -2301,13 +2313,18 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
     
     // Increase enabled lights count
     lightsCount++;
-    
+#else
+    // TODO: Support OpenGL 1.1 lighting system
+    TraceLog(WARNING, "Lighting currently not supported on OpenGL 1.1");
+#endif
+
     return light;
 }
 
 // Destroy a light and take it out of the list
 void DestroyLight(Light light)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Free dynamic memory allocation
     free(lights[light->id]);
     
@@ -2325,6 +2342,7 @@ void DestroyLight(Light light)
     
     // Decrease enabled physic objects count
     lightsCount--;
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -2869,9 +2887,9 @@ static void DrawDefaultBuffers(void)
         glUseProgram(currentShader.id);
         
         // Create modelview-projection matrix
-        //Matrix matMVP = MatrixMultiply(modelview, projection);
+        Matrix matMVP = MatrixMultiply(modelview, projection);
 
-        glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(customMVP));  //customMVP
+        glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(matMVP));
         glUniform4f(currentShader.tintColorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
         glUniform1i(currentShader.mapTexture0Loc, 0);
         
@@ -3062,7 +3080,7 @@ static void UnloadDefaultBuffers(void)
     free(quads.indices);
 }
 
-// Sets shader uniform values for lights array
+// Setup shader uniform values for lights array
 // NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
 static void SetShaderLights(Shader shader)
 {

@@ -54,13 +54,7 @@
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined(PLATFORM_DESKTOP)
-    #define GLAD_EXTENSIONS_LOADER
-    #if defined(GLEW_EXTENSIONS_LOADER)
-        #define GLEW_STATIC
-        #include <GL/glew.h>        // GLEW extensions loading lib
-    #elif defined(GLAD_EXTENSIONS_LOADER)
-        #include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
-    #endif
+    #include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -1576,33 +1570,15 @@ static void InitDisplay(int width, int height)
     // Extensions initialization for OpenGL 3.3
     if (rlGetVersion() == OPENGL_33)
     {
-        #if defined(GLEW_EXTENSIONS_LOADER)
-            // Initialize extensions using GLEW
-            glewExperimental = 1;       // Needed for core profile
-            GLenum error = glewInit();
-            
-            if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
-            
-            if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-            else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+        // NOTE: glad is generated and contains only required OpenGL version and Core extensions
+        //if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n"); // No GLFW3 in this module...
 
-            // With GLEW, we can check if an extension has been loaded in two ways:
-            //if (GLEW_ARB_vertex_array_object) { } 
-            //if (glewIsSupported("GL_ARB_vertex_array_object")) { }
-
-            // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
-            // Alternatives: glLoadGen, glad, libepoxy
-        #elif defined(GLAD_EXTENSIONS_LOADER)
-            // NOTE: glad is generated and contains only required OpenGL version and Core extensions
-            //if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
-            if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n"); // No GLFW3 in this module...
-
-            if (GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-            else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
-            
-            // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
-            //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
-        #endif
+        if (GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+        else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+        
+        // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
+        //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
     }
 #endif
     

@@ -47,24 +47,6 @@
     #endif
 #endif
 
-typedef enum {
-    ERROR_RAW_CONTEXT_CREATION = 1,
-    ERROR_XM_CONTEXT_CREATION = 2,
-    ERROR_MOD_CONTEXT_CREATION = 4,
-    ERROR_MIX_CHANNEL_CREATION = 8,
-    ERROR_MUSIC_CHANNEL_CREATION = 16,
-    ERROR_LOADING_XM = 32,
-    ERROR_LOADING_MOD = 64,
-    ERROR_LOADING_WAV = 128,
-    ERROR_LOADING_OGG = 256,
-    ERROR_OUT_OF_MIX_CHANNELS = 512,
-    ERROR_EXTENSION_NOT_RECOGNIZED = 1024,
-    ERROR_UNABLE_TO_OPEN_RRES_FILE = 2048,
-    ERROR_INVALID_RRES_FILE = 4096,
-    ERROR_INVALID_RRES_RESOURCE = 8192,
-    ERROR_UNINITIALIZED_CHANNELS = 16384
-} AudioError;
-
 // Sound source type
 typedef struct Sound {
     unsigned int source;
@@ -111,7 +93,7 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
+int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
 void UpdateMusicStream(int index);                              // Updates buffers for music streaming
 void StopMusicStream(int index);                                // Stop music playing (close stream)
 void PauseMusicStream(int index);                               // Pause music playing
@@ -120,7 +102,7 @@ bool IsMusicPlaying(int index);                                 // Check if musi
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(int index);                            // Get music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int getMusicStreamCount(void);
+int GetMusicStreamCount(void);
 void SetMusicPitch(int index, float pitch);
 
 // used to output raw audio streams, returns negative numbers on error

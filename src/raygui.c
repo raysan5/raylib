@@ -667,7 +667,7 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
     Vector2 mousePoint = GetMousePosition();
 
     int textWidth = MeasureText(FormatText("%i", value), style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
+    //int textHeight = style[GLOBAL_TEXT_FONTSIZE];     // Unused variable
     
     int buttonSide = 0;
     

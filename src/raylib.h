@@ -452,29 +452,10 @@ typedef struct Ray {
     Vector3 direction;
 } Ray;
 
-typedef enum { // allows errors to be & together
-    ERROR_RAW_CONTEXT_CREATION = 1,
-    ERROR_XM_CONTEXT_CREATION = 2,
-    ERROR_MOD_CONTEXT_CREATION = 4,
-    ERROR_MIX_CHANNEL_CREATION = 8,
-    ERROR_MUSIC_CHANNEL_CREATION = 16,
-    ERROR_LOADING_XM = 32,
-    ERROR_LOADING_MOD = 64,
-    ERROR_LOADING_WAV = 128,
-    ERROR_LOADING_OGG = 256,
-    ERROR_OUT_OF_MIX_CHANNELS = 512,
-    ERROR_EXTENSION_NOT_RECOGNIZED = 1024,
-    ERROR_UNABLE_TO_OPEN_RRES_FILE = 2048,
-    ERROR_INVALID_RRES_FILE = 4096,
-    ERROR_INVALID_RRES_RESOURCE = 8192,
-    ERROR_UNINITIALIZED_CHANNELS = 16384
-} AudioError;
-
 // Sound source type
 typedef struct Sound {
     unsigned int source;
     unsigned int buffer;
-    AudioError error; // if there was any error during the creation or use of this Sound
 } Sound;
 
 // Wave type, defines audio wave data
@@ -487,8 +468,6 @@ typedef struct Wave {
 } Wave;
 
 typedef int RawAudioContext;
-
-
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -889,6 +868,9 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // S
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
+void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+
 void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
 void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
@@ -911,7 +893,6 @@ void ApplyForce(PhysicObject pObj, Vector2 force);                              
 void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
 
 Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
-void DrawPhysicObjectInfo(PhysicObject pObj, Vector2 position, int fontSize);           // Draw physic object information at screen position
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
@@ -931,7 +912,7 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
+int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
 void UpdateMusicStream(int index);                              // Updates buffers for music streaming
 void StopMusicStream(int index);                                // Stop music playing (close stream)
 void PauseMusicStream(int index);                               // Pause music playing
@@ -940,7 +921,7 @@ bool IsMusicPlaying(int index);                                 // Check if musi
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int getMusicStreamCount(void);
+int GetMusicStreamCount(void);
 void SetMusicPitch(int index, float pitch);
 
 // used to output raw audio streams, returns negative numbers on error

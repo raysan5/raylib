@@ -30,7 +30,7 @@
 #define RLGL_STANDALONE
 #include "rlgl.h"
 
-//#define PLATFORM_OCULUS
+#define PLATFORM_OCULUS
 
 #if defined(PLATFORM_OCULUS)
     #include "OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
@@ -72,7 +72,7 @@ typedef struct OculusMirror {
 typedef struct OculusLayer {
     ovrViewScaleDesc viewScaleDesc;
     ovrLayerEyeFov eyeLayer;      // layer 0
-    //ovrLayerQuad quadLayer;     // layer 1
+    //ovrLayerQuad quadLayer;     // TODO: layer 1: '2D' quad for GUI
     Matrix eyeProjections[2];
     int width;
     int height;
@@ -222,6 +222,7 @@ int main(void)
         layer.eyeLayer.RenderPose[0] = eyePoses[0];
         layer.eyeLayer.RenderPose[1] = eyePoses[1];
 #endif
+        Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -229,13 +230,12 @@ int main(void)
 #if defined(PLATFORM_OCULUS)
         SetOculusBuffer(session, buffer);
 #endif
-
-        rlClearScreenBuffers();             // Clear current framebuffers
+        rlClearScreenBuffers();             // Clear current framebuffer(s)
 
 #if defined(PLATFORM_OCULUS)
         for (int eye = 0; eye < 2; eye++)
         {
-            glViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
+            rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
             Quaternion eyeRPose = (Quaternion){ eyePoses[eye].Orientation.x, eyePoses[eye].Orientation.y, eyePoses[eye].Orientation.z, eyePoses[eye].Orientation.w };
             QuaternionInvert(&eyeRPose);
@@ -244,32 +244,39 @@ int main(void)
 
             Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);
             Matrix modelview = MatrixMultiply(matView, eyeView);
-            Matrix mvp = MatrixMultiply(modelview, layer.eyeProjections[eye]);
+            //Matrix mvp = MatrixMultiply(modelview, layer.eyeProjections[eye]);
+			
+			SetMatrixModelview(modelview);
+			SetMatrixProjection(layer.eyeProjections[eye]);
 #else
             // Calculate projection matrix (from perspective) and view matrix from camera look at
             Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             MatrixTranspose(&matProj);
-            Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-            Matrix mvp = MatrixMultiply(matView, matProj);
+			
+			SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
+			SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
 #endif
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
             DrawGrid(10, 1.0f);
 
             // NOTE: Internal buffers drawing (3D data)
-            rlglDraw(mvp);
+            rlglDraw();
             
-            matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
-            MatrixTranspose(&matProj);
-            matView = MatrixIdentity();
-            mvp = MatrixMultiply(matView, matProj);
-            
+#if !defined(PLATFORM_OCULUS)
+            // Draw '2D' elements in the scene (GUI)
             // TODO: 2D drawing on Oculus Rift: requires an ovrLayerQuad layer
-            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 300.0f, 20.0f }, DARKGRAY);
+            rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
+            rlLoadIdentity();                                       // Reset internal projection matrix
+            rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+            rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
+            rlLoadIdentity();                                       // Reset internal modelview matrix
+            
+            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 600.0f, 20.0f }, DARKGRAY);
 
             // NOTE: Internal buffers drawing (2D data)
-            rlglDraw(mvp);
-            
+            rlglDraw();
+#endif
 #if defined(PLATFORM_OCULUS)
         }
         
@@ -593,13 +600,11 @@ static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
     desc.Width = width;
     desc.Height = height;
     desc.MipLevels = 1;
-    desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+    desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;   // Requires glEnable(GL_FRAMEBUFFER_SRGB);
     desc.SampleCount = 1;
     desc.StaticImage = ovrFalse;
 
     ovrResult result = ovr_CreateTextureSwapChainGL(session, &desc, &buffer.textureChain);
-    
-    //eyeLayer.ColorTexture[0] = buffer.textureChain;      // <------------------- ???
     
     if (!OVR_SUCCESS(result)) TraceLog(LOG_WARNING, "OVR: Failed to create swap textures buffer");
 
@@ -672,9 +677,11 @@ static void SetOculusBuffer(ovrSession session, OculusBuffer buffer)
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
     //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
 
-    //glViewport(0, 0, buffer.width, buffer.height);
+    //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glEnable(GL_FRAMEBUFFER_SRGB);
+    
+    // Required if OculusBuffer format is OVR_FORMAT_R8G8B8A8_UNORM_SRGB
+    glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 // Unset Oculus buffer

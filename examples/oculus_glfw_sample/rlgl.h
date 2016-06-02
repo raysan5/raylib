@@ -32,15 +32,15 @@
 //#define RLGL_STANDALONE       // NOTE: To use rlgl as standalone lib, just uncomment this line
 
 #ifndef RLGL_STANDALONE
-    #include "raylib.h"         // Required for typedef(s): Model, Shader, Texture2D
-    #include "utils.h"          // Required for function TraceLog()
+    #include "raylib.h"         // Required for: Model, Shader, Texture2D
+    #include "utils.h"          // Required for: TraceLog()
 #endif
 
 #ifdef RLGL_STANDALONE
     #define RAYMATH_STANDALONE
 #endif
 
-#include "raymath.h"            // Required for types: Vector3, Matrix
+#include "raymath.h"            // Required for: Vector3, Matrix
 
 // Select desired OpenGL version
 // NOTE: Those preprocessor defines are only used on rlgl module,
@@ -291,7 +291,7 @@ int rlGetVersion(void);                         // Returns current OpenGL versio
 //------------------------------------------------------------------------------------
 void rlglInit(void);                            // Initialize rlgl (shaders, VAO, VBO...)
 void rlglClose(void);                           // De-init rlgl
-void rlglDraw(Matrix mvp);                            // Draw VAO/VBO
+void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
@@ -328,6 +328,9 @@ int GetShaderLocation(Shader shader, const char *uniformName);              // G
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
+
+void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
 
 void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
 void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
