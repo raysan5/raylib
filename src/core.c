@@ -2674,7 +2674,7 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     gestureEvent.position[1].y /= (float)GetScreenHeight();
 
     // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
+    ProcessGestureEvent(gestureEvent);
 
     return 1;
 }

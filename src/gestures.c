@@ -46,12 +46,12 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FORCE_TO_SWIPE          0.0005f     // Measured in normalized pixels / time
-#define MINIMUM_DRAG            0.015f      // Measured in normalized pixels [0..1]
-#define MINIMUM_PINCH           0.005f      // Measured in normalized pixels [0..1]
+#define FORCE_TO_SWIPE          0.0005f     // Measured in normalized screen units/time
+#define MINIMUM_DRAG            0.015f      // Measured in normalized screen units (0.0f to 1.0f)
+#define MINIMUM_PINCH           0.005f      // Measured in normalized screen units (0.0f to 1.0f)
 #define TAP_TIMEOUT             300         // Time in milliseconds
 #define PINCH_TIMEOUT           300         // Time in milliseconds
-#define DOUBLETAP_RANGE         0.03f
+#define DOUBLETAP_RANGE         0.03f       // Measured in normalized screen units (0.0f to 1.0f)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
