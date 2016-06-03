@@ -177,7 +177,7 @@ static bool CheckCollisionPointRec(Vector2 point, Rectangle rec);  // Check if p
 static const char *FormatText(const char *text, ...);   // Formatting of text with variables to 'embed'
 
 // NOTE: raygui depend on some raylib input and drawing functions
-// TODO: Set your own functions
+// TODO: Replace by your own functions
 static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
 static int IsMouseButtonDown(int button) { return 0; }
 static int IsMouseButtonPressed(int button) { return 0; }
@@ -191,7 +191,6 @@ static int MeasureText(const char *text, int fontSize) { return 0; }
 static void DrawText(const char *text, int posX, int posY, int fontSize, Color color) { }
 static void DrawRectangleRec(Rectangle rec, Color color) { }
 static void DrawRectangle(int posX, int posY, int width, int height, Color color) { DrawRectangleRec((Rectangle){ posX, posY, width, height }, color); }
-
 #endif
 
 //----------------------------------------------------------------------------------
