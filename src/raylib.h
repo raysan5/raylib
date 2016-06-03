@@ -64,6 +64,7 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
+//#define PLATFORM_OCULUS       // Oculus Rift CV1
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -71,7 +72,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    typedef struct android_app;     // Define android_app struct (android_native_app_glue.h)
+    typedef struct android_app; // Define android_app struct (android_native_app_glue.h)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -448,14 +449,14 @@ typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
 
 // Ray type (useful for raycast)
 typedef struct Ray {
-    Vector3 position;
-    Vector3 direction;
+    Vector3 position;       // Ray position (origin)
+    Vector3 direction;      // Ray direction
 } Ray;
 
 // Sound source type
 typedef struct Sound {
-    unsigned int source;
-    unsigned int buffer;
+    unsigned int source;    // Sound audio source id
+    unsigned int buffer;    // Sound audio buffer id
 } Sound;
 
 // Wave type, defines audio wave data
@@ -576,6 +577,12 @@ extern "C" {            // Prevents name mangling of functions
 void InitWindow(int width, int height, struct android_app *state);  // Init Android Activity and OpenGL Graphics
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
+#endif
+
+#if defined(PLATFORM_OCULUS)
+void InitOculusDevice(void);                                // Init Oculus Rift device
+void CloseOculusDevice(void);                               // Close Oculus Rift device
+void UpdateOculusTracking(void);                            // Update Oculus Rift tracking (position and orientation)
 #endif
 
 void CloseWindow(void);                                     // Close Window and Terminate Context
