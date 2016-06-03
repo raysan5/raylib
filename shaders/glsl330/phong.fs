@@ -6,7 +6,7 @@ in vec3 fragNormal;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // Output fragment color
 out vec4 finalColor;
@@ -44,7 +44,7 @@ vec3 DiffuseLighting(in vec3 N, in vec3 L)
     // Lambertian reflection calculation
     float diffuse = clamp(dot(N, L), 0, 1);
 
-    return (fragTintColor.xyz*lightDiffuseColor*lightIntensity*diffuse);
+    return (colDiffuse.xyz*lightDiffuseColor*lightIntensity*diffuse);
 }
 
 // Calculate specular lighting component

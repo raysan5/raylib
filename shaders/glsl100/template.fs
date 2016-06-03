@@ -8,7 +8,7 @@ varying vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
 
@@ -19,5 +19,5 @@ void main()
     
     // NOTE: Implement here your fragment shader code
     
-    gl_FragColor = texelColor*fragTintColor;
+    gl_FragColor = texelColor*colDiffuse;
 }
