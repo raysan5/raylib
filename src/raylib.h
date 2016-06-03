@@ -578,6 +578,12 @@ void InitWindow(int width, int height, struct android_app *state);  // Init Andr
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
 
+#if defined(PLATFORM_OCULUS)
+void InitOculusDevice(void);                                // Init Oculus Rift device
+void CloseOculusDevice(void);                               // Close Oculus Rift device
+void UpdateOculusTracking(void);                            // Update Oculus Rift tracking (position and orientation)
+#endif
+
 void CloseWindow(void);                                     // Close Window and Terminate Context
 bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)

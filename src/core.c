@@ -483,11 +483,6 @@ void CloseWindow(void)
 {
     UnloadDefaultFont();
 
-#if defined(PLATFORM_OCULUS)
-    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
-    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
-#endif
-
     rlglClose();                // De-init rlgl
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -525,6 +520,63 @@ void CloseWindow(void)
 
     TraceLog(INFO, "Window closed successfully");
 }
+
+#if defined(PLATFORM_OCULUS)
+// Init Oculus Rift device
+// NOTE: Device initialization should be done before window creation?
+void InitOculusDevice(void)
+{
+    ovrResult result = ovr_Initialize(NULL);
+    if (OVR_FAILURE(result)) TraceLog(ERROR, "OVR: Could not initialize Oculus device");
+
+    result = ovr_Create(&session, &luid);
+    if (OVR_FAILURE(result))
+    {
+        TraceLog(WARNING, "OVR: Could not create Oculus session");
+        ovr_Shutdown();
+    }
+
+    hmdDesc = ovr_GetHmdDesc(session);
+    
+    TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+    TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+    TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+    TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
+    TraceLog(INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
+    TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+    
+    screenWidth = hmdDesc.Resolution.w/2;
+    screenHeight = hmdDesc.Resolution.h/2;
+    
+    // Initialize Oculus Buffers
+    layer = InitOculusLayer(session);   
+    buffer = LoadOculusBuffer(session, layer.width, layer.height);
+    mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
+    layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
+}
+
+// Close Oculus Rift device
+void CloseOculusDevice(void)
+{
+    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
+    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
+
+    ovr_Destroy(session);   // Must be called after glfwTerminate() -->  REALLY???
+    ovr_Shutdown();
+}
+
+// Update Oculus Rift tracking (position and orientation)
+void UpdateOculusTracking(void)
+{
+    frameIndex++;
+   
+    ovrPosef eyePoses[2];
+    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
+    
+    layer.eyeLayer.RenderPose[0] = eyePoses[0];
+    layer.eyeLayer.RenderPose[1] = eyePoses[1];
+}
+#endif
 
 // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
