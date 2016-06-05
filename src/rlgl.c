@@ -2253,13 +2253,17 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
 // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixProjection(Matrix proj)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     projection = proj;
+#endif
 }
 
 // Set a custom modelview matrix (replaces internal modelview matrix)
 void SetMatrixModelview(Matrix view)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     modelview = view;
+#endif
 }
 
 // Begin blending mode (alpha, additive, multiplied)
