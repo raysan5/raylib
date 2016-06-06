@@ -62,6 +62,10 @@
     #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
 #endif
 
+#if !defined(GRAPHICS_API_OPENGL_11)
+    #include "standard_shader.h"    // Standard shader to embed
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -189,26 +193,27 @@ static bool useTempBuffer = false;
 
 // Shader Programs
 static Shader defaultShader;
-static Shader standardShader;
-static Shader currentShader;            // By default, defaultShader
+static Shader standardShader;               // Lazy initialization when GetStandardShader()
+static Shader currentShader;                // By default, defaultShader
+static bool standardShaderLoaded = false;   
 
 // Flags for supported extensions
-static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support VAO extension)
+static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
 
 // Compressed textures support flags
-static bool texCompETC1Supported = false;    // ETC1 texture compression support
-static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
-static bool texCompPVRTSupported = false;    // PVR texture compression support
-static bool texCompASTCSupported = false;    // ASTC texture compression support
+static bool texCompETC1Supported = false;   // ETC1 texture compression support
+static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
+static bool texCompPVRTSupported = false;   // PVR texture compression support
+static bool texCompASTCSupported = false;   // ASTC texture compression support
 
 // Lighting data
-static Light lights[MAX_LIGHTS];             // Lights pool
-static int lightsCount;                      // Counts current enabled physic objects
+static Light lights[MAX_LIGHTS];            // Lights pool
+static int lightsCount;                     // Counts current enabled physic objects
 #endif
 
 // Compressed textures support flags
-static bool texCompDXTSupported = false;     // DDS texture compression support
-static bool npotSupported = false;           // NPOT textures full support
+static bool texCompDXTSupported = false;    // DDS texture compression support
+static bool npotSupported = false;          // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -1031,7 +1036,6 @@ void rlglInit(void)
 
     // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
-    standardShader = LoadStandardShader();
     currentShader = defaultShader;
 
     LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
@@ -2184,14 +2188,22 @@ Shader GetDefaultShader(void)
 }
 
 // Get default shader
+// NOTE: Inits global variable standardShader
 Shader GetStandardShader(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    return standardShader;
-#else
     Shader shader = { 0 };
-    return shader;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (standardShaderLoaded) shader = standardShader;
+    else
+    {
+        // Lazy initialization of standard shader
+        standardShader = LoadStandardShader();
+        shader = standardShader;
+    }
 #endif
+
+    return shader;
 }
 
 // Get shader uniform location
@@ -2567,18 +2579,22 @@ static Shader LoadDefaultShader(void)
 
 // Load standard shader
 // NOTE: This shader supports: 
-//      - Up to 3 different maps: diffuse, normal, specular
-//      - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
-//      - Up to 8 lights: Point, Directional or Spot
+//     - Up to 3 different maps: diffuse, normal, specular
+//     - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
+//     - Up to 8 lights: Point, Directional or Spot
 static Shader LoadStandardShader(void)
 {
-    // Load standard shader (TODO: rewrite as char pointers)
-    Shader shader = LoadShader("resources/shaders/standard.vs", "resources/shaders/standard.fs");
+    Shader shader;
+    
+    // Load standard shader (embeded in standard_shader.h)
+    shader.id = LoadShaderProgram(vStandardShaderStr, fStandardShaderStr);
 
     if (shader.id != 0)
     {
         LoadDefaultShaderLocations(&shader);
         TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
+        
+        standardShaderLoaded = true;
     }
     else
     {
