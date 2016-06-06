@@ -48,7 +48,7 @@
     #ifdef __APPLE__ 
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        #include "glad.h"           // GLAD library, includes OpenGL headers
+        #include "external/glad.h"  // GLAD library, includes OpenGL headers
     #endif
 #endif
 
@@ -2253,13 +2253,17 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
 // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixProjection(Matrix proj)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     projection = proj;
+#endif
 }
 
 // Set a custom modelview matrix (replaces internal modelview matrix)
 void SetMatrixModelview(Matrix view)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     modelview = view;
+#endif
 }
 
 // Begin blending mode (alpha, additive, multiplied)
@@ -2571,10 +2575,16 @@ static Shader LoadStandardShader(void)
     // Load standard shader (TODO: rewrite as char pointers)
     Shader shader = LoadShader("resources/shaders/standard.vs", "resources/shaders/standard.fs");
 
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
-
-    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+    if (shader.id != 0)
+    {
+        LoadDefaultShaderLocations(&shader);
+        TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
+    }
+    else
+    {
+        TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded, using default shader", shader.id);
+        shader = GetDefaultShader();
+    }
 
     return shader;
 }

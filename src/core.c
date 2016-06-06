@@ -55,11 +55,11 @@
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined(PLATFORM_OCULUS)
-    #define PLATFORM_DESKTOP    // Enable PLATFORM_DESKTOP code-base
+    #define PLATFORM_DESKTOP      // Enable PLATFORM_DESKTOP code-base
 #endif
 
 #if defined(PLATFORM_DESKTOP)
-    #include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
+    #include "external/glad.h"    // GLAD library: Manage OpenGL headers and extensions
 #endif
 
 #if defined(PLATFORM_OCULUS)

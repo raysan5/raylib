@@ -40,12 +40,12 @@
                                 // NOTE: Includes Android fopen function map
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"          // Required for: stbi_load()
+#include "external/stb_image.h" // Required for: stbi_load()
                                 // NOTE: Used to read image data (multiple formats support)
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"   // Required for: stbir_resize_uint8() 
-                                // NOTE: Used for image scaling on ImageResize()
+#include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() 
+                                        // NOTE: Used for image scaling on ImageResize()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

@@ -42,10 +42,11 @@
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     #define STB_IMAGE_WRITE_IMPLEMENTATION
-    #include "stb_image_write.h"    // Required for: stbi_write_png()
+    #include "external/stb_image_write.h"    // Required for: stbi_write_png()
 #endif
 
-#include "tinfl.c"
+#include "external/tinfl.c"         // Required for: tinfl_decompress_mem_to_mem()
+                                    // NOTE: Deflate algorythm data decompression
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
