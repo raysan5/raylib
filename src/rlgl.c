@@ -2575,11 +2575,16 @@ static Shader LoadStandardShader(void)
     // Load standard shader (TODO: rewrite as char pointers)
     Shader shader = LoadShader("resources/shaders/standard.vs", "resources/shaders/standard.fs");
 
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
-
-    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
-    else shader = GetDefaultShader();
+    if (shader.id != 0)
+    {
+        LoadDefaultShaderLocations(&shader);
+        TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
+    }
+    else
+    {
+        TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded, using default shader", shader.id);
+        shader = GetDefaultShader();
+    }
 
     return shader;
 }
