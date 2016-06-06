@@ -101,7 +101,7 @@ endif
 
 
 # typing 'make' will invoke the default target entry called 'all',
-# in this case, the 'default' target entry is basic_game
+# in this case, the 'default' target entry is raylib
 all: raylib
 
 # compile raylib library
