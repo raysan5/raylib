@@ -1,8 +1,8 @@
 /**********************************************************************************************
 *
-*   [physac] raylib physics engine module - Basic functions to apply physics to 2D objects
+*   [physac] raylib physics module - Basic functions to apply physics to 2D objects
 *
-*   Copyright (c) 2015 Victor Fisac and Ramon Santamaria
+*   Copyright (c) 2016 Victor Fisac and Ramon Santamaria
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -31,62 +31,67 @@
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
+// NOTE: Below types are required for PHYSAC_STANDALONE usage
 //----------------------------------------------------------------------------------
-// Collider types
-typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE, COLLIDER_CAPSULE } ColliderType;
 
-// Transform struct
+// Vector2 type
+typedef struct Vector2 {
+    float x;
+    float y;
+} Vector2;
+
+typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE } ColliderType;
+
 typedef struct Transform {
     Vector2 position;
-    float rotation;
-    Vector2 scale;
+    float rotation;         // Radians (not used)
+    Vector2 scale;          // Just for rectangle physic objects, for circle physic objects use collider radius and keep scale as { 0, 0 }
 } Transform;
 
-// Rigidbody struct
 typedef struct Rigidbody {
-    bool enabled;
+    bool enabled;           // Acts as kinematic state (collisions are calculated anyway)
     float mass;
     Vector2 acceleration;
     Vector2 velocity;
-    bool isGrounded;
-    bool isContact;     // Avoid freeze player when touching floor
     bool applyGravity;
-    float friction;     // 0.0f to 1.0f
-    float bounciness;   // 0.0f to 1.0f
+    bool isGrounded;
+    float friction;         // Normalized value
+    float bounciness;
 } Rigidbody;
 
-// Collider struct
 typedef struct Collider {
     bool enabled;
     ColliderType type;
-    Rectangle bounds;   // Used for COLLIDER_RECTANGLE and COLLIDER_CAPSULE
-    int radius;         // Used for COLLIDER_CIRCLE and COLLIDER_CAPSULE
+    Rectangle bounds;       // Used for COLLIDER_RECTANGLE
+    int radius;             // Used for COLLIDER_CIRCLE
 } Collider;
+
+typedef struct PhysicObjectData {
+    unsigned int id;
+    Transform transform;
+    Rigidbody rigidbody;
+    Collider collider;
+    bool enabled;
+} PhysicObjectData, *PhysicObject;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
 
 //----------------------------------------------------------------------------------
-// Module Functions Declarations
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
-void InitPhysics(int maxPhysicElements);                                    // Initialize all internal physics values
-void UnloadPhysics();                                                       // Unload physic elements arrays
+void InitPhysics(Vector2 gravity);                                                      // Initializes pointers array (just pointers, fixed size)
+void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
+void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
 
-void AddRigidbody(int index, Rigidbody rigidbody);                          // Initialize a new rigidbody with parameters to internal index slot
-void AddCollider(int index, Collider collider);                             // Initialize a new Collider with parameters to internal index slot
+PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);       // Create a new physic object dinamically, initialize it and add to pool
+void DestroyPhysicObject(PhysicObject pObj);                                            // Destroy a specific physic object and take it out of the list
 
-void ApplyPhysics(int index, Vector2 *position);                            // Apply physics to internal rigidbody, physics calculations are applied to position pointer parameter
-void SetRigidbodyEnabled(int index, bool state);                            // Set enabled state to a defined rigidbody
-void SetRigidbodyVelocity(int index, Vector2 velocity);                     // Set velocity of rigidbody (without considering of mass value)
-void SetRigidbodyAcceleration(int index, Vector2 acceleration);             // Set acceleration of rigidbody (without considering of mass value)
-void AddRigidbodyForce(int index, Vector2 force);                           // Set rigidbody force (considering mass value)
-void AddForceAtPosition(Vector2 position, float intensity, float radius);   // Add a force to all enabled rigidbodies at a position
+void ApplyForce(PhysicObject pObj, Vector2 force);                                      // Apply directional force to a physic object
+void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
 
-void SetColliderEnabled(int index, bool state);                             // Set enabled state to a defined collider
-
-Rigidbody GetRigidbody(int index);                                          // Returns the internal rigidbody data defined by index parameter
-Collider GetCollider(int index);                                            // Returns the internal collider data defined by index parameter
+Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
 
 #ifdef __cplusplus
 }

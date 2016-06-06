@@ -25,6 +25,7 @@ int main()
     camera.position = (Vector3){ 0.0f, 10.0f, 10.0f };  // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
 
     Vector3 cubePosition = { 0.0f, 1.0f, 0.0f };
     Vector3 cubeSize = { 2.0f, 2.0f, 2.0f };
@@ -35,6 +36,7 @@ int main()
     
     SetCameraMode(CAMERA_FREE);         // Set a free camera mode
     SetCameraPosition(camera.position); // Set internal camera position to match our camera position
+    SetCameraFovy(camera.fovy);         // Set internal camera field-of-view Y
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -53,8 +55,8 @@ int main()
             
             // Check collision between ray and box
             collision = CheckCollisionRayBox(ray,
-                (Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
-                (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 });
+                        (BoundingBox){(Vector3){ cubePosition.x - cubeSize.x/2, cubePosition.y - cubeSize.y/2, cubePosition.z - cubeSize.z/2 },
+                                      (Vector3){ cubePosition.x + cubeSize.x/2, cubePosition.y + cubeSize.y/2, cubePosition.z + cubeSize.z/2 }});
         }
         //----------------------------------------------------------------------------------
 
@@ -75,7 +77,7 @@ int main()
 
             End3dMode();
             
-            DrawText("Try selecting the box with mouse!", 240, 10, 20, GRAY);
+            DrawText("Try selecting the box with mouse!", 240, 10, 20, DARKGRAY);
             
             if(collision) DrawText("BOX SELECTED", (screenWidth - MeasureText("BOX SELECTED", 30)) / 2, screenHeight * 0.1f, 30, GREEN);
 

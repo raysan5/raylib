@@ -23,16 +23,49 @@
 #ifndef RAYGUI_H
 #define RAYGUI_H
 
-#include "raylib.h"
+//#include "raylib.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define NUM_PROPERTIES  98
+#define NUM_PROPERTIES       98
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
+// NOTE: Some types are required for RAYGUI_STANDALONE usage
 //----------------------------------------------------------------------------------
+#if defined(RAYGUI_STANDALONE)
+    #ifndef __cplusplus
+    // Boolean type
+        #ifndef true
+            typedef enum { false, true } bool;
+        #endif
+    #endif
+
+    // Vector2 type
+    typedef struct Vector2 {
+        float x;
+        float y;
+    } Vector2;
+
+    // Color type, RGBA (32bit)
+    typedef struct Color {
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+        unsigned char a;
+    } Color;
+
+    // Rectangle type
+    typedef struct Rectangle {
+        int x;
+        int y;
+        int width;
+        int height;
+    } Rectangle;
+#endif
+
+// Gui properties enumeration
 typedef enum GuiProperty {
     GLOBAL_BASE_COLOR = 0,
     GLOBAL_BORDER_COLOR,

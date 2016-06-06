@@ -1,8 +1,8 @@
 /**********************************************************************************************
 *
-*   [physac] raylib physics engine module - Basic functions to apply physics to 2D objects
+*   [physac] raylib physics module - Basic functions to apply physics to 2D objects
 *
-*   Copyright (c) 2015 Victor Fisac and Ramon Santamaria
+*   Copyright (c) 2016 Victor Fisac and Ramon Santamaria
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -29,329 +29,566 @@
     #include "raylib.h"
 #endif
 
-#include <math.h>
-#include <stdlib.h>             // Required for: malloc(), free()
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <math.h>           // Required for: cos(), sin(), abs(), fminf()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define DECIMAL_FIX     0.26f       // Decimal margin for collision checks (avoid rigidbodies shake)
+#define MAX_PHYSIC_OBJECTS      256             // Maximum available physic object slots in objects pool
+#define PHYSICS_STEPS           450             // Physics update steps number (divided calculations in steps per frame) to get more accurately collisions detections
+#define PHYSICS_ACCURACY        0.0001f         // Velocity subtract operations round filter (friction)
+#define PHYSICS_ERRORPERCENT    0.001f          // Collision resolve position fix
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
+// NOTE: Below types are required for PHYSAC_STANDALONE usage
 //----------------------------------------------------------------------------------
 // ...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Collider *colliders;         // Colliders array, dynamically allocated at runtime
-static Rigidbody *rigidbodies;      // Rigitbody array, dynamically allocated at runtime
-static bool collisionChecker;
-
-static int maxElements;             // Max physic elements to compute
-static bool enabled;                // Physics enabled? (true by default)
-static Vector2 gravity;             // Gravity value used for physic calculations
+static PhysicObject physicObjects[MAX_PHYSIC_OBJECTS];              // Physic objects pool
+static int physicObjectsCount;                                      // Counts current enabled physic objects
+static Vector2 gravityForce;                                        // Gravity force
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declarations
+// Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static float Vector2Length(Vector2 vector);
-static float Vector2Distance(Vector2 a, Vector2 b);
-static void Vector2Normalize(Vector2 *vector);
+static float Vector2DotProduct(Vector2 v1, Vector2 v2);             // Returns the dot product of two Vector2
+static float Vector2Length(Vector2 v);                              // Returns the length of a Vector2
 
 //----------------------------------------------------------------------------------
-// Module Functions Definitions
+// Module Functions Definition
 //----------------------------------------------------------------------------------
-void InitPhysics(int maxPhysicElements)
+
+// Initializes pointers array (just pointers, fixed size)
+void InitPhysics(Vector2 gravity)
 {
-    maxElements = maxPhysicElements;
+    // Initialize physics variables
+    physicObjectsCount = 0;
+    gravityForce = gravity;
+}
+
+// Update physic objects, calculating physic behaviours and collisions detection
+void UpdatePhysics()
+{
+    // Reset all physic objects is grounded state
+    for (int i = 0; i < physicObjectsCount; i++) physicObjects[i]->rigidbody.isGrounded = false;
     
-    colliders = (Collider *)malloc(maxElements*sizeof(Collider));
-    rigidbodies = (Rigidbody *)malloc(maxElements*sizeof(Rigidbody));
-    
-    for (int i = 0; i < maxElements; i++)
+    for (int steps = 0; steps < PHYSICS_STEPS; steps++)
     {
-        colliders[i].enabled = false;
-        colliders[i].bounds = (Rectangle){ 0, 0, 0, 0 };
-        colliders[i].radius = 0;
-        
-        rigidbodies[i].enabled = false;
-        rigidbodies[i].mass = 0.0f;
-        rigidbodies[i].velocity = (Vector2){ 0.0f, 0.0f };
-        rigidbodies[i].acceleration = (Vector2){ 0.0f, 0.0f };
-        rigidbodies[i].isGrounded = false;
-        rigidbodies[i].isContact = false;
-        rigidbodies[i].friction = 0.0f;
-    }
-    
-    collisionChecker = false;
-    enabled = true;
-    
-    // NOTE: To get better results, gravity needs to be 1:10 from original parameter
-    gravity = (Vector2){ 0.0f, -9.81f/10.0f };     // By default, standard gravity
-}
-
-void UnloadPhysics()
-{
-    free(colliders);
-    free(rigidbodies);
-}
-
-void AddCollider(int index, Collider collider)
-{
-    colliders[index] = collider;
-}
-
-void AddRigidbody(int index, Rigidbody rigidbody)
-{
-    rigidbodies[index] = rigidbody;
-}
-
-void ApplyPhysics(int index, Vector2 *position)
-{
-    if (rigidbodies[index].enabled)
-    {
-        // Apply friction to acceleration
-        if (rigidbodies[index].acceleration.x > DECIMAL_FIX)
+        for (int i = 0; i < physicObjectsCount; i++)
         {
-            rigidbodies[index].acceleration.x -= rigidbodies[index].friction;
-        }
-        else if (rigidbodies[index].acceleration.x < -DECIMAL_FIX)
-        {
-            rigidbodies[index].acceleration.x += rigidbodies[index].friction;
-        }
-        else
-        {
-            rigidbodies[index].acceleration.x = 0;
-        }
-        
-        if (rigidbodies[index].acceleration.y > DECIMAL_FIX / 2)
-        {
-            rigidbodies[index].acceleration.y -= rigidbodies[index].friction;
-        }
-        else if (rigidbodies[index].acceleration.y < -DECIMAL_FIX / 2)
-        {
-            rigidbodies[index].acceleration.y += rigidbodies[index].friction;
-        }
-        else
-        {
-            rigidbodies[index].acceleration.y = 0;
-        }
-        
-        // Apply friction to velocity
-        if (rigidbodies[index].isGrounded)
-        {
-            if (rigidbodies[index].velocity.x > DECIMAL_FIX)
+            if (physicObjects[i]->enabled)
             {
-                rigidbodies[index].velocity.x -= rigidbodies[index].friction;
-            }
-            else if (rigidbodies[index].velocity.x < -DECIMAL_FIX)
-            {
-                rigidbodies[index].velocity.x += rigidbodies[index].friction;
-            }
-            else
-            {
-                rigidbodies[index].velocity.x = 0;
-            }
-        }
-        
-        if (rigidbodies[index].velocity.y > DECIMAL_FIX / 2)
-        {
-            rigidbodies[index].velocity.y -= rigidbodies[index].friction;
-        }
-        else if (rigidbodies[index].velocity.y < -DECIMAL_FIX / 2)
-        {
-            rigidbodies[index].velocity.y += rigidbodies[index].friction;
-        }
-        else
-        {
-            rigidbodies[index].velocity.y = 0;
-        }
-        
-        // Apply gravity
-        rigidbodies[index].velocity.y += gravity.y;
-        rigidbodies[index].velocity.x += gravity.x;
-        
-        // Apply acceleration
-        rigidbodies[index].velocity.y += rigidbodies[index].acceleration.y;
-        rigidbodies[index].velocity.x += rigidbodies[index].acceleration.x;
-        
-        // Update position vector
-        position->x += rigidbodies[index].velocity.x;        
-        position->y -= rigidbodies[index].velocity.y;
-        
-        // Update collider bounds
-        colliders[index].bounds.x = position->x;
-        colliders[index].bounds.y = position->y;
-        
-        // Check collision with other colliders
-        collisionChecker = false;
-        rigidbodies[index].isContact = false;
-        for (int j = 0; j < maxElements; j++)
-        {
-            if (index != j)
-            {
-                if (colliders[index].enabled && colliders[j].enabled)
+                // Update physic behaviour
+                if (physicObjects[i]->rigidbody.enabled)
                 {
-                    if (colliders[index].type == COLLIDER_RECTANGLE)
+                    // Apply friction to acceleration in X axis
+                    if (physicObjects[i]->rigidbody.acceleration.x > PHYSICS_ACCURACY) physicObjects[i]->rigidbody.acceleration.x -= physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else if (physicObjects[i]->rigidbody.acceleration.x < PHYSICS_ACCURACY) physicObjects[i]->rigidbody.acceleration.x += physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else physicObjects[i]->rigidbody.acceleration.x = 0.0f;
+                    
+                    // Apply friction to acceleration in Y axis
+                    if (physicObjects[i]->rigidbody.acceleration.y > PHYSICS_ACCURACY) physicObjects[i]->rigidbody.acceleration.y -= physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else if (physicObjects[i]->rigidbody.acceleration.y < PHYSICS_ACCURACY) physicObjects[i]->rigidbody.acceleration.y += physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else physicObjects[i]->rigidbody.acceleration.y = 0.0f;
+                    
+                    // Apply friction to velocity in X axis
+                    if (physicObjects[i]->rigidbody.velocity.x > PHYSICS_ACCURACY) physicObjects[i]->rigidbody.velocity.x -= physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else if (physicObjects[i]->rigidbody.velocity.x < PHYSICS_ACCURACY) physicObjects[i]->rigidbody.velocity.x += physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else physicObjects[i]->rigidbody.velocity.x = 0.0f;
+                    
+                    // Apply friction to velocity in Y axis
+                    if (physicObjects[i]->rigidbody.velocity.y > PHYSICS_ACCURACY) physicObjects[i]->rigidbody.velocity.y -= physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else if (physicObjects[i]->rigidbody.velocity.y < PHYSICS_ACCURACY) physicObjects[i]->rigidbody.velocity.y += physicObjects[i]->rigidbody.friction/PHYSICS_STEPS;
+                    else physicObjects[i]->rigidbody.velocity.y = 0.0f;
+                    
+                    // Apply gravity to velocity
+                    if (physicObjects[i]->rigidbody.applyGravity)
                     {
-                        if (colliders[j].type == COLLIDER_RECTANGLE)
-                        {
-                            if (CheckCollisionRecs(colliders[index].bounds, colliders[j].bounds))
-                            {
-                                collisionChecker = true;
-                                
-                                if ((colliders[index].bounds.y + colliders[index].bounds.height <= colliders[j].bounds.y) == false)
-                                {
-                                    rigidbodies[index].isContact = true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (CheckCollisionCircleRec((Vector2){colliders[j].bounds.x, colliders[j].bounds.y}, colliders[j].radius, colliders[index].bounds))
-                            {
-                                collisionChecker = true;
-                            }
-                        }
+                        physicObjects[i]->rigidbody.velocity.x += gravityForce.x/PHYSICS_STEPS;
+                        physicObjects[i]->rigidbody.velocity.y += gravityForce.y/PHYSICS_STEPS;
                     }
-                    else
+                    
+                    // Apply acceleration to velocity
+                    physicObjects[i]->rigidbody.velocity.x += physicObjects[i]->rigidbody.acceleration.x/PHYSICS_STEPS;
+                    physicObjects[i]->rigidbody.velocity.y += physicObjects[i]->rigidbody.acceleration.y/PHYSICS_STEPS;
+                    
+                    // Apply velocity to position
+                    physicObjects[i]->transform.position.x += physicObjects[i]->rigidbody.velocity.x/PHYSICS_STEPS;
+                    physicObjects[i]->transform.position.y -= physicObjects[i]->rigidbody.velocity.y/PHYSICS_STEPS;
+                }
+                
+                // Update collision detection
+                if (physicObjects[i]->collider.enabled)
+                {
+                    // Update collider bounds
+                    physicObjects[i]->collider.bounds = TransformToRectangle(physicObjects[i]->transform);
+                    
+                    // Check collision with other colliders
+                    for (int k = 0; k < physicObjectsCount; k++)
                     {
-                        if (colliders[j].type == COLLIDER_RECTANGLE)
+                        if (physicObjects[k]->collider.enabled && i != k)
                         {
-                            if (CheckCollisionCircleRec((Vector2){colliders[index].bounds.x, colliders[index].bounds.y}, colliders[index].radius, colliders[j].bounds))
+                            // Resolve physic collision
+                            // NOTE: collision resolve is generic for all directions and conditions (no axis separated cases behaviours)
+                            // and it is separated in rigidbody attributes resolve (velocity changes by impulse) and position correction (position overlap)
+                            
+                            // 1. Calculate collision normal
+                            // -------------------------------------------------------------------------------------------------------------------------------------
+                            
+                            // Define collision contact normal, direction and penetration depth
+                            Vector2 contactNormal = { 0.0f, 0.0f };
+                            Vector2 direction = { 0.0f, 0.0f };
+                            float penetrationDepth = 0.0f;
+                            
+                            switch (physicObjects[i]->collider.type)
                             {
-                                collisionChecker = true;
+                                case COLLIDER_RECTANGLE:
+                                {
+                                    switch (physicObjects[k]->collider.type)
+                                    {
+                                        case COLLIDER_RECTANGLE:
+                                        {
+                                            // Check if colliders are overlapped
+                                            if (CheckCollisionRecs(physicObjects[i]->collider.bounds, physicObjects[k]->collider.bounds))
+                                            {
+                                                // Calculate direction vector from i to k
+                                                direction.x = (physicObjects[k]->transform.position.x + physicObjects[k]->transform.scale.x/2) - (physicObjects[i]->transform.position.x + physicObjects[i]->transform.scale.x/2);
+                                                direction.y = (physicObjects[k]->transform.position.y + physicObjects[k]->transform.scale.y/2) - (physicObjects[i]->transform.position.y + physicObjects[i]->transform.scale.y/2);
+                                                
+                                                // Define overlapping and penetration attributes
+                                                Vector2 overlap;
+
+                                                // Calculate overlap on X axis
+                                                overlap.x = (physicObjects[i]->transform.scale.x + physicObjects[k]->transform.scale.x)/2 - abs(direction.x);
+                                                
+                                                // SAT test on X axis
+                                                if (overlap.x > 0.0f)
+                                                {
+                                                    // Calculate overlap on Y axis
+                                                    overlap.y = (physicObjects[i]->transform.scale.y + physicObjects[k]->transform.scale.y)/2 - abs(direction.y);
+                                                    
+                                                    // SAT test on Y axis
+                                                    if (overlap.y > 0.0f)
+                                                    {
+                                                        // Find out which axis is axis of least penetration
+                                                        if (overlap.y > overlap.x)
+                                                        {
+                                                            // Point towards k knowing that direction points from i to k
+                                                            if (direction.x < 0.0f) contactNormal = (Vector2){ -1.0f, 0.0f };
+                                                            else contactNormal = (Vector2){ 1.0f, 0.0f };
+                                                            
+                                                            // Update penetration depth for position correction
+                                                            penetrationDepth = overlap.x;
+                                                        }
+                                                        else
+                                                        {
+                                                            // Point towards k knowing that direction points from i to k
+                                                            if (direction.y < 0.0f) contactNormal = (Vector2){ 0.0f, 1.0f };
+                                                            else contactNormal = (Vector2){ 0.0f, -1.0f };
+                                                            
+                                                            // Update penetration depth for position correction
+                                                            penetrationDepth = overlap.y;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } break;
+                                        case COLLIDER_CIRCLE:
+                                        {
+                                            if (CheckCollisionCircleRec(physicObjects[k]->transform.position, physicObjects[k]->collider.radius, physicObjects[i]->collider.bounds))
+                                            {
+                                                // Calculate direction vector between circles
+                                                direction.x = physicObjects[k]->transform.position.x - physicObjects[i]->transform.position.x + physicObjects[i]->transform.scale.x/2;
+                                                direction.y = physicObjects[k]->transform.position.y - physicObjects[i]->transform.position.y + physicObjects[i]->transform.scale.y/2;
+                                                
+                                                // Calculate closest point on rectangle to circle
+                                                Vector2 closestPoint = { 0.0f, 0.0f };
+                                                if (direction.x > 0.0f) closestPoint.x = physicObjects[i]->collider.bounds.x + physicObjects[i]->collider.bounds.width;
+                                                else closestPoint.x = physicObjects[i]->collider.bounds.x;
+                                                
+                                                if (direction.y > 0.0f) closestPoint.y = physicObjects[i]->collider.bounds.y + physicObjects[i]->collider.bounds.height;
+                                                else closestPoint.y = physicObjects[i]->collider.bounds.y;
+                                                
+                                                // Check if the closest point is inside the circle
+                                                if (CheckCollisionPointCircle(closestPoint, physicObjects[k]->transform.position, physicObjects[k]->collider.radius))
+                                                {
+                                                    // Recalculate direction based on closest point position
+                                                    direction.x = physicObjects[k]->transform.position.x - closestPoint.x;
+                                                    direction.y = physicObjects[k]->transform.position.y - closestPoint.y;
+                                                    float distance = Vector2Length(direction);
+                                                    
+                                                    // Calculate final contact normal
+                                                    contactNormal.x = direction.x/distance;
+                                                    contactNormal.y = -direction.y/distance;
+                                                    
+                                                    // Calculate penetration depth
+                                                    penetrationDepth = physicObjects[k]->collider.radius - distance;
+                                                }
+                                                else
+                                                {
+                                                    if (abs(direction.y) < abs(direction.x))
+                                                    {
+                                                        // Calculate final contact normal
+                                                        if (direction.y > 0.0f)
+                                                        {
+                                                            contactNormal = (Vector2){ 0.0f, -1.0f };
+                                                            penetrationDepth = fabs(physicObjects[i]->collider.bounds.y - physicObjects[k]->transform.position.y - physicObjects[k]->collider.radius);
+                                                        }
+                                                        else 
+                                                        {
+                                                            contactNormal = (Vector2){ 0.0f, 1.0f };
+                                                            penetrationDepth = fabs(physicObjects[i]->collider.bounds.y - physicObjects[k]->transform.position.y + physicObjects[k]->collider.radius);
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        // Calculate final contact normal
+                                                        if (direction.x > 0.0f)
+                                                        {
+                                                            contactNormal = (Vector2){ 1.0f, 0.0f };
+                                                            penetrationDepth = fabs(physicObjects[k]->transform.position.x + physicObjects[k]->collider.radius - physicObjects[i]->collider.bounds.x);
+                                                        }
+                                                        else 
+                                                        {
+                                                            contactNormal = (Vector2){ -1.0f, 0.0f };
+                                                            penetrationDepth = fabs(physicObjects[i]->collider.bounds.x + physicObjects[i]->collider.bounds.width - physicObjects[k]->transform.position.x - physicObjects[k]->collider.radius);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } break;
+                                    }
+                                } break;
+                                case COLLIDER_CIRCLE:
+                                {
+                                    switch (physicObjects[k]->collider.type)
+                                    {
+                                        case COLLIDER_RECTANGLE:
+                                        {
+                                            if (CheckCollisionCircleRec(physicObjects[i]->transform.position, physicObjects[i]->collider.radius, physicObjects[k]->collider.bounds))
+                                            {
+                                                // Calculate direction vector between circles
+                                                direction.x = physicObjects[k]->transform.position.x + physicObjects[i]->transform.scale.x/2 - physicObjects[i]->transform.position.x;
+                                                direction.y = physicObjects[k]->transform.position.y + physicObjects[i]->transform.scale.y/2 - physicObjects[i]->transform.position.y;
+                                                
+                                                // Calculate closest point on rectangle to circle
+                                                Vector2 closestPoint = { 0.0f, 0.0f };
+                                                if (direction.x > 0.0f) closestPoint.x = physicObjects[k]->collider.bounds.x + physicObjects[k]->collider.bounds.width;
+                                                else closestPoint.x = physicObjects[k]->collider.bounds.x;
+                                                
+                                                if (direction.y > 0.0f) closestPoint.y = physicObjects[k]->collider.bounds.y + physicObjects[k]->collider.bounds.height;
+                                                else closestPoint.y = physicObjects[k]->collider.bounds.y;
+                                                
+                                                // Check if the closest point is inside the circle
+                                                if (CheckCollisionPointCircle(closestPoint, physicObjects[i]->transform.position, physicObjects[i]->collider.radius))
+                                                {
+                                                    // Recalculate direction based on closest point position
+                                                    direction.x = physicObjects[i]->transform.position.x - closestPoint.x;
+                                                    direction.y = physicObjects[i]->transform.position.y - closestPoint.y;
+                                                    float distance = Vector2Length(direction);
+                                                    
+                                                    // Calculate final contact normal
+                                                    contactNormal.x = direction.x/distance;
+                                                    contactNormal.y = -direction.y/distance;
+                                                    
+                                                    // Calculate penetration depth
+                                                    penetrationDepth = physicObjects[k]->collider.radius - distance;
+                                                }
+                                                else
+                                                {
+                                                    if (abs(direction.y) < abs(direction.x))
+                                                    {
+                                                        // Calculate final contact normal
+                                                        if (direction.y > 0.0f)
+                                                        {
+                                                            contactNormal = (Vector2){ 0.0f, -1.0f };
+                                                            penetrationDepth = fabs(physicObjects[k]->collider.bounds.y - physicObjects[i]->transform.position.y - physicObjects[i]->collider.radius);
+                                                        }
+                                                        else 
+                                                        {
+                                                            contactNormal = (Vector2){ 0.0f, 1.0f };
+                                                            penetrationDepth = fabs(physicObjects[k]->collider.bounds.y - physicObjects[i]->transform.position.y + physicObjects[i]->collider.radius);
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        // Calculate final contact normal and penetration depth
+                                                        if (direction.x > 0.0f)
+                                                        {
+                                                            contactNormal = (Vector2){ 1.0f, 0.0f };
+                                                            penetrationDepth = fabs(physicObjects[i]->transform.position.x + physicObjects[i]->collider.radius - physicObjects[k]->collider.bounds.x);
+                                                        }
+                                                        else 
+                                                        {
+                                                            contactNormal = (Vector2){ -1.0f, 0.0f };
+                                                            penetrationDepth = fabs(physicObjects[k]->collider.bounds.x + physicObjects[k]->collider.bounds.width - physicObjects[i]->transform.position.x - physicObjects[i]->collider.radius);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } break;
+                                        case COLLIDER_CIRCLE:
+                                        {
+                                            // Check if colliders are overlapped
+                                            if (CheckCollisionCircles(physicObjects[i]->transform.position, physicObjects[i]->collider.radius, physicObjects[k]->transform.position, physicObjects[k]->collider.radius))
+                                            {
+                                                // Calculate direction vector between circles
+                                                direction.x = physicObjects[k]->transform.position.x - physicObjects[i]->transform.position.x;
+                                                direction.y = physicObjects[k]->transform.position.y - physicObjects[i]->transform.position.y;
+                                                
+                                                // Calculate distance between circles
+                                                float distance = Vector2Length(direction);
+                                                
+                                                // Check if circles are not completely overlapped
+                                                if (distance != 0.0f)
+                                                {                                                    
+                                                    // Calculate contact normal direction (Y axis needs to be flipped)
+                                                    contactNormal.x = direction.x/distance;
+                                                    contactNormal.y = -direction.y/distance;
+                                                }
+                                                else contactNormal = (Vector2){ 1.0f, 0.0f };   // Choose random (but consistent) values
+                                            }
+                                        } break;
+                                        default: break;
+                                    }
+                                } break;
+                                default: break;
                             }
-                        }
-                        else
-                        {
-                            if (CheckCollisionCircles((Vector2){colliders[j].bounds.x, colliders[j].bounds.y}, colliders[j].radius, (Vector2){colliders[index].bounds.x, colliders[index].bounds.y}, colliders[index].radius))
+                            
+                            // Update rigidbody grounded state
+                            if (physicObjects[i]->rigidbody.enabled)
                             {
-                                collisionChecker = true;
+                                if (contactNormal.y < 0.0f) physicObjects[i]->rigidbody.isGrounded = true;
+                            }
+                            
+                            // 2. Calculate collision impulse
+                            // -------------------------------------------------------------------------------------------------------------------------------------
+                            
+                            // Calculate relative velocity
+                            Vector2 relVelocity = { 0.0f, 0.0f };
+                            relVelocity.x = physicObjects[k]->rigidbody.velocity.x - physicObjects[i]->rigidbody.velocity.x;
+                            relVelocity.y = physicObjects[k]->rigidbody.velocity.y - physicObjects[i]->rigidbody.velocity.y;
+
+                            // Calculate relative velocity in terms of the normal direction
+                            float velAlongNormal = Vector2DotProduct(relVelocity, contactNormal);
+                        
+                            // Dot not resolve if velocities are separating
+                            if (velAlongNormal <= 0.0f)
+                            {
+                                // Calculate minimum bounciness value from both objects
+                                float e = fminf(physicObjects[i]->rigidbody.bounciness, physicObjects[k]->rigidbody.bounciness);
+                                
+                                // Calculate impulse scalar value
+                                float j = -(1.0f + e)*velAlongNormal;
+                                j /= 1.0f/physicObjects[i]->rigidbody.mass + 1.0f/physicObjects[k]->rigidbody.mass;
+                                
+                                // Calculate final impulse vector
+                                Vector2 impulse = { j*contactNormal.x, j*contactNormal.y };
+                                
+                                // Calculate collision mass ration
+                                float massSum = physicObjects[i]->rigidbody.mass + physicObjects[k]->rigidbody.mass;
+                                float ratio = 0.0f;
+                                
+                                // Apply impulse to current rigidbodies velocities if they are enabled
+                                if (physicObjects[i]->rigidbody.enabled) 
+                                {
+                                    // Calculate inverted mass ration
+                                    ratio = physicObjects[i]->rigidbody.mass/massSum;
+                                    
+                                    // Apply impulse direction to velocity
+                                    physicObjects[i]->rigidbody.velocity.x -= impulse.x*ratio*(1.0f+physicObjects[i]->rigidbody.bounciness);
+                                    physicObjects[i]->rigidbody.velocity.y -= impulse.y*ratio*(1.0f+physicObjects[i]->rigidbody.bounciness);
+                                }
+                                
+                                if (physicObjects[k]->rigidbody.enabled) 
+                                {
+                                    // Calculate inverted mass ration
+                                    ratio = physicObjects[k]->rigidbody.mass/massSum;
+                                    
+                                    // Apply impulse direction to velocity
+                                    physicObjects[k]->rigidbody.velocity.x += impulse.x*ratio*(1.0f+physicObjects[i]->rigidbody.bounciness);
+                                    physicObjects[k]->rigidbody.velocity.y += impulse.y*ratio*(1.0f+physicObjects[i]->rigidbody.bounciness);
+                                }
+                                
+                                // 3. Correct colliders overlaping (transform position)
+                                // ---------------------------------------------------------------------------------------------------------------------------------
+                                
+                                // Calculate transform position penetration correction
+                                Vector2 posCorrection;
+                                posCorrection.x = penetrationDepth/((1.0f/physicObjects[i]->rigidbody.mass) + (1.0f/physicObjects[k]->rigidbody.mass))*PHYSICS_ERRORPERCENT*contactNormal.x;
+                                posCorrection.y = penetrationDepth/((1.0f/physicObjects[i]->rigidbody.mass) + (1.0f/physicObjects[k]->rigidbody.mass))*PHYSICS_ERRORPERCENT*contactNormal.y;
+                                
+                                // Fix transform positions
+                                if (physicObjects[i]->rigidbody.enabled)
+                                {                                        
+                                    // Fix physic objects transform position
+                                    physicObjects[i]->transform.position.x -= 1.0f/physicObjects[i]->rigidbody.mass*posCorrection.x;
+                                    physicObjects[i]->transform.position.y += 1.0f/physicObjects[i]->rigidbody.mass*posCorrection.y;
+                                    
+                                    // Update collider bounds
+                                    physicObjects[i]->collider.bounds = TransformToRectangle(physicObjects[i]->transform);
+                                    
+                                    if (physicObjects[k]->rigidbody.enabled)
+                                    {
+                                        // Fix physic objects transform position
+                                        physicObjects[k]->transform.position.x += 1.0f/physicObjects[k]->rigidbody.mass*posCorrection.x;
+                                        physicObjects[k]->transform.position.y -= 1.0f/physicObjects[k]->rigidbody.mass*posCorrection.y;
+                                        
+                                        // Update collider bounds
+                                        physicObjects[k]->collider.bounds = TransformToRectangle(physicObjects[k]->transform);
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        
-        // Update grounded rigidbody state
-        rigidbodies[index].isGrounded = collisionChecker;
-        
-        // Set grounded state if needed (fix overlap and set y velocity)
-        if (collisionChecker && rigidbodies[index].velocity.y != 0)
-        {
-            position->y += rigidbodies[index].velocity.y;
-            rigidbodies[index].velocity.y = -rigidbodies[index].velocity.y * rigidbodies[index].bounciness;
-        }
-        
-        if (rigidbodies[index].isContact)
-        {
-            position->x -= rigidbodies[index].velocity.x;
-            rigidbodies[index].velocity.x = rigidbodies[index].velocity.x;
-        }
     }
 }
 
-void SetRigidbodyEnabled(int index, bool state)
+// Unitialize all physic objects and empty the objects pool
+void ClosePhysics()
 {
-    rigidbodies[index].enabled = state;
+    // Free all dynamic memory allocations
+    for (int i = 0; i < physicObjectsCount; i++) free(physicObjects[i]);
+    
+    // Reset enabled physic objects count
+    physicObjectsCount = 0;
 }
 
-void SetRigidbodyVelocity(int index, Vector2 velocity)
+// Create a new physic object dinamically, initialize it and add to pool
+PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale)
 {
-    rigidbodies[index].velocity.x = velocity.x;
-    rigidbodies[index].velocity.y = velocity.y;
+    // Allocate dynamic memory
+    PhysicObject obj = (PhysicObject)malloc(sizeof(PhysicObjectData));
+    
+    // Initialize physic object values with generic values
+    obj->id = physicObjectsCount;
+    obj->enabled = true;
+    
+    obj->transform = (Transform){ (Vector2){ position.x - scale.x/2, position.y - scale.y/2 }, rotation, scale };
+    
+    obj->rigidbody.enabled = false;
+    obj->rigidbody.mass = 1.0f;
+    obj->rigidbody.acceleration = (Vector2){ 0.0f, 0.0f };
+    obj->rigidbody.velocity = (Vector2){ 0.0f, 0.0f };
+    obj->rigidbody.applyGravity = false;
+    obj->rigidbody.isGrounded = false;
+    obj->rigidbody.friction = 0.0f;
+    obj->rigidbody.bounciness = 0.0f;
+    
+    obj->collider.enabled = true;
+    obj->collider.type = COLLIDER_RECTANGLE;
+    obj->collider.bounds = TransformToRectangle(obj->transform);
+    obj->collider.radius = 0.0f;
+    
+    // Add new physic object to the pointers array
+    physicObjects[physicObjectsCount] = obj;
+    
+    // Increase enabled physic objects count
+    physicObjectsCount++;
+    
+    return obj;
 }
 
-void SetRigidbodyAcceleration(int index, Vector2 acceleration)
+// Destroy a specific physic object and take it out of the list
+void DestroyPhysicObject(PhysicObject pObj)
 {
-    rigidbodies[index].acceleration.x = acceleration.x;
-    rigidbodies[index].acceleration.y = acceleration.y;
-}
-
-void AddRigidbodyForce(int index, Vector2 force)
-{
-    rigidbodies[index].acceleration.x = force.x / rigidbodies[index].mass;
-    rigidbodies[index].acceleration.y = force.y / rigidbodies[index].mass;
-}
-
-void AddForceAtPosition(Vector2 position, float intensity, float radius)
-{
-    for(int i = 0; i < maxElements; i++)
+    // Free dynamic memory allocation
+    free(physicObjects[pObj->id]);
+    
+    // Remove *obj from the pointers array
+    for (int i = pObj->id; i < physicObjectsCount; i++)
     {
-        if(rigidbodies[i].enabled)
+        // Resort all the following pointers of the array
+        if ((i + 1) < physicObjectsCount)
         {
-            // Get position from its collider
-            Vector2 pos = {colliders[i].bounds.x, colliders[i].bounds.y};
-            
-            // Get distance between rigidbody position and target position
-            float distance = Vector2Distance(position, pos);
-            
-            if(distance <= radius)
+            physicObjects[i] = physicObjects[i + 1];
+            physicObjects[i]->id = physicObjects[i + 1]->id;
+        }
+        else free(physicObjects[i]);
+    }
+    
+    // Decrease enabled physic objects count
+    physicObjectsCount--;
+}
+
+// Apply directional force to a physic object
+void ApplyForce(PhysicObject pObj, Vector2 force)
+{
+    if (pObj->rigidbody.enabled)
+    {
+        pObj->rigidbody.velocity.x += force.x/pObj->rigidbody.mass;
+        pObj->rigidbody.velocity.y += force.y/pObj->rigidbody.mass;
+    }
+}
+
+// Apply radial force to all physic objects in range
+void ApplyForceAtPosition(Vector2 position, float force, float radius)
+{
+    for (int i = 0; i < physicObjectsCount; i++)
+    {
+        if (physicObjects[i]->rigidbody.enabled)
+        {
+            // Calculate direction and distance between force and physic object pposition
+            Vector2 distance = (Vector2){ physicObjects[i]->transform.position.x - position.x, physicObjects[i]->transform.position.y - position.y };
+
+            if (physicObjects[i]->collider.type == COLLIDER_RECTANGLE)
             {
-                // Calculate force based on direction
-                Vector2 force = {colliders[i].bounds.x - position.x, colliders[i].bounds.y - position.y};
+                distance.x += physicObjects[i]->transform.scale.x/2;
+                distance.y += physicObjects[i]->transform.scale.y/2;
+            }
+            
+            float distanceLength = Vector2Length(distance);
+            
+            // Check if physic object is in force range
+            if (distanceLength <= radius)
+            {
+                // Normalize force direction
+                distance.x /= distanceLength;
+                distance.y /= -distanceLength;
                 
-                // Normalize the direction vector
-                Vector2Normalize(&force);
+                // Calculate final force
+                Vector2 finalForce = { distance.x*force, distance.y*force };
                 
-                // Invert y value
-                force.y *= -1;
-                
-                // Apply intensity and distance
-                force = (Vector2){force.x * intensity / distance, force.y * intensity / distance};
-                
-                // Add calculated force to the rigidbodies
-                AddRigidbodyForce(i, force);
+                // Apply force to the physic object
+                ApplyForce(physicObjects[i], finalForce);
             }
         }
     }
 }
 
-void SetColliderEnabled(int index, bool state)
+// Convert Transform data type to Rectangle (position and scale)
+Rectangle TransformToRectangle(Transform transform)
 {
-    colliders[index].enabled = state;
-}
-
-Collider GetCollider(int index)
-{
-    return colliders[index];
-}
-
-Rigidbody GetRigidbody(int index)
-{
-    return rigidbodies[index];
+    return (Rectangle){transform.position.x, transform.position.y, transform.scale.x, transform.scale.y};
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definitions
+// Module specific Functions Definition
 //----------------------------------------------------------------------------------
-static float Vector2Length(Vector2 vector)
+
+// Returns the dot product of two Vector2
+static float Vector2DotProduct(Vector2 v1, Vector2 v2)
 {
-    return sqrt((vector.x * vector.x) + (vector.y * vector.y));
+    float result;
+
+    result = v1.x*v2.x + v1.y*v2.y;
+
+    return result;
 }
 
-static float Vector2Distance(Vector2 a, Vector2 b)
+static float Vector2Length(Vector2 v)
 {
-    Vector2 vector = {b.x - a.x, b.y - a.y};
-    return sqrt((vector.x * vector.x) + (vector.y * vector.y));
-}
-
-static void Vector2Normalize(Vector2 *vector)
-{
-    float length = Vector2Length(*vector);
+    float result;
     
-    if (length != 0.0f)
-    {
-        vector->x /= length;
-        vector->y /= length;
-    }
-    else 
-    {
-        vector->x = 0.0f;
-        vector->y = 0.0f;
-    }
+    result = sqrt(v.x*v.x + v.y*v.y);
+    
+    return result;
 }

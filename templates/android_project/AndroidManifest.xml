@@ -29,8 +29,7 @@
                 <!-- android:theme="@android:style/Theme.NoTitleBar.Fullscreen" -->
                 <!-- android:screenOrientation="portrait" -->
             <!-- Tell NativeActivity the name of our .so -->
-            <!--<meta-data android:name="android.app.lib_name" android:value="raylib_game" /> -->
-            <meta-data android:name="android.app.lib_name" android:value="@string/app_name" />
+            <meta-data android:name="android.app.lib_name" android:value="raylib_game" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

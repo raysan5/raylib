@@ -22,17 +22,30 @@
 *
 **********************************************************************************************/
 
+//#define RAYGUI_STANDALONE     // To use the raygui module as standalone lib, just uncomment this line
+                              // NOTE: Some external funtions are required for drawing and input management
+
+#if !defined(RAYGUI_STANDALONE)
+    #include "raylib.h"
+#endif
+
 #include "raygui.h"
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>     // Required for malloc(), free()
-#include <string.h>     // Required for strcmp()
+#include <stdio.h>      // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf()
+                        // NOTE: Those functions are only used in SaveGuiStyle() and LoadGuiStyle()
+                        
+#include <stdlib.h>     // Required for: malloc(), free()
+#include <string.h>     // Required for: strcmp()
+#include <stdarg.h>     // Required for: va_list, va_start(), vfprintf(), va_end()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-//...
+#if defined(RAYGUI_STANDALONE)
+    #define KEY_LEFT            263
+    #define KEY_RIGHT           262
+    #define MOUSE_LEFT_BUTTON     0
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -50,7 +63,7 @@ typedef enum { SLIDER_DEFAULT, SLIDER_HOVER, SLIDER_ACTIVE } SliderState;
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 
-//Current GUI style (default light)
+// Current GUI style (default light)
 static int style[NUM_PROPERTIES] = {
     0xf5f5f5ff,         // GLOBAL_BASE_COLOR,
     0xf5f5f5ff,         // GLOBAL_BORDER_COLOR,
@@ -59,16 +72,16 @@ static int style[NUM_PROPERTIES] = {
     1,                  // GLOBAL_BORDER_WIDTH
     0xf5f5f5ff,         // BACKGROUND_COLOR
     1,                  // LABEL_BORDER_WIDTH
-    0x000000ff,         // LABEL_TEXT_COLOR
+    0x4d4d4dff,         // LABEL_TEXT_COLOR
     20,                 // LABEL_TEXT_PADDING
     2,                  // BUTTON_BORDER_WIDTH
     20,                 // BUTTON_TEXT_PADDING
     0x828282ff,         // BUTTON_DEFAULT_BORDER_COLOR
     0xc8c8c8ff,         // BUTTON_DEFAULT_INSIDE_COLOR
-    0x000000ff,         // BUTTON_DEFAULT_TEXT_COLOR
+    0x4d4d4dff,         // BUTTON_DEFAULT_TEXT_COLOR
     0xc8c8c8ff,         // BUTTON_HOVER_BORDER_COLOR
     0xffffffff,         // BUTTON_HOVER_INSIDE_COLOR
-    0x000000ff,         // BUTTON_HOVER_TEXT_COLOR
+    0x353535ff,         // BUTTON_HOVER_TEXT_COLOR
     0x7bb0d6ff,         // BUTTON_PRESSED_BORDER_COLOR
     0xbcecffff,         // BUTTON_PRESSED_INSIDE_COLOR
     0x5f9aa7ff,         // BUTTON_PRESSED_TEXT_COLOR
@@ -120,7 +133,7 @@ static int style[NUM_PROPERTIES] = {
     0x000000ff,         // SPINNER_PRESSED_TEXT_COLOR
     1,                  // COMBOBOX_PADDING
     30,                 // COMBOBOX_BUTTON_WIDTH
-    30,                 // COMBOBOX_BUTTON_HEIGHT
+    20,                 // COMBOBOX_BUTTON_HEIGHT
     1,                  // COMBOBOX_BORDER_WIDTH
     0x828282ff,         // COMBOBOX_DEFAULT_BORDER_COLOR
     0xc8c8c8ff,         // COMBOBOX_DEFAULT_INSIDE_COLOR
@@ -157,6 +170,29 @@ static int style[NUM_PROPERTIES] = {
 //----------------------------------------------------------------------------------
 static Color ColorMultiply(Color baseColor, float value);
 
+#if defined RAYGUI_STANDALONE
+static Color GetColor(int hexValue);   // Returns a Color struct from hexadecimal value
+static int GetHexValue(Color color);   // Returns hexadecimal value for a Color
+static bool CheckCollisionPointRec(Vector2 point, Rectangle rec);  // Check if point is inside rectangle
+static const char *FormatText(const char *text, ...);   // Formatting of text with variables to 'embed'
+
+// NOTE: raygui depend on some raylib input and drawing functions
+// TODO: Replace by your own functions
+static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
+static int IsMouseButtonDown(int button) { return 0; }
+static int IsMouseButtonPressed(int button) { return 0; }
+static int IsMouseButtonReleased(int button) { return 0; }
+static int IsMouseButtonUp(int button) { return 0; }
+
+static int GetKeyPressed(void) { return 0; }    // NOTE: Only used by GuiTextBox()
+static int IsKeyDown(int key) { return 0; }     // NOTE: Only used by GuiSpinner()
+
+static int MeasureText(const char *text, int fontSize) { return 0; }
+static void DrawText(const char *text, int posX, int posY, int fontSize, Color color) { }
+static void DrawRectangleRec(Rectangle rec, Color color) { }
+static void DrawRectangle(int posX, int posY, int width, int height, Color color) { DrawRectangleRec((Rectangle){ posX, posY, width, height }, color); }
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -164,7 +200,9 @@ static Color ColorMultiply(Color baseColor, float value);
 // Label element, show text
 void GuiLabel(Rectangle bounds, const char *text)
 {
-    GuiLabelEx(bounds,text, GetColor(style[LABEL_TEXT_COLOR]), BLANK, BLANK);
+    #define BLANK (Color){ 0, 0, 0, 0 } // Blank (Transparent)
+
+    GuiLabelEx(bounds, text, GetColor(style[LABEL_TEXT_COLOR]), BLANK, BLANK);
 }
 
 // Label element extended, configurable colors
@@ -173,7 +211,7 @@ void GuiLabelEx(Rectangle bounds, const char *text, Color textColor, Color borde
     // Update control
     //--------------------------------------------------------------------
     int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
 
     if (bounds.width < textWidth) bounds.width = textWidth + style[LABEL_TEXT_PADDING];
     if (bounds.height < textHeight) bounds.height = textHeight + style[LABEL_TEXT_PADDING]/2;
@@ -194,7 +232,7 @@ bool GuiButton(Rectangle bounds, const char *text)
     Vector2 mousePoint = GetMousePosition();
     
     int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
     
     // Update control
     //--------------------------------------------------------------------
@@ -252,21 +290,34 @@ bool GuiToggleButton(Rectangle bounds, const char *text, bool toggle)
     Vector2 mousePoint = GetMousePosition();
     
     int textWidth = MeasureText(text, style[GLOBAL_TEXT_FONTSIZE]);
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
     
     // Update control
     //--------------------------------------------------------------------   
     if (toggleButton.width < textWidth) toggleButton.width = textWidth + style[TOGGLE_TEXT_PADDING];
     if (toggleButton.height < textHeight) toggleButton.height = textHeight + style[TOGGLE_TEXT_PADDING]/2;
+    
+    if (toggle) toggleState = TOGGLE_ACTIVE;
+    else toggleState = TOGGLE_UNACTIVE;
+    
     if (CheckCollisionPointRec(mousePoint, toggleButton))
     {
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) toggleState = TOGGLE_PRESSED;
-        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) toggleState = TOGGLE_ACTIVE;
+        else if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
+            if (toggle)
+            {
+                toggle = false;
+                toggleState = TOGGLE_UNACTIVE;
+            }
+            else
+            {
+                toggle = true;
+                toggleState = TOGGLE_ACTIVE;
+            }
+        }
         else toggleState = TOGGLE_HOVER;
     }
-     
-    if (toggleState == TOGGLE_ACTIVE && !toggle) toggle = true;
-    if (toggle) toggleState = TOGGLE_ACTIVE;
     //--------------------------------------------------------------------   
     
     // Draw control
@@ -324,7 +375,7 @@ int GuiComboBox(Rectangle bounds, int comboNum, char **comboText, int comboActiv
     Rectangle click = { bounds.x + bounds.width + style[COMBOBOX_PADDING], bounds.y, style[COMBOBOX_BUTTON_WIDTH], style[COMBOBOX_BUTTON_HEIGHT] };
     Vector2 mousePoint = GetMousePosition();
 
-    int textHeight = GetDefaultFont().size;
+    int textHeight = style[GLOBAL_TEXT_FONTSIZE];
      
     for (int i = 0; i < comboNum; i++)
     {
@@ -614,9 +665,8 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
     Rectangle rightButtonBound = { bounds.x + bounds.width - bounds.width/4 + 1, bounds.y, bounds.width/4, bounds.height };
     Vector2 mousePoint = GetMousePosition();
 
-    int textHeight = GetDefaultFont().size;
-
     int textWidth = MeasureText(FormatText("%i", value), style[GLOBAL_TEXT_FONTSIZE]);
+    //int textHeight = style[GLOBAL_TEXT_FONTSIZE];     // Unused variable
     
     int buttonSide = 0;
     
@@ -789,11 +839,11 @@ int GuiSpinner(Rectangle bounds, int value, int minValue, int maxValue)
 // NOTE: Requires static variables: framesCounter - ERROR!
 char *GuiTextBox(Rectangle bounds, char *text)
 {
-    #define MAX_CHARS_LENGTH  	20
-    #define KEY_BACKSPACE_TEXT   3
+    #define MAX_CHARS_LENGTH  	 20
+    #define KEY_BACKSPACE_TEXT  259     // GLFW BACKSPACE: 3 + 256
     
     int initPos = bounds.x + 4;
-    char letter = -1;
+    int letter = -1;
     static int framesCounter = 0;
     Vector2 mousePoint = GetMousePosition();
     
@@ -822,12 +872,15 @@ char *GuiTextBox(Rectangle bounds, char *text)
             }
             else
             {
-                for (int i = 0; i < MAX_CHARS_LENGTH; i++)
+                if ((letter >= 32) && (letter < 127))
                 {
-                    if (text[i] == '\0')
+                    for (int i = 0; i < MAX_CHARS_LENGTH; i++)
                     {
-                        text[i] = letter;
-                        break;
+                        if (text[i] == '\0')
+                        {
+                            text[i] = (char)letter;
+                            break;
+                        }
                     }
                 }
             }
@@ -848,10 +901,11 @@ char *GuiTextBox(Rectangle bounds, char *text)
         
         DrawText(FormatText("%c", text[i]), initPos, bounds.y + style[TEXTBOX_TEXT_FONTSIZE], style[TEXTBOX_TEXT_FONTSIZE], GetColor(style[TEXTBOX_TEXT_COLOR]));
         
-        initPos += ((GetDefaultFont().charRecs[(int)text[i] - 32].width + 2));
+        initPos += (MeasureText(FormatText("%c", text[i]), style[GLOBAL_TEXT_FONTSIZE]) + 2);
+        //initPos += ((GetDefaultFont().charRecs[(int)text[i] - 32].width + 2));
     }
 
-    if ((framesCounter/20)%2 && CheckCollisionPointRec(mousePoint, bounds)) DrawLine(initPos + 2, bounds.y + 5, initPos + 2, bounds.y + 10 + 15, GetColor(style[TEXTBOX_LINE_COLOR]));
+    if ((framesCounter/20)%2 && CheckCollisionPointRec(mousePoint, bounds)) DrawRectangle(initPos + 2, bounds.y + 5, 1, 20, GetColor(style[TEXTBOX_LINE_COLOR]));
     //--------------------------------------------------------------------    
 
     return text;
@@ -1036,3 +1090,49 @@ static Color ColorMultiply(Color baseColor, float value)
     
     return multColor;
 }
+
+#if defined (RAYGUI_STANDALONE)
+// Returns a Color struct from hexadecimal value
+static Color GetColor(int hexValue)
+{
+    Color color;
+
+    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
+    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
+    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
+    color.a = (unsigned char)hexValue & 0xFF;
+
+    return color;
+}
+
+// Returns hexadecimal value for a Color
+static int GetHexValue(Color color)
+{
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Check if point is inside rectangle
+static bool CheckCollisionPointRec(Vector2 point, Rectangle rec)
+{
+    bool collision = false;
+
+    if ((point.x >= rec.x) && (point.x <= (rec.x + rec.width)) && (point.y >= rec.y) && (point.y <= (rec.y + rec.height))) collision = true;
+
+    return collision;
+}
+
+// Formatting of text with variables to 'embed'
+static const char *FormatText(const char *text, ...)
+{
+    #define MAX_FORMATTEXT_LENGTH   64
+    
+    static char buffer[MAX_FORMATTEXT_LENGTH];
+
+    va_list args;
+    va_start(args, text);
+    vsprintf(buffer, text, args);
+    va_end(args);
+
+    return buffer;
+}
+#endif

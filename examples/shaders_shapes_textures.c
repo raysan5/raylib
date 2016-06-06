@@ -32,10 +32,9 @@ int main()
     
     Texture2D sonic = LoadTexture("resources/texture_formats/sonic.png");
 
-    // NOTE: This shader is a bit different than model/postprocessing shaders,
-    // it requires the color data for every vertice to use it in every shape or texture independently
-    Shader shader = LoadShader("resources/shaders/shapes_base.vs", 
-                               "resources/shaders/shapes_grayscale.fs");
+    // NOTE: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version 
+    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
+                               "resources/shaders/glsl330/grayscale.fs");
                                
     // Shader usage is also different than models/postprocessing, shader is just activated when required
     
@@ -66,16 +65,16 @@ int main()
 
             
             // Activate our custom shader to be applied on next shapes/textures drawings
-            SetCustomShader(shader);
+            BeginShaderMode(shader);
             
-            DrawText("USING CUSTOM SHADER", 190, 40, 10, RED);
+                DrawText("USING CUSTOM SHADER", 190, 40, 10, RED);
 
-            DrawRectangle(250 - 60, 90, 120, 60, RED);
-            DrawRectangleGradient(250 - 90, 170, 180, 130, MAROON, GOLD);
-            DrawRectangleLines(250 - 40, 320, 80, 60, ORANGE);
+                DrawRectangle(250 - 60, 90, 120, 60, RED);
+                DrawRectangleGradient(250 - 90, 170, 180, 130, MAROON, GOLD);
+                DrawRectangleLines(250 - 40, 320, 80, 60, ORANGE);
 
             // Activate our default shader for next drawings
-            SetDefaultShader();
+            EndShaderMode();
             
             DrawText("USING DEFAULT SHADER", 370, 40, 10, RED);
             
@@ -90,12 +89,12 @@ int main()
             DrawPoly((Vector2){430, 320}, 6, 80, 0, BROWN);
             
             // Activate our custom shader to be applied on next shapes/textures drawings
-            SetCustomShader(shader);
+            BeginShaderMode(shader);
 
-            DrawTexture(sonic, 380, -10, WHITE);    // Using custom shader
+                DrawTexture(sonic, 380, -10, WHITE);    // Using custom shader
             
             // Activate our default shader for next drawings
-            SetDefaultShader();
+            EndShaderMode();
             
         EndDrawing();
         //----------------------------------------------------------------------------------

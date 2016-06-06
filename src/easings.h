@@ -7,6 +7,26 @@
 *   This header uses:
 *       #define EASINGS_STATIC_INLINE       // Inlines all functions code, so it runs faster.
 *                                           // This requires lots of memory on system.
+*   How to use:
+*   The four inputs t,b,c,d are defined as follows:
+*   t = current time (in any unit measure, but same unit as duration)
+*   b = starting value to interpolate
+*   c = the total change in value of b that needs to occur
+*   d = total time it should take to complete (duration)
+*
+*   Example:
+*
+*   int currentTime = 0;
+*   int duration = 100;
+*   float startPositionX = 0.0f;
+*   float finalPositionX = 30.0f;
+*   float currentPositionX = startPositionX;
+*
+*   while (currentPositionX < finalPositionX)
+*   {
+*       currentPositionX = EaseSineIn(currentTime, startPositionX, finalPositionX - startPositionX, duration);
+*       currentTime++;
+*   }
 *
 *   A port of Robert Penner's easing equations to C (http://robertpenner.com/easing/)
 *
@@ -70,7 +90,7 @@
     #define EASEDEF extern
 #endif
 
-#include <math.h>
+#include <math.h>       // Required for: sin(), cos(), sqrt(), pow()
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions

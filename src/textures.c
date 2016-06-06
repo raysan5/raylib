@@ -29,21 +29,23 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>          // Declares malloc() and free() for memory management
-#include <string.h>          // Required for strcmp(), strrchr(), strncmp()
+#include <stdlib.h>             // Required for: malloc(), free()
+#include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
 
-#include "rlgl.h"            // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                             // Required: rlglLoadTexture() rlDeleteTextures(), 
-                             //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+#include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
+                                // Required: rlglLoadTexture() rlDeleteTextures(), 
+                                //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"           // rRES data decompression utility function
-                             // NOTE: Includes Android fopen function map
+#include "utils.h"              // rRES data decompression utility function
+                                // NOTE: Includes Android fopen function map
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"       // Used to read image data (multiple formats support)
+#include "external/stb_image.h" // Required for: stbi_load()
+                                // NOTE: Used to read image data (multiple formats support)
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"
+#include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() 
+                                        // NOTE: Used for image scaling on ImageResize()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -130,6 +132,7 @@ Image LoadImage(const char *fileName)
 }
 
 // Load image data from Color array data (RGBA - 32bit)
+// NOTE: Creates a copy of pixels data array
 Image LoadImageEx(Color *pixels, int width, int height)
 {
     Image image;
@@ -388,6 +391,14 @@ Texture2D LoadTextureFromImage(Image image)
     return texture;
 }
 
+// Load a texture to be used for rendering
+RenderTexture2D LoadRenderTexture(int width, int height)
+{
+    RenderTexture2D target = rlglLoadRenderTexture(width, height);
+    
+    return target;
+}
+
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
@@ -405,6 +416,17 @@ void UnloadTexture(Texture2D texture)
         rlDeleteTextures(texture.id);
         
         TraceLog(INFO, "[TEX ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
+    }
+}
+
+// Unload render texture from GPU memory
+void UnloadRenderTexture(RenderTexture2D target)
+{
+    if (target.id != 0)
+    {
+        rlDeleteRenderTextures(target);
+        
+        TraceLog(INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
     }
 }
 
@@ -919,6 +941,39 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     free(pixels);
 }
 
+// Resize and image to new size using Nearest-Neighbor scaling algorithm
+void ImageResizeNN(Image *image,int newWidth,int newHeight) 
+{
+    Color *pixels = GetImageData(*image);
+    Color *output = (Color *)malloc(newWidth*newHeight*sizeof(Color));
+    
+    // EDIT: added +1 to account for an early rounding problem
+    int x_ratio = (int)((image->width<<16)/newWidth) + 1;
+    int y_ratio = (int)((image->height<<16)/newHeight) + 1;
+    
+    int x2, y2;
+    for (int i = 0; i < newHeight; i++) 
+    {
+        for (int j = 0; j < newWidth; j++) 
+        {
+            x2 = ((j*x_ratio) >> 16);
+            y2 = ((i*y_ratio) >> 16);
+            
+            output[(i*newWidth) + j] = pixels[(y2*image->width) + x2] ;
+        }                
+    }                
+
+    int format = image->format;
+
+    UnloadImage(*image);
+
+    *image = LoadImageEx(output, newWidth, newHeight);
+    ImageFormat(image, format);  // Reformat 32bit RGBA image to original format 
+    
+    free(output);
+    free(pixels);
+}
+
 // Draw an image (source) within an image (destination)
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec) 
 {
@@ -1046,14 +1101,34 @@ Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, 
         float scaleFactor = (float)fontSize/imSize.y;
         TraceLog(INFO, "Scalefactor: %f", scaleFactor);
         
-        // TODO: Allow nearest-neighbor scaling algorithm
-        ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor)); 
+        // Using nearest-neighbor scaling algorithm for default font
+        if (font.texture.id == GetDefaultFont().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+        else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
     
     free(pixels);
     free(fontPixels);
     
     return imText;
+}
+
+// Draw text (default font) within an image (destination)
+void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
+{
+    ImageDrawTextEx(dst, position, GetDefaultFont(), text, fontSize, 0, color);
+}
+
+// Draw text (custom sprite font) within an image (destination)
+void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color)
+{
+    Image imText = ImageTextEx(font, text, fontSize, spacing, color);
+    
+    Rectangle srcRec = { 0, 0, imText.width, imText.height };
+    Rectangle dstRec = { (int)position.x, (int)position.y, imText.width, imText.height };
+    
+    ImageDraw(dst, imText, srcRec, dstRec);
+    
+    UnloadImage(imText);
 }
 
 // Flip image vertically
@@ -1321,36 +1396,43 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Co
 // NOTE: origin is relative to destination rectangle size
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
-    rlEnableTexture(texture.id);
+    // Check if texture is valid
+    if (texture.id != 0)
+    {
+        if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
+        if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
+        
+        rlEnableTexture(texture.id);
 
-    rlPushMatrix();
-        rlTranslatef(destRec.x, destRec.y, 0);
-        rlRotatef(rotation, 0, 0, 1);
-        rlTranslatef(-origin.x, -origin.y, 0);
+        rlPushMatrix();
+            rlTranslatef(destRec.x, destRec.y, 0);
+            rlRotatef(rotation, 0, 0, 1);
+            rlTranslatef(-origin.x, -origin.y, 0);
 
-        rlBegin(RL_QUADS);
-            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+            rlBegin(RL_QUADS);
+                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
-            // Bottom-left corner for texture and quad
-            rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
-            rlVertex2f(0.0f, 0.0f);
+                // Bottom-left corner for texture and quad
+                rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
+                rlVertex2f(0.0f, 0.0f);
 
-            // Bottom-right corner for texture and quad
-            rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-            rlVertex2f(0.0f, destRec.height);
+                // Bottom-right corner for texture and quad
+                rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+                rlVertex2f(0.0f, destRec.height);
 
-            // Top-right corner for texture and quad
-            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-            rlVertex2f(destRec.width, destRec.height);
+                // Top-right corner for texture and quad
+                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+                rlVertex2f(destRec.width, destRec.height);
 
-            // Top-left corner for texture and quad
-            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-            rlVertex2f(destRec.width, 0.0f);
-        rlEnd();
-    rlPopMatrix();
+                // Top-left corner for texture and quad
+                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+                rlVertex2f(destRec.width, 0.0f);
+            rlEnd();
+        rlPopMatrix();
 
-    rlDisableTexture();
+        rlDisableTexture();
+    }
 }
 
 //----------------------------------------------------------------------------------

@@ -26,16 +26,16 @@
 #include "raylib.h"
 
 #if defined(PLATFORM_ANDROID)
-    #include "utils.h"  // Android fopen function map
+    #include "utils.h"      // Android fopen function map
 #endif
 
-#include <stdio.h>      // Standard input/output functions, used to read model files data
-#include <stdlib.h>     // Declares malloc() and free() for memory management
-#include <string.h>     // Required for strcmp()
-#include <math.h>       // Used for sin, cos, tan
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <string.h>         // Required for: strcmp()
+#include <math.h>           // Required for: sin(), cos()
 
-#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "raymath.h"    // Required for data type Matrix and Matrix functions
+#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include "raymath.h"        // Matrix data type and Matrix functions
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -55,11 +55,44 @@ extern unsigned int whiteTexture;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Mesh LoadOBJ(const char *fileName);
+static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
+static Material LoadMTL(const char *fileName);  // Load MTL material data
+
+static Mesh GenMeshHeightmap(Image image, Vector3 size);
+static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
+
+// Draw a line in 3D world space
+void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
+{
+    rlBegin(RL_LINES);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex3f(startPos.x, startPos.y, startPos.z);
+        rlVertex3f(endPos.x, endPos.y, endPos.z);
+    rlEnd();
+}
+
+// Draw a circle in 3D world space
+void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
+{
+    rlPushMatrix();
+        rlTranslatef(center.x, center.y, center.z);
+        rlRotatef(rotationAngle, rotation.x, rotation.y, rotation.z);
+        
+        rlBegin(RL_LINES);
+            for (int i = 0; i < 360; i += 10)
+            {
+                rlColor4ub(color.r, color.g, color.b, color.a);
+                
+                rlVertex3f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius, 0.0f);
+                rlVertex3f(sin(DEG2RAD*(i + 10)) * radius, cos(DEG2RAD*(i + 10)) * radius, 0.0f);
+            }
+        rlEnd();
+    rlPopMatrix();
+}
 
 // Draw cube
 // NOTE: Cube position is the center position
@@ -288,9 +321,9 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for(int i = 0; i < (rings + 2); i++)
+            for (int i = 0; i < (rings + 2); i++)
             {
-                for(int j = 0; j < slices; j++)
+                for (int j = 0; j < slices; j++)
                 {
                     rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
@@ -327,9 +360,9 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for(int i = 0; i < (rings + 2); i++)
+            for (int i = 0; i < (rings + 2); i++)
             {
-                for(int j = 0; j < slices; j++)
+                for (int j = 0; j < slices; j++)
                 {
                     rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
@@ -372,7 +405,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             if (radiusTop > 0)
             {
                 // Draw Body -------------------------------------------------------------------------------------
-                for(int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
                     rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom); //Bottom Right
@@ -384,7 +417,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
-                for(int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
@@ -394,7 +427,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             else
             {
                 // Draw Cone -------------------------------------------------------------------------------------
-                for(int i = 0; i < 360; i += 360/sides)
+                for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
@@ -403,7 +436,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             }
 
             // Draw Base -----------------------------------------------------------------------------------------
-            for(int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
                 rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
@@ -417,7 +450,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
 // NOTE: It could be also used for pyramid and cone
 void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int sides, Color color)
 {
-    if(sides < 3) sides = 3;
+    if (sides < 3) sides = 3;
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
@@ -425,7 +458,7 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for(int i = 0; i < 360; i += 360/sides)
+            for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
                 rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
@@ -446,41 +479,24 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 // Draw a plane
 void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
-    // NOTE: QUADS usage require defining a texture on OpenGL 3.3+
-    if (rlGetVersion() != OPENGL_11) rlEnableTexture(whiteTexture);    // Default white texture
-
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(size.x, 1.0f, size.y);
 
-        rlBegin(RL_QUADS);
+        rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlNormal3f(0.0f, 1.0f, 0.0f);
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, -0.5f);
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(-0.5f, 0.0f, 0.5f);
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(0.5f, 0.0f, 0.5f);
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(0.5f, 0.0f, -0.5f);
+
+            rlVertex3f(0.5f, 0.0f, -0.5f);
+            rlVertex3f(-0.5f, 0.0f, -0.5f);
+            rlVertex3f(-0.5f, 0.0f, 0.5f);
+
+            rlVertex3f(-0.5f, 0.0f, 0.5f);
+            rlVertex3f(0.5f, 0.0f, 0.5f);
+            rlVertex3f(0.5f, 0.0f, -0.5f);
         rlEnd();
     rlPopMatrix();
-
-    if (rlGetVersion() != OPENGL_11) rlDisableTexture();
-}
-
-// Draw a quad
-void DrawQuad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Color color)
-{
-    // TODO: Calculate normals from vertex position
-    
-    rlBegin(RL_QUADS);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        //rlNormal3f(0.0f, 0.0f, 0.0f);
-
-        rlVertex3f(v1.x, v1.y, v1.z);
-        rlVertex3f(v2.x, v2.y, v2.z);
-        rlVertex3f(v3.x, v3.y, v3.z);
-        rlVertex3f(v4.x, v4.y, v4.z);
-    rlEnd();
 }
 
 // Draw a ray line
@@ -503,7 +519,7 @@ void DrawGrid(int slices, float spacing)
     int halfSlices = slices / 2;
 
     rlBegin(RL_LINES);
-        for(int i = -halfSlices; i <= halfSlices; i++)
+        for (int i = -halfSlices; i <= halfSlices; i++)
         {
             if (i == 0)
             {
@@ -553,56 +569,152 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
+
+// Draw light in 3D world
+void DrawLight(Light light)
+{
+    switch (light->type)
+    {
+        case LIGHT_POINT:
+        {
+            DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
+            Draw3DCircle(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
+            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
+            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
+        } break;
+        case LIGHT_DIRECTIONAL:
+        {                
+            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
+            DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
+        } break;
+        case LIGHT_SPOT:
+        {                
+            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
+            DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : BLACK));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
+        } break;
+        default: break;
+    }
+}
+
 // Load a 3d model (from file)
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
-    Mesh mesh = { 0 };
     
-    // NOTE: Initialize default data for model in case loading fails, maybe a cube?
+    // TODO: Initialize default data for model in case loading fails, maybe a cube?
 
-    if (strcmp(GetExtension(fileName),"obj") == 0) mesh = LoadOBJ(fileName);
+    if (strcmp(GetExtension(fileName), "obj") == 0) model.mesh = LoadOBJ(fileName);
     else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
 
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-    
-    if (mesh.vertexCount == 0)
-    {
-        TraceLog(WARNING, "Model could not be loaded");
-    }
+    if (model.mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
     else
     {
-        // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
-        model = rlglLoadModel(mesh);     // Upload vertex data to GPU
-
-        // Now that vertex data is uploaded to GPU, we can free arrays
-        // NOTE 1: We don't need CPU vertex data on OpenGL 3.3 or ES2... for static meshes...
-        // NOTE 2: ...but we could keep CPU vertex data in case we need to update the mesh
+        rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
         
-        /*
-        if (rlGetVersion() != OPENGL_11)
-        {
-            free(mesh.vertices);
-            free(mesh.texcoords);
-            free(mesh.normals);
-            free(mesh.colors);
-        }
-        */
+        model.transform = MatrixIdentity();
+        model.material = LoadDefaultMaterial();
     }
 
     return model;
 }
 
 // Load a 3d model (from vertex data)
-Model LoadModelEx(Mesh data)
+Model LoadModelEx(Mesh data, bool dynamic)
 {
-    Model model;
+    Model model = { 0 };
 
-    // NOTE: model properties (transform, texture, shader) are initialized inside rlglLoadModel()
-    model = rlglLoadModel(data);     // Upload vertex data to GPU
+    model.mesh = data;
     
-    // NOTE: Vertex data is managed externally, must be deallocated manually
+    rlglLoadMesh(&model.mesh, dynamic);  // Upload vertex data to GPU
     
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
+    
+    return model;
+}
+
+// Load a 3d model from rRES file (raylib Resource)
+Model LoadModelFromRES(const char *rresName, int resId)
+{
+    Model model = { 0 };
+    bool found = false;
+
+    char id[4];             // rRES file identifier
+    unsigned char version;  // rRES file version and subversion
+    char useless;           // rRES header reserved data
+    short numRes;
+
+    ResInfoHeader infoHeader;
+
+    FILE *rresFile = fopen(rresName, "rb");
+
+    if (rresFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
+    }
+    else
+    {
+        // Read rres file (basic file check - id)
+        fread(&id[0], sizeof(char), 1, rresFile);
+        fread(&id[1], sizeof(char), 1, rresFile);
+        fread(&id[2], sizeof(char), 1, rresFile);
+        fread(&id[3], sizeof(char), 1, rresFile);
+        fread(&version, sizeof(char), 1, rresFile);
+        fread(&useless, sizeof(char), 1, rresFile);
+
+        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
+        {
+            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
+        }
+        else
+        {
+            // Read number of resources embedded
+            fread(&numRes, sizeof(short), 1, rresFile);
+
+            for (int i = 0; i < numRes; i++)
+            {
+                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
+
+                if (infoHeader.id == resId)
+                {
+                    found = true;
+
+                    // Check data is of valid MODEL type
+                    if (infoHeader.type == 8)
+                    {
+                        // TODO: Load model data
+                    }
+                    else
+                    {
+                        TraceLog(WARNING, "[%s] Required resource do not seem to be a valid MODEL resource", rresName);
+                    }
+                }
+                else
+                {
+                    // Depending on type, skip the right amount of parameters
+                    switch (infoHeader.type)
+                    {
+                        case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
+                        case 1: fseek(rresFile, 6, SEEK_CUR); break;    // SOUND: Jump 6 bytes of parameters
+                        case 2: fseek(rresFile, 5, SEEK_CUR); break;    // MODEL: Jump 5 bytes of parameters (TODO: Review)
+                        case 3: break;                                  // TEXT: No parameters
+                        case 4: break;                                  // RAW: No parameters
+                        default: break;
+                    }
+
+                    // Jump DATA to read next infoHeader
+                    fseek(rresFile, infoHeader.size, SEEK_CUR);
+                }
+            }
+        }
+
+        fclose(rresFile);
+    }
+
+    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
+
     return model;
 }
 
@@ -610,9 +722,105 @@ Model LoadModelEx(Mesh data)
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
 {
+    Model model = { 0 };
+    
+    model.mesh = GenMeshHeightmap(heightmap, size);
+    
+    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
+    
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
+
+    return model;
+}
+
+// Load a map image as a 3d model (cubes based)
+Model LoadCubicmap(Image cubicmap)
+{
+    Model model = { 0 };
+    
+    model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0, 1.0, 1.5f });
+    
+    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
+    
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
+
+    return model;
+}
+
+// Unload 3d model from memory (mesh and material)
+void UnloadModel(Model model)
+{
+    rlglUnloadMesh(&model.mesh);
+
+    UnloadMaterial(model.material);
+    
+    TraceLog(INFO, "Unloaded model data from RAM and VRAM");
+}
+
+// Load material data (from file)
+Material LoadMaterial(const char *fileName)
+{
+    Material material = { 0 };
+    
+    if (strcmp(GetExtension(fileName), "mtl") == 0) material = LoadMTL(fileName);
+    else TraceLog(WARNING, "[%s] Material extension not recognized, it can't be loaded", fileName);
+    
+    return material;
+}
+
+// Load default material (uses default models shader)
+Material LoadDefaultMaterial(void)
+{
+    Material material = { 0 };
+    
+    material.shader = GetDefaultShader();
+    material.texDiffuse = GetDefaultTexture();      // White texture (1x1 pixel)
+    //material.texNormal;           // NOTE: By default, not set
+    //material.texSpecular;         // NOTE: By default, not set
+
+    material.colDiffuse = WHITE;    // Diffuse color
+    material.colAmbient = WHITE;    // Ambient color
+    material.colSpecular = WHITE;   // Specular color
+    
+    material.glossiness = 100.0f;   // Glossiness level
+    
+    return material;
+}
+
+// Load standard material (uses material attributes and lighting shader)
+// NOTE: Standard shader supports multiple maps and lights
+Material LoadStandardMaterial(void)
+{
+    Material material = LoadDefaultMaterial();
+    
+    material.shader = GetStandardShader();
+
+    return material;
+}
+
+// Unload material from memory
+void UnloadMaterial(Material material)
+{
+    rlDeleteTextures(material.texDiffuse.id);
+    rlDeleteTextures(material.texNormal.id);
+    rlDeleteTextures(material.texSpecular.id);
+}
+
+// Link a texture to a model
+void SetModelTexture(Model *model, Texture2D texture)
+{
+    if (texture.id <= 0) model->material.texDiffuse.id = whiteTexture;  // Use default white texture
+    else model->material.texDiffuse = texture;
+}
+
+// Generate a mesh from heightmap
+static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
+{
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
     
-    Mesh mesh;
+    Mesh mesh = { 0 };
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
@@ -627,7 +835,7 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
-    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char)); // Not used...
+    mesh.colors = NULL;
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -637,9 +845,9 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
 
     Vector3 scaleFactor = { size.x/mapX, size.y/255.0f, size.z/mapZ };
 
-    for(int z = 0; z < mapZ-1; z++)
+    for (int z = 0; z < mapZ-1; z++)
     {
-        for(int x = 0; x < mapX-1; x++)
+        for (int x = 0; x < mapX-1; x++)
         {
             // Fill vertices array with data
             //----------------------------------------------------------
@@ -710,38 +918,17 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
     
     free(pixels);
 
-    // Fill color data
-    // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
-
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-
-    Model model = rlglLoadModel(mesh);
-
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
-    if (rlGetVersion() != OPENGL_11)
-    {
-        free(mesh.vertices);
-        free(mesh.texcoords);
-        free(mesh.normals);
-        free(mesh.colors);
-    }
-
-    return model;
+    return mesh;
 }
 
-// Load a map image as a 3d model (cubes based)
-Model LoadCubicmap(Image cubicmap)
+static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
-    Mesh mesh;
+    Mesh mesh = { 0 };
 
     Color *cubicmapPixels = GetImageData(cubicmap);
     
-    // Map cube size will be 1.0
-    float mapCubeSide = 1.0f;
-    int mapWidth = cubicmap.width*(int)mapCubeSide;
-    int mapHeight = cubicmap.height*(int)mapCubeSide;
+    int mapWidth = cubicmap.width*(int)cubeSize.x;
+    int mapHeight = cubicmap.height*(int)cubeSize.z;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
@@ -750,9 +937,9 @@ Model LoadCubicmap(Image cubicmap)
     int tcCounter = 0;      // Used to count texcoords
     int nCounter = 0;       // Used to count normals
 
-    float w = mapCubeSide;
-    float h = mapCubeSide;
-    float h2 = mapCubeSide*1.5f;   // TODO: Review walls height...
+    float w = cubeSize.x;
+    float h = cubeSize.z;
+    float h2 = cubeSize.y;
 
     Vector3 *mapVertices = (Vector3 *)malloc(maxTriangles*3*sizeof(Vector3));
     Vector2 *mapTexcoords = (Vector2 *)malloc(maxTriangles*3*sizeof(Vector2));
@@ -781,9 +968,9 @@ Model LoadCubicmap(Image cubicmap)
     RectangleF topTexUV = { 0.0f, 0.5f, 0.5f, 0.5f };
     RectangleF bottomTexUV = { 0.5f, 0.5f, 0.5f, 0.5f };
 
-    for (int z = 0; z < mapHeight; z += mapCubeSide)
+    for (int z = 0; z < mapHeight; z += cubeSize.z)
     {
-        for (int x = 0; x < mapWidth; x += mapCubeSide)
+        for (int x = 0; x < mapWidth; x += cubeSize.x)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
             Vector3 v1 = { x - w/2, h2, z - h/2 };
@@ -1045,11 +1232,7 @@ Model LoadCubicmap(Image cubicmap)
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
-    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char));  // Not used...
-
-    // Fill color data
-    // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
+    mesh.colors = NULL;
 
     int fCounter = 0;
 
@@ -1087,59 +1270,9 @@ Model LoadCubicmap(Image cubicmap)
     free(mapNormals);
     free(mapTexcoords);
     
-    free(cubicmapPixels);
-
-    // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-
-    Model model = rlglLoadModel(mesh);
-
-    // Now that vertex data is uploaded to GPU, we can free arrays
-    // NOTE: We don't need CPU vertex data on OpenGL 3.3 or ES2
-    if (rlGetVersion() != OPENGL_11)
-    {
-        free(mesh.vertices);
-        free(mesh.texcoords);
-        free(mesh.normals);
-        free(mesh.colors);
-    }
-
-    return model;
-}
-
-// Unload 3d model from memory
-void UnloadModel(Model model)
-{
-    if (rlGetVersion() == OPENGL_11)
-    {
-        free(model.mesh.vertices);
-        free(model.mesh.texcoords);
-        free(model.mesh.normals);
-    }
-
-    rlDeleteBuffers(model.mesh.vboId[0]);
-    rlDeleteBuffers(model.mesh.vboId[1]);
-    rlDeleteBuffers(model.mesh.vboId[2]);
-
-    rlDeleteVertexArrays(model.mesh.vaoId);
+    free(cubicmapPixels);   // Free image pixel data
     
-    if (model.mesh.vaoId > 0) TraceLog(INFO, "[VAO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vaoId);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i][VBO ID %i] Unloaded model data from VRAM (GPU)", model.mesh.vboId[0], model.mesh.vboId[1], model.mesh.vboId[2]);
-}
-
-// Link a texture to a model
-void SetModelTexture(Model *model, Texture2D texture)
-{
-    if (texture.id <= 0)
-    {
-        // Use default white texture (use mesh color)
-        model->texture.id = whiteTexture;               // OpenGL 1.1
-        model->shader.texDiffuseId = whiteTexture;      // OpenGL 3.3 / ES 2.0
-    }
-    else
-    {
-        model->texture = texture;
-        model->shader.texDiffuseId = texture.id;
-    }
+    return mesh;
 }
 
 // Draw a model (with texture if set)
@@ -1147,38 +1280,61 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
-
+    
     DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
 // Draw a model with extended parameters
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
-    // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
-    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, false);
+    // Calculate transformation matrix from function parameters
+    // Get transform matrix (rotation -> scale -> translation)
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
+    Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
+    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
+    
+    // Combine model transformation matrix (model.transform) with matrix generated by function parameters (matTransform)
+    //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
+    
+    model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+    model.material.colDiffuse = tint;       // TODO: Multiply tint color by diffuse color?
+    
+    rlglDrawMesh(model.mesh, model.material, model.transform);
 }
 
 // Draw a model wires (with texture if set)
-void DrawModelWires(Model model, Vector3 position, float scale, Color color)
+void DrawModelWires(Model model, Vector3 position, float scale, Color tint)
 {
-    Vector3 vScale = { scale, scale, scale };
-    Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
-
-    rlglDrawModel(model, position, rotationAxis, 0.0f, vScale, color, true);
+    rlEnableWireMode();
+    
+    DrawModel(model, position, scale, tint);
+    
+    rlDisableWireMode();
 }
 
 // Draw a model wires (with texture if set) with extended parameters
 void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
-    // NOTE: Rotation must be provided in degrees, it's converted to radians inside rlglDrawModel()
-    rlglDrawModel(model, position, rotationAxis, rotationAngle, scale, tint, true);
+    rlEnableWireMode();
+    
+    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
+    
+    rlDisableWireMode();
 }
 
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
-    // NOTE: Billboard size will maintain texture aspect ratio, size will be billboard width
-    Vector2 sizeRatio = { size, size * (float)texture.height/texture.width };
+    Rectangle sourceRec = { 0, 0, texture.width, texture.height };
+    
+    DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
+}
+
+// Draw a billboard (part of a texture defined by a rectangle)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
+{
+    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
+    Vector2 sizeRatio = { size, size*(float)sourceRec.height/sourceRec.width };
 
     Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
     MatrixTranspose(&viewMatrix);
@@ -1186,51 +1342,8 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size,
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
     //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
     
-    // NOTE: Billboard locked to axis-Y
+    // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
-/*
-    a-------b
-    |       |
-    |   *   |
-    |       |
-    d-------c
-*/
-    VectorScale(&right, sizeRatio.x/2);
-    VectorScale(&up, sizeRatio.y/2);
-
-    Vector3 p1 = VectorAdd(right, up);
-    Vector3 p2 = VectorSubtract(right, up);
-
-    Vector3 a = VectorSubtract(center, p2);
-    Vector3 b = VectorAdd(center, p1);
-    Vector3 c = VectorAdd(center, p2);
-    Vector3 d = VectorSubtract(center, p1);
-
-    rlEnableTexture(texture.id);
-
-    rlBegin(RL_QUADS);
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-
-        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
-        rlTexCoord2f(0.0f, 1.0f); rlVertex3f(d.x, d.y, d.z);
-        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(c.x, c.y, c.z);
-        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
-    rlEnd();
-
-    rlDisableTexture();
-}
-
-// Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vector3 center, float size, Color tint)
-{
-    // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
-    Vector2 sizeRatio = { size, size * (float)sourceRec.height/sourceRec.width };
-
-    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&viewMatrix);
-
-    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
 /*
     a-------b
     |       |
@@ -1275,7 +1388,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 }
 
 // Draw a bounding box with wires
-void DrawBoundingBox(BoundingBox box)
+void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
     
@@ -1285,7 +1398,7 @@ void DrawBoundingBox(BoundingBox box)
     
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
     
-    DrawCubeWires(center, size.x, size.y, size.z, GREEN);
+    DrawCubeWires(center, size.x, size.y, size.z, color);
 }
 
 // Detect collision between two spheres
@@ -1306,14 +1419,14 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
 
 // Detect collision between two boxes
 // NOTE: Boxes are defined by two points minimum and maximum
-bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, Vector3 maxBBox2)
+bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2)
 {
     bool collision = true;
 
-    if ((maxBBox1.x >= minBBox2.x) && (minBBox1.x <= maxBBox2.x))
+    if ((box1.max.x >= box2.min.x) && (box1.min.x <= box2.max.x))
     {
-        if ((maxBBox1.y < minBBox2.y) || (minBBox1.y > maxBBox2.y)) collision = false;
-        if ((maxBBox1.z < minBBox2.z) || (minBBox1.z > maxBBox2.z)) collision = false;
+        if ((box1.max.y < box2.min.y) || (box1.min.y > box2.max.y)) collision = false;
+        if ((box1.max.z < box2.min.z) || (box1.min.z > box2.max.z)) collision = false;
     }
     else collision = false;
 
@@ -1321,30 +1434,22 @@ bool CheckCollisionBoxes(Vector3 minBBox1, Vector3 maxBBox1, Vector3 minBBox2, V
 }
 
 // Detect collision between box and sphere
-bool CheckCollisionBoxSphere(Vector3 minBBox, Vector3 maxBBox, Vector3 centerSphere, float radiusSphere)
+bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere)
 {
     bool collision = false;
 
-    if ((centerSphere.x - minBBox.x > radiusSphere) && (centerSphere.y - minBBox.y > radiusSphere) && (centerSphere.z - minBBox.z > radiusSphere) &&
-            (maxBBox.x - centerSphere.x > radiusSphere) && (maxBBox.y - centerSphere.y > radiusSphere) && (maxBBox.z - centerSphere.z > radiusSphere))
-    {
-        collision = true;
-    }
-    else
-    {
-        float dmin = 0;
+    float dmin = 0;
 
-        if (centerSphere.x - minBBox.x <= radiusSphere) dmin += (centerSphere.x - minBBox.x)*(centerSphere.x - minBBox.x);
-        else if (maxBBox.x - centerSphere.x <= radiusSphere) dmin += (centerSphere.x - maxBBox.x)*(centerSphere.x - maxBBox.x);
+    if (centerSphere.x < box.min.x) dmin += pow(centerSphere.x - box.min.x, 2);
+    else if (centerSphere.x > box.max.x) dmin += pow(centerSphere.x - box.max.x, 2);
 
-        if (centerSphere.y - minBBox.y <= radiusSphere) dmin += (centerSphere.y - minBBox.y)*(centerSphere.y - minBBox.y);
-        else if (maxBBox.y - centerSphere.y <= radiusSphere) dmin += (centerSphere.y - maxBBox.y)*(centerSphere.y - maxBBox.y);
+    if (centerSphere.y < box.min.y) dmin += pow(centerSphere.y - box.min.y, 2);
+    else if (centerSphere.y > box.max.y) dmin += pow(centerSphere.y - box.max.y, 2);
 
-        if (centerSphere.z - minBBox.z <= radiusSphere) dmin += (centerSphere.z - minBBox.z)*(centerSphere.z - minBBox.z);
-        else if (maxBBox.z - centerSphere.z <= radiusSphere) dmin += (centerSphere.z - maxBBox.z)*(centerSphere.z - maxBBox.z);
+    if (centerSphere.z < box.min.z) dmin += pow(centerSphere.z - box.min.z, 2);
+    else if (centerSphere.z > box.max.z) dmin += pow(centerSphere.z - box.max.z, 2);
 
-        if (dmin <= radiusSphere*radiusSphere) collision = true;
-    }
+    if (dmin <= (radiusSphere*radiusSphere)) collision = true;
 
     return collision;
 }
@@ -1359,7 +1464,7 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
     
-    if(d >= 0.0f) collision = true;
+    if (d >= 0.0f) collision = true;
     
     return collision;
 }
@@ -1374,14 +1479,14 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
     
-    if(d >= 0.0f) collision = true;
+    if (d >= 0.0f) collision = true;
     
     // Calculate collision point
     Vector3 offset = ray.direction;
     float collisionDistance = 0;
     
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    if(distance < sphereRadius) collisionDistance = vector + sqrt(d);
+    if (distance < sphereRadius) collisionDistance = vector + sqrt(d);
     else collisionDistance = vector - sqrt(d);
     
     VectorScale(&offset, collisionDistance);
@@ -1395,17 +1500,17 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 }
 
 // Detect collision between ray and bounding box
-bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
+bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 {
     bool collision = false;
     
     float t[8];
-    t[0] = (minBBox.x - ray.position.x)/ray.direction.x;
-    t[1] = (maxBBox.x - ray.position.x)/ray.direction.x;
-    t[2] = (minBBox.y - ray.position.y)/ray.direction.y;
-    t[3] = (maxBBox.y - ray.position.y)/ray.direction.y;
-    t[4] = (minBBox.z - ray.position.z)/ray.direction.z;
-    t[5] = (maxBBox.z - ray.position.z)/ray.direction.z;
+    t[0] = (box.min.x - ray.position.x)/ray.direction.x;
+    t[1] = (box.max.x - ray.position.x)/ray.direction.x;
+    t[2] = (box.min.y - ray.position.y)/ray.direction.y;
+    t[3] = (box.max.y - ray.position.y)/ray.direction.y;
+    t[4] = (box.min.z - ray.position.z)/ray.direction.z;
+    t[5] = (box.max.z - ray.position.z)/ray.direction.z;
     t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
     
@@ -1419,13 +1524,19 @@ bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox)
 BoundingBox CalculateBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
-    Vector3 maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+    Vector3 minVertex = { 0 };
+    Vector3 maxVertex = { 0 };
 
-    for (int i = 1; i < mesh.vertexCount; i++)
+    if (mesh.vertices != NULL)
     {
-		minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
-        maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+        minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+        maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
+    
+        for (int i = 1; i < mesh.vertexCount; i++)
+        {
+            minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+            maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+        }
     }
     
     // Create the bounding box
@@ -1712,12 +1823,12 @@ static Mesh LoadOBJ(const char *fileName)
 
     // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
-    // NOTE: faces MUST be defined as TRIANGLES, not QUADS
-    while(!feof(objFile))
+    // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
+    while (!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
 
-        switch(dataType)
+        switch (dataType)
         {
             case '#':   // Comments
             case 'o':   // Object name (One OBJ file can contain multible named meshes)
@@ -1778,11 +1889,11 @@ static Mesh LoadOBJ(const char *fileName)
     // Second reading pass: Get vertex data to fill intermediate arrays
     // NOTE: This second pass is required in case of multiple meshes defined in same OBJ
     // TODO: Consider that different meshes can have different vertex data available (position, texcoords, normals)
-    while(!feof(objFile))
+    while (!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
 
-        switch(dataType)
+        switch (dataType)
         {
             case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'f': fgets(comments, 200, objFile); break;
             case 'v':
@@ -1826,7 +1937,7 @@ static Mesh LoadOBJ(const char *fileName)
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-    mesh.colors = (unsigned char *)malloc(mesh.vertexCount*4*sizeof(unsigned char));
+    mesh.colors = NULL;
 
     int vCounter = 0;       // Used to count vertices float by float
     int tcCounter = 0;      // Used to count texcoords float by float
@@ -1839,11 +1950,11 @@ static Mesh LoadOBJ(const char *fileName)
     if (numNormals == 0) TraceLog(INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
 
     // Third reading pass: Get faces (triangles) data and fill VertexArray
-    while(!feof(objFile))
+    while (!feof(objFile))
     {
         fscanf(objFile, "%c", &dataType);
 
-        switch(dataType)
+        switch (dataType)
         {
             case '#': case 'o': case 'g': case 's': case 'm': case 'u': case 'v': fgets(comments, 200, objFile); break;
             case 'f':
@@ -1925,10 +2036,6 @@ static Mesh LoadOBJ(const char *fileName)
 
     // Security check, just in case no normals or no texcoords defined in OBJ
     if (numTexCoords == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
-    
-    // NOTE: We set all vertex colors to white
-    // NOTE: Not used any more... just one plain color defined at DrawModel()
-    for (int i = 0; i < (4*mesh.vertexCount); i++) mesh.colors[i] = 255;
 
     // Now we can free temp mid* arrays
     free(midVertices);
@@ -1939,4 +2046,167 @@ static Mesh LoadOBJ(const char *fileName)
     TraceLog(INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return mesh;
+}
+
+// Load MTL material data (specs: http://paulbourke.net/dataformats/mtl/)
+// NOTE: Texture map parameters are not supported
+static Material LoadMTL(const char *fileName)
+{
+    #define MAX_BUFFER_SIZE     128
+    
+    Material material = { 0 };  // LoadDefaultMaterial();
+    
+    char buffer[MAX_BUFFER_SIZE];
+    Vector3 color = { 1.0f, 1.0f, 1.0f };
+    char *mapFileName = NULL;
+
+    FILE *mtlFile;
+
+    mtlFile = fopen(fileName, "rt");
+
+    if (mtlFile == NULL)
+    {
+        TraceLog(WARNING, "[%s] MTL file could not be opened", fileName);
+        return material;
+    }
+
+    while (!feof(mtlFile))
+    {
+        fgets(buffer, MAX_BUFFER_SIZE, mtlFile);
+        
+        switch (buffer[0])
+        {
+            case 'n':   // newmtl string    Material name. Begins a new material description.
+            {
+                // TODO: Support multiple materials in a single .mtl
+                sscanf(buffer, "newmtl %s", mapFileName);
+                
+                TraceLog(INFO, "[%s] Loading material...", mapFileName);
+            }
+            case 'i':   // illum int        Illumination model
+            {
+                // illum = 1 if specular disabled
+                // illum = 2 if specular enabled (lambertian model)
+                // ...
+            }
+            case 'K':   // Ka, Kd, Ks, Ke
+            {
+                switch (buffer[1])
+                {
+                    case 'a':   // Ka float float float    Ambient color (RGB)
+                    {
+                        sscanf(buffer, "Ka %f %f %f", &color.x, &color.y, &color.z);
+                        material.colAmbient.r = (unsigned char)(color.x*255);
+                        material.colAmbient.g = (unsigned char)(color.y*255);
+                        material.colAmbient.b = (unsigned char)(color.z*255);
+                    } break;
+                    case 'd':   // Kd float float float     Diffuse color (RGB)
+                    {
+                        sscanf(buffer, "Kd %f %f %f", &color.x, &color.y, &color.z);
+                        material.colDiffuse.r = (unsigned char)(color.x*255);
+                        material.colDiffuse.g = (unsigned char)(color.y*255);
+                        material.colDiffuse.b = (unsigned char)(color.z*255);
+                    } break;
+                    case 's':   // Ks float float float     Specular color (RGB)
+                    {
+                        sscanf(buffer, "Ks %f %f %f", &color.x, &color.y, &color.z);
+                        material.colSpecular.r = (unsigned char)(color.x*255);
+                        material.colSpecular.g = (unsigned char)(color.y*255);
+                        material.colSpecular.b = (unsigned char)(color.z*255);
+                    } break;
+                    case 'e':   // Ke float float float     Emmisive color (RGB)
+                    {
+                        // TODO: Support Ke ?
+                    } break;
+                    default: break;
+                }
+            } break;
+            case 'N':   // Ns, Ni
+            {
+                if (buffer[1] == 's')       // Ns int   Shininess (specular exponent). Ranges from 0 to 1000.
+                {
+                    int shininess = 0;
+                    sscanf(buffer, "Ns %i", &shininess);
+                    
+                    material.glossiness = (float)shininess;
+                }
+                else if (buffer[1] == 'i')  // Ni int   Refraction index.
+                {
+                    // Not supported...
+                }
+            } break;
+            case 'm':   // map_Kd, map_Ks, map_Ka, map_Bump, map_d
+            {
+                switch (buffer[4])
+                {
+                    case 'K':   // Color texture maps
+                    {
+                        if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
+                        {
+                            sscanf(buffer, "map_Kd %s", mapFileName);
+                            if (mapFileName != NULL) material.texDiffuse = LoadTexture(mapFileName);
+                        }
+                        else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
+                        {
+                            sscanf(buffer, "map_Ks %s", mapFileName);
+                            if (mapFileName != NULL) material.texSpecular = LoadTexture(mapFileName);
+                        }
+                        else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
+                        {
+                            // Not supported...
+                        }
+                    } break;
+                    case 'B':       // map_Bump string      Bump texture map.
+                    {
+                        sscanf(buffer, "map_Bump %s", mapFileName);
+                        if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+                    } break;
+                    case 'b':       // map_bump string      Bump texture map.
+                    {
+                        sscanf(buffer, "map_bump %s", mapFileName);
+                        if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+                    } break;
+                    case 'd':       // map_d string         Opacity texture map.
+                    {
+                        // Not supported...
+                    } break;
+                    default: break;
+                }
+            } break;
+            case 'd':   // d, disp
+            {
+                if (buffer[1] == ' ')       // d float      Dissolve factor. d is inverse of Tr
+                {
+                    float alpha = 1.0f;
+                    sscanf(buffer, "d %f", &alpha);
+                    material.colDiffuse.a = (unsigned char)(alpha*255);
+                }
+                else if (buffer[1] == 'i')  // disp string  Displacement map
+                {
+                    // Not supported...
+                }
+            } break;
+            case 'b':   // bump string      Bump texture map
+            {
+                sscanf(buffer, "bump %s", mapFileName);
+                if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+            } break;
+            case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
+            {
+                float ialpha = 0.0f;
+                sscanf(buffer, "Tr %f", &ialpha);
+                material.colDiffuse.a = (unsigned char)((1.0f - ialpha)*255);
+                
+            } break;
+            case 'r':   // refl string      Reflection texture map
+            default: break;
+        }
+    }
+
+    fclose(mtlFile);
+
+    // NOTE: At this point we have all material data
+    TraceLog(INFO, "[%s] Material loaded successfully", fileName);
+    
+    return material;
 }

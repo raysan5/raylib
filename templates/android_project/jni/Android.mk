@@ -73,7 +73,7 @@ include $(PREBUILT_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 # Module name
-LOCAL_MODULE     := raylibGame
+LOCAL_MODULE     := raylib_game
 
 # Module source files
 LOCAL_SRC_FILES  := basic_game.c
@@ -95,7 +95,7 @@ LOCAL_STATIC_LIBRARIES := android_native_app_glue raylib openal
 # NOTE: It brokes the build, using static library instead
 #LOCAL_SHARED_LIBRARIES := openal
 
-# Build the shared library libraylibGame.so
+# Build the shared library libraylib_game.so
 include $(BUILD_SHARED_LIBRARY)
 
 $(call import-module,android/native_app_glue)

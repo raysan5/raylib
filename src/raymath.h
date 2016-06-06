@@ -73,7 +73,7 @@
 //----------------------------------------------------------------------------------
 
 #if defined(RAYMATH_STANDALONE)
-	// Vector2 type
+    // Vector2 type
     typedef struct Vector2 {
         float x;
         float y;
@@ -151,13 +151,13 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);    // Returns orthographic projection matrix
 RMDEF Matrix MatrixLookAt(Vector3 position, Vector3 target, Vector3 up);  // Returns camera look-at matrix (view matrix)
-RMDEF void PrintMatrix(Matrix m);                             // Print matrix utility
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
 //------------------------------------------------------------------------------------
 RMDEF float QuaternionLength(Quaternion quat);                // Compute the length of a quaternion
 RMDEF void QuaternionNormalize(Quaternion *q);                // Normalize provided quaternion
+RMDEF void QuaternionInvert(Quaternion *quat);                // Invert provided quaternion
 RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
@@ -177,9 +177,7 @@ RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transfo
 
 #if defined(RAYMATH_IMPLEMENTATION) || defined(RAYMATH_EXTERN_INLINE)
 
-#include <stdio.h>      // Used only on PrintMatrix()
-#include <math.h>       // Standard math libary: sin(), cos(), tan()...
-#include <stdlib.h>     // Used for abs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), fabs()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector3 math
@@ -341,14 +339,13 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
     return result;
 }
 
-// Transforms a Vector3 with a given Matrix
+// Transforms a Vector3 by a given Matrix
+// TODO: Review math (matrix transpose required?)
 RMDEF void VectorTransform(Vector3 *v, Matrix mat)
 {
     float x = v->x;
     float y = v->y;
     float z = v->z;
-
-    //MatrixTranspose(&mat);
 
     v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
@@ -803,7 +800,7 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 // Returns perspective projection matrix
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
-    double top = near*tanf(fovy*PI/360.0f);
+    double top = near*tan(fovy*PI/360.0);
     double right = top*aspect;
 
     return MatrixFrustum(-right, right, -top, top, near, far);
@@ -870,17 +867,6 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     return result;
 }
 
-// Print matrix utility (for debug)
-RMDEF void PrintMatrix(Matrix m)
-{
-    printf("----------------------\n");
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m0, m.m4, m.m8, m.m12);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m1, m.m5, m.m9, m.m13);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m2, m.m6, m.m10, m.m14);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m3, m.m7, m.m11, m.m15);
-    printf("----------------------\n");
-}
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Quaternion math
 //----------------------------------------------------------------------------------
@@ -906,6 +892,23 @@ RMDEF void QuaternionNormalize(Quaternion *q)
     q->y *= ilength;
     q->z *= ilength;
     q->w *= ilength;
+}
+
+// Invert provided quaternion
+RMDEF void QuaternionInvert(Quaternion *quat)
+{
+    float length = QuaternionLength(*quat);
+    float lengthSq = length*length;
+    
+    if (lengthSq != 0.0)
+    {
+        float i = 1.0f/lengthSq;
+        
+        quat->x *= -i;
+        quat->y *= -i;
+        quat->z *= -i;
+        quat->w *= i;
+    }
 }
 
 // Calculate two quaternion multiplication

@@ -1,8 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [physac] physics example - Basic rigidbody
+*   raylib [physac] example - Basic rigidbody
 *
-*   This example has been created using raylib 1.4 (www.raylib.com)
+*   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
@@ -11,8 +11,8 @@
 
 #include "raylib.h"
 
-#define OBJECT_SIZE 50
-#define PLAYER_INDEX 0
+#define MOVE_VELOCITY    5
+#define JUMP_VELOCITY    30
 
 int main()
 {
@@ -20,28 +20,37 @@ int main()
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
-    
-    InitWindow(screenWidth, screenHeight, "raylib [physics] example - basic rigidbody");
 
-    InitPhysics(3);      // Initialize physics system with maximum physic objects
-    
-    // Object initialization
-    Transform player = (Transform){(Vector2){(screenWidth - OBJECT_SIZE) / 2, (screenHeight - OBJECT_SIZE) / 2}, 0.0f, (Vector2){OBJECT_SIZE, OBJECT_SIZE}};
-    AddCollider(PLAYER_INDEX, (Collider){true, COLLIDER_RECTANGLE, (Rectangle){player.position.x, player.position.y, player.scale.x, player.scale.y}, 0});
-    AddRigidbody(PLAYER_INDEX, (Rigidbody){true, 1.0f, (Vector2){0, 0}, (Vector2){0, 0}, false, false, true, 0.5f, 1.0f});
-    
-    // Floor initialization 
-    // NOTE: floor doesn't need a rigidbody because it's a static physic object, just a collider to collide with other dynamic colliders (with rigidbody)
-    Transform floor = (Transform){(Vector2){0, screenHeight * 0.8f}, 0.0f, (Vector2){screenWidth, screenHeight * 0.2f}};
-    AddCollider(PLAYER_INDEX + 1, (Collider){true, COLLIDER_RECTANGLE, (Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, 0});
-    
-    // Object properties initialization
-    float moveSpeed = 6.0f;
-    float jumpForce = 5.0f;
-    
-    bool physicsDebug = false;
+    InitWindow(screenWidth, screenHeight, "raylib [physac] example - basic rigidbody");
+    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     SetTargetFPS(60);
+    
+    // Debug variables
+    bool isDebug = false;
+    
+    // Create rectangle physic object
+    PhysicObject rectangle = CreatePhysicObject((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
+    rectangle->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
+    rectangle->rigidbody.applyGravity = true;
+    rectangle->rigidbody.friction = 0.1f;
+    rectangle->rigidbody.bounciness = 6.0f;
+    
+    // Create square physic object
+    PhysicObject square = CreatePhysicObject((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
+    square->rigidbody.enabled = true;      // Enable physic object rigidbody behaviour
+    square->rigidbody.applyGravity = true;
+    square->rigidbody.friction = 0.1f;
+    
+    // Create walls physic objects
+    PhysicObject floor = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    PhysicObject leftWall = CreatePhysicObject((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicObject rightWall = CreatePhysicObject((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicObject roof = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    
+    // Create pplatform physic object
+    PhysicObject platform = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
+    
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -49,35 +58,20 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdatePhysics();    // Update all created physic objects
         
-        // Update object physics 
-        // NOTE: all physics detections and reactions are calculated in ApplyPhysics() function (You will live happier :D)
-        ApplyPhysics(PLAYER_INDEX, &player.position);
+        // Check rectangle movement inputs
+        if (IsKeyDown('W') && rectangle->rigidbody.isGrounded) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyDown('A')) rectangle->rigidbody.velocity.x = -MOVE_VELOCITY;
+        else if (IsKeyDown('D')) rectangle->rigidbody.velocity.x = MOVE_VELOCITY;
         
-        // Check jump button input
-        if (IsKeyDown(KEY_SPACE) && GetRigidbody(PLAYER_INDEX).isGrounded)
-        {
-            // Reset object Y velocity to avoid double jumping cases but keep the same X velocity that it already has
-            SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){GetRigidbody(PLAYER_INDEX).velocity.x, 0});
-            
-            // Add jumping force in Y axis
-            AddRigidbodyForce(PLAYER_INDEX, (Vector2){0, jumpForce});
-        }
+        // Check square movement inputs
+        if (IsKeyDown(KEY_UP) && square->rigidbody.isGrounded) square->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyDown(KEY_LEFT)) square->rigidbody.velocity.x = -MOVE_VELOCITY;
+        else if (IsKeyDown(KEY_RIGHT)) square->rigidbody.velocity.x = MOVE_VELOCITY;
         
-        // Check movement buttons input
-        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
-        {
-            // Set rigidbody velocity in X based on moveSpeed value and apply the same Y velocity that it already has
-            SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){moveSpeed, GetRigidbody(PLAYER_INDEX).velocity.y});
-        }
-        else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-        {
-            // Set rigidbody velocity in X based on moveSpeed negative value and apply the same Y velocity that it already has
-            SetRigidbodyVelocity(PLAYER_INDEX, (Vector2){-moveSpeed, GetRigidbody(PLAYER_INDEX).velocity.y});
-        }
-        
-        // Check debug mode toggle button input
-        if (IsKeyPressed(KEY_P)) physicsDebug = !physicsDebug;
+        // Check debug switch input
+        if (IsKeyPressed('P')) isDebug = !isDebug;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -85,29 +79,34 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+
+            // Draw floor, roof and walls rectangles
+            DrawRectangleRec(TransformToRectangle(floor->transform), DARKGRAY);         // Convert transform values to rectangle data type variable
+            DrawRectangleRec(TransformToRectangle(leftWall->transform), DARKGRAY);
+            DrawRectangleRec(TransformToRectangle(rightWall->transform), DARKGRAY);
+            DrawRectangleRec(TransformToRectangle(roof->transform), DARKGRAY);
             
-            // Draw information
-            DrawText("Use LEFT / RIGHT to MOVE and SPACE to JUMP", (screenWidth - MeasureText("Use LEFT / RIGHT to MOVE and SPACE to JUMP", 20)) / 2, screenHeight * 0.20f, 20, LIGHTGRAY);
-            DrawText("Use P to switch DEBUG MODE", (screenWidth - MeasureText("Use P to switch DEBUG MODE", 20)) / 2, screenHeight * 0.3f, 20, LIGHTGRAY);
+            // Draw middle platform rectangle
+            DrawRectangleRec(TransformToRectangle(platform->transform), DARKGRAY);
             
-            // Check if debug mode is enabled
-            if (physicsDebug)
+            // Draw physic objects
+            DrawRectangleRec(TransformToRectangle(rectangle->transform), RED);
+            DrawRectangleRec(TransformToRectangle(square->transform), BLUE);
+            
+            // Draw collider lines if debug is enabled
+            if (isDebug)
             {
-                // Draw every internal physics stored collider if it is active
-                for (int i = 0; i < 2; i++)
-                {
-                    if (GetCollider(i).enabled)
-                    {
-                        DrawRectangleLines(GetCollider(i).bounds.x, GetCollider(i).bounds.y, GetCollider(i).bounds.width, GetCollider(i).bounds.height, GREEN);
-                    }
-                }
+                DrawRectangleLines(floor->collider.bounds.x, floor->collider.bounds.y, floor->collider.bounds.width, floor->collider.bounds.height, GREEN);
+                DrawRectangleLines(leftWall->collider.bounds.x, leftWall->collider.bounds.y, leftWall->collider.bounds.width, leftWall->collider.bounds.height, GREEN);
+                DrawRectangleLines(rightWall->collider.bounds.x, rightWall->collider.bounds.y, rightWall->collider.bounds.width, rightWall->collider.bounds.height, GREEN);
+                DrawRectangleLines(roof->collider.bounds.x, roof->collider.bounds.y, roof->collider.bounds.width, roof->collider.bounds.height, GREEN);
+                DrawRectangleLines(platform->collider.bounds.x, platform->collider.bounds.y, platform->collider.bounds.width, platform->collider.bounds.height, GREEN);
+                DrawRectangleLines(rectangle->collider.bounds.x, rectangle->collider.bounds.y, rectangle->collider.bounds.width, rectangle->collider.bounds.height, GREEN);
+                DrawRectangleLines(square->collider.bounds.x, square->collider.bounds.y, square->collider.bounds.width, square->collider.bounds.height, GREEN);
             }
-            else
-            {
-                // Draw player and floor
-                DrawRectangleRec((Rectangle){player.position.x, player.position.y, player.scale.x, player.scale.y}, GRAY);
-                DrawRectangleRec((Rectangle){floor.position.x, floor.position.y, floor.scale.x, floor.scale.y}, BLACK);
-            }
+            
+            // Draw help message
+            DrawText("Use WASD to move rectangle and ARROWS to move square", screenWidth/2 - MeasureText("Use WASD to move rectangle and ARROWS to move square", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -115,7 +114,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadPhysics();      // Unload physic objects
+    ClosePhysics();       // Unitialize physics (including all loaded objects)
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

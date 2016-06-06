@@ -28,30 +28,30 @@
 #if defined(GESTURES_STANDALONE)
     #include "gestures.h"
 #else
-    #include "raylib.h"         // Required for typedef(s): Vector2, Gestures
+    #include "raylib.h"         // Required for: Vector2, Gestures
 #endif
 
-#include <math.h>               // Used for: atan2(), sqrt()
-#include <stdint.h>             // Defines int32_t, int64_t
+#include <math.h>               // Required for: atan2(), sqrt()
+#include <stdint.h>             // Required for: uint64_t
 
 #if defined(_WIN32)
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
 #elif defined(__linux)
-    #include <sys/time.h>       // Declares storage size of ‘now’
-    #include <time.h>           // Used for clock functions
+    #include <sys/time.h>       // Required for: timespec
+    #include <time.h>           // Required for: clock_gettime()
 #endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FORCE_TO_SWIPE          0.0005f     // Measured in normalized pixels / time
-#define MINIMUM_DRAG            0.015f      // Measured in normalized pixels [0..1]
-#define MINIMUM_PINCH           0.005f      // Measured in normalized pixels [0..1]
+#define FORCE_TO_SWIPE          0.0005f     // Measured in normalized screen units/time
+#define MINIMUM_DRAG            0.015f      // Measured in normalized screen units (0.0f to 1.0f)
+#define MINIMUM_PINCH           0.005f      // Measured in normalized screen units (0.0f to 1.0f)
 #define TAP_TIMEOUT             300         // Time in milliseconds
 #define PINCH_TIMEOUT           300         // Time in milliseconds
-#define DOUBLETAP_RANGE         0.03f
+#define DOUBLETAP_RANGE         0.03f       // Measured in normalized screen units (0.0f to 1.0f)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -72,7 +72,7 @@ static Vector2 moveDownPosition2 = { 0.0f, 0.0f };
 static int numTap = 0;
 
 static int pointCount = 0;
-static int touchId = -1;
+static int firstTouchId = -1;
 
 static double eventTime = 0.0;
 static double swipeTime = 0.0;
@@ -120,9 +120,7 @@ void ProcessGestureEvent(GestureEvent event)
     pointCount = event.pointCount;      // Required on UpdateGestures()
     
     if (pointCount < 2)
-    {      
-        touchId = event.pointerId[0];
-        
+    {
         if (event.touchAction == TOUCH_DOWN)
         {
             numTap++;    // Tap counter
@@ -145,6 +143,8 @@ void ProcessGestureEvent(GestureEvent event)
             touchUpPosition = touchDownPosition;
             eventTime = GetCurrentTime();
             
+            firstTouchId = event.pointerId[0];
+            
             dragVector = (Vector2){ 0.0f, 0.0f };
         }
         else if (event.touchAction == TOUCH_UP)
@@ -155,12 +155,10 @@ void ProcessGestureEvent(GestureEvent event)
             dragDistance = Vector2Distance(touchDownPosition, touchUpPosition);
             dragIntensity = dragDistance/(float)((GetCurrentTime() - swipeTime));
             
-            // TODO: Make getures detection resolution independant
-
             startMoving = false;
             
             // Detect GESTURE_SWIPE
-            if ((dragIntensity > FORCE_TO_SWIPE) && (touchId == 0))        // RAY: why check (touchId == 0)???
+            if ((dragIntensity > FORCE_TO_SWIPE) && firstTouchId == event.pointerId[0])
             {
                 // NOTE: Angle should be inverted in Y
                 dragAngle = 360.0f - Vector2Angle(touchDownPosition, touchUpPosition);
@@ -181,6 +179,7 @@ void ProcessGestureEvent(GestureEvent event)
             }
             
             touchDownDragPosition = (Vector2){ 0.0f, 0.0f };
+            pointCount = 0;
         }
         else if (event.touchAction == TOUCH_MOVE)
         {
@@ -259,6 +258,7 @@ void ProcessGestureEvent(GestureEvent event)
             pinchDistance = 0.0f;
             pinchAngle = 0.0f;
             pinchVector = (Vector2){ 0.0f, 0.0f };
+            pointCount = 0;
             
             currentGesture = GESTURE_NONE;
         }
@@ -292,14 +292,14 @@ void UpdateGestures(void)
 }
 
 // Check if a gesture have been detected
-bool IsGestureDetected(void)
+bool IsGestureDetected(int gesture)
 {
-    if ((enabledGestures & currentGesture) != GESTURE_NONE) return true;
+    if ((enabledGestures & currentGesture) == gesture) return true;
     else return false;
 }
 
 // Check gesture type
-int GetGestureType(void)
+int GetGestureDetected(void)
 {
     // Get current gesture only if enabled
     return (enabledGestures & currentGesture);

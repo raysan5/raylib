@@ -179,22 +179,22 @@ void InitGame(void)
 
     // Initialize grid matrices
     for (int i = 0; i < GRID_HORIZONTAL_SIZE; i++)
-	{
-		for (int j = 0; j < GRID_VERTICAL_SIZE; j++)
-		{
+    {
+        for (int j = 0; j < GRID_VERTICAL_SIZE; j++)
+        {
             if ((j == GRID_VERTICAL_SIZE - 1) || (i == 0) || (i == GRID_HORIZONTAL_SIZE - 1)) grid[i][j] = BLOCK;
             else grid[i][j] = EMPTY;
-		}
-	}
+        }
+    }
 
     // Initialize incoming piece matrices
     for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j< 4; j++)
-		{
-			incomingPiece[i][j] = EMPTY;
-		}
-	}
+    {
+        for (int j = 0; j< 4; j++)
+        {
+            incomingPiece[i][j] = EMPTY;
+        }
+    }
 }
 
 // Update game (one frame)
@@ -423,34 +423,34 @@ static bool Createpiece()
     piecePositionY = 0;
 
     // If the game is starting and you are going to create the first piece, we create an extra one
-	if (beginPlay)
-	{
+    if (beginPlay)
+    {
         GetRandompiece();
         beginPlay = false;
-	}
-	
+    }
+    
     // We assign the incoming piece to the actual piece
     for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j< 4; j++)
-		{
-			piece[i][j] = incomingPiece[i][j];
-		}
-	}
-	
+    {
+        for (int j = 0; j< 4; j++)
+        {
+            piece[i][j] = incomingPiece[i][j];
+        }
+    }
+    
     // We assign a random piece to the incoming one
-	GetRandompiece();
+    GetRandompiece();
 
     // Assign the piece to the grid
     for (int i = piecePositionX; i < piecePositionX + 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			if (piece[i - (int)piecePositionX][j] == MOVING) grid[i][j] = MOVING;
-		}
-	}
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (piece[i - (int)piecePositionX][j] == MOVING) grid[i][j] = MOVING;
+        }
+    }
 
-	return true;
+    return true;
 }
 
 static void GetRandompiece()
@@ -459,22 +459,22 @@ static void GetRandompiece()
     int random = rand() % 7;
 
     for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			incomingPiece[i][j] = EMPTY;
-		}
-	}
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            incomingPiece[i][j] = EMPTY;
+        }
+    }
 
     switch(random)
-	{
-        case 0:	{	incomingPiece[1][1] = MOVING;   incomingPiece[2][1] = MOVING;	incomingPiece[1][2] = MOVING;	incomingPiece[2][2] = MOVING;	}	break;	//Cube
-        case 1:	{	incomingPiece[1][0] = MOVING;	incomingPiece[1][1] = MOVING;	incomingPiece[1][2] = MOVING;	incomingPiece[2][2] = MOVING;	}	break;	//L
-        case 2:	{	incomingPiece[1][2] = MOVING;	incomingPiece[2][0] = MOVING;	incomingPiece[2][1] = MOVING;	incomingPiece[2][2] = MOVING;	}	break;	//L inversa
-        case 3:	{	incomingPiece[0][1] = MOVING;	incomingPiece[1][1] = MOVING;	incomingPiece[2][1] = MOVING;	incomingPiece[3][1] = MOVING;	}	break;	//Recta
-        case 4:	{	incomingPiece[1][0] = MOVING;	incomingPiece[1][1] = MOVING;	incomingPiece[1][2] = MOVING;	incomingPiece[2][1] = MOVING;	}	break;	//Creu tallada
-        case 5: {	incomingPiece[1][1] = MOVING;	incomingPiece[2][1] = MOVING; 	incomingPiece[2][2] = MOVING;	incomingPiece[3][2] = MOVING;	}	break;	//S
-        case 6: {	incomingPiece[1][2] = MOVING;	incomingPiece[2][2] = MOVING; 	incomingPiece[2][1] = MOVING;	incomingPiece[3][1] = MOVING;	}	break;	//S inversa
+    {
+        case 0:    {    incomingPiece[1][1] = MOVING;   incomingPiece[2][1] = MOVING;    incomingPiece[1][2] = MOVING;    incomingPiece[2][2] = MOVING;    }    break;    //Cube
+        case 1:    {    incomingPiece[1][0] = MOVING;    incomingPiece[1][1] = MOVING;    incomingPiece[1][2] = MOVING;    incomingPiece[2][2] = MOVING;    }    break;    //L
+        case 2:    {    incomingPiece[1][2] = MOVING;    incomingPiece[2][0] = MOVING;    incomingPiece[2][1] = MOVING;    incomingPiece[2][2] = MOVING;    }    break;    //L inversa
+        case 3:    {    incomingPiece[0][1] = MOVING;    incomingPiece[1][1] = MOVING;    incomingPiece[2][1] = MOVING;    incomingPiece[3][1] = MOVING;    }    break;    //Recta
+        case 4:    {    incomingPiece[1][0] = MOVING;    incomingPiece[1][1] = MOVING;    incomingPiece[1][2] = MOVING;    incomingPiece[2][1] = MOVING;    }    break;    //Creu tallada
+        case 5: {    incomingPiece[1][1] = MOVING;    incomingPiece[2][1] = MOVING;     incomingPiece[2][2] = MOVING;    incomingPiece[3][2] = MOVING;    }    break;    //S
+        case 6: {    incomingPiece[1][2] = MOVING;    incomingPiece[2][2] = MOVING;     incomingPiece[2][1] = MOVING;    incomingPiece[3][1] = MOVING;    }    break;    //S inversa
     }
 }
 
@@ -482,34 +482,34 @@ static void ResolveFallingMovement(bool *detection, bool *pieceActive)
 {
     // If we finished moving this piece, we stop it
     if (*detection)
-	{
+    {
         for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-		{
-			for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
-			{
-				if (grid[i][j] == MOVING)
-				{
-					grid[i][j] = FULL;
-					*detection = false;
-					*pieceActive = false;
-				}
-			}
-		}
-	}
+        {
+            for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
+            {
+                if (grid[i][j] == MOVING)
+                {
+                    grid[i][j] = FULL;
+                    *detection = false;
+                    *pieceActive = false;
+                }
+            }
+        }
+    }
     // We move down the piece
-	else
-	{
+    else
+    {
         for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-		{
-			for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
-			{
-				if (grid[i][j] == MOVING)
-				{
-					grid[i][j+1] = MOVING;
-					grid[i][j] = EMPTY;
-				}
-			}
-		}
+        {
+            for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
+            {
+                if (grid[i][j] == MOVING)
+                {
+                    grid[i][j+1] = MOVING;
+                    grid[i][j] = EMPTY;
+                }
+            }
+        }
         piecePositionY++;
     }
 }
@@ -519,78 +519,78 @@ static bool ResolveLateralMovement()
     bool collision = false;
 
     // Move left
-	if (IsKeyDown(KEY_LEFT))
-	{
+    if (IsKeyDown(KEY_LEFT))
+    {
         // Check if is possible to move to left
-		for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-		{
-			for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
-			{
-				if (grid[i][j] == MOVING)
-				{
+        for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
+        {
+            for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
+            {
+                if (grid[i][j] == MOVING)
+                {
                     // Check if we are touching the left wall or we have a full square at the left
-					if ((i-1 == 0) || (grid[i-1][j] == FULL)) collision = true;
-				}
-			}
-		}
+                    if ((i-1 == 0) || (grid[i-1][j] == FULL)) collision = true;
+                }
+            }
+        }
         // If able, move left
-		if (!collision)
-		{
-			for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-			{
-				for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)             // We check the matrix from left to right
-				{
+        if (!collision)
+        {
+            for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
+            {
+                for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)             // We check the matrix from left to right
+                {
                     // Move everything to the left
-					if (grid[i][j] == MOVING)
-					{
-						grid[i-1][j] = MOVING;
-						grid[i][j] = EMPTY;
-					}
-				}
-			}
+                    if (grid[i][j] == MOVING)
+                    {
+                        grid[i-1][j] = MOVING;
+                        grid[i][j] = EMPTY;
+                    }
+                }
+            }
 
             piecePositionX--;
-		}
-	}
+        }
+    }
 
     // Move right
-	else if (IsKeyDown(KEY_RIGHT))
-	{
+    else if (IsKeyDown(KEY_RIGHT))
+    {
         // Check if is possible to move to right
-		for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-		{
-			for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
-			{
-				if (grid[i][j] == MOVING)
-				{
+        for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
+        {
+            for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
+            {
+                if (grid[i][j] == MOVING)
+                {
                     // Check if we are touching the right wall or we have a full square at the right
-					if ((i+1 == GRID_HORIZONTAL_SIZE - 1) || (grid[i+1][j] == FULL))
+                    if ((i+1 == GRID_HORIZONTAL_SIZE - 1) || (grid[i+1][j] == FULL))
                     {
                         collision = true;
 
                     }
-				}
-			}
-		}
+                }
+            }
+        }
         // If able move right
-		if (!collision)
-		{
-			for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-			{
-				for (int i = GRID_HORIZONTAL_SIZE - 1; i >= 1; i--)             // We check the matrix from right to left
-				{
+        if (!collision)
+        {
+            for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
+            {
+                for (int i = GRID_HORIZONTAL_SIZE - 1; i >= 1; i--)             // We check the matrix from right to left
+                {
                     // Move everything to the right
-					if (grid[i][j] == MOVING)
-					{
-						grid[i+1][j] = MOVING;
-						grid[i][j] = EMPTY;
-					}
-				}
-			}
+                    if (grid[i][j] == MOVING)
+                    {
+                        grid[i+1][j] = MOVING;
+                        grid[i][j] = EMPTY;
+                    }
+                }
+            }
 
             piecePositionX++;
-		}
-	}
+        }
+    }
 
     return collision;
 }
@@ -599,164 +599,164 @@ static bool ResolveTurnMovement()
 {
     // Input for turning the piece
     if (IsKeyDown(KEY_UP))
-	{
-		int aux;
-		bool checker = false;
+    {
+        int aux;
+        bool checker = false;
 
         // Check all turning possibilities
-		if ((grid[piecePositionX + 3][piecePositionY] == MOVING) &&
+        if ((grid[piecePositionX + 3][piecePositionY] == MOVING) &&
             (grid[piecePositionX][piecePositionY] != EMPTY) &&
             (grid[piecePositionX][piecePositionY] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX + 3][piecePositionY + 3] == MOVING) &&
+        if ((grid[piecePositionX + 3][piecePositionY + 3] == MOVING) &&
             (grid[piecePositionX + 3][piecePositionY] != EMPTY) &&
             (grid[piecePositionX + 3][piecePositionY] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX][piecePositionY + 3] == MOVING) &&
+        if ((grid[piecePositionX][piecePositionY + 3] == MOVING) &&
             (grid[piecePositionX + 3][piecePositionY + 3] != EMPTY) &&
             (grid[piecePositionX + 3][piecePositionY + 3] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX][piecePositionY] == MOVING) &&
+        if ((grid[piecePositionX][piecePositionY] == MOVING) &&
             (grid[piecePositionX][piecePositionY + 3] != EMPTY) &&
             (grid[piecePositionX][piecePositionY + 3] != MOVING))
-        {	
+        {    
             checker = true;
         }
 
 
-		if ((grid[piecePositionX + 1][piecePositionY] == MOVING) &&
+        if ((grid[piecePositionX + 1][piecePositionY] == MOVING) &&
             (grid[piecePositionX][piecePositionY + 2] != EMPTY) &&
             (grid[piecePositionX][piecePositionY + 2] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX + 3][piecePositionY + 1] == MOVING) &&
+        if ((grid[piecePositionX + 3][piecePositionY + 1] == MOVING) &&
             (grid[piecePositionX + 1][piecePositionY] != EMPTY) &&
             (grid[piecePositionX + 1][piecePositionY] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX + 2][piecePositionY + 3] == MOVING) &&
+        if ((grid[piecePositionX + 2][piecePositionY + 3] == MOVING) &&
             (grid[piecePositionX + 3][piecePositionY + 1] != EMPTY) &&
             (grid[piecePositionX + 3][piecePositionY + 1] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX][piecePositionY + 2] == MOVING) &&
+        if ((grid[piecePositionX][piecePositionY + 2] == MOVING) &&
             (grid[piecePositionX + 2][piecePositionY + 3] != EMPTY) &&
             (grid[piecePositionX + 2][piecePositionY + 3] != MOVING))
-        {	
+        {    
             checker = true;
         }
 
 
-		if ((grid[piecePositionX + 2][piecePositionY] == MOVING) &&
+        if ((grid[piecePositionX + 2][piecePositionY] == MOVING) &&
             (grid[piecePositionX][piecePositionY + 1] != EMPTY) &&
             (grid[piecePositionX][piecePositionY + 1] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX + 3][piecePositionY + 2] == MOVING) &&
+        if ((grid[piecePositionX + 3][piecePositionY + 2] == MOVING) &&
             (grid[piecePositionX + 2][piecePositionY] != EMPTY) &&
             (grid[piecePositionX + 2][piecePositionY] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX + 1][piecePositionY + 3] == MOVING) &&
+        if ((grid[piecePositionX + 1][piecePositionY + 3] == MOVING) &&
             (grid[piecePositionX + 3][piecePositionY + 2] != EMPTY) &&
             (grid[piecePositionX + 3][piecePositionY + 2] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX][piecePositionY + 1] == MOVING) &&
+        if ((grid[piecePositionX][piecePositionY + 1] == MOVING) &&
             (grid[piecePositionX + 1][piecePositionY + 3] != EMPTY) &&
             (grid[piecePositionX + 1][piecePositionY + 3] != MOVING))
-        {	
+        {    
             checker = true;
         }
 
-		if ((grid[piecePositionX + 1][piecePositionY + 1] == MOVING) &&
+        if ((grid[piecePositionX + 1][piecePositionY + 1] == MOVING) &&
             (grid[piecePositionX + 1][piecePositionY + 2] != EMPTY) &&
             (grid[piecePositionX + 1][piecePositionY + 2] != MOVING))
-        {	
+        {    
             checker = true;
         }
         
-		if ((grid[piecePositionX + 2][piecePositionY + 1] == MOVING) &&
+        if ((grid[piecePositionX + 2][piecePositionY + 1] == MOVING) &&
             (grid[piecePositionX + 1][piecePositionY + 1] != EMPTY) &&
             (grid[piecePositionX + 1][piecePositionY + 1] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX + 2][piecePositionY + 2] == MOVING) &&
+        if ((grid[piecePositionX + 2][piecePositionY + 2] == MOVING) &&
             (grid[piecePositionX + 2][piecePositionY + 1] != EMPTY) &&
             (grid[piecePositionX + 2][piecePositionY + 1] != MOVING))
-        {	
+        {    
             checker = true;
         }
-		if ((grid[piecePositionX + 1][piecePositionY + 2] == MOVING) &&
+        if ((grid[piecePositionX + 1][piecePositionY + 2] == MOVING) &&
             (grid[piecePositionX + 2][piecePositionY + 2] != EMPTY) &&
             (grid[piecePositionX + 2][piecePositionY + 2] != MOVING))
-        {	
+        {    
             checker = true;
         }
 
-		if (!checker)
-		{
-			aux = piece[0][0];
-			piece[0][0] = piece[3][0];
-			piece[3][0] = piece[3][3];
-			piece[3][3] = piece[0][3];
-			piece[0][3] = aux;
+        if (!checker)
+        {
+            aux = piece[0][0];
+            piece[0][0] = piece[3][0];
+            piece[3][0] = piece[3][3];
+            piece[3][3] = piece[0][3];
+            piece[0][3] = aux;
 
-			aux = piece[1][0];
-			piece[1][0] = piece[3][1];
-			piece[3][1] = piece[2][3];
-			piece[2][3] = piece[0][2];
-			piece[0][2] = aux;
+            aux = piece[1][0];
+            piece[1][0] = piece[3][1];
+            piece[3][1] = piece[2][3];
+            piece[2][3] = piece[0][2];
+            piece[0][2] = aux;
 
-			aux = piece[2][0];
-			piece[2][0] = piece[3][2];
-			piece[3][2] = piece[1][3];
-			piece[1][3] = piece[0][1];
-			piece[0][1] = aux;
+            aux = piece[2][0];
+            piece[2][0] = piece[3][2];
+            piece[3][2] = piece[1][3];
+            piece[1][3] = piece[0][1];
+            piece[0][1] = aux;
 
-			aux = piece[1][1];
-			piece[1][1] = piece[2][1];
-			piece[2][1] = piece[2][2];
-			piece[2][2] = piece[1][2];
-			piece[1][2] = aux;
-		}
+            aux = piece[1][1];
+            piece[1][1] = piece[2][1];
+            piece[2][1] = piece[2][2];
+            piece[2][2] = piece[1][2];
+            piece[1][2] = aux;
+        }
 
-		for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-		{
-			for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
-			{
-				if (grid[i][j] == MOVING)
-				{
-					grid[i][j] = EMPTY;
-				}
-			}
-		}
+        for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
+        {
+            for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
+            {
+                if (grid[i][j] == MOVING)
+                {
+                    grid[i][j] = EMPTY;
+                }
+            }
+        }
 
-		for (int i = piecePositionX; i < piecePositionX + 4; i++)
-		{
-			for (int j = piecePositionY; j < piecePositionY + 4; j++)
-			{
-				if (piece[i - piecePositionX][j - piecePositionY] == MOVING)
-				{
-					grid[i][j] = MOVING;
-				}
-			}
-		}
+        for (int i = piecePositionX; i < piecePositionX + 4; i++)
+        {
+            for (int j = piecePositionY; j < piecePositionY + 4; j++)
+            {
+                if (piece[i - piecePositionX][j - piecePositionY] == MOVING)
+                {
+                    grid[i][j] = MOVING;
+                }
+            }
+        }
         return true;
-	}
+    }
 
     return false;
 }
@@ -764,44 +764,44 @@ static bool ResolveTurnMovement()
 static void CheckDetection(bool *detection)
 {
     for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-	{
-		for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
-		{
-			if ((grid[i][j] == MOVING) && ((grid[i][j+1] == FULL) || (grid[i][j+1] == BLOCK))) *detection = true;
-		}
-	}
+    {
+        for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
+        {
+            if ((grid[i][j] == MOVING) && ((grid[i][j+1] == FULL) || (grid[i][j+1] == BLOCK))) *detection = true;
+        }
+    }
 }
 
 static void CheckCompletition(bool *lineToDelete)
 {
     int calculator;
 
-	for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
-	{
-		calculator = 0;
-		for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
-		{
+    for (int j = GRID_VERTICAL_SIZE - 2; j >= 0; j--)
+    {
+        calculator = 0;
+        for (int i = 1; i < GRID_HORIZONTAL_SIZE - 1; i++)
+        {
             // Count each square of the line
-			if (grid[i][j] == FULL)
-			{
-				calculator++;
-			}
+            if (grid[i][j] == FULL)
+            {
+                calculator++;
+            }
 
             // Check if we completed the whole line
-			if (calculator == GRID_HORIZONTAL_SIZE - 2)
-			{
+            if (calculator == GRID_HORIZONTAL_SIZE - 2)
+            {
                 *lineToDelete = true;
                 calculator = 0;
-				// points++;
+                // points++;
 
                 // Mark the completed line
-				for (int z = 1; z < GRID_HORIZONTAL_SIZE - 1; z++)
-				{
-					grid[z][j] = FADING;
-				}
-			}
-		}
-	}
+                for (int z = 1; z < GRID_HORIZONTAL_SIZE - 1; z++)
+                {
+                    grid[z][j] = FADING;
+                }
+            }
+        }
+    }
 }
 
 static void DeleteCompleteLines()

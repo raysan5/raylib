@@ -9,6 +9,7 @@
 *       PLATFORM_ANDROID - Only OpenGL ES 2.0 devices
 *       PLATFORM_RPI - Rapsberry Pi (tested on Raspbian)
 *       PLATFORM_WEB - Emscripten, HTML5
+*       PLATFORM_OCULUS - Oculus Rift CV1 (with desktop mirror)
 *
 *   On PLATFORM_DESKTOP, the external lib GLFW3 (www.glfw.com) is used to manage graphic
 *   device, OpenGL context and input on multiple operating systems (Windows, Linux, OSX).
@@ -53,14 +54,16 @@
 #include <string.h>         // String function definitions, memset()
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
+#if defined(PLATFORM_OCULUS)
+    #define PLATFORM_DESKTOP      // Enable PLATFORM_DESKTOP code-base
+#endif
+
 #if defined(PLATFORM_DESKTOP)
-    #define GLAD_EXTENSIONS_LOADER
-    #if defined(GLEW_EXTENSIONS_LOADER)
-        #define GLEW_STATIC
-        #include <GL/glew.h>        // GLEW extensions loading lib
-    #elif defined(GLAD_EXTENSIONS_LOADER)
-        #include "glad.h"           // GLAD library: Manage OpenGL headers and extensions
-    #endif
+    #include "external/glad.h"    // GLAD library: Manage OpenGL headers and extensions
+#endif
+
+#if defined(PLATFORM_OCULUS)
+    #include "../examples/oculus_glfw_sample/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -116,9 +119,9 @@
 
 #if defined(PLATFORM_RPI)
     // Old device inputs system
-    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO            // Standard input
-    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"
-    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js0"
+    #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
+    #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"       // Mouse input
+    #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
 
     // New device input events (evdev) (must be detected)
     //#define DEFAULT_KEYBOARD_DEV    "/dev/input/eventN"
@@ -126,13 +129,40 @@
     //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
     
     #define MOUSE_SENSITIVITY         0.8f
-    #define MAX_GAMEPAD_BUTTONS       11
+    
+    #define MAX_GAMEPADS              2         // Max number of gamepads supported
+    #define MAX_GAMEPAD_BUTTONS       11        // Max bumber of buttons supported (per gamepad)
+    #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 #endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// ...
+#if defined(PLATFORM_OCULUS)
+typedef struct OculusBuffer {
+    ovrTextureSwapChain textureChain;
+    GLuint depthId;
+    GLuint fboId;
+    int width;
+    int height;
+} OculusBuffer;
+
+typedef struct OculusMirror {
+    ovrMirrorTexture texture;
+    GLuint fboId;
+    int width;
+    int height;
+} OculusMirror;
+
+typedef struct OculusLayer {
+    ovrViewScaleDesc viewScaleDesc;
+    ovrLayerEyeFov eyeLayer;      // layer 0
+    //ovrLayerQuad quadLayer;     // TODO: layer 1: '2D' quad for GUI
+    Matrix eyeProjections[2];
+    int width;
+    int height;
+} OculusLayer;
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -140,16 +170,23 @@
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static GLFWwindow *window;                      // Native window (graphic device)
 static bool windowMinimized = false;
-#elif defined(PLATFORM_ANDROID)
+#endif
+
+#if defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
 static struct android_poll_source *source;      // Android events polling source
-static int ident, events;
+static int ident, events;                       // Android ALooper_pollAll() variables
+static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
+
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
+
 static int previousButtonState[128] = { 1 };    // Required to check if button pressed/released once
 static int currentButtonState[128] = { 1 };     // Required to check if button pressed/released once
-#elif defined(PLATFORM_RPI)
+#endif
+
+#if defined(PLATFORM_RPI)
 static EGL_DISPMANX_WINDOW_T nativeWindow;      // Native window (graphic device)
 
 // Keyboard input variables
@@ -163,13 +200,12 @@ static bool mouseReady = false;                 // Flag to know if mouse is read
 pthread_t mouseThreadId;                        // Mouse reading thread id
 
 // Gamepad input variables
-static int gamepadStream = -1;                  // Gamepad device file descriptor
-static bool gamepadReady = false;               // Flag to know if gamepad is ready
-pthread_t gamepadThreadId;                      // Gamepad reading thread id
+static int gamepadStream[MAX_GAMEPADS] = { -1 };    // Gamepad device file descriptor (two gamepads supported)
+static bool gamepadReady[MAX_GAMEPADS] = { false }; // Flag to know if gamepad is ready (two gamepads supported)
+pthread_t gamepadThreadId;                          // Gamepad reading thread id
 
-int gamepadButtons[MAX_GAMEPAD_BUTTONS];
-int gamepadAxisX = 0;
-int gamepadAxisY = 0;
+int gamepadButtons[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];        // Gamepad buttons state
+float gamepadAxisValues[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];      // Gamepad axis state
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -181,6 +217,17 @@ static uint64_t baseTime;                   // Base time measure for hi-res time
 static bool windowShouldClose = false;      // Flag to set window for closing
 #endif
 
+#if defined(PLATFORM_OCULUS)
+// OVR device variables
+static ovrSession session;
+static ovrHmdDesc hmdDesc;
+static ovrGraphicsLuid luid;
+static OculusLayer layer;
+static OculusBuffer buffer;
+static OculusMirror mirror;
+static unsigned int frameIndex = 0;
+#endif
+
 static unsigned int displayWidth, displayHeight;     // Display width and height (monitor, device-screen, LCD, ...)
 static int screenWidth, screenHeight;       // Screen width and height (used render area)
 static int renderWidth, renderHeight;       // Framebuffer width and height (render area)
@@ -190,28 +237,20 @@ static int renderOffsetX = 0;               // Offset X from render area (must b
 static int renderOffsetY = 0;               // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
-static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
-#endif
+static Matrix cameraView;                   // Store camera view matrix (required for Oculus Rift)
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
-
-static bool customCursor = false;           // Tracks if custom cursor has been set
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
-static Texture2D cursor;                    // Cursor texture
-
-static Vector2 mousePosition;               // Mouse position on screen
 
 static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
 static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
 
-static char previousMouseState[3] = { 0 };  // Required to check if mouse btn pressed/released once
-static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pressed/released once
-
 static char previousGamepadState[32] = {0}; // Required to check if gamepad btn pressed/released once
 static char currentGamepadState[32] = {0};  // Required to check if gamepad btn pressed/released once
+
+static char previousMouseState[3] = { 0 };  // Required to check if mouse btn pressed/released once
+static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pressed/released once
 
 static int previousMouseWheelY = 0;         // Required to track mouse wheel variation
 static int currentMouseWheelY = 0;          // Required to track mouse wheel variation
@@ -221,6 +260,9 @@ static int lastKeyPressed = -1;             // Register last key pressed
 
 static bool cursorHidden;                   // Track if cursor is hidden
 #endif
+
+static Vector2 mousePosition;               // Mouse position on screen
+static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
 
 #if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -246,23 +288,16 @@ extern void UnloadDefaultFont(void);            // [Module: text] Unloads defaul
 //----------------------------------------------------------------------------------
 static void InitDisplay(int width, int height);         // Initialize display device and framebuffer
 static void InitGraphics(void);                         // Initialize OpenGL graphics
+static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
-static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void PollInputEvents(void);                      // Register user events
+static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
-static void SetupFramebufferSize(int displayWidth, int displayHeight);
-
-#if defined(PLATFORM_RPI)
-static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
-static void ProcessKeyboard(void);                      // Process keyboard events
-static void RestoreKeyboard(void);                      // Restore keyboard system
-static void InitMouse(void);                            // Mouse initialization (including mouse thread)
-static void *MouseThread(void *arg);                    // Mouse reading thread
-static void InitGamepad(void);                          // Init raw gamepad input
-static void *GamepadThread(void *arg);                  // Mouse reading thread
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+static void TakeScreenshot(void);                       // Takes a screenshot and saves it in the same folder as executable
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -281,10 +316,6 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified);           
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);         // GLFW3 Window Drop Callback, runs when drop files into window
 #endif
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-static void TakeScreenshot(void);                                                          // Takes a screenshot and saves it in the same folder as executable
-#endif
-
 #if defined(PLATFORM_ANDROID)
 static void AndroidCommandCallback(struct android_app *app, int32_t cmd);                  // Process Android activity lifecycle commands
 static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event);          // Process Android inputs
@@ -295,6 +326,29 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 #endif
 
+#if defined(PLATFORM_RPI)
+static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
+static void ProcessKeyboard(void);                      // Process keyboard events
+static void RestoreKeyboard(void);                      // Restore keyboard system
+static void InitMouse(void);                            // Mouse initialization (including mouse thread)
+static void *MouseThread(void *arg);                    // Mouse reading thread
+static void InitGamepad(void);                          // Init raw gamepad input
+static void *GamepadThread(void *arg);                  // Mouse reading thread
+#endif
+
+#if defined(PLATFORM_OCULUS)
+// Oculus Rift functions
+static Matrix FromOvrMatrix(ovrMatrix4f ovrM);
+static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);
+static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);
+static void SetOculusBuffer(ovrSession session, OculusBuffer buffer);
+static void UnsetOculusBuffer(OculusBuffer buffer);
+static OculusMirror LoadOculusMirror(ovrSession session, int width, int height);    // Load Oculus mirror buffers
+static void UnloadOculusMirror(ovrSession session, OculusMirror mirror);            // Unload Oculus mirror buffers
+static void BlitOculusMirror(ovrSession session, OculusMirror mirror);
+static OculusLayer InitOculusLayer(ovrSession session);
+#endif
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
@@ -302,7 +356,7 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(INFO, "Initializing raylib (v1.4.0)");
+    TraceLog(INFO, "Initializing raylib (v1.5.0)");
 
     // Store window title (could be useful...)
     windowTitle = title;
@@ -343,6 +397,11 @@ void InitWindow(int width, int height, const char *title)
     //emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenInputCallback);
 #endif
 
+#if defined(PLATFORM_OCULUS)
+    // Recenter OVR tracking origin
+    ovr_RecenterTrackingOrigin(session);
+#endif
+
     mousePosition.x = (float)screenWidth/2.0f;
     mousePosition.y = (float)screenHeight/2.0f;
 
@@ -353,12 +412,13 @@ void InitWindow(int width, int height, const char *title)
         LogoAnimation();
     }
 }
+#endif
 
-#elif defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID)
 // Android activity initialization
 void InitWindow(int width, int height, struct android_app *state)
 {
-    TraceLog(INFO, "Initializing raylib (v1.4.0)");
+    TraceLog(INFO, "Initializing raylib (v1.5.0)");
 
     app_dummy();
 
@@ -366,6 +426,7 @@ void InitWindow(int width, int height, struct android_app *state)
     screenHeight = height;
 
     app = state;
+    internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
     ANativeActivity_setWindowFlags(app->activity, AWINDOW_FLAG_FULLSCREEN, 0);  //AWINDOW_FLAG_SCALED, AWINDOW_FLAG_DITHER
@@ -401,13 +462,6 @@ void InitWindow(int width, int height, struct android_app *state)
 
     TraceLog(INFO, "Android app initialized successfully");
 
-    // Init button states values (default up)
-    for(int i = 0; i < 128; i++)
-    {
-        currentButtonState[i] = 1;
-        previousButtonState[i] = 1;
-    }
-
     // Wait for window to be initialized (display and context)
     while (!windowReady)
     {
@@ -434,7 +488,9 @@ void CloseWindow(void)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwDestroyWindow(window);
     glfwTerminate();
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     // Close surface, context and display
     if (display != EGL_NO_DISPLAY)
     {
@@ -457,8 +513,70 @@ void CloseWindow(void)
     }
 #endif
 
+#if defined(PLATFORM_OCULUS)
+    ovr_Destroy(session);   // Must be called after glfwTerminate()
+    ovr_Shutdown();
+#endif
+
     TraceLog(INFO, "Window closed successfully");
 }
+
+#if defined(PLATFORM_OCULUS)
+// Init Oculus Rift device
+// NOTE: Device initialization should be done before window creation?
+void InitOculusDevice(void)
+{
+    ovrResult result = ovr_Initialize(NULL);
+    if (OVR_FAILURE(result)) TraceLog(ERROR, "OVR: Could not initialize Oculus device");
+
+    result = ovr_Create(&session, &luid);
+    if (OVR_FAILURE(result))
+    {
+        TraceLog(WARNING, "OVR: Could not create Oculus session");
+        ovr_Shutdown();
+    }
+
+    hmdDesc = ovr_GetHmdDesc(session);
+    
+    TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+    TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+    TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+    TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
+    TraceLog(INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
+    TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+    
+    screenWidth = hmdDesc.Resolution.w/2;
+    screenHeight = hmdDesc.Resolution.h/2;
+    
+    // Initialize Oculus Buffers
+    layer = InitOculusLayer(session);   
+    buffer = LoadOculusBuffer(session, layer.width, layer.height);
+    mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
+    layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
+}
+
+// Close Oculus Rift device
+void CloseOculusDevice(void)
+{
+    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
+    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
+
+    ovr_Destroy(session);   // Must be called after glfwTerminate() -->  REALLY???
+    ovr_Shutdown();
+}
+
+// Update Oculus Rift tracking (position and orientation)
+void UpdateOculusTracking(void)
+{
+    frameIndex++;
+   
+    ovrPosef eyePoses[2];
+    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
+    
+    layer.eyeLayer.RenderPose[0] = eyePoses[0];
+    layer.eyeLayer.RenderPose[1] = eyePoses[1];
+}
+#endif
 
 // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
@@ -468,7 +586,9 @@ bool WindowShouldClose(void)
     while (windowMinimized) glfwPollEvents();
 
     return (glfwWindowShouldClose(window));
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     return windowShouldClose;
 #endif
 }
@@ -494,33 +614,12 @@ void ToggleFullscreen(void)
     glfwDestroyWindow(window);         // Destroy the current window (we will recreate it!)
 
     InitWindow(screenWidth, screenHeight, windowTitle);
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     TraceLog(WARNING, "Could not toggle to windowed mode");
 #endif
 }
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-// Set a custom cursor icon/image
-void SetCustomCursor(const char *cursorImage)
-{
-    if (customCursor) UnloadTexture(cursor);
-
-    cursor = LoadTexture(cursorImage);
-
-#if defined(PLATFORM_DESKTOP)
-    // NOTE: emscripten not implemented
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-#endif
-    customCursor = true;
-}
-
-// Set a custom key to exit program
-// NOTE: default exitKey is ESCAPE
-void SetExitKey(int key)
-{
-    exitKey = key;
-}
-#endif
 
 // Get current screen width
 int GetScreenWidth(void)
@@ -547,41 +646,78 @@ void BeginDrawing(void)
     currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
+    
+#if defined(PLATFORM_OCULUS)
+    frameIndex++;
+   
+    ovrPosef eyePoses[2];
+    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
+    
+    layer.eyeLayer.RenderPose[0] = eyePoses[0];
+    layer.eyeLayer.RenderPose[1] = eyePoses[1];
+    
+    SetOculusBuffer(session, buffer);
+#endif
 
-    if (IsPosproShaderEnabled()) rlEnablePostproFBO();
-
-    rlClearScreenBuffers();
-
+    rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-
     rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
-// Setup drawing canvas with extended parameters
-void BeginDrawingEx(int blendMode, Shader shader, Matrix transform)
-{
-    BeginDrawing();
-    
-    SetBlendMode(blendMode);
-    SetPostproShader(shader);
-    
-    rlMultMatrixf(MatrixToFloat(transform));
-}
-
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing(void)
 {
-    rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+#if defined(PLATFORM_OCULUS)
+    for (int eye = 0; eye < 2; eye++)
+    {
+        rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
-    if (IsPosproShaderEnabled()) rlglDrawPostpro(); // Draw postprocessing effect (shader)
+        Quaternion eyeRPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
+                                            layer.eyeLayer.RenderPose[eye].Orientation.y, 
+                                            layer.eyeLayer.RenderPose[eye].Orientation.z, 
+                                            layer.eyeLayer.RenderPose[eye].Orientation.w };
+        QuaternionInvert(&eyeRPose);
+        Matrix eyeOrientation = QuaternionToMatrix(eyeRPose);
+        Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
+                                                -layer.eyeLayer.RenderPose[eye].Position.y, 
+                                                -layer.eyeLayer.RenderPose[eye].Position.z);
+
+        Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);
+        Matrix modelEyeView = MatrixMultiply(cameraView, eyeView);  // Using internal camera modelview matrix
+
+        SetMatrixModelview(modelEyeView);
+        SetMatrixProjection(layer.eyeProjections[eye]);
+#endif
+    
+        rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+
+#if defined(PLATFORM_OCULUS)
+    }
+    
+    UnsetOculusBuffer(buffer);
+    
+    ovr_CommitTextureSwapChain(session, buffer.textureChain);
+    
+    ovrLayerHeader *layers = &layer.eyeLayer.Header;
+    ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
+
+    // Blit mirror texture to back buffer
+    BlitOculusMirror(session, mirror);
+
+    // Get session status information
+    ovrSessionStatus sessionStatus;
+    ovr_GetSessionStatus(session, &sessionStatus);
+    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
+    if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
+#endif
 
     SwapBuffers();                  // Copy back buffer to front buffer
-
     PollInputEvents();              // Poll user events
     
+    // Frame time control system
     currentTime = GetTime();
     drawTime = currentTime - previousTime;
     previousTime = currentTime;
@@ -600,6 +736,32 @@ void EndDrawing(void)
     }
 }
 
+// Initialize 2D mode with custom camera
+void Begin2dMode(Camera2D camera)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+
+    // Camera rotation and scaling is always relative to target
+    Matrix matOrigin = MatrixTranslate(-camera.target.x, -camera.target.y, 0.0f);
+    Matrix matRotation = MatrixRotate((Vector3){ 0.0f, 0.0f, 1.0f }, camera.rotation*DEG2RAD);
+    Matrix matScale = MatrixScale(camera.zoom, camera.zoom, 1.0f);
+    Matrix matTranslation = MatrixTranslate(camera.offset.x + camera.target.x, camera.offset.y + camera.target.y, 0.0f);
+    
+    Matrix matTransform = MatrixMultiply(MatrixMultiply(matOrigin, MatrixMultiply(matScale, matRotation)), matTranslation);
+    
+    rlMultMatrixf(MatrixToFloat(matTransform));
+}
+
+// Ends 2D mode custom camera usage
+void End2dMode(void)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+}
+
 // Initializes 3D mode for drawing (Camera setup)
 void Begin3dMode(Camera camera)
 {
@@ -609,21 +771,23 @@ void Begin3dMode(Camera camera)
 
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
-
+    
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.1*tan(45.0*PI/360.0);
+    double top = 0.01*tan(camera.fovy*PI/360.0);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
-    rlFrustum(-right, right, -top, top, 0.1f, 1000.0f);
+    rlFrustum(-right, right, -top, top, 0.01, 1000.0);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     // Setup Camera view
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(MatrixToFloat(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
+    cameraView = MatrixLookAt(camera.position, camera.target, camera.up);
+    rlMultMatrixf(MatrixToFloat(cameraView));      // Multiply MODELVIEW matrix by view matrix (camera)
+    
+    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -638,6 +802,55 @@ void End3dMode(void)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     //rlTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
+    
+    rlDisableDepthTest();               // Disable DEPTH_TEST for 2D
+}
+
+// Initializes render texture for drawing
+void BeginTextureMode(RenderTexture2D target)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlEnableRenderTexture(target.id);   // Enable render target
+
+    rlClearScreenBuffers();             // Clear render texture buffers
+    
+    // Set viewport to framebuffer size
+    rlViewport(0, 0, target.texture.width, target.texture.height); 
+    
+    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
+    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+
+    // Set orthographic projection to current framebuffer size
+    // NOTE: Configured top-left corner as (0, 0)
+    rlOrtho(0, target.texture.width, target.texture.height, 0, 0.0f, 1.0f);        
+
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
+
+    //rlScalef(0.0f, -1.0f, 0.0f);      // Flip Y-drawing (?)
+}
+
+// Ends drawing to render texture
+void EndTextureMode(void)
+{
+    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+
+    rlDisableRenderTexture();           // Disable render target
+
+    // Set viewport to default framebuffer size (screen size)
+    // TODO: consider possible viewport offsets
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    
+    rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
+    rlLoadIdentity();                   // Reset current matrix (PROJECTION)
+    
+    // Set orthographic projection to current framebuffer size
+    // NOTE: Configured top-left corner as (0, 0)
+    rlOrtho(0, GetScreenWidth(), GetScreenHeight(), 0, 0.0f, 1.0f);
+
+    rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 }
 
 // Set target FPS for the game
@@ -810,12 +1023,21 @@ void ClearDroppedFiles(void)
 void StorageSaveValue(int position, int value)
 {
     FILE *storageFile = NULL;
+    
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
 
     // Try open existing file to append data
-    storageFile = fopen(STORAGE_FILENAME, "rb+");      
+    storageFile = fopen(path, "rb+");      
 
     // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen(STORAGE_FILENAME, "wb");
+    if (!storageFile) storageFile = fopen(path, "wb");
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
     else
@@ -842,8 +1064,17 @@ int StorageLoadValue(int position)
 {
     int value = 0;
     
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
+    
     // Try open existing file to append data
-    FILE *storageFile = fopen(STORAGE_FILENAME, "rb");      
+    FILE *storageFile = fopen(path, "rb");      
 
     if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
     else
@@ -867,16 +1098,8 @@ int StorageLoadValue(int position)
 }
 
 // Returns a ray trace from mouse position
-//http://www.songho.ca/opengl/gl_transform.html
-//http://www.songho.ca/opengl/gl_matrix.html
-//http://www.sjbaker.org/steve/omniv/matrices_can_be_your_friends.html
-//https://www.opengl.org/archives/resources/faq/technical/transformations.htm
 Ray GetMouseRay(Vector2 mousePosition, Camera camera)
-{
-    // Tutorial used: https://mkonrad.net/2014/08/07/simple-opengl-object-picking-in-3d.html
-    // Similar to http://antongerdelan.net, the problem is maybe in MatrixPerspective vs MatrixFrustum
-    // or matrix order (transpose it or not... that's the question)
-    
+{   
     Ray ray;
     
     // Calculate normalized device coordinates
@@ -886,40 +1109,48 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     float z = 1.0f;
     
     // Store values in a vector
-    Vector3 deviceCoords = {x, y, z};
+    Vector3 deviceCoords = { x, y, z };
     
-    // Device debug message
-    TraceLog(INFO, "device(%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
+    TraceLog(DEBUG, "Device coordinates: (%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
     
-    // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    // Calculate projection matrix (from perspective instead of frustum)
+    Matrix matProj = MatrixPerspective(camera.fovy, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
     
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
     
     // Do I need to transpose it? It seems that yes...
-    // NOTE: matrix order is maybe incorrect... In OpenGL to get world position from
+    // NOTE: matrix order may be incorrect... In OpenGL to get world position from
     // camera view it just needs to get inverted, but here we need to transpose it too.
     // For example, if you get view matrix, transpose and inverted and you transform it
     // to a vector, you will get its 3d world position coordinates (camera.position).
     // If you don't transpose, final position will be wrong.
     MatrixTranspose(&matView);
     
+//#define USE_RLGL_UNPROJECT
+#if defined(USE_RLGL_UNPROJECT)     // OPTION 1: Use rlglUnproject()
+    
+    Vector3 nearPoint = rlglUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
+    Vector3 farPoint = rlglUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
+
+#else   // OPTION 2: Compute unprojection directly here
+
     // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
     Matrix matProjView = MatrixMultiply(matProj, matView);
     MatrixInvert(&matProjView);
     
     // Calculate far and near points
-    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f};
-    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f};
+    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
+    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
     
     // Multiply points by unproject matrix
     QuaternionTransform(&near, matProjView);
     QuaternionTransform(&far, matProjView);
     
     // Calculate normalized world points in vectors
-    Vector3 nearPoint = {near.x / near.w, near.y / near.w, near.z / near.w};
-    Vector3 farPoint = {far.x / far.w, far.y / far.w, far.z / far.w};
+    Vector3 nearPoint = { near.x/near.w, near.y/near.w, near.z/near.w};
+    Vector3 farPoint = { far.x/far.w, far.y/far.w, far.z/far.w};
+#endif
     
     // Calculate normalized direction vector
     Vector3 direction = VectorSubtract(farPoint, nearPoint);
@@ -933,10 +1164,10 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 }
 
 // Returns the screen space position from a 3d world space position
-Vector2 WorldToScreen(Vector3 position, Camera camera)
+Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {    
     // Calculate projection matrix (from perspective instead of frustum
-    Matrix matProj = MatrixPerspective(45.0f, (float)((float)GetScreenWidth() / (float)GetScreenHeight()), 0.01f, 1000.0f);
+    Matrix matProj = MatrixPerspective(camera.fovy, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
     
     // Calculate view matrix from camera look at (and transpose it)
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
@@ -1012,78 +1243,11 @@ int GetKeyPressed(void)
     return lastKeyPressed;
 }
 
-// Detect if a mouse button has been pressed once
-bool IsMouseButtonPressed(int button)
+// Set a custom key to exit program
+// NOTE: default exitKey is ESCAPE
+void SetExitKey(int key)
 {
-    bool pressed = false;
-
-    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
-    else pressed = false;
-
-    return pressed;
-}
-
-// Detect if a mouse button is being pressed
-bool IsMouseButtonDown(int button)
-{
-    if (GetMouseButtonStatus(button) == 1) return true;
-    else return false;
-}
-
-// Detect if a mouse button has been released once
-bool IsMouseButtonReleased(int button)
-{
-    bool released = false;
-
-    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 0)) released = true;
-    else released = false;
-
-    return released;
-}
-
-// Detect if a mouse button is NOT being pressed
-bool IsMouseButtonUp(int button)
-{
-    if (GetMouseButtonStatus(button) == 0) return true;
-    else return false;
-}
-
-// Returns mouse position X
-int GetMouseX(void)
-{
-    return (int)mousePosition.x;
-}
-
-// Returns mouse position Y
-int GetMouseY(void)
-{
-    return (int)mousePosition.y;
-}
-
-// Returns mouse position XY
-Vector2 GetMousePosition(void)
-{
-    return mousePosition;
-}
-
-// Set mouse position XY
-void SetMousePosition(Vector2 position)
-{
-    mousePosition = position;
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // NOTE: emscripten not implemented
-    glfwSetCursorPos(window, position.x, position.y);
-#endif
-}
-
-// Returns mouse wheel movement Y
-int GetMouseWheelMove(void)
-{
-#if defined(PLATFORM_WEB)
-    return previousMouseWheelY/100;
-#else
-    return previousMouseWheelY;
-#endif
+    exitKey = key;
 }
 
 // Hide mouse cursor
@@ -1151,7 +1315,7 @@ bool IsGamepadAvailable(int gamepad)
     bool result = false;
     
 #if defined(PLATFORM_RPI)
-    if (gamepadReady && (gamepad == 0)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
 #else
     if (glfwJoystickPresent(gamepad) == 1) result = true;
 #endif
@@ -1160,30 +1324,25 @@ bool IsGamepadAvailable(int gamepad)
 }
 
 // Return axis movement vector for a gamepad
-Vector2 GetGamepadMovement(int gamepad)
+float GetGamepadAxisMovement(int gamepad, int axis)
 {
-    Vector2 vec = { 0, 0 };
-
+    float value = 0;
+    
+#if defined(PLATFORM_RPI)
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad])
+    {
+        if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisValues[gamepad][axis];
+    }
+#else
     const float *axes;
     int axisCount = 0;
     
-#if defined(PLATFORM_RPI)
-    // TODO: Get gamepad axis information
-    // Use gamepadAxisX, gamepadAxisY
-#else
     axes = glfwGetJoystickAxes(gamepad, &axisCount);
-#endif
     
-    if (axisCount >= 2)
-    {
-        vec.x = axes[0];    // Left joystick X
-        vec.y = axes[1];    // Left joystick Y
+    if (axis < axisCount) value = axes[axis];
+#endif
 
-        //vec.x = axes[2];    // Right joystick X
-        //vec.x = axes[3];    // Right joystick Y
-    }
-
-    return vec;
+    return value;
 }
 
 // Detect if a gamepad button has been pressed once
@@ -1210,7 +1369,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
     
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
-    if ((gamepad == 0) && (gamepadButtons[button] == 1)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 1)) result = true;
     else result = false;
 #else
     const unsigned char *buttons;
@@ -1249,7 +1408,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 
 #if defined(PLATFORM_RPI)
     // Get gamepad buttons information
-    if ((gamepad == 0) && (gamepadButtons[button] == 0)) result = true;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 0)) result = true;
     else result = false;
 #else
     const unsigned char *buttons;
@@ -1264,6 +1423,111 @@ bool IsGamepadButtonUp(int gamepad, int button)
     return result;
 }
 #endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+
+
+// Detect if a mouse button has been pressed once
+bool IsMouseButtonPressed(int button)
+{
+    bool pressed = false;
+    
+#if defined(PLATFORM_ANDROID)
+    if (IsGestureDetected(GESTURE_TAP)) pressed = true;
+#else
+    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
+#endif
+
+    return pressed;
+}
+
+// Detect if a mouse button is being pressed
+bool IsMouseButtonDown(int button)
+{
+    bool down = false;
+    
+#if defined(PLATFORM_ANDROID)
+    if (IsGestureDetected(GESTURE_HOLD)) down = true;
+#else
+    if (GetMouseButtonStatus(button) == 1) down = true;
+#endif
+    
+    return down;
+}
+
+// Detect if a mouse button has been released once
+bool IsMouseButtonReleased(int button)
+{
+    bool released = false;
+    
+#if !defined(PLATFORM_ANDROID)
+    if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 0)) released = true;
+#endif
+
+    return released;
+}
+
+// Detect if a mouse button is NOT being pressed
+bool IsMouseButtonUp(int button)
+{
+    bool up = false;
+    
+#if !defined(PLATFORM_ANDROID)
+    if (GetMouseButtonStatus(button) == 0) up = true;
+#endif
+
+    return up;
+}
+
+// Returns mouse position X
+int GetMouseX(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return (int)touchPosition[0].x;
+#else
+    return (int)mousePosition.x;
+#endif
+}
+
+// Returns mouse position Y
+int GetMouseY(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return (int)touchPosition[0].x;
+#else
+    return (int)mousePosition.y;
+#endif
+}
+
+// Returns mouse position XY
+Vector2 GetMousePosition(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return GetTouchPosition(0);
+#else
+    return mousePosition;
+#endif
+}
+
+// Set mouse position XY
+void SetMousePosition(Vector2 position)
+{
+    mousePosition = position;
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    // NOTE: emscripten not implemented
+    glfwSetCursorPos(window, position.x, position.y);
+#endif
+}
+
+// Returns mouse wheel movement Y
+int GetMouseWheelMove(void)
+{
+#if defined(PLATFORM_ANDROID)
+    return 0;
+#elif defined(PLATFORM_WEB)
+    return previousMouseWheelY/100;
+#else
+    return previousMouseWheelY;
+#endif
+}
 
 // Returns touch position X
 int GetTouchX(void)
@@ -1361,7 +1625,31 @@ static void InitDisplay(int width, int height)
 
     // Downscale matrix is required in case desired screen area is bigger than display area
     downscaleView = MatrixIdentity();
+    
+#if defined(PLATFORM_OCULUS)
+    ovrResult result = ovr_Initialize(NULL);
+    if (OVR_FAILURE(result)) TraceLog(ERROR, "OVR: Could not initialize Oculus device");
 
+    result = ovr_Create(&session, &luid);
+    if (OVR_FAILURE(result))
+    {
+        TraceLog(WARNING, "OVR: Could not create Oculus session");
+        ovr_Shutdown();
+    }
+
+    hmdDesc = ovr_GetHmdDesc(session);
+    
+    TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+    TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+    TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+    TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
+    TraceLog(INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
+    TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+    
+    screenWidth = hmdDesc.Resolution.w/2;
+    screenHeight = hmdDesc.Resolution.h/2;
+#endif
+    
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 
@@ -1378,10 +1666,12 @@ static void InitDisplay(int width, int height)
     // Screen size security check
     if (screenWidth <= 0) screenWidth = displayWidth;
     if (screenHeight <= 0) screenHeight = displayHeight;
-#elif defined(PLATFORM_WEB)
+#endif  // defined(PLATFORM_DESKTOP)
+
+#if defined(PLATFORM_WEB)
     displayWidth = screenWidth;
     displayHeight = screenHeight;
-#endif
+#endif  // defined(PLATFORM_WEB)
 
     glfwDefaultWindowHints();                     // Set default windows hints
 
@@ -1410,7 +1700,12 @@ static void InitDisplay(int width, int height)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Other values: GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
+#ifdef __APPLE__
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);  // OSX Requires 
+#else
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
+#endif
+        //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     }
 
     if (fullscreen)
@@ -1432,7 +1727,7 @@ static void InitDisplay(int width, int height)
             // TODO: Check modes[i]->width;
             // TODO: Check modes[i]->height;
         }
-
+        
         window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
     }
     else
@@ -1470,11 +1765,11 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 
-    glfwSetWindowSizeCallback(window, WindowSizeCallback);
+    glfwSetWindowSizeCallback(window, WindowSizeCallback);      // NOTE: Resizing not allowed by default!
     glfwSetCursorEnterCallback(window, CursorEnterCallback);
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
-    glfwSetCursorPosCallback(window, MouseCursorPosCallback);    // Track mouse position changes
+    glfwSetCursorPosCallback(window, MouseCursorPosCallback);   // Track mouse position changes
     glfwSetCharCallback(window, CharCallback);
     glfwSetScrollCallback(window, ScrollCallback);
     glfwSetWindowIconifyCallback(window, WindowIconifyCallback);
@@ -1483,38 +1778,23 @@ static void InitDisplay(int width, int height)
 #endif
 
     glfwMakeContextCurrent(window);
+#if defined(PLATFORM_OCULUS)
+    glfwSwapInterval(0);
+#endif
 
 #if defined(PLATFORM_DESKTOP)
-    // Extensions initialization for OpenGL 3.3
+    // Load OpenGL 3.3 extensions using GLAD
     if (rlGetVersion() == OPENGL_33)
     {
-        #if defined(GLEW_EXTENSIONS_LOADER)
-            // Initialize extensions using GLEW
-            glewExperimental = 1;       // Needed for core profile
-            GLenum error = glewInit();
-            
-            if (error != GLEW_OK) TraceLog(ERROR, "Failed to initialize GLEW - Error Code: %s\n", glewGetErrorString(error));
-            
-            if (glewIsSupported("GL_VERSION_3_3")) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-            else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+        // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
+        else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
 
-            // With GLEW, we can check if an extension has been loaded in two ways:
-            //if (GLEW_ARB_vertex_array_object) { } 
-            //if (glewIsSupported("GL_ARB_vertex_array_object")) { }
-
-            // NOTE: GLEW is a big library that loads ALL extensions, we can use some alternative to load only required ones
-            // Alternatives: glLoadGen, glad, libepoxy
-        #elif defined(GLAD_EXTENSIONS_LOADER)
-            // NOTE: glad is generated and contains only required OpenGL version and Core extensions
-            //if (!gladLoadGL()) TraceLog(ERROR, "Failed to initialize glad\n");
-            if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(ERROR, "Failed to initialize glad\n"); // No GLFW3 in this module...
-
-            if (GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-            else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
-            
-            // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
-            //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
-        #endif
+        if (GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+        else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+        
+        // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
+        //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
     }
 #endif
     
@@ -1528,8 +1808,9 @@ static void InitDisplay(int width, int height)
     }
 
     //glfwGetFramebufferSize(window, &renderWidth, &renderHeight);    // Get framebuffer size of current window
+#endif // defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     fullscreen = true;
 
     // Screen size security check
@@ -1614,8 +1895,9 @@ static void InitDisplay(int width, int height)
     //ANativeWindow_setBuffersGeometry(app->window, 0, 0, displayFormat);       // Force use of native display size
 
     surface = eglCreateWindowSurface(display, config, app->window, NULL);
+#endif  // defined(PLATFORM_ANDROID)
 
-#elif defined(PLATFORM_RPI)
+#if defined(PLATFORM_RPI)
     graphics_get_display_size(0, &displayWidth, &displayHeight);
 
     // At this point we need to manage render size vs screen size
@@ -1653,7 +1935,7 @@ static void InitDisplay(int width, int height)
 
     surface = eglCreateWindowSurface(display, config, &nativeWindow, NULL);
     //---------------------------------------------------------------------------------
-#endif
+#endif  // defined(PLATFORM_RPI)
     // There must be at least one frame displayed before the buffers are swapped
     //eglSwapInterval(display, 1);
 
@@ -1673,15 +1955,22 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Screen size: %i x %i", screenWidth, screenHeight);
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
-#endif
+#endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 }
 
 // Initialize OpenGL graphics
 static void InitGraphics(void)
 {
     rlglInit();                     // Init rlgl
-
     rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
+
+#if defined(PLATFORM_OCULUS)
+    // Initialize Oculus Buffers
+    layer = InitOculusLayer(session);   
+    buffer = LoadOculusBuffer(session, layer.width, layer.height);
+    mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
+    layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
+#endif
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
@@ -1689,6 +1978,244 @@ static void InitGraphics(void)
     windowReady = true;     // IMPORTANT!
 #endif
 }
+
+// Compute framebuffer size relative to screen size and display size
+// NOTE: Global variables renderWidth/renderHeight can be modified
+static void SetupFramebufferSize(int displayWidth, int displayHeight)
+{
+    // TODO: SetupFramebufferSize() does not consider properly display video modes.
+    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
+    // and so, framebuffer is not scaled properly to some monitors.
+    
+    // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
+    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
+    {
+        TraceLog(WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
+
+        // Downscaling to fit display with border-bars
+        float widthRatio = (float)displayWidth/(float)screenWidth;
+        float heightRatio = (float)displayHeight/(float)screenHeight;
+
+        if (widthRatio <= heightRatio)
+        {
+            renderWidth = displayWidth;
+            renderHeight = (int)round((float)screenHeight*widthRatio);
+            renderOffsetX = 0;
+            renderOffsetY = (displayHeight - renderHeight);
+        }
+        else
+        {
+            renderWidth = (int)round((float)screenWidth*heightRatio);
+            renderHeight = displayHeight;
+            renderOffsetX = (displayWidth - renderWidth);
+            renderOffsetY = 0;
+        }
+
+        // NOTE: downscale matrix required!
+        float scaleRatio = (float)renderWidth/(float)screenWidth;
+
+        downscaleView = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
+
+        // NOTE: We render to full display resolution!
+        // We just need to calculate above parameters for downscale matrix and offsets
+        renderWidth = displayWidth;
+        renderHeight = displayHeight;
+
+        TraceLog(WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", renderWidth, renderHeight);
+    }
+    else if ((screenWidth < displayWidth) || (screenHeight < displayHeight))
+    {
+        // Required screen size is smaller than display size
+        TraceLog(INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
+
+        // Upscaling to fit display with border-bars
+        float displayRatio = (float)displayWidth/(float)displayHeight;
+        float screenRatio = (float)screenWidth/(float)screenHeight;
+
+        if (displayRatio <= screenRatio)
+        {
+            renderWidth = screenWidth;
+            renderHeight = (int)round((float)screenWidth/displayRatio);
+            renderOffsetX = 0;
+            renderOffsetY = (renderHeight - screenHeight);
+        }
+        else
+        {
+            renderWidth = (int)round((float)screenHeight*displayRatio);
+            renderHeight = screenHeight;
+            renderOffsetX = (renderWidth - screenWidth);
+            renderOffsetY = 0;
+        }
+    }
+    else    // screen == display
+    {
+        renderWidth = screenWidth;
+        renderHeight = screenHeight;
+        renderOffsetX = 0;
+        renderOffsetY = 0;
+    }
+}
+
+// Initialize hi-resolution timer
+static void InitTimer(void)
+{
+    srand(time(NULL));              // Initialize random seed
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec now;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    {
+        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+    }
+    else TraceLog(WARNING, "No hi-resolution timer available");
+#endif
+
+    previousTime = GetTime();       // Get time as double
+}
+
+// Get current time measure (in seconds) since InitTimer()
+static double GetTime(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetTime();
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+
+    return (double)(time - baseTime)*1e-9;
+#endif
+}
+
+// Get one key state
+static bool GetKeyStatus(int key)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetKey(window, key);
+#elif defined(PLATFORM_ANDROID)
+    // TODO: Check for virtual keyboard
+    return false;
+#elif defined(PLATFORM_RPI)
+    // NOTE: Keys states are filled in PollInputEvents()
+    if (key < 0 || key > 511) return false;
+    else return currentKeyState[key];
+#endif
+}
+
+// Get one mouse button state
+static bool GetMouseButtonStatus(int button)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetMouseButton(window, button);
+#elif defined(PLATFORM_ANDROID)
+    // TODO: Check for virtual mouse
+    return false;
+#elif defined(PLATFORM_RPI)
+    // NOTE: Mouse buttons states are filled in PollInputEvents()
+    return currentMouseState[button];
+#endif
+}
+
+// Poll (store) all input events
+static void PollInputEvents(void)
+{
+    // NOTE: Gestures update must be called every frame to reset gestures correctly
+    // because ProcessGestureEvent() is just called on an event, not every frame
+    UpdateGestures();
+    
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    // Mouse input polling
+    double mouseX;
+    double mouseY;
+
+    glfwGetCursorPos(window, &mouseX, &mouseY);
+
+    mousePosition.x = (float)mouseX;
+    mousePosition.y = (float)mouseY;
+
+    // Keyboard input polling (automatically managed by GLFW3 through callback)
+    lastKeyPressed = -1;
+
+    // Register previous keys states
+    for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
+
+    // Register previous mouse states
+    for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
+
+    previousMouseWheelY = currentMouseWheelY;
+    currentMouseWheelY = 0;
+
+    glfwPollEvents();       // Register keyboard/mouse events... and window events!
+#endif
+
+#if defined(PLATFORM_ANDROID)
+    // Register previous keys states
+    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
+
+    // Poll Events (registered events)
+    // NOTE: Activity is paused if not enabled (appEnabled)
+    while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
+    {
+        // Process this event
+        if (source != NULL) source->process(app, source);
+
+        // NOTE: Never close window, native activity is controlled by the system!
+        if (app->destroyRequested != 0)
+        {
+            //TraceLog(INFO, "Closing Window...");
+            //windowShouldClose = true;
+            //ANativeActivity_finish(app->activity);
+        }
+    }
+#endif
+
+#if defined(PLATFORM_RPI)
+    // NOTE: Mouse input events polling is done asynchonously in another pthread - MouseThread()
+
+    // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
+    // we use method 2 (stdin) but maybe in a future we should change to method 1...
+    ProcessKeyboard();
+
+    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
+#endif
+}
+
+// Copy back buffer to front buffers
+static void SwapBuffers(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    glfwSwapBuffers(window);
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    eglSwapBuffers(display, surface);
+#endif
+}
+
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+// Takes a screenshot and saves it in the same folder as executable
+static void TakeScreenshot(void)
+{
+    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
+    char buffer[20];            // Buffer to store file name
+
+    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
+
+    sprintf(buffer, "screenshot%03i.png", shotNum);
+    
+    // Save image as PNG
+    WritePNG(buffer, imgData, renderWidth, renderHeight, 4);
+
+    free(imgData);
+
+    shotNum++;
+
+    TraceLog(INFO, "[%s] Screenshot taken!", buffer);
+}
+#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
@@ -1718,10 +2245,11 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         TakeScreenshot();
     }
 #endif
-    else currentKeyState[key] = action;
-
-    // TODO: Review (and remove) this HACK for GuiTextBox, to deteck back key
-    if ((key == 259) && (action == GLFW_PRESS)) lastKeyPressed = 3;
+    else 
+    {
+        currentKeyState[key] = action;
+        if (action == GLFW_PRESS) lastKeyPressed = key;
+    }
 }
 
 // GLFW3 Mouse Button Callback, runs on mouse button pressed
@@ -1750,10 +2278,10 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     gestureEvent.position[0] = GetMousePosition();
     
     // Normalize gestureEvent.position[0] for screenWidth and screenHeight
-    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
     gestureEvent.position[0].y /= (float)GetScreenHeight();
-	
-	// Gesture data is sent to gestures system for processing
+
+    // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
 }
@@ -1767,12 +2295,17 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     GestureEvent gestureEvent;
 
     gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Assign a pointer ID
+    gestureEvent.pointerId[0] = 0;
 
     // Register touch points count
     gestureEvent.pointCount = 1;
     
     // Register touch points position, only one point registered
     gestureEvent.position[0] = (Vector2){ (float)x, (float)y };
+    
+    touchPosition[0] = gestureEvent.position[0];
     
     // Normalize gestureEvent.position[0] for screenWidth and screenHeight
     gestureEvent.position[0].x /= (float)GetScreenWidth(); 
@@ -1799,16 +2332,19 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 }
 
 // GLFW3 WindowSize Callback, runs when window is resized
+// NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
     // If window is resized, graphics device is re-initialized (but only ortho mode)
-    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);
+    rlglInitGraphics(0, 0, width, height);
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
-    //screenWidth = width;
-    //screenHeight = height;
-
-    // TODO: Update render size?
+    screenWidth = width;
+    screenHeight = height;
+    renderWidth = width;
+    renderHeight = height;
+    
+    // NOTE: Postprocessing texture is not scaled to new size
 
     // Background must be also re-cleared
     ClearBackground(RAYWHITE);
@@ -1887,10 +2423,10 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Load default font for convenience
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();
-                    
+
                     // TODO: GPU assets reload in case of lost focus (lost context)
                     // NOTE: This problem has been solved just unbinding and rebinding context from display
-					/*
+                    /*
                     if (assetsReloadRequired)
                     {
                         for (int i = 0; i < assetsCount; i++)
@@ -2054,151 +2590,95 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 }
 #endif
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-// Takes a screenshot and saves it in the same folder as executable
-static void TakeScreenshot(void)
+#if defined(PLATFORM_WEB)
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
 {
-    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
-    char buffer[20];            // Buffer to store file name
-
-    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
-
-    sprintf(buffer, "screenshot%03i.png", shotNum);
+    //isFullscreen: int e->isFullscreen 
+    //fullscreenEnabled: int e->fullscreenEnabled 
+    //fs element nodeName: (char *) e->nodeName
+    //fs element id: (char *) e->id
+    //Current element size: (int) e->elementWidth, (int) e->elementHeight
+    //Screen size:(int) e->screenWidth, (int) e->screenHeight
     
-    // Save image as PNG
-    WritePNG(buffer, imgData, renderWidth, renderHeight, 4);
-
-    free(imgData);
-
-    shotNum++;
-
-    TraceLog(INFO, "[%s] Screenshot taken!", buffer);
-}
-#endif
-
-// Initialize hi-resolution timer
-static void InitTimer(void)
-{
-    srand(time(NULL));              // Initialize random seed
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec now;
-
-    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    if (e->isFullscreen)
     {
-        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+        TraceLog(INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
     }
-    else TraceLog(WARNING, "No hi-resolution timer available");
-#endif
-
-    previousTime = GetTime();       // Get time as double
-}
-
-// Get current time measure (in seconds) since InitTimer()
-static double GetTime(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetTime();
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
-
-    return (double)(time - baseTime)*1e-9;
-#endif
-}
-
-// Get one key state
-static bool GetKeyStatus(int key)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetKey(window, key);
-#elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual keyboard
-    return false;
-#elif defined(PLATFORM_RPI)
-    // NOTE: Keys states are filled in PollInputEvents()
-    if (key < 0 || key > 511) return false;
-    else return currentKeyState[key];
-#endif
-}
-
-// Get one mouse button state
-static bool GetMouseButtonStatus(int button)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetMouseButton(window, button);
-#elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual keyboard
-    return false;
-#elif defined(PLATFORM_RPI)
-    // NOTE: Mouse buttons states are filled in PollInputEvents()
-    return currentMouseState[button];
-#endif
-}
-
-// Poll (store) all input events
-static void PollInputEvents(void)
-{
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
-    UpdateGestures();
+    else
+    {
+        TraceLog(INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
+    }
     
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // Mouse input polling
-    double mouseX;
-    double mouseY;
+    // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
 
-    glfwGetCursorPos(window, &mouseX, &mouseY);
-
-    mousePosition.x = (float)mouseX;
-    mousePosition.y = (float)mouseY;
-
-    // Keyboard input polling (automatically managed by GLFW3 through callback)
-    lastKeyPressed = -1;
-
-    // Register previous keys states
-    for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
-
-    // Register previous mouse states
-    for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
-
-    previousMouseWheelY = currentMouseWheelY;
-    currentMouseWheelY = 0;
-
-    glfwPollEvents();       // Register keyboard/mouse events... and window events!
-#elif defined(PLATFORM_ANDROID)
-
-    // Register previous keys states
-    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
-
-    // Poll Events (registered events)
-    // NOTE: Activity is paused if not enabled (appEnabled)
-    while ((ident = ALooper_pollAll(appEnabled ? 0 : -1, NULL, &events,(void**)&source)) >= 0)
-    {
-        // Process this event
-        if (source != NULL) source->process(app, source);
-
-        // NOTE: Never close window, native activity is controlled by the system!
-        if (app->destroyRequested != 0)
-        {
-            //TraceLog(INFO, "Closing Window...");
-            //windowShouldClose = true;
-            //ANativeActivity_finish(app->activity);
-        }
-    }
-#elif defined(PLATFORM_RPI)
-
-    // NOTE: Mouse input events polling is done asynchonously in another pthread - MouseThread()
-
-    // NOTE: Keyboard reading could be done using input_event(s) reading or just read from stdin,
-    // we use method 2 (stdin) but maybe in a future we should change to method 1...
-    ProcessKeyboard();
-
-    // NOTE: Gamepad (Joystick) input events polling is done asynchonously in another pthread - GamepadThread()
-
-#endif
+    return 0;
 }
+
+// Web: Get input events
+static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
+{
+    /*
+    for (int i = 0; i < touchEvent->numTouches; i++)
+    {
+        long x, y, id;
+
+        if (!touchEvent->touches[i].isChanged) continue;
+
+        id = touchEvent->touches[i].identifier;
+        x = touchEvent->touches[i].canvasX;
+        y = touchEvent->touches[i].canvasY;
+    }
+    
+    printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
+           event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
+
+    for(int i = 0; i < event->numTouches; ++i)
+    {
+        const EmscriptenTouchPoint *t = &event->touches[i];
+        
+        printf("  %ld: screen: (%ld,%ld), client: (%ld,%ld), page: (%ld,%ld), isChanged: %d, onTarget: %d, canvas: (%ld, %ld)\n",
+          t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
+    }
+    */
+    
+    GestureEvent gestureEvent;
+
+    // Register touch actions
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_UP;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_MOVE;
+    
+    // Register touch points count
+    gestureEvent.pointCount = touchEvent->numTouches;
+    
+    // Register touch points id
+    gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
+    gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
+    
+    // Register touch points position
+    // NOTE: Only two points registered
+    // TODO: Touch data should be scaled accordingly!
+    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
+    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
+    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
+    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
+
+    touchPosition[0] = gestureEvent.position[0];
+    touchPosition[1] = gestureEvent.position[1];
+    
+    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
+    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+    
+    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
+    gestureEvent.position[1].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+
+    return 1;
+}
+#endif
 
 #if defined(PLATFORM_RPI)
 // Initialize Keyboard system (using standard input)
@@ -2437,19 +2917,31 @@ static void *MouseThread(void *arg)
 // Init gamepad system
 static void InitGamepad(void)
 {
-    if ((gamepadStream = open(DEFAULT_GAMEPAD_DEV, O_RDONLY|O_NONBLOCK)) < 0) 
+    char gamepadDev[128] = "";
+            
+    for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
-    }
-    else
-    {
-        gamepadReady = true;
+        sprintf(gamepadDev, "%s%i", DEFAULT_GAMEPAD_DEV, i);
+        
+        if ((gamepadStream[i] = open(gamepadDev, O_RDONLY|O_NONBLOCK)) < 0) 
+        {
+            // NOTE: Only show message for first gamepad
+            if (i == 0) TraceLog(WARNING, "Gamepad device could not be opened, no gamepad available");
+        }
+        else
+        {
+            gamepadReady[i] = true;
 
-        int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
+            // NOTE: Only create one thread
+            if (i == 0)
+            {
+                int error = pthread_create(&gamepadThreadId, NULL, &GamepadThread, NULL);
 
-        if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
-        else  TraceLog(INFO, "Gamepad device initialized successfully");
-    }
+                if (error != 0) TraceLog(WARNING, "Error creating gamepad input event thread");
+                else  TraceLog(INFO, "Gamepad device initialized successfully");
+            }
+        }
+    }       
 }
 
 // Process Gamepad (/dev/input/js0)
@@ -2466,227 +2958,251 @@ static void *GamepadThread(void *arg)
         unsigned char number;   // event axis/button number
     };
 
-    // These values are sensible on Logitech Dual Action Rumble and Xbox360 controller
-    const int joystickAxisX = 0;
-    const int joystickAxisY = 1;
-
     // Read gamepad event
-	struct js_event gamepadEvent;
+    struct js_event gamepadEvent;
     
-	while (1) 
+    while (1) 
     {
-        if (read(gamepadStream, &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
+        for (int i = 0; i < MAX_GAMEPADS; i++)
         {
-            gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
-            
-            // Process gamepad events by type
-            if (gamepadEvent.type == JS_EVENT_BUTTON) 
+            if (read(gamepadStream[i], &gamepadEvent, sizeof(struct js_event)) == (int)sizeof(struct js_event))
             {
-                TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                gamepadEvent.type &= ~JS_EVENT_INIT;     // Ignore synthetic events
                 
-                if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
+                // Process gamepad events by type
+                if (gamepadEvent.type == JS_EVENT_BUTTON) 
                 {
-                    // 1 - button pressed, 0 - button released
-                    gamepadButtons[gamepadEvent.number] = (int)gamepadEvent.value;
+                    TraceLog(DEBUG, "Gamepad button: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    
+                    if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS) 
+                    {
+                        // 1 - button pressed, 0 - button released
+                        gamepadButtons[i][gamepadEvent.number] = (int)gamepadEvent.value;
+                    }
                 }
-            }
-            else if (gamepadEvent.type == JS_EVENT_AXIS) 
-            {
-                TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
-                
-                if (gamepadEvent.number == joystickAxisX) gamepadAxisX = (int)gamepadEvent.value;
-                if (gamepadEvent.number == joystickAxisY) gamepadAxisY = (int)gamepadEvent.value;
-                /*
-                switch (gamepadEvent.number)
+                else if (gamepadEvent.type == JS_EVENT_AXIS) 
                 {
-                    case 0: // 1st Axis X
-                    case 1: // 1st Axis Y
-                    case 2: // 2st Axis X
-                    case 3: // 2st Axis Y
+                    TraceLog(DEBUG, "Gamepad axis: %i, value: %i", gamepadEvent.number, gamepadEvent.value);
+                    
+                    if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
+                    {
+                        // NOTE: Scaling of gamepadEvent.value to get values between -1..1
+                        gamepadAxisValues[i][gamepadEvent.number] = (float)gamepadEvent.value/32768;
+                    }
                 }
-                */
             }
         }
-	}
-    
+    }
+
     return NULL;
 }
 #endif
 
-// Copy back buffer to front buffers
-static void SwapBuffers(void)
+
+#if defined(PLATFORM_OCULUS)
+// Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
+static Matrix FromOvrMatrix(ovrMatrix4f ovrmat)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    glfwSwapBuffers(window);
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    eglSwapBuffers(display, surface);
-#endif
+    Matrix rmat;
+    
+    rmat.m0 = ovrmat.M[0][0];
+    rmat.m1 = ovrmat.M[1][0];
+    rmat.m2 = ovrmat.M[2][0];
+    rmat.m3 = ovrmat.M[3][0];
+    rmat.m4 = ovrmat.M[0][1];
+    rmat.m5 = ovrmat.M[1][1];
+    rmat.m6 = ovrmat.M[2][1];
+    rmat.m7 = ovrmat.M[3][1];
+    rmat.m8 = ovrmat.M[0][2];
+    rmat.m9 = ovrmat.M[1][2];
+    rmat.m10 = ovrmat.M[2][2];
+    rmat.m11 = ovrmat.M[3][2];
+    rmat.m12 = ovrmat.M[0][3];
+    rmat.m13 = ovrmat.M[1][3];
+    rmat.m14 = ovrmat.M[2][3];
+    rmat.m15 = ovrmat.M[3][3];
+    
+    MatrixTranspose(&rmat);
+    
+    return rmat;
 }
 
-// Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables renderWidth/renderHeight can be modified
-static void SetupFramebufferSize(int displayWidth, int displayHeight)
+// Load Oculus required buffers: texture-swap-chain, fbo, texture-depth
+static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
 {
-    // TODO: SetupFramebufferSize() does not consider properly display video modes.
-    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
-    // and so, framebuffer is not scaled properly to some monitors.
+    OculusBuffer buffer;
+    buffer.width = width;
+    buffer.height = height;
     
-    // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
-    if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
-    {
-        TraceLog(WARNING, "DOWNSCALING: Required screen size (%ix%i) is bigger than display size (%ix%i)", screenWidth, screenHeight, displayWidth, displayHeight);
+    // Create OVR texture chain
+    ovrTextureSwapChainDesc desc = {};
+    desc.Type = ovrTexture_2D;
+    desc.ArraySize = 1;
+    desc.Width = width;
+    desc.Height = height;
+    desc.MipLevels = 1;
+    desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;   // Requires glEnable(GL_FRAMEBUFFER_SRGB);
+    desc.SampleCount = 1;
+    desc.StaticImage = ovrFalse;
 
-        // Downscaling to fit display with border-bars
-        float widthRatio = (float)displayWidth/(float)screenWidth;
-        float heightRatio = (float)displayHeight/(float)screenHeight;
-
-        if (widthRatio <= heightRatio)
-        {
-            renderWidth = displayWidth;
-            renderHeight = (int)round((float)screenHeight*widthRatio);
-            renderOffsetX = 0;
-            renderOffsetY = (displayHeight - renderHeight);
-        }
-        else
-        {
-            renderWidth = (int)round((float)screenWidth*heightRatio);
-            renderHeight = displayHeight;
-            renderOffsetX = (displayWidth - renderWidth);
-            renderOffsetY = 0;
-        }
-
-        // NOTE: downscale matrix required!
-        float scaleRatio = (float)renderWidth/(float)screenWidth;
-
-        downscaleView = MatrixScale(scaleRatio, scaleRatio, scaleRatio);
-
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
-        renderWidth = displayWidth;
-        renderHeight = displayHeight;
-
-        TraceLog(WARNING, "Downscale matrix generated, content will be rendered at: %i x %i", renderWidth, renderHeight);
-    }
-    else if ((screenWidth < displayWidth) || (screenHeight < displayHeight))
-    {
-        // Required screen size is smaller than display size
-        TraceLog(INFO, "UPSCALING: Required screen size: %i x %i -> Display size: %i x %i", screenWidth, screenHeight, displayWidth, displayHeight);
-
-        // Upscaling to fit display with border-bars
-        float displayRatio = (float)displayWidth/(float)displayHeight;
-        float screenRatio = (float)screenWidth/(float)screenHeight;
-
-        if (displayRatio <= screenRatio)
-        {
-            renderWidth = screenWidth;
-            renderHeight = (int)round((float)screenWidth/displayRatio);
-            renderOffsetX = 0;
-            renderOffsetY = (renderHeight - screenHeight);
-        }
-        else
-        {
-            renderWidth = (int)round((float)screenHeight*displayRatio);
-            renderHeight = screenHeight;
-            renderOffsetX = (renderWidth - screenWidth);
-            renderOffsetY = 0;
-        }
-    }
-    else    // screen == display
-    {
-        renderWidth = screenWidth;
-        renderHeight = screenHeight;
-        renderOffsetX = 0;
-        renderOffsetY = 0;
-    }
-}
-
-#if defined(PLATFORM_WEB)
-static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
-{
-    //isFullscreen: int e->isFullscreen 
-    //fullscreenEnabled: int e->fullscreenEnabled 
-    //fs element nodeName: (char *) e->nodeName
-    //fs element id: (char *) e->id
-    //Current element size: (int) e->elementWidth, (int) e->elementHeight
-    //Screen size:(int) e->screenWidth, (int) e->screenHeight
+    ovrResult result = ovr_CreateTextureSwapChainGL(session, &desc, &buffer.textureChain);
     
-    if (e->isFullscreen)
+    if (!OVR_SUCCESS(result)) TraceLog(WARNING, "OVR: Failed to create swap textures buffer");
+
+    int textureCount = 0;
+    ovr_GetTextureSwapChainLength(session, buffer.textureChain, &textureCount);
+    
+    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(WARNING, "OVR: Unable to count swap chain textures");
+
+    for (int i = 0; i < textureCount; ++i)
     {
-        TraceLog(INFO, "Canvas scaled to fullscreen. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
-    }
-    else
-    {
-        TraceLog(INFO, "Canvas scaled to windowed. ElementSize: (%ix%i), ScreenSize(%ix%i)", e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
+        GLuint chainTexId;
+        ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, i, &chainTexId);
+        glBindTexture(GL_TEXTURE_2D, chainTexId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
     
-    // TODO: Depending on scaling factor (screen vs element), calculate factor to scale mouse/touch input
-
-    return 0;
-}
-
-// Web: Get input events
-static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
-{
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
     /*
-    for (int i = 0; i < touchEvent->numTouches; i++)
-    {
-        long x, y, id;
-
-        if (!touchEvent->touches[i].isChanged) continue;
-
-        id = touchEvent->touches[i].identifier;
-        x = touchEvent->touches[i].canvasX;
-        y = touchEvent->touches[i].canvasY;
-    }
-    
-    printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
-           event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
-
-    for(int i = 0; i < event->numTouches; ++i)
-    {
-        const EmscriptenTouchPoint *t = &event->touches[i];
-        
-        printf("  %ld: screen: (%ld,%ld), client: (%ld,%ld), page: (%ld,%ld), isChanged: %d, onTarget: %d, canvas: (%ld, %ld)\n",
-          t->identifier, t->screenX, t->screenY, t->clientX, t->clientY, t->pageX, t->pageY, t->isChanged, t->onTarget, t->canvasX, t->canvasY);
-    }
+    // Setup framebuffer object (using depth texture)
+    glGenFramebuffers(1, &buffer.fboId);
+    glGenTextures(1, &buffer.depthId);
+    glBindTexture(GL_TEXTURE_2D, buffer.depthId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, buffer.width, buffer.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
     */
     
-    GestureEvent gestureEvent;
+    // Setup framebuffer object (using depth renderbuffer)
+    glGenFramebuffers(1, &buffer.fboId);
+    glGenRenderbuffers(1, &buffer.depthId);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
+    glBindRenderbuffer(GL_RENDERBUFFER, buffer.depthId);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, buffer.width, buffer.height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer.depthId);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-    // Register touch actions
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_DOWN;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_UP;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_MOVE;
-    
-    // Register touch points count
-    gestureEvent.pointCount = touchEvent->numTouches;
-    
-    // Register touch points id
-    gestureEvent.pointerId[0] = touchEvent->touches[0].identifier;
-    gestureEvent.pointerId[1] = touchEvent->touches[1].identifier;
-    
-    // Register touch points position
-    // NOTE: Only two points registered
-    // TODO: Touch data should be scaled accordingly!
-    //gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].canvasX, touchEvent->touches[0].canvasY };
-    //gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].canvasX, touchEvent->touches[1].canvasY };
-    gestureEvent.position[0] = (Vector2){ touchEvent->touches[0].targetX, touchEvent->touches[0].targetY };
-    gestureEvent.position[1] = (Vector2){ touchEvent->touches[1].targetX, touchEvent->touches[1].targetY };
+    return buffer;
+}
 
-    touchPosition[0] = gestureEvent.position[0];
-    touchPosition[1] = gestureEvent.position[1];
-    
-    // Normalize gestureEvent.position[x] for screenWidth and screenHeight
-    gestureEvent.position[0].x /= (float)GetScreenWidth(); 
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-    
-    gestureEvent.position[1].x /= (float)GetScreenWidth(); 
-    gestureEvent.position[1].y /= (float)GetScreenHeight();
+// Unload texture required buffers
+static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer)
+{
+    if (buffer.textureChain)
+    {
+        ovr_DestroyTextureSwapChain(session, buffer.textureChain);
+        buffer.textureChain = NULL;
+    }
 
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);   // Process obtained gestures data
+    if (buffer.depthId != 0) glDeleteTextures(1, &buffer.depthId);
+    if (buffer.fboId != 0) glDeleteFramebuffers(1, &buffer.fboId);
+}
 
-    return 1;
+// Set current Oculus buffer
+static void SetOculusBuffer(ovrSession session, OculusBuffer buffer)
+{
+    GLuint currentTexId;
+    int currentIndex;
+    
+    ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
+    ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
+
+    //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    // Required if OculusBuffer format is OVR_FORMAT_R8G8B8A8_UNORM_SRGB
+    glEnable(GL_FRAMEBUFFER_SRGB);
+}
+
+// Unset Oculus buffer
+static void UnsetOculusBuffer(OculusBuffer buffer)
+{
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+// Load Oculus mirror buffers
+static OculusMirror LoadOculusMirror(ovrSession session, int width, int height)
+{
+    OculusMirror mirror;
+    mirror.width = width;
+    mirror.height = height;
+    
+    ovrMirrorTextureDesc mirrorDesc;
+    memset(&mirrorDesc, 0, sizeof(mirrorDesc));
+    mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+    mirrorDesc.Width = mirror.width;
+    mirrorDesc.Height = mirror.height;
+    
+    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(WARNING, "Could not create mirror texture");
+
+    glGenFramebuffers(1, &mirror.fboId);
+
+    return mirror;
+}
+
+// Unload Oculus mirror buffers
+static void UnloadOculusMirror(ovrSession session, OculusMirror mirror)
+{
+    if (mirror.fboId != 0) glDeleteFramebuffers(1, &mirror.fboId);
+    if (mirror.texture) ovr_DestroyMirrorTexture(session, mirror.texture);
+}
+
+static void BlitOculusMirror(ovrSession session, OculusMirror mirror)
+{
+    GLuint mirrorTextureId;
+    
+    ovr_GetMirrorTextureBufferGL(session, mirror.texture, &mirrorTextureId);
+    
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, mirror.fboId);
+    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
+    glBlitFramebuffer(0, 0, mirror.width, mirror.height, 0, mirror.height, mirror.width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+}
+
+// Requires: session, hmdDesc
+static OculusLayer InitOculusLayer(ovrSession session)
+{
+    OculusLayer layer = { 0 };
+    
+    layer.viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
+
+    memset(&layer.eyeLayer, 0, sizeof(ovrLayerEyeFov));
+    layer.eyeLayer.Header.Type = ovrLayerType_EyeFov;
+    layer.eyeLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
+
+    ovrEyeRenderDesc eyeRenderDescs[2];
+    
+    for (int eye = 0; eye < 2; eye++)
+    {
+        eyeRenderDescs[eye] = ovr_GetRenderDesc(session, eye, hmdDesc.DefaultEyeFov[eye]);
+        ovrMatrix4f ovrPerspectiveProjection = ovrMatrix4f_Projection(eyeRenderDescs[eye].Fov, 0.01f, 10000.0f, ovrProjection_None); //ovrProjection_ClipRangeOpenGL);
+        layer.eyeProjections[eye] = FromOvrMatrix(ovrPerspectiveProjection);      // NOTE: struct ovrMatrix4f { float M[4][4] } --> struct Matrix
+
+        layer.viewScaleDesc.HmdToEyeOffset[eye] = eyeRenderDescs[eye].HmdToEyeOffset;
+        layer.eyeLayer.Fov[eye] = eyeRenderDescs[eye].Fov;
+        
+        ovrSizei eyeSize = ovr_GetFovTextureSize(session, eye, layer.eyeLayer.Fov[eye], 1.0f);
+        layer.eyeLayer.Viewport[eye].Size = eyeSize;
+        layer.eyeLayer.Viewport[eye].Pos.x = layer.width;
+        layer.eyeLayer.Viewport[eye].Pos.y = 0;
+
+        layer.height = eyeSize.h;     //std::max(renderTargetSize.y, (uint32_t)eyeSize.h);
+        layer.width += eyeSize.w;
+    }
+    
+    return layer;
 }
 #endif
 
