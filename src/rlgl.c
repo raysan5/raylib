@@ -2579,6 +2579,7 @@ static Shader LoadStandardShader(void)
     else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
 
     if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+    else shader = GetDefaultShader();
 
     return shader;
 }
