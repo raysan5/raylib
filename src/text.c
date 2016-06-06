@@ -34,7 +34,7 @@
 
 // Following libs are used on LoadTTF()
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"   // Required for: stbtt_BakeFontBitmap()
+#include "external/stb_truetype.h"   // Required for: stbtt_BakeFontBitmap()
 
 // Rectangle packing functions (not used at the moment)
 //#define STB_RECT_PACK_IMPLEMENTATION

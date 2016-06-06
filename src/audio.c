@@ -51,13 +51,13 @@
 #endif
 
 //#define STB_VORBIS_HEADER_ONLY
-#include "stb_vorbis.h"         // OGG loading functions
+#include "external/stb_vorbis.h"    // OGG loading functions
 
 #define JAR_XM_IMPLEMENTATION
-#include "jar_xm.h"             // XM loading functions
+#include "external/jar_xm.h"        // XM loading functions
 
 #define JAR_MOD_IMPLEMENTATION
-#include "jar_mod.h"            // MOD loading functions
+#include "external/jar_mod.h"       // MOD loading functions
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

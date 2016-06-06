@@ -81,14 +81,14 @@ CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES = -I. -Iexternal -I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../src
-# external libraries headers
-# GLFW3
-    INCLUDES += -I../external/glfw3/include
-# OpenAL Soft
-    INCLUDES += -I../external/openal_soft/include
+# STB libraries and others
+    INCLUDES = -I. -Iexternal
+# GLFW3 library
+    INCLUDES += -Iexternal/glfw3/include
+# OpenAL Soft library
+    INCLUDES += -Iexternal/openal_soft/include
 endif
 
 # define all object files required
@@ -121,10 +121,6 @@ core.o: core.c
 rlgl.o: rlgl.c
 	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
-# compile glad module
-glad.o: glad.c
-	$(CC) -c glad.c $(CFLAGS) $(INCLUDES)
-
 # compile shapes module
 shapes.o: shapes.c
 	$(CC) -c shapes.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
@@ -145,10 +141,6 @@ models.o: models.c
 audio.o: audio.c
 	$(CC) -c audio.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-# compile stb_vorbis library
-stb_vorbis.o: stb_vorbis.c
-	$(CC) -c stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
-
 # compile utils module
 utils.o: utils.c
 	$(CC) -c utils.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
@@ -160,6 +152,14 @@ camera.o: camera.c
 # compile gestures module
 gestures.o: gestures.c
 	$(CC) -c gestures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile glad module
+glad.o: external/glad.c
+	$(CC) -c external/glad.c $(CFLAGS) $(INCLUDES)
+
+# compile stb_vorbis library
+stb_vorbis.o: external/stb_vorbis.c
+	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
 
 # clean everything
 clean:
