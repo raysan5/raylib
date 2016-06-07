@@ -46,7 +46,7 @@ LOCAL_SRC_FILES  :=\
                     ../../models.c \
                     ../../utils.c \
                     ../../audio.c \
-                    ../../stb_vorbis.c \
+                    ../../external/stb_vorbis.c \
 
 # Required includes paths (.h)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/include $(LOCAL_PATH)/../..
