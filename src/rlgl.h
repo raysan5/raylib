@@ -230,6 +230,9 @@ typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
+    
+    // TraceLog message types
+    typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 #endif
 
 #ifdef __cplusplus
@@ -339,6 +342,8 @@ void EndBlendMode(void);                                            // End blend
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
+
+void TraceLog(int msgType, const char *text, ...);
 #endif
 
 #ifdef __cplusplus

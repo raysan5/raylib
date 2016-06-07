@@ -28,7 +28,7 @@
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
 #define RLGL_STANDALONE
-#include "rlgl.h"
+#include "rlgl.h"               // rlgl library: OpenGL 1.1 immediate-mode style coding
 
 #define PLATFORM_OCULUS
 
@@ -79,14 +79,11 @@ typedef struct OculusLayer {
 } OculusLayer;
 #endif
 
-typedef enum { LOG_INFO = 0, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_OTHER } TraceLogType;
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static void ErrorCallback(int error, const char* description);
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void TraceLog(int msgType, const char *text, ...);
 
 // Drawing functions (uses rlgl functionality)
 static void DrawGrid(int slices, float spacing);
@@ -125,10 +122,10 @@ int main(void)
     
     if (!glfwInit())
     {
-        TraceLog(LOG_WARNING, "GLFW3: Can not initialize GLFW");
-        exit(EXIT_FAILURE);
+        TraceLog(WARNING, "GLFW3: Can not initialize GLFW");
+        return 1;
     }
-    else TraceLog(LOG_INFO, "GLFW3: GLFW initialized successfully");
+    else TraceLog(INFO, "GLFW3: GLFW initialized successfully");
     
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -141,9 +138,9 @@ int main(void)
     if (!window)
     {
         glfwTerminate();
-        exit(EXIT_FAILURE);
+        return 2;
     }
-    else TraceLog(LOG_INFO, "GLFW3: Window created successfully");
+    else TraceLog(INFO, "GLFW3: Window created successfully");
     
     glfwSetKeyCallback(window, KeyCallback);
     
@@ -153,10 +150,10 @@ int main(void)
     // Load OpenGL 3.3 extensions
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        TraceLog(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
-        exit(1);
+        TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
+        return 3;
     }
-    else TraceLog(LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
+    else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
     //--------------------------------------------------------
     
 #if defined(PLATFORM_OCULUS)
@@ -198,7 +195,6 @@ int main(void)
     rlClearColor(245, 245, 245, 255);   // Define clear color
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
     
-    Vector2 size = { 200, 200 };
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
     Camera camera;
@@ -257,8 +253,8 @@ int main(void)
             Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             MatrixTranspose(&matProj);
 			
-			SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
-			SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
+            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
+            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
 #endif
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
@@ -332,7 +328,7 @@ int main(void)
 // GLFW3: Error callback
 static void ErrorCallback(int error, const char* description)
 {
-    TraceLog(LOG_ERROR, description);
+    TraceLog(ERROR, description);
 }
 
 // GLFW3: Keyboard callback
@@ -342,29 +338,6 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
-}
-
-// Output a trace log message
-static void TraceLog(int msgType, const char *text, ...)
-{
-    va_list args;
-    va_start(args, text);
-
-    switch(msgType)
-    {
-        case LOG_INFO: fprintf(stdout, "INFO: "); break;
-        case LOG_ERROR: fprintf(stdout, "ERROR: "); break;
-        case LOG_WARNING: fprintf(stdout, "WARNING: "); break;
-        case LOG_DEBUG: fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    vfprintf(stdout, text, args);
-    fprintf(stdout, "\n");
-
-    va_end(args);
-
-    //if (msgType == LOG_ERROR) exit(1);
 }
 
 // Draw rectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)
