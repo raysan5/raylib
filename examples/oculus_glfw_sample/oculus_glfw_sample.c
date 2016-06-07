@@ -114,32 +114,10 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 1080;
-    int screenHeight = 600;
+    int screenWidth = 1080;     // Mirror screen width (set to hmdDesc.Resolution.w/2)
+    int screenHeight = 600;     // Mirror screen height (set to hmdDesc.Resolution.h/2)
     
-#if defined(PLATFORM_OCULUS)
-    ovrResult result = ovr_Initialize(NULL);
-    if (OVR_FAILURE(result)) TraceLog(LOG_ERROR, "OVR: Could not initialize Oculus device");
-
-    result = ovr_Create(&session, &luid);
-    if (OVR_FAILURE(result))
-    {
-        TraceLog(LOG_WARNING, "OVR: Could not create Oculus session");
-        ovr_Shutdown();
-    }
-
-    hmdDesc = ovr_GetHmdDesc(session);
-    
-    TraceLog(LOG_INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-    TraceLog(LOG_INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-    TraceLog(LOG_INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-    TraceLog(LOG_INFO, "OVR: Product Type: %i", hmdDesc.Type);
-    TraceLog(LOG_INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
-    TraceLog(LOG_INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
-    
-    screenWidth = hmdDesc.Resolution.w/2;
-    screenHeight = hmdDesc.Resolution.h/2;
-#endif
+    // NOTE: Mirror screen size can be set to any desired resolution!
     
     // GLFW3 Initialization + OpenGL 3.3 Context + Extensions
     //--------------------------------------------------------
@@ -182,10 +160,32 @@ int main(void)
     //--------------------------------------------------------
     
 #if defined(PLATFORM_OCULUS)
+    ovrResult result = ovr_Initialize(NULL);
+    if (OVR_FAILURE(result)) TraceLog(LOG_ERROR, "OVR: Could not initialize Oculus device");
+
+    result = ovr_Create(&session, &luid);
+    if (OVR_FAILURE(result))
+    {
+        TraceLog(LOG_WARNING, "OVR: Could not create Oculus session");
+        ovr_Shutdown();
+    }
+
+    hmdDesc = ovr_GetHmdDesc(session);
+    
+    TraceLog(LOG_INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+    TraceLog(LOG_INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+    TraceLog(LOG_INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+    TraceLog(LOG_INFO, "OVR: Product Type: %i", hmdDesc.Type);
+    TraceLog(LOG_INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
+    TraceLog(LOG_INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+    
+    //screenWidth = hmdDesc.Resolution.w/2;
+    //screenHeight = hmdDesc.Resolution.h/2;
+
     // Initialize Oculus Buffers
     OculusLayer layer = InitOculusLayer(session);   
     OculusBuffer buffer = LoadOculusBuffer(session, layer.width, layer.height);
-    OculusMirror mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
+    OculusMirror mirror = LoadOculusMirror(session, screenWidth, screenHeight);
     layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
 
     // Recenter OVR tracking origin
@@ -311,17 +311,15 @@ int main(void)
 #if defined(PLATFORM_OCULUS)
     UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
     UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
+
+    ovr_Destroy(session);   // Must be called after glfwTerminate() --> no
+    ovr_Shutdown();
 #endif
 
     rlglClose();                            // Unload rlgl internal buffers and default shader/texture
     
     glfwDestroyWindow(window);
     glfwTerminate();
-    
-#if defined(PLATFORM_OCULUS)
-    ovr_Destroy(session);   // Must be called after glfwTerminate()
-    ovr_Shutdown();
-#endif
     //--------------------------------------------------------------------------------------
     
     return 0;
@@ -682,10 +680,13 @@ static void SetOculusBuffer(ovrSession session, OculusBuffer buffer)
     //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
 
     //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   // Same as rlClearScreenBuffers()
     
-    // Required if OculusBuffer format is OVR_FORMAT_R8G8B8A8_UNORM_SRGB
-    glEnable(GL_FRAMEBUFFER_SRGB);
+    // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA) 
+    // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
+    //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
+    //     - Do NOT enable GL_FRAMEBUFFER_SRGB
+    //glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 // Unset Oculus buffer
