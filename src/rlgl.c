@@ -48,7 +48,8 @@
     #ifdef __APPLE__ 
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        #include "external/glad.h"  // GLAD library, includes OpenGL headers
+        #define GLAD_IMPLEMENTATION
+        #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
     #endif
 #endif
 
