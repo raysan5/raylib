@@ -28,7 +28,7 @@
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
 #define RLGL_STANDALONE
-#include "rlgl.h"
+#include "rlgl.h"               // rlgl library: OpenGL 1.1 immediate-mode style coding
 
 #define PLATFORM_OCULUS
 
@@ -79,14 +79,11 @@ typedef struct OculusLayer {
 } OculusLayer;
 #endif
 
-typedef enum { LOG_INFO = 0, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_OTHER } TraceLogType;
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static void ErrorCallback(int error, const char* description);
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void TraceLog(int msgType, const char *text, ...);
 
 // Drawing functions (uses rlgl functionality)
 static void DrawGrid(int slices, float spacing);
@@ -114,8 +111,50 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 1080;
-    int screenHeight = 600;
+    int screenWidth = 1080;     // Mirror screen width (set to hmdDesc.Resolution.w/2)
+    int screenHeight = 600;     // Mirror screen height (set to hmdDesc.Resolution.h/2)
+    
+    // NOTE: Mirror screen size can be set to any desired resolution!
+    
+    // GLFW3 Initialization + OpenGL 3.3 Context + Extensions
+    //--------------------------------------------------------
+    glfwSetErrorCallback(ErrorCallback);
+    
+    if (!glfwInit())
+    {
+        TraceLog(WARNING, "GLFW3: Can not initialize GLFW");
+        return 1;
+    }
+    else TraceLog(INFO, "GLFW3: GLFW initialized successfully");
+    
+    glfwWindowHint(GLFW_DEPTH_BITS, 16);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+   
+    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "raylib oculus sample", NULL, NULL);
+    
+    if (!window)
+    {
+        glfwTerminate();
+        return 2;
+    }
+    else TraceLog(INFO, "GLFW3: Window created successfully");
+    
+    glfwSetKeyCallback(window, KeyCallback);
+    
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);
+
+    // Load OpenGL 3.3 extensions
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
+        return 3;
+    }
+    else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
+    //--------------------------------------------------------
     
 #if defined(PLATFORM_OCULUS)
     ovrResult result = ovr_Initialize(NULL);
@@ -137,55 +176,13 @@ int main(void)
     TraceLog(LOG_INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
     TraceLog(LOG_INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
     
-    screenWidth = hmdDesc.Resolution.w/2;
-    screenHeight = hmdDesc.Resolution.h/2;
-#endif
-    
-    // GLFW3 Initialization + OpenGL 3.3 Context + Extensions
-    //--------------------------------------------------------
-    glfwSetErrorCallback(ErrorCallback);
-    
-    if (!glfwInit())
-    {
-        TraceLog(LOG_WARNING, "GLFW3: Can not initialize GLFW");
-        exit(EXIT_FAILURE);
-    }
-    else TraceLog(LOG_INFO, "GLFW3: GLFW initialized successfully");
-    
-    glfwWindowHint(GLFW_DEPTH_BITS, 16);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-   
-    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "raylib oculus sample", NULL, NULL);
-    
-    if (!window)
-    {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-    else TraceLog(LOG_INFO, "GLFW3: Window created successfully");
-    
-    glfwSetKeyCallback(window, KeyCallback);
-    
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);
+    //screenWidth = hmdDesc.Resolution.w/2;
+    //screenHeight = hmdDesc.Resolution.h/2;
 
-    // Load OpenGL 3.3 extensions
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        TraceLog(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
-        exit(1);
-    }
-    else TraceLog(LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
-    //--------------------------------------------------------
-    
-#if defined(PLATFORM_OCULUS)
     // Initialize Oculus Buffers
     OculusLayer layer = InitOculusLayer(session);   
     OculusBuffer buffer = LoadOculusBuffer(session, layer.width, layer.height);
-    OculusMirror mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
+    OculusMirror mirror = LoadOculusMirror(session, screenWidth, screenHeight);
     layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
 
     // Recenter OVR tracking origin
@@ -198,7 +195,6 @@ int main(void)
     rlClearColor(245, 245, 245, 255);   // Define clear color
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
     
-    Vector2 size = { 200, 200 };
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
     Camera camera;
@@ -257,8 +253,8 @@ int main(void)
             Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             MatrixTranspose(&matProj);
 			
-			SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
-			SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
+            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
+            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
 #endif
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
@@ -311,17 +307,15 @@ int main(void)
 #if defined(PLATFORM_OCULUS)
     UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
     UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
+
+    ovr_Destroy(session);   // Must be called after glfwTerminate() --> no
+    ovr_Shutdown();
 #endif
 
     rlglClose();                            // Unload rlgl internal buffers and default shader/texture
     
     glfwDestroyWindow(window);
     glfwTerminate();
-    
-#if defined(PLATFORM_OCULUS)
-    ovr_Destroy(session);   // Must be called after glfwTerminate()
-    ovr_Shutdown();
-#endif
     //--------------------------------------------------------------------------------------
     
     return 0;
@@ -334,7 +328,7 @@ int main(void)
 // GLFW3: Error callback
 static void ErrorCallback(int error, const char* description)
 {
-    TraceLog(LOG_ERROR, description);
+    TraceLog(ERROR, description);
 }
 
 // GLFW3: Keyboard callback
@@ -344,29 +338,6 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
-}
-
-// Output a trace log message
-static void TraceLog(int msgType, const char *text, ...)
-{
-    va_list args;
-    va_start(args, text);
-
-    switch(msgType)
-    {
-        case LOG_INFO: fprintf(stdout, "INFO: "); break;
-        case LOG_ERROR: fprintf(stdout, "ERROR: "); break;
-        case LOG_WARNING: fprintf(stdout, "WARNING: "); break;
-        case LOG_DEBUG: fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    vfprintf(stdout, text, args);
-    fprintf(stdout, "\n");
-
-    va_end(args);
-
-    //if (msgType == LOG_ERROR) exit(1);
 }
 
 // Draw rectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)
@@ -682,10 +653,13 @@ static void SetOculusBuffer(ovrSession session, OculusBuffer buffer)
     //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
 
     //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   // Same as rlClearScreenBuffers()
     
-    // Required if OculusBuffer format is OVR_FORMAT_R8G8B8A8_UNORM_SRGB
-    glEnable(GL_FRAMEBUFFER_SRGB);
+    // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA) 
+    // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
+    //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
+    //     - Do NOT enable GL_FRAMEBUFFER_SRGB
+    //glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 // Unset Oculus buffer

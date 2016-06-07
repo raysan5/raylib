@@ -49,8 +49,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1080;
+    const int screenHeight = 600;
     
     
     // GLFW3 Initialization + OpenGL 3.3 Context + Extensions
@@ -106,7 +106,7 @@ int main(void)
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.fovy = 60.0f;                               // Camera field-of-view Y
     //--------------------------------------------------------------------------------------    
 
     // Main game loop    
@@ -121,44 +121,49 @@ int main(void)
         //----------------------------------------------------------------------------------
         rlClearScreenBuffers();             // Clear current framebuffer
         
-            // Calculate projection matrix (from perspective) and view matrix from camera look at
-            Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
-            MatrixTranspose(&matProj);
-            Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+            for (int i = 0; i < 2; i++)
+            {
+                rlViewport(i*screenWidth/2, 0, screenWidth/2, screenHeight); 
+        
+                // Calculate projection matrix (from perspective) and view matrix from camera look at
+                Matrix matProj = MatrixPerspective(camera.fovy, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
+                MatrixTranspose(&matProj);
+                Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
-            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
+                SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
+                SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
 
-            DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-            DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
-            DrawGrid(10, 1.0f);
+                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
+                DrawGrid(10, 1.0f);
 
-            // NOTE: Internal buffers drawing (3D data)
-            rlglDraw();
-            
-            // Draw '2D' elements in the scene (GUI)
-#define RLGL_CREATE_MATRIX_MANUALLY
-#if defined(RLGL_CREATE_MATRIX_MANUALLY)
+                // NOTE: Internal buffers drawing (3D data)
+                rlglDraw();
+                
+                // Draw '2D' elements in the scene (GUI)
+    #define RLGL_CREATE_MATRIX_MANUALLY
+    #if defined(RLGL_CREATE_MATRIX_MANUALLY)
 
-            matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
-            MatrixTranspose(&matProj);
-            matView = MatrixIdentity();
-            
-            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
-            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
+                matProj = MatrixOrtho(0.0, screenWidth/2, screenHeight, 0.0, 0.0, 1.0);
+                MatrixTranspose(&matProj);
+                matView = MatrixIdentity();
+                
+                SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
+                SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
 
-#else   // Let rlgl generate and multiply matrix internally
+    #else   // Let rlgl generate and multiply matrix internally
 
-            rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
-            rlLoadIdentity();                                       // Reset internal projection matrix
-            rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
-            rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
-            rlLoadIdentity();                                       // Reset internal modelview matrix
-#endif
-            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 600.0f, 20.0f }, DARKGRAY);
+                rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
+                rlLoadIdentity();                                       // Reset internal projection matrix
+                rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+                rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
+                rlLoadIdentity();                                       // Reset internal modelview matrix
+    #endif
+                DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 600.0f, 20.0f }, DARKGRAY);
 
-            // NOTE: Internal buffers drawing (2D data)
-            rlglDraw();
+                // NOTE: Internal buffers drawing (2D data)
+                rlglDraw();
+            }
             
         glfwSwapBuffers(window);
         glfwPollEvents();

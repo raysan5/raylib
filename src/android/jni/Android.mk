@@ -46,13 +46,13 @@ LOCAL_SRC_FILES  :=\
                     ../../models.c \
                     ../../utils.c \
                     ../../audio.c \
-                    ../../stb_vorbis.c \
+                    ../../external/stb_vorbis.c \
 
 # Required includes paths (.h)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/include $(LOCAL_PATH)/../..
 
 # Required flags for compilation: defines PLATFORM_ANDROID and GRAPHICS_API_OPENGL_ES2
-LOCAL_CFLAGS     := -Wall -std=c99 -Wno-missing-braces -g -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2
+LOCAL_CFLAGS     := -Wall -std=c99 -Wno-missing-braces -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2
 
 # Build the static library libraylib.a
 include $(BUILD_STATIC_LIBRARY)

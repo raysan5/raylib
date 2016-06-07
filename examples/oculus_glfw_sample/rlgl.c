@@ -48,7 +48,13 @@
     #ifdef __APPLE__ 
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        #include "glad.h"           // GLAD library, includes OpenGL headers
+    #define GLAD_IMPLEMENTATION
+#if defined(RLGL_STANDALONE)
+    #include "glad.h"               // GLAD extensions loading library, includes OpenGL headers
+#else
+    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
+#endif
+
     #endif
 #endif
 
@@ -60,6 +66,10 @@
 
 #if defined(RLGL_STANDALONE)
     #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
+#endif
+
+#if !defined(GRAPHICS_API_OPENGL_11)
+    #include "standard_shader.h"    // Standard shader to embed
 #endif
 
 //----------------------------------------------------------------------------------
@@ -154,10 +164,6 @@ typedef struct {
     // TODO: Store draw state -> blending mode, shader
 } DrawCall;
 
-#if defined(RLGL_STANDALONE)
-typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
-#endif
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -189,26 +195,27 @@ static bool useTempBuffer = false;
 
 // Shader Programs
 static Shader defaultShader;
-static Shader standardShader;
-static Shader currentShader;            // By default, defaultShader
+static Shader standardShader;               // Lazy initialization when GetStandardShader()
+static Shader currentShader;                // By default, defaultShader
+static bool standardShaderLoaded = false;   
 
 // Flags for supported extensions
-static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support VAO extension)
+static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
 
 // Compressed textures support flags
-static bool texCompETC1Supported = false;    // ETC1 texture compression support
-static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
-static bool texCompPVRTSupported = false;    // PVR texture compression support
-static bool texCompASTCSupported = false;    // ASTC texture compression support
+static bool texCompETC1Supported = false;   // ETC1 texture compression support
+static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
+static bool texCompPVRTSupported = false;   // PVR texture compression support
+static bool texCompASTCSupported = false;   // ASTC texture compression support
 
 // Lighting data
-static Light lights[MAX_LIGHTS];             // Lights pool
-static int lightsCount;                      // Counts current enabled physic objects
+static Light lights[MAX_LIGHTS];            // Lights pool
+static int lightsCount;                     // Counts current enabled physic objects
 #endif
 
 // Compressed textures support flags
-static bool texCompDXTSupported = false;     // DDS texture compression support
-static bool npotSupported = false;           // NPOT textures full support
+static bool texCompDXTSupported = false;    // DDS texture compression support
+static bool npotSupported = false;          // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -253,7 +260,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 #endif
 
 #if defined(RLGL_STANDALONE)
-static void TraceLog(int msgType, const char *text, ...);
 float *MatrixToFloat(Matrix mat);           // Converts Matrix to float array
 #endif
 
@@ -355,7 +361,6 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     Vector3 axis = (Vector3){ x, y, z };
     VectorNormalize(&axis);
     matRotation = MatrixRotate(axis, angleDeg*DEG2RAD);
-
     MatrixTranspose(&matRotation);
 
     *currentMatrix = MatrixMultiply(*currentMatrix, matRotation);
@@ -1032,7 +1037,6 @@ void rlglInit(void)
 
     // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
-    standardShader = LoadStandardShader();
     currentShader = defaultShader;
 
     LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
@@ -2185,14 +2189,22 @@ Shader GetDefaultShader(void)
 }
 
 // Get default shader
+// NOTE: Inits global variable standardShader
 Shader GetStandardShader(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    return standardShader;
-#else
     Shader shader = { 0 };
-    return shader;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (standardShaderLoaded) shader = standardShader;
+    else
+    {
+        // Lazy initialization of standard shader
+        standardShader = LoadStandardShader();
+        shader = standardShader;
+    }
 #endif
+
+    return shader;
 }
 
 // Get shader uniform location
@@ -2254,13 +2266,17 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
 // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixProjection(Matrix proj)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     projection = proj;
+#endif
 }
 
 // Set a custom modelview matrix (replaces internal modelview matrix)
 void SetMatrixModelview(Matrix view)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     modelview = view;
+#endif
 }
 
 // Begin blending mode (alpha, additive, multiplied)
@@ -2564,18 +2580,28 @@ static Shader LoadDefaultShader(void)
 
 // Load standard shader
 // NOTE: This shader supports: 
-//      - Up to 3 different maps: diffuse, normal, specular
-//      - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
-//      - Up to 8 lights: Point, Directional or Spot
+//     - Up to 3 different maps: diffuse, normal, specular
+//     - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
+//     - Up to 8 lights: Point, Directional or Spot
 static Shader LoadStandardShader(void)
 {
-    // Load standard shader (TODO: rewrite as char pointers)
-    Shader shader = { 0 }; //LoadShader("resources/shaders/standard.vs", "resources/shaders/standard.fs");
+    Shader shader;
+    
+    // Load standard shader (embeded in standard_shader.h)
+    shader.id = LoadShaderProgram(vStandardShaderStr, fStandardShaderStr);
 
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
-
-    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+    if (shader.id != 0)
+    {
+        LoadDefaultShaderLocations(&shader);
+        TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
+        
+        standardShaderLoaded = true;
+    }
+    else
+    {
+        TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded, using default shader", shader.id);
+        shader = GetDefaultShader();
+    }
 
     return shader;
 }
@@ -3318,7 +3344,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #if defined(RLGL_STANDALONE)
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
-static void TraceLog(int msgType, const char *text, ...)
+void TraceLog(int msgType, const char *text, ...)
 {
     va_list args;
     va_start(args, text);
