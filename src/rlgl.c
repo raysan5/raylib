@@ -48,8 +48,13 @@
     #ifdef __APPLE__ 
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        #define GLAD_IMPLEMENTATION
-        #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
+    #define GLAD_IMPLEMENTATION
+#if defined(RLGL_STANDALONE)
+    #include "glad.h"               // GLAD extensions loading library, includes OpenGL headers
+#else
+    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
+#endif
+
     #endif
 #endif
 
@@ -159,10 +164,6 @@ typedef struct {
     // TODO: Store draw state -> blending mode, shader
 } DrawCall;
 
-#if defined(RLGL_STANDALONE)
-typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
-#endif
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -259,7 +260,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 #endif
 
 #if defined(RLGL_STANDALONE)
-static void TraceLog(int msgType, const char *text, ...);
 float *MatrixToFloat(Matrix mat);           // Converts Matrix to float array
 #endif
 
@@ -3344,7 +3344,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #if defined(RLGL_STANDALONE)
 // Output a trace log message
 // NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
-static void TraceLog(int msgType, const char *text, ...)
+void TraceLog(int msgType, const char *text, ...)
 {
     va_list args;
     va_start(args, text);
