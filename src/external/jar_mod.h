@@ -1063,7 +1063,6 @@ bool jar_mod_init(jar_mod_context_t * modctx)
         modctx->stereo_separation = 1;
         modctx->bits = 16;
         modctx->filter = 1;
-        modctx->loopcount = 0;
 
         for(i=0; i < PERIOD_TABLE_LENGTH - 1; i++)
         {
@@ -1472,7 +1471,7 @@ void jar_mod_fillbuffer( jar_mod_context_t * modctx, short * outbuffer, unsigned
 }
 
 //resets internals for mod context
-static void jar_mod_reset( jar_mod_context_t * modctx)
+static bool jar_mod_reset( jar_mod_context_t * modctx)
 {
     if(modctx)
     {
@@ -1488,7 +1487,6 @@ static void jar_mod_reset( jar_mod_context_t * modctx)
         modctx->patterntickse = 0;
         modctx->patternticksaim = 0;
         modctx->sampleticksconst = 0;
-        modctx->loopcount = 0;
         modctx->samplenb = 0;
         memclear(modctx->channels, 0, sizeof(modctx->channels));
         modctx->number_of_channels = 0;
@@ -1496,8 +1494,9 @@ static void jar_mod_reset( jar_mod_context_t * modctx)
         modctx->last_r_sample = 0;
         modctx->last_l_sample = 0;
         
-        jar_mod_init(modctx);
+        return jar_mod_init(modctx);
     }
+    return 0;
 }
 
 void jar_mod_unload( jar_mod_context_t * modctx)
@@ -1508,6 +1507,8 @@ void jar_mod_unload( jar_mod_context_t * modctx)
         {
             free(modctx->modfile);
             modctx->modfile = 0;
+            modctx->modfilesize = 0;
+            modctx->loopcount = 0;
         }
         jar_mod_reset(modctx);
     }
@@ -1556,27 +1557,34 @@ mulong jar_mod_current_samples(jar_mod_context_t * modctx)
 // Works, however it is very slow, this data should be cached to ensure it is run only once per file
 mulong jar_mod_max_samples(jar_mod_context_t * ctx)
 {
-    jar_mod_context_t tmpctx;
-    jar_mod_init(&tmpctx);
-    if(!jar_mod_load(&tmpctx, (void*)ctx->modfile, ctx->modfilesize)) return 0;
-    
     muint buff[2];
-    mulong lastcount = tmpctx.loopcount;
+    mulong len;
+    mulong lastcount = ctx->loopcount;
     
-    while(1){
-        jar_mod_fillbuffer( &tmpctx, buff, 1, 0 );
-        if(tmpctx.loopcount > lastcount) break;
-    }
-    return tmpctx.samplenb;
+    while(ctx->loopcount <= lastcount)
+        jar_mod_fillbuffer(ctx, buff, 1, 0);
+    
+    len = ctx->samplenb;
+    jar_mod_seek_start(ctx);
+    
+    return len;
 }
 
 // move seek_val to sample index, 0 -> jar_mod_max_samples is the range
 void jar_mod_seek_start(jar_mod_context_t * ctx)
 {
-    if(ctx)
+    if(ctx && ctx->modfile)
     {
-        jar_mod_reset(ctx);
-        jar_mod_load(ctx, ctx->modfile, ctx->modfilesize);
+        muchar* ftmp = ctx->modfile;
+        mulong stmp = ctx->modfilesize;
+        muint lcnt = ctx->loopcount;
+        
+        if(jar_mod_reset(ctx)){
+            jar_mod_load(ctx, ftmp, stmp);
+            ctx->modfile = ftmp;
+            ctx->modfilesize = stmp;
+            ctx->loopcount = lcnt;
+        }
     }
 }
 

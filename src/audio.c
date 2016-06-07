@@ -107,6 +107,7 @@ typedef struct Music {
     float totalLengthSeconds;
     bool loop;
     bool chipTune;             // chiptune is loaded?
+    bool enabled;
 } Music;
 
 // Audio errors registered
@@ -831,7 +832,7 @@ int PlayMusicStream(int index, char *fileName)
             TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
             musicChannels_g[index].loop = true;                  // We loop by default
-            musicEnabled_g = true;
+            musicChannels_g[index].enabled = true;
             
 
             musicChannels_g[index].totalSamplesLeft = (unsigned int)stb_vorbis_stream_length_in_samples(musicChannels_g[index].stream) * info.channels;
@@ -861,7 +862,7 @@ int PlayMusicStream(int index, char *fileName)
             jar_xm_set_max_loop_count(musicChannels_g[index].xmctx, 0); // infinite number of loops
             musicChannels_g[index].totalSamplesLeft =  (unsigned int)jar_xm_get_remaining_samples(musicChannels_g[index].xmctx);
             musicChannels_g[index].totalLengthSeconds = ((float)musicChannels_g[index].totalSamplesLeft) / 48000.f;
-            musicEnabled_g = true;
+            musicChannels_g[index].enabled = true;
             
             TraceLog(INFO, "[%s] XM number of samples: %i", fileName, musicChannels_g[index].totalSamplesLeft);
             TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, musicChannels_g[index].totalLengthSeconds);
@@ -888,7 +889,7 @@ int PlayMusicStream(int index, char *fileName)
             musicChannels_g[index].loop = true;
             musicChannels_g[index].totalSamplesLeft = (unsigned int)jar_mod_max_samples(&musicChannels_g[index].modctx);
             musicChannels_g[index].totalLengthSeconds = ((float)musicChannels_g[index].totalSamplesLeft) / 48000.f;
-            musicEnabled_g = true;
+            musicChannels_g[index].enabled = true;
             
             TraceLog(INFO, "[%s] MOD number of samples: %i", fileName, musicChannels_g[index].totalSamplesLeft);
             TraceLog(INFO, "[%s] MOD track length: %11.6f sec", fileName, musicChannels_g[index].totalLengthSeconds);
@@ -921,15 +922,14 @@ void StopMusicStream(int index)
     {
         CloseMixChannel(musicChannels_g[index].mixc);
         
-        if (musicChannels_g[index].chipTune && musicChannels_g[index].xmctx)
-        {
+        if (musicChannels_g[index].xmctx)
             jar_xm_free_context(musicChannels_g[index].xmctx);
-            musicChannels_g[index].xmctx = 0;
-        }
-        else if (musicChannels_g[index].chipTune && musicChannels_g[index].modctx.mod_loaded) jar_mod_unload(&musicChannels_g[index].modctx);
-        else stb_vorbis_close(musicChannels_g[index].stream);
+        else if (musicChannels_g[index].modctx.mod_loaded)
+            jar_mod_unload(&musicChannels_g[index].modctx);
+        else
+            stb_vorbis_close(musicChannels_g[index].stream);
         
-        if (!GetMusicStreamCount()) musicEnabled_g = false;
+        musicChannels_g[index].enabled = false;
         
         if (musicChannels_g[index].stream || musicChannels_g[index].xmctx)
         {
@@ -957,7 +957,7 @@ int GetMusicStreamCount(void)
 void PauseMusicStream(int index)
 {
     // Pause music stream if music available!
-    if (index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc && musicEnabled_g)
+    if (index < MAX_MUSIC_STREAMS && musicChannels_g[index].mixc && musicChannels_g[index].enabled)
     {
         TraceLog(INFO, "Pausing music stream");
         alSourcePause(musicChannels_g[index].mixc->alSource);
@@ -1154,7 +1154,7 @@ void UpdateMusicStream(int index)
     bool active = true;
     int numBuffers = IsMusicStreamReadyForBuffering(index);
     
-    if (musicChannels_g[index].mixc->playing && (index < MAX_MUSIC_STREAMS) && musicEnabled_g && musicChannels_g[index].mixc && numBuffers)
+    if (musicChannels_g[index].mixc->playing && (index < MAX_MUSIC_STREAMS) && musicChannels_g[index].enabled && musicChannels_g[index].mixc && numBuffers)
     {
         active = BufferMusicStream(index, numBuffers);
         
@@ -1163,7 +1163,8 @@ void UpdateMusicStream(int index)
             if (musicChannels_g[index].chipTune)
             {
                 if(musicChannels_g[index].modctx.mod_loaded) jar_mod_seek_start(&musicChannels_g[index].modctx);
-                musicChannels_g[index].totalSamplesLeft = musicChannels_g[index].totalLengthSeconds * 48000;
+                
+                musicChannels_g[index].totalSamplesLeft = musicChannels_g[index].totalLengthSeconds * 48000.f;
             }
             else
             {
@@ -1171,7 +1172,7 @@ void UpdateMusicStream(int index)
                 musicChannels_g[index].totalSamplesLeft = stb_vorbis_stream_length_in_samples(musicChannels_g[index].stream) * musicChannels_g[index].mixc->channels;
             }
             
-            active = true;
+            active = BufferMusicStream(index, IsMusicStreamReadyForBuffering(index));
         }
 
         if (alGetError() != AL_NO_ERROR) TraceLog(WARNING, "Error buffering data...");
