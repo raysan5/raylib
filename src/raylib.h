@@ -64,6 +64,7 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
+//#define PLATFORM_OCULUS       // Oculus Rift CV1
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -71,7 +72,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    typedef struct android_app;     // Define android_app struct (android_native_app_glue.h)
+    typedef struct android_app; // Define android_app struct (android_native_app_glue.h)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -261,8 +262,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #ifndef true
+    #if !defined(_STDBOOL_H)
         typedef enum { false, true } bool;
+        #define _STDBOOL_H
     #endif
 #endif
 
@@ -349,7 +351,7 @@ typedef struct Camera {
     Vector3 position;       // Camera position
     Vector3 target;         // Camera target it looks-at
     Vector3 up;             // Camera up vector (rotation over its axis)
-    float fovy;             // Field-Of-View apperture in Y (degrees)
+    float fovy;             // Camera field-of-view apperture in Y (degrees)
 } Camera;
 
 // Camera2D type, defines a 2d camera
@@ -362,87 +364,84 @@ typedef struct Camera2D {
 
 // Bounding box type
 typedef struct BoundingBox {
-    Vector3 min;
-    Vector3 max;
+    Vector3 min;            // minimum vertex box-corner
+    Vector3 max;            // maximum vertex box-corner
 } BoundingBox;
 
 // Vertex data definning a mesh
 typedef struct Mesh {
-    int vertexCount;            // number of vertices stored in arrays
-    int triangleCount;          // number of triangles stored (indexed or not)
-    float *vertices;            // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;           // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;          // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;             // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;            // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
-    unsigned char *colors;      // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-    unsigned short *indices;    // vertex indices (in case vertex data comes indexed)
+    int vertexCount;        // number of vertices stored in arrays
+    int triangleCount;      // number of triangles stored (indexed or not)
+    float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;        // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+    unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;// vertex indices (in case vertex data comes indexed)
 
-    BoundingBox bounds;         // mesh limits defined by min and max points
-    
-    unsigned int vaoId;         // OpenGL Vertex Array Object id
-    unsigned int vboId[7];      // OpenGL Vertex Buffer Objects id (7 types of vertex data)
+    unsigned int vaoId;     // OpenGL Vertex Array Object id
+    unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
 } Mesh;
 
 // Shader type (generic shader)
 typedef struct Shader {
-    unsigned int id;      // Shader program id
+    unsigned int id;        // Shader program id
     
     // Vertex attributes locations (default locations)
-    int vertexLoc;        // Vertex attribute location point    (default-location = 0)
-    int texcoordLoc;      // Texcoord attribute location point  (default-location = 1)
-    int texcoord2Loc;     // Texcoord2 attribute location point (default-location = 5)
-    int normalLoc;        // Normal attribute location point    (default-location = 2)
-    int tangentLoc;       // Tangent attribute location point   (default-location = 4)
-    int colorLoc;         // Color attibute location point      (default-location = 3)
+    int vertexLoc;          // Vertex attribute location point    (default-location = 0)
+    int texcoordLoc;        // Texcoord attribute location point  (default-location = 1)
+    int texcoord2Loc;       // Texcoord2 attribute location point (default-location = 5)
+    int normalLoc;          // Normal attribute location point    (default-location = 2)
+    int tangentLoc;         // Tangent attribute location point   (default-location = 4)
+    int colorLoc;           // Color attibute location point      (default-location = 3)
 
     // Uniform locations
-    int mvpLoc;           // ModelView-Projection matrix uniform location point (vertex shader)
-    int tintColorLoc;     // Diffuse color uniform location point (fragment shader)
+    int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
+    int tintColorLoc;       // Diffuse color uniform location point (fragment shader)
     
     // Texture map locations (generic for any kind of map)
-    int mapTexture0Loc;  // Map texture uniform location point (default-texture-unit = 0)
-    int mapTexture1Loc;  // Map texture uniform location point (default-texture-unit = 1)
-    int mapTexture2Loc;  // Map texture uniform location point (default-texture-unit = 2)
+    int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
+    int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
+    int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
 } Shader;
 
 // Material type
 typedef struct Material {
-    Shader shader;              // Standard shader (supports 3 map textures)
+    Shader shader;          // Standard shader (supports 3 map textures)
 
-    Texture2D texDiffuse;       // Diffuse texture  (binded to shader mapTexture0Loc)
-    Texture2D texNormal;        // Normal texture   (binded to shader mapTexture1Loc)
-    Texture2D texSpecular;      // Specular texture (binded to shader mapTexture2Loc)
+    Texture2D texDiffuse;   // Diffuse texture  (binded to shader mapTexture0Loc)
+    Texture2D texNormal;    // Normal texture   (binded to shader mapTexture1Loc)
+    Texture2D texSpecular;  // Specular texture (binded to shader mapTexture2Loc)
     
-    Color colTint;              // Tint color
-    Color colDiffuse;           // Diffuse color
-    Color colAmbient;           // Ambient color
-    Color colSpecular;          // Specular color
+    Color colDiffuse;       // Diffuse color
+    Color colAmbient;       // Ambient color
+    Color colSpecular;      // Specular color
     
-    float glossiness;           // Glossiness level (Ranges from 0 to 1000)
+    float glossiness;       // Glossiness level (Ranges from 0 to 1000)
 } Material;
 
 // Model type
 typedef struct Model {
-    Mesh mesh;                  // Vertex data buffers (RAM and VRAM)
-    Matrix transform;           // Local transform matrix
-    Material material;          // Shader and textures data
+    Mesh mesh;              // Vertex data buffers (RAM and VRAM)
+    Matrix transform;       // Local transform matrix
+    Material material;      // Shader and textures data
 } Model;
 
 // Light type
 typedef struct LightData {
-    int id;
-    int type;           // LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-    bool enabled;
+    unsigned int id;        // Light unique id
+    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+    bool enabled;           // Light enabled
     
-    Vector3 position;
-    Vector3 target;     // Used on LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-    float radius;       // Lost of light intensity with distance (world distance)
+    Vector3 position;       // Light position
+    Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+    float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
     
-    Color diffuse;      // Light color
-    float intensity;    // Light intensity level
+    Color diffuse;          // Light diffuse color
+    float intensity;        // Light intensity level
     
-    float coneAngle;    // Spot light max angle
+    float coneAngle;        // Light cone max angle: LIGHT_SPOT
 } LightData, *Light;
 
 // Light types
@@ -450,14 +449,14 @@ typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
 
 // Ray type (useful for raycast)
 typedef struct Ray {
-    Vector3 position;
-    Vector3 direction;
+    Vector3 position;       // Ray position (origin)
+    Vector3 direction;      // Ray direction
 } Ray;
 
 // Sound source type
 typedef struct Sound {
-    unsigned int source;
-    unsigned int buffer;
+    unsigned int source;    // Sound audio source id
+    unsigned int buffer;    // Sound audio buffer id
 } Sound;
 
 // Wave type, defines audio wave data
@@ -578,6 +577,12 @@ extern "C" {            // Prevents name mangling of functions
 void InitWindow(int width, int height, struct android_app *state);  // Init Android Activity and OpenGL Graphics
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
+#endif
+
+#if defined(PLATFORM_OCULUS)
+void InitOculusDevice(void);                                // Init Oculus Rift device
+void CloseOculusDevice(void);                               // Close Oculus Rift device
+void UpdateOculusTracking(void);                            // Update Oculus Rift tracking (position and orientation)
 #endif
 
 void CloseWindow(void);                                     // Close Window and Terminate Context
@@ -817,6 +822,7 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                   
 void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
+void DrawLight(Light light);                                                                       // Draw light in 3D world
 //DrawTorus(), DrawTeapot() are useless...
 
 //------------------------------------------------------------------------------------
@@ -859,8 +865,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
 //------------------------------------------------------------------------------------
 Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
-void SetDefaultShader(void);                                        // Set default shader to be used in batch draw
-void SetCustomShader(Shader shader);                                // Set custom shader to be used in batch draw
+
 Shader GetDefaultShader(void);                                      // Get default shader
 Shader GetStandardShader(void);                                     // Get default shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
@@ -870,10 +875,15 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // S
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
-void SetBlendMode(int mode);                                        // Set blending mode (alpha, additive, multiplied)
+void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+
+void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
+void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
+void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
+void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
-void DrawLights(void);                                              // Draw all created lights in 3D world
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 //----------------------------------------------------------------------------------
@@ -890,7 +900,6 @@ void ApplyForce(PhysicObject pObj, Vector2 force);                              
 void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
 
 Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
-void DrawPhysicObjectInfo(PhysicObject pObj, Vector2 position, int fontSize);           // Draw physic object information at screen position
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
@@ -910,7 +919,7 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
+int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
 void UpdateMusicStream(int index);                              // Updates buffers for music streaming
 void StopMusicStream(int index);                                // Stop music playing (close stream)
 void PauseMusicStream(int index);                               // Pause music playing
@@ -919,7 +928,7 @@ bool IsMusicPlaying(int index);                                 // Check if musi
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int getMusicStreamCount(void);
+int GetMusicStreamCount(void);
 void SetMusicPitch(int index, float pitch);
 
 // used to output raw audio streams, returns negative numbers on error
@@ -927,7 +936,7 @@ void SetMusicPitch(int index, float pitch);
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
 
 void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
+int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }

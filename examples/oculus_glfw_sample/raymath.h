@@ -73,7 +73,7 @@
 //----------------------------------------------------------------------------------
 
 #if defined(RAYMATH_STANDALONE)
-	// Vector2 type
+    // Vector2 type
     typedef struct Vector2 {
         float x;
         float y;
@@ -158,6 +158,7 @@ RMDEF void PrintMatrix(Matrix m);                             // Print matrix ut
 //------------------------------------------------------------------------------------
 RMDEF float QuaternionLength(Quaternion quat);                // Compute the length of a quaternion
 RMDEF void QuaternionNormalize(Quaternion *q);                // Normalize provided quaternion
+RMDEF void QuaternionInvert(Quaternion *quat);                // Invert provided quaternion
 RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
@@ -906,6 +907,23 @@ RMDEF void QuaternionNormalize(Quaternion *q)
     q->y *= ilength;
     q->z *= ilength;
     q->w *= ilength;
+}
+
+// Invert provided quaternion
+RMDEF void QuaternionInvert(Quaternion *quat)
+{
+    float length = QuaternionLength(*quat);
+    float lengthSq = length*length;
+    
+    if (lengthSq != 0.0)
+    {
+        float i = 1.0f/lengthSq;
+        
+        quat->x *= -i;
+        quat->y *= -i;
+        quat->z *= -i;
+        quat->w *= i;
+    }
 }
 
 // Calculate two quaternion multiplication

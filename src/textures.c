@@ -29,8 +29,8 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>             // Declares malloc() and free() for memory management
-#include <string.h>             // Required for strcmp(), strrchr(), strncmp()
+#include <stdlib.h>             // Required for: malloc(), free()
+#include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
                                 // Required: rlglLoadTexture() rlDeleteTextures(), 
@@ -40,10 +40,12 @@
                                 // NOTE: Includes Android fopen function map
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"          // Used to read image data (multiple formats support)
+#include "external/stb_image.h" // Required for: stbi_load()
+                                // NOTE: Used to read image data (multiple formats support)
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"   // Used on image scaling function: ImageResize()
+#include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8() 
+                                        // NOTE: Used for image scaling on ImageResize()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -1394,39 +1396,43 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Co
 // NOTE: origin is relative to destination rectangle size
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
-    if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
-    if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
-    
-    rlEnableTexture(texture.id);
+    // Check if texture is valid
+    if (texture.id != 0)
+    {
+        if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
+        if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
+        
+        rlEnableTexture(texture.id);
 
-    rlPushMatrix();
-        rlTranslatef(destRec.x, destRec.y, 0);
-        rlRotatef(rotation, 0, 0, 1);
-        rlTranslatef(-origin.x, -origin.y, 0);
+        rlPushMatrix();
+            rlTranslatef(destRec.x, destRec.y, 0);
+            rlRotatef(rotation, 0, 0, 1);
+            rlTranslatef(-origin.x, -origin.y, 0);
 
-        rlBegin(RL_QUADS);
-            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+            rlBegin(RL_QUADS);
+                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
+                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
-            // Bottom-left corner for texture and quad
-            rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
-            rlVertex2f(0.0f, 0.0f);
+                // Bottom-left corner for texture and quad
+                rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
+                rlVertex2f(0.0f, 0.0f);
 
-            // Bottom-right corner for texture and quad
-            rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-            rlVertex2f(0.0f, destRec.height);
+                // Bottom-right corner for texture and quad
+                rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+                rlVertex2f(0.0f, destRec.height);
 
-            // Top-right corner for texture and quad
-            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-            rlVertex2f(destRec.width, destRec.height);
+                // Top-right corner for texture and quad
+                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+                rlVertex2f(destRec.width, destRec.height);
 
-            // Top-left corner for texture and quad
-            rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-            rlVertex2f(destRec.width, 0.0f);
-        rlEnd();
-    rlPopMatrix();
+                // Top-left corner for texture and quad
+                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+                rlVertex2f(destRec.width, 0.0f);
+            rlEnd();
+        rlPopMatrix();
 
-    rlDisableTexture();
+        rlDisableTexture();
+    }
 }
 
 //----------------------------------------------------------------------------------

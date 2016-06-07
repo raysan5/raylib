@@ -9,21 +9,24 @@
 *                                           // This requires lots of memory on system.
 *   How to use:
 *   The four inputs t,b,c,d are defined as follows:
-*   t = current time in milliseconds
-*   b = starting position in only one dimension [X || Y || Z] your choice
+*   t = current time (in any unit measure, but same unit as duration)
+*   b = starting value to interpolate
 *   c = the total change in value of b that needs to occur
-*   d = total time it should take to complete
+*   d = total time it should take to complete (duration)
 *
 *   Example:
-*   float speed = 1.f;
-*   float currentTime = 0.f;
-*   float currentPos[2] = {0,0};
-*   float finalPos[2] = {1,1};
-*   float startPosition[2] = currentPos;//x,y positions
-*   while(currentPos[0] < finalPos[0])
-*       currentPos[0] = EaseSineIn(currentTime, startPosition[0], startPosition[0]-finalPos[0], speed);
-*       currentPos[1] = EaseSineIn(currentTime, startPosition[1], startPosition[1]-finalPos[0], speed);
-*       currentTime += diffTime();
+*
+*   int currentTime = 0;
+*   int duration = 100;
+*   float startPositionX = 0.0f;
+*   float finalPositionX = 30.0f;
+*   float currentPositionX = startPositionX;
+*
+*   while (currentPositionX < finalPositionX)
+*   {
+*       currentPositionX = EaseSineIn(currentTime, startPositionX, finalPositionX - startPositionX, duration);
+*       currentTime++;
+*   }
 *
 *   A port of Robert Penner's easing equations to C (http://robertpenner.com/easing/)
 *
@@ -87,7 +90,7 @@
     #define EASEDEF extern
 #endif
 
-#include <math.h>
+#include <math.h>       // Required for: sin(), cos(), sqrt(), pow()
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions

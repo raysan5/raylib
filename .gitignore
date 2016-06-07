@@ -66,3 +66,7 @@ src/libraylib.a
 
 # oculus example
 !examples/oculus_glfw_sample/LibOVRRT32_1.dll
+
+# external libraries DLLs
+!src/external/glfw3/lib/win32/glfw3.dll
+!src/external/openal_soft/lib/win32/OpenAL32.dll

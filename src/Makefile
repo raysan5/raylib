@@ -69,38 +69,33 @@ else
 endif
 
 # define compiler flags:
-#  -O1              defines optimization level
-#  -Wall            turns on most, but not all, compiler warnings
-#  -std=c99         defines C language mode (standard C from 1999 revision)
-#  -std=gnu99       defines C language mode (GNU C from 1999 revision)
-#  -fgnu89-inline   declaring inline functions support (GCC optimized, faster)
-CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline
+#  -O1                  defines optimization level
+#  -Wall                turns on most, but not all, compiler warnings
+#  -std=c99             defines C language mode (standard C from 1999 revision)
+#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline       declaring inline functions support (GCC optimized, faster)
+#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
+CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES = -I. -Iexternal -I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
 else
-    INCLUDES = -I. -I../src
-# external libraries headers
-# GLFW3
-    INCLUDES += -I../external/glfw3/include
-# OpenAL Soft
-    INCLUDES += -I../external/openal_soft/include
+# STB libraries and others
+    INCLUDES = -I. -Iexternal
+# GLFW3 library
+    INCLUDES += -Iexternal/glfw3/include
+# OpenAL Soft library
+    INCLUDES += -Iexternal/openal_soft/include
 endif
 
 # define all object files required
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    OBJS = core.o rlgl.o glad.o shapes.o text.o textures.o models.o audio.o utils.o camera.o gestures.o stb_vorbis.o
-else
-    #GLAD only required on desktop platform
-    OBJS = core.o rlgl.o shapes.o text.o textures.o models.o audio.o stb_vorbis.o utils.o camera.o gestures.o
-endif
-
+OBJS = core.o rlgl.o shapes.o text.o textures.o models.o audio.o utils.o camera.o gestures.o stb_vorbis.o
 
 # typing 'make' will invoke the default target entry called 'all',
-# in this case, the 'default' target entry is basic_game
+# in this case, the 'default' target entry is raylib
 all: raylib
 
 # compile raylib library
@@ -119,10 +114,6 @@ core.o: core.c
 # compile rlgl module
 rlgl.o: rlgl.c
 	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-
-# compile glad module
-glad.o: glad.c
-	$(CC) -c glad.c $(CFLAGS) $(INCLUDES)
 
 # compile shapes module
 shapes.o: shapes.c
@@ -144,10 +135,6 @@ models.o: models.c
 audio.o: audio.c
 	$(CC) -c audio.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-# compile stb_vorbis library
-stb_vorbis.o: stb_vorbis.c
-	$(CC) -c stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
-
 # compile utils module
 utils.o: utils.c
 	$(CC) -c utils.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
@@ -159,6 +146,10 @@ camera.o: camera.c
 # compile gestures module
 gestures.o: gestures.c
 	$(CC) -c gestures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile stb_vorbis library
+stb_vorbis.o: external/stb_vorbis.c
+	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
 
 # clean everything
 clean:

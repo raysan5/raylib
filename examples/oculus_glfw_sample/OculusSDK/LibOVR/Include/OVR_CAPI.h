@@ -1,7 +1,7 @@
 /********************************************************************************//**
 \file      OVR_CAPI.h
 \brief     C Interface to the Oculus PC SDK tracking and rendering library.
-\copyright Copyright 2014-2016 Oculus VR, LLC All Rights reserved.
+\copyright Copyright 2014 Oculus VR, LLC All Rights reserved.
 ************************************************************************************/
 
 #ifndef OVR_CAPI_h  //   We don't use version numbers within this name, as all versioned variations of this file are currently mutually exclusive.
@@ -687,6 +687,11 @@ typedef enum ovrTextureMiscFlags_
     /// call. This flag requires that RenderTarget binding also be specified.
     ovrTextureMisc_AllowGenerateMips = 0x0002,
 
+    /// Texture swap chain contains protected content, and requires
+    /// HDCP connection in order to display to HMD. Also prevents
+    /// mirroring or other redirection of any frame containing this contents
+    ovrTextureMisc_ProtectedContent = 0x0004,
+
     ovrTextureMisc_EnumSize = 0x7fffffff  ///< \internal Force type int32_t.
 } ovrTextureFlags;
 
@@ -695,7 +700,7 @@ typedef enum ovrTextureMiscFlags_
 /// \see ovr_CreateTextureSwapChainDX
 /// \see ovr_CreateTextureSwapChainGL
 ///
-typedef struct
+typedef struct ovrTextureSwapChainDesc_
 {
     ovrTextureType      Type;
     ovrTextureFormat    Format;
@@ -705,7 +710,7 @@ typedef struct
     int                 MipLevels;
     int                 SampleCount;    ///< Current only supported on depth textures
     ovrBool             StaticImage;    ///< Not buffered in a chain. For images that don't change
-    unsigned int        MiscFlags;      ///< ovrTextureMiscFlags
+    unsigned int        MiscFlags;      ///< ovrTextureFlags
     unsigned int        BindFlags;      ///< ovrTextureBindFlags. Not used for GL.
 } ovrTextureSwapChainDesc;
 
@@ -714,12 +719,12 @@ typedef struct
 /// \see ovr_CreateMirrorTextureDX
 /// \see ovr_CreateMirrorTextureGL
 ///
-typedef struct
+typedef struct ovrMirrorTextureDesc_
 {
     ovrTextureFormat    Format;
     int                 Width;
     int                 Height;
-    unsigned int        MiscFlags;      ///< ovrTextureMiscFlags
+    unsigned int        MiscFlags;      ///< ovrTextureFlags
 } ovrMirrorTextureDesc;
 
 typedef struct ovrTextureSwapChainData* ovrTextureSwapChain;
@@ -987,8 +992,8 @@ extern "C" {
 /// Initializes LibOVR
 ///
 /// Initialize LibOVR for application usage. This includes finding and loading the LibOVRRT
-/// shared library. No LibOVR API functions, other than ovr_GetLastErrorInfo, can be called
-/// unless ovr_Initialize succeeds. A successful call to ovr_Initialize must be eventually
+/// shared library. No LibOVR API functions, other than ovr_GetLastErrorInfo and ovr_Detect, can
+/// be called unless ovr_Initialize succeeds. A successful call to ovr_Initialize must be eventually
 /// followed by a call to ovr_Shutdown. ovr_Initialize calls are idempotent.
 /// Calling ovr_Initialize twice does not require two matching calls to ovr_Shutdown.
 /// If already initialized, the return value is ovr_Success.
@@ -1696,6 +1701,14 @@ OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrMirror
 /// \param[in] pixelsPerDisplayPixel Specifies the ratio of the number of render target pixels
 ///            to display pixels at the center of distortion. 1.0 is the default value. Lower
 ///            values can improve performance, higher values give improved quality.
+///
+/// <b>Example code</b>
+///     \code{.cpp}
+///         ovrHmdDesc hmdDesc = ovr_GetHmdDesc(session);
+///         ovrSizei eyeSizeLeft  = ovr_GetFovTextureSize(session, ovrEye_Left,  hmdDesc.DefaultEyeFov[ovrEye_Left],  1.0f);
+///         ovrSizei eyeSizeRight = ovr_GetFovTextureSize(session, ovrEye_Right, hmdDesc.DefaultEyeFov[ovrEye_Right], 1.0f);
+///     \endcode
+///
 /// \return Returns the texture width and height size.
 ///
 OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov,

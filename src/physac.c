@@ -29,8 +29,8 @@
     #include "raylib.h"
 #endif
 
-#include <stdlib.h>         // Declares malloc() and free() for memory management
-#include <math.h>           // Declares cos(), sin(), abs() and fminf() for math operations
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <math.h>           // Required for: cos(), sin(), abs(), fminf()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -568,22 +568,6 @@ void ApplyForceAtPosition(Vector2 position, float force, float radius)
 Rectangle TransformToRectangle(Transform transform)
 {
     return (Rectangle){transform.position.x, transform.position.y, transform.scale.x, transform.scale.y};
-}
-
-// Draw physic object information at screen position
-void DrawPhysicObjectInfo(PhysicObject pObj, Vector2 position, int fontSize)
-{
-    // Draw physic object ID
-    DrawText(FormatText("PhysicObject ID: %i - Enabled: %i", pObj->id, pObj->enabled), position.x, position.y, fontSize, BLACK);
-    
-    // Draw physic object transform values
-    DrawText(FormatText("\nTRANSFORM\nPosition: %f, %f\nRotation: %f\nScale: %f, %f", pObj->transform.position.x, pObj->transform.position.y, pObj->transform.rotation, pObj->transform.scale.x, pObj->transform.scale.y), position.x, position.y, fontSize, BLACK);
-    
-    // Draw physic object rigidbody values
-    DrawText(FormatText("\n\n\n\n\n\nRIGIDBODY\nEnabled: %i\nMass: %f\nAcceleration: %f, %f\nVelocity: %f, %f\nApplyGravity: %i\nIsGrounded: %i\nFriction: %f\nBounciness: %f", pObj->rigidbody.enabled, pObj->rigidbody.mass, pObj->rigidbody.acceleration.x, pObj->rigidbody.acceleration.y, 
-    pObj->rigidbody.velocity.x, pObj->rigidbody.velocity.y, pObj->rigidbody.applyGravity, pObj->rigidbody.isGrounded, pObj->rigidbody.friction, pObj->rigidbody.bounciness), position.x, position.y, fontSize, BLACK);
-    
-    DrawText(FormatText("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCOLLIDER\nEnabled: %i\nBounds: %i, %i, %i, %i\nRadius: %i", pObj->collider.enabled, pObj->collider.bounds.x, pObj->collider.bounds.y, pObj->collider.bounds.width, pObj->collider.bounds.height, pObj->collider.radius), position.x, position.y, fontSize, BLACK);
 }
 
 //----------------------------------------------------------------------------------

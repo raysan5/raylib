@@ -28,40 +28,43 @@
 
 #include "rlgl.h"
 
-#include <stdio.h>          // Standard input / output lib
-#include <stdlib.h>         // Declares malloc() and free() for memory management, rand()
-#include <string.h>         // Declares strcmp(), strlen(), strtok()
+#include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on ReadTextFile()]
+#include <stdlib.h>                 // Required for: malloc(), free(), rand()
+#include <string.h>                 // Required for: strcmp(), strlen(), strtok()
 
 #ifndef RLGL_STANDALONE
-    #include "raymath.h"    // Required for Vector3 and Matrix functions
+    #include "raymath.h"            // Required for Vector3 and Matrix functions
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #ifdef __APPLE__                // OpenGL include for OSX
-        #include <OpenGL/gl.h>
+    #ifdef __APPLE__                
+        #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
     #else
-        #include <GL/gl.h>          // Basic OpenGL include
+        #include <GL/gl.h>          // OpenGL 1.1 library
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #ifdef __APPLE__                // OpenGL include for OSX
-        #include <OpenGL/gl3.h>
+    #ifdef __APPLE__ 
+        #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-        //#define GLEW_STATIC
-        //#include <GL/glew.h>        // GLEW header, includes OpenGL headers
-        #include "glad.h"         // glad header, includes OpenGL headers
+        #define GLAD_IMPLEMENTATION
+        #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
     #endif
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    #include <EGL/egl.h>
-    #include <GLES2/gl2.h>
-    #include <GLES2/gl2ext.h>
+    #include <EGL/egl.h>            // EGL library
+    #include <GLES2/gl2.h>          // OpenGL ES 2.0 library
+    #include <GLES2/gl2ext.h>       // OpenGL ES 2.0 extensions library
 #endif
 
 #if defined(RLGL_STANDALONE)
-    #include <stdarg.h>         // Used for functions with variable number of parameters (TraceLog())
+    #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
+#endif
+
+#if !defined(GRAPHICS_API_OPENGL_11)
+    #include "standard_shader.h"    // Standard shader to embed
 #endif
 
 //----------------------------------------------------------------------------------
@@ -191,26 +194,27 @@ static bool useTempBuffer = false;
 
 // Shader Programs
 static Shader defaultShader;
-static Shader standardShader;
-static Shader currentShader;            // By default, defaultShader
+static Shader standardShader;               // Lazy initialization when GetStandardShader()
+static Shader currentShader;                // By default, defaultShader
+static bool standardShaderLoaded = false;   
 
 // Flags for supported extensions
-static bool vaoSupported = false;   // VAO support (OpenGL ES2 could not support VAO extension)
+static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
 
 // Compressed textures support flags
-static bool texCompETC1Supported = false;    // ETC1 texture compression support
-static bool texCompETC2Supported = false;    // ETC2/EAC texture compression support
-static bool texCompPVRTSupported = false;    // PVR texture compression support
-static bool texCompASTCSupported = false;    // ASTC texture compression support
+static bool texCompETC1Supported = false;   // ETC1 texture compression support
+static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
+static bool texCompPVRTSupported = false;   // PVR texture compression support
+static bool texCompASTCSupported = false;   // ASTC texture compression support
 
 // Lighting data
-static Light lights[MAX_LIGHTS];             // Lights pool
-static int lightsCount;                      // Counts current enabled physic objects
+static Light lights[MAX_LIGHTS];            // Lights pool
+static int lightsCount;                     // Counts current enabled physic objects
 #endif
 
 // Compressed textures support flags
-static bool texCompDXTSupported = false;     // DDS texture compression support
-static bool npotSupported = false;           // NPOT textures full support
+static bool texCompDXTSupported = false;    // DDS texture compression support
+static bool npotSupported = false;          // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -237,7 +241,7 @@ static Shader LoadDefaultShader(void);      // Load default shader (just vertex 
 static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
 static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadDefaultShader(void);      // Unload default shader
-static void UnloadStandardShader(void);      // Unload standard shader
+static void UnloadStandardShader(void);     // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
@@ -256,7 +260,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight);
 
 #if defined(RLGL_STANDALONE)
 static void TraceLog(int msgType, const char *text, ...);
-float *MatrixToFloat(Matrix mat);   // Converts Matrix to float array
+float *MatrixToFloat(Matrix mat);           // Converts Matrix to float array
 #endif
 
 //----------------------------------------------------------------------------------
@@ -357,7 +361,6 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     Vector3 axis = (Vector3){ x, y, z };
     VectorNormalize(&axis);
     matRotation = MatrixRotate(axis, angleDeg*DEG2RAD);
-
     MatrixTranspose(&matRotation);
 
     *currentMatrix = MatrixMultiply(*currentMatrix, matRotation);
@@ -912,8 +915,8 @@ void rlglInit(void)
     vaoSupported = true;
     npotSupported = true;
 
-    // NOTE: We don't need to check again supported extensions but we do (in case GLEW is replaced sometime)
     // We get a list of available extensions and we check for some of them (compressed textures)
+    // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
     const char *extList[numExt];
     
@@ -1034,7 +1037,6 @@ void rlglInit(void)
 
     // Init default Shader (customized for GL 3.3 and ES2)
     defaultShader = LoadDefaultShader();
-    standardShader = LoadStandardShader();
     currentShader = defaultShader;
 
     LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
@@ -1069,6 +1071,13 @@ void rlglClose(void)
     // Delete default white texture
     glDeleteTextures(1, &whiteTexture);
     TraceLog(INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
+    
+    // Unload lights
+    if (lightsCount > 0)
+    {
+        for (int i = 0; i < lightsCount; i++) free(lights[i]);
+        lightsCount = 0;
+    }
 
     free(draws);
 #endif
@@ -1538,10 +1547,10 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[5] = 0;     // Vertex texcoords2 VBO
     mesh->vboId[6] = 0;     // Vertex indices VBO
     
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vaoId = 0;       // Vertex Array Objects (VAO)
     GLuint vboId[7];        // Vertex Buffer Objects (VBOs)
 
@@ -1667,6 +1676,7 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
 // Update vertex data on GPU (upload new data to one buffer)
 void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Activate mesh VAO
     if (vaoSupported) glBindVertexArray(mesh.vaoId);
         
@@ -1722,6 +1732,7 @@ void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
     //mesh.vertices = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
     // Now we can modify vertices
     //glUnmapBuffer(GL_ARRAY_BUFFER);
+#endif
 }
 
 // Draw a 3d mesh with material and transform
@@ -1792,9 +1803,6 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         
         // Setup shader uniforms for lights
         SetShaderLights(material.shader);
-        
-        // Upload to shader material.colSpecular
-        glUniform4f(glGetUniformLocation(material.shader.id, "colTint"), (float)material.colTint.r/255, (float)material.colTint.g/255, (float)material.colTint.b/255, (float)material.colTint.a/255);
         
         // Upload to shader material.colAmbient
         glUniform4f(glGetUniformLocation(material.shader.id, "colAmbient"), (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
@@ -2149,8 +2157,8 @@ void UnloadShader(Shader shader)
     }
 }
 
-// Set custom shader to be used on batch draw
-void SetCustomShader(Shader shader)
+// Begin custom shader mode
+void BeginShaderMode(Shader shader)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (currentShader.id != shader.id)
@@ -2161,11 +2169,11 @@ void SetCustomShader(Shader shader)
 #endif
 }
 
-// Set default shader to be used in batch draw
-void SetDefaultShader(void)
+// End custom shader mode (returns to default shader)
+void EndShaderMode(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    SetCustomShader(defaultShader);
+    BeginShaderMode(defaultShader);
 #endif
 }
 
@@ -2181,14 +2189,22 @@ Shader GetDefaultShader(void)
 }
 
 // Get default shader
+// NOTE: Inits global variable standardShader
 Shader GetStandardShader(void)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    return standardShader;
-#else
     Shader shader = { 0 };
-    return shader;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (standardShaderLoaded) shader = standardShader;
+    else
+    {
+        // Lazy initialization of standard shader
+        standardShader = LoadStandardShader();
+        shader = standardShader;
+    }
 #endif
+
+    return shader;
 }
 
 // Get shader uniform location
@@ -2247,9 +2263,25 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
 #endif
 }
 
-// Set blending mode (alpha, additive, multiplied)
-// NOTE: Only 3 blending modes predefined
-void SetBlendMode(int mode)
+// Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixProjection(Matrix proj)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    projection = proj;
+#endif
+}
+
+// Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixModelview(Matrix view)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    modelview = view;
+#endif
+}
+
+// Begin blending mode (alpha, additive, multiplied)
+// NOTE: Only 3 blending modes supported, default blend mode is alpha
+void BeginBlendMode(int mode)
 {
     if ((blendMode != mode) && (mode < 3))
     {
@@ -2267,11 +2299,20 @@ void SetBlendMode(int mode)
     }
 }
 
+// End blending mode (reset to default: alpha blending)
+void EndBlendMode(void)
+{
+    BeginBlendMode(BLEND_ALPHA);
+}
+
 // Create a new light, initialize it and add to pool
 Light CreateLight(int type, Vector3 position, Color diffuse)
 {
+    Light light = NULL;
+    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Allocate dynamic memory
-    Light light = (Light)malloc(sizeof(LightData));
+    light = (Light)malloc(sizeof(LightData));
     
     // Initialize light values with generic values
     light->id = lightsCount;
@@ -2288,44 +2329,18 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
     
     // Increase enabled lights count
     lightsCount++;
-    
-    return light;
-}
+#else
+    // TODO: Support OpenGL 1.1 lighting system
+    TraceLog(WARNING, "Lighting currently not supported on OpenGL 1.1");
+#endif
 
-// Draw all created lights in 3D world
-void DrawLights(void)
-{
-    for (int i = 0; i < lightsCount; i++)
-    {
-        switch (lights[i]->type)
-        {
-            case LIGHT_POINT:
-            {
-                DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                Draw3DCircle(lights[i]->position, lights[i]->radius, 0.0f, (Vector3){ 0, 0, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                Draw3DCircle(lights[i]->position, lights[i]->radius, 90.0f, (Vector3){ 1, 0, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                Draw3DCircle(lights[i]->position, lights[i]->radius, 90.0f, (Vector3){ 0, 1, 0 }, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-            } break;
-            case LIGHT_DIRECTIONAL:
-            {                
-                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawSphereWires(lights[i]->position, 0.3f*lights[i]->intensity, 4, 8, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-            } break;
-            case LIGHT_SPOT:
-            {                
-                Draw3DLine(lights[i]->position, lights[i]->target, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawCylinderWires(lights[i]->position, 0.0f, 0.3f*lights[i]->coneAngle/50, 0.6f, 5, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-                DrawCubeWires(lights[i]->target, 0.3f, 0.3f, 0.3f, (lights[i]->enabled ? lights[i]->diffuse : BLACK));
-            } break;
-            default: break;
-        }
-    }
+    return light;
 }
 
 // Destroy a light and take it out of the list
 void DestroyLight(Light light)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Free dynamic memory allocation
     free(lights[light->id]);
     
@@ -2343,6 +2358,7 @@ void DestroyLight(Light light)
     
     // Decrease enabled physic objects count
     lightsCount--;
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -2390,7 +2406,7 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
 static unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
 {
     unsigned int program = 0;
-	
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     GLuint vertexShader;
     GLuint fragmentShader;
@@ -2564,18 +2580,28 @@ static Shader LoadDefaultShader(void)
 
 // Load standard shader
 // NOTE: This shader supports: 
-//      - Up to 3 different maps: diffuse, normal, specular
-//      - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
-//      - Up to 8 lights: Point, Directional or Spot
+//     - Up to 3 different maps: diffuse, normal, specular
+//     - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
+//     - Up to 8 lights: Point, Directional or Spot
 static Shader LoadStandardShader(void)
 {
-    // Load standard shader (TODO: rewrite as char pointers)
-    Shader shader = LoadShader("resources/shaders/standard.vs", "resources/shaders/standard.fs");
+    Shader shader;
+    
+    // Load standard shader (embeded in standard_shader.h)
+    shader.id = LoadShaderProgram(vStandardShaderStr, fStandardShaderStr);
 
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
-    else TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded", shader.id);
-
-    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+    if (shader.id != 0)
+    {
+        LoadDefaultShaderLocations(&shader);
+        TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
+        
+        standardShaderLoaded = true;
+    }
+    else
+    {
+        TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded, using default shader", shader.id);
+        shader = GetDefaultShader();
+    }
 
     return shader;
 }
@@ -3080,7 +3106,7 @@ static void UnloadDefaultBuffers(void)
     free(quads.indices);
 }
 
-// Sets shader uniform values for lights array
+// Setup shader uniform values for lights array
 // NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
 static void SetShaderLights(Shader shader)
 {

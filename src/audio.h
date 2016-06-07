@@ -41,8 +41,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #ifndef true
+    #if !defined(_STDBOOL_H)
         typedef enum { false, true } bool;
+        #define _STDBOOL_H
     #endif
 #endif
 
@@ -50,6 +51,7 @@
 typedef struct Sound {
     unsigned int source;
     unsigned int buffer;
+    AudioError error; // if there was any error during the creation or use of this Sound
 } Sound;
 
 // Wave type, defines audio wave data
@@ -62,6 +64,7 @@ typedef struct Wave {
 } Wave;
 
 typedef int RawAudioContext;
+
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -90,7 +93,7 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int musicIndex, char *fileName);            // Start music playing (open stream)
+int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
 void UpdateMusicStream(int index);                              // Updates buffers for music streaming
 void StopMusicStream(int index);                                // Stop music playing (close stream)
 void PauseMusicStream(int index);                               // Pause music playing
@@ -99,7 +102,7 @@ bool IsMusicPlaying(int index);                                 // Check if musi
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
 float GetMusicTimeLength(int index);                            // Get music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int getMusicStreamCount(void);
+int GetMusicStreamCount(void);
 void SetMusicPitch(int index, float pitch);
 
 // used to output raw audio streams, returns negative numbers on error
@@ -107,7 +110,7 @@ void SetMusicPitch(int index, float pitch);
 RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
 
 void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, int numberElements); // returns number of elements buffered
+int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
 
 #ifdef __cplusplus
 }
