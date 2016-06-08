@@ -226,21 +226,21 @@ contributing (in some way or another) to make raylib project better. Huge thanks
 
  - [Zopokx](https://github.com/Zopokx) for testing the web.
  - [Elendow](http://www.elendow.com) for testing and helping on web development.
- - Victor Dual for implementating and testing of 3D shapes functions.
- - Marc Palau for implementating and testing of 3D shapes functions and helping on development of camera and gestures modules.
+ - Victor Dual for implementing and testing 3D shapes functions.
+ - Marc Palau for implementing and testing 3D shapes functions and contribute on camera and gestures modules.
  - Kevin Gato for improving texture internal formats support and helping on raygui development. 
  - Daniel Nicolas for improving texture internal formats support and helping on raygui development. 
  - Marc Agüera for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Daniel Moreno for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Daniel Gomez for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
- - Sergio Martinez for helping on raygui development and tools development.
+ - Sergio Martinez for helping on raygui development and tools development (raygui_styler).
  - [Victor Fisac](https://github.com/victorfisac) for developing physics raylib module (physac) and implementing materials and lighting systems... among multiple other improvements and multiple tools and games. 
  - Albert Martos for helping on raygui and porting examples and game-templates to Android and HTML5.
  - Ian Eito for helping on raygui and porting examples and game-templates to Android and HTML5.
  - [procedural](https://github.com/procedural) for testing raylib on Linux, correcting some bugs and adding several mouse functions.
  - [Chris Hemingway](https://github.com/cHemingway) for improving raylib on OSX build system.
  - [Emanuele Petriglia](https://github.com/LelixSuper) for working on multiple GNU/Linux improvements and developing [TicTacToe](https://github.com/LelixSuper/TicTacToe) raylib game.
- - [Joshua Reisenauer](https://github.com/kd7tck) for adding audio modules (XM, MOD) support and audio system redesign.
+ - [Joshua Reisenauer](https://github.com/kd7tck) for adding audio modules support (XM, MOD) and reviewing audio system.
  
 	
 [raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"
