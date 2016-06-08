@@ -513,11 +513,6 @@ void CloseWindow(void)
     }
 #endif
 
-#if defined(PLATFORM_OCULUS)
-    ovr_Destroy(session);   // Must be called after glfwTerminate()
-    ovr_Shutdown();
-#endif
-
     TraceLog(INFO, "Window closed successfully");
 }
 
@@ -526,6 +521,7 @@ void CloseWindow(void)
 // NOTE: Device initialization should be done before window creation?
 void InitOculusDevice(void)
 {
+    // Initialize Oculus device
     ovrResult result = ovr_Initialize(NULL);
     if (OVR_FAILURE(result)) TraceLog(ERROR, "OVR: Could not initialize Oculus device");
 
@@ -545,13 +541,13 @@ void InitOculusDevice(void)
     TraceLog(INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
     TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
     
-    screenWidth = hmdDesc.Resolution.w/2;
-    screenHeight = hmdDesc.Resolution.h/2;
+    // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
+    // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
     
     // Initialize Oculus Buffers
     layer = InitOculusLayer(session);   
     buffer = LoadOculusBuffer(session, layer.width, layer.height);
-    mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
+    mirror = LoadOculusMirror(session, screenWidth, screenHeight);
     layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
 }
 
@@ -561,8 +557,8 @@ void CloseOculusDevice(void)
     UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
     UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
 
-    ovr_Destroy(session);   // Must be called after glfwTerminate() -->  REALLY???
-    ovr_Shutdown();
+    ovr_Destroy(session);   // Free Oculus session data
+    ovr_Shutdown();         // Close Oculus device connection
 }
 
 // Update Oculus Rift tracking (position and orientation)
@@ -1625,31 +1621,7 @@ static void InitDisplay(int width, int height)
 
     // Downscale matrix is required in case desired screen area is bigger than display area
     downscaleView = MatrixIdentity();
-    
-#if defined(PLATFORM_OCULUS)
-    ovrResult result = ovr_Initialize(NULL);
-    if (OVR_FAILURE(result)) TraceLog(ERROR, "OVR: Could not initialize Oculus device");
 
-    result = ovr_Create(&session, &luid);
-    if (OVR_FAILURE(result))
-    {
-        TraceLog(WARNING, "OVR: Could not create Oculus session");
-        ovr_Shutdown();
-    }
-
-    hmdDesc = ovr_GetHmdDesc(session);
-    
-    TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-    TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-    TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-    TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
-    TraceLog(INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
-    TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
-    
-    screenWidth = hmdDesc.Resolution.w/2;
-    screenHeight = hmdDesc.Resolution.h/2;
-#endif
-    
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 
@@ -1963,14 +1935,6 @@ static void InitGraphics(void)
 {
     rlglInit();                     // Init rlgl
     rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
-
-#if defined(PLATFORM_OCULUS)
-    // Initialize Oculus Buffers
-    layer = InitOculusLayer(session);   
-    buffer = LoadOculusBuffer(session, layer.width, layer.height);
-    mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);
-    layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
-#endif
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
