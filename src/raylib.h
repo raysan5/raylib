@@ -527,40 +527,6 @@ typedef struct GestureEvent {
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
-typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE } ColliderType;
-
-typedef struct Transform {
-    Vector2 position;
-    float rotation;         // Radians (not used)
-    Vector2 scale;          // Just for rectangle physic objects, for circle physic objects use collider radius and keep scale as { 0, 0 }
-} Transform;
-
-typedef struct Rigidbody {
-    bool enabled;           // Acts as kinematic state (collisions are calculated anyway)
-    float mass;
-    Vector2 acceleration;
-    Vector2 velocity;
-    bool applyGravity;
-    bool isGrounded;
-    float friction;         // Normalized value
-    float bounciness;
-} Rigidbody;
-
-typedef struct Collider {
-    bool enabled;
-    ColliderType type;
-    Rectangle bounds;       // Used for COLLIDER_RECTANGLE
-    int radius;             // Used for COLLIDER_CIRCLE
-} Collider;
-
-typedef struct PhysicObjectData {
-    unsigned int id;
-    Transform transform;
-    Rigidbody rigidbody;
-    Collider collider;
-    bool enabled;
-} PhysicObjectData, *PhysicObject;
-
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -885,21 +851,6 @@ void EndBlendMode(void);                                            // End blend
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
-
-//----------------------------------------------------------------------------------
-// Physics System Functions (Module: physac)
-//----------------------------------------------------------------------------------
-void InitPhysics(Vector2 gravity);                                                      // Initializes pointers array (just pointers, fixed size)
-void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
-void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
-
-PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);       // Create a new physic object dinamically, initialize it and add to pool
-void DestroyPhysicObject(PhysicObject pObj);                                            // Destroy a specific physic object and take it out of the list
-
-void ApplyForce(PhysicObject pObj, Vector2 force);                                      // Apply directional force to a physic object
-void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
-
-Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
