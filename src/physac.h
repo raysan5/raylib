@@ -190,7 +190,7 @@ PHYSACDEF Rectangle TransformToRectangle(Transform transform);                  
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define MAX_PHYSIC_BODIES       256             // Maximum available physic bodies slots in bodies pool
-#define PHYSICS_STEPS           450             // Physics update steps number (divided calculations in steps per frame) to get more accurately collisions detections
+#define PHYSICS_STEPS            64             // Physics update steps per frame for improved collision-detection
 #define PHYSICS_ACCURACY        0.0001f         // Velocity subtract operations round filter (friction)
 #define PHYSICS_ERRORPERCENT    0.001f          // Collision resolve position fix
 
