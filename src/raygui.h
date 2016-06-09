@@ -1,8 +1,9 @@
 /*******************************************************************************************
 *
-*   raygui v1.2 - IMGUI (Immedite Mode GUI) library for raylib (https://github.com/raysan5/raylib)
+*   raygui 1.0 - IMGUI (Immedite Mode GUI) library for raylib (https://github.com/raysan5/raylib)
 *
-*   raygui is a library for creating simple IMGUI interfaces. It provides a set of basic components:
+*   raygui is a library for creating simple IMGUI interfaces using raylib. 
+*   It provides a set of basic components:
 *
 *       - Label
 *       - Button
@@ -16,30 +17,50 @@
 *       - Spinner
 *       - TextBox
 *
-*   It also provides a set of functions for styling the components based on a set of properties.
-*
-*   USAGE:
-*   
-*   Include this file in any C/C++ file that requires it; in ONLY one of them, write:
-*       #define RAYGUI_IMPLEMENTATION
-*   before the #include of this file. This expands out the actual implementation into that file.
-*   
+*   It also provides a set of functions for styling the components based on its properties (size, color).
+* 
 *   CONFIGURATION:
 *   
-*   You can #define RAYGUI_STANDALONE to avoid raylib.h inclusion (not dependant on raylib functions and types).
-*       NOTE: Some external funtions are required for drawing and input management, check implementation code.
+*   #define RAYGUI_IMPLEMENTATION
+*       Generates the implementation of the library into the included file.
+*       If not defined, the library is in header only mode and can be included in other headers 
+*       or source files without problems. But only ONE file should hold the implementation.
 *
-*   You can #define RAY_MALLOC() to replace malloc() and free() function by your own.
+*   #define RAYGUI_STATIC (defined by default)
+*       The generated implementation will stay private inside implementation file and all 
+*       internal symbols and functions will only be visible inside that file.
 *
-*   You can #define RAYGUI_STATIC to make the implementation private to the file that generates the implementation,
+*   #define RAYGUI_STANDALONE
+*       Avoid raylib.h header inclusion in this file. Data types defined on raylib are defined
+*       internally in the library and input management and drawing functions must be provided by
+*       the user (check library implementation for further details).
 *
-*   VERSIONS AND CREDITS:
+*   #define RAYGUI_MALLOC()
+*   #define RAYGUI_FREE()
+*       You can define your own malloc/free implementation replacing stdlib.h malloc()/free() functions.
+*       Otherwise it will include stdlib.h and use the C standard library malloc()/free() function.
+*       
+*   LIMITATIONS: 
 *
-*   1.2 (07-Jun-2016) Converted to header-only by Ramon Santamaria
-*   1.1 (07-Mar-2016) Reviewed and expanded by Albert Martos, Ian Eito, Sergio Martinez and Ramon Santamaria.
-*   1.0 (27-Aug-2015) Initial release. Implemented by Kevin Gato, Daniel Nicolás and Ramon Santamaria.
+*       // TODO.
+*
+*   VERSIONS:
+*
+*   1.0 (07-Jun-2016) Converted to header-only by Ramon Santamaria.
+*   0.9 (07-Mar-2016) Reviewed and tested by Albert Martos, Ian Eito, Sergio Martinez and Ramon Santamaria.
+*   0.8 (27-Aug-2015) Initial release. Implemented by Kevin Gato, Daniel Nicolás and Ramon Santamaria.
+*
+*   CONTRIBUTORS:
+*       Ramon Santamaria: Functions design and naming conventions.
+*       Kevin Gato: Initial implementation of basic components.
+*       Daniel Nicolas: Initial implementation of basic components.
+*       Albert Martos: Review and testing of library.
+*       Ian Eito: Review and testing of the library.
+*       Sergio Martinez: Review and testing of the library.
 *
 *   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2015-2016 emegeme (@emegemegames)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -355,29 +376,27 @@ RAYGUIDEF int GetStyleProperty(int guiProperty);                          // Get
 #endif // RAYGUI_H
 
 
-/*********************************************************************************************************
+/***********************************************************************************
 *
-*       RAYGUI IMPLEMENTATION
+*   RAYGUI IMPLEMENTATION
 *
-**********************************************************************************************************/
+************************************************************************************/
 
 #if defined(RAYGUI_IMPLEMENTATION)
 
-#include <stdio.h>      // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf()
-                        // NOTE: Those functions are only used in SaveGuiStyle() and LoadGuiStyle()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fprintf(), feof(), fscanf()
+                            // NOTE: Those functions are only used in SaveGuiStyle() and LoadGuiStyle()
                         
-#include <stdlib.h>     // Required for: malloc(), free() [Used only on LoadGuiStyle()]
-#include <string.h>     // Required for: strcmp() [Used only on LoadGuiStyle()]
-#include <stdarg.h>     // Required for: va_list, va_start(), vfprintf(), va_end()
-
-/*
-// NOTE: Example on how to define custom functions
-#if !defined(RAY_MALLOC)
-    #include <stdlib.h>
-    #define RAY_MALLOC(size,c) malloc(size)
-    #define RAY_FREE(ptr,c) free(ptr)
+// Check if custom malloc/free functions defined, if not, using standard ones
+#if !defined(RAYGUI_MALLOC)
+    #include <stdlib.h>     // Required for: malloc(), free() [Used only on LoadGuiStyle()]
+    
+    #define RAYGUI_MALLOC(size)  malloc(size)
+    #define RAYGUI_FREE(ptr)     free(ptr)
 #endif
-*/
+
+#include <string.h>         // Required for: strcmp() [Used only on LoadGuiStyle()]
+#include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -1272,7 +1291,7 @@ RAYGUIDEF void LoadGuiStyle(const char *fileName)
         int value;
     } StyleProperty;
     
-    StyleProperty *styleProp = (StyleProperty *)malloc(MAX_STYLE_PROPERTIES*sizeof(StyleProperty));; 
+    StyleProperty *styleProp = (StyleProperty *)RAYGUI_MALLOC(MAX_STYLE_PROPERTIES*sizeof(StyleProperty));; 
     int counter = 0;
     
     FILE *styleFile = fopen(fileName, "rt");
@@ -1297,7 +1316,7 @@ RAYGUIDEF void LoadGuiStyle(const char *fileName)
         }
     }
     
-    free(styleProp);
+    RAYGUI_FREE(styleProp);
 }
 
 // Set one style property value
