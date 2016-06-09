@@ -236,7 +236,7 @@ unsigned int whiteTexture;
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
-static unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr);  // Load custom shader strings and return program id
+static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShaderStr);  // Load custom shader strings and return program id
 
 static Shader LoadDefaultShader(void);      // Load default shader (just vertex positioning and texture coloring)
 static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
@@ -2403,7 +2403,7 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
 }
 
 // Load custom shader strings and return program id
-static unsigned int LoadShaderProgram(char *vShaderStr, char *fShaderStr)
+static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShaderStr)
 {
     unsigned int program = 0;
 

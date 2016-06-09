@@ -1,16 +1,101 @@
 changelog
 ---------
 
-Current Release:    raylib 1.4.0 (22 February 2016)
+Current Release:    raylib 1.5.0 (23 June 2016)
 
 NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
 NOTE: Current Release includes all previous updates.
 
 -----------------------------------------------
+Release:     raylib 1.5.0 (23 June 2016)
+-----------------------------------------------
+NOTE: 
+  Probably this new version is the biggest boost of the library ever, lots of parts of the library have been redesigned, 
+  lots of bugs have been solved and some **AMAZING** new features have been added.
+
+HUGE changes:
+[core] OCULUS RIFT CV1: Added support for VR witha bunch of Oculus-specific functions to init/close device and Oculus rendering.
+[rlgl] MATERIALS SYSTEM: Added support for Materials (.mtl) and multiple material properties: diffuse, specular, normal.
+[rlgl] LIGHTING SYSTEM: Added support for up to 8 lights of 3 different types: Omni, Directional and Spot
+[physac] REDESIGNED: Improved performance and simplified usage, physic objects are managed internally
+[audio] CHIPTUNES: Added support for module audio music (.xm, .mod) loading and playing
+
+other changes:
+
+[core] Review Android button inputs
+[core] Support Android internal data storage
+[core] Renamed WorldToScreen() to GetWorldToScreen()
+[core] Removed function SetCustomCursor()
+[core] Removed functions BeginDrawingEx(), BeginDrawingPro()
+[core] Added support for field-of-view Y (fovy) on 3d Camera
+[core] Added 2D camera mode functions: Begin2dMode() - End2dMode()
+[core] Translate mouse inputs to Android touch/gestures internally
+[core] Translate mouse inputs as touch inputs in HTML5
+[core] Improved function GetKeyPressed() to support multiple keys (including function keys)
+[core] Improved gamepad support, specially for RaspberryPi (including multiple gamepads support)
+[rlgl] Improved 2D vs 3D drawing system (lines, triangles, quads)
+[rlgl] Improved DXT-ETC1 support on HTML5
+[rlgl] Review function: rlglUnproject()
+[rlgl] Updated Mesh and Shader structs
+[rlgl] Simplified internal (default) dynamic buffers
+[rlgl] Added support for indexed and dynamic mesh data
+[rlgl] Set fixed vertex attribs location points
+[rlgl] Improved mesh data loading support
+[rlgl] Added standard shader (embeded) to support materials and lighting: standard_shader.h
+[rlgl] Added light functions: CreateLight(), DestroyLight()
+[rlgl] Added wire mode functions: rlDisableWireMode(), rlEnableWireMode()
+[rlgl] Review function consistency, added: rlglLoadMesh(), rlglUpdateMesh(), rlglDrawMesh(), rlglUnloadMesh()
+[rlgl] Replaced SetCustomShader() by: BeginShaderMode() - EndShaderMode()
+[rlgl] Replaced SetBlendMode() by: BeginBlendMode() - EndBlendMode()
+[rlgl] Added functions to customize internal matrices: SetMatrixProjection(), SetMatrixModelview()
+[rlgl] Unified internal shaders to only one default shader
+[rlgl] Added support for render to texture (RenderTexture2D): 
+          LoadRenderTexture() - UnloadRenderTexture()
+          BeginTextureMode() - EndTextureMode()
+[rlgl] Removed SetShaderMap*() functions
+[rlgl] Redesigned default buffers usage functions:
+          LoadDefaultBuffers() - UnloadDefaultBuffers()
+          UpdateDefaultBuffers() - DrawDefaultBuffers()
+[shapes] Corrected bug on GetCollisionRec()
+[textures] Added support for Nearest-Neighbor image scaling
+[textures] Added functions to draw text on image: ImageDrawText(), ImageDrawTextEx()
+[text] Reorganized internal functions: Added LoadImageFont()
+[text] Security check for unsupported BMFonts
+[models] Split mesh creation from model loading on heightmap and cubicmap
+[models] Updated BoundingBox collision detections
+[models] Added color parameter to DrawBoundigBox()
+[models] Removed function: DrawQuad()
+[models] Redesigned DrawPlane() to use RL_TRIANGLES
+[models] Redesigned DrawRectangleV() to use RL_TRIANGLES
+[models] Redesign to accomodate new materials system: LoadMaterial()
+[models] Added material functions: LoadDefaultMaterial(), LoadStandardMaterial()
+[models] Added MTL material loading support: LoadMTL()
+[models] Added function: DrawLight()
+[audio] Renamed SoundIsPlaying() to IsSoundPlaying()
+[audio] Renamed MusicIsPlaying() to IsMusicPlaying()
+[audio] Support multiple Music streams (indexed)
+[gestures] Improved and reviewed gestures system
+[raymath] Added QuaternionInvert()
+[raymath] Removed function: PrintMatrix()
+[raygui] Ported to header-only library
+[shaders] Added depth drawing shader (requires a depth texture)
+[shaders] Reviewed included shaders and added comments
+[OpenAL Soft] Updated to latest version (1.17.2)
+[GLFW3] Updated to latest version (3.2)
+[GLAD] Converted to header only library
+[stb] Updated to latest headers versions
+[*] Reorganize library folders: external libs moved to src/external folder
+[*] Reorganize src folder for Android library
+[*] Review external dependencies usage
+[*] Improved Linux and OSX build systems
+[*] Lots of tweaks and bugs corrected all around
+
+
+-----------------------------------------------
 Release:     raylib 1.4.0 (22 February 2016)
 -----------------------------------------------
 NOTE: 
-  This version supposed another big improvement for raylib, inlcuding new modules and new features.
+  This version supposed another big improvement for raylib, including new modules and new features.
   More than 30 new functions have been added to previous raylib version.
   Around 8 new examples and +10 new game samples have been added.
 

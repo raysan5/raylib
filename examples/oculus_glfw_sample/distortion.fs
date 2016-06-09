@@ -33,11 +33,11 @@ Right Lens Center = {0.712005913, 0.5, 0, 0}
 // Scales input texture coordinates for distortion.
 vec2 HmdWarp(vec2 in01, vec2 LensCenter)
 {
-    vec2 theta = (in01 - LensCenter) * ScaleIn; // Scales to [-1, 1]
-    float rSq = theta.x * theta.x + theta.y * theta.y;
-    vec2 rvector = theta * (HmdWarpParam.x + HmdWarpParam.y * rSq + HmdWarpParam.z * rSq * rSq + HmdWarpParam.w * rSq * rSq * rSq);
+    vec2 theta = (in01 - LensCenter)*ScaleIn; // Scales to [-1, 1]
+    float rSq = theta.x*theta.x + theta.y*theta.y;
+    vec2 rvector = theta*(HmdWarpParam.x + HmdWarpParam.y*rSq + HmdWarpParam.z*rSq*rSq + HmdWarpParam.w*rSq*rSq*rSq);
 
-    return LensCenter + Scale * rvector;
+    return LensCenter + Scale*rvector;
 }
 
 void main()
@@ -48,17 +48,12 @@ void main()
     vec2 LensCenter = gl_FragCoord.x < 540 ? LeftLensCenter : RightLensCenter;
     vec2 ScreenCenter = gl_FragCoord.x < 540 ? LeftScreenCenter : RightScreenCenter;
 
-    //vec2 oTexCoord = (gl_FragCoord.xy + vec2(0.5, 0.5)) / vec2(1280, 800);  //Uncomment if using BGE's built-in stereo rendering
-
     vec2 tc = HmdWarp(fragTexCoord, LensCenter);
 
-    if (any(bvec2(clamp(tc,ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)) - tc)))
-    {
-        gl_FragColor = vec4(vec3(0.0), 1.0);
-    }
+    if (any(bvec2(clamp(tc,ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)) - tc))) finalColor = vec4(0.0, 0.0, 0.0, 1.0);
     else
     {
-        //tc.x = gl_FragCoord.x < 640 ? (2.0 * tc.x) : (2.0 * (tc.x - 0.5));  //Uncomment if using BGE's built-in stereo rendering
-        gl_FragColor = texture2D(texture0, tc);
+        //tc.x = gl_FragCoord.x < 640 ? (2.0 * tc.x) : (2.0 * (tc.x - 0.5));
+        finalColor = texture2D(texture0, tc);
     }
 }

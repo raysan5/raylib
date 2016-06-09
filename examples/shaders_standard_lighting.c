@@ -22,8 +22,8 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 1280;
-    int screenHeight = 720;
+    int screenWidth = 800;
+    int screenHeight = 450;
     
     SetConfigFlags(FLAG_MSAA_4X_HINT);      // Enable Multi Sampling Anti Aliasing 4x (if available)
 

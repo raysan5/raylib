@@ -1,6 +1,6 @@
 
 // Vertex shader definition to embed, no external file required
-const static unsigned char vStandardShaderStr[] = 
+static const char vStandardShaderStr[] = 
 #if defined(GRAPHICS_API_OPENGL_21)
 "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -37,7 +37,7 @@ const static unsigned char vStandardShaderStr[] =
 "}                                  \n";
 
 // Fragment shader definition to embed, no external file required
-const static unsigned char fStandardShaderStr[] = 
+static const char fStandardShaderStr[] = 
 #if defined(GRAPHICS_API_OPENGL_21)
 "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -163,4 +163,4 @@ const static unsigned char fStandardShaderStr[] =
 #elif defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
 "   gl_FragColor = vec4(texelColor.rgb*lighting*colDiffuse.rgb, texelColor.a*colDiffuse.a); \n"
 #endif
-"}                                                        \n";
+"}\n";
