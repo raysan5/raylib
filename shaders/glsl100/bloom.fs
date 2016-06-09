@@ -26,7 +26,7 @@ void main()
     }
     
     // Texel color fetching from texture sampler
-    vec4 texelColor = texture(texture0, fragTexCoord);
+    vec4 texelColor = texture2D(texture0, fragTexCoord);
     
     // Calculate final fragment color
     if (texelColor.r < 0.3) tc = sum*sum*0.012 + texelColor;

@@ -15,7 +15,7 @@ uniform vec4 fragTintColor;
 void main()
 {
     // Texel color fetching from texture sampler
-    vec4 texelColor = texture(texture0, fragTexCoord)*fragTintColor*fragColor;
+    vec4 texelColor = texture2D(texture0, fragTexCoord)*fragTintColor*fragColor;
     
     // Convert texel color to grayscale using NTSC conversion weights
     float gray = dot(texelColor.rgb, vec3(0.299, 0.587, 0.114));
