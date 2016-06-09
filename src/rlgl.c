@@ -1795,8 +1795,13 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     // NOTE: standard shader specific locations are got at render time to keep Shader struct as simple as possible (with just default shader locations)
     if (material.shader.id == standardShader.id)
     {
+        // Transpose and inverse model transformations matrix for fragment normal calculations
+        Matrix transInvTransform = transform;
+        MatrixTranspose(&transInvTransform);
+        MatrixInvert(&transInvTransform);
+        
         // Send model transformations matrix to shader
-        glUniformMatrix4fv(glGetUniformLocation(material.shader.id, "modelMatrix"), 1, false, MatrixToFloat(transform));
+        glUniformMatrix4fv(glGetUniformLocation(material.shader.id, "modelMatrix"), 1, false, MatrixToFloat(transInvTransform));
         
         // Send view transformation matrix to shader. View matrix 8, 9 and 10 are view direction vector axis values (target - position)
         glUniform3f(glGetUniformLocation(material.shader.id, "viewDir"), matView.m8, matView.m9, matView.m10);
