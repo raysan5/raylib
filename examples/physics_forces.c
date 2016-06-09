@@ -10,14 +10,14 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "math.h"
+
+#define PHYSAC_IMPLEMENTATION
+#include "physac.h"
 
 #define FORCE_AMOUNT        5.0f
 #define FORCE_RADIUS        150
 #define LINE_LENGTH         75
 #define TRIANGLE_LENGTH     12
-
-void DrawRigidbodyCircle(PhysicObject obj, Color color);
 
 int main()
 {
@@ -27,29 +27,28 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - forces");
-    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
-    SetTargetFPS(60);
+    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     // Global variables
     Vector2 mousePosition;
     bool isDebug = false;
     
     // Create rectangle physic objects
-    PhysicObject rectangles[3];
+    PhysicBody rectangles[3];
     for (int i = 0; i < 3; i++)
     {
-        rectangles[i] = CreatePhysicObject((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/3) : (screenHeight/1.5f)) }, 0.0f, (Vector2){ 50, 50 });
+        rectangles[i] = CreatePhysicBody((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/3) : (screenHeight/1.5f)) }, 0.0f, (Vector2){ 50, 50 });
         rectangles[i]->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
         rectangles[i]->rigidbody.friction = 0.1f;
     }
     
     // Create circles physic objects
     // NOTE: when creating circle physic objects, transform.scale must be { 0, 0 } and object radius must be defined in collider.radius and use this value to draw the circle.
-    PhysicObject circles[3];
+    PhysicBody circles[3];
     for (int i = 0; i < 3; i++)
     {
-        circles[i] = CreatePhysicObject((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/1.5f) : (screenHeight/4)) }, 0.0f, (Vector2){ 0, 0 });
+        circles[i] = CreatePhysicBody((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/1.5f) : (screenHeight/4)) }, 0.0f, (Vector2){ 0, 0 });
         circles[i]->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
         circles[i]->rigidbody.friction = 0.1f;
         circles[i]->collider.type = COLLIDER_CIRCLE;
@@ -57,11 +56,12 @@ int main()
     }
     
     // Create walls physic objects
-    PhysicObject leftWall = CreatePhysicObject((Vector2){ -25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
-    PhysicObject rightWall = CreatePhysicObject((Vector2){ screenWidth + 25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
-    PhysicObject topWall = CreatePhysicObject((Vector2){ screenWidth/2, -25 }, 0.0f, (Vector2){ screenWidth, 50 });
-    PhysicObject bottomWall = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight + 25 }, 0.0f, (Vector2){ screenWidth, 50 });
+    PhysicBody leftWall = CreatePhysicBody((Vector2){ -25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
+    PhysicBody rightWall = CreatePhysicBody((Vector2){ screenWidth + 25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
+    PhysicBody topWall = CreatePhysicBody((Vector2){ screenWidth/2, -25 }, 0.0f, (Vector2){ screenWidth, 50 });
+    PhysicBody bottomWall = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight + 25 }, 0.0f, (Vector2){ screenWidth, 50 });
     
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -175,6 +175,7 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     ClosePhysics();       // Unitialize physics module
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

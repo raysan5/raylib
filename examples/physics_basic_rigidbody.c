@@ -11,6 +11,9 @@
 
 #include "raylib.h"
 
+#define PHYSAC_IMPLEMENTATION
+#include "physac.h"
+
 #define MOVE_VELOCITY    5
 #define JUMP_VELOCITY    30
 
@@ -22,35 +25,35 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - basic rigidbody");
-    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
-    SetTargetFPS(60);
+    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     // Debug variables
     bool isDebug = false;
     
     // Create rectangle physic object
-    PhysicObject rectangle = CreatePhysicObject((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
+    PhysicBody rectangle = CreatePhysicBody((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
     rectangle->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
     rectangle->rigidbody.applyGravity = true;
     rectangle->rigidbody.friction = 0.1f;
     rectangle->rigidbody.bounciness = 6.0f;
     
     // Create square physic object
-    PhysicObject square = CreatePhysicObject((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
+    PhysicBody square = CreatePhysicBody((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
     square->rigidbody.enabled = true;      // Enable physic object rigidbody behaviour
     square->rigidbody.applyGravity = true;
     square->rigidbody.friction = 0.1f;
     
     // Create walls physic objects
-    PhysicObject floor = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
-    PhysicObject leftWall = CreatePhysicObject((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    PhysicObject rightWall = CreatePhysicObject((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    PhysicObject roof = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    PhysicBody floor = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    PhysicBody leftWall = CreatePhysicBody((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicBody rightWall = CreatePhysicBody((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicBody roof = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
     
     // Create pplatform physic object
-    PhysicObject platform = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
+    PhysicBody platform = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
     
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
