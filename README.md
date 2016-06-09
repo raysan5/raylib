@@ -133,11 +133,10 @@ Lots of code changes and lots of hours of hard work have concluded in this amazi
 notes on raylib 1.5
 -------------------
 
-On June 2016, after 4 months of raylib 1.4 release, arrives raylib 1.5. Probably this new version is the biggest boost of the library ever, 
-lots of parts of the library have been redesigned, lots of bugs have been solved and some **AMAZING** new features have been added.
+On June 2016, after 4 months of raylib 1.4 release, arrives raylib 1.5. Probably this new version is the biggest boost of the library ever, lots of parts of the library have been redesigned, lots of bugs have been solved and some **AMAZING** new features have been added.
 
-New platform support: **Oculus Rift CV1**. raylib introduces VR support for one the most anticipated VR devices in the market.
-Supporting Oculus Rift CV1 device makes raylib the only (or one of the few) C libraries in the market to support VR out-of-the-box.
+New platform support: **Oculus Rift CV1**. raylib introduces VR support for one of the most anticipated VR devices in the market.
+Supporting Oculus Rift CV1 makes raylib the only (or one of the few) C libraries in the market to support VR out-of-the-box. Additionally, stereo mode rendering has been added to raylib independently of the VR device.
 
 New materials system:
 
