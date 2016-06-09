@@ -43,7 +43,7 @@ void android_main(struct android_app *app)
 
     int framesCounter = 0;          // Used to count frames
     
-    PlayMusicStream("ambient.ogg");
+    PlayMusicStream(0, "ambient.ogg");
     
     SetTargetFPS(60);               // Not required on Android, already locked to 60 fps
     //--------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ void android_main(struct android_app *app)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateMusicStream();
+        UpdateMusicStream(0);
         
         switch(currentScreen) 
         {
@@ -74,7 +74,7 @@ void android_main(struct android_app *app)
                 // TODO: Update TITLE screen variables here!
 
                 // Press enter to change to GAMEPLAY screen
-                if (GetGestureType() == GESTURE_TAP)
+                if (IsGestureDetected(GESTURE_TAP))
                 {
                     PlaySound(fx);
                     currentScreen = GAMEPLAY;
@@ -85,7 +85,7 @@ void android_main(struct android_app *app)
                 // TODO: Update GAMEPLAY screen variables here!
 
                 // Press enter to change to ENDING screen
-                if (GetGestureType() == GESTURE_TAP)
+                if (IsGestureDetected(GESTURE_TAP))
                 {  
                     PlaySound(fx);
                     currentScreen = ENDING;
@@ -96,7 +96,7 @@ void android_main(struct android_app *app)
                 // TODO: Update ENDING screen variables here!
 
                 // Press enter to return to TITLE screen
-                if (GetGestureType() == GESTURE_TAP)
+                if (IsGestureDetected(GESTURE_TAP))
                 {
                     PlaySound(fx);
                     currentScreen = TITLE;
