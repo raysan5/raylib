@@ -142,10 +142,6 @@ typedef struct PhysicBodyData {
     bool enabled;
 } PhysicBodyData, *PhysicBody;
 
-#ifdef __cplusplus
-extern "C" {            // Prevents name mangling of functions
-#endif
-
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
@@ -160,10 +156,6 @@ PHYSACDEF void ApplyForce(PhysicBody pbody, Vector2 force);                     
 PHYSACDEF void ApplyForceAtPosition(Vector2 position, float force, float radius);       // Apply radial force to all physic objects in range
 
 PHYSACDEF Rectangle TransformToRectangle(Transform transform);                          // Convert Transform data type to Rectangle (position and scale)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // PHYSAC_H
 

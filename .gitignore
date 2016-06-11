@@ -63,6 +63,7 @@ xcuserdata/
 DerivedData/
 *.dll
 src/libraylib.a
+src/libraylib.bc
 
 # oculus example
 !examples/oculus_glfw_sample/LibOVRRT32_1.dll

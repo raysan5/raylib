@@ -209,23 +209,23 @@ float gamepadAxisValues[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];      // Gamepad axis st
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-static EGLDisplay display;          // Native display device (physical screen connection)
-static EGLSurface surface;          // Surface to draw on, framebuffers (connected to context)
-static EGLContext context;          // Graphic context, mode in which drawing can be done
-static EGLConfig config;            // Graphic config
-static uint64_t baseTime;                   // Base time measure for hi-res timer
-static bool windowShouldClose = false;      // Flag to set window for closing
+static EGLDisplay display;              // Native display device (physical screen connection)
+static EGLSurface surface;              // Surface to draw on, framebuffers (connected to context)
+static EGLContext context;              // Graphic context, mode in which drawing can be done
+static EGLConfig config;                // Graphic config
+static uint64_t baseTime;               // Base time measure for hi-res timer
+static bool windowShouldClose = false;  // Flag to set window for closing
 #endif
 
 #if defined(PLATFORM_OCULUS)
 // OVR device variables
-static ovrSession session;
-static ovrHmdDesc hmdDesc;
-static ovrGraphicsLuid luid;
-static OculusLayer layer;
-static OculusBuffer buffer;
-static OculusMirror mirror;
-static unsigned int frameIndex = 0;
+static ovrSession session;              // Oculus session (pointer to ovrHmdStruct)
+static ovrHmdDesc hmdDesc;              // Oculus device descriptor parameters
+static ovrGraphicsLuid luid;            // Oculus locally unique identifier for the program (64 bit)
+static OculusLayer layer;               // Oculus drawing layer (similar to photoshop)
+static OculusBuffer buffer;             // Oculus internal buffers (texture chain and fbo)
+static OculusMirror mirror;             // Oculus mirror texture and fbo
+static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
 #endif
 
 static unsigned int displayWidth, displayHeight;     // Display width and height (monitor, device-screen, LCD, ...)
@@ -280,8 +280,8 @@ static bool showLogo = false;               // Track if showing logo at init is 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-extern void LoadDefaultFont(void);              // [Module: text] Loads default font on InitWindow()
-extern void UnloadDefaultFont(void);            // [Module: text] Unloads default font from GPU memory
+extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
+extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -523,7 +523,7 @@ void InitOculusDevice(void)
 {
     // Initialize Oculus device
     ovrResult result = ovr_Initialize(NULL);
-    if (OVR_FAILURE(result)) TraceLog(ERROR, "OVR: Could not initialize Oculus device");
+    if (OVR_FAILURE(result)) TraceLog(WARNING, "OVR: Could not initialize Oculus device");
 
     result = ovr_Create(&session, &luid);
     if (OVR_FAILURE(result))
@@ -538,7 +538,7 @@ void InitOculusDevice(void)
     TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
     TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
     TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
-    TraceLog(INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
+    //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
     TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
     
     // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...

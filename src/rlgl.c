@@ -228,8 +228,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 static int blendMode = 0;
 
 // White texture useful for plain color polys (required by shader)
-// NOTE: It's required in shapes and models modules!
-unsigned int whiteTexture;
+static unsigned int whiteTexture;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
