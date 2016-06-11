@@ -239,10 +239,6 @@ typedef enum GuiProperty {
     TEXTBOX_TEXT_FONTSIZE
 } GuiProperty;
 
-#ifdef __cplusplus
-extern "C" {            
-#endif
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -368,10 +364,6 @@ RAYGUIDEF void LoadGuiStyle(const char *fileName);                        // Loa
 
 RAYGUIDEF void SetStyleProperty(int guiProperty, int value);              // Set one style property
 RAYGUIDEF int GetStyleProperty(int guiProperty);                          // Get one style property
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // RAYGUI_H
 
