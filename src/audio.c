@@ -37,11 +37,17 @@
 
 #include "AL/al.h"              // OpenAL basic header
 #include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
-#include "AL/alext.h"           // OpenAL extensions for other format types
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strcmp(), strncmp()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
+
+#ifndef AL_FORMAT_MONO_FLOAT32
+    #define AL_FORMAT_MONO_FLOAT32 0x10010
+#endif
+#ifndef AL_FORMAT_STEREO_FLOAT32
+    #define AL_FORMAT_STEREO_FLOAT32 0x10011
+#endif
 
 #if defined(AUDIO_STANDALONE)
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
