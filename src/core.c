@@ -290,7 +290,6 @@ static void InitDisplay(int width, int height);         // Initialize display de
 static void InitGraphics(void);                         // Initialize OpenGL graphics
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
-static double GetTime(void);                            // Returns time since InitTimer() was run
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
 static void PollInputEvents(void);                      // Register user events
@@ -2039,7 +2038,7 @@ static void InitTimer(void)
 }
 
 // Get current time measure (in seconds) since InitTimer()
-static double GetTime(void)
+double GetTime(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetTime();
