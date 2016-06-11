@@ -739,7 +739,7 @@ Model LoadCubicmap(Image cubicmap)
 {
     Model model = { 0 };
     
-    model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0, 1.0, 1.5f });
+    model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
     
     rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
     
