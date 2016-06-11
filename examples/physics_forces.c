@@ -13,11 +13,14 @@
 
 #define PHYSAC_IMPLEMENTATION
 #include "physac.h"
+#include <pthread.h>
 
 #define FORCE_AMOUNT        5.0f
 #define FORCE_RADIUS        150
 #define LINE_LENGTH         75
 #define TRIANGLE_LENGTH     12
+
+void* PhysicsThread(void *arg);
 
 int main()
 {
@@ -61,6 +64,10 @@ int main()
     PhysicBody topWall = CreatePhysicBody((Vector2){ screenWidth/2, -25 }, 0.0f, (Vector2){ screenWidth, 50 });
     PhysicBody bottomWall = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight + 25 }, 0.0f, (Vector2){ screenWidth, 50 });
     
+    // Create physics thread
+    pthread_t tid;
+    pthread_create(&tid, NULL, &PhysicsThread, NULL);
+    
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -69,7 +76,6 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdatePhysics();    // Update all created physic objects
         
         // Update mouse position value
         mousePosition = GetMousePosition();
@@ -174,10 +180,32 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    pthread_cancel(tid);    // Destroy physics thread
+    
     ClosePhysics();       // Unitialize physics module
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+void* PhysicsThread(void *arg)
+{
+    // Initialize time variables
+    double currentTime = GetTime();
+    double previousTime = currentTime;
+    
+    // Physics update loop
+    while (!WindowShouldClose()) 
+    {
+        currentTime = GetTime();
+        double deltaTime = (double)(currentTime - previousTime);
+        previousTime = currentTime;
+
+        // Delta time value needs to be inverse multiplied by physics time step value (1/target fps)
+        UpdatePhysics(deltaTime/PHYSICS_TIMESTEP);
+    }
+    
+    return NULL;
 }
