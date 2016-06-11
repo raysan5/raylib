@@ -64,7 +64,7 @@
 // - "Load" a MOD from file, context must already be initialized.
 //   Return size of file in bytes.
 // -------------------------------------------
-// void jar_mod_fillbuffer( jar_mod_context_t * modctx, unsigned short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf )
+// void jar_mod_fillbuffer( jar_mod_context_t * modctx, short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf )
 //
 // - Generate and return the next samples chunk to outbuffer.
 //   nbsample specify the number of stereo 16bits samples you want.
@@ -1557,7 +1557,7 @@ mulong jar_mod_current_samples(jar_mod_context_t * modctx)
 // Works, however it is very slow, this data should be cached to ensure it is run only once per file
 mulong jar_mod_max_samples(jar_mod_context_t * ctx)
 {
-    muint buff[2];
+    mint buff[2];
     mulong len;
     mulong lastcount = ctx->loopcount;
     

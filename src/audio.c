@@ -144,7 +144,6 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 static Music musicChannels_g[MAX_MUSIC_STREAMS];             // Current music loaded, up to two can play at the same time
 static MixChannel_t *mixChannels_g[MAX_MIX_CHANNELS];        // What mix channels are currently active
-static bool musicEnabled_g = false;
 
 static int lastAudioError = 0;                               // Registers last audio error
 
