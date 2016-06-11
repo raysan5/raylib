@@ -44,7 +44,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-extern unsigned int whiteTexture;
+// ...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -137,7 +137,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
     }
     else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
-        rlEnableTexture(whiteTexture); // Default white texture
+        rlEnableTexture(GetDefaultTexture().id); // Default white texture
 
         rlBegin(RL_QUADS);
             for (int i = 0; i < 360; i += 20)
@@ -220,7 +220,7 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
     }
     else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
-        rlEnableTexture(whiteTexture); // Default white texture
+        rlEnableTexture(GetDefaultTexture().id); // Default white texture
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);

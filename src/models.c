@@ -50,7 +50,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-extern unsigned int whiteTexture;
+// ...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -811,7 +811,7 @@ void UnloadMaterial(Material material)
 // Link a texture to a model
 void SetModelTexture(Model *model, Texture2D texture)
 {
-    if (texture.id <= 0) model->material.texDiffuse.id = whiteTexture;  // Use default white texture
+    if (texture.id <= 0) model->material.texDiffuse = GetDefaultTexture();  // Use default white texture
     else model->material.texDiffuse = texture;
 }
 
