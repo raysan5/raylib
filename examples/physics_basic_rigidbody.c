@@ -13,9 +13,12 @@
 
 #define PHYSAC_IMPLEMENTATION
 #include "physac.h"
+#include <pthread.h>
 
 #define MOVE_VELOCITY    5
 #define JUMP_VELOCITY    30
+
+void* PhysicsThread(void *arg);
 
 int main()
 {
@@ -53,6 +56,10 @@ int main()
     // Create pplatform physic object
     PhysicBody platform = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
     
+    // Create physics thread
+    pthread_t tid;
+    pthread_create(&tid, NULL, &PhysicsThread, NULL);
+    
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -61,10 +68,9 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdatePhysics();    // Update all created physic objects
         
         // Check rectangle movement inputs
-        if (IsKeyDown('W') && rectangle->rigidbody.isGrounded) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyPressed('W')) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
         if (IsKeyDown('A')) rectangle->rigidbody.velocity.x = -MOVE_VELOCITY;
         else if (IsKeyDown('D')) rectangle->rigidbody.velocity.x = MOVE_VELOCITY;
         
@@ -117,10 +123,32 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    pthread_cancel(tid);    // Destroy physics thread
+    
     ClosePhysics();       // Unitialize physics (including all loaded objects)
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+void* PhysicsThread(void *arg)
+{
+    // Initialize time variables
+    double currentTime = GetTime();
+    double previousTime = currentTime;
+    
+    // Physics update loop
+    while (!WindowShouldClose()) 
+    {
+        currentTime = GetTime();
+        double deltaTime = (double)(currentTime - previousTime);
+        previousTime = currentTime;
+
+        // Delta time value needs to be inverse multiplied by physics time step value (1/target fps)
+        UpdatePhysics(deltaTime/PHYSICS_TIMESTEP);
+    }
+    
+    return NULL;
 }
