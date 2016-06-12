@@ -582,7 +582,6 @@ Matrix GetCameraMatrix(Camera camera);                      // Returns camera tr
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 float GetFPS(void);                                         // Returns current FPS
 float GetFrameTime(void);                                   // Returns time in seconds for one frame
-double GetTime(void);                                       // Returns time since InitTimer() was run internally
 
 Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
