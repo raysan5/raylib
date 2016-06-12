@@ -159,9 +159,17 @@ typedef struct {
 // Draw call type
 // NOTE: Used to track required draw-calls, organized by texture
 typedef struct {
-    GLuint textureId;
     int vertexCount;
-    // TODO: Store draw state -> blending mode, shader
+    GLuint vaoId;
+    GLuint textureId;
+    GLuint shaderId;
+
+    Matrix projection;
+    Matrix modelview;
+
+    // TODO: Store additional draw state data
+    //int blendMode;
+    //Guint fboId;
 } DrawCall;
 
 //----------------------------------------------------------------------------------
@@ -2099,6 +2107,24 @@ void *rlglReadTexturePixels(Texture2D texture)
     return pixels;
 }
 
+/*
+// TODO: Record draw calls to be processed in batch
+// NOTE: Global state must be kept
+void rlglRecordDraw(void)
+{
+    // TODO: Before adding a new draw, check if anything changed from last stored draw
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    draws[drawsCounter].vaoId = currentState.vaoId;             // lines.id, trangles.id, quads.id?
+    draws[drawsCounter].textureId = currentState.textureId;     // whiteTexture?
+    draws[drawsCounter].shaderId = currentState.shaderId;       // defaultShader.id
+    draws[drawsCounter].projection = projection;
+    draws[drawsCounter].modelview = modelview;
+    draws[drawsCounter].vertexCount = currentState.vertexCount;
+    
+    drawsCounter++;
+#endif
+}
+*/
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Shaders Functions
