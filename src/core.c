@@ -565,7 +565,7 @@ void CloseOculusDevice(void)
 void UpdateOculusTracking(void)
 {
     frameIndex++;
-   
+
     ovrPosef eyePoses[2];
     ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
     
@@ -644,14 +644,6 @@ void BeginDrawing(void)
     previousTime = currentTime;
     
 #if defined(PLATFORM_OCULUS)
-    frameIndex++;
-   
-    ovrPosef eyePoses[2];
-    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
-    
-    layer.eyeLayer.RenderPose[0] = eyePoses[0];
-    layer.eyeLayer.RenderPose[1] = eyePoses[1];
-    
     SetOculusBuffer(session, buffer);
 #endif
 
