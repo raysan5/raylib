@@ -177,6 +177,18 @@ PHYSACDEF Rectangle TransformToRectangle(Transform transform);                  
 #endif
 
 #include <math.h>           // Required for: cos(), sin(), abs(), fminf()
+#include <stdint.h>         // Required for typedef unsigned long long int uint64_t, used by hi-res timer
+#include <pthread.h>        // Required for: pthread_create()
+#include "utils.h"          // Required for: TraceLog()
+
+#if defined(PLATFORM_DESKTOP)
+    // Functions required to query time on Windows
+    int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
+    int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
+#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    #include <sys/time.h>       // Required for: timespec
+    #include <time.h>           // Required for: clock_gettime()
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -195,6 +207,9 @@ PHYSACDEF Rectangle TransformToRectangle(Transform transform);                  
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
+static bool physicsThreadEnabled = false;                           // Physics calculations thread exit control
+static uint64_t baseTime;                                           // Base time measure for hi-res timer
+static double currentTime, previousTime;                            // Used to track timmings
 static PhysicBody physicBodies[MAX_PHYSIC_BODIES];                  // Physic bodies pool
 static int physicBodiesCount;                                       // Counts current enabled physic bodies
 static Vector2 gravityForce;                                        // Gravity force
@@ -202,6 +217,9 @@ static Vector2 gravityForce;                                        // Gravity f
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+static void* PhysicsThread(void *arg);                              // Physics calculations thread function
+static void InitTimer(void);                                        // Initialize hi-resolution timer
+static double GetCurrentTime(void);                                 // Time measure returned are microseconds
 static float Vector2DotProduct(Vector2 v1, Vector2 v2);             // Returns the dot product of two Vector2
 static float Vector2Length(Vector2 v);                              // Returns the length of a Vector2
 
@@ -215,6 +233,10 @@ PHYSACDEF void InitPhysics(Vector2 gravity)
     // Initialize physics variables
     physicBodiesCount = 0;
     gravityForce = gravity;
+    
+    // Create physics thread
+    pthread_t tid;
+    pthread_create(&tid, NULL, &PhysicsThread, NULL);
 }
 
 // Update physic objects, calculating physic behaviours and collisions detection
@@ -592,6 +614,9 @@ PHYSACDEF void UpdatePhysics(double deltaTime)
 // Unitialize all physic objects and empty the objects pool
 PHYSACDEF void ClosePhysics()
 {
+    // Exit physics thread loop
+    physicsThreadEnabled = false;
+    
     // Free all dynamic memory allocations
     for (int i = 0; i < physicBodiesCount; i++) PHYSAC_FREE(physicBodies[i]);
     
@@ -710,6 +735,65 @@ PHYSACDEF Rectangle TransformToRectangle(Transform transform)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
+// Physics calculations thread function
+static void* PhysicsThread(void *arg)
+{
+    // Initialize thread loop state
+    physicsThreadEnabled = true;
+    
+    // Initialize hi-resolution timer
+    InitTimer();
+    
+    // Physics update loop
+    while (physicsThreadEnabled) 
+    {
+        currentTime = GetCurrentTime();
+        double deltaTime = (double)(currentTime - previousTime);
+        previousTime = currentTime;
+
+        // Delta time value needs to be inverse multiplied by physics time step value (1/target fps)
+        UpdatePhysics(deltaTime/PHYSICS_TIMESTEP);
+    }
+    
+    return NULL;
+}
+
+// Initialize hi-resolution timer
+static void InitTimer(void)
+{
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec now;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    {
+        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+    }
+    else TraceLog(WARNING, "No hi-resolution timer available");
+#endif
+
+    previousTime = GetCurrentTime();       // Get time as double
+}
+
+// Time measure returned are microseconds
+static double GetCurrentTime(void)
+{
+#if defined(PLATFORM_DESKTOP)
+    unsigned long long int clockFrequency, currentTime;
+    
+    QueryPerformanceFrequency(&clockFrequency);
+    QueryPerformanceCounter(&currentTime);
+
+    return (double)(currentTime/clockFrequency);
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+
+    return (double)(time - baseTime)*1e-9;
+#endif
+}
 
 // Returns the dot product of two Vector2
 static float Vector2DotProduct(Vector2 v1, Vector2 v2)
