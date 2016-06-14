@@ -48,7 +48,7 @@
 
 // Choose opengl version here or just define it at compile time: -DGRAPHICS_API_OPENGL_33
 //#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP
-//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP
+//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP or PLATFORM_OCULUS
 //#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI or PLATFORM_WEB
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
@@ -296,6 +296,7 @@ void rlglInit(void);                            // Initialize rlgl (shaders, VAO
 void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
+void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)

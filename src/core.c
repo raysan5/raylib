@@ -58,10 +58,6 @@
     #define PLATFORM_DESKTOP      // Enable PLATFORM_DESKTOP code-base
 #endif
 
-#if defined(PLATFORM_DESKTOP)
-    #include "external/glad.h"    // GLAD library: Manage OpenGL headers and extensions
-#endif
-
 #if defined(PLATFORM_OCULUS)
     #include "../examples/oculus_glfw_sample/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
 #endif
@@ -1747,19 +1743,9 @@ static void InitDisplay(int width, int height)
 #endif
 
 #if defined(PLATFORM_DESKTOP)
-    // Load OpenGL 3.3 extensions using GLAD
-    if (rlGetVersion() == OPENGL_33)
-    {
-        // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
-        else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
-
-        if (GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
-        else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
-        
-        // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
-        //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
-    }
+    // Load OpenGL 3.3 extensions
+    // NOTE: GLFW loader function is passed as parameter
+    rlglLoadExtensions(glfwGetProcAddress);
 #endif
     
     // Enables GPU v-sync, so frames are not limited to screen refresh rate (60Hz -> 60 FPS)

@@ -872,6 +872,23 @@ int rlGetVersion(void)
 #endif
 }
 
+// Load OpenGL extensions
+// NOTE: External loader function could be passed as a pointer
+void rlglLoadExtensions(void *loader)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions
+    if (!gladLoadGLLoader((GLADloadproc)loader)) TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
+    else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
+
+    if (GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+    else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+
+    // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
+    //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
+#endif
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - rlgl Functions
 //----------------------------------------------------------------------------------
@@ -1184,11 +1201,13 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     GLuint id = 0;
     
     // Check texture format support by OpenGL 1.1 (compressed textures not supported)
-    if ((rlGetVersion() == OPENGL_11) && (textureFormat >= 8))
+#if defined(GRAPHICS_API_OPENGL_11) 
+    if (textureFormat >= 8)
     {
         TraceLog(WARNING, "OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }
+#endif
     
     if ((!texCompDXTSupported) && ((textureFormat == COMPRESSED_DXT1_RGB) || (textureFormat == COMPRESSED_DXT1_RGBA) ||
         (textureFormat == COMPRESSED_DXT3_RGBA) || (textureFormat == COMPRESSED_DXT5_RGBA)))
