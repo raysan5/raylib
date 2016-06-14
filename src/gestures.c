@@ -111,6 +111,19 @@ static double GetCurrentTime(void);
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
+// Enable only desired getures to be detected
+void SetGesturesEnabled(unsigned int gestureFlags)
+{
+    enabledGestures = gestureFlags;
+}
+
+// Check if a gesture have been detected
+bool IsGestureDetected(int gesture)
+{
+    if ((enabledGestures & currentGesture) == gesture) return true;
+    else return false;
+}
+
 // Process gesture event and translate it into gestures
 void ProcessGestureEvent(GestureEvent event)
 {
@@ -291,13 +304,6 @@ void UpdateGestures(void)
     }
 }
 
-// Check if a gesture have been detected
-bool IsGestureDetected(int gesture)
-{
-    if ((enabledGestures & currentGesture) == gesture) return true;
-    else return false;
-}
-
 // Get number of touch points
 int GetTouchPointsCount(void)
 {
@@ -306,10 +312,11 @@ int GetTouchPointsCount(void)
     return pointCount;
 }
 
-// Enable only desired getures to be detected
-void SetGesturesEnabled(unsigned int gestureFlags)
+// Get latest detected gesture
+int GetGestureDetected(void)
 {
-    enabledGestures = gestureFlags;
+    // Get current gesture only if enabled
+    return (enabledGestures & currentGesture);
 }
 
 // Hold time measured in ms
