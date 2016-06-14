@@ -48,7 +48,7 @@
 
 // Choose opengl version here or just define it at compile time: -DGRAPHICS_API_OPENGL_33
 //#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP
-//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP
+//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP or Oculus Rift CV1
 //#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI or PLATFORM_WEB
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
@@ -296,6 +296,7 @@ void rlglInit(void);                            // Initialize rlgl (shaders, VAO
 void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
+void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
@@ -344,6 +345,15 @@ Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a 
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 void TraceLog(int msgType, const char *text, ...);
+#endif
+
+#if defined(RLGL_OCULUS_SUPPORT)
+void InitOculusDevice(void);                // Init Oculus Rift device
+void CloseOculusDevice(void);               // Close Oculus Rift device
+void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
+void SetOculusMatrix(int eye);              // Set internal projection and modelview matrix depending on eyes tracking data
+void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
+void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
 #endif
 
 #ifdef __cplusplus

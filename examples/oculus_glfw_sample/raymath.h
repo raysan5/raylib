@@ -47,10 +47,16 @@
     #include "raylib.h"             // Required for structs: Vector3, Matrix
 #endif
 
-#if defined(RAYMATH_EXTERN_INLINE)
-    #define RMDEF extern inline
+#ifdef __cplusplus
+    #define RMEXTERN extern "C"     // Functions visible from other files (no name mangling of functions in C++)
 #else
-    #define RMDEF extern
+    #define RMEXTERN extern         // Functions visible from other files
+#endif
+
+#if defined(RAYMATH_EXTERN_INLINE)
+    #define RMDEF RMEXTERN inline   // Functions are embeded inline (compiler generated code)
+#else
+    #define RMDEF RMEXTERN
 #endif
 
 //----------------------------------------------------------------------------------
@@ -104,10 +110,6 @@ typedef struct Quaternion {
 } Quaternion;
 
 #ifndef RAYMATH_EXTERN_INLINE
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Vector3
@@ -165,10 +167,6 @@ RMDEF Matrix QuaternionToMatrix(Quaternion q);                        // Returns
 RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns rotation quaternion for an angle and axis
 RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle); // Returns the rotation angle and axis for a given quaternion
 RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transform a quaternion given a transformation matrix
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // notdef RAYMATH_EXTERN_INLINE
 
