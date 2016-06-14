@@ -788,6 +788,7 @@ static double GetCurrentTime(void)
     QueryPerformanceFrequency(&clockFrequency);
     QueryPerformanceCounter(&currentTime);
     
+    time = (double)((double)currentTime/(double)clockFrequency);
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
