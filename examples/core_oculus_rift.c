@@ -47,15 +47,24 @@ int main()
         BeginDrawing();
         
             ClearBackground(RAYWHITE);
+            
+            BeginOculusDrawing();
+            
+                for (int eye = 0; eye < 2; eye++)
+                {
+                    Begin3dMode(camera);
+                
+                        SetOculusMatrix(eye);
+                        
+                        DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                        DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
-            Begin3dMode(camera);
-
-                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-
-                DrawGrid(10, 1.0f);
-
-            End3dMode();
+                        DrawGrid(10, 1.0f);
+                    
+                    End3dMode();
+                }
+            
+            EndOculusDrawing()
 
         EndDrawing();
         //----------------------------------------------------------------------------------
