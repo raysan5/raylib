@@ -178,8 +178,10 @@ PHYSACDEF Rectangle TransformToRectangle(Transform transform);                  
 
 #include <math.h>           // Required for: cos(), sin(), abs(), fminf()
 #include <stdint.h>         // Required for typedef unsigned long long int uint64_t, used by hi-res timer
-#include <pthread.h>        // Required for: pthread_create()
-#include "utils.h"          // Required for: TraceLog()
+
+#ifndef PHYSAC_NO_THREADS
+    #include <pthread.h>        // Required for: pthread_create()
+#endif
 
 #if defined(PLATFORM_DESKTOP)
     // Functions required to query time on Windows
@@ -234,9 +236,11 @@ PHYSACDEF void InitPhysics(Vector2 gravity)
     physicBodiesCount = 0;
     gravityForce = gravity;
     
-    // Create physics thread
-    pthread_t tid;
-    pthread_create(&tid, NULL, &PhysicsThread, NULL);
+    #ifndef PHYSAC_NO_THREADS       // NOTE: if defined, user will need to create a thread for PhysicsThread function manually
+        // Create physics thread
+        pthread_t tid;
+        pthread_create(&tid, NULL, &PhysicsThread, NULL);
+    #endif
 }
 
 // Update physic objects, calculating physic behaviours and collisions detection
@@ -768,7 +772,6 @@ static void InitTimer(void)
     {
         baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
     }
-    else TraceLog(WARNING, "No hi-resolution timer available");
 #endif
 
     previousTime = GetCurrentTime();       // Get time as double
@@ -777,22 +780,25 @@ static void InitTimer(void)
 // Time measure returned are microseconds
 static double GetCurrentTime(void)
 {
+    double time;
+    
 #if defined(PLATFORM_DESKTOP)
     unsigned long long int clockFrequency, currentTime;
     
     QueryPerformanceFrequency(&clockFrequency);
     QueryPerformanceCounter(&currentTime);
-
-    return (double)(currentTime/clockFrequency);
+    
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+    uint64_t temp = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
-    return (double)(time - baseTime)*1e-9;
+    time = (double)(temp - baseTime)*1e-9;
 #endif
+
+    return time;
 }
 
 // Returns the dot product of two Vector2

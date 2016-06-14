@@ -164,7 +164,9 @@ int main()
             
             // Draw help messages
             DrawText("Use LEFT MOUSE BUTTON to apply a force", screenWidth/2 - MeasureText("Use LEFT MOUSE BUTTON to apply a force", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
-            DrawText("Use R to reset objects position", screenWidth/2 - MeasureText("Use R to reset objects position", 20)/2, screenHeight*0.875f, 20, GRAY);    
+            DrawText("Use R to reset objects position", screenWidth/2 - MeasureText("Use R to reset objects position", 20)/2, screenHeight*0.875f, 20, GRAY);
+            
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

@@ -110,6 +110,8 @@ int main()
             // Draw help message
             DrawText("Use WASD to move rectangle and ARROWS to move square", screenWidth/2 - MeasureText("Use WASD to move rectangle and ARROWS to move square", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
 
+            DrawFPS(10, 10);
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
