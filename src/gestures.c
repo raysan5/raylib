@@ -298,13 +298,6 @@ bool IsGestureDetected(int gesture)
     else return false;
 }
 
-// Check gesture type
-int GetGestureDetected(void)
-{
-    // Get current gesture only if enabled
-    return (enabledGestures & currentGesture);
-}
-
 // Get number of touch points
 int GetTouchPointsCount(void)
 {

@@ -644,13 +644,12 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
+void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
-bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-int GetGestureDetected(void);                           // Get latest detected gesture
-void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
-int GetTouchPointsCount(void);                          // Get touch points count
 
+int GetTouchPointsCount(void);                          // Get touch points count
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
