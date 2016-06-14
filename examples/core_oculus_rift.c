@@ -55,6 +55,8 @@ int main()
             
                 for (int eye = 0; eye < 2; eye++)
                 {
+                    // TODO: Probably projection and view matrices could be created here...
+                    // ...without the need to create it internally through Begin3dMode()
                     Begin3dMode(camera);
                 
                         SetOculusMatrix(eye);
@@ -64,6 +66,8 @@ int main()
                         
                         DrawGrid(10, 1.0f);
                     
+                    // TODO: Call internal buffers drawing directly (rlglDraw()) and...
+                    // ...reset internal matrices, instead of letting End3dMode() do that
                     End3dMode();
                 }
             

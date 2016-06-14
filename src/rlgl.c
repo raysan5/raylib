@@ -2519,26 +2519,39 @@ void UpdateOculusTracking(void)
     
     layer.eyeLayer.RenderPose[0] = eyePoses[0];
     layer.eyeLayer.RenderPose[1] = eyePoses[1];
+    
+    // Get session status information
+    ovrSessionStatus sessionStatus;
+    ovr_GetSessionStatus(session, &sessionStatus);
+    
+    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
+    if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
+    //if (sessionStatus.HmdPresent)  // HMD is present.
+    //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
+    //if (sessionStatus.HmdMounted)  // HMD is on the user's head.
+    //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
 }
 
 void SetOculusMatrix(int eye)
 {
     rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
-    Quaternion eyeRPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
-                                        layer.eyeLayer.RenderPose[eye].Orientation.y, 
-                                        layer.eyeLayer.RenderPose[eye].Orientation.z, 
-                                        layer.eyeLayer.RenderPose[eye].Orientation.w };
-    QuaternionInvert(&eyeRPose);
-    Matrix eyeOrientation = QuaternionToMatrix(eyeRPose);
+    Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
+                                             layer.eyeLayer.RenderPose[eye].Orientation.y, 
+                                             layer.eyeLayer.RenderPose[eye].Orientation.z, 
+                                             layer.eyeLayer.RenderPose[eye].Orientation.w };
+    QuaternionInvert(&eyeRenderPose);
+    Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
     Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
                                             -layer.eyeLayer.RenderPose[eye].Position.y, 
                                             -layer.eyeLayer.RenderPose[eye].Position.z);
 
-    Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);
-    Matrix modelEyeView = MatrixMultiply(modelview, eyeView);  // Using internal camera modelview matrix
+    Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
+    Matrix eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
 
-    SetMatrixModelview(modelEyeView);
+    // TODO: Find a better way to get camera view matrix (instead of using internal modelview)
+    
+    SetMatrixModelview(eyeModelView);
     SetMatrixProjection(layer.eyeProjections[eye]);
 }
 
@@ -2554,20 +2567,19 @@ void BeginOculusDrawing(void)
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
     //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
 
-    //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   // Same as rlClearScreenBuffers()
-    
     // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA) 
     // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
     //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
     //     - Do NOT enable GL_FRAMEBUFFER_SRGB
     //glEnable(GL_FRAMEBUFFER_SRGB);
     
+    //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
     rlClearScreenBuffers();             // Clear current framebuffer(s)
 }
 
 void EndOculusDrawing(void)
 {
+    // Unbind current framebuffer (Oculus buffer)
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     
@@ -2578,12 +2590,6 @@ void EndOculusDrawing(void)
 
     // Blit mirror texture to back buffer
     BlitOculusMirror(session, mirror);
-
-    // Get session status information
-    ovrSessionStatus sessionStatus;
-    ovr_GetSessionStatus(session, &sessionStatus);
-    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
-    if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
 }
 #endif
 
