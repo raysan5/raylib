@@ -2,6 +2,9 @@
 *
 *   raylib [core] example - Oculus Rift CV1
 *
+*   Compile example using:
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) -L. -L..\src\external\OculusSDK\LibOVR -lLibOVRRT32_1 -lraylib -lglfw3 -lopengl32 -lgdi32 -std=c99
+*
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
@@ -21,8 +24,8 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - oculus rift");
     
     InitOculusDevice();
-
-    // Define the camera to look into our 3d world   
+    
+    // Define the camera to look into our 3d world
     Camera camera;
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
@@ -30,8 +33,8 @@ int main()
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
-
-    SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
+    
+    //SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -47,15 +50,24 @@ int main()
         BeginDrawing();
         
             ClearBackground(RAYWHITE);
-
-            Begin3dMode(camera);
-
-                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-
-                DrawGrid(10, 1.0f);
-
-            End3dMode();
+            
+            BeginOculusDrawing();
+            
+                for (int eye = 0; eye < 2; eye++)
+                {
+                    Begin3dMode(camera);
+                
+                        SetOculusMatrix(eye);
+                        
+                        DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                        DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+                        
+                        DrawGrid(10, 1.0f);
+                    
+                    End3dMode();
+                }
+            
+            EndOculusDrawing();
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -63,7 +75,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseOculusdevice();    // Close Oculus Rift device
+    CloseOculusDevice();    // Close Oculus Rift device
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

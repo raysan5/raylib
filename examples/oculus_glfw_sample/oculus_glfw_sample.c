@@ -23,8 +23,7 @@
 #include <string.h>
 #include <math.h>
 
-#define GLAD_IMPLEMENTATION
-#include "glad.h"               // Extensions loading library
+#include "glad.h"
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
 #define RLGL_STANDALONE
@@ -148,33 +147,34 @@ int main(void)
     glfwSwapInterval(0);
 
     // Load OpenGL 3.3 extensions
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
-        return 3;
-    }
-    else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
+    rlglLoadExtensions(glfwGetProcAddress);
+    
+    // Initialize rlgl internal buffers and OpenGL state
+    rlglInit();
+    rlglInitGraphics(0, 0, screenWidth, screenHeight);
+    rlClearColor(245, 245, 245, 255);   // Define clear color
+    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
     //--------------------------------------------------------
     
 #if defined(PLATFORM_OCULUS)
     ovrResult result = ovr_Initialize(NULL);
-    if (OVR_FAILURE(result)) TraceLog(LOG_ERROR, "OVR: Could not initialize Oculus device");
+    if (OVR_FAILURE(result)) TraceLog(ERROR, "OVR: Could not initialize Oculus device");
 
     result = ovr_Create(&session, &luid);
     if (OVR_FAILURE(result))
     {
-        TraceLog(LOG_WARNING, "OVR: Could not create Oculus session");
+        TraceLog(WARNING, "OVR: Could not create Oculus session");
         ovr_Shutdown();
     }
 
     hmdDesc = ovr_GetHmdDesc(session);
     
-    TraceLog(LOG_INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-    TraceLog(LOG_INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-    TraceLog(LOG_INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-    TraceLog(LOG_INFO, "OVR: Product Type: %i", hmdDesc.Type);
-    TraceLog(LOG_INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
-    TraceLog(LOG_INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+    TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+    TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+    TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+    TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
+    TraceLog(INFO, "OVR: Serian Number: %s", hmdDesc.SerialNumber);
+    TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
     
     //screenWidth = hmdDesc.Resolution.w/2;
     //screenHeight = hmdDesc.Resolution.h/2;
@@ -188,20 +188,14 @@ int main(void)
     // Recenter OVR tracking origin
     ovr_RecenterTrackingOrigin(session);
 #endif
-
-    // Initialize rlgl internal buffers and OpenGL state
-    rlglInit();
-    rlglInitGraphics(0, 0, screenWidth, screenHeight);
-    rlClearColor(245, 245, 245, 255);   // Define clear color
-    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
-    
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
     Camera camera;
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
+    
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     //--------------------------------------------------------------------------------------    
 
     // Main game loop    
@@ -293,7 +287,7 @@ int main(void)
         // Get session status information
         ovrSessionStatus sessionStatus;
         ovr_GetSessionStatus(session, &sessionStatus);
-        if (sessionStatus.ShouldQuit) TraceLog(LOG_WARNING, "OVR: Session should quit...");
+        if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
         if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
 #endif
 
@@ -581,12 +575,12 @@ static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
 
     ovrResult result = ovr_CreateTextureSwapChainGL(session, &desc, &buffer.textureChain);
     
-    if (!OVR_SUCCESS(result)) TraceLog(LOG_WARNING, "OVR: Failed to create swap textures buffer");
+    if (!OVR_SUCCESS(result)) TraceLog(WARNING, "OVR: Failed to create swap textures buffer");
 
     int textureCount = 0;
     ovr_GetTextureSwapChainLength(session, buffer.textureChain, &textureCount);
     
-    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(LOG_WARNING, "OVR: Unable to count swap chain textures");
+    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(WARNING, "OVR: Unable to count swap chain textures");
 
     for (int i = 0; i < textureCount; ++i)
     {
@@ -682,7 +676,7 @@ static OculusMirror LoadOculusMirror(ovrSession session, int width, int height)
     mirrorDesc.Width = mirror.width;
     mirrorDesc.Height = mirror.height;
     
-    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(LOG_WARNING, "Could not create mirror texture");
+    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(WARNING, "Could not create mirror texture");
 
     glGenFramebuffers(1, &mirror.fboId);
 

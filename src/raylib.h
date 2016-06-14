@@ -64,7 +64,7 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
-//#define PLATFORM_OCULUS       // Oculus Rift CV1
+//#define RLGL_OCULUS_SUPPORT   // Oculus Rift CV1 (complementary to PLATFORM_DESKTOP)
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -545,12 +545,6 @@ void InitWindow(int width, int height, struct android_app *state);  // Init Andr
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
 
-#if defined(PLATFORM_OCULUS)
-void InitOculusDevice(void);                                // Init Oculus Rift device
-void CloseOculusDevice(void);                               // Close Oculus Rift device
-void UpdateOculusTracking(void);                            // Update Oculus Rift tracking (position and orientation)
-#endif
-
 void CloseWindow(void);                                     // Close Window and Terminate Context
 bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)
@@ -644,13 +638,13 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
+void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
-bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-int GetGestureDetected(void);                           // Get latest detected gesture
-void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
-int GetTouchPointsCount(void);                          // Get touch points count
 
+int GetTouchPointsCount(void);                          // Get touch points count
+int GetGestureDetected(void);                           // Get latest detected gesture
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
@@ -851,6 +845,17 @@ void EndBlendMode(void);                                            // End blend
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
+
+//------------------------------------------------------------------------------------
+// Oculus Rift CV1 Functions (Module: rlgl)
+// NOTE: This functions are useless when using OpenGL 1.1
+//------------------------------------------------------------------------------------
+void InitOculusDevice(void);                // Init Oculus Rift device
+void CloseOculusDevice(void);               // Close Oculus Rift device
+void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
+void SetOculusMatrix(int eye);              // Set internal projection and modelview matrix depending on eyes tracking data
+void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
+void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

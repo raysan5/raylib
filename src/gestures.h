@@ -90,13 +90,13 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
+void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (must be called every frame)
-bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-int GetGestureDetected(void);                           // Get latest detected gesture
-void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
-int GetTouchPointsCount(void);                          // Get touch points count
 
+int GetTouchPointsCount(void);                          // Get touch points count
+int GetGestureDetected(void);                           // Get latest detected gesture
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
