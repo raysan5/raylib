@@ -2562,6 +2562,8 @@ void BeginOculusDrawing(void)
     //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
     //     - Do NOT enable GL_FRAMEBUFFER_SRGB
     //glEnable(GL_FRAMEBUFFER_SRGB);
+    
+    rlClearScreenBuffers();             // Clear current framebuffer(s)
 }
 
 void EndOculusDrawing(void)
