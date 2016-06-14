@@ -5,6 +5,10 @@
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*
+*   Compile example using:
+*   cmd /c IF NOT EXIST pthreadGC2.dll copy C:\raylib\raylib\src\external\pthread\pthreadGC2.dll $(CURRENT_DIRECTORY) /Y
+*
 *   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
@@ -25,7 +29,6 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - basic rigidbody");
-    
     InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     // Debug variables
@@ -60,11 +63,9 @@ int main()
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        //----------------------------------------------------------------------------------
-        UpdatePhysics();    // Update all created physic objects
-        
+        //----------------------------------------------------------------------------------        
         // Check rectangle movement inputs
-        if (IsKeyDown('W') && rectangle->rigidbody.isGrounded) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyPressed('W')) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
         if (IsKeyDown('A')) rectangle->rigidbody.velocity.x = -MOVE_VELOCITY;
         else if (IsKeyDown('D')) rectangle->rigidbody.velocity.x = MOVE_VELOCITY;
         
@@ -111,6 +112,8 @@ int main()
             // Draw help message
             DrawText("Use WASD to move rectangle and ARROWS to move square", screenWidth/2 - MeasureText("Use WASD to move rectangle and ARROWS to move square", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
 
+            DrawFPS(10, 10);
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -118,7 +121,6 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     ClosePhysics();       // Unitialize physics (including all loaded objects)
-    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

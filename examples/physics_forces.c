@@ -5,6 +5,11 @@
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*   NOTE: This example requires raylib module [rlgl]
+*
+*   Compile example using:
+*   cmd /c IF NOT EXIST pthreadGC2.dll copy C:\raylib\raylib\src\external\pthread\pthreadGC2.dll $(CURRENT_DIRECTORY) /Y
+*
 *   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
@@ -27,7 +32,6 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - forces");
-    
     InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     // Global variables
@@ -69,7 +73,6 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdatePhysics();    // Update all created physic objects
         
         // Update mouse position value
         mousePosition = GetMousePosition();
@@ -166,7 +169,9 @@ int main()
             
             // Draw help messages
             DrawText("Use LEFT MOUSE BUTTON to apply a force", screenWidth/2 - MeasureText("Use LEFT MOUSE BUTTON to apply a force", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
-            DrawText("Use R to reset objects position", screenWidth/2 - MeasureText("Use R to reset objects position", 20)/2, screenHeight*0.875f, 20, GRAY);    
+            DrawText("Use R to reset objects position", screenWidth/2 - MeasureText("Use R to reset objects position", 20)/2, screenHeight*0.875f, 20, GRAY);
+            
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -175,7 +180,6 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     ClosePhysics();       // Unitialize physics module
-    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
