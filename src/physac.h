@@ -15,6 +15,10 @@
 *       The generated implementation will stay private inside implementation file and all 
 *       internal symbols and functions will only be visible inside that file.
 *
+*   #define PHYSAC_NO_THREADS
+*       The generated implementation won't include pthread library and user must create a secondary thread to call PhysicsThread().
+*       It is so important that the thread where PhysicsThread() is called must not have v-sync or any other CPU limitation.
+*
 *   #define PHYSAC_STANDALONE
 *       Avoid raylib.h header inclusion in this file. Data types defined on raylib are defined
 *       internally in the library and input management and drawing functions must be provided by
@@ -27,12 +31,16 @@
 *       
 *   LIMITATIONS:
 *
-*       // TODO.
+*       - There is a limit of 256 physic objects.
+*       - Physics behaviour can be unexpected using bounciness or friction values out of 0.0f - 1.0f range.
+*       - The module is limited to 2D axis oriented physics.
+*       - Physics colliders must be rectangle or circle shapes (there is not a custom polygon collider type).
 *
 *   VERSIONS:
 *
-*   1.0 (09-Jun-2016) Module names review and converted to header-only.
-*   0.9 (23-Mar-2016) Complete module redesign, steps-based for better physics resolution.
+*   1.0 (14-Jun-2016) New module defines and fixed some delta time calculation bugs.
+*   0.9 (09-Jun-2016) Module names review and converted to header-only.
+*   0.8 (23-Mar-2016) Complete module redesign, steps-based for better physics resolution.
 *   0.3 (13-Feb-2016) Reviewed to add PhysicObjects pool.
 *   0.2 (03-Jan-2016) Improved physics calculations.
 *   0.1 (30-Dec-2015) Initial release.
