@@ -21,7 +21,6 @@
 #define MOVE_VELOCITY    5
 #define JUMP_VELOCITY    30
 
-
 int main()
 {
     // Initialization
@@ -30,7 +29,7 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - basic rigidbody");
-    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
+    // InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     // Debug variables
     bool isDebug = false;
@@ -64,8 +63,7 @@ int main()
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        //----------------------------------------------------------------------------------
-        
+        //----------------------------------------------------------------------------------        
         // Check rectangle movement inputs
         if (IsKeyPressed('W')) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
         if (IsKeyDown('A')) rectangle->rigidbody.velocity.x = -MOVE_VELOCITY;
@@ -121,7 +119,7 @@ int main()
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------    
+    //--------------------------------------------------------------------------------------
     ClosePhysics();       // Unitialize physics (including all loaded objects)
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

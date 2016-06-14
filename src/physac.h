@@ -146,7 +146,7 @@ typedef struct PhysicBodyData {
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 PHYSACDEF void InitPhysics(Vector2 gravity);                                            // Initializes pointers array (just pointers, fixed size)
-PHYSACDEF void UpdatePhysics(double deltaTime);                                         // Update physic objects, calculating physic behaviours and collisions detection
+PHYSACDEF void* PhysicsThread(void *arg);                                               // Physics calculations thread function
 PHYSACDEF void ClosePhysics();                                                          // Unitialize all physic objects and empty the objects pool
 
 PHYSACDEF PhysicBody CreatePhysicBody(Vector2 position, float rotation, Vector2 scale); // Create a new physic body dinamically, initialize it and add to pool
@@ -219,7 +219,7 @@ static Vector2 gravityForce;                                        // Gravity f
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void* PhysicsThread(void *arg);                              // Physics calculations thread function
+static void UpdatePhysics(double deltaTime);                        // Update physic objects, calculating physic behaviours and collisions detection
 static void InitTimer(void);                                        // Initialize hi-resolution timer
 static double GetCurrentTime(void);                                 // Time measure returned are microseconds
 static float Vector2DotProduct(Vector2 v1, Vector2 v2);             // Returns the dot product of two Vector2
@@ -243,8 +243,214 @@ PHYSACDEF void InitPhysics(Vector2 gravity)
     #endif
 }
 
+// Unitialize all physic objects and empty the objects pool
+PHYSACDEF void ClosePhysics()
+{
+    // Exit physics thread loop
+    physicsThreadEnabled = false;
+    
+    // Free all dynamic memory allocations
+    for (int i = 0; i < physicBodiesCount; i++) PHYSAC_FREE(physicBodies[i]);
+    
+    // Reset enabled physic objects count
+    physicBodiesCount = 0;
+}
+
+// Create a new physic body dinamically, initialize it and add to pool
+PHYSACDEF PhysicBody CreatePhysicBody(Vector2 position, float rotation, Vector2 scale)
+{
+    // Allocate dynamic memory
+    PhysicBody obj = (PhysicBody)PHYSAC_MALLOC(sizeof(PhysicBodyData));
+    
+    // Initialize physic body values with generic values
+    obj->id = physicBodiesCount;
+    obj->enabled = true;
+    
+    obj->transform = (Transform){ (Vector2){ position.x - scale.x/2, position.y - scale.y/2 }, rotation, scale };
+    
+    obj->rigidbody.enabled = false;
+    obj->rigidbody.mass = 1.0f;
+    obj->rigidbody.acceleration = (Vector2){ 0.0f, 0.0f };
+    obj->rigidbody.velocity = (Vector2){ 0.0f, 0.0f };
+    obj->rigidbody.applyGravity = false;
+    obj->rigidbody.isGrounded = false;
+    obj->rigidbody.friction = 0.0f;
+    obj->rigidbody.bounciness = 0.0f;
+    
+    obj->collider.enabled = true;
+    obj->collider.type = COLLIDER_RECTANGLE;
+    obj->collider.bounds = TransformToRectangle(obj->transform);
+    obj->collider.radius = 0.0f;
+    
+    // Add new physic body to the pointers array
+    physicBodies[physicBodiesCount] = obj;
+    
+    // Increase enabled physic bodies count
+    physicBodiesCount++;
+    
+    return obj;
+}
+
+// Destroy a specific physic body and take it out of the list
+PHYSACDEF void DestroyPhysicBody(PhysicBody pbody)
+{
+    // Free dynamic memory allocation
+    PHYSAC_FREE(physicBodies[pbody->id]);
+    
+    // Remove *obj from the pointers array
+    for (int i = pbody->id; i < physicBodiesCount; i++)
+    {
+        // Resort all the following pointers of the array
+        if ((i + 1) < physicBodiesCount)
+        {
+            physicBodies[i] = physicBodies[i + 1];
+            physicBodies[i]->id = physicBodies[i + 1]->id;
+        }
+        else PHYSAC_FREE(physicBodies[i]);
+    }
+    
+    // Decrease enabled physic bodies count
+    physicBodiesCount--;
+}
+
+// Apply directional force to a physic body
+PHYSACDEF void ApplyForce(PhysicBody pbody, Vector2 force)
+{
+    if (pbody->rigidbody.enabled)
+    {
+        pbody->rigidbody.velocity.x += force.x/pbody->rigidbody.mass;
+        pbody->rigidbody.velocity.y += force.y/pbody->rigidbody.mass;
+    }
+}
+
+// Apply radial force to all physic objects in range
+PHYSACDEF void ApplyForceAtPosition(Vector2 position, float force, float radius)
+{
+    for (int i = 0; i < physicBodiesCount; i++)
+    {
+        if (physicBodies[i]->rigidbody.enabled)
+        {
+            // Calculate direction and distance between force and physic body position
+            Vector2 distance = (Vector2){ physicBodies[i]->transform.position.x - position.x, physicBodies[i]->transform.position.y - position.y };
+
+            if (physicBodies[i]->collider.type == COLLIDER_RECTANGLE)
+            {
+                distance.x += physicBodies[i]->transform.scale.x/2;
+                distance.y += physicBodies[i]->transform.scale.y/2;
+            }
+            
+            float distanceLength = Vector2Length(distance);
+            
+            // Check if physic body is in force range
+            if (distanceLength <= radius)
+            {
+                // Normalize force direction
+                distance.x /= distanceLength;
+                distance.y /= -distanceLength;
+                
+                // Calculate final force
+                Vector2 finalForce = { distance.x*force, distance.y*force };
+                
+                // Apply force to the physic body
+                ApplyForce(physicBodies[i], finalForce);
+            }
+        }
+    }
+}
+
+// Convert Transform data type to Rectangle (position and scale)
+PHYSACDEF Rectangle TransformToRectangle(Transform transform)
+{
+    return (Rectangle){transform.position.x, transform.position.y, transform.scale.x, transform.scale.y};
+}
+
+// Physics calculations thread function
+PHYSACDEF void* PhysicsThread(void *arg)
+{
+    // Initialize thread loop state
+    physicsThreadEnabled = true;
+    
+    // Initialize hi-resolution timer
+    InitTimer();
+    
+    // Physics update loop
+    while (physicsThreadEnabled) 
+    {
+        currentTime = GetCurrentTime();
+        double deltaTime = (double)(currentTime - previousTime);
+        previousTime = currentTime;
+
+        // Delta time value needs to be inverse multiplied by physics time step value (1/target fps)
+        UpdatePhysics(deltaTime/PHYSICS_TIMESTEP);
+    }
+    
+    return NULL;
+}
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------
+// Initialize hi-resolution timer
+static void InitTimer(void)
+{
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec now;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
+    {
+        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
+    }
+#endif
+
+    previousTime = GetCurrentTime();       // Get time as double
+}
+
+// Time measure returned are microseconds
+static double GetCurrentTime(void)
+{
+    double time;
+    
+#if defined(PLATFORM_DESKTOP)
+    unsigned long long int clockFrequency, currentTime;
+    
+    QueryPerformanceFrequency(&clockFrequency);
+    QueryPerformanceCounter(&currentTime);
+    
+    time = (double)((double)currentTime/(double)clockFrequency);
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t temp = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+
+    time = (double)(temp - baseTime)*1e-9;
+#endif
+
+    return time;
+}
+
+// Returns the dot product of two Vector2
+static float Vector2DotProduct(Vector2 v1, Vector2 v2)
+{
+    float result;
+
+    result = v1.x*v2.x + v1.y*v2.y;
+
+    return result;
+}
+
+static float Vector2Length(Vector2 v)
+{
+    float result;
+    
+    result = sqrt(v.x*v.x + v.y*v.y);
+    
+    return result;
+}
+
 // Update physic objects, calculating physic behaviours and collisions detection
-PHYSACDEF void UpdatePhysics(double deltaTime)
+static void UpdatePhysics(double deltaTime)
 {
     for (int i = 0; i < physicBodiesCount; i++)
     {
@@ -613,212 +819,6 @@ PHYSACDEF void UpdatePhysics(double deltaTime)
             }
         }
     }
-}
-
-// Unitialize all physic objects and empty the objects pool
-PHYSACDEF void ClosePhysics()
-{
-    // Exit physics thread loop
-    physicsThreadEnabled = false;
-    
-    // Free all dynamic memory allocations
-    for (int i = 0; i < physicBodiesCount; i++) PHYSAC_FREE(physicBodies[i]);
-    
-    // Reset enabled physic objects count
-    physicBodiesCount = 0;
-}
-
-// Create a new physic body dinamically, initialize it and add to pool
-PHYSACDEF PhysicBody CreatePhysicBody(Vector2 position, float rotation, Vector2 scale)
-{
-    // Allocate dynamic memory
-    PhysicBody obj = (PhysicBody)PHYSAC_MALLOC(sizeof(PhysicBodyData));
-    
-    // Initialize physic body values with generic values
-    obj->id = physicBodiesCount;
-    obj->enabled = true;
-    
-    obj->transform = (Transform){ (Vector2){ position.x - scale.x/2, position.y - scale.y/2 }, rotation, scale };
-    
-    obj->rigidbody.enabled = false;
-    obj->rigidbody.mass = 1.0f;
-    obj->rigidbody.acceleration = (Vector2){ 0.0f, 0.0f };
-    obj->rigidbody.velocity = (Vector2){ 0.0f, 0.0f };
-    obj->rigidbody.applyGravity = false;
-    obj->rigidbody.isGrounded = false;
-    obj->rigidbody.friction = 0.0f;
-    obj->rigidbody.bounciness = 0.0f;
-    
-    obj->collider.enabled = true;
-    obj->collider.type = COLLIDER_RECTANGLE;
-    obj->collider.bounds = TransformToRectangle(obj->transform);
-    obj->collider.radius = 0.0f;
-    
-    // Add new physic body to the pointers array
-    physicBodies[physicBodiesCount] = obj;
-    
-    // Increase enabled physic bodies count
-    physicBodiesCount++;
-    
-    return obj;
-}
-
-// Destroy a specific physic body and take it out of the list
-PHYSACDEF void DestroyPhysicBody(PhysicBody pbody)
-{
-    // Free dynamic memory allocation
-    PHYSAC_FREE(physicBodies[pbody->id]);
-    
-    // Remove *obj from the pointers array
-    for (int i = pbody->id; i < physicBodiesCount; i++)
-    {
-        // Resort all the following pointers of the array
-        if ((i + 1) < physicBodiesCount)
-        {
-            physicBodies[i] = physicBodies[i + 1];
-            physicBodies[i]->id = physicBodies[i + 1]->id;
-        }
-        else PHYSAC_FREE(physicBodies[i]);
-    }
-    
-    // Decrease enabled physic bodies count
-    physicBodiesCount--;
-}
-
-// Apply directional force to a physic body
-PHYSACDEF void ApplyForce(PhysicBody pbody, Vector2 force)
-{
-    if (pbody->rigidbody.enabled)
-    {
-        pbody->rigidbody.velocity.x += force.x/pbody->rigidbody.mass;
-        pbody->rigidbody.velocity.y += force.y/pbody->rigidbody.mass;
-    }
-}
-
-// Apply radial force to all physic objects in range
-PHYSACDEF void ApplyForceAtPosition(Vector2 position, float force, float radius)
-{
-    for (int i = 0; i < physicBodiesCount; i++)
-    {
-        if (physicBodies[i]->rigidbody.enabled)
-        {
-            // Calculate direction and distance between force and physic body position
-            Vector2 distance = (Vector2){ physicBodies[i]->transform.position.x - position.x, physicBodies[i]->transform.position.y - position.y };
-
-            if (physicBodies[i]->collider.type == COLLIDER_RECTANGLE)
-            {
-                distance.x += physicBodies[i]->transform.scale.x/2;
-                distance.y += physicBodies[i]->transform.scale.y/2;
-            }
-            
-            float distanceLength = Vector2Length(distance);
-            
-            // Check if physic body is in force range
-            if (distanceLength <= radius)
-            {
-                // Normalize force direction
-                distance.x /= distanceLength;
-                distance.y /= -distanceLength;
-                
-                // Calculate final force
-                Vector2 finalForce = { distance.x*force, distance.y*force };
-                
-                // Apply force to the physic body
-                ApplyForce(physicBodies[i], finalForce);
-            }
-        }
-    }
-}
-
-// Convert Transform data type to Rectangle (position and scale)
-PHYSACDEF Rectangle TransformToRectangle(Transform transform)
-{
-    return (Rectangle){transform.position.x, transform.position.y, transform.scale.x, transform.scale.y};
-}
-
-//----------------------------------------------------------------------------------
-// Module specific Functions Definition
-//----------------------------------------------------------------------------------
-// Physics calculations thread function
-static void* PhysicsThread(void *arg)
-{
-    // Initialize thread loop state
-    physicsThreadEnabled = true;
-    
-    // Initialize hi-resolution timer
-    InitTimer();
-    
-    // Physics update loop
-    while (physicsThreadEnabled) 
-    {
-        currentTime = GetCurrentTime();
-        double deltaTime = (double)(currentTime - previousTime);
-        previousTime = currentTime;
-
-        // Delta time value needs to be inverse multiplied by physics time step value (1/target fps)
-        UpdatePhysics(deltaTime/PHYSICS_TIMESTEP);
-    }
-    
-    return NULL;
-}
-
-// Initialize hi-resolution timer
-static void InitTimer(void)
-{
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec now;
-
-    if (clock_gettime(CLOCK_MONOTONIC, &now) == 0)  // Success
-    {
-        baseTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;
-    }
-#endif
-
-    previousTime = GetCurrentTime();       // Get time as double
-}
-
-// Time measure returned are microseconds
-static double GetCurrentTime(void)
-{
-    double time;
-    
-#if defined(PLATFORM_DESKTOP)
-    unsigned long long int clockFrequency, currentTime;
-    
-    QueryPerformanceFrequency(&clockFrequency);
-    QueryPerformanceCounter(&currentTime);
-    
-    time = (double)((double)currentTime/(double)clockFrequency);
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t temp = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
-
-    time = (double)(temp - baseTime)*1e-9;
-#endif
-
-    return time;
-}
-
-// Returns the dot product of two Vector2
-static float Vector2DotProduct(Vector2 v1, Vector2 v2)
-{
-    float result;
-
-    result = v1.x*v2.x + v1.y*v2.y;
-
-    return result;
-}
-
-static float Vector2Length(Vector2 v)
-{
-    float result;
-    
-    result = sqrt(v.x*v.x + v.y*v.y);
-    
-    return result;
 }
 
 #endif  // PHYSAC_IMPLEMENTATION
