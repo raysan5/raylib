@@ -9,7 +9,7 @@
 *       PLATFORM_ANDROID - Only OpenGL ES 2.0 devices
 *       PLATFORM_RPI - Rapsberry Pi (tested on Raspbian)
 *       PLATFORM_WEB - Emscripten, HTML5
-*       PLATFORM_OCULUS - Oculus Rift CV1 (with desktop mirror)
+*       Oculus Rift CV1 (with desktop mirror) - View [rlgl] module to enable it
 *
 *   On PLATFORM_DESKTOP, the external lib GLFW3 (www.glfw.com) is used to manage graphic
 *   device, OpenGL context and input on multiple operating systems (Windows, Linux, OSX).
@@ -53,14 +53,6 @@
 #include <math.h>           // Math related functions, tan() used to set perspective
 #include <string.h>         // String function definitions, memset()
 #include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
-
-#if defined(PLATFORM_OCULUS)
-    #define PLATFORM_DESKTOP      // Enable PLATFORM_DESKTOP code-base
-#endif
-
-#if defined(PLATFORM_OCULUS)
-    #include "../examples/oculus_glfw_sample/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
-#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
@@ -134,31 +126,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_OCULUS)
-typedef struct OculusBuffer {
-    ovrTextureSwapChain textureChain;
-    GLuint depthId;
-    GLuint fboId;
-    int width;
-    int height;
-} OculusBuffer;
-
-typedef struct OculusMirror {
-    ovrMirrorTexture texture;
-    GLuint fboId;
-    int width;
-    int height;
-} OculusMirror;
-
-typedef struct OculusLayer {
-    ovrViewScaleDesc viewScaleDesc;
-    ovrLayerEyeFov eyeLayer;      // layer 0
-    //ovrLayerQuad quadLayer;     // TODO: layer 1: '2D' quad for GUI
-    Matrix eyeProjections[2];
-    int width;
-    int height;
-} OculusLayer;
-#endif
+// ...
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -213,17 +181,6 @@ static uint64_t baseTime;               // Base time measure for hi-res timer
 static bool windowShouldClose = false;  // Flag to set window for closing
 #endif
 
-#if defined(PLATFORM_OCULUS)
-// OVR device variables
-static ovrSession session;              // Oculus session (pointer to ovrHmdStruct)
-static ovrHmdDesc hmdDesc;              // Oculus device descriptor parameters
-static ovrGraphicsLuid luid;            // Oculus locally unique identifier for the program (64 bit)
-static OculusLayer layer;               // Oculus drawing layer (similar to photoshop)
-static OculusBuffer buffer;             // Oculus internal buffers (texture chain and fbo)
-static OculusMirror mirror;             // Oculus mirror texture and fbo
-static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
-#endif
-
 static unsigned int displayWidth, displayHeight;     // Display width and height (monitor, device-screen, LCD, ...)
 static int screenWidth, screenHeight;       // Screen width and height (used render area)
 static int renderWidth, renderHeight;       // Framebuffer width and height (render area)
@@ -233,7 +190,6 @@ static int renderOffsetX = 0;               // Offset X from render area (must b
 static int renderOffsetY = 0;               // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
-static Matrix cameraView;                   // Store camera view matrix (required for Oculus Rift)
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
@@ -332,19 +288,6 @@ static void InitGamepad(void);                          // Init raw gamepad inpu
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
-#if defined(PLATFORM_OCULUS)
-// Oculus Rift functions
-static Matrix FromOvrMatrix(ovrMatrix4f ovrM);
-static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);
-static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);
-static void SetOculusBuffer(ovrSession session, OculusBuffer buffer);
-static void UnsetOculusBuffer(OculusBuffer buffer);
-static OculusMirror LoadOculusMirror(ovrSession session, int width, int height);    // Load Oculus mirror buffers
-static void UnloadOculusMirror(ovrSession session, OculusMirror mirror);            // Unload Oculus mirror buffers
-static void BlitOculusMirror(ovrSession session, OculusMirror mirror);
-static OculusLayer InitOculusLayer(ovrSession session);
-#endif
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
@@ -391,11 +334,6 @@ void InitWindow(int width, int height, const char *title)
     // TODO: Add gamepad support (not provided by GLFW3 on emscripten)
     //emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenInputCallback);
     //emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenInputCallback);
-#endif
-
-#if defined(PLATFORM_OCULUS)
-    // Recenter OVR tracking origin
-    ovr_RecenterTrackingOrigin(session);
 #endif
 
     mousePosition.x = (float)screenWidth/2.0f;
@@ -512,64 +450,6 @@ void CloseWindow(void)
     TraceLog(INFO, "Window closed successfully");
 }
 
-#if defined(PLATFORM_OCULUS)
-// Init Oculus Rift device
-// NOTE: Device initialization should be done before window creation?
-void InitOculusDevice(void)
-{
-    // Initialize Oculus device
-    ovrResult result = ovr_Initialize(NULL);
-    if (OVR_FAILURE(result)) TraceLog(WARNING, "OVR: Could not initialize Oculus device");
-
-    result = ovr_Create(&session, &luid);
-    if (OVR_FAILURE(result))
-    {
-        TraceLog(WARNING, "OVR: Could not create Oculus session");
-        ovr_Shutdown();
-    }
-
-    hmdDesc = ovr_GetHmdDesc(session);
-    
-    TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-    TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-    TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-    TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
-    //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
-    TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
-    
-    // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
-    // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
-    
-    // Initialize Oculus Buffers
-    layer = InitOculusLayer(session);   
-    buffer = LoadOculusBuffer(session, layer.width, layer.height);
-    mirror = LoadOculusMirror(session, screenWidth, screenHeight);
-    layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
-}
-
-// Close Oculus Rift device
-void CloseOculusDevice(void)
-{
-    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
-    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
-
-    ovr_Destroy(session);   // Free Oculus session data
-    ovr_Shutdown();         // Close Oculus device connection
-}
-
-// Update Oculus Rift tracking (position and orientation)
-void UpdateOculusTracking(void)
-{
-    frameIndex++;
-
-    ovrPosef eyePoses[2];
-    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
-    
-    layer.eyeLayer.RenderPose[0] = eyePoses[0];
-    layer.eyeLayer.RenderPose[1] = eyePoses[1];
-}
-#endif
-
 // Detect if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
 {
@@ -638,10 +518,6 @@ void BeginDrawing(void)
     currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
-    
-#if defined(PLATFORM_OCULUS)
-    SetOculusBuffer(session, buffer);
-#endif
 
     rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
@@ -654,49 +530,7 @@ void BeginDrawing(void)
 // End canvas drawing and Swap Buffers (Double Buffering)
 void EndDrawing(void)
 {
-#if defined(PLATFORM_OCULUS)
-    for (int eye = 0; eye < 2; eye++)
-    {
-        rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
-
-        Quaternion eyeRPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
-                                            layer.eyeLayer.RenderPose[eye].Orientation.y, 
-                                            layer.eyeLayer.RenderPose[eye].Orientation.z, 
-                                            layer.eyeLayer.RenderPose[eye].Orientation.w };
-        QuaternionInvert(&eyeRPose);
-        Matrix eyeOrientation = QuaternionToMatrix(eyeRPose);
-        Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
-                                                -layer.eyeLayer.RenderPose[eye].Position.y, 
-                                                -layer.eyeLayer.RenderPose[eye].Position.z);
-
-        Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);
-        Matrix modelEyeView = MatrixMultiply(cameraView, eyeView);  // Using internal camera modelview matrix
-
-        SetMatrixModelview(modelEyeView);
-        SetMatrixProjection(layer.eyeProjections[eye]);
-#endif
-    
-        rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
-
-#if defined(PLATFORM_OCULUS)
-    }
-    
-    UnsetOculusBuffer(buffer);
-    
-    ovr_CommitTextureSwapChain(session, buffer.textureChain);
-    
-    ovrLayerHeader *layers = &layer.eyeLayer.Header;
-    ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
-
-    // Blit mirror texture to back buffer
-    BlitOculusMirror(session, mirror);
-
-    // Get session status information
-    ovrSessionStatus sessionStatus;
-    ovr_GetSessionStatus(session, &sessionStatus);
-    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
-    if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
-#endif
+    rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
@@ -768,7 +602,7 @@ void Begin3dMode(Camera camera)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     // Setup Camera view
-    cameraView = MatrixLookAt(camera.position, camera.target, camera.up);
+    Matrix cameraView = MatrixLookAt(camera.position, camera.target, camera.up);
     rlMultMatrixf(MatrixToFloat(cameraView));      // Multiply MODELVIEW matrix by view matrix (camera)
     
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
@@ -1738,9 +1572,7 @@ static void InitDisplay(int width, int height)
 #endif
 
     glfwMakeContextCurrent(window);
-#if defined(PLATFORM_OCULUS)
-    glfwSwapInterval(0);
-#endif
+    glfwSwapInterval(0);                // Disable VSync by default
 
 #if defined(PLATFORM_DESKTOP)
     // Load OpenGL 3.3 extensions
@@ -2937,214 +2769,6 @@ static void *GamepadThread(void *arg)
     }
 
     return NULL;
-}
-#endif
-
-
-#if defined(PLATFORM_OCULUS)
-// Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
-static Matrix FromOvrMatrix(ovrMatrix4f ovrmat)
-{
-    Matrix rmat;
-    
-    rmat.m0 = ovrmat.M[0][0];
-    rmat.m1 = ovrmat.M[1][0];
-    rmat.m2 = ovrmat.M[2][0];
-    rmat.m3 = ovrmat.M[3][0];
-    rmat.m4 = ovrmat.M[0][1];
-    rmat.m5 = ovrmat.M[1][1];
-    rmat.m6 = ovrmat.M[2][1];
-    rmat.m7 = ovrmat.M[3][1];
-    rmat.m8 = ovrmat.M[0][2];
-    rmat.m9 = ovrmat.M[1][2];
-    rmat.m10 = ovrmat.M[2][2];
-    rmat.m11 = ovrmat.M[3][2];
-    rmat.m12 = ovrmat.M[0][3];
-    rmat.m13 = ovrmat.M[1][3];
-    rmat.m14 = ovrmat.M[2][3];
-    rmat.m15 = ovrmat.M[3][3];
-    
-    MatrixTranspose(&rmat);
-    
-    return rmat;
-}
-
-// Load Oculus required buffers: texture-swap-chain, fbo, texture-depth
-static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
-{
-    OculusBuffer buffer;
-    buffer.width = width;
-    buffer.height = height;
-    
-    // Create OVR texture chain
-    ovrTextureSwapChainDesc desc = {};
-    desc.Type = ovrTexture_2D;
-    desc.ArraySize = 1;
-    desc.Width = width;
-    desc.Height = height;
-    desc.MipLevels = 1;
-    desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;   // Requires glEnable(GL_FRAMEBUFFER_SRGB);
-    desc.SampleCount = 1;
-    desc.StaticImage = ovrFalse;
-
-    ovrResult result = ovr_CreateTextureSwapChainGL(session, &desc, &buffer.textureChain);
-    
-    if (!OVR_SUCCESS(result)) TraceLog(WARNING, "OVR: Failed to create swap textures buffer");
-
-    int textureCount = 0;
-    ovr_GetTextureSwapChainLength(session, buffer.textureChain, &textureCount);
-    
-    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(WARNING, "OVR: Unable to count swap chain textures");
-
-    for (int i = 0; i < textureCount; ++i)
-    {
-        GLuint chainTexId;
-        ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, i, &chainTexId);
-        glBindTexture(GL_TEXTURE_2D, chainTexId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-    
-    glBindTexture(GL_TEXTURE_2D, 0);
-    
-    /*
-    // Setup framebuffer object (using depth texture)
-    glGenFramebuffers(1, &buffer.fboId);
-    glGenTextures(1, &buffer.depthId);
-    glBindTexture(GL_TEXTURE_2D, buffer.depthId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, buffer.width, buffer.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
-    */
-    
-    // Setup framebuffer object (using depth renderbuffer)
-    glGenFramebuffers(1, &buffer.fboId);
-    glGenRenderbuffers(1, &buffer.depthId);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
-    glBindRenderbuffer(GL_RENDERBUFFER, buffer.depthId);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, buffer.width, buffer.height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer.depthId);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    return buffer;
-}
-
-// Unload texture required buffers
-static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer)
-{
-    if (buffer.textureChain)
-    {
-        ovr_DestroyTextureSwapChain(session, buffer.textureChain);
-        buffer.textureChain = NULL;
-    }
-
-    if (buffer.depthId != 0) glDeleteTextures(1, &buffer.depthId);
-    if (buffer.fboId != 0) glDeleteFramebuffers(1, &buffer.fboId);
-}
-
-// Set current Oculus buffer
-static void SetOculusBuffer(ovrSession session, OculusBuffer buffer)
-{
-    GLuint currentTexId;
-    int currentIndex;
-    
-    ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
-    ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
-
-    //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    // Required if OculusBuffer format is OVR_FORMAT_R8G8B8A8_UNORM_SRGB
-    glEnable(GL_FRAMEBUFFER_SRGB);
-}
-
-// Unset Oculus buffer
-static void UnsetOculusBuffer(OculusBuffer buffer)
-{
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-}
-
-// Load Oculus mirror buffers
-static OculusMirror LoadOculusMirror(ovrSession session, int width, int height)
-{
-    OculusMirror mirror;
-    mirror.width = width;
-    mirror.height = height;
-    
-    ovrMirrorTextureDesc mirrorDesc;
-    memset(&mirrorDesc, 0, sizeof(mirrorDesc));
-    mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-    mirrorDesc.Width = mirror.width;
-    mirrorDesc.Height = mirror.height;
-    
-    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(WARNING, "Could not create mirror texture");
-
-    glGenFramebuffers(1, &mirror.fboId);
-
-    return mirror;
-}
-
-// Unload Oculus mirror buffers
-static void UnloadOculusMirror(ovrSession session, OculusMirror mirror)
-{
-    if (mirror.fboId != 0) glDeleteFramebuffers(1, &mirror.fboId);
-    if (mirror.texture) ovr_DestroyMirrorTexture(session, mirror.texture);
-}
-
-static void BlitOculusMirror(ovrSession session, OculusMirror mirror)
-{
-    GLuint mirrorTextureId;
-    
-    ovr_GetMirrorTextureBufferGL(session, mirror.texture, &mirrorTextureId);
-    
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, mirror.fboId);
-    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
-    glBlitFramebuffer(0, 0, mirror.width, mirror.height, 0, mirror.height, mirror.width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-}
-
-// Requires: session, hmdDesc
-static OculusLayer InitOculusLayer(ovrSession session)
-{
-    OculusLayer layer = { 0 };
-    
-    layer.viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
-
-    memset(&layer.eyeLayer, 0, sizeof(ovrLayerEyeFov));
-    layer.eyeLayer.Header.Type = ovrLayerType_EyeFov;
-    layer.eyeLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
-
-    ovrEyeRenderDesc eyeRenderDescs[2];
-    
-    for (int eye = 0; eye < 2; eye++)
-    {
-        eyeRenderDescs[eye] = ovr_GetRenderDesc(session, eye, hmdDesc.DefaultEyeFov[eye]);
-        ovrMatrix4f ovrPerspectiveProjection = ovrMatrix4f_Projection(eyeRenderDescs[eye].Fov, 0.01f, 10000.0f, ovrProjection_None); //ovrProjection_ClipRangeOpenGL);
-        layer.eyeProjections[eye] = FromOvrMatrix(ovrPerspectiveProjection);      // NOTE: struct ovrMatrix4f { float M[4][4] } --> struct Matrix
-
-        layer.viewScaleDesc.HmdToEyeOffset[eye] = eyeRenderDescs[eye].HmdToEyeOffset;
-        layer.eyeLayer.Fov[eye] = eyeRenderDescs[eye].Fov;
-        
-        ovrSizei eyeSize = ovr_GetFovTextureSize(session, eye, layer.eyeLayer.Fov[eye], 1.0f);
-        layer.eyeLayer.Viewport[eye].Size = eyeSize;
-        layer.eyeLayer.Viewport[eye].Pos.x = layer.width;
-        layer.eyeLayer.Viewport[eye].Pos.y = 0;
-
-        layer.height = eyeSize.h;     //std::max(renderTargetSize.y, (uint32_t)eyeSize.h);
-        layer.width += eyeSize.w;
-    }
-    
-    return layer;
 }
 #endif
 

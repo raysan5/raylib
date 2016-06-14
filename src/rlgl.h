@@ -347,6 +347,15 @@ void DestroyLight(Light light);                                     // Destroy a
 void TraceLog(int msgType, const char *text, ...);
 #endif
 
+#if defined(RLGL_OCULUS_SUPPORT)
+void InitOculusDevice(void);                // Init Oculus Rift device
+void CloseOculusDevice(void);               // Close Oculus Rift device
+void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
+void SetOculusMatrix(int eye);              // Set internal projection and modelview matrix depending on eyes tracking data
+void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
+void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
+#endif
+
 #ifdef __cplusplus
 }
 #endif
