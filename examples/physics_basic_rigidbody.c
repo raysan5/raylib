@@ -29,7 +29,7 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - basic rigidbody");
-    // InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
+    InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
     // Debug variables
     bool isDebug = false;
