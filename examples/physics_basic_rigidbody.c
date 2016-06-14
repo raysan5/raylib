@@ -5,6 +5,10 @@
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*
+*   Compile example using:
+*   cmd /c IF NOT EXIST pthreadGC2.dll copy C:\raylib\raylib\src\external\pthread\pthreadGC2.dll $(CURRENT_DIRECTORY) /Y
+*
 *   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
