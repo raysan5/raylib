@@ -44,6 +44,10 @@
     #endif
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_21)
+    #define GRAPHICS_API_OPENGL_33
+#endif
+
 #if defined(GRAPHICS_API_OPENGL_33)
     #ifdef __APPLE__ 
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
@@ -916,6 +920,8 @@ int rlGetVersion(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     return OPENGL_11;
+#elif defined(GRAPHICS_API_OPENGL_21)
+    return OPENGL_21;
 #elif defined(GRAPHICS_API_OPENGL_33)
     return OPENGL_33;
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -1213,7 +1219,8 @@ void rlglLoadExtensions(void *loader)
     if (!gladLoadGLLoader((GLADloadproc)loader)) TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
     else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
 
-    if (GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
+    if (GLAD_GL_VERSION_2_1) TraceLog(INFO, "OpenGL 2.1 profile supported");
+    else if(GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
     else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
 
     // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
@@ -2752,55 +2759,65 @@ static Shader LoadDefaultShader(void)
     Shader shader;
 
     // Vertex shader directly defined, no external file required
-#if defined(GRAPHICS_API_OPENGL_33)
-    char vShaderStr[] = "#version 330       \n"
-        "in vec3 vertexPosition;            \n"
-        "in vec2 vertexTexCoord;            \n"
-        "in vec4 vertexColor;               \n"
-        "out vec2 fragTexCoord;             \n"
-        "out vec4 fragColor;                \n"
+    char vDefaultShaderStr[] =
+#if defined(GRAPHICS_API_OPENGL_21)
+    "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char vShaderStr[] = "#version 100       \n"
-        "attribute vec3 vertexPosition;     \n"
-        "attribute vec2 vertexTexCoord;     \n"
-        "attribute vec4 vertexColor;        \n"
-        "varying vec2 fragTexCoord;         \n"
-        "varying vec4 fragColor;            \n"
+    "#version 100                       \n"
 #endif
-        "uniform mat4 mvpMatrix;            \n"
-        "void main()                        \n"
-        "{                                  \n"
-        "    fragTexCoord = vertexTexCoord; \n"
-        "    fragColor = vertexColor;       \n"
-        "    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
-        "}                                  \n";
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
+    "attribute vec3 vertexPosition;     \n"
+    "attribute vec2 vertexTexCoord;     \n"
+    "attribute vec4 vertexColor;        \n"
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+#elif defined(GRAPHICS_API_OPENGL_33)
+    "#version 330                       \n"
+    "in vec3 vertexPosition;            \n"
+    "in vec2 vertexTexCoord;            \n"
+    "in vec4 vertexColor;               \n"
+    "out vec2 fragTexCoord;             \n"
+    "out vec4 fragColor;                \n"
+#endif
+    "uniform mat4 mvpMatrix;            \n"
+    "void main()                        \n"
+    "{                                  \n"
+    "    fragTexCoord = vertexTexCoord; \n"
+    "    fragColor = vertexColor;       \n"
+    "    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
+    "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-#if defined(GRAPHICS_API_OPENGL_33)
-    char fShaderStr[] = "#version 330       \n"
-        "in vec2 fragTexCoord;              \n"
-        "in vec4 fragColor;                 \n"
-        "out vec4 finalColor;               \n"
+    char fDefaultShaderStr[] =
+#if defined(GRAPHICS_API_OPENGL_21)
+    "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
-    char fShaderStr[] = "#version 100       \n"
-        "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
-        "varying vec2 fragTexCoord;         \n"
-        "varying vec4 fragColor;            \n"
+    "#version 100                       \n"
+    "precision mediump float;           \n"     // precision required for OpenGL ES2 (WebGL)
 #endif
-        "uniform sampler2D texture0;        \n"
-        "uniform vec4 colDiffuse;           \n"
-        "void main()                        \n"
-        "{                                  \n"
-#if defined(GRAPHICS_API_OPENGL_33)
-        "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
-        "    finalColor = texelColor*colDiffuse*fragColor;        \n"
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-        "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
-        "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
+    "varying vec2 fragTexCoord;         \n"
+    "varying vec4 fragColor;            \n"
+#elif defined(GRAPHICS_API_OPENGL_33)
+    "#version 330       \n"
+    "in vec2 fragTexCoord;              \n"
+    "in vec4 fragColor;                 \n"
+    "out vec4 finalColor;               \n"
 #endif
-        "}                                  \n";
+    "uniform sampler2D texture0;        \n"
+    "uniform vec4 colDiffuse;           \n"
+    "void main()                        \n"
+    "{                                  \n"
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
+    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n" // NOTE: texture2D() is deprecated on OpenGL 3.3 and ES 3.0
+    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+#elif defined(GRAPHICS_API_OPENGL_33)
+    "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
+    "    finalColor = texelColor*colDiffuse*fragColor;        \n"
+#endif
+    "}                                  \n";
 
-    shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
+    shader.id = LoadShaderProgram(vDefaultShaderStr, fDefaultShaderStr);
 
     if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);

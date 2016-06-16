@@ -51,6 +51,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 else
     # define raylib graphics api to use (OpenGL 1.1 by default)
     GRAPHICS ?= GRAPHICS_API_OPENGL_11
+    #GRAPHICS = GRAPHICS_API_OPENGL_21  # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_33  # Uncomment to use OpenGL 3.3
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)

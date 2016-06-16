@@ -52,19 +52,25 @@
 //#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI or PLATFORM_WEB
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
-#if !defined(GRAPHICS_API_OPENGL_11) && !defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_ES2)
+#if !defined(GRAPHICS_API_OPENGL_11) && !defined(GRAPHICS_API_OPENGL_21) && !defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_ES2)
     #define GRAPHICS_API_OPENGL_11
 #endif
 
 // Security check in case multiple GRAPHICS_API_OPENGL_* defined
 #if defined(GRAPHICS_API_OPENGL_11)
+    #if defined(GRAPHICS_API_OPENGL_21)
+        #undef GRAPHICS_API_OPENGL_21
+    #endif
     #if defined(GRAPHICS_API_OPENGL_33)
         #undef GRAPHICS_API_OPENGL_33
     #endif
-
     #if defined(GRAPHICS_API_OPENGL_ES2)
         #undef GRAPHICS_API_OPENGL_ES2
     #endif
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_21)
+    #define GRAPHICS_API_OPENGL_33
 #endif
 
 //----------------------------------------------------------------------------------
@@ -90,7 +96,7 @@ typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
-typedef enum { OPENGL_11 = 1, OPENGL_33, OPENGL_ES_20 } GlVersion;
+typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus

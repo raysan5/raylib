@@ -1480,16 +1480,21 @@ static void InitDisplay(int width, int height)
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 3.3 context fordward compatible.
-
-    // Check selection OpenGL version (not initialized yet!)
-    if (rlGetVersion() == OPENGL_33)
+    
+    if (configFlags & FLAG_MSAA_4X_HINT)
     {
-        if (configFlags & FLAG_MSAA_4X_HINT)
-        {
-            glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
-            TraceLog(INFO, "Trying to enable MSAA x4");
-        }
+        glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
+        TraceLog(INFO, "Trying to enable MSAA x4");
+    }
 
+    // Check selection OpenGL version
+    if (rlGetVersion() == OPENGL_21)
+    {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);        // Choose OpenGL major version (just hint)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);        // Choose OpenGL minor version (just hint)
+    }
+    else if (rlGetVersion() == OPENGL_33)
+    {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
