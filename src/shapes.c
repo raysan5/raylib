@@ -135,7 +135,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             }
         rlEnd();
     }
-    else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
         rlEnableTexture(GetDefaultTexture().id); // Default white texture
 
@@ -218,7 +218,7 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
             rlVertex2i(position.x + size.x, position.y);
         rlEnd();
     }
-    else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
         rlEnableTexture(GetDefaultTexture().id); // Default white texture
 
@@ -264,7 +264,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
             rlVertex2i(posX + 1, posY + 1);
         rlEnd();
     }
-    else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
         DrawRectangle(posX, posY, width, 1, color);
         DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);

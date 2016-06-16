@@ -166,9 +166,9 @@ static const char fStandardShaderStr[] =
 "            else if(lights[i].type == 2) lighting += CalcSpotLight(lights[i], n, v, spec);\n"
 "        }\n"
 "    }\n"
-#if defined(GRAPHICS_API_OPENGL_33)
-"   finalColor = vec4(texelColor.rgb*lighting*colDiffuse.rgb, texelColor.a*colDiffuse.a); \n"
-#elif defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
 "   gl_FragColor = vec4(texelColor.rgb*lighting*colDiffuse.rgb, texelColor.a*colDiffuse.a); \n"
+#elif defined(GRAPHICS_API_OPENGL_33)
+"   finalColor = vec4(texelColor.rgb*lighting*colDiffuse.rgb, texelColor.a*colDiffuse.a); \n"
 #endif
 "}\n";
