@@ -606,6 +606,8 @@ void Begin3dMode(Camera camera)
     rlMultMatrixf(MatrixToFloat(cameraView));      // Multiply MODELVIEW matrix by view matrix (camera)
     
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
+    
+    //if (vrEnabled) BeginVrMode();
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
@@ -1013,6 +1015,14 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 Matrix GetCameraMatrix(Camera camera)
 {
     return MatrixLookAt(camera.position, camera.target, camera.up);
+}
+
+// Update and draw default buffers vertex data
+// NOTE: This data has been stored dynamically during frame on each Draw*() call
+void DrawDefaultBuffers(void)
+{
+    rlglUpdateDefaultBuffers(); // Upload frame vertex data to GPU
+    rlglDrawDefaultBuffers();   // Draw vertex data into framebuffer
 }
 
 //----------------------------------------------------------------------------------

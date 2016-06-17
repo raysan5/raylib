@@ -51,27 +51,31 @@ int main()
         
             ClearBackground(RAYWHITE);
             
-            BeginOculusDrawing();
+            Begin3dMode(camera);
+            //BeginOculusDrawing(camera);   // Add it to Begin3dMode() ?
             
-                for (int eye = 0; eye < 2; eye++)
-                {
-                    // TODO: Probably projection and view matrices could be created here...
-                    // ...without the need to create it internally through Begin3dMode()
-                    Begin3dMode(camera);
+            for (int eye = 0; eye < 2; eye++)
+            {
+                // TODO: Probably projection and view matrices could be created here...
+                // ...without the need to create it internally through Begin3dMode()
+                //Begin3dMode(camera);
+            
+                SetOculusView(eye);
                 
-                        SetOculusMatrix(eye);
-                        
-                        DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                        DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-                        
-                        DrawGrid(10, 1.0f);
-                    
-                    // TODO: Call internal buffers drawing directly (rlglDraw()) and...
-                    // ...reset internal matrices, instead of letting End3dMode() do that
-                    End3dMode();
-                }
+                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+                
+                DrawGrid(10, 1.0f);
+                
+                // TODO: Call internal buffers drawing directly (rlglDraw()) and...
+                // ...reset internal matrices, instead of letting End3dMode() do that
+                //End3dMode();
+                
+                DrawDefaultBuffers();   // Process internal dynamic buffers
+            }
             
-            EndOculusDrawing();
+            End3dMode();
+            //EndOculusDrawing();   // Add it to End3dMode() ?
 
         EndDrawing();
         //----------------------------------------------------------------------------------

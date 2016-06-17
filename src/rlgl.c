@@ -297,8 +297,8 @@ static void UnloadDefaultShader(void);      // Unload default shader
 static void UnloadStandardShader(void);     // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
-static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
-static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
+void rlglUpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
+void rlglDrawDefaultBuffers(void);       // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
 static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
@@ -2542,7 +2542,7 @@ void UpdateOculusTracking(void)
     //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
 }
 
-void SetOculusMatrix(int eye)
+void SetOculusView(int eye)
 {
     rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
@@ -3089,7 +3089,7 @@ static void LoadDefaultBuffers(void)
 // Update default internal buffers (VAOs/VBOs) with vertex array data
 // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
 // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (change flag required)
-static void UpdateDefaultBuffers(void)
+void rlglUpdateDefaultBuffers(void)
 {
     // Update lines vertex buffers
     if (lines.vCounter > 0)
@@ -3159,7 +3159,7 @@ static void UpdateDefaultBuffers(void)
 
 // Draw default internal buffers vertex data
 // NOTE: We draw in this order: lines, triangles, quads
-static void DrawDefaultBuffers(void)
+void rlglDrawDefaultBuffers(void)
 {
     // Set current shader and upload current MVP matrix
     if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
