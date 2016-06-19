@@ -48,7 +48,7 @@
 
 // Choose opengl version here or just define it at compile time: -DGRAPHICS_API_OPENGL_33
 //#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP
-//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP or PLATFORM_OCULUS
+//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP and RLGL_OCULUS_SUPPORT
 //#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI or PLATFORM_WEB
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
@@ -304,6 +304,9 @@ void rlglDraw(void);                            // Draw VAO/VBO
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
+void rlglUpdateDefaultBuffers(void);            // Update default internal buffers (VAOs/VBOs) with vertex data
+void rlglDrawDefaultBuffers(void);              // Draw default internal buffers vertex data
+
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
@@ -353,14 +356,12 @@ void DestroyLight(Light light);                                     // Destroy a
 void TraceLog(int msgType, const char *text, ...);
 #endif
 
-#if defined(RLGL_OCULUS_SUPPORT)
 void InitOculusDevice(void);                // Init Oculus Rift device
 void CloseOculusDevice(void);               // Close Oculus Rift device
 void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
 void SetOculusView(int eye);                // Set internal projection and modelview matrix depending on eyes tracking data
 void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
 void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
-#endif
 
 #ifdef __cplusplus
 }

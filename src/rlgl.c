@@ -76,6 +76,7 @@
     #include "standard_shader.h"    // Standard shader to embed
 #endif
 
+#define RLGL_OCULUS_SUPPORT       // Enable Oculus Rift code
 #if defined(RLGL_OCULUS_SUPPORT)
     #include "external/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
 #endif
@@ -266,6 +267,8 @@ static OculusMirror mirror;             // Oculus mirror texture and fbo
 static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
 #endif
 
+static bool vrSimulator = false;        // VR simulator (stereo rendering on window, without vr device)
+
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
 static bool npotSupported = false;          // NPOT textures full support
@@ -306,7 +309,7 @@ static void SetShaderLights(Shader shader); // Sets shader uniform values for li
 static char *ReadTextFile(const char *fileName);
 #endif
 
-#if defined(RLGL_OCULUS_SUPPORT)            // Oculus Rift functions
+#if defined(RLGL_OCULUS_SUPPORT)
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
 static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);            // Unload texture required buffers
 static OculusMirror LoadOculusMirror(ovrSession session, int width, int height);    // Load Oculus mirror buffers
@@ -1158,8 +1161,8 @@ void rlglDraw(void)
     }
 */
     // NOTE: Default buffers always drawn at the end
-    UpdateDefaultBuffers();
-    DrawDefaultBuffers();
+    rlglUpdateDefaultBuffers();
+    rlglDrawDefaultBuffers();
 #endif
 }
 
@@ -2471,57 +2474,86 @@ void DestroyLight(Light light)
 #endif
 }
 
-#if defined(RLGL_OCULUS_SUPPORT)
-// Init Oculus Rift device
-// NOTE: Device initialization should be done before window creation?
+// Init Oculus Rift device (or Oculus device simulator)
 void InitOculusDevice(void)
 {
+#if defined(RLGL_OCULUS_SUPPORT)
     // Initialize Oculus device
     ovrResult result = ovr_Initialize(NULL);
-    if (OVR_FAILURE(result)) TraceLog(WARNING, "OVR: Could not initialize Oculus device");
-
-    result = ovr_Create(&session, &luid);
     if (OVR_FAILURE(result))
     {
-        TraceLog(WARNING, "OVR: Could not create Oculus session");
-        ovr_Shutdown();
+        TraceLog(WARNING, "OVR: Could not initialize Oculus device");
+        TraceLog(INFO, "VR: Initializing Oculus simulator");
+        vrSimulator = true;
     }
+    else
+    {
+        result = ovr_Create(&session, &luid);
+        if (OVR_FAILURE(result))
+        {
+            TraceLog(WARNING, "OVR: Could not create Oculus session");
+            ovr_Shutdown();
+            
+            TraceLog(INFO, "VR: Initializing Oculus simulator");
+            vrSimulator = true;
+        }
+        else
+        {
+            hmdDesc = ovr_GetHmdDesc(session);
+            
+            TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+            TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+            TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+            TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
+            //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
+            TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+            
+            // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
+            // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
+            
+            // Initialize Oculus Buffers
+            layer = InitOculusLayer(session);   
+            buffer = LoadOculusBuffer(session, layer.width, layer.height);
+            mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);     // NOTE: hardcoded...
+            layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
+            
+            // Recenter OVR tracking origin
+            ovr_RecenterTrackingOrigin(session);
+        }
+    }
+#else
+    vrSimulator = true;
+#endif
 
-    hmdDesc = ovr_GetHmdDesc(session);
-    
-    TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-    TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-    TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-    TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
-    //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
-    TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
-    
-    // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
-    // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
-    
-    // Initialize Oculus Buffers
-    layer = InitOculusLayer(session);   
-    buffer = LoadOculusBuffer(session, layer.width, layer.height);
-    mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);     // NOTE: hardcoded...
-    layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
-    
-    // Recenter OVR tracking origin
-    ovr_RecenterTrackingOrigin(session);
+    if (vrSimulator)
+    {
+        // TODO: Initialize framebuffer and textures for stereo rendering
+        // TODO: Load oculus-distortion shader (oculus parameters setup internally)
+    }
 }
 
-// Close Oculus Rift device
+// Close Oculus Rift device (or Oculus device simulator)
 void CloseOculusDevice(void)
 {
+#if defined(RLGL_OCULUS_SUPPORT)
     UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
     UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
 
     ovr_Destroy(session);   // Free Oculus session data
     ovr_Shutdown();         // Close Oculus device connection
+#endif
+
+    if (vrSimulator)
+    {
+        // TODO: Unload stereo framebuffer and texture
+        // TODO: Unload oculus-distortion shader
+    }
 }
 
 // Update Oculus Rift tracking (position and orientation)
 void UpdateOculusTracking(void)
 {
+#if defined(RLGL_OCULUS_SUPPORT)
     frameIndex++;
 
     ovrPosef eyePoses[2];
@@ -2540,10 +2572,21 @@ void UpdateOculusTracking(void)
     //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
     //if (sessionStatus.HmdMounted)  // HMD is on the user's head.
     //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
+#endif
+
+    if (vrSimulator)
+    {
+        // TODO: Use alternative inputs (mouse, keyboard) to simulate tracking data (eyes position/orientation)
+    }
 }
 
+// Set internal projection and modelview matrix depending on eyes tracking data
 void SetOculusView(int eye)
 {
+    Matrix eyeProjection;
+    Matrix eyeModelView;
+
+#if defined(RLGL_OCULUS_SUPPORT)
     rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
     Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
@@ -2557,16 +2600,26 @@ void SetOculusView(int eye)
                                             -layer.eyeLayer.RenderPose[eye].Position.z);
 
     Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
-    Matrix eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
+    eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
 
     // TODO: Find a better way to get camera view matrix (instead of using internal modelview)
     
+    eyeProjection = layer.eyeProjections[eye];
+#endif
+
+    if (vrSimulator)
+    {
+        // TODO: Setup viewport and projection/modelview matrices using tracking data
+    }
+
     SetMatrixModelview(eyeModelView);
-    SetMatrixProjection(layer.eyeProjections[eye]);
+    SetMatrixProjection(eyeProjection);
 }
 
+// Begin Oculus drawing configuration
 void BeginOculusDrawing(void)
 {
+#if defined(RLGL_OCULUS_SUPPORT)
     GLuint currentTexId;
     int currentIndex;
     
@@ -2576,6 +2629,13 @@ void BeginOculusDrawing(void)
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
     //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
+#endif
+
+    if (vrSimulator)
+    {
+        // TODO: Setup framebuffer for stereo rendering
+        //rlEnableRenderTexture(buffer.fboId);
+    }
 
     // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA) 
     // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
@@ -2587,8 +2647,10 @@ void BeginOculusDrawing(void)
     rlClearScreenBuffers();             // Clear current framebuffer(s)
 }
 
+// End Oculus drawing process (and desktop mirror)
 void EndOculusDrawing(void)
 {
+#if defined(RLGL_OCULUS_SUPPORT)
     // Unbind current framebuffer (Oculus buffer)
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -2600,10 +2662,21 @@ void EndOculusDrawing(void)
 
     // Blit mirror texture to back buffer
     BlitOculusMirror(session, mirror);
-    
+#endif
+
+    if (vrSimulator)
+    {
+        // Unbind current framebuffer
+        //rlDisableRenderTexture();
+
+        // TODO: Draw RenderTexture (fbo) using distortion shader 
+        //BeginShaderMode(distortion);
+            // TODO: DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
+        //EndShaderMode();
+    }
+
     rlDisableDepthTest();
 }
-#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
