@@ -607,13 +607,14 @@ void Begin3dMode(Camera camera)
     
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
     
-    //if (vrEnabled) BeginVrMode();
+    if (VrEnabled()) BeginOculusDrawing();
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void End3dMode(void)
 {
-    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+    if (VrEnabled()) EndOculusDrawing();
+    else rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack

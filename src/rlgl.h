@@ -362,6 +362,7 @@ void UpdateOculusTracking(void);            // Update Oculus Rift tracking (posi
 void SetOculusView(int eye);                // Set internal projection and modelview matrix depending on eyes tracking data
 void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
 void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
+bool VrEnabled(void);                       // Track stereoscopic rendering
 
 #ifdef __cplusplus
 }

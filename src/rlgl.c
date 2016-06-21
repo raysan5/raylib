@@ -76,7 +76,7 @@
     #include "standard_shader.h"    // Standard shader to embed
 #endif
 
-#define RLGL_OCULUS_SUPPORT       // Enable Oculus Rift code
+//#define RLGL_OCULUS_SUPPORT       // Enable Oculus Rift code
 #if defined(RLGL_OCULUS_SUPPORT)
     #include "external/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
 #endif
@@ -268,6 +268,7 @@ static unsigned int frameIndex = 0;     // Oculus frames counter, used to discar
 #endif
 
 static bool vrSimulator = false;        // VR simulator (stereo rendering on window, without vr device)
+static bool vrEnabled = false;          // VR enabled flag (required by core module)
 
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
@@ -2523,6 +2524,7 @@ void InitOculusDevice(void)
     }
 #else
     vrSimulator = true;
+    vrEnabled = true;
 #endif
 
     if (vrSimulator)
@@ -2548,6 +2550,14 @@ void CloseOculusDevice(void)
         // TODO: Unload stereo framebuffer and texture
         // TODO: Unload oculus-distortion shader
     }
+    
+    vrEnabled = false;
+}
+
+// Track stereoscopic rendering
+bool VrEnabled(void)
+{
+    return vrEnabled;
 }
 
 // Update Oculus Rift tracking (position and orientation)
