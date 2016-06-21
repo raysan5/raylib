@@ -267,8 +267,11 @@ static OculusMirror mirror;             // Oculus mirror texture and fbo
 static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
 #endif
 
-static bool vrSimulator = false;        // VR simulator (stereo rendering on window, without vr device)
-static bool vrEnabled = false;          // VR enabled flag (required by core module)
+static bool oculusEnabled = false;      // Oculus device enabled flag (required by core module)
+static bool oculusSimulator = false;    // Oculus device simulator
+
+static RenderTexture2D stereoFbo;
+static Shader distortion;
 
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
@@ -865,6 +868,8 @@ void rlDeleteRenderTextures(RenderTexture2D target)
     if (target.id != 0) glDeleteFramebuffers(1, &target.id);
     if (target.texture.id != 0) glDeleteTextures(1, &target.texture.id);
     if (target.depth.id != 0) glDeleteTextures(1, &target.depth.id);
+    
+    TraceLog(INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
 #endif
 }
 
@@ -2484,8 +2489,7 @@ void InitOculusDevice(void)
     if (OVR_FAILURE(result))
     {
         TraceLog(WARNING, "OVR: Could not initialize Oculus device");
-        TraceLog(INFO, "VR: Initializing Oculus simulator");
-        vrSimulator = true;
+        oculusEnabled = false;
     }
     else
     {
@@ -2494,9 +2498,7 @@ void InitOculusDevice(void)
         {
             TraceLog(WARNING, "OVR: Could not create Oculus session");
             ovr_Shutdown();
-            
-            TraceLog(INFO, "VR: Initializing Oculus simulator");
-            vrSimulator = true;
+            oculusEnabled = false;
         }
         else
         {
@@ -2520,17 +2522,29 @@ void InitOculusDevice(void)
             
             // Recenter OVR tracking origin
             ovr_RecenterTrackingOrigin(session);
+            
+            oculusEnabled = true;
         }
     }
 #else
-    vrSimulator = true;
-    vrEnabled = true;
+    oculusEnabled = false;
 #endif
 
-    if (vrSimulator)
+    if (!oculusEnabled)
     {
-        // TODO: Initialize framebuffer and textures for stereo rendering
-        // TODO: Load oculus-distortion shader (oculus parameters setup internally)
+        TraceLog(INFO, "VR: Initializing Oculus simulator");
+        
+        int screenWidth = 1080;
+        int screenHeight = 600;
+        
+        // Initialize framebuffer and textures for stereo rendering
+        stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
+        
+        // Load oculus-distortion shader (oculus parameters setup internally)
+        // TODO: Embed coulus distortion shader (in this function like default shader?)
+        distortion = LoadShader("resources/shaders/base.vs", "resources/shaders/distortion.fs");
+        
+        oculusSimulator = true;
     }
 }
 
@@ -2538,53 +2552,60 @@ void InitOculusDevice(void)
 void CloseOculusDevice(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
-    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
-
-    ovr_Destroy(session);   // Free Oculus session data
-    ovr_Shutdown();         // Close Oculus device connection
-#endif
-
-    if (vrSimulator)
+    if (oculusEnabled)
     {
-        // TODO: Unload stereo framebuffer and texture
-        // TODO: Unload oculus-distortion shader
+        UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
+        UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
+
+        ovr_Destroy(session);   // Free Oculus session data
+        ovr_Shutdown();         // Close Oculus device connection
+    }
+    else
+#endif
+    {
+        // Unload stereo framebuffer and texture
+        rlDeleteRenderTextures(stereoFbo);
+        
+        // Unload oculus-distortion shader
+        UnloadShader(distortion);
     }
     
-    vrEnabled = false;
+    oculusEnabled = false;
 }
 
-// Track stereoscopic rendering
-bool VrEnabled(void)
+// Detect if oculus device is available
+bool IsOculusReady(void)
 {
-    return vrEnabled;
+    return (oculusEnabled || oculusSimulator);
 }
 
 // Update Oculus Rift tracking (position and orientation)
 void UpdateOculusTracking(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    frameIndex++;
+    if (oculusEnabled)
+    {
+        frameIndex++;
 
-    ovrPosef eyePoses[2];
-    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
-    
-    layer.eyeLayer.RenderPose[0] = eyePoses[0];
-    layer.eyeLayer.RenderPose[1] = eyePoses[1];
-    
-    // Get session status information
-    ovrSessionStatus sessionStatus;
-    ovr_GetSessionStatus(session, &sessionStatus);
-    
-    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
-    if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
-    //if (sessionStatus.HmdPresent)  // HMD is present.
-    //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
-    //if (sessionStatus.HmdMounted)  // HMD is on the user's head.
-    //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
+        ovrPosef eyePoses[2];
+        ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
+        
+        layer.eyeLayer.RenderPose[0] = eyePoses[0];
+        layer.eyeLayer.RenderPose[1] = eyePoses[1];
+        
+        // Get session status information
+        ovrSessionStatus sessionStatus;
+        ovr_GetSessionStatus(session, &sessionStatus);
+        
+        if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
+        if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
+        //if (sessionStatus.HmdPresent)  // HMD is present.
+        //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
+        //if (sessionStatus.HmdMounted)  // HMD is on the user's head.
+        //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
+    }
+    else
 #endif
-
-    if (vrSimulator)
     {
         // TODO: Use alternative inputs (mouse, keyboard) to simulate tracking data (eyes position/orientation)
     }
@@ -2597,29 +2618,44 @@ void SetOculusView(int eye)
     Matrix eyeModelView;
 
 #if defined(RLGL_OCULUS_SUPPORT)
-    rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
-
-    Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
-                                             layer.eyeLayer.RenderPose[eye].Orientation.y, 
-                                             layer.eyeLayer.RenderPose[eye].Orientation.z, 
-                                             layer.eyeLayer.RenderPose[eye].Orientation.w };
-    QuaternionInvert(&eyeRenderPose);
-    Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
-    Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
-                                            -layer.eyeLayer.RenderPose[eye].Position.y, 
-                                            -layer.eyeLayer.RenderPose[eye].Position.z);
-
-    Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
-    eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
-
-    // TODO: Find a better way to get camera view matrix (instead of using internal modelview)
-    
-    eyeProjection = layer.eyeProjections[eye];
-#endif
-
-    if (vrSimulator)
+    if (oculusEnabled)
     {
-        // TODO: Setup viewport and projection/modelview matrices using tracking data
+        rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
+
+        Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
+                                                 layer.eyeLayer.RenderPose[eye].Orientation.y, 
+                                                 layer.eyeLayer.RenderPose[eye].Orientation.z, 
+                                                 layer.eyeLayer.RenderPose[eye].Orientation.w };
+        QuaternionInvert(&eyeRenderPose);
+        Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
+        Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
+                                                -layer.eyeLayer.RenderPose[eye].Position.y, 
+                                                -layer.eyeLayer.RenderPose[eye].Position.z);
+
+        Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
+        eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
+
+        // TODO: Find a better way to get camera view matrix (instead of using internal modelview)
+        
+        eyeProjection = layer.eyeProjections[eye];
+    }
+    else
+#endif
+    {
+        int screenWidth = 1080;
+        int screenHeight = 600;
+        float fovy = 45.0f;
+        
+        // Setup viewport and projection/modelview matrices using tracking data
+        rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
+        
+        eyeProjection = MatrixPerspective(fovy, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
+        MatrixTranspose(&eyeProjection);
+        
+        // TODO: Compute eyes IPD and apply to current modelview matrix (camera)
+        Matrix eyeView = MatrixIdentity();
+        
+        eyeModelView = MatrixMultiply(modelview, eyeView);
     }
 
     SetMatrixModelview(eyeModelView);
@@ -2630,21 +2666,23 @@ void SetOculusView(int eye)
 void BeginOculusDrawing(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    GLuint currentTexId;
-    int currentIndex;
-    
-    ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
-    ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
-#endif
-
-    if (vrSimulator)
+    if (oculusEnabled)
     {
-        // TODO: Setup framebuffer for stereo rendering
-        //rlEnableRenderTexture(buffer.fboId);
+        GLuint currentTexId;
+        int currentIndex;
+        
+        ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
+        ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
+        //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
+    }
+    else
+#endif
+    {
+        // Setup framebuffer for stereo rendering
+        rlEnableRenderTexture(stereoFbo.id);
     }
 
     // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA) 
@@ -2661,28 +2699,73 @@ void BeginOculusDrawing(void)
 void EndOculusDrawing(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    // Unbind current framebuffer (Oculus buffer)
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    
-    ovr_CommitTextureSwapChain(session, buffer.textureChain);
-    
-    ovrLayerHeader *layers = &layer.eyeLayer.Header;
-    ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
+    if (oculusEnabled)
+    {
+        // Unbind current framebuffer (Oculus buffer)
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        
+        ovr_CommitTextureSwapChain(session, buffer.textureChain);
+        
+        ovrLayerHeader *layers = &layer.eyeLayer.Header;
+        ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
 
-    // Blit mirror texture to back buffer
-    BlitOculusMirror(session, mirror);
+        // Blit mirror texture to back buffer
+        BlitOculusMirror(session, mirror);
+    }
+    else
 #endif
-
-    if (vrSimulator)
     {
         // Unbind current framebuffer
-        //rlDisableRenderTexture();
+        rlDisableRenderTexture();
+        
+        rlClearScreenBuffers();             // Clear current framebuffer
 
-        // TODO: Draw RenderTexture (fbo) using distortion shader 
-        //BeginShaderMode(distortion);
-            // TODO: DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-        //EndShaderMode();
+        int screenWidth = 1080;
+        int screenHeight = 600;
+        
+        // Set viewport to default framebuffer size (screen size)
+        rlViewport(0, 0, screenWidth, screenHeight);
+        
+        // Let rlgl reconfigure internal matrices
+        rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
+        rlLoadIdentity();                                       // Reset internal projection matrix
+        rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+        rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
+        rlLoadIdentity();                                       // Reset internal modelview matrix
+
+        // Draw RenderTexture (stereoFbo) using distortion shader 
+        BeginShaderMode(distortion);
+
+            rlEnableTexture(stereoFbo.texture.id);
+
+            rlPushMatrix();
+                rlBegin(RL_QUADS);
+                    rlColor4ub(255, 255, 255, 255);
+                    rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+                    // Bottom-left corner for texture and quad
+                    rlTexCoord2f(0.0f, 1.0f);
+                    rlVertex2f(0.0f, 0.0f);
+
+                    // Bottom-right corner for texture and quad
+                    rlTexCoord2f(0.0f, 0.0f);
+                    rlVertex2f(0.0f, stereoFbo.texture.height);
+
+                    // Top-right corner for texture and quad
+                    rlTexCoord2f(1.0f, 0.0f);
+                    rlVertex2f(stereoFbo.texture.width, stereoFbo.texture.height);
+
+                    // Top-left corner for texture and quad
+                    rlTexCoord2f(1.0f, 1.0f);
+                    rlVertex2f(stereoFbo.texture.width, 0.0f);
+                rlEnd();
+            rlPopMatrix();
+
+            rlDisableTexture();
+            
+            //rlglDraw();
+        EndShaderMode();
     }
 
     rlDisableDepthTest();
