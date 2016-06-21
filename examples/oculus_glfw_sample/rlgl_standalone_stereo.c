@@ -184,7 +184,7 @@ int main(void)
 
             rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
             rlLoadIdentity();                                       // Reset internal projection matrix
-            rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+            rlOrtho(0.0, screenWidth/2, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
             rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
             rlLoadIdentity();                                       // Reset internal modelview matrix
 #endif
