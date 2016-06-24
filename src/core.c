@@ -444,7 +444,15 @@ void CloseWindow(void)
 
         eglTerminate(display);
         display = EGL_NO_DISPLAY;
-    }
+    }   
+#endif
+
+#if defined(PLATFORM_RPI)
+    // Wait for mouse and gamepad threads to finish before closing
+    // NOTE: Those threads should already have finished at this point
+    // because they are controlled by windowShouldClose variable
+    pthread_join(mouseThreadId, NULL);
+    pthread_join(gamepadThreadId, NULL);
 #endif
 
     TraceLog(INFO, "Window closed successfully");
@@ -1766,12 +1774,12 @@ static void InitGraphics(void)
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
 #if defined(PLATFORM_ANDROID)
-    windowReady = true;     // IMPORTANT!
+    windowReady = true;             // IMPORTANT!
 #endif
 }
 
 // Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables renderWidth/renderHeight can be modified
+// NOTE: Global variables renderWidth/renderHeight and renderOffsetX/renderOffsetY can be modified
 static void SetupFramebufferSize(int displayWidth, int displayHeight)
 {
     // TODO: SetupFramebufferSize() does not consider properly display video modes.
@@ -2662,7 +2670,7 @@ static void *MouseThread(void *arg)
     int mouseRelX = 0;
     int mouseRelY = 0;
 
-    while(1)
+    while (1)
     {
         if (read(mouseStream, &mouse, sizeof(MouseEvent)) == (int)sizeof(MouseEvent))
         {
@@ -2752,7 +2760,7 @@ static void *GamepadThread(void *arg)
     // Read gamepad event
     struct js_event gamepadEvent;
     
-    while (1) 
+    while (!windowShouldClose)
     {
         for (int i = 0; i < MAX_GAMEPADS; i++)
         {
@@ -2787,7 +2795,7 @@ static void *GamepadThread(void *arg)
 
     return NULL;
 }
-#endif
+#endif      // PLATFORM_RPI
 
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)
