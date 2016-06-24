@@ -72,7 +72,7 @@
     #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
 #endif
 
-#if !defined(GRAPHICS_API_OPENGL_11)
+#if !defined(GRAPHICS_API_OPENGL_11) && !defined(RLGL_NO_STANDARD_SHADER)
     #include "standard_shader.h"    // Standard shader to embed
 #endif
 
@@ -240,7 +240,7 @@ static bool useTempBuffer = false;
 static Shader defaultShader;
 static Shader standardShader;               // Lazy initialization when GetStandardShader()
 static Shader currentShader;                // By default, defaultShader
-static bool standardShaderLoaded = false;   
+static bool standardShaderLoaded = false;   // Flag to track if standard shader has been loaded
 
 // Flags for supported extensions
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
@@ -285,10 +285,15 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 //static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
 
-static int blendMode = 0;
+static int blendMode = 0;   // Track current blending mode
 
 // White texture useful for plain color polys (required by shader)
 static unsigned int whiteTexture;
+
+// Default framebuffer size
+// NOTE: Updated when calling rlglInitGraphics()
+static int screenWidth;     // Default framebuffer width
+static int screenHeight;    // Default framebuffer height
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -1089,18 +1094,7 @@ void rlglInit(void)
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
     
-    // Set default draw mode
-    currentDrawMode = RL_TRIANGLES;
-
-    // Reset projection and modelview matrices
-    projection = MatrixIdentity();
-    modelview = MatrixIdentity();
-    currentMatrix = &modelview;
-
-    // Initialize matrix stack
-    for (int i = 0; i < MATRIX_STACK_SIZE; i++) stack[i] = MatrixIdentity();
-    
-    // Create default white texture for plain colors (required by shader)
+    // Init default white texture
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
 
     whiteTexture = rlglLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
@@ -1112,7 +1106,8 @@ void rlglInit(void)
     defaultShader = LoadDefaultShader();
     currentShader = defaultShader;
 
-    LoadDefaultBuffers();        // Initialize default vertex arrays buffers (lines, triangles, quads)
+    // Init default vertex arrays buffers (lines, triangles, quads)
+    LoadDefaultBuffers();        
 
     // Init temp vertex buffer, used when transformation required (translate, rotate, scale)
     tempBuffer = (Vector3 *)malloc(sizeof(Vector3)*TEMP_VERTEX_BUFFER_SIZE);
@@ -1130,6 +1125,15 @@ void rlglInit(void)
 
     drawsCounter = 1;
     draws[drawsCounter - 1].textureId = whiteTexture;
+    currentDrawMode = RL_TRIANGLES;     // Set default draw mode
+    
+    // Init internal matrix stack (emulating OpenGL 1.1)
+    for (int i = 0; i < MATRIX_STACK_SIZE; i++) stack[i] = MatrixIdentity();
+
+    // Init internal projection and modelview matrices
+    projection = MatrixIdentity();
+    modelview = MatrixIdentity();
+    currentMatrix = &modelview;
 #endif
 }
 
@@ -1175,7 +1179,11 @@ void rlglDraw(void)
 // Initialize Graphics Device (OpenGL stuff)
 // NOTE: Stores global variables screenWidth and screenHeight
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
-{   
+{
+    // Store default framebuffer size
+    screenWidth = width;
+    screenHeight = height;
+    
     // NOTE: Required! viewport must be recalculated if screen resized!
     glViewport(offsetX/2, offsetY/2, width - offsetX, height - offsetY);    // Set viewport width and height
 
@@ -2312,7 +2320,7 @@ Shader GetDefaultShader(void)
 Shader GetStandardShader(void)
 {
     Shader shader = { 0 };
-    
+
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (standardShaderLoaded) shader = standardShader;
     else
@@ -2333,7 +2341,7 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)   
     location = glGetUniformLocation(shader.id, uniformName);
     
-    if (location == -1) TraceLog(WARNING, "[SHDR ID %i] Shader location for %s could not be found", shader.id, uniformName);
+    if (location == -1) TraceLog(DEBUG, "[SHDR ID %i] Shader location for %s could not be found", shader.id, uniformName);
 #endif
     return location;
 }
@@ -2532,10 +2540,7 @@ void InitOculusDevice(void)
 
     if (!oculusEnabled)
     {
-        TraceLog(INFO, "VR: Initializing Oculus simulator");
-        
-        int screenWidth = 1080;
-        int screenHeight = 600;
+        TraceLog(WARNING, "VR: Initializing Oculus simulator");
         
         // Initialize framebuffer and textures for stereo rendering
         stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
@@ -2642,14 +2647,11 @@ void SetOculusView(int eye)
     else
 #endif
     {
-        int screenWidth = 1080;
-        int screenHeight = 600;
-        float fovy = 45.0f;
-        
         // Setup viewport and projection/modelview matrices using tracking data
         rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
         
-        eyeProjection = MatrixPerspective(fovy, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
+        // NOTE: fovy vaule hardcoded to 45.0 degrees
+        eyeProjection = MatrixPerspective(45.0, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
         MatrixTranspose(&eyeProjection);
         
         // TODO: Compute eyes IPD and apply to current modelview matrix (camera)
@@ -2721,9 +2723,6 @@ void EndOculusDrawing(void)
         
         rlClearScreenBuffers();             // Clear current framebuffer
 
-        int screenWidth = 1080;
-        int screenHeight = 600;
-        
         // Set viewport to default framebuffer size (screen size)
         rlViewport(0, 0, screenWidth, screenHeight);
         
@@ -3007,6 +3006,7 @@ static Shader LoadStandardShader(void)
 {
     Shader shader;
     
+#if !defined(RLGL_NO_STANDARD_SHADER)
     // Load standard shader (embeded in standard_shader.h)
     shader.id = LoadShaderProgram(vStandardShaderStr, fStandardShaderStr);
 
@@ -3022,6 +3022,10 @@ static Shader LoadStandardShader(void)
         TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded, using default shader", shader.id);
         shader = GetDefaultShader();
     }
+#else
+    shader = defaultShader;
+    TraceLog(WARNING, "[SHDR ID %i] Standard shader not available, using default shader", shader.id);
+#endif
 
     return shader;
 }
@@ -3072,12 +3076,13 @@ static void UnloadDefaultShader(void)
 static void UnloadStandardShader(void)
 {
     glUseProgram(0);
-
+#if !defined(RLGL_NO_STANDARD_SHADER)
     //glDetachShader(defaultShader, vertexShader);
     //glDetachShader(defaultShader, fragmentShader);
     //glDeleteShader(vertexShader);     // Already deleted on shader compilation
     //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
     glDeleteProgram(standardShader.id);
+#endif
 }
 
 
