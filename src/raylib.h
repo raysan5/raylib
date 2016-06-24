@@ -795,7 +795,6 @@ Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d mod
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
-void SetModelTexture(Model *model, Texture2D texture);          // Link a texture to a model
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)

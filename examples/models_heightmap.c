@@ -26,7 +26,7 @@ int main()
     Image image = LoadImage("resources/heightmap.png");         // Load heightmap image (RAM)
     Texture2D texture = LoadTextureFromImage(image);            // Convert image to texture (VRAM)
     Model map = LoadHeightmap(image, (Vector3){ 16, 8, 16 });   // Load heightmap model with defined size
-    SetModelTexture(&map, texture);                             // Bind texture to model
+    map.material.texDiffuse = texture;                          // Set map diffuse texture
     Vector3 mapPosition = { -8.0f, 0.0f, -8.0f };               // Set model position (depends on model scaling!)
 
     UnloadImage(image);                 // Unload heightmap image from RAM, already uploaded to VRAM

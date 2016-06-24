@@ -1,20 +1,20 @@
 changelog
 ---------
 
-Current Release:    raylib 1.5.0 (23 June 2016)
+Current Release:    raylib 1.5.0 (xx June 2016)
 
 NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
 NOTE: Current Release includes all previous updates.
 
 -----------------------------------------------
-Release:     raylib 1.5.0 (23 June 2016)
+Release:     raylib 1.5.0 (xx June 2016)
 -----------------------------------------------
 NOTE: 
   Probably this new version is the biggest boost of the library ever, lots of parts of the library have been redesigned, 
   lots of bugs have been solved and some **AMAZING** new features have been added.
 
 HUGE changes:
-[core] OCULUS RIFT CV1: Added support for VR witha bunch of Oculus-specific functions to init/close device and Oculus rendering.
+[rlgl] OCULUS RIFT CV1: Added support for VR witha bunch of Oculus-specific functions to init/close device and Oculus rendering.
 [rlgl] MATERIALS SYSTEM: Added support for Materials (.mtl) and multiple material properties: diffuse, specular, normal.
 [rlgl] LIGHTING SYSTEM: Added support for up to 8 lights of 3 different types: Omni, Directional and Spot
 [physac] REDESIGNED: Improved performance and simplified usage, physic objects are managed internally
@@ -65,6 +65,7 @@ other changes:
 [models] Updated BoundingBox collision detections
 [models] Added color parameter to DrawBoundigBox()
 [models] Removed function: DrawQuad()
+[models] Removed function: SetModelTexture()
 [models] Redesigned DrawPlane() to use RL_TRIANGLES
 [models] Redesigned DrawRectangleV() to use RL_TRIANGLES
 [models] Redesign to accomodate new materials system: LoadMaterial()

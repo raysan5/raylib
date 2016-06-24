@@ -808,13 +808,6 @@ void UnloadMaterial(Material material)
     rlDeleteTextures(material.texSpecular.id);
 }
 
-// Link a texture to a model
-void SetModelTexture(Model *model, Texture2D texture)
-{
-    if (texture.id <= 0) model->material.texDiffuse = GetDefaultTexture();  // Use default white texture
-    else model->material.texDiffuse = texture;
-}
-
 // Generate a mesh from heightmap
 static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
