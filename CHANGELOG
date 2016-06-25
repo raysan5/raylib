@@ -37,6 +37,7 @@ other changes:
 [rlgl] Improved 2D vs 3D drawing system (lines, triangles, quads)
 [rlgl] Improved DXT-ETC1 support on HTML5
 [rlgl] Review function: rlglUnproject()
+[rlgl] Removed function: rlglInitGraphics(), integrated into rlglInit()
 [rlgl] Updated Mesh and Shader structs
 [rlgl] Simplified internal (default) dynamic buffers
 [rlgl] Added support for indexed and dynamic mesh data

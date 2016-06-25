@@ -1761,8 +1761,19 @@ static void InitGraphicsDevice(int width, int height)
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 
     // Initialize OpenGL context (states and resources)
-    rlglInit();                     // Init rlgl
-    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
+    rlglInit();
+    
+    // Initialize screen viewport (area of the screen that you will actually draw to)
+    // NOTE: Viewport must be recalculated if screen is resized
+    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
+
+    // Initialize internal projection and modelview matrices
+    // NOTE: Default to orthographic projection mode with top-left corner at (0,0)
+    rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
+    rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+    rlOrtho(0, renderWidth - renderOffsetX, renderHeight - renderOffsetY, 0, 0.0f, 1.0f); 
+    rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
@@ -2127,8 +2138,14 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
-    // If window is resized, graphics device is re-initialized (but only ortho mode)
-    rlglInitGraphics(0, 0, width, height);
+    // If window is resized, viewport and projection matrix needs to be re-calculated
+    rlViewport(0, 0, width, height);            // Set viewport width and height
+    rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
+    rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+    rlOrtho(0, width, height, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
+    rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
+    rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
     screenWidth = width;
@@ -2137,9 +2154,6 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     renderHeight = height;
     
     // NOTE: Postprocessing texture is not scaled to new size
-
-    // Background must be also re-cleared
-    ClearBackground(RAYWHITE);
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored

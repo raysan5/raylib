@@ -290,8 +290,7 @@ static int blendMode = 0;   // Track current blending mode
 // White texture useful for plain color polys (required by shader)
 static unsigned int whiteTexture;
 
-// Default framebuffer size
-// NOTE: Updated when calling rlglInitGraphics()
+// Default framebuffer size (required by Oculus device)
 static int screenWidth;     // Default framebuffer width
 static int screenHeight;    // Default framebuffer height
 
@@ -481,10 +480,15 @@ void rlOrtho(double left, double right, double bottom, double top, double near, 
 
 #endif
 
-// Set the viewport area (trasnformation from normalized device coordinates to window coordinates)
+// Set the viewport area (transformation from normalized device coordinates to window coordinates)
+// NOTE: Updates global variables: screenWidth, screenHeight
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
+    
+    // Store default framebuffer size
+    screenWidth = width;
+    screenHeight = height;
 }
 
 //----------------------------------------------------------------------------------
@@ -947,7 +951,7 @@ int rlGetVersion(void)
 // Module Functions Definition - rlgl Functions
 //----------------------------------------------------------------------------------
 
-// Init OpenGL 3.3+ required data
+// Initialize rlgl: OpenGL extensions, default buffers/shaders/textures, OpenGL states
 void rlglInit(void)
 {
     // Check OpenGL information and capabilities
@@ -1134,7 +1138,37 @@ void rlglInit(void)
     projection = MatrixIdentity();
     modelview = MatrixIdentity();
     currentMatrix = &modelview;
+#endif      // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+
+    // Initialize OpenGL default states
+    //----------------------------------------------------------
+
+    // Init state: Depth test
+    glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
+    glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
+
+    // Init state: Blending mode
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);      // Color blending function (how colors are mixed)
+    glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)
+
+    // Init state: Culling
+    // NOTE: All shapes/models triangles are drawn CCW
+    glCullFace(GL_BACK);                                    // Cull the back face (default)
+    glFrontFace(GL_CCW);                                    // Front face are defined counter clockwise (default)
+    glEnable(GL_CULL_FACE);                                 // Enable backface culling
+
+#if defined(GRAPHICS_API_OPENGL_11)
+    // Init state: Color hints (deprecated in OpenGL 3.0+)
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Improve quality of color and texture coordinate interpolation 
+    glShadeModel(GL_SMOOTH);                                // Smooth shading between vertex (vertex colors interpolation)
 #endif
+
+    // Init state: Color/Depth buffers clear
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
+    glClearDepth(1.0f);                                     // Set clear depth value (default)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
+
+    TraceLog(INFO, "OpenGL default states initialized successfully");
 }
 
 // Vertex Buffer Object deinitialization (memory free)
@@ -1174,61 +1208,6 @@ void rlglDraw(void)
     rlglUpdateDefaultBuffers();
     rlglDrawDefaultBuffers();
 #endif
-}
-
-// Initialize OpenGL states
-// NOTE: Stores global variables screenWidth and screenHeight
-void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
-{
-    // Store default framebuffer size
-    screenWidth = width;
-    screenHeight = height;
-    
-    // Init state: Viewport
-    // NOTE: Viewport must be recalculated if screen is resized, don't confuse glViewport with the 
-    // transformation matrix, glViewport just defines the area of the context that you will actually draw to.
-    glViewport(offsetX/2, offsetY/2, width - offsetX, height - offsetY);    // Set viewport width and height
-
-    // Init state: Depth Test
-    glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
-    glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
-
-    // Init state: Blending mode
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);      // Color blending function (how colors are mixed)
-    glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)
-
-    // Init state: Culling
-    // NOTE: All shapes/models triangles are drawn CCW
-    glCullFace(GL_BACK);                                    // Cull the back face (default)
-    glFrontFace(GL_CCW);                                    // Front face are defined counter clockwise (default)
-    glEnable(GL_CULL_FACE);                                 // Enable backface culling
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    // Init state: Color hints (deprecated in OpenGL 3.0+)
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Improve quality of color and texture coordinate interpolation 
-    glShadeModel(GL_SMOOTH);                                // Smooth shading between vertex (vertex colors interpolation)
-#endif
-
-    // Init state: Color/Depth buffers clear
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
-    glClearDepth(1.0f);                                     // Set clear depth value (default)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
-
-    // Init state: projection and modelview matrices
-    // NOTE: Setup global variables: projection and modelview
-    rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
-    rlLoadIdentity();                           // Reset current matrix (PROJECTION)
-    rlOrtho(0, width - offsetX, height - offsetY, 0, 0.0f, 1.0f); // Orthographic projection mode with top-left corner at (0,0)
-    rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
-    rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
-    
-    // NOTE: projection and modelview could be set alternatively using:
-    //Matrix matOrtho = MatrixOrtho(0, width - offsetX, height - offsetY, 0, 0.0f, 1.0f);
-    //MatrixTranspose(&matOrtho);
-    //projection = matOrtho;                      // Global variable
-    //modelview = MatrixIdentity();               // Global variable
-
-    TraceLog(INFO, "OpenGL graphic device initialized successfully");
 }
 
 // Load OpenGL extensions

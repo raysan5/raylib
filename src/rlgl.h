@@ -301,7 +301,6 @@ int rlGetVersion(void);                         // Returns current OpenGL versio
 void rlglInit(void);                            // Initialize rlgl (shaders, VAO, VBO...)
 void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
-void rlglInitGraphics(int offsetX, int offsetY, int width, int height);  // Initialize Graphics (OpenGL stuff)
 void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
 void rlglUpdateDefaultBuffers(void);            // Update default internal buffers (VAOs/VBOs) with vertex data
