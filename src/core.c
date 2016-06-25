@@ -480,16 +480,14 @@ bool IsWindowMinimized(void)
 }
 
 // Fullscreen toggle
-// TODO: When destroying window context is lost and resources too, take care!
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
     fullscreen = !fullscreen;          // Toggle fullscreen flag
 
-    rlglClose();                       // De-init rlgl
-    glfwDestroyWindow(window);         // Destroy the current window (we will recreate it!)
-
-    InitWindow(screenWidth, screenHeight, windowTitle);
+    // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
+    if (fullscreen) glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
+    else glfwSetWindowMonitor(window, NULL, 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -1525,25 +1523,40 @@ static void InitGraphicsDevice(int width, int height)
 
     if (fullscreen)
     {
+        // Obtain recommended displayWidth/displayHeight from a valid videomode for the monitor
+        int count; 
+        const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+        
+        // Get closest videomode to desired screenWidth/screenHeight
+        for (int i = 0; i < count; i++)
+        {
+            if (modes[i].width >= screenWidth)
+            {
+                if (modes[i].height >= screenHeight)
+                {
+                    displayWidth = modes[i].width;
+                    displayHeight = modes[i].height;
+                    break;
+                }
+            }
+        }
+        
+        TraceLog(WARNING, "Closest fullscreen videomode: %i x %i", displayWidth, displayHeight);
+
+        // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
+        // for a desired screen size of 800x450 (16:9), closest supported videomode is 800x600 (4:3),
+        // framebuffer is rendered correctly but once displayed on a 16:9 monitor, it gets stretched
+        // by the sides to fit all monitor space...
+
         // At this point we need to manage render size vs screen size
         // NOTE: This function uses and modifies global module variables: 
         //       screenWidth/screenHeight - renderWidth/renderHeight - downscaleView
         SetupFramebufferSize(displayWidth, displayHeight);
+
+        window = glfwCreateWindow(displayWidth, displayHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
         
-        // TODO: SetupFramebufferSize() does not consider properly display video modes.
-        // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
-        // and so, framebuffer is not scaled properly to some monitors.
-        
-        int count; 
-        const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
-        
-        for (int i = 0; i < count; i++)
-        {
-            // TODO: Check modes[i]->width;
-            // TODO: Check modes[i]->height;
-        }
-        
-        window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
+        // NOTE: Full-screen change, not working properly...
+        //glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
     }
     else
     {
@@ -1785,11 +1798,7 @@ static void InitGraphicsDevice(int width, int height)
 // Compute framebuffer size relative to screen size and display size
 // NOTE: Global variables renderWidth/renderHeight and renderOffsetX/renderOffsetY can be modified
 static void SetupFramebufferSize(int displayWidth, int displayHeight)
-{
-    // TODO: SetupFramebufferSize() does not consider properly display video modes.
-    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
-    // and so, framebuffer is not scaled properly to some monitors.
-    
+{    
     // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
