@@ -16,7 +16,7 @@ int main()
     // Initialization
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
-    int screenHeight = 400;
+    int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - color selection (collision detection)");
 
@@ -30,7 +30,7 @@ int main()
     for (int i = 0; i < 21; i++)
     {
         colorsRecs[i].x = 20 + 100*(i%7) + 10*(i%7);
-        colorsRecs[i].y = 40 + 100*(i/7) + 10*(i/7);
+        colorsRecs[i].y = 60 + 100*(i/7) + 10*(i/7);
         colorsRecs[i].width = 100;
         colorsRecs[i].height = 100;
     }
