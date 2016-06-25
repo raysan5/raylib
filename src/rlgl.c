@@ -1176,7 +1176,7 @@ void rlglDraw(void)
 #endif
 }
 
-// Initialize Graphics Device (OpenGL stuff)
+// Initialize OpenGL states
 // NOTE: Stores global variables screenWidth and screenHeight
 void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
 {
@@ -1184,45 +1184,49 @@ void rlglInitGraphics(int offsetX, int offsetY, int width, int height)
     screenWidth = width;
     screenHeight = height;
     
-    // NOTE: Required! viewport must be recalculated if screen resized!
+    // Init state: Viewport
+    // NOTE: Viewport must be recalculated if screen is resized, don't confuse glViewport with the 
+    // transformation matrix, glViewport just defines the area of the context that you will actually draw to.
     glViewport(offsetX/2, offsetY/2, width - offsetX, height - offsetY);    // Set viewport width and height
 
-    // NOTE: Don't confuse glViewport with the transformation matrix
-    // NOTE: glViewport just defines the area of the context that you will actually draw to.
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
-    //glClearDepth(1.0f);                                   // Clear depth buffer (default)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear used buffers, depth buffer is used for 3D
-
-    glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
+    // Init state: Depth Test
     glDepthFunc(GL_LEQUAL);                                 // Type of depth testing to apply
+    glDisable(GL_DEPTH_TEST);                               // Disable depth testing for 2D (only used for 3D)
 
-    glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)
+    // Init state: Blending mode
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);      // Color blending function (how colors are mixed)
+    glEnable(GL_BLEND);                                     // Enable color blending (required to work with transparencies)
+
+    // Init state: Culling
+    // NOTE: All shapes/models triangles are drawn CCW
+    glCullFace(GL_BACK);                                    // Cull the back face (default)
+    glFrontFace(GL_CCW);                                    // Front face are defined counter clockwise (default)
+    glEnable(GL_CULL_FACE);                                 // Enable backface culling
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Improve quality of color and texture coordinate interpolation (Deprecated in OGL 3.0)
-                                                            // Other options: GL_FASTEST, GL_DONT_CARE (default)
+    // Init state: Color hints (deprecated in OpenGL 3.0+)
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);      // Improve quality of color and texture coordinate interpolation 
+    glShadeModel(GL_SMOOTH);                                // Smooth shading between vertex (vertex colors interpolation)
 #endif
 
+    // Init state: Color/Depth buffers clear
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
+    glClearDepth(1.0f);                                     // Set clear depth value (default)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
+
+    // Init state: projection and modelview matrices
+    // NOTE: Setup global variables: projection and modelview
     rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
     rlLoadIdentity();                           // Reset current matrix (PROJECTION)
-
-    rlOrtho(0, width - offsetX, height - offsetY, 0, 0.0f, 1.0f); // Config orthographic mode: top-left corner --> (0,0)
-
+    rlOrtho(0, width - offsetX, height - offsetY, 0, 0.0f, 1.0f); // Orthographic projection mode with top-left corner at (0,0)
     rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
     rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
-
-    // NOTE: All shapes/models triangles are drawn CCW
-
-    glEnable(GL_CULL_FACE);       // Enable backface culling (Disabled by default)
-    //glCullFace(GL_BACK);        // Cull the Back face (default)
-    //glFrontFace(GL_CCW);        // Front face are defined counter clockwise (default)
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    glShadeModel(GL_SMOOTH);      // Smooth shading between vertex (vertex colors interpolation) (Deprecated on OpenGL 3.3+)
-                                  // Possible options: GL_SMOOTH (Color interpolation) or GL_FLAT (no interpolation)
-#endif
+    
+    // NOTE: projection and modelview could be set alternatively using:
+    //Matrix matOrtho = MatrixOrtho(0, width - offsetX, height - offsetY, 0, 0.0f, 1.0f);
+    //MatrixTranspose(&matOrtho);
+    //projection = matOrtho;                      // Global variable
+    //modelview = MatrixIdentity();               // Global variable
 
     TraceLog(INFO, "OpenGL graphic device initialized successfully");
 }
@@ -2741,7 +2745,7 @@ void EndOculusDrawing(void)
             rlPushMatrix();
                 rlBegin(RL_QUADS);
                     rlColor4ub(255, 255, 255, 255);
-                    rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+                    rlNormal3f(0.0f, 0.0f, 1.0f);
 
                     // Bottom-left corner for texture and quad
                     rlTexCoord2f(0.0f, 1.0f);

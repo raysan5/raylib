@@ -27,6 +27,7 @@ other changes:
 [core] Renamed WorldToScreen() to GetWorldToScreen()
 [core] Removed function SetCustomCursor()
 [core] Removed functions BeginDrawingEx(), BeginDrawingPro()
+[core] Replaced functions InitDisplay() + InitGraphics() with: InitGraphicsDevice()
 [core] Added support for field-of-view Y (fovy) on 3d Camera
 [core] Added 2D camera mode functions: Begin2dMode() - End2dMode()
 [core] Translate mouse inputs to Android touch/gestures internally
