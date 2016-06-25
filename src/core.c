@@ -238,8 +238,7 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitDisplay(int width, int height);         // Initialize display device and framebuffer
-static void InitGraphics(void);                         // Initialize OpenGL graphics
+static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
@@ -300,11 +299,8 @@ void InitWindow(int width, int height, const char *title)
     // Store window title (could be useful...)
     windowTitle = title;
 
-    // Init device display (monitor, LCD, ...)
-    InitDisplay(width, height);
-
-    // Init OpenGL graphics
-    InitGraphics();
+    // Init graphics device (display device and OpenGL context)
+    InitGraphicsDevice(width, height);
 
     // Load default font for convenience
     // NOTE: External function (defined in module: text)
@@ -1453,7 +1449,7 @@ bool IsButtonReleased(int button)
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
-static void InitDisplay(int width, int height)
+static void InitGraphicsDevice(int width, int height)
 {
     screenWidth = width;        // User desired width
     screenHeight = height;      // User desired height
@@ -1763,11 +1759,8 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-}
 
-// Initialize OpenGL graphics
-static void InitGraphics(void)
-{
+    // Initialize OpenGL context (states and resources)
     rlglInit();                     // Init rlgl
     rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
 
@@ -2213,11 +2206,8 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 }
                 else
                 {
-                    // Init device display (monitor, LCD, ...)
-                    InitDisplay(screenWidth, screenHeight);
-
-                    // Init OpenGL graphics
-                    InitGraphics();
+                    // Init graphics device (display device and OpenGL context)
+                    InitGraphicsDevice(screenWidth, screenHeight);
 
                     // Load default font for convenience
                     // NOTE: External function (defined in module: text)
