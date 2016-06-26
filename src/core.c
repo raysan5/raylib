@@ -1774,7 +1774,7 @@ static void InitGraphicsDevice(int width, int height)
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 
     // Initialize OpenGL context (states and resources)
-    rlglInit();
+    rlglInit(screenWidth, screenHeight);
     
     // Initialize screen viewport (area of the screen that you will actually draw to)
     // NOTE: Viewport must be recalculated if screen is resized

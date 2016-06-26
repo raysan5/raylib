@@ -298,7 +298,7 @@ int rlGetVersion(void);                         // Returns current OpenGL versio
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
-void rlglInit(void);                            // Initialize rlgl (shaders, VAO, VBO...)
+void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
 void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglLoadExtensions(void *loader);          // Load OpenGL extensions

@@ -485,10 +485,6 @@ void rlOrtho(double left, double right, double bottom, double top, double near, 
 void rlViewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
-    
-    // Store default framebuffer size
-    screenWidth = width;
-    screenHeight = height;
 }
 
 //----------------------------------------------------------------------------------
@@ -952,7 +948,7 @@ int rlGetVersion(void)
 //----------------------------------------------------------------------------------
 
 // Initialize rlgl: OpenGL extensions, default buffers/shaders/textures, OpenGL states
-void rlglInit(void)
+void rlglInit(int width, int height)
 {
     // Check OpenGL information and capabilities
     //------------------------------------------------------------------------------
@@ -1167,6 +1163,10 @@ void rlglInit(void)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);                   // Set clear color (black)
     glClearDepth(1.0f);                                     // Set clear depth value (default)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     // Clear color and depth buffers (depth buffer required for 3D)
+    
+    // Store screen size into global variables
+    screenWidth = width;
+    screenHeight = height;
 
     TraceLog(INFO, "OpenGL default states initialized successfully");
 }
@@ -2524,7 +2524,7 @@ void InitOculusDevice(void)
     if (!oculusEnabled)
     {
         TraceLog(WARNING, "VR: Initializing Oculus simulator");
-        
+
         // Initialize framebuffer and textures for stereo rendering
         stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
         
