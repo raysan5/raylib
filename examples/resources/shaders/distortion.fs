@@ -56,4 +56,14 @@ void main()
         //tc.x = gl_FragCoord.x < 640 ? (2.0 * tc.x) : (2.0 * (tc.x - 0.5));
         finalColor = texture2D(texture0, tc);
     }
+    
+    /*
+    // Chromatic aberration is caused when a lens can't focus every color to the same focal point. 
+    // A simple way to fake this effect, and render it as a quick full-screen post-process, 
+    // is to apply an offset to each color channel in a fragment shader.
+    vec4 rValue = texture2D(texture0, fragTexCoord - rOffset);  
+    vec4 gValue = texture2D(texture0, fragTexCoord - gOffset);
+    vec4 bValue = texture2D(texture0, fragTexCoord - bOffset);
+    finalColor = vec4(rValue.r, gValue.g, bValue.b, 1.0);
+    */
 }
