@@ -135,6 +135,12 @@
     #define GL_UNSIGNED_SHORT_4_4_4_4   0x8033
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    #define glClearDepth            glClearDepthf
+    #define GL_READ_FRAMEBUFFER     GL_FRAMEBUFFER      
+    #define GL_DRAW_FRAMEBUFFER     GL_FRAMEBUFFER
+#endif
+
 // Default vertex attribute names on shader to set location points
 #define DEFAULT_ATTRIB_POSITION_NAME    "vertexPosition"    // shader-location = 0
 #define DEFAULT_ATTRIB_TEXCOORD_NAME    "vertexTexCoord"    // shader-location = 1
@@ -3877,7 +3883,10 @@ static void BlitOculusMirror(ovrSession session, OculusMirror mirror)
     
     glBindFramebuffer(GL_READ_FRAMEBUFFER, mirror.fboId);
     glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
+#if defined(GRAPHICS_API_OPENGL_33)
+    // NOTE: glBlitFramebuffer() requires extension: GL_EXT_framebuffer_blit (not available in OpenGL ES 2.0)
     glBlitFramebuffer(0, 0, mirror.width, mirror.height, 0, mirror.height, mirror.width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+#endif
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
