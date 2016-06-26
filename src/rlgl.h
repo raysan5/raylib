@@ -362,6 +362,7 @@ void SetOculusView(int eye);                // Set internal projection and model
 void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
 void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
 bool IsOculusReady(void);                   // Detect if oculus device (or simulator) is ready
+void ToggleVR(void);                        // Enable/Disable VR experience (Oculus device or simulator)
 
 #ifdef __cplusplus
 }

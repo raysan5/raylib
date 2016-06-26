@@ -267,8 +267,9 @@ static OculusMirror mirror;             // Oculus mirror texture and fbo
 static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
 #endif
 
-static bool oculusEnabled = false;      // Oculus device enabled flag (required by core module)
+static bool oculusReady = false;        // Oculus device ready flag
 static bool oculusSimulator = false;    // Oculus device simulator
+static bool vrEnabled = false;          // VR experience enabled (Oculus device or simulator)
 
 static RenderTexture2D stereoFbo;
 static Shader distortion;
@@ -2480,7 +2481,7 @@ void InitOculusDevice(void)
     if (OVR_FAILURE(result))
     {
         TraceLog(WARNING, "OVR: Could not initialize Oculus device");
-        oculusEnabled = false;
+        oculusReady = false;
     }
     else
     {
@@ -2489,7 +2490,7 @@ void InitOculusDevice(void)
         {
             TraceLog(WARNING, "OVR: Could not create Oculus session");
             ovr_Shutdown();
-            oculusEnabled = false;
+            oculusReady = false;
         }
         else
         {
@@ -2514,14 +2515,15 @@ void InitOculusDevice(void)
             // Recenter OVR tracking origin
             ovr_RecenterTrackingOrigin(session);
             
-            oculusEnabled = true;
+            oculusReady = true;
+            vrEnabled = true;
         }
     }
 #else
-    oculusEnabled = false;
+    oculusReady = false;
 #endif
 
-    if (!oculusEnabled)
+    if (!oculusReady)
     {
         TraceLog(WARNING, "VR: Initializing Oculus simulator");
 
@@ -2533,6 +2535,7 @@ void InitOculusDevice(void)
         distortion = LoadShader("resources/shaders/base.vs", "resources/shaders/distortion.fs");
         
         oculusSimulator = true;
+        vrEnabled = true;
     }
 }
 
@@ -2540,7 +2543,7 @@ void InitOculusDevice(void)
 void CloseOculusDevice(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusEnabled)
+    if (oculusReady)
     {
         UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
         UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
@@ -2558,20 +2561,26 @@ void CloseOculusDevice(void)
         UnloadShader(distortion);
     }
     
-    oculusEnabled = false;
+    oculusReady = false;
 }
 
 // Detect if oculus device is available
 bool IsOculusReady(void)
 {
-    return (oculusEnabled || oculusSimulator);
+    return (oculusReady || oculusSimulator) && vrEnabled;
+}
+
+// Enable/Disable VR experience (Oculus device or simulator)
+void ToggleVR(void)
+{
+    vrEnabled = !vrEnabled;
 }
 
 // Update Oculus Rift tracking (position and orientation)
 void UpdateOculusTracking(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusEnabled)
+    if (oculusReady)
     {
         frameIndex++;
 
@@ -2604,54 +2613,58 @@ void SetOculusView(int eye)
 {
     Matrix eyeProjection;
     Matrix eyeModelView;
-
+    
+    if (vrEnabled)
+    {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusEnabled)
-    {
-        rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
+        if (oculusReady)
+        {
+            rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, 
+                       layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
 
-        Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
-                                                 layer.eyeLayer.RenderPose[eye].Orientation.y, 
-                                                 layer.eyeLayer.RenderPose[eye].Orientation.z, 
-                                                 layer.eyeLayer.RenderPose[eye].Orientation.w };
-        QuaternionInvert(&eyeRenderPose);
-        Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
-        Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
-                                                -layer.eyeLayer.RenderPose[eye].Position.y, 
-                                                -layer.eyeLayer.RenderPose[eye].Position.z);
+            Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.y, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.z, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.w };
+            QuaternionInvert(&eyeRenderPose);
+            Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
+            Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.y, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.z);
 
-        Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
-        eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
+            Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
+            eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
 
-        // TODO: Find a better way to get camera view matrix (instead of using internal modelview)
-        
-        eyeProjection = layer.eyeProjections[eye];
-    }
-    else
+            // TODO: Find a better way to get camera view matrix (instead of using internal modelview)
+            
+            eyeProjection = layer.eyeProjections[eye];
+        }
+        else
 #endif
-    {
-        // Setup viewport and projection/modelview matrices using tracking data
-        rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
-        
-        // NOTE: fovy vaule hardcoded to 45.0 degrees
-        eyeProjection = MatrixPerspective(45.0, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
-        MatrixTranspose(&eyeProjection);
-        
-        // TODO: Compute eyes IPD and apply to current modelview matrix (camera)
-        Matrix eyeView = MatrixIdentity();
-        
-        eyeModelView = MatrixMultiply(modelview, eyeView);
-    }
+        {
+            // Setup viewport and projection/modelview matrices using tracking data
+            rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
+            
+            // NOTE: fovy value hardcoded to 60 degrees (Oculus Rift CV1 vertical FOV is 100 degrees)
+            eyeProjection = MatrixPerspective(60.0, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
+            MatrixTranspose(&eyeProjection);
+            
+            // TODO: Compute eyes IPD and apply to current modelview matrix (camera)
+            Matrix eyeView = MatrixIdentity();
+            
+            eyeModelView = MatrixMultiply(modelview, eyeView);
+        }
 
-    SetMatrixModelview(eyeModelView);
-    SetMatrixProjection(eyeProjection);
+        SetMatrixModelview(eyeModelView);
+        SetMatrixProjection(eyeProjection);
+    }
 }
 
 // Begin Oculus drawing configuration
 void BeginOculusDrawing(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusEnabled)
+    if (oculusReady)
     {
         GLuint currentTexId;
         int currentIndex;
@@ -2684,7 +2697,7 @@ void BeginOculusDrawing(void)
 void EndOculusDrawing(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusEnabled)
+    if (oculusReady)
     {
         // Unbind current framebuffer (Oculus buffer)
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);

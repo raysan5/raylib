@@ -30,7 +30,7 @@ int main()
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.fovy = 60.0f;                                // Camera field-of-view Y
     
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
@@ -43,6 +43,8 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateOculusTracking();
+        
+        if (IsKeyPressed(KEY_SPACE)) ToggleVR();
         //----------------------------------------------------------------------------------
 
         // Draw
