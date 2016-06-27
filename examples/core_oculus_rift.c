@@ -63,11 +63,13 @@ int main()
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
                 
                 DrawGrid(10, 1.0f);
-                
+
                 DrawDefaultBuffers();   // Process internal dynamic buffers
             }
             
             End3dMode();
+            
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

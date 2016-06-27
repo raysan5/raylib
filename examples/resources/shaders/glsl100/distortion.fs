@@ -44,17 +44,13 @@ void main()
     // SOURCE: http://www.mtbs3d.com/phpbb/viewtopic.php?f=140&t=17081
     
     // The following two variables need to be set per eye
-    vec2 LensCenter = fragTexCoord.x < 540 ? LeftLensCenter : RightLensCenter;
-    vec2 ScreenCenter = fragTexCoord.x < 540 ? LeftScreenCenter : RightScreenCenter;
+    vec2 LensCenter = fragTexCoord.x < 0.5 ? LeftLensCenter : RightLensCenter;
+    vec2 ScreenCenter = fragTexCoord.x < 0.5 ? LeftScreenCenter : RightScreenCenter;
 
     vec2 tc = HmdWarp(fragTexCoord, LensCenter);
 
     if (any(bvec2(clamp(tc,ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)) - tc))) gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    else
-    {
-        //tc.x = gl_FragCoord.x < 640 ? (2.0 * tc.x) : (2.0 * (tc.x - 0.5));
-        gl_FragColor = texture2D(texture0, tc);
-    }
+    else gl_FragColor = texture2D(texture0, tc);
     
     /*
     // Chromatic aberration is caused when a lens can't focus every color to the same focal point. 

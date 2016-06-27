@@ -17,6 +17,7 @@ const vec2 RightScreenCenter = vec2(0.75, 0.5);
 const vec2 Scale = vec2(0.25, 0.45);    //vec2(0.1469278, 0.2350845);
 const vec2 ScaleIn = vec2(4, 2.2222);
 const vec4 HmdWarpParam = vec4(1, 0.22, 0.24, 0);
+const vec4 ChromaAbCorrection = vec4(0.99599999, -0.0040000002, 1.0140001, 0.0);
 
 /*
 // Another set of default values
@@ -45,25 +46,22 @@ void main()
     // SOURCE: http://www.mtbs3d.com/phpbb/viewtopic.php?f=140&t=17081
     
     // The following two variables need to be set per eye
-    vec2 LensCenter = fragTexCoord.x < 540 ? LeftLensCenter : RightLensCenter;
-    vec2 ScreenCenter = fragTexCoord.x < 540 ? LeftScreenCenter : RightScreenCenter;
+    vec2 LensCenter = fragTexCoord.x < 0.5 ? LeftLensCenter : RightLensCenter;
+    vec2 ScreenCenter = fragTexCoord.x < 0.5 ? LeftScreenCenter : RightScreenCenter;
 
     vec2 tc = HmdWarp(fragTexCoord, LensCenter);
 
-    if (any(bvec2(clamp(tc,ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)) - tc))) finalColor = vec4(0.0, 0.0, 0.0, 1.0);
-    else
-    {
-        //tc.x = gl_FragCoord.x < 640 ? (2.0 * tc.x) : (2.0 * (tc.x - 0.5));
-        finalColor = texture2D(texture0, tc);
-    }
+    if (any(bvec2(clamp(tc, ScreenCenter - vec2(0.25, 0.5), ScreenCenter + vec2(0.25, 0.5)) - tc))) finalColor = vec4(0.0, 0.0, 0.0, 1.0);
+    else finalColor = texture2D(texture0, tc);
     
-    /*
     // Chromatic aberration is caused when a lens can't focus every color to the same focal point. 
     // A simple way to fake this effect, and render it as a quick full-screen post-process, 
     // is to apply an offset to each color channel in a fragment shader.
-    vec4 rValue = texture2D(texture0, fragTexCoord - rOffset);  
-    vec4 gValue = texture2D(texture0, fragTexCoord - gOffset);
-    vec4 bValue = texture2D(texture0, fragTexCoord - bOffset);
+    /*
+    vec4 rValue = texture2D(texture0, fragTexCoord - ChromaAbCorrection.x);  
+    vec4 gValue = texture2D(texture0, fragTexCoord - ChromaAbCorrection.y);
+    vec4 bValue = texture2D(texture0, fragTexCoord - ChromaAbCorrection.z);
+
     finalColor = vec4(rValue.r, gValue.g, bValue.b, 1.0);
     */
 }
