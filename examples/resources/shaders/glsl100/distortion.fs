@@ -16,6 +16,7 @@ const vec2 RightScreenCenter = vec2(0.75, 0.5);
 const vec2 Scale = vec2(0.25, 0.45);    //vec2(0.1469278, 0.2350845);
 const vec2 ScaleIn = vec2(4, 2.2222);
 const vec4 HmdWarpParam = vec4(1, 0.22, 0.24, 0);
+const vec4 ChromaAbParam = vec4(0.996, -0.004, 1.014, 0.0);
 
 /*
 // Another set of default values
