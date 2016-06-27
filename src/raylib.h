@@ -856,6 +856,8 @@ void UpdateOculusTracking(void);            // Update Oculus Rift tracking (posi
 void SetOculusView(int eye);                // Set internal projection and modelview matrix depending on eyes tracking data
 void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
 void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
+bool IsOculusReady(void);                   // Detect if oculus device (or simulator) is ready
+void ToggleVR(void);                        // Enable/Disable VR experience (Oculus device or simulator)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
