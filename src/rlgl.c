@@ -2651,6 +2651,46 @@ void SetOculusView(int eye)
             // Setup viewport and projection/modelview matrices using tracking data
             rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
             
+            float hmdIPD = 0.064f;
+            float hmdHScreenSize = 0.14976f;
+            float hmdVScreenSize = 0.0936f;
+            //float hmdVScreenCenter = 0.04675f;
+            float hmdEyeToScreenDistance = 0.041f;
+            float hmdLensSeparationDistance = 0.064f;
+            
+            //NOTE: fovy value hardcoded to 60 degrees (Oculus Rift CV1 vertical FOV is 100 degrees)
+            //float halfScreenDistance = hmdVScreenSize/2.0f;
+            //float yfov = 2.0f*atan(halfScreenDistance/hmdEyeToScreenDistance);
+
+            float viewCenter = (float)hmdHScreenSize*0.25f;
+            float eyeProjectionShift = viewCenter - hmdLensSeparationDistance*0.5f;
+            float projectionCenterOffset = 4.0f*eyeProjectionShift/(float)hmdHScreenSize;
+
+            
+            // The matrixes for offsetting the projection and view for each eye, to achieve stereo effect
+            Vector3 projectionOffset = { -projectionCenterOffset, 0.0f, 0.0f };
+            Vector3 viewOffset = { -hmdIPD/2.0f, 0.0f, 0.0f };
+
+            // Negate the left eye versions
+            if (eye == 1)
+            {
+                projectionOffset.x *= -1.0f;
+                viewOffset.x *= -1.0f;
+            }
+
+            // Adjust the view and projection matrixes
+            // View matrix is translated based on the eye offset
+            Matrix projCenter = MatrixPerspective(60.0, (double)((float)screenWidth*0.5f)/(double)screenHeight, 0.01, 1000.0);
+
+            Matrix projTranslation = MatrixTranslate(projectionOffset.x, projectionOffset.y, projectionOffset.z);
+            Matrix viewTranslation = MatrixTranslate(viewOffset.x, viewOffset.y, viewOffset.z);
+
+            eyeProjection = MatrixMultiply(projCenter, projTranslation);    // projection
+            eyeModelView = MatrixMultiply(modelview, viewTranslation);      // modelview
+            
+            MatrixTranspose(&eyeProjection);
+
+            /*
             // NOTE: fovy value hardcoded to 60 degrees (Oculus Rift CV1 vertical FOV is 100 degrees)
             eyeProjection = MatrixPerspective(60.0, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
             MatrixTranspose(&eyeProjection);
@@ -2659,6 +2699,7 @@ void SetOculusView(int eye)
             Matrix eyeView = MatrixIdentity();
             
             eyeModelView = MatrixMultiply(modelview, eyeView);
+            */
         }
 
         SetMatrixModelview(eyeModelView);
