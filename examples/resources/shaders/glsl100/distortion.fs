@@ -1,13 +1,12 @@
-#version 330
+#version 100
+
+precision mediump float;
 
 // Input vertex attributes (from vertex shader)
-in vec2 fragTexCoord;
+varying vec2 fragTexCoord;
 
 // Input uniform values
 uniform sampler2D texture0;
-
-// Output fragment color
-out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 const vec2 LeftLensCenter = vec2(0.2863248, 0.5);
@@ -45,16 +44,16 @@ void main()
     // SOURCE: http://www.mtbs3d.com/phpbb/viewtopic.php?f=140&t=17081
     
     // The following two variables need to be set per eye
-    vec2 LensCenter = gl_FragCoord.x < 540 ? LeftLensCenter : RightLensCenter;
-    vec2 ScreenCenter = gl_FragCoord.x < 540 ? LeftScreenCenter : RightScreenCenter;
+    vec2 LensCenter = fragTexCoord.x < 540 ? LeftLensCenter : RightLensCenter;
+    vec2 ScreenCenter = fragTexCoord.x < 540 ? LeftScreenCenter : RightScreenCenter;
 
     vec2 tc = HmdWarp(fragTexCoord, LensCenter);
 
-    if (any(bvec2(clamp(tc,ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)) - tc))) finalColor = vec4(0.0, 0.0, 0.0, 1.0);
+    if (any(bvec2(clamp(tc,ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)) - tc))) gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     else
     {
         //tc.x = gl_FragCoord.x < 640 ? (2.0 * tc.x) : (2.0 * (tc.x - 0.5));
-        finalColor = texture2D(texture0, tc);
+        gl_FragColor = texture2D(texture0, tc);
     }
     
     /*

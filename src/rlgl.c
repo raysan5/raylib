@@ -2538,7 +2538,7 @@ void InitOculusDevice(void)
         
         // Load oculus-distortion shader (oculus parameters setup internally)
         // TODO: Embed coulus distortion shader (in this function like default shader?)
-        distortion = LoadShader("resources/shaders/base.vs", "resources/shaders/distortion.fs");
+        distortion = LoadShader("resources/shaders/glsl330/base.vs", "resources/shaders/glsl330/distortion.fs");
         
         oculusSimulator = true;
         vrEnabled = true;
