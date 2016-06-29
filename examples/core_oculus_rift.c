@@ -34,7 +34,7 @@ int main()
     
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
-    //SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
+    SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop

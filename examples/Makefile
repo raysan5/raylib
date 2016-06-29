@@ -173,6 +173,7 @@ EXAMPLES = \
     core_3d_camera_free \
     core_3d_camera_first_person \
     core_2d_camera \
+    core_world_screen \
     core_oculus_rift \
     shapes_logo_raylib \
     shapes_basic_shapes \
@@ -287,6 +288,10 @@ core_3d_camera_first_person: core_3d_camera_first_person.c
 
 # compile [core] example - 2d camera
 core_2d_camera: core_2d_camera.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [core] example - world screen
+core_world_screen: core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - oculus rift

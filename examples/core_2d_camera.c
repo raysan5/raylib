@@ -23,8 +23,8 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera");
     
     Rectangle player = { 400, 280, 40, 40 };
-    Rectangle buildings[MAX_BUILDINGS] = { 0, 0, 0, 0 };
-    Color buildColors[MAX_BUILDINGS] = { 80, 80, 80, 255 };
+    Rectangle buildings[MAX_BUILDINGS];
+    Color buildColors[MAX_BUILDINGS];
     
     int spacing = 0;
     
