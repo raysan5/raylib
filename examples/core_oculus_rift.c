@@ -50,22 +50,15 @@ int main()
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
-            
+
             Begin3dMode(camera);
 
-            for (int eye = 0; eye < 2; eye++)
-            {
-                SetOculusView(eye);
-                
                 DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
                 
                 DrawGrid(10, 1.0f);
-
-                DrawDefaultBuffers();   // Process internal dynamic buffers
-            }
             
             End3dMode();
             

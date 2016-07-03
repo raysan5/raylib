@@ -520,6 +520,8 @@ void BeginDrawing(void)
     currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
+    
+    if (IsOculusReady()) BeginOculusDrawing();
 
     rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
@@ -533,6 +535,8 @@ void BeginDrawing(void)
 void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+    
+    if (IsOculusReady()) EndOculusDrawing();
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
@@ -608,15 +612,11 @@ void Begin3dMode(Camera camera)
     rlMultMatrixf(MatrixToFloat(cameraView));      // Multiply MODELVIEW matrix by view matrix (camera)
     
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
-    
-    if (IsOculusReady()) BeginOculusDrawing();
 }
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void End3dMode(void)
-{
-    if (IsOculusReady()) EndOculusDrawing();
-    
+{        
     rlglDraw();                         // Process internal buffers (update + draw)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
@@ -1019,14 +1019,6 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 Matrix GetCameraMatrix(Camera camera)
 {
     return MatrixLookAt(camera.position, camera.target, camera.up);
-}
-
-// Update and draw default buffers vertex data
-// NOTE: This data has been stored dynamically during frame on each Draw*() call
-void DrawDefaultBuffers(void)
-{
-    rlglUpdateDefaultBuffers(); // Upload frame vertex data to GPU
-    rlglDrawDefaultBuffers();   // Draw vertex data into framebuffer
 }
 
 //----------------------------------------------------------------------------------

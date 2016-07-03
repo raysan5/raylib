@@ -572,7 +572,6 @@ void EndTextureMode(void);                                  // Ends drawing to r
 Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position from a 3d world space position
 Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
-void DrawDefaultBuffers(void);                              // Update and draw default buffers vertex data (stored dynamically in frame)
 
 void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 float GetFPS(void);                                         // Returns current FPS
@@ -853,7 +852,6 @@ void DestroyLight(Light light);                                     // Destroy a
 void InitOculusDevice(void);                // Init Oculus Rift device
 void CloseOculusDevice(void);               // Close Oculus Rift device
 void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
-void SetOculusView(int eye);                // Set internal projection and modelview matrix depending on eyes tracking data
 void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
 void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
 bool IsOculusReady(void);                   // Detect if oculus device (or simulator) is ready

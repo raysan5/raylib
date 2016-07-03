@@ -276,9 +276,10 @@ static unsigned int frameIndex = 0;     // Oculus frames counter, used to discar
 static bool oculusReady = false;        // Oculus device ready flag
 static bool oculusSimulator = false;    // Oculus device simulator
 static bool vrEnabled = false;          // VR experience enabled (Oculus device or simulator)
+static bool vrControl = true;          // VR controlled by user code, instead of internally
 
 static RenderTexture2D stereoFbo;
-static Shader distortion;
+static Shader distortionShader;
 
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
@@ -315,9 +316,12 @@ static void UnloadDefaultShader(void);      // Unload default shader
 static void UnloadStandardShader(void);     // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
-void rlglUpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
-void rlglDrawDefaultBuffers(void);       // Draw default internal buffers vertex data
+static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
+static void DrawDefaultBuffers(int eyesCount); // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
+
+// Set internal projection and modelview matrix depending on eyes tracking data
+static void SetOculusView(int eye, Matrix matProjection, Matrix matModelView);
 
 static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
 
@@ -1205,15 +1209,14 @@ void rlglClose(void)
 void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-/*
-    for (int i = 0; i < modelsCount; i++)
-    {
-        rlglDrawMesh(models[i]->mesh, models[i]->material, models[i]->transform);
-    }
-*/
-    // NOTE: Default buffers always drawn at the end
-    rlglUpdateDefaultBuffers();
-    rlglDrawDefaultBuffers();
+    // NOTE: In a future version, models could be stored in a stack...
+    //for (int i = 0; i < modelsCount; i++) rlglDrawMesh(models[i]->mesh, models[i]->material, models[i]->transform);
+
+    // NOTE: Default buffers upload and draw
+    UpdateDefaultBuffers();
+    
+    if (vrEnabled && vrControl) DrawDefaultBuffers(2);
+    else DrawDefaultBuffers(1);
 #endif
 }
 
@@ -1865,25 +1868,22 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    int eyesCount = 1;
+    if (vrEnabled) eyesCount = 2;
+
     glUseProgram(material.shader.id);
+    
+    // Upload to shader material.colDiffuse
+    float vColorDiffuse[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
+    glUniform4fv(material.shader.tintColorLoc, 1, vColorDiffuse);
     
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matView = modelview;         // View matrix (camera)
     Matrix matProjection = projection;  // Projection matrix (perspective)
-
+    
     // Calculate model-view matrix combining matModel and matView
     Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
-
-    // Calculate model-view-projection matrix (MVP)
-    Matrix matMVP = MatrixMultiply(matModelView, matProjection);        // Transform to screen-space coordinates
-
-    // Send combined model-view-projection matrix to shader
-    glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-    
-    // Upload to shader material.colDiffuse
-    float vColorDiffuse[4] = { (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255 };
-    glUniform4fv(material.shader.tintColorLoc, 1, vColorDiffuse);
 
     // Check if using standard shader to get location points
     // NOTE: standard shader specific locations are got at render time to keep Shader struct as simple as possible (with just default shader locations)
@@ -1989,9 +1989,20 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
     }
 
-    // Draw call!
-    if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
-    else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    for (int eye = 0; eye < eyesCount; eye++)
+    {
+        if (eyesCount == 2) SetOculusView(eye, matProjection, matModelView);
+
+        // Calculate model-view-projection matrix (MVP)
+        Matrix matMVP = MatrixMultiply(modelview, projection);        // Transform to screen-space coordinates
+
+        // Send combined model-view-projection matrix to shader
+        glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
+
+        // Draw call!
+        if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
+        else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    }
     
     if (material.texNormal.id != 0)
     {
@@ -2016,6 +2027,10 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     glUseProgram(0);        // Unbind shader program
+    
+    // Restore projection/modelview matrices
+    projection = matProjection;
+    modelview = matView;
 #endif
 }
 
@@ -2538,7 +2553,7 @@ void InitOculusDevice(void)
         
         // Load oculus-distortion shader (oculus parameters setup internally)
         // TODO: Embed coulus distortion shader (in this function like default shader?)
-        distortion = LoadShader("resources/shaders/glsl330/base.vs", "resources/shaders/glsl330/distortion.fs");
+        distortionShader = LoadShader("resources/shaders/glsl330/base.vs", "resources/shaders/glsl330/distortion.fs");
         
         oculusSimulator = true;
         vrEnabled = true;
@@ -2564,7 +2579,7 @@ void CloseOculusDevice(void)
         rlDeleteRenderTextures(stereoFbo);
         
         // Unload oculus-distortion shader
-        UnloadShader(distortion);
+        UnloadShader(distortionShader);
     }
     
     oculusReady = false;
@@ -2615,13 +2630,13 @@ void UpdateOculusTracking(void)
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data
-void SetOculusView(int eye)
-{
-    Matrix eyeProjection;
-    Matrix eyeModelView;
-    
+static void SetOculusView(int eye, Matrix matProjection, Matrix matModelView)
+{   
     if (vrEnabled)
     {
+        Matrix eyeProjection = matProjection;
+        Matrix eyeModelView = matModelView;
+        
 #if defined(RLGL_OCULUS_SUPPORT)
         if (oculusReady)
         {
@@ -2639,10 +2654,8 @@ void SetOculusView(int eye)
                                                     -layer.eyeLayer.RenderPose[eye].Position.z);
 
             Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
-            eyeModelView = MatrixMultiply(modelview, eyeView);           // Combine internal camera matrix (modelview) wih eye-head movement
+            eyeModelView = MatrixMultiply(matModelView, eyeView);               // Combine internal camera matrix (modelview) wih eye-head movement
 
-            // TODO: Find a better way to get camera view matrix (instead of using internal modelview)
-            
             eyeProjection = layer.eyeProjections[eye];
         }
         else
@@ -2651,28 +2664,43 @@ void SetOculusView(int eye)
             // Setup viewport and projection/modelview matrices using tracking data
             rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
             
-            float hmdIPD = 0.064f;
-            float hmdHScreenSize = 0.14976f;
-            float hmdVScreenSize = 0.0936f;
-            //float hmdVScreenCenter = 0.04675f;
-            float hmdEyeToScreenDistance = 0.041f;
-            float hmdLensSeparationDistance = 0.064f;
+            static float IPD = 0.064f;       // InterpupillaryDistance
+            float HScreenSize = 0.14976f;
+            float VScreenSize = 0.0936f;     // HScreenSize/(1280.0f/800.0f)
+            float VScreenCenter = 0.04675f;
+            float EyeToScreenDistance = 0.041f;
+            float LensSeparationDistance = 0.064f; //0.0635f (DK1)
             
-            //NOTE: fovy value hardcoded to 60 degrees (Oculus Rift CV1 vertical FOV is 100 degrees)
-            //float halfScreenDistance = hmdVScreenSize/2.0f;
-            //float yfov = 2.0f*atan(halfScreenDistance/hmdEyeToScreenDistance);
+            // NOTE: fovy value obtained from device parameters (Oculus Rift CV1)
+            float halfScreenDistance = VScreenSize/2.0f;
+            float fovy = 2.0f*atan(halfScreenDistance/EyeToScreenDistance)*RAD2DEG;
 
-            float viewCenter = (float)hmdHScreenSize*0.25f;
-            float eyeProjectionShift = viewCenter - hmdLensSeparationDistance*0.5f;
-            float projectionCenterOffset = 4.0f*eyeProjectionShift/(float)hmdHScreenSize;
+            float viewCenter = (float)HScreenSize*0.25f;
+            float eyeProjectionShift = viewCenter - LensSeparationDistance*0.5f;
+            float projectionCenterOffset = 4.0f*eyeProjectionShift/(float)HScreenSize;
+/*            
+            static float scale[2] = { 0.25, 0.45 };
 
+            if (IsKeyDown(KEY_RIGHT)) scale[0] += 0.01;
+            else if (IsKeyDown(KEY_LEFT)) scale[0] -= 0.01;
+            else if (IsKeyDown(KEY_UP)) scale[1] += 0.01;
+            else if (IsKeyDown(KEY_DOWN)) scale[1] -= 0.01;
             
+            SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "Scale"), scale, 2);
+
+            if (IsKeyDown(KEY_N)) IPD += 0.02;
+            else if (IsKeyDown(KEY_M)) IPD -= 0.02;
+*/            
             // The matrixes for offsetting the projection and view for each eye, to achieve stereo effect
             Vector3 projectionOffset = { -projectionCenterOffset, 0.0f, 0.0f };
-            Vector3 viewOffset = { -hmdIPD/2.0f, 0.0f, 0.0f };
+            
+            // Camera movement might seem more natural if we model the head. 
+            // Our axis of rotation is the base of our head, so we might want to add 
+            // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+            Vector3 viewOffset = { -IPD/2.0f, 0.075f, 0.045f };
 
             // Negate the left eye versions
-            if (eye == 1)
+            if (eye == 0)
             {
                 projectionOffset.x *= -1.0f;
                 viewOffset.x *= -1.0f;
@@ -2680,29 +2708,18 @@ void SetOculusView(int eye)
 
             // Adjust the view and projection matrixes
             // View matrix is translated based on the eye offset
-            Matrix projCenter = MatrixPerspective(60.0, (double)((float)screenWidth*0.5f)/(double)screenHeight, 0.01, 1000.0);
+            Matrix projCenter = MatrixPerspective(fovy, (double)((float)screenWidth*0.5f)/(double)screenHeight, 0.01, 1000.0);
 
             Matrix projTranslation = MatrixTranslate(projectionOffset.x, projectionOffset.y, projectionOffset.z);
             Matrix viewTranslation = MatrixTranslate(viewOffset.x, viewOffset.y, viewOffset.z);
 
             eyeProjection = MatrixMultiply(projCenter, projTranslation);    // projection
-            eyeModelView = MatrixMultiply(modelview, viewTranslation);      // modelview
+            eyeModelView = MatrixMultiply(matModelView, viewTranslation);   // modelview
             
             MatrixTranspose(&eyeProjection);
-
-            /*
-            // NOTE: fovy value hardcoded to 60 degrees (Oculus Rift CV1 vertical FOV is 100 degrees)
-            eyeProjection = MatrixPerspective(60.0, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
-            MatrixTranspose(&eyeProjection);
-            
-            // TODO: Compute eyes IPD and apply to current modelview matrix (camera)
-            Matrix eyeView = MatrixIdentity();
-            
-            eyeModelView = MatrixMultiply(modelview, eyeView);
-            */
         }
 
-        SetMatrixModelview(eyeModelView);
+        SetMatrixModelview(eyeModelView);       // ERROR! We are modifying modelview for next eye!!!
         SetMatrixProjection(eyeProjection);
     }
 }
@@ -2738,6 +2755,8 @@ void BeginOculusDrawing(void)
     
     //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
     rlClearScreenBuffers();             // Clear current framebuffer(s)
+    
+    vrControl = true;
 }
 
 // End Oculus drawing process (and desktop mirror)
@@ -2777,40 +2796,44 @@ void EndOculusDrawing(void)
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
         // Draw RenderTexture (stereoFbo) using distortion shader 
-        BeginShaderMode(distortion);
+        currentShader = distortionShader;
 
-            rlEnableTexture(stereoFbo.texture.id);
+        rlEnableTexture(stereoFbo.texture.id);
 
-            rlPushMatrix();
-                rlBegin(RL_QUADS);
-                    rlColor4ub(255, 255, 255, 255);
-                    rlNormal3f(0.0f, 0.0f, 1.0f);
+        rlPushMatrix();
+            rlBegin(RL_QUADS);
+                rlColor4ub(255, 255, 255, 255);
+                rlNormal3f(0.0f, 0.0f, 1.0f);
 
-                    // Bottom-left corner for texture and quad
-                    rlTexCoord2f(0.0f, 1.0f);
-                    rlVertex2f(0.0f, 0.0f);
+                // Bottom-left corner for texture and quad
+                rlTexCoord2f(0.0f, 1.0f);
+                rlVertex2f(0.0f, 0.0f);
 
-                    // Bottom-right corner for texture and quad
-                    rlTexCoord2f(0.0f, 0.0f);
-                    rlVertex2f(0.0f, stereoFbo.texture.height);
+                // Bottom-right corner for texture and quad
+                rlTexCoord2f(0.0f, 0.0f);
+                rlVertex2f(0.0f, stereoFbo.texture.height);
 
-                    // Top-right corner for texture and quad
-                    rlTexCoord2f(1.0f, 0.0f);
-                    rlVertex2f(stereoFbo.texture.width, stereoFbo.texture.height);
+                // Top-right corner for texture and quad
+                rlTexCoord2f(1.0f, 0.0f);
+                rlVertex2f(stereoFbo.texture.width, stereoFbo.texture.height);
 
-                    // Top-left corner for texture and quad
-                    rlTexCoord2f(1.0f, 1.0f);
-                    rlVertex2f(stereoFbo.texture.width, 0.0f);
-                rlEnd();
-            rlPopMatrix();
+                // Top-left corner for texture and quad
+                rlTexCoord2f(1.0f, 1.0f);
+                rlVertex2f(stereoFbo.texture.width, 0.0f);
+            rlEnd();
+        rlPopMatrix();
 
-            rlDisableTexture();
-            
-            //rlglDraw();
-        EndShaderMode();
+        rlDisableTexture();
+
+        UpdateDefaultBuffers();
+        DrawDefaultBuffers(1);
+
+        currentShader = defaultShader;
     }
 
     rlDisableDepthTest();
+    
+    vrControl = false;
 }
 
 //----------------------------------------------------------------------------------
@@ -3303,7 +3326,7 @@ static void LoadDefaultBuffers(void)
 // Update default internal buffers (VAOs/VBOs) with vertex array data
 // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
 // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (change flag required)
-void rlglUpdateDefaultBuffers(void)
+static void UpdateDefaultBuffers(void)
 {
     // Update lines vertex buffers
     if (lines.vCounter > 0)
@@ -3373,146 +3396,154 @@ void rlglUpdateDefaultBuffers(void)
 
 // Draw default internal buffers vertex data
 // NOTE: We draw in this order: lines, triangles, quads
-void rlglDrawDefaultBuffers(void)
+static void DrawDefaultBuffers(int eyesCount)
 {
-    // Set current shader and upload current MVP matrix
-    if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
+    Matrix matProjection = projection;
+    Matrix matModelView = modelview;
+    
+    for (int eye = 0; eye < eyesCount; eye++)
     {
-        glUseProgram(currentShader.id);
-        
-        // Create modelview-projection matrix
-        Matrix matMVP = MatrixMultiply(modelview, projection);
+        if (eyesCount == 2) SetOculusView(eye, matProjection, matModelView);
 
-        glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-        glUniform4f(currentShader.tintColorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
-        glUniform1i(currentShader.mapTexture0Loc, 0);
-        
-        // NOTE: Additional map textures not considered for default buffers drawing
-    }
-   
-    // Draw lines buffers
-    if (lines.vCounter > 0)
-    {
-        glBindTexture(GL_TEXTURE_2D, whiteTexture);
-
-        if (vaoSupported)
+        // Set current shader and upload current MVP matrix
+        if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
         {
-            glBindVertexArray(lines.vaoId);
-        }
-        else
-        {
-            // Bind vertex attrib: position (shader-location = 0)
-            glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[0]);
-            glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(currentShader.vertexLoc);
-
-            // Bind vertex attrib: color (shader-location = 3)
-            glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[1]);
-            glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(currentShader.colorLoc);
-        }
-
-        glDrawArrays(GL_LINES, 0, lines.vCounter);
-
-        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    // Draw triangles buffers
-    if (triangles.vCounter > 0)
-    {
-        glBindTexture(GL_TEXTURE_2D, whiteTexture);
-
-        if (vaoSupported)
-        {
-            glBindVertexArray(triangles.vaoId);
-        }
-        else
-        {
-            // Bind vertex attrib: position (shader-location = 0)
-            glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[0]);
-            glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(currentShader.vertexLoc);
-
-            // Bind vertex attrib: color (shader-location = 3)
-            glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[1]);
-            glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(currentShader.colorLoc);
-        }
-
-        glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
-
-        if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    // Draw quads buffers
-    if (quads.vCounter > 0)
-    {
-        int quadsCount = 0;
-        int numIndicesToProcess = 0;
-        int indicesOffset = 0;
-
-        if (vaoSupported)
-        {
-            glBindVertexArray(quads.vaoId);
-        }
-        else
-        {
-            // Bind vertex attrib: position (shader-location = 0)
-            glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[0]);
-            glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(currentShader.vertexLoc);
-
-            // Bind vertex attrib: texcoord (shader-location = 1)
-            glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[1]);
-            glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(currentShader.texcoordLoc);
-
-            // Bind vertex attrib: color (shader-location = 3)
-            glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[2]);
-            glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(currentShader.colorLoc);
+            glUseProgram(currentShader.id);
             
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
+            // Create modelview-projection matrix
+            Matrix matMVP = MatrixMultiply(modelview, projection);
+
+            glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(matMVP));
+            glUniform4f(currentShader.tintColorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
+            glUniform1i(currentShader.mapTexture0Loc, 0);
+            
+            // NOTE: Additional map textures not considered for default buffers drawing
         }
-
-        //TraceLog(DEBUG, "Draws required per frame: %i", drawsCounter);
-
-        for (int i = 0; i < drawsCounter; i++)
+       
+        // Draw lines buffers
+        if (lines.vCounter > 0)
         {
-            quadsCount = draws[i].vertexCount/4;
-            numIndicesToProcess = quadsCount*6;  // Get number of Quads * 6 index by Quad
+            glBindTexture(GL_TEXTURE_2D, whiteTexture);
 
-            //TraceLog(DEBUG, "Quads to render: %i - Vertex Count: %i", quadsCount, draws[i].vertexCount);
+            if (vaoSupported)
+            {
+                glBindVertexArray(lines.vaoId);
+            }
+            else
+            {
+                // Bind vertex attrib: position (shader-location = 0)
+                glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[0]);
+                glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.vertexLoc);
 
-            glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
+                // Bind vertex attrib: color (shader-location = 3)
+                glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[1]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+            }
 
-            // NOTE: The final parameter tells the GPU the offset in bytes from the start of the index buffer to the location of the first index to process
-#if defined(GRAPHICS_API_OPENGL_33)
-            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid *)(sizeof(GLuint)*indicesOffset));
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-            glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)*indicesOffset));
-#endif
-            //GLenum err;
-            //if ((err = glGetError()) != GL_NO_ERROR) TraceLog(INFO, "OpenGL error: %i", (int)err);    //GL_INVALID_ENUM!
+            glDrawArrays(GL_LINES, 0, lines.vCounter);
 
-            indicesOffset += draws[i].vertexCount/4*6;
+            if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
 
-        if (!vaoSupported)
+        // Draw triangles buffers
+        if (triangles.vCounter > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, whiteTexture);
+
+            if (vaoSupported)
+            {
+                glBindVertexArray(triangles.vaoId);
+            }
+            else
+            {
+                // Bind vertex attrib: position (shader-location = 0)
+                glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[0]);
+                glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.vertexLoc);
+
+                // Bind vertex attrib: color (shader-location = 3)
+                glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[1]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+            }
+
+            glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
+
+            if (!vaoSupported) glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
 
-        glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures
+        // Draw quads buffers
+        if (quads.vCounter > 0)
+        {
+            int quadsCount = 0;
+            int numIndicesToProcess = 0;
+            int indicesOffset = 0;
+
+            if (vaoSupported)
+            {
+                glBindVertexArray(quads.vaoId);
+            }
+            else
+            {
+                // Bind vertex attrib: position (shader-location = 0)
+                glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[0]);
+                glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.vertexLoc);
+
+                // Bind vertex attrib: texcoord (shader-location = 1)
+                glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[1]);
+                glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.texcoordLoc);
+
+                // Bind vertex attrib: color (shader-location = 3)
+                glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[2]);
+                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.colorLoc);
+                
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
+            }
+
+            //TraceLog(DEBUG, "Draws required per frame: %i", drawsCounter);
+
+            for (int i = 0; i < drawsCounter; i++)
+            {
+                quadsCount = draws[i].vertexCount/4;
+                numIndicesToProcess = quadsCount*6;  // Get number of Quads * 6 index by Quad
+
+                //TraceLog(DEBUG, "Quads to render: %i - Vertex Count: %i", quadsCount, draws[i].vertexCount);
+
+                glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
+
+                // NOTE: The final parameter tells the GPU the offset in bytes from the start of the index buffer to the location of the first index to process
+    #if defined(GRAPHICS_API_OPENGL_33)
+                glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_INT, (GLvoid *)(sizeof(GLuint)*indicesOffset));
+    #elif defined(GRAPHICS_API_OPENGL_ES2)
+                glDrawElements(GL_TRIANGLES, numIndicesToProcess, GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)*indicesOffset));
+    #endif
+                //GLenum err;
+                //if ((err = glGetError()) != GL_NO_ERROR) TraceLog(INFO, "OpenGL error: %i", (int)err);    //GL_INVALID_ENUM!
+
+                indicesOffset += draws[i].vertexCount/4*6;
+            }
+
+            if (!vaoSupported)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            }
+
+            glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures
+        }
+
+        if (vaoSupported) glBindVertexArray(0);   // Unbind VAO
+
+        glUseProgram(0);    // Unbind shader program
     }
-
-    if (vaoSupported) glBindVertexArray(0);   // Unbind VAO
-
-    glUseProgram(0);    // Unbind shader program
-
+    
     // Reset draws counter
     drawsCounter = 1;
     draws[0].textureId = whiteTexture;
@@ -3529,6 +3560,10 @@ void rlglDrawDefaultBuffers(void)
     
     // Reset depth for next draw
     currentDepth = -1.0f;
+    
+    // Restore projection/modelview matrices
+    projection = matProjection;
+    modelview = matModelView;
 }
 
 // Unload default internal buffers vertex data from CPU and GPU
