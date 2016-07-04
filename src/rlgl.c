@@ -31,6 +31,7 @@
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on ReadTextFile()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
 #include <string.h>                 // Required for: strcmp(), strlen(), strtok()
+#include <math.h>                   // Required for: atan()
 
 #ifndef RLGL_STANDALONE
     #include "raymath.h"            // Required for Vector3 and Matrix functions
@@ -1648,8 +1649,8 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
 
-    GLuint vaoId = 0;       // Vertex Array Objects (VAO)
-    GLuint vboId[7];        // Vertex Buffer Objects (VBOs)
+    GLuint vaoId = 0;           // Vertex Array Objects (VAO)
+    GLuint vboId[7] = { 0 };    // Vertex Buffer Objects (VBOs)
 
     if (vaoSupported)
     {
@@ -1745,7 +1746,6 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, GL_STATIC_DRAW);
     }
 
-    
     mesh->vboId[0] = vboId[0];     // Vertex position VBO
     mesh->vboId[1] = vboId[1];     // Texcoords VBO
     mesh->vboId[2] = vboId[2];     // Normals VBO
@@ -1912,12 +1912,12 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         // Upload to shader glossiness
         glUniform1f(glGetUniformLocation(material.shader.id, "glossiness"), material.glossiness);
     }    
-    
+
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
     glUniform1i(material.shader.mapTexture0Loc, 0);         // Diffuse texture fits in active texture unit 0
-    
+
     if ((material.texNormal.id != 0) && (material.shader.mapTexture1Loc != -1))
     {
         // Upload to shader specular map flag
@@ -1937,7 +1937,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
         glUniform1i(material.shader.mapTexture2Loc, 2);    // Specular texture fits in active texture unit 2
     }
-
+    
     if (vaoSupported)
     {
         glBindVertexArray(mesh.vaoId);
@@ -1962,12 +1962,22 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
             glEnableVertexAttribArray(material.shader.normalLoc);
         }
         
-        // Bind mesh VBO data: vertex colors (shader-location = 3, if available) , tangents, texcoords2 (if available)
+        // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
         if (material.shader.colorLoc != -1)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-            glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(material.shader.colorLoc);
+            if (mesh.vboId[3] != 0)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
+                glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(material.shader.colorLoc);
+            }
+            else
+            {
+                // Set default value for unused attribute
+                // NOTE: Required when using default shader and no VAO support
+                glVertexAttrib4f(material.shader.colorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
+                glDisableVertexAttribArray(material.shader.colorLoc);
+            }
         }
         
         // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
@@ -1992,6 +2002,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     for (int eye = 0; eye < eyesCount; eye++)
     {
         if (eyesCount == 2) SetOculusView(eye, matProjection, matModelView);
+        else modelview = matModelView;
 
         // Calculate model-view-projection matrix (MVP)
         Matrix matMVP = MatrixMultiply(modelview, projection);        // Transform to screen-space coordinates
@@ -2677,7 +2688,7 @@ static void SetOculusView(int eye, Matrix matProjection, Matrix matModelView)
 
             float viewCenter = (float)HScreenSize*0.25f;
             float eyeProjectionShift = viewCenter - LensSeparationDistance*0.5f;
-            float projectionCenterOffset = 4.0f*eyeProjectionShift/(float)HScreenSize;
+            float projectionCenterOffset = eyeProjectionShift/(float)HScreenSize;   //4.0f*eyeProjectionShift/(float)HScreenSize;
 /*            
             static float scale[2] = { 0.25, 0.45 };
 
@@ -3274,7 +3285,7 @@ static void LoadDefaultBuffers(void)
     glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (triangles)", triangles.vaoId);
-    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully(triangles)", triangles.vboId[0], triangles.vboId[1]);
+    else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully (triangles)", triangles.vboId[0], triangles.vboId[1]);
 
     // Upload and link quads vertex buffers
     if (vaoSupported)
