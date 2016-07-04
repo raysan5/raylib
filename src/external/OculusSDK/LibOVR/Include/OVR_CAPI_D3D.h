@@ -25,7 +25,7 @@
 /// \param[in]  desc Specifies requested texture properties. See notes for more info about texture format.
 /// \param[in]  bindFlags Specifies what ovrTextureBindFlags the application requires for this texture chain.
 /// \param[out] out_TextureSwapChain Returns the created ovrTextureSwapChain, which will be valid upon a successful return value, else it will be NULL.
-///             This texture chain must be eventually destroyed via ovr_DestroyTextureSwapChain before destroying the HMD with ovr_Destroy.
+///             This texture chain must be eventually destroyed via ovr_DestroyTextureSwapChain before destroying the session with ovr_Destroy.
 ///
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.
@@ -88,7 +88,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferDX(ovrSession sessio
 ///             which must be the same one the application renders to the textures with.
 /// \param[in]  desc Specifies requested texture properties. See notes for more info about texture format.
 /// \param[out] out_MirrorTexture Returns the created ovrMirrorTexture, which will be valid upon a successful return value, else it will be NULL.
-///             This texture must be eventually destroyed via ovr_DestroyMirrorTexture before destroying the HMD with ovr_Destroy.
+///             This texture must be eventually destroyed via ovr_DestroyMirrorTexture before destroying the session with ovr_Destroy.
 ///
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.

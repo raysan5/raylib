@@ -1487,6 +1487,25 @@ public:
         }
     }
 
+    // Decompose a quat into quat = swing * twist, where twist is a rotation about axis,
+    // and swing is a rotation perpendicular to axis.
+    Quat GetSwingTwist(const Vector3<T>& axis, Quat* twist) const
+    {
+        OVR_MATH_ASSERT(twist);
+        OVR_MATH_ASSERT(axis.IsNormalized());
+
+        // Create a normalized quaternion from projection of (x,y,z) onto axis
+        T d = axis.Dot(Vector3<T>(x, y, z));
+        *twist = Quat(axis.x*d, axis.y*d, axis.z*d, w);
+        T len = twist->Length();
+        if (len == 0)
+            twist->w = T(1);    // identity
+        else
+            twist /= len;       // normalize
+
+        return *this * twist.Inverted();
+    }
+
     // Normalized linear interpolation of quaternions
     // NOTE: This function is a bad approximation of Slerp()
     // when the angle between the *this and b is large.
@@ -1500,7 +1519,7 @@ public:
     Quat Slerp(const Quat& b, T s) const
     {
         Vector3<T> delta = (b * this->Inverted()).ToRotationVector();
-        return FromRotationVector(delta * s) * *this;
+        return (FromRotationVector(delta * s) * *this).Normalized();    // normalize so errors don't accumulate
     }
 
     // Spherical linear interpolation: much faster for small rotations, accurate for large rotations. See FastTo/FromRotationVector

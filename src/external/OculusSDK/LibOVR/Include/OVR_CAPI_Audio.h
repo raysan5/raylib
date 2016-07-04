@@ -9,6 +9,10 @@
 #define OVR_CAPI_Audio_h
 
 #ifdef _WIN32
+// Prevents <Windows.h> from defining min() and max() macro symbols.
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include "OVR_CAPI.h"
 #define OVR_AUDIO_MAX_DEVICE_STR_SIZE 128

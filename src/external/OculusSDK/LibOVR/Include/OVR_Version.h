@@ -19,7 +19,7 @@
 // Master version numbers
 #define OVR_PRODUCT_VERSION 1  // Product version doesn't participate in semantic versioning.
 #define OVR_MAJOR_VERSION   1  // If you change these values then you need to also make sure to change LibOVR/Projects/Windows/LibOVR.props in parallel.
-#define OVR_MINOR_VERSION   4  // 
+#define OVR_MINOR_VERSION   5  // 
 #define OVR_PATCH_VERSION   0
 #define OVR_BUILD_NUMBER    0
 

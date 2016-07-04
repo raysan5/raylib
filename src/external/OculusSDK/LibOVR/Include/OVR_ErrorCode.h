@@ -14,9 +14,6 @@
 
 
 
-
-
-
 #ifndef OVR_RESULT_DEFINED
 #define OVR_RESULT_DEFINED ///< Allows ovrResult to be independently defined.
 /// API call results are represented at the highest level by a single ovrResult.
@@ -59,27 +56,26 @@ typedef enum ovrSuccessType_
 {
     /// This is a general success result. Use OVR_SUCCESS to test for success.
     ovrSuccess = 0,
+} ovrSuccessType;
+#endif
 
+// Public success types
+// Success is a value greater or equal to 0, while all error types are negative values.
+typedef enum ovrSuccessTypes_
+{
     /// Returned from a call to SubmitFrame. The call succeeded, but what the app
     /// rendered will not be visible on the HMD. Ideally the app should continue
     /// calling SubmitFrame, but not do any rendering. When the result becomes
     /// ovrSuccess, rendering should continue as usual.
     ovrSuccess_NotVisible                 = 1000,
 
-    ovrSuccess_HMDFirmwareMismatch        = 4100,   ///< The HMD Firmware is out of date but is acceptable.
-    ovrSuccess_TrackerFirmwareMismatch    = 4101,   ///< The Tracker Firmware is out of date but is acceptable.
-    ovrSuccess_ControllerFirmwareMismatch = 4104,   ///< The controller firmware is out of date but is acceptable.
-    ovrSuccess_TrackerDriverNotFound      = 4105,   ///< The tracker driver interface was not found. Can be a temporary error
+} ovrSuccessTypes;
 
-} ovrSuccessType;
-#endif
-
-
+// Public error types
 typedef enum ovrErrorType_
 {
     /* General errors */
     ovrError_MemoryAllocationFailure    = -1000,   ///< Failure to allocate memory.
-    ovrError_SocketCreationFailure      = -1001,   ///< Failure to create a socket.
     ovrError_InvalidSession             = -1002,   ///< Invalid ovrSession parameter provided.
     ovrError_Timeout                    = -1003,   ///< The operation timed out.
     ovrError_NotInitialized             = -1004,   ///< The system or component has not been initialized.
@@ -94,10 +90,8 @@ typedef enum ovrErrorType_
     ovrError_ServiceDeadlockDetected    = -1014,   ///< The service watchdog discovered a deadlock.
 
     /* Audio error range, reserved for Audio errors. */
-    ovrError_AudioReservedBegin         = -2000,   ///< First Audio error.
     ovrError_AudioDeviceNotFound        = -2001,   ///< Failure to find the specified audio device.
     ovrError_AudioComError              = -2002,   ///< Generic COM error.
-    ovrError_AudioReservedEnd           = -2999,   ///< Last Audio error.
 
     /* Initialization errors. */
     ovrError_Initialize                 = -3000,   ///< Generic initialization error.
@@ -122,51 +116,6 @@ typedef enum ovrErrorType_
     ovrError_DisplayManagerInit         = -3019,   ///< Initialization of the DisplayManager failed.
     ovrError_TrackerDriverInit          = -3020,   ///< Failed to get the interface for an attached tracker
 
-    /* Hardware errors */
-    ovrError_InvalidBundleAdjustment    = -4000,   ///< Headset has no bundle adjustment data.
-    ovrError_USBBandwidth               = -4001,   ///< The USB hub cannot handle the camera frame bandwidth.
-    ovrError_USBEnumeratedSpeed         = -4002,   ///< The USB camera is not enumerating at the correct device speed.
-    ovrError_ImageSensorCommError       = -4003,   ///< Unable to communicate with the image sensor.
-    ovrError_GeneralTrackerFailure      = -4004,   ///< We use this to report various sensor issues that don't fit in an easily classifiable bucket.
-    ovrError_ExcessiveFrameTruncation   = -4005,   ///< A more than acceptable number of frames are coming back truncated.
-    ovrError_ExcessiveFrameSkipping     = -4006,   ///< A more than acceptable number of frames have been skipped.
-    ovrError_SyncDisconnected           = -4007,   ///< The sensor is not receiving the sync signal (cable disconnected?).
-    ovrError_TrackerMemoryReadFailure   = -4008,   ///< Failed to read memory from the sensor.
-    ovrError_TrackerMemoryWriteFailure  = -4009,   ///< Failed to write memory from the sensor.
-    ovrError_TrackerFrameTimeout        = -4010,   ///< Timed out waiting for a camera frame.
-    ovrError_TrackerTruncatedFrame      = -4011,   ///< Truncated frame returned from sensor.
-    ovrError_TrackerDriverFailure       = -4012,   ///< The sensor driver has encountered a problem.
-    ovrError_TrackerNRFFailure          = -4013,   ///< The sensor wireless subsystem has encountered a problem.
-    ovrError_HardwareGone               = -4014,   ///< The hardware has been unplugged
-    ovrError_NordicEnabledNoSync        = -4015,   ///< The nordic indicates that sync is enabled but it is not sending sync pulses
-    ovrError_NordicSyncNoFrames         = -4016,   ///< It looks like we're getting a sync signal, but no camera frames have been received
-    ovrError_CatastrophicFailure        = -4017,   ///< A catastrophic failure has occurred.  We will attempt to recover by resetting the device
-    ovrError_CatastrophicTimeout        = -4018,   ///< The catastrophic recovery has timed out.
-    ovrError_RepeatCatastrophicFail     = -4019,   ///< Catastrophic failure has repeated too many times.
-    ovrError_USBOpenDeviceFailure       = -4020,   ///< Could not open handle for Rift device (likely already in use by another process).
-    ovrError_HMDGeneralFailure          = -4021,   ///< Unexpected HMD issues that don't fit a specific bucket.
-
-    ovrError_HMDFirmwareMismatch        = -4100,   ///< The HMD Firmware is out of date and is unacceptable.
-    ovrError_TrackerFirmwareMismatch    = -4101,   ///< The sensor Firmware is out of date and is unacceptable.
-    ovrError_BootloaderDeviceDetected   = -4102,   ///< A bootloader HMD is detected by the service.
-    ovrError_TrackerCalibrationError    = -4103,   ///< The sensor calibration is missing or incorrect.
-    ovrError_ControllerFirmwareMismatch = -4104,   ///< The controller firmware is out of date and is unacceptable.
-    ovrError_DevManDeviceDetected       = -4105,   ///< A DeviceManagement mode HMD is detected by the service.
-    ovrError_RebootedBootloaderDevice   = -4106,   ///< Had to reboot bootloader device, which succeeded.
-    ovrError_FailedRebootBootloaderDev  = -4107,   ///< Had to reboot bootloader device, which failed.  Device is stuck in bootloader mode.
-
-    ovrError_IMUTooManyLostSamples      = -4200,   ///< Too many lost IMU samples.
-    ovrError_IMURateError               = -4201,   ///< IMU rate is outside of the expected range.
-    ovrError_FeatureReportFailure       = -4202,   ///< A feature report has failed.
-    ovrError_HMDWirelessTimeout         = -4203,   ///< HMD wireless interface never returned from busy state.
-
-    ovrError_BootloaderAssertLog        = -4300,   ///< HMD Bootloader Assert Log was not empty.
-    ovrError_AppAssertLog               = -4301,   ///< HMD App Assert Log was not empty.
-
-    /* Synchronization errors */
-    ovrError_Incomplete                 = -5000,   ///< Requested async work not yet complete.
-    ovrError_Abandoned                  = -5001,   ///< Requested async work was abandoned and result is incomplete.
-
     /* Rendering errors */
     ovrError_DisplayLost                = -6000,   ///< In the event of a system-wide graphics reset or cable unplug this is returned to the app.
     ovrError_TextureSwapChainFull       = -6001,   ///< ovr_CommitTextureSwapChain was called too many times on a texture swapchain without calling submit to use the chain.
@@ -182,18 +131,6 @@ typedef enum ovrErrorType_
     ovrError_RuntimeException           = -7000,   ///< A runtime exception occurred. The application is required to shutdown LibOVR and re-initialize it before this error state will be cleared.
 
 
-    ovrError_MetricsUnknownApp            = -90000,
-    ovrError_MetricsDuplicateApp          = -90001,
-    ovrError_MetricsNoEvents              = -90002,
-    ovrError_MetricsRuntime               = -90003,
-    ovrError_MetricsFile                  = -90004,
-    ovrError_MetricsNoClientInfo          = -90005,
-    ovrError_MetricsNoAppMetaData         = -90006,
-    ovrError_MetricsNoApp                 = -90007,
-    ovrError_MetricsOafFailure            = -90008,
-    ovrError_MetricsSessionAlreadyActive  = -90009,
-    ovrError_MetricsSessionNotActive      = -90010,
-
 } ovrErrorType;
 
 
@@ -205,5 +142,6 @@ typedef struct ovrErrorInfo_
     ovrResult Result;               ///< The result from the last API call that generated an error ovrResult.
     char      ErrorString[512];     ///< A UTF8-encoded null-terminated English string describing the problem. The format of this string is subject to change in future versions.
 } ovrErrorInfo;
+
 
 #endif /* OVR_ErrorCode_h */

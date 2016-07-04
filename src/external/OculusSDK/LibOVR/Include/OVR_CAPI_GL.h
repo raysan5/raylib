@@ -15,7 +15,7 @@
 /// \param[in]  desc Specifies the requested texture properties. See notes for more info about texture format.
 /// \param[out] out_TextureSwapChain Returns the created ovrTextureSwapChain, which will be valid upon
 ///             a successful return value, else it will be NULL. This texture swap chain must be eventually
-///             destroyed via ovr_DestroyTextureSwapChain before destroying the HMD with ovr_Destroy.
+///             destroyed via ovr_DestroyTextureSwapChain before destroying the session with ovr_Destroy.
 ///
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.
@@ -64,7 +64,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferGL(ovrSession sessio
 /// \param[in]  session Specifies an ovrSession previously returned by ovr_Create.
 /// \param[in]  desc Specifies the requested mirror texture description.
 /// \param[out] out_MirrorTexture Specifies the created ovrMirrorTexture, which will be valid upon a successful return value, else it will be NULL.
-///             This texture must be eventually destroyed via ovr_DestroyMirrorTexture before destroying the HMD with ovr_Destroy.
+///             This texture must be eventually destroyed via ovr_DestroyMirrorTexture before destroying the session with ovr_Destroy.
 ///
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.
