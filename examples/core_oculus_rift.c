@@ -52,6 +52,8 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+            
+            if (IsOculusReady()) BeginOculusDrawing();
 
             Begin3dMode(camera);
 
@@ -61,6 +63,8 @@ int main()
                 DrawGrid(10, 1.0f);
             
             End3dMode();
+            
+            if (IsOculusReady()) EndOculusDrawing();
             
             DrawFPS(10, 10);
 

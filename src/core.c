@@ -521,7 +521,7 @@ void BeginDrawing(void)
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
     
-    if (IsOculusReady()) BeginOculusDrawing();
+    //if (IsOculusReady()) BeginOculusDrawing();
 
     rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
@@ -536,7 +536,7 @@ void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
     
-    if (IsOculusReady()) EndOculusDrawing();
+    //if (IsOculusReady()) EndOculusDrawing();
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
@@ -2675,7 +2675,7 @@ static void *MouseThread(void *arg)
     int mouseRelX = 0;
     int mouseRelY = 0;
 
-    while (1)
+    while (!windowShouldClose)
     {
         if (read(mouseStream, &mouse, sizeof(MouseEvent)) == (int)sizeof(MouseEvent))
         {
