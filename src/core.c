@@ -521,8 +521,6 @@ void BeginDrawing(void)
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
     
-    //if (IsOculusReady()) BeginOculusDrawing();
-
     rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
     rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
@@ -535,8 +533,6 @@ void BeginDrawing(void)
 void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
-    
-    //if (IsOculusReady()) EndOculusDrawing();
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
@@ -590,6 +586,8 @@ void End2dMode(void)
 void Begin3dMode(Camera camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+    
+    if (IsVrDeviceReady()) BeginVrDrawing();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
 
@@ -618,6 +616,8 @@ void Begin3dMode(Camera camera)
 void End3dMode(void)
 {        
     rlglDraw();                         // Process internal buffers (update + draw)
+    
+    if (IsVrDeviceReady()) EndVrDrawing();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack

@@ -23,7 +23,8 @@ int main()
     
     InitWindow(screenWidth, screenHeight, "raylib [core] example - oculus rift");
     
-    InitOculusDevice();
+    // NOTE: If device is not available, it fallbacks to default device (simulator)
+    InitVrDevice(HMD_OCULUS_RIFT_CV1);                  // Init VR device (Oculus Rift CV1)
     
     // Define the camera to look into our 3d world
     Camera camera;
@@ -42,9 +43,9 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateOculusTracking();
+        UpdateVrTracking();
         
-        if (IsKeyPressed(KEY_SPACE)) ToggleVR();
+        if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -52,20 +53,16 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
-            if (IsOculusReady()) BeginOculusDrawing();
 
             Begin3dMode(camera);
 
                 DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-                
+
                 DrawGrid(10, 1.0f);
-            
+
             End3dMode();
-            
-            if (IsOculusReady()) EndOculusDrawing();
-            
+
             DrawFPS(10, 10);
 
         EndDrawing();
@@ -74,7 +71,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseOculusDevice();    // Close Oculus Rift device
+    CloseVrDevice();        // Close VR device
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

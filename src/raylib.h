@@ -527,6 +527,19 @@ typedef struct GestureEvent {
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
+// Head Mounted Display devices
+typedef enum {
+    HMD_DEFAULT_DEVICE = 0,
+    HMD_OCULUS_RIFT_DK2,
+    HMD_OCULUS_RIFT_CV1,
+    HMD_VALVE_HTC_VIVE,
+    HMD_SAMSUNG_GEAR_VR,
+    HMD_GOOGLE_CARDBOARD,
+    HMD_SONY_PLAYSTATION_VR,
+    HMD_RAZER_OSVR,
+    HMD_FOVE_VR,
+} HmdDevice;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -846,16 +859,16 @@ Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a 
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 //------------------------------------------------------------------------------------
-// Oculus Rift CV1 Functions (Module: rlgl)
+// VR experience Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-void InitOculusDevice(void);                // Init Oculus Rift device
-void CloseOculusDevice(void);               // Close Oculus Rift device
-void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
-void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
-void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
-bool IsOculusReady(void);                   // Detect if oculus device (or simulator) is ready
-void ToggleVR(void);                        // Enable/Disable VR experience (Oculus device or simulator)
+void InitVrDevice(int hmdDevice);           // Init VR device
+void CloseVrDevice(void);                   // Close VR device
+void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
+void BeginVrDrawing(void);                  // Begin VR drawing configuration
+void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

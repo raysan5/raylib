@@ -322,7 +322,7 @@ static void DrawDefaultBuffers(int eyesCount); // Draw default internal buffers 
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
 // Set internal projection and modelview matrix depending on eyes tracking data
-static void SetOculusView(int eye, Matrix matProjection, Matrix matModelView);
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
 
 static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
 
@@ -2001,7 +2001,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
-        if (eyesCount == 2) SetOculusView(eye, matProjection, matModelView);
+        if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
         else modelview = matModelView;
 
         // Calculate model-view-projection matrix (MVP)
@@ -2504,8 +2504,9 @@ void DestroyLight(Light light)
 #endif
 }
 
-// Init Oculus Rift device (or Oculus device simulator)
-void InitOculusDevice(void)
+// Init VR device (or simulator)
+// NOTE: If device is not available, it fallbacks to default device (simulator)
+void InitVrDevice(int hmdDevice)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
     // Initialize Oculus device
@@ -2557,7 +2558,7 @@ void InitOculusDevice(void)
 
     if (!oculusReady)
     {
-        TraceLog(WARNING, "VR: Initializing Oculus simulator");
+        TraceLog(WARNING, "HMD Device not found: Initializing VR simulator");
 
         // Initialize framebuffer and textures for stereo rendering
         stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
@@ -2571,8 +2572,8 @@ void InitOculusDevice(void)
     }
 }
 
-// Close Oculus Rift device (or Oculus device simulator)
-void CloseOculusDevice(void)
+// Close VR device (or simulator)
+void CloseVrDevice(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
     if (oculusReady)
@@ -2596,20 +2597,20 @@ void CloseOculusDevice(void)
     oculusReady = false;
 }
 
-// Detect if oculus device is available
-bool IsOculusReady(void)
+// Detect if VR device is available
+bool IsVrDeviceReady(void)
 {
     return (oculusReady || oculusSimulator) && vrEnabled;
 }
 
-// Enable/Disable VR experience (Oculus device or simulator)
-void ToggleVR(void)
+// Enable/Disable VR experience (device or simulator)
+void ToggleVrMode(void)
 {
     vrEnabled = !vrEnabled;
 }
 
-// Update Oculus Rift tracking (position and orientation)
-void UpdateOculusTracking(void)
+// Update VR tracking (position and orientation)
+void UpdateVrTracking(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
     if (oculusReady)
@@ -2641,7 +2642,7 @@ void UpdateOculusTracking(void)
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data
-static void SetOculusView(int eye, Matrix matProjection, Matrix matModelView)
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
 {   
     if (vrEnabled)
     {
@@ -2675,12 +2676,12 @@ static void SetOculusView(int eye, Matrix matProjection, Matrix matModelView)
             // Setup viewport and projection/modelview matrices using tracking data
             rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
             
-            static float IPD = 0.064f;       // InterpupillaryDistance
+            static float IPD = 0.064f;              // InterpupillaryDistance
             float HScreenSize = 0.14976f;
-            float VScreenSize = 0.0936f;     // HScreenSize/(1280.0f/800.0f)
-            float VScreenCenter = 0.04675f;
+            float VScreenSize = 0.0936f;            // HScreenSize/(1280.0f/800.0f) (DK2)
+            float VScreenCenter = 0.04675f;         // VScreenSize/2
             float EyeToScreenDistance = 0.041f;
-            float LensSeparationDistance = 0.064f; //0.0635f (DK1)
+            float LensSeparationDistance = 0.064f;  //0.0635f (DK1)
             
             // NOTE: fovy value obtained from device parameters (Oculus Rift CV1)
             float halfScreenDistance = VScreenSize/2.0f;
@@ -2730,13 +2731,13 @@ static void SetOculusView(int eye, Matrix matProjection, Matrix matModelView)
             MatrixTranspose(&eyeProjection);
         }
 
-        SetMatrixModelview(eyeModelView);       // ERROR! We are modifying modelview for next eye!!!
+        SetMatrixModelview(eyeModelView);
         SetMatrixProjection(eyeProjection);
     }
 }
 
 // Begin Oculus drawing configuration
-void BeginOculusDrawing(void)
+void BeginVrDrawing(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
     if (oculusReady)
@@ -2771,7 +2772,7 @@ void BeginOculusDrawing(void)
 }
 
 // End Oculus drawing process (and desktop mirror)
-void EndOculusDrawing(void)
+void EndVrDrawing(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
     if (oculusReady)
@@ -3414,7 +3415,7 @@ static void DrawDefaultBuffers(int eyesCount)
     
     for (int eye = 0; eye < eyesCount; eye++)
     {
-        if (eyesCount == 2) SetOculusView(eye, matProjection, matModelView);
+        if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
 
         // Set current shader and upload current MVP matrix
         if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
