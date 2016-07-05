@@ -40,7 +40,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define CUBIC_MAP_HALF_BLOCK_SIZE           0.5
+// ...
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -808,13 +808,6 @@ void UnloadMaterial(Material material)
     rlDeleteTextures(material.texSpecular.id);
 }
 
-// Link a texture to a model
-void SetModelTexture(Model *model, Texture2D texture)
-{
-    if (texture.id <= 0) model->material.texDiffuse = GetDefaultTexture();  // Use default white texture
-    else model->material.texDiffuse = texture;
-}
-
 // Generate a mesh from heightmap
 static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
@@ -1549,8 +1542,11 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
 
 // Detect and resolve cubicmap collisions
 // NOTE: player position (or camera) is modified inside this function
+// TODO: This functions needs to be completely reviewed!
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius)
 {
+    #define CUBIC_MAP_HALF_BLOCK_SIZE   0.5
+    
     Color *cubicmapPixels = GetImageData(cubicmap);
     
     // Detect the cell where the player is located
@@ -1562,15 +1558,15 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
     locationCellX = floor(playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE);
     locationCellY = floor(playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE);
 
-    if (locationCellX >= 0 && locationCellY >= 0 && locationCellX < cubicmap.width && locationCellY < cubicmap.height)
+    if ((locationCellX >= 0) && (locationCellY >= 0) && (locationCellX < cubicmap.width) && (locationCellY < cubicmap.height))
     {
         // Multiple Axis --------------------------------------------------------------------------------------------
 
         // Axis x-, y-
-        if (locationCellX > 0 && locationCellY > 0)
+        if ((locationCellX > 0) && (locationCellY > 0))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1583,10 +1579,10 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
 
         // Axis x-, y+
-        if (locationCellX > 0 && locationCellY < cubicmap.height - 1)
+        if ((locationCellX > 0) && (locationCellY < cubicmap.height - 1))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
@@ -1599,10 +1595,10 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
 
         // Axis x+, y-
-        if (locationCellX < cubicmap.width - 1 && locationCellY > 0)
+        if ((locationCellX < cubicmap.width - 1) && (locationCellY > 0))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1615,10 +1611,10 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
 
         // Axis x+, y+
-        if (locationCellX < cubicmap.width - 1 && locationCellY < cubicmap.height - 1)
+        if ((locationCellX < cubicmap.width - 1) && (locationCellY < cubicmap.height - 1))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r != 0) &&
+                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
@@ -1635,7 +1631,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         // Axis x-
         if (locationCellX > 0)
         {
-            if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r != 0)
+            if (cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r != 0)
             {
                 if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius)
                 {
@@ -1647,7 +1643,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         // Axis x+
         if (locationCellX < cubicmap.width - 1)
         {
-            if (cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r != 0)
+            if (cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r != 0)
             {
                 if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius)
                 {
@@ -1659,7 +1655,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         // Axis y-
         if (locationCellY > 0)
         {
-            if (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r != 0)
+            if (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r != 0)
             {
                 if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius)
                 {
@@ -1671,7 +1667,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         // Axis y+
         if (locationCellY < cubicmap.height - 1)
         {
-            if (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r != 0)
+            if (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r != 0)
             {
                 if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius)
                 {
@@ -1684,11 +1680,11 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         // Diagonals -------------------------------------------------------------------------------------------------------
 
         // Axis x-, y-
-        if (locationCellX > 0 && locationCellY > 0)
+        if ((locationCellX > 0) && (locationCellY > 0))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX - 1)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1707,11 +1703,11 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
 
         // Axis x-, y+
-        if (locationCellX > 0 && locationCellY < cubicmap.height - 1)
+        if ((locationCellX > 0) && (locationCellY < cubicmap.height - 1))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX - 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX - 1)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX - 1)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
@@ -1730,11 +1726,11 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
 
         // Axis x+, y-
-        if (locationCellX < cubicmap.width - 1 && locationCellY > 0)
+        if ((locationCellX < cubicmap.width - 1) && (locationCellY > 0))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX + 1)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
@@ -1753,11 +1749,11 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         }
 
         // Axis x+, y+
-        if (locationCellX < cubicmap.width - 1 && locationCellY < cubicmap.height - 1)
+        if ((locationCellX < cubicmap.width - 1) && (locationCellY < cubicmap.height - 1))
         {
-            if ((cubicmapPixels[locationCellY * cubicmap.width + (locationCellX + 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1) * cubicmap.width + (locationCellX + 1)].r != 0))
+            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r == 0) &&
+                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX + 1)].r != 0))
             {
                 if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
                     ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))

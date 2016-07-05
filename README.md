@@ -1,4 +1,4 @@
-<img src="http://www.raylib.com/img/fb_raylib_logo.png" width=256>
+<img src="https://github.com/raysan5/raylib/blob/master/logo/logo256x256.png" width=256>
 
 about
 -----

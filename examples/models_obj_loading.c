@@ -25,7 +25,7 @@ int main()
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
-    SetModelTexture(&dwarf, texture);                                       // Bind texture to model
+    dwarf.material.texDiffuse = texture;                                    // Set dwarf model diffuse texture
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second

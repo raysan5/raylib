@@ -96,11 +96,19 @@ int main(void)
     
     // Initialize rlgl internal buffers and OpenGL state
     rlglInit();
-    rlglInitGraphics(0, 0, screenWidth, screenHeight);
-    rlClearColor(245, 245, 245, 255);   // Define clear color
-    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
     
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+    // Initialize viewport and internal projection/modelview matrices
+    rlViewport(0, 0, screenWidth, screenHeight);
+    rlMatrixMode(RL_PROJECTION);                        // Switch to PROJECTION matrix
+    rlLoadIdentity();                                   // Reset current matrix (PROJECTION)
+    rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f); // Orthographic projection with top-left corner at (0,0)
+    rlMatrixMode(RL_MODELVIEW);                         // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                                   // Reset current matrix (MODELVIEW)
+
+    rlClearColor(245, 245, 245, 255);                   // Define clear color
+    rlEnableDepthTest();                                // Enable DEPTH_TEST for 3D
+    
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)
     
     Camera camera;
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position

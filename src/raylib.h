@@ -794,7 +794,6 @@ Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d mod
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
-void SetModelTexture(Model *model, Texture2D texture);          // Link a texture to a model
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
@@ -853,9 +852,10 @@ void DestroyLight(Light light);                                     // Destroy a
 void InitOculusDevice(void);                // Init Oculus Rift device
 void CloseOculusDevice(void);               // Close Oculus Rift device
 void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
-void SetOculusMatrix(int eye);              // Set internal projection and modelview matrix depending on eyes tracking data
 void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
 void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
+bool IsOculusReady(void);                   // Detect if oculus device (or simulator) is ready
+void ToggleVR(void);                        // Enable/Disable VR experience (Oculus device or simulator)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

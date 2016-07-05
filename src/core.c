@@ -238,8 +238,7 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitDisplay(int width, int height);         // Initialize display device and framebuffer
-static void InitGraphics(void);                         // Initialize OpenGL graphics
+static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
@@ -300,11 +299,8 @@ void InitWindow(int width, int height, const char *title)
     // Store window title (could be useful...)
     windowTitle = title;
 
-    // Init device display (monitor, LCD, ...)
-    InitDisplay(width, height);
-
-    // Init OpenGL graphics
-    InitGraphics();
+    // Init graphics device (display device and OpenGL context)
+    InitGraphicsDevice(width, height);
 
     // Load default font for convenience
     // NOTE: External function (defined in module: text)
@@ -444,7 +440,15 @@ void CloseWindow(void)
 
         eglTerminate(display);
         display = EGL_NO_DISPLAY;
-    }
+    }   
+#endif
+
+#if defined(PLATFORM_RPI)
+    // Wait for mouse and gamepad threads to finish before closing
+    // NOTE: Those threads should already have finished at this point
+    // because they are controlled by windowShouldClose variable
+    pthread_join(mouseThreadId, NULL);
+    pthread_join(gamepadThreadId, NULL);
 #endif
 
     TraceLog(INFO, "Window closed successfully");
@@ -476,16 +480,14 @@ bool IsWindowMinimized(void)
 }
 
 // Fullscreen toggle
-// TODO: When destroying window context is lost and resources too, take care!
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
     fullscreen = !fullscreen;          // Toggle fullscreen flag
 
-    rlglClose();                       // De-init rlgl
-    glfwDestroyWindow(window);         // Destroy the current window (we will recreate it!)
-
-    InitWindow(screenWidth, screenHeight, windowTitle);
+    // NOTE: glfwSetWindowMonitor() doesn't work properly (bugs)
+    if (fullscreen) glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
+    else glfwSetWindowMonitor(window, NULL, 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -518,6 +520,8 @@ void BeginDrawing(void)
     currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
+    
+    //if (IsOculusReady()) BeginOculusDrawing();
 
     rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
@@ -531,6 +535,8 @@ void BeginDrawing(void)
 void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
+    
+    //if (IsOculusReady()) EndOculusDrawing();
 
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
@@ -610,8 +616,8 @@ void Begin3dMode(Camera camera)
 
 // Ends 3D mode and returns to default 2D orthographic mode
 void End3dMode(void)
-{
-    rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
+{        
+    rlglDraw();                         // Process internal buffers (update + draw)
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
@@ -1433,7 +1439,7 @@ bool IsButtonReleased(int button)
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
-static void InitDisplay(int width, int height)
+static void InitGraphicsDevice(int width, int height)
 {
     screenWidth = width;        // User desired width
     screenHeight = height;      // User desired height
@@ -1480,16 +1486,21 @@ static void InitDisplay(int width, int height)
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
     // For example, if using OpenGL 1.1, driver can provide a 3.3 context fordward compatible.
-
-    // Check selection OpenGL version (not initialized yet!)
-    if (rlGetVersion() == OPENGL_33)
+    
+    if (configFlags & FLAG_MSAA_4X_HINT)
     {
-        if (configFlags & FLAG_MSAA_4X_HINT)
-        {
-            glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
-            TraceLog(INFO, "Trying to enable MSAA x4");
-        }
+        glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
+        TraceLog(INFO, "Trying to enable MSAA x4");
+    }
 
+    // Check selection OpenGL version
+    if (rlGetVersion() == OPENGL_21)
+    {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);        // Choose OpenGL major version (just hint)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);        // Choose OpenGL minor version (just hint)
+    }
+    else if (rlGetVersion() == OPENGL_33)
+    {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);        // Choose OpenGL major version (just hint)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
@@ -1504,25 +1515,40 @@ static void InitDisplay(int width, int height)
 
     if (fullscreen)
     {
+        // Obtain recommended displayWidth/displayHeight from a valid videomode for the monitor
+        int count; 
+        const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+        
+        // Get closest videomode to desired screenWidth/screenHeight
+        for (int i = 0; i < count; i++)
+        {
+            if (modes[i].width >= screenWidth)
+            {
+                if (modes[i].height >= screenHeight)
+                {
+                    displayWidth = modes[i].width;
+                    displayHeight = modes[i].height;
+                    break;
+                }
+            }
+        }
+        
+        TraceLog(WARNING, "Closest fullscreen videomode: %i x %i", displayWidth, displayHeight);
+
+        // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
+        // for a desired screen size of 800x450 (16:9), closest supported videomode is 800x600 (4:3),
+        // framebuffer is rendered correctly but once displayed on a 16:9 monitor, it gets stretched
+        // by the sides to fit all monitor space...
+
         // At this point we need to manage render size vs screen size
         // NOTE: This function uses and modifies global module variables: 
         //       screenWidth/screenHeight - renderWidth/renderHeight - downscaleView
         SetupFramebufferSize(displayWidth, displayHeight);
+
+        window = glfwCreateWindow(displayWidth, displayHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
         
-        // TODO: SetupFramebufferSize() does not consider properly display video modes.
-        // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
-        // and so, framebuffer is not scaled properly to some monitors.
-        
-        int count; 
-        const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
-        
-        for (int i = 0; i < count; i++)
-        {
-            // TODO: Check modes[i]->width;
-            // TODO: Check modes[i]->height;
-        }
-        
-        window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, glfwGetPrimaryMonitor(), NULL);
+        // NOTE: Full-screen change, not working properly...
+        //glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
     }
     else
     {
@@ -1738,29 +1764,33 @@ static void InitDisplay(int width, int height)
         TraceLog(INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-}
 
-// Initialize OpenGL graphics
-static void InitGraphics(void)
-{
-    rlglInit();                     // Init rlgl
-    rlglInitGraphics(renderOffsetX, renderOffsetY, renderWidth, renderHeight);  // Init graphics (OpenGL stuff)
+    // Initialize OpenGL context (states and resources)
+    rlglInit(screenWidth, screenHeight);
+    
+    // Initialize screen viewport (area of the screen that you will actually draw to)
+    // NOTE: Viewport must be recalculated if screen is resized
+    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
+
+    // Initialize internal projection and modelview matrices
+    // NOTE: Default to orthographic projection mode with top-left corner at (0,0)
+    rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
+    rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+    rlOrtho(0, renderWidth - renderOffsetX, renderHeight - renderOffsetY, 0, 0.0f, 1.0f); 
+    rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
 
     ClearBackground(RAYWHITE);      // Default background color for raylib games :P
 
 #if defined(PLATFORM_ANDROID)
-    windowReady = true;     // IMPORTANT!
+    windowReady = true;             // IMPORTANT!
 #endif
 }
 
 // Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables renderWidth/renderHeight can be modified
+// NOTE: Global variables renderWidth/renderHeight and renderOffsetX/renderOffsetY can be modified
 static void SetupFramebufferSize(int displayWidth, int displayHeight)
-{
-    // TODO: SetupFramebufferSize() does not consider properly display video modes.
-    // It setups a renderWidth/renderHeight with black bars that could not match a valid video mode,
-    // and so, framebuffer is not scaled properly to some monitors.
-    
+{    
     // Calculate renderWidth and renderHeight, we have the display size (input params) and the desired screen size (global var)
     if ((screenWidth > displayWidth) || (screenHeight > displayHeight))
     {
@@ -2109,8 +2139,14 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // NOTE: Window resizing not allowed by default
 static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 {
-    // If window is resized, graphics device is re-initialized (but only ortho mode)
-    rlglInitGraphics(0, 0, width, height);
+    // If window is resized, viewport and projection matrix needs to be re-calculated
+    rlViewport(0, 0, width, height);            // Set viewport width and height
+    rlMatrixMode(RL_PROJECTION);                // Switch to PROJECTION matrix
+    rlLoadIdentity();                           // Reset current matrix (PROJECTION)
+    rlOrtho(0, width, height, 0, 0.0f, 1.0f);   // Orthographic projection mode with top-left corner at (0,0)
+    rlMatrixMode(RL_MODELVIEW);                 // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                           // Reset current matrix (MODELVIEW)
+    rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
     screenWidth = width;
@@ -2119,9 +2155,6 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     renderHeight = height;
     
     // NOTE: Postprocessing texture is not scaled to new size
-
-    // Background must be also re-cleared
-    ClearBackground(RAYWHITE);
 }
 
 // GLFW3 WindowIconify Callback, runs when window is minimized/restored
@@ -2188,11 +2221,8 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 }
                 else
                 {
-                    // Init device display (monitor, LCD, ...)
-                    InitDisplay(screenWidth, screenHeight);
-
-                    // Init OpenGL graphics
-                    InitGraphics();
+                    // Init graphics device (display device and OpenGL context)
+                    InitGraphicsDevice(screenWidth, screenHeight);
 
                     // Load default font for convenience
                     // NOTE: External function (defined in module: text)
@@ -2645,7 +2675,7 @@ static void *MouseThread(void *arg)
     int mouseRelX = 0;
     int mouseRelY = 0;
 
-    while(1)
+    while (!windowShouldClose)
     {
         if (read(mouseStream, &mouse, sizeof(MouseEvent)) == (int)sizeof(MouseEvent))
         {
@@ -2735,7 +2765,7 @@ static void *GamepadThread(void *arg)
     // Read gamepad event
     struct js_event gamepadEvent;
     
-    while (1) 
+    while (!windowShouldClose)
     {
         for (int i = 0; i < MAX_GAMEPADS; i++)
         {
@@ -2770,7 +2800,7 @@ static void *GamepadThread(void *arg)
 
     return NULL;
 }
-#endif
+#endif      // PLATFORM_RPI
 
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)

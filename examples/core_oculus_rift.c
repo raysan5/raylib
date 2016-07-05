@@ -30,11 +30,11 @@ int main()
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.fovy = 60.0f;                                // Camera field-of-view Y
     
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
-    //SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
+    SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -43,31 +43,30 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateOculusTracking();
+        
+        if (IsKeyPressed(KEY_SPACE)) ToggleVR();
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
             
-            BeginOculusDrawing();
-            
-                for (int eye = 0; eye < 2; eye++)
-                {
-                    Begin3dMode(camera);
+            if (IsOculusReady()) BeginOculusDrawing();
+
+            Begin3dMode(camera);
+
+                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
                 
-                        SetOculusMatrix(eye);
-                        
-                        DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                        DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-                        
-                        DrawGrid(10, 1.0f);
-                    
-                    End3dMode();
-                }
+                DrawGrid(10, 1.0f);
             
-            EndOculusDrawing();
+            End3dMode();
+            
+            if (IsOculusReady()) EndOculusDrawing();
+            
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
