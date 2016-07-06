@@ -260,7 +260,7 @@ static bool texCompASTCSupported = false;   // ASTC texture compression support
 
 // Lighting data
 static Light lights[MAX_LIGHTS];            // Lights pool
-static int lightsCount;                     // Counts current enabled physic objects
+static int lightsCount;                     // Enabled lights counter
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
