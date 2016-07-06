@@ -78,7 +78,6 @@ static const char fStandardShaderStr[] =
 "    float radius;                  \n"
 "    float coneAngle; };            \n"
 "const int maxLights = 8;           \n"
-"uniform int lightsCount;           \n"
 "uniform Light lights[maxLights];   \n"
 "\n"  
 "vec3 CalcPointLight(Light l, vec3 n, vec3 v, float s)   \n"
@@ -157,7 +156,7 @@ static const char fStandardShaderStr[] =
 #elif defined(GRAPHICS_API_OPENGL_33)
 "    if (useSpecular == 1) spec *= normalize(texture(texture2, fragTexCoord).r);\n"
 #endif
-"    for (int i = 0; i < lightsCount; i++)\n"
+"    for (int i = 0; i < maxLights; i++)\n"
 "    {\n"
 "        if (lights[i].enabled == 1)\n"
 "        {\n"

@@ -260,7 +260,7 @@ static bool texCompASTCSupported = false;   // ASTC texture compression support
 
 // Lighting data
 static Light lights[MAX_LIGHTS];            // Lights pool
-static int lightsCount;                     // Enabled lights counter
+static int lightsCount = 0;                 // Enabled lights counter
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
@@ -2454,24 +2454,28 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
     Light light = NULL;
     
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Allocate dynamic memory
-    light = (Light)malloc(sizeof(LightData));
-    
-    // Initialize light values with generic values
-    light->id = lightsCount;
-    light->type = type;
-    light->enabled = true;
-    
-    light->position = position;
-    light->target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    light->intensity = 1.0f;
-    light->diffuse = diffuse;
-    
-    // Add new light to the array
-    lights[lightsCount] = light;
-    
-    // Increase enabled lights count
-    lightsCount++;
+    if (lightsCount < MAX_LIGHTS)
+    {
+        // Allocate dynamic memory
+        light = (Light)malloc(sizeof(LightData));
+        
+        // Initialize light values with generic values
+        light->id = lightsCount;
+        light->type = type;
+        light->enabled = true;
+        
+        light->position = position;
+        light->target = (Vector3){ 0.0f, 0.0f, 0.0f };
+        light->intensity = 1.0f;
+        light->diffuse = diffuse;
+        
+        // Add new light to the array
+        lights[lightsCount] = light;
+        
+        // Increase enabled lights count
+        lightsCount++;
+    }
+    else TraceLog(WARNING, "Too many lights, only supported up to %i lights", MAX_LIGHTS);
 #else
     // TODO: Support OpenGL 1.1 lighting system
     TraceLog(WARNING, "Lighting currently not supported on OpenGL 1.1");
@@ -2484,23 +2488,26 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
 void DestroyLight(Light light)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Free dynamic memory allocation
-    free(lights[light->id]);
-    
-    // Remove *obj from the pointers array
-    for (int i = light->id; i < lightsCount; i++)
+    if (light != NULL)
     {
-        // Resort all the following pointers of the array
-        if ((i + 1) < lightsCount)
+        // Free dynamic memory allocation
+        free(lights[light->id]);
+        
+        // Remove *obj from the pointers array
+        for (int i = light->id; i < lightsCount; i++)
         {
-            lights[i] = lights[i + 1];
-            lights[i]->id = lights[i + 1]->id;
+            // Resort all the following pointers of the array
+            if ((i + 1) < lightsCount)
+            {
+                lights[i] = lights[i + 1];
+                lights[i]->id = lights[i + 1]->id;
+            }
+            else free(lights[i]);
         }
-        else free(lights[i]);
+        
+        // Decrease enabled physic objects count
+        lightsCount--;
     }
-    
-    // Decrease enabled physic objects count
-    lightsCount--;
 #endif
 }
 
@@ -3625,72 +3632,79 @@ static void UnloadDefaultBuffers(void)
 // NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
 static void SetShaderLights(Shader shader)
 {
-    int locPoint = glGetUniformLocation(shader.id, "lightsCount");
-    glUniform1i(locPoint, lightsCount);
-    
+    int locPoint = -1;
     char locName[32] = "lights[x].position\0";
 
-    for (int i = 0; i < lightsCount; i++)
+    for (int i = 0; i < MAX_LIGHTS; i++)
     {
         locName[7] = '0' + i;
-        
-        memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
-        locPoint = GetShaderLocation(shader, locName);
-        glUniform1i(locPoint, lights[i]->enabled);
-        
-        memcpy(&locName[10], "type\0", strlen("type\0") + 1);
-        locPoint = GetShaderLocation(shader, locName);
-        glUniform1i(locPoint, lights[i]->type);
-        
-        memcpy(&locName[10], "diffuse\0", strlen("diffuse\0") + 2);
-        locPoint = glGetUniformLocation(shader.id, locName);
-        glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
-        
-        memcpy(&locName[10], "intensity\0", strlen("intensity\0"));
-        locPoint = glGetUniformLocation(shader.id, locName);
-        glUniform1f(locPoint, lights[i]->intensity);
-        
-        switch (lights[i]->type)
+
+        if (lights[i] != NULL)      // Only upload registered lights data
         {
-            case LIGHT_POINT:
+            memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
+            locPoint = GetShaderLocation(shader, locName);
+            glUniform1i(locPoint, lights[i]->enabled);
+            
+            memcpy(&locName[10], "type\0", strlen("type\0") + 1);
+            locPoint = GetShaderLocation(shader, locName);
+            glUniform1i(locPoint, lights[i]->type);
+            
+            memcpy(&locName[10], "diffuse\0", strlen("diffuse\0") + 2);
+            locPoint = glGetUniformLocation(shader.id, locName);
+            glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
+            
+            memcpy(&locName[10], "intensity\0", strlen("intensity\0"));
+            locPoint = glGetUniformLocation(shader.id, locName);
+            glUniform1f(locPoint, lights[i]->intensity);
+            
+            switch (lights[i]->type)
             {
-                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
-                
-                memcpy(&locName[10], "radius\0", strlen("radius\0") + 2);
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform1f(locPoint, lights[i]->radius);
-            } break;
-            case LIGHT_DIRECTIONAL:
-            {
-                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
-                locPoint = GetShaderLocation(shader, locName);
-                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
-                VectorNormalize(&direction);
-                glUniform3f(locPoint, direction.x, direction.y, direction.z);
-            } break;
-            case LIGHT_SPOT:
-            {
-                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
-                
-                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
-                locPoint = GetShaderLocation(shader, locName);
-                
-                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
-                VectorNormalize(&direction);
-                glUniform3f(locPoint, direction.x, direction.y, direction.z);
-                
-                memcpy(&locName[10], "coneAngle\0", strlen("coneAngle\0"));
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform1f(locPoint, lights[i]->coneAngle);
-            } break;
-            default: break;
+                case LIGHT_POINT:
+                {
+                    memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                    
+                    memcpy(&locName[10], "radius\0", strlen("radius\0") + 2);
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform1f(locPoint, lights[i]->radius);
+                } break;
+                case LIGHT_DIRECTIONAL:
+                {
+                    memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                    locPoint = GetShaderLocation(shader, locName);
+                    Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                    VectorNormalize(&direction);
+                    glUniform3f(locPoint, direction.x, direction.y, direction.z);
+                } break;
+                case LIGHT_SPOT:
+                {
+                    memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                    
+                    memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                    locPoint = GetShaderLocation(shader, locName);
+                    
+                    Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                    VectorNormalize(&direction);
+                    glUniform3f(locPoint, direction.x, direction.y, direction.z);
+                    
+                    memcpy(&locName[10], "coneAngle\0", strlen("coneAngle\0"));
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform1f(locPoint, lights[i]->coneAngle);
+                } break;
+                default: break;
+            }
+            
+            // TODO: Pass to the shader any other required data from LightData struct
         }
-        
-        // TODO: Pass to the shader any other required data from LightData struct
+        else    // Not enabled lights
+        {
+            memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
+            locPoint = GetShaderLocation(shader, locName);
+            glUniform1i(locPoint, 0);
+        }
     }
 }
 

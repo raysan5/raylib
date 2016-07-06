@@ -431,8 +431,8 @@ typedef struct Model {
 // Light type
 typedef struct LightData {
     unsigned int id;        // Light unique id
-    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     bool enabled;           // Light enabled
+    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     
     Vector3 position;       // Light position
     Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)

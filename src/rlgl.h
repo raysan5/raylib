@@ -218,9 +218,9 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
     // Light type
     typedef struct LightData {
         unsigned int id;        // Light unique id
-        int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
         bool enabled;           // Light enabled
-        
+        int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+
         Vector3 position;       // Light position
         Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
         float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
