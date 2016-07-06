@@ -350,15 +350,15 @@ Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a 
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 void TraceLog(int msgType, const char *text, ...);
-#endif
 
-void InitOculusDevice(void);                // Init Oculus Rift device
-void CloseOculusDevice(void);               // Close Oculus Rift device
-void UpdateOculusTracking(void);            // Update Oculus Rift tracking (position and orientation)
-void BeginOculusDrawing(void);              // Begin Oculus drawing configuration
-void EndOculusDrawing(void);                // End Oculus drawing process (and desktop mirror)
-bool IsOculusReady(void);                   // Detect if oculus device (or simulator) is ready
-void ToggleVR(void);                        // Enable/Disable VR experience (Oculus device or simulator)
+void InitVrDevice(int hmdDevice);           // Init VR device
+void CloseVrDevice(void);                   // Close VR device
+void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
+void BeginVrDrawing(void);                  // Begin VR drawing configuration
+void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
+#endif
 
 #ifdef __cplusplus
 }
