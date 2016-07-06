@@ -782,12 +782,15 @@ static SpriteFont LoadBMFont(const char *fileName)
     char *texPath = NULL;
     char *lastSlash = NULL;
 
-    lastSlash = strrchr(fileName, '/'); // you need escape character
-    texPath = malloc(strlen(fileName) - strlen(lastSlash) + 1 + strlen(texFileName) + 1);
-    memcpy(texPath, fileName, strlen(fileName) - strlen(lastSlash));
-    strcat(texPath, "/");
-    strcat(texPath, texFileName);
-    strcat(texPath, "\0");
+    lastSlash = strrchr(fileName, '/');
+    
+    // NOTE: We need some extra space to avoid memory corruption on next allocations!
+    texPath = malloc(strlen(fileName) - strlen(lastSlash) + strlen(texFileName) + 4);
+    
+    // NOTE: strcat() and strncat() required a '\0' terminated string to work!
+    *texPath = '\0';
+    strncat(texPath, fileName, strlen(fileName) - strlen(lastSlash) + 1);
+    strncat(texPath, texFileName, strlen(texFileName));
 
     TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
     
@@ -828,7 +831,7 @@ static SpriteFont LoadBMFont(const char *fileName)
     else if (unorderedChars) TraceLog(WARNING, "BMFont not supported: unordered chars data, falling back to default font");
     
     // NOTE: Font data could be not ordered by charId: 32,33,34,35... raylib does not support unordered BMFonts
-    if ((firstChar != FONT_FIRST_CHAR) || (unorderedChars))
+    if ((firstChar != FONT_FIRST_CHAR) || (unorderedChars) || (font.texture.id == 0))
     {
         UnloadSpriteFont(font);
         font = GetDefaultFont();
