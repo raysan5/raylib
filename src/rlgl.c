@@ -188,6 +188,20 @@ typedef struct {
     //Guint fboId;
 } DrawCall;
 
+// Head-Mounted-Display device parameters
+typedef struct {
+    int hResolution;                // HMD horizontal resolution in pixels
+    int vResolution;                // HMD vertical resolution in pixels
+    float hScreenSize;              // HMD horizontal size in meters
+    float vScreenSize;              // HMD vertical size in meters
+    float vScreenCenter;            // HMD screen center in meters
+    float eyeToScreenDistance;      // HMD distance between eye and display in meters
+    float lensSeparationDistance;   // HMD lens separation distance in meters
+    float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
+    float distortionK[4];           // HMD lens distortion constant parameters
+    float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
+} VrDeviceInfo;
+
 #if defined(RLGL_OCULUS_SUPPORT)
 typedef struct OculusBuffer {
     ovrTextureSwapChain textureChain;
@@ -323,6 +337,9 @@ static void UnloadDefaultBuffers(void);     // Unload default internal buffers v
 
 // Set internal projection and modelview matrix depending on eyes tracking data
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
+
+// Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetupVrDevice(VrDeviceInfo hmd);
 
 static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
 
@@ -2535,7 +2552,7 @@ void InitVrDevice(int hmdDevice)
         else
         {
             hmdDesc = ovr_GetHmdDesc(session);
-            
+
             TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
             TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
             TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
@@ -2685,10 +2702,10 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
             
             static float IPD = 0.064f;              // InterpupillaryDistance
             float HScreenSize = 0.14976f;
-            float VScreenSize = 0.0936f;            // HScreenSize/(1280.0f/800.0f) (DK2)
+            float VScreenSize = 0.09356f;           // HScreenSize/(1280.0f/800.0f) (DK2)
             float VScreenCenter = 0.04675f;         // VScreenSize/2
             float EyeToScreenDistance = 0.041f;
-            float LensSeparationDistance = 0.064f;  //0.0635f (DK1)
+            float LensSeparationDistance = 0.0635f; //0.0635f (DK2)
             
             // NOTE: fovy value obtained from device parameters (Oculus Rift CV1)
             float halfScreenDistance = VScreenSize/2.0f;
@@ -3870,7 +3887,81 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 }
 #endif
 
+// Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetupVrDevice(VrDeviceInfo hmd)
+{
+    // Compute aspect ratio and FOV
+    float aspect = ((float)hmd.hResolution/2.0f)/(float)hmd.vResolution;
+
+    // Fov-y is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
+    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+    float radius = -1.0 - (4*(hmd.hScreenSize/4 - hmd.lensSeparationDistance/2)/hmd.hScreenSize);
+    float distScale = (hmd.distortionK[0] + hmd.distortionK[1]*pow(radius, 2) + hmd.distortionK[2]*pow(radius, 4) + hmd.distortionK[3]*pow(radius, 6));
+    float fovy = 2*atan2(hmd.vScreenSize*distScale, 2*hmd.eyeToScreenDistance)*RAD2DEG;
+
+    // Compute camera projection matrices
+    Matrix proj = MatrixPerspective(fovy, aspect, 0.1, 10000);
+    float projOffset = 4*(hmd.hScreenSize/4 - hmd.interpupillaryDistance/2)/hmd.hScreenSize;
+    
+    //Matrix projLeft = MatrixMultiply(MatrixTranslation(projOffset, 0.0, 0.0), proj);
+    //matrix projRight = MatrixMultiply(MatrixTranslation(-projOffset, 0.0, 0.0)), proj);
+
+    // Compute camera transformation matrices
+    //Matrix viewTransformLeft = MatrixTranslation(-hmd.interpupillaryDistance/2, 0.0, 0.0 );
+    //Matrix viewTransformRight = MatrixTranslation(hmd.interpupillaryDistance/2, 0.0, 0.0 );
+
+    // Compute eyes Viewports
+    // Rectangle viewportLeft = { 0, 0, hmd.hResolution/2, hmd.vResolution };
+    // Rectangle viewportRight = { hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+
+    // Distortion shader parameters
+    float lensShift = 4*(hmd.hScreenSize/4 - hmd.lensSeparationDistance/2)/hmd.hScreenSize;
+    float leftLensCenter[2] = { lensShift, 0.0f };
+    float rightLensCenter[2] = { -lensShift, 0.0f };
+    float leftScreenCenter[2] = { 0.25f, 0.5f };
+    float rightScreenCenter[2] = { 0.75f, 0.5f };
+    
+    float scaleIn[2] = { 1.0f, 1.0f/aspect };
+    float scale[2] = { 1.0f/distScale, 1.0f*aspect/distScale };
+
+    // Distortion shader parameters update
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "leftLensCenter"), leftLensCenter, 2);
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "rightLensCenter"), rightLensCenter, 2);
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
+    
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "scale"), scale, 2);
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "scaleIn"), scaleIn, 2);
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
+    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+}
+
 #if defined(RLGL_OCULUS_SUPPORT)
+static void InitOculusDevice(void)
+{
+    
+}
+
+static void CloseOculusDevice(void)
+{
+    
+}
+
+static void UpdateOculusTracking(void)
+{
+    
+}
+
+static void BeginOculusDrawing(void)
+{
+    
+}
+
+static void EndOculusDrawing(void)
+{
+    
+}
+
 // Load Oculus required buffers: texture-swap-chain, fbo, texture-depth
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
 {
