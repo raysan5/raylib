@@ -31,7 +31,7 @@
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on ReadTextFile()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
 #include <string.h>                 // Required for: strcmp(), strlen(), strtok()
-#include <math.h>                   // Required for: atan()
+#include <math.h>                   // Required for: atan2()
 
 #ifndef RLGL_STANDALONE
     #include "raymath.h"            // Required for Vector3 and Matrix functions
@@ -206,6 +206,15 @@ typedef struct {
     float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
 } VrDeviceInfo;
 
+// VR Stereo rendering configuration for simulator
+typedef struct {
+    RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
+    Shader distortionShader;        // VR stereo rendering distortion shader
+    //Rectangle eyesViewport[2];      // VR stereo rendering eyes viewports
+    Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
+    Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
+} VrStereoConfig;
+
 #if defined(RLGL_OCULUS_SUPPORT)
 typedef struct OculusBuffer {
     ovrTextureSwapChain textureChain;
@@ -292,18 +301,14 @@ static OculusMirror mirror;             // Oculus mirror texture and fbo
 static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
 #endif
 
+// VR global variables
+static VrDeviceInfo hmd;                // Current VR device info
+static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
 static bool vrDeviceReady = false;      // VR device ready flag
 static bool vrSimulator = false;        // VR simulator enabled flag
 static bool vrEnabled = false;          // VR experience enabled (device or simulator)
 static bool vrRendering = true;         // VR stereo rendering enabled/disabled flag
                                         // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
-
-static RenderTexture2D stereoFbo;       // Stereo rendering framebuffer
-static Shader distortionShader;         // Stereo rendering distortion shader (simulator)
-
-// Compressed textures support flags
-static bool texCompDXTSupported = false;    // DDS texture compression support
-static bool npotSupported = false;          // NPOT textures full support
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -312,6 +317,10 @@ static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 //static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
+
+// Compressed textures support flags
+static bool texCompDXTSupported = false;    // DDS texture compression support
+static bool npotSupported = false;          // NPOT textures full support
 
 static int blendMode = 0;   // Track current blending mode
 
@@ -341,7 +350,7 @@ static void DrawDefaultBuffers(int eyesCount); // Draw default internal buffers 
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
 // Configure stereo rendering (including distortion shader) with HMD device parameters
-static void SetupVrDevice(VrDeviceInfo info);
+static void SetStereoConfig(VrDeviceInfo info);
 
 // Set internal projection and modelview matrix depending on eyes tracking data
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
@@ -2535,6 +2544,7 @@ void DestroyLight(Light light)
 
 // Init VR device (or simulator)
 // NOTE: If device is not available, it fallbacks to default device (simulator)
+// NOTE: It modifies the global variable: VrDeviceInfo hmd
 void InitVrDevice(int hmdDevice)
 {
     switch (hmdDevice)
@@ -2560,40 +2570,39 @@ void InitVrDevice(int hmdDevice)
 
     if (!vrDeviceReady)
     {
-        TraceLog(WARNING, "VR Device not found: Initializing VR Simulator");
+        TraceLog(WARNING, "VR Device not found: Initializing VR Simulator (Oculus Rift DK2)");
 
         // Initialize framebuffer and textures for stereo rendering
-        stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
+        vrConfig.stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
         
         // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
-        distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
-        if (distortionShader.id != 0) LoadDefaultShaderLocations(&distortionShader);
-        
-        VrDeviceInfo info = { 0 };
-        
+        vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
+        if (vrConfig.distortionShader.id != 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
+
         if ((hmdDevice == HMD_DEFAULT_DEVICE) || 
             (hmdDevice == HMD_OCULUS_RIFT_DK2) || 
             (hmdDevice == HMD_OCULUS_RIFT_CV1))
         {
-            info.hResolution = 1280;                // HMD horizontal resolution in pixels
-            info.vResolution = 800;                 // HMD vertical resolution in pixels
-            info.hScreenSize = 0.14976f;;           // HMD horizontal size in meters
-            info.vScreenSize = 0.09356f;            // HMD vertical size in meters
-            info.vScreenCenter = 0.04675f;          // HMD screen center in meters
-            info.eyeToScreenDistance = 0.041f;      // HMD distance between eye and display in meters
-            info.lensSeparationDistance = 0.0635f;  // HMD lens separation distance in meters
-            info.interpupillaryDistance = 0.064f;   // HMD IPD (distance between pupils) in meters
-            info.distortionK[0] = 1.0f;             // HMD lens distortion constant parameter 0
-            info.distortionK[1] = 0.22f;            // HMD lens distortion constant parameter 1
-            info.distortionK[2] = 0.24f;            // HMD lens distortion constant parameter 2
-            info.distortionK[3] = 0.0f;             // HMD lens distortion constant parameter 3
-            info.chromaAbCorrection[0] = 0.996f;    // HMD chromatic aberration correction parameter 0
-            info.chromaAbCorrection[1] = -0.004f;   // HMD chromatic aberration correction parameter 1
-            info.chromaAbCorrection[2] = 1.014f;    // HMD chromatic aberration correction parameter 2
-            info.chromaAbCorrection[3] = 0.0f;      // HMD chromatic aberration correction parameter 3
+            // NOTE: Oculus Rift DK2 parameters
+            hmd.hResolution = 1280;                // HMD horizontal resolution in pixels
+            hmd.vResolution = 800;                 // HMD vertical resolution in pixels
+            hmd.hScreenSize = 0.14976f;;           // HMD horizontal size in meters
+            hmd.vScreenSize = 0.09356f;            // HMD vertical size in meters
+            hmd.vScreenCenter = 0.04675f;          // HMD screen center in meters
+            hmd.eyeToScreenDistance = 0.041f;      // HMD distance between eye and display in meters
+            hmd.lensSeparationDistance = 0.0635f;  // HMD lens separation distance in meters
+            hmd.interpupillaryDistance = 0.064f;   // HMD IPD (distance between pupils) in meters
+            hmd.distortionK[0] = 1.0f;             // HMD lens distortion constant parameter 0
+            hmd.distortionK[1] = 0.22f;            // HMD lens distortion constant parameter 1
+            hmd.distortionK[2] = 0.24f;            // HMD lens distortion constant parameter 2
+            hmd.distortionK[3] = 0.0f;             // HMD lens distortion constant parameter 3
+            hmd.chromaAbCorrection[0] = 0.996f;    // HMD chromatic aberration correction parameter 0
+            hmd.chromaAbCorrection[1] = -0.004f;   // HMD chromatic aberration correction parameter 1
+            hmd.chromaAbCorrection[2] = 1.014f;    // HMD chromatic aberration correction parameter 2
+            hmd.chromaAbCorrection[3] = 0.0f;      // HMD chromatic aberration correction parameter 3
         }
 
-        SetupVrDevice(info);
+        SetStereoConfig(hmd);
         
         vrSimulator = true;
         vrEnabled = true;
@@ -2608,11 +2617,8 @@ void CloseVrDevice(void)
     else
 #endif
     {
-        // Unload stereo framebuffer and texture
-        rlDeleteRenderTextures(stereoFbo);
-        
-        // Unload oculus-distortion shader
-        UnloadShader(distortionShader);
+        rlDeleteRenderTextures(vrConfig.stereoFbo); // Unload stereo framebuffer and texture
+        UnloadShader(vrConfig.distortionShader);    // Unload distortion shader
     }
     
     vrDeviceReady = false;
@@ -2654,7 +2660,7 @@ void BeginVrDrawing(void)
 #endif
     {
         // Setup framebuffer for stereo rendering
-        rlEnableRenderTexture(stereoFbo.id);
+        rlEnableRenderTexture(vrConfig.stereoFbo.id);
     }
 
     // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA) 
@@ -2696,9 +2702,9 @@ void EndVrDrawing(void)
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
         // Draw RenderTexture (stereoFbo) using distortion shader 
-        currentShader = distortionShader;
+        currentShader = vrConfig.distortionShader;
 
-        rlEnableTexture(stereoFbo.texture.id);
+        rlEnableTexture(vrConfig.stereoFbo.texture.id);
 
         rlPushMatrix();
             rlBegin(RL_QUADS);
@@ -2711,15 +2717,15 @@ void EndVrDrawing(void)
 
                 // Bottom-right corner for texture and quad
                 rlTexCoord2f(0.0f, 0.0f);
-                rlVertex2f(0.0f, stereoFbo.texture.height);
+                rlVertex2f(0.0f, vrConfig.stereoFbo.texture.height);
 
                 // Top-right corner for texture and quad
                 rlTexCoord2f(1.0f, 0.0f);
-                rlVertex2f(stereoFbo.texture.width, stereoFbo.texture.height);
+                rlVertex2f(vrConfig.stereoFbo.texture.width, vrConfig.stereoFbo.texture.height);
 
                 // Top-left corner for texture and quad
                 rlTexCoord2f(1.0f, 1.0f);
-                rlVertex2f(stereoFbo.texture.width, 0.0f);
+                rlVertex2f(vrConfig.stereoFbo.texture.width, 0.0f);
             rlEnd();
         rlPopMatrix();
 
@@ -3752,61 +3758,71 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #endif
 
 // Configure stereo rendering (including distortion shader) with HMD device parameters
-static void SetupVrDevice(VrDeviceInfo hmd)
+static void SetStereoConfig(VrDeviceInfo hmd)
 {
-            // NOTE: fovy value obtained from device parameters (Oculus Rift CV1)
-            //float fovy = 2.0f*atan((VScreenSize*0.5f)/EyeToScreenDistance)*RAD2DEG;
-
-            //float eyeProjectionShift = ;
-            //float projectionOffset = (HScreenSize*0.25f - LensSeparationDistance*0.5f)/(float)HScreenSize;
-
-    // Compute aspect ratio and FOV
-    //float aspect = ((float)hmd.hResolution/2.0f)/(float)hmd.vResolution;
+    // Compute aspect ratio
+    //float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
     float aspect = (float)screenWidth*0.5f/(float)screenHeight;
-
-    // Fov-y is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
-    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    float radius = -1.0 - (4*(hmd.hScreenSize/4 - hmd.lensSeparationDistance/2)/hmd.hScreenSize);
-    float distScale = (hmd.distortionK[0] + hmd.distortionK[1]*pow(radius, 2) + hmd.distortionK[2]*pow(radius, 4) + hmd.distortionK[3]*pow(radius, 6));
-    //float fovy = 2.0f*atan2(hmd.vScreenSize*distScale, 2*hmd.eyeToScreenDistance)*RAD2DEG;
-    float fovy = 2.0f*atan((hmd.vScreenSize*0.5f)/hmd.eyeToScreenDistance)*RAD2DEG;
-
-    // Compute camera projection matrices
-    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
-    //float projOffset = 4.0f*(hmd.hScreenSize/4 - hmd.interpupillaryDistance/2)/hmd.hScreenSize;
-    float projOffset = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
     
-    //Matrix projLeft = MatrixMultiply(MatrixTranslate(projOffset, 0.0, 0.0), proj);
-    //matrix projRight = MatrixMultiply(MatrixTranslate(-projOffset, 0.0, 0.0)), proj);
-
-    // Compute camera transformation matrices
-    //Matrix viewTransformLeft = MatrixTranslate(-hmd.interpupillaryDistance/2, 0.0, 0.0 );
-    //Matrix viewTransformRight = MatrixTranslate(hmd.interpupillaryDistance/2, 0.0, 0.0 );
-
-    // Compute eyes Viewports
-    // Rectangle viewportLeft = { 0, 0, hmd.hResolution/2, hmd.vResolution };
-    // Rectangle viewportRight = { hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
-
-    // Distortion shader parameters
-    float lensShift = 4*(hmd.hScreenSize/4 - hmd.lensSeparationDistance/2)/hmd.hScreenSize;
-    float leftLensCenter[2] = { lensShift, 0.0f };                  // REVIEW!!!
-    float rightLensCenter[2] = { -lensShift, 0.0f };                // REVIEW!!!
+    // Compute lens parameters
+    float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
+    float leftLensCenter[2] = { 0.25 + lensShift, 0.5f };
+    float rightLensCenter[2] = { 0.75 - lensShift, 0.5f };
     float leftScreenCenter[2] = { 0.25f, 0.5f };
     float rightScreenCenter[2] = { 0.75f, 0.5f };
     
-    float scaleIn[2] = { 1.0f, 1.0f/aspect };                       // REVIEW!!!
-    float scale[2] = { 1.0f/distScale, 1.0f*aspect/distScale };     // REVIEW!!!
+    // Compute distortion scale parameters
+    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+    float lensRadiusSq = lensRadius*lensRadius;
+    float distortionScale = hmd.distortionK[0] + 
+                            hmd.distortionK[1]*lensRadiusSq + 
+                            hmd.distortionK[2]*lensRadiusSq*lensRadiusSq + 
+                            hmd.distortionK[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
 
-    // Distortion shader parameters update
-    //SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "leftLensCenter"), leftLensCenter, 2);
-    //SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "rightLensCenter"), rightLensCenter, 2);
-    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
-    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
+    float normScreenWidth = 0.5f;
+    float normScreenHeight = 1.0f;
+    float scaleIn[2] = { 2/normScreenWidth, 2/normScreenHeight/aspect };
+    float scale[2] = { normScreenWidth*0.5/distortionScale, normScreenHeight*0.5*aspect/distortionScale };
     
-    //SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "scale"), scale, 2);
-    //SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "scaleIn"), scaleIn, 2);
-    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
-    SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+    // Update distortion shader with lens and distortion-scale parameters
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
+    
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+
+    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
+    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+    float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance)*RAD2DEG;     // Really need distortionScale?
+
+    // Compute camera projection matrices
+    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
+    vrConfig.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+    vrConfig.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+    
+    // NOTE: Projection matrices must be transposed due to raymath convention
+    MatrixTranspose(&vrConfig.eyesProjection[0]);
+    MatrixTranspose(&vrConfig.eyesProjection[1]);
+    
+    // Compute camera transformation matrices
+    // NOTE: Camera movement might seem more natural if we model the head. 
+    // Our axis of rotation is the base of our head, so we might want to add 
+    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+    vrConfig.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    
+    // Compute eyes Viewports
+    //vrConfig.eyesViewport[0] = (Rectangle){ 0, 0, hmd.hResolution/2, hmd.vResolution };
+    //vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+    
+    //https://forums.oculus.com/vip/discussion/3413/calculating-the-distortion-shader-parameters
+    //https://vrwiki.wikispaces.com/Theory+%26+practice
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data
@@ -3844,59 +3860,10 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
             // Setup viewport and projection/modelview matrices using tracking data
             rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
 
-            float HScreenSize = 0.14976f;
-            float VScreenSize = 0.09356f;           // HScreenSize/(1280.0f/800.0f) (DK2)
-            float VScreenCenter = 0.04675f;         // VScreenSize/2
-            float EyeToScreenDistance = 0.041f;
-            float LensSeparationDistance = 0.0635f; // DK2
-            float InterpupillaryDistance = 0.064f;  // IPD
+            // Apply view offset to modelview matrix
+            eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
             
-            // NOTE: fovy value obtained from device parameters (Oculus Rift CV1)
-            float halfScreenDistance = VScreenSize/2.0f;
-            float fovy = 2.0f*atan(halfScreenDistance/EyeToScreenDistance)*RAD2DEG;
-
-            float viewCenter = (float)HScreenSize*0.25f;
-            float eyeProjectionShift = viewCenter - LensSeparationDistance*0.5f;
-            float projectionCenterOffset = eyeProjectionShift/(float)HScreenSize;   //4.0f*eyeProjectionShift/(float)HScreenSize;
-/*            
-            static float scale[2] = { 0.25, 0.45 };
-
-            if (IsKeyDown(KEY_RIGHT)) scale[0] += 0.01;
-            else if (IsKeyDown(KEY_LEFT)) scale[0] -= 0.01;
-            else if (IsKeyDown(KEY_UP)) scale[1] += 0.01;
-            else if (IsKeyDown(KEY_DOWN)) scale[1] -= 0.01;
-            
-            SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "Scale"), scale, 2);
-
-            if (IsKeyDown(KEY_N)) IPD += 0.02;
-            else if (IsKeyDown(KEY_M)) IPD -= 0.02;
-*/            
-            // The matrixes for offsetting the projection and view for each eye, to achieve stereo effect
-            Vector3 projectionOffset = { -projectionCenterOffset, 0.0f, 0.0f };
-            
-            // Camera movement might seem more natural if we model the head. 
-            // Our axis of rotation is the base of our head, so we might want to add 
-            // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-            Vector3 viewOffset = { -InterpupillaryDistance/2.0f, 0.075f, 0.045f };
-
-            // Negate the left eye versions
-            if (eye == 0)
-            {
-                projectionOffset.x *= -1.0f;
-                viewOffset.x *= -1.0f;
-            }
-
-            // Adjust the view and projection matrixes
-            // View matrix is translated based on the eye offset
-            Matrix projCenter = MatrixPerspective(fovy, (double)((float)screenWidth*0.5f)/(double)screenHeight, 0.01, 1000.0);
-
-            Matrix projTranslation = MatrixTranslate(projectionOffset.x, projectionOffset.y, projectionOffset.z);
-            Matrix viewTranslation = MatrixTranslate(viewOffset.x, viewOffset.y, viewOffset.z);
-
-            eyeProjection = MatrixMultiply(projCenter, projTranslation);    // projection
-            eyeModelView = MatrixMultiply(matModelView, viewTranslation);   // modelview
-            
-            MatrixTranspose(&eyeProjection);
+            eyeProjection = vrConfig.eyesProjection[eye];
         }
 
         SetMatrixModelview(eyeModelView);
