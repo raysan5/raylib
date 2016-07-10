@@ -9,13 +9,13 @@ uniform sampler2D texture0;
 // Output fragment color
 out vec4 finalColor;
 
-// NOTE: Default parameters for Oculus Rift device
-const vec2 LeftLensCenter = vec2(0.288, 0.5);
-const vec2 RightLensCenter = vec2(0.712, 0.5);
+// NOTE: Default parameters for Oculus Rift DK2 device
+const vec2 LeftLensCenter = vec2(0.2863248, 0.5);
+const vec2 RightLensCenter = vec2(0.7136753, 0.5);
 const vec2 LeftScreenCenter = vec2(0.25, 0.5);
 const vec2 RightScreenCenter = vec2(0.75, 0.5);
 const vec2 Scale = vec2(0.25, 0.45);
-const vec2 ScaleIn = vec2(4.0, 2.2222);
+const vec2 ScaleIn = vec2(4.0, 2.5);
 const vec4 HmdWarpParam = vec4(1.0, 0.22, 0.24, 0.0);
 const vec4 ChromaAbParam = vec4(0.996, -0.004, 1.014, 0.0);
 

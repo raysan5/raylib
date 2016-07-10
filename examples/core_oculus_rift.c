@@ -18,8 +18,8 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 1080;
-    int screenHeight = 600;
+    int screenWidth = 1280;
+    int screenHeight = 800;
     
     InitWindow(screenWidth, screenHeight, "raylib [core] example - oculus rift");
     
