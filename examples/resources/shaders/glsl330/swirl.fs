@@ -6,7 +6,7 @@ in vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // Output fragment color
 out vec4 finalColor;
@@ -40,7 +40,7 @@ void main()
     }
 
     tc += center;
-    vec3 color = texture(texture0, tc/texSize).rgb;
+    vec4 color = texture2D(texture0, tc/texSize)*colDiffuse*fragColor;;
 
-    finalColor = vec4(color, 1.0);;
+    finalColor = vec4(color.rgb, 1.0);;
 }
