@@ -361,6 +361,12 @@ static char *ReadTextFile(const char *fileName);
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
+static bool InitOculusDevice(void);         // Initialize Oculus device (returns true if success)
+static void CloseOculusDevice(void);        // Close Oculus device
+static void UpdateOculusTracking(void);     // Update Oculus head position-orientation tracking
+static void BeginOculusDrawing(void);       // Setup Oculus buffers for drawing
+static void EndOculusDrawing(void);         // Finish Oculus drawing and blit framebuffer to mirror
+
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
 static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);            // Unload texture required buffers
 static OculusMirror LoadOculusMirror(ovrSession session, int width, int height);    // Load Oculus mirror buffers
@@ -3912,7 +3918,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
-// Initialize Oculus device
+// Initialize Oculus device (returns true if success)
 static bool InitOculusDevice(void)
 {
     bool oculusReady = false;
@@ -3959,6 +3965,7 @@ static bool InitOculusDevice(void)
     return oculusReady;
 }
 
+// Close Oculus device (and unload buffers)
 static void CloseOculusDevice(void)
 {
     UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
@@ -3968,6 +3975,7 @@ static void CloseOculusDevice(void)
     ovr_Shutdown();         // Close Oculus device connection
 }
 
+// Update Oculus head position-orientation tracking
 static void UpdateOculusTracking(void)
 {
     frameIndex++;
@@ -3990,6 +3998,7 @@ static void UpdateOculusTracking(void)
     //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
 }
 
+// Setup Oculus buffers for drawing
 static void BeginOculusDrawing(void)
 {
     GLuint currentTexId;
@@ -4003,6 +4012,7 @@ static void BeginOculusDrawing(void)
     //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
 }
 
+// Finish Oculus drawing and blit framebuffer to mirror
 static void EndOculusDrawing(void)
 {
     // Unbind current framebuffer (Oculus buffer)
