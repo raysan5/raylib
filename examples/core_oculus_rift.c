@@ -18,8 +18,10 @@ int main()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    int screenWidth = 1280;
-    int screenHeight = 800;
+    int screenWidth = 1080;
+    int screenHeight = 600;
+    
+    // NOTE: screenWidth/screenHeight should match VR device aspect ratio
     
     InitWindow(screenWidth, screenHeight, "raylib [core] example - oculus rift");
     
