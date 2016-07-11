@@ -284,10 +284,6 @@ static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
-
-// Lighting data
-static Light lights[MAX_LIGHTS];            // Lights pool
-static int lightsCount = 0;                 // Enabled lights counter
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
@@ -330,6 +326,10 @@ static unsigned int whiteTexture;
 // Default framebuffer size (required by Oculus device)
 static int screenWidth;     // Default framebuffer width
 static int screenHeight;    // Default framebuffer height
+
+// Lighting data
+static Light lights[MAX_LIGHTS];            // Lights pool
+static int lightsCount = 0;                 // Enabled lights counter
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -1880,6 +1880,8 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
     if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
     if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
+    
+    // TODO: Support OpenGL 1.1 lighting system
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
@@ -2484,7 +2486,6 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
 {
     Light light = NULL;
     
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (lightsCount < MAX_LIGHTS)
     {
         // Allocate dynamic memory
@@ -2506,9 +2507,15 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
         // Increase enabled lights count
         lightsCount++;
     }
-    else TraceLog(WARNING, "Too many lights, only supported up to %i lights", MAX_LIGHTS);
-#else
-    // TODO: Support OpenGL 1.1 lighting system
+    else
+    {
+        TraceLog(WARNING, "Too many lights, only supported up to %i lights", MAX_LIGHTS);
+        
+        // NOTE: Returning latest created light to avoid crashes
+        light = lights[lightsCount];
+    }
+
+#if defined(GRAPHICS_API_OPENGL_11)
     TraceLog(WARNING, "Lighting currently not supported on OpenGL 1.1");
 #endif
 
@@ -2518,7 +2525,6 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
 // Destroy a light and take it out of the list
 void DestroyLight(Light light)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (light != NULL)
     {
         // Free dynamic memory allocation
@@ -2539,7 +2545,6 @@ void DestroyLight(Light light)
         // Decrease enabled physic objects count
         lightsCount--;
     }
-#endif
 }
 
 // Init VR device (or simulator)
@@ -2547,6 +2552,7 @@ void DestroyLight(Light light)
 // NOTE: It modifies the global variable: VrDeviceInfo hmd
 void InitVrDevice(int hmdDevice)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     switch (hmdDevice)
     {
         case HMD_DEFAULT_DEVICE: TraceLog(INFO, "Initializing default VR Device (Oculus Rift CV1)");
@@ -2631,11 +2637,13 @@ void InitVrDevice(int hmdDevice)
         vrSimulator = true;
         vrEnabled = true;
     }
+#endif
 }
 
 // Close VR device (or simulator)
 void CloseVrDevice(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 #if defined(RLGL_OCULUS_SUPPORT)
     if (vrDeviceReady) CloseOculusDevice();
     else
@@ -2644,7 +2652,7 @@ void CloseVrDevice(void)
         rlDeleteRenderTextures(vrConfig.stereoFbo); // Unload stereo framebuffer and texture
         UnloadShader(vrConfig.distortionShader);    // Unload distortion shader
     }
-    
+#endif
     vrDeviceReady = false;
 }
 
@@ -2675,6 +2683,7 @@ void UpdateVrTracking(void)
 // Begin Oculus drawing configuration
 void BeginVrDrawing(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 #if defined(RLGL_OCULUS_SUPPORT)
     if (vrDeviceReady)
     {
@@ -2697,11 +2706,13 @@ void BeginVrDrawing(void)
     rlClearScreenBuffers();             // Clear current framebuffer(s)
     
     vrRendering = true;
+#endif
 }
 
 // End Oculus drawing process (and desktop mirror)
 void EndVrDrawing(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 #if defined(RLGL_OCULUS_SUPPORT)
     if (vrDeviceReady)
     {
@@ -2764,6 +2775,7 @@ void EndVrDrawing(void)
     rlDisableDepthTest();
     
     vrRendering = false;
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -3652,6 +3664,124 @@ static char *ReadTextFile(const char *fileName)
 
     return text;
 }
+
+// Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetStereoConfig(VrDeviceInfo hmd)
+{
+    // Compute aspect ratio
+    float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
+
+    // Compute lens parameters
+    float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
+    float leftLensCenter[2] = { 0.25 + lensShift, 0.5f };
+    float rightLensCenter[2] = { 0.75 - lensShift, 0.5f };
+    float leftScreenCenter[2] = { 0.25f, 0.5f };
+    float rightScreenCenter[2] = { 0.75f, 0.5f };
+    
+    // Compute distortion scale parameters
+    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+    float lensRadiusSq = lensRadius*lensRadius;
+    float distortionScale = hmd.distortionK[0] + 
+                            hmd.distortionK[1]*lensRadiusSq + 
+                            hmd.distortionK[2]*lensRadiusSq*lensRadiusSq + 
+                            hmd.distortionK[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+    
+    TraceLog(DEBUG, "VR: Distortion Scale: %f", distortionScale);
+    
+    float normScreenWidth = 0.5f;
+    float normScreenHeight = 1.0f;
+    float scaleIn[2] = { 2/normScreenWidth, 2/normScreenHeight/aspect };
+    float scale[2] = { normScreenWidth*0.5/distortionScale, normScreenHeight*0.5*aspect/distortionScale };
+    
+    TraceLog(DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
+    TraceLog(DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
+    TraceLog(DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
+    TraceLog(DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
+    
+    // Update distortion shader with lens and distortion-scale parameters
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
+    
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+
+    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
+    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance)*RAD2DEG;     // Really need distortionScale?
+    float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance)*RAD2DEG;
+    
+    // Compute camera projection matrices
+    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
+    vrConfig.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+    vrConfig.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+    
+    // NOTE: Projection matrices must be transposed due to raymath convention
+    MatrixTranspose(&vrConfig.eyesProjection[0]);
+    MatrixTranspose(&vrConfig.eyesProjection[1]);
+    
+    // Compute camera transformation matrices
+    // NOTE: Camera movement might seem more natural if we model the head. 
+    // Our axis of rotation is the base of our head, so we might want to add 
+    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+    vrConfig.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    
+    // Compute eyes Viewports
+    //vrConfig.eyesViewport[0] = (Rectangle){ 0, 0, hmd.hResolution/2, hmd.vResolution };
+    //vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+}
+
+// Set internal projection and modelview matrix depending on eyes tracking data
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
+{   
+    if (vrEnabled)
+    {
+        Matrix eyeProjection = matProjection;
+        Matrix eyeModelView = matModelView;
+        
+#if defined(RLGL_OCULUS_SUPPORT)
+        if (vrDeviceReady)
+        {
+            rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, 
+                       layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
+
+            Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.y, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.z, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.w };
+            QuaternionInvert(&eyeRenderPose);
+            Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
+            Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.y, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.z);
+
+            Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
+            eyeModelView = MatrixMultiply(matModelView, eyeView);               // Combine internal camera matrix (modelview) wih eye-head movement
+
+            eyeProjection = layer.eyeProjections[eye];
+        }
+        else
+#endif
+        {
+            // Setup viewport and projection/modelview matrices using tracking data
+            rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
+
+            // Apply view offset to modelview matrix
+            eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
+            
+            eyeProjection = vrConfig.eyesProjection[eye];
+        }
+
+        SetMatrixModelview(eyeModelView);
+        SetMatrixProjection(eyeProjection);
+    }
+}
 #endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -3780,124 +3910,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
     return mipmap;
 }
 #endif
-
-// Configure stereo rendering (including distortion shader) with HMD device parameters
-static void SetStereoConfig(VrDeviceInfo hmd)
-{
-    // Compute aspect ratio
-    float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
-
-    // Compute lens parameters
-    float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
-    float leftLensCenter[2] = { 0.25 + lensShift, 0.5f };
-    float rightLensCenter[2] = { 0.75 - lensShift, 0.5f };
-    float leftScreenCenter[2] = { 0.25f, 0.5f };
-    float rightScreenCenter[2] = { 0.75f, 0.5f };
-    
-    // Compute distortion scale parameters
-    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
-    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
-    float lensRadiusSq = lensRadius*lensRadius;
-    float distortionScale = hmd.distortionK[0] + 
-                            hmd.distortionK[1]*lensRadiusSq + 
-                            hmd.distortionK[2]*lensRadiusSq*lensRadiusSq + 
-                            hmd.distortionK[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
-    
-    TraceLog(DEBUG, "VR: Distortion Scale: %f", distortionScale);
-    
-    float normScreenWidth = 0.5f;
-    float normScreenHeight = 1.0f;
-    float scaleIn[2] = { 2/normScreenWidth, 2/normScreenHeight/aspect };
-    float scale[2] = { normScreenWidth*0.5/distortionScale, normScreenHeight*0.5*aspect/distortionScale };
-    
-    TraceLog(DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
-    TraceLog(DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
-    TraceLog(DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
-    TraceLog(DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
-    
-    // Update distortion shader with lens and distortion-scale parameters
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
-    
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
-
-    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
-    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance)*RAD2DEG;     // Really need distortionScale?
-    float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance)*RAD2DEG;
-    
-    // Compute camera projection matrices
-    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
-    vrConfig.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
-    vrConfig.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
-    
-    // NOTE: Projection matrices must be transposed due to raymath convention
-    MatrixTranspose(&vrConfig.eyesProjection[0]);
-    MatrixTranspose(&vrConfig.eyesProjection[1]);
-    
-    // Compute camera transformation matrices
-    // NOTE: Camera movement might seem more natural if we model the head. 
-    // Our axis of rotation is the base of our head, so we might want to add 
-    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-    vrConfig.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
-    
-    // Compute eyes Viewports
-    //vrConfig.eyesViewport[0] = (Rectangle){ 0, 0, hmd.hResolution/2, hmd.vResolution };
-    //vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
-}
-
-// Set internal projection and modelview matrix depending on eyes tracking data
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
-{   
-    if (vrEnabled)
-    {
-        Matrix eyeProjection = matProjection;
-        Matrix eyeModelView = matModelView;
-        
-#if defined(RLGL_OCULUS_SUPPORT)
-        if (vrDeviceReady)
-        {
-            rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, 
-                       layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
-
-            Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.y, 
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.z, 
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.w };
-            QuaternionInvert(&eyeRenderPose);
-            Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
-            Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
-                                                    -layer.eyeLayer.RenderPose[eye].Position.y, 
-                                                    -layer.eyeLayer.RenderPose[eye].Position.z);
-
-            Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
-            eyeModelView = MatrixMultiply(matModelView, eyeView);               // Combine internal camera matrix (modelview) wih eye-head movement
-
-            eyeProjection = layer.eyeProjections[eye];
-        }
-        else
-#endif
-        {
-            // Setup viewport and projection/modelview matrices using tracking data
-            rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
-
-            // Apply view offset to modelview matrix
-            eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
-            
-            eyeProjection = vrConfig.eyesProjection[eye];
-        }
-
-        SetMatrixModelview(eyeModelView);
-        SetMatrixProjection(eyeProjection);
-    }
-}
 
 #if defined(RLGL_OCULUS_SUPPORT)
 // Initialize Oculus device
