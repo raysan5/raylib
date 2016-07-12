@@ -2671,7 +2671,17 @@ bool IsVrDeviceReady(void)
 // Enable/Disable VR experience (device or simulator)
 void ToggleVrMode(void)
 {
-    vrEnabled = !vrEnabled;
+    if (vrDeviceReady || vrSimulator) vrEnabled = !vrEnabled;
+    else vrEnabled = false;
+    
+    if (!vrEnabled)
+    {   
+        // Reset viewport and default projection-modelview matrices
+        rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+        projection = MatrixOrtho(0, GetScreenWidth(), GetScreenHeight(), 0, 0.0f, 1.0f);
+        MatrixTranspose(&projection);
+        modelview = MatrixIdentity();
+    }
 }
 
 // Update VR tracking (position and orientation)
@@ -3745,12 +3755,12 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
 // Set internal projection and modelview matrix depending on eyes tracking data
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
-{   
+{
     if (vrEnabled)
     {
         Matrix eyeProjection = matProjection;
         Matrix eyeModelView = matModelView;
-        
+
 #if defined(RLGL_OCULUS_SUPPORT)
         if (vrDeviceReady)
         {
