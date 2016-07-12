@@ -46,6 +46,16 @@ static const char fDistortionShaderStr[] =
 "out vec4 finalColor;               \n"
 #endif
 "uniform sampler2D texture0;                                     \n"
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
+"uniform vec2 leftLensCenter;       \n"
+"uniform vec2 rightLensCenter;      \n"
+"uniform vec2 leftScreenCenter;     \n"
+"uniform vec2 rightScreenCenter;    \n"
+"uniform vec2 scale;                \n"
+"uniform vec2 scaleIn;              \n"
+"uniform vec4 hmdWarpParam;         \n"
+"uniform vec4 chromaAbParam;        \n"
+#elif defined(GRAPHICS_API_OPENGL_33)
 "uniform vec2 leftLensCenter = vec2(0.288, 0.5);                 \n"
 "uniform vec2 rightLensCenter = vec2(0.712, 0.5);                \n"
 "uniform vec2 leftScreenCenter = vec2(0.25, 0.5);                \n"
@@ -54,6 +64,7 @@ static const char fDistortionShaderStr[] =
 "uniform vec2 scaleIn = vec2(4, 2.2222);                         \n"
 "uniform vec4 hmdWarpParam = vec4(1, 0.22, 0.24, 0);             \n"
 "uniform vec4 chromaAbParam = vec4(0.996, -0.004, 1.014, 0.0);   \n"
+#endif
 "void main() \n"
 "{ \n"
 "   vec2 lensCenter = fragTexCoord.x < 0.5 ? leftLensCenter : rightLensCenter; \n"
@@ -65,7 +76,11 @@ static const char fDistortionShaderStr[] =
 "   vec2 tcBlue = lensCenter + scale*thetaBlue; \n"
 "   if (any(bvec2(clamp(tcBlue, screenCenter - vec2(0.25, 0.5), screenCenter + vec2(0.25, 0.5)) - tcBlue))) \n"
 "   { \n"
+#if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
+"       gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); \n"
+#elif defined(GRAPHICS_API_OPENGL_33)
 "       finalColor = vec4(0.0, 0.0, 0.0, 1.0); \n"
+#endif
 "   } \n"
 "   else \n"
 "   { \n"
