@@ -257,9 +257,9 @@ static DrawMode currentDrawMode;
 
 static float currentDepth = -1.0f;
 
-static DynamicBuffer lines;
-static DynamicBuffer triangles;
-static DynamicBuffer quads;
+static DynamicBuffer lines;                 // Default dynamic buffer for lines data
+static DynamicBuffer triangles;             // Default dynamic buffer for triangles data
+static DynamicBuffer quads;                 // Default dynamic buffer for quads data (used to draw textures)
 
 // Default buffers draw calls
 static DrawCall *draws;
@@ -271,9 +271,10 @@ static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
 // Shader Programs
-static Shader defaultShader;
-static Shader standardShader;               // Lazy initialization when GetStandardShader()
-static Shader currentShader;                // By default, defaultShader
+static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
+static Shader standardShader;               // Shader with support for lighting and materials
+                                            // NOTE: Lazy initialization when GetStandardShader()
+static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
 static bool standardShaderLoaded = false;   // Flag to track if standard shader has been loaded
 
 // Flags for supported extensions
@@ -357,7 +358,7 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
 
 static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
 
-static char *ReadTextFile(const char *fileName);
+static char *ReadTextFile(const char *fileName); // Read chars array from text file
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
