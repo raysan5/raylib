@@ -5,11 +5,18 @@
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*
+*   Compile example using:
+*   cmd /c IF NOT EXIST pthreadGC2.dll copy C:\raylib\raylib\src\external\pthread\pthreadGC2.dll $(CURRENT_DIRECTORY) /Y
+*
 *   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
+#define PHYSAC_IMPLEMENTATION
+#include "physac.h"
 
 #define MOVE_VELOCITY    5
 #define JUMP_VELOCITY    30
@@ -24,44 +31,41 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - basic rigidbody");
     InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
-    SetTargetFPS(60);
-    
     // Debug variables
     bool isDebug = false;
     
     // Create rectangle physic object
-    PhysicObject rectangle = CreatePhysicObject((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
+    PhysicBody rectangle = CreatePhysicBody((Vector2){ screenWidth*0.25f, screenHeight/2 }, 0.0f, (Vector2){ 75, 50 });
     rectangle->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
     rectangle->rigidbody.applyGravity = true;
     rectangle->rigidbody.friction = 0.1f;
     rectangle->rigidbody.bounciness = 6.0f;
     
     // Create square physic object
-    PhysicObject square = CreatePhysicObject((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
+    PhysicBody square = CreatePhysicBody((Vector2){ screenWidth*0.75f, screenHeight/2 }, 0.0f, (Vector2){ 50, 50 });
     square->rigidbody.enabled = true;      // Enable physic object rigidbody behaviour
     square->rigidbody.applyGravity = true;
     square->rigidbody.friction = 0.1f;
     
     // Create walls physic objects
-    PhysicObject floor = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
-    PhysicObject leftWall = CreatePhysicObject((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    PhysicObject rightWall = CreatePhysicObject((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
-    PhysicObject roof = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    PhysicBody floor = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight*0.95f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
+    PhysicBody leftWall = CreatePhysicBody((Vector2){ 0.0f, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicBody rightWall = CreatePhysicBody((Vector2){ screenWidth, screenHeight/2 }, 0.0f, (Vector2){ screenWidth*0.1f, screenHeight });
+    PhysicBody roof = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight*0.05f }, 0.0f, (Vector2){ screenWidth*0.9f, 100 });
     
     // Create pplatform physic object
-    PhysicObject platform = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
+    PhysicBody platform = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight*0.7f }, 0.0f, (Vector2){ screenWidth*0.25f, 20 });
     
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
-        //----------------------------------------------------------------------------------
-        UpdatePhysics();    // Update all created physic objects
-        
+        //----------------------------------------------------------------------------------        
         // Check rectangle movement inputs
-        if (IsKeyDown('W') && rectangle->rigidbody.isGrounded) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
+        if (IsKeyPressed('W')) rectangle->rigidbody.velocity.y = JUMP_VELOCITY;
         if (IsKeyDown('A')) rectangle->rigidbody.velocity.x = -MOVE_VELOCITY;
         else if (IsKeyDown('D')) rectangle->rigidbody.velocity.x = MOVE_VELOCITY;
         
@@ -108,6 +112,8 @@ int main()
             // Draw help message
             DrawText("Use WASD to move rectangle and ARROWS to move square", screenWidth/2 - MeasureText("Use WASD to move rectangle and ARROWS to move square", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
 
+            DrawFPS(10, 10);
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -115,7 +121,6 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------
     ClosePhysics();       // Unitialize physics (including all loaded objects)
-    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

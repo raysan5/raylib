@@ -47,10 +47,16 @@
     #include "raylib.h"             // Required for structs: Vector3, Matrix
 #endif
 
-#if defined(RAYMATH_EXTERN_INLINE)
-    #define RMDEF extern inline
+#ifdef __cplusplus
+    #define RMEXTERN extern "C"     // Functions visible from other files (no name mangling of functions in C++)
 #else
-    #define RMDEF extern
+    #define RMEXTERN extern         // Functions visible from other files
+#endif
+
+#if defined(RAYMATH_EXTERN_INLINE)
+    #define RMDEF RMEXTERN inline   // Functions are embeded inline (compiler generated code)
+#else
+    #define RMDEF RMEXTERN
 #endif
 
 //----------------------------------------------------------------------------------
@@ -105,10 +111,6 @@ typedef struct Quaternion {
 
 #ifndef RAYMATH_EXTERN_INLINE
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Vector3
 //------------------------------------------------------------------------------------
@@ -151,7 +153,6 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);    // Returns orthographic projection matrix
 RMDEF Matrix MatrixLookAt(Vector3 position, Vector3 target, Vector3 up);  // Returns camera look-at matrix (view matrix)
-RMDEF void PrintMatrix(Matrix m);                             // Print matrix utility
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
@@ -167,10 +168,6 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns
 RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle); // Returns the rotation angle and axis for a given quaternion
 RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transform a quaternion given a transformation matrix
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif  // notdef RAYMATH_EXTERN_INLINE
 
 #endif  // RAYMATH_H
@@ -178,9 +175,7 @@ RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transfo
 
 #if defined(RAYMATH_IMPLEMENTATION) || defined(RAYMATH_EXTERN_INLINE)
 
-#include <stdio.h>      // Used only on PrintMatrix()
-#include <math.h>       // Standard math libary: sin(), cos(), tan()...
-#include <stdlib.h>     // Used for abs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), fabs()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector3 math
@@ -342,14 +337,13 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
     return result;
 }
 
-// Transforms a Vector3 with a given Matrix
+// Transforms a Vector3 by a given Matrix
+// TODO: Review math (matrix transpose required?)
 RMDEF void VectorTransform(Vector3 *v, Matrix mat)
 {
     float x = v->x;
     float y = v->y;
     float z = v->z;
-
-    //MatrixTranspose(&mat);
 
     v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
@@ -869,17 +863,6 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     result.m15 = 1.0f;
 
     return result;
-}
-
-// Print matrix utility (for debug)
-RMDEF void PrintMatrix(Matrix m)
-{
-    printf("----------------------\n");
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m0, m.m4, m.m8, m.m12);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m1, m.m5, m.m9, m.m13);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m2, m.m6, m.m10, m.m14);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m3, m.m7, m.m11, m.m15);
-    printf("----------------------\n");
 }
 
 //----------------------------------------------------------------------------------

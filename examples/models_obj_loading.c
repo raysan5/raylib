@@ -25,7 +25,7 @@ int main()
 
     Model dwarf = LoadModel("resources/model/dwarf.obj");                   // Load OBJ model
     Texture2D texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
-    SetModelTexture(&dwarf, texture);                                       // Bind texture to model
+    dwarf.material.texDiffuse = texture;                                    // Set dwarf model diffuse texture
     Vector3 position = { 0.0f, 0.0f, 0.0f };                                // Set model position
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
@@ -49,7 +49,7 @@ int main()
 
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10, 1.0f);        // Draw a grid
+                DrawGrid(10, 1.0f);         // Draw a grid
 
                 DrawGizmo(position);        // Draw gizmo
 

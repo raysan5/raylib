@@ -18,30 +18,23 @@
 *
 ********************************************************************************************/
 
-#define GLAD_IMPLEMENTATION
 #include "glad.h"               // Extensions loading library
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
 #define RLGL_STANDALONE
-#include "rlgl.h"
+#include "rlgl.h"               // rlgl library: OpenGL 1.1 immediate-mode style coding
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
 
 #define RED        (Color){ 230, 41, 55, 255 }     // Red
 #define MAROON     (Color){ 190, 33, 55, 255 }     // Maroon
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
-//----------------------------------------------------------------------------------
-typedef enum { LOG_INFO = 0, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_OTHER } TraceLogType;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 static void ErrorCallback(int error, const char* description);
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void TraceLog(int msgType, const char *text, ...);
 
 // Drawing functions (uses rlgl functionality)
 static void DrawGrid(int slices, float spacing);
@@ -66,10 +59,10 @@ int main(void)
     
     if (!glfwInit())
     {
-        TraceLog(LOG_WARNING, "GLFW3: Can not initialize GLFW");
-        exit(EXIT_FAILURE);
+        TraceLog(WARNING, "GLFW3: Can not initialize GLFW");
+        return 1;
     }
-    else TraceLog(LOG_INFO, "GLFW3: GLFW initialized successfully");
+    else TraceLog(INFO, "GLFW3: GLFW initialized successfully");
     
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
@@ -83,9 +76,9 @@ int main(void)
     if (!window)
     {
         glfwTerminate();
-        exit(EXIT_FAILURE);
+        return 2;
     }
-    else TraceLog(LOG_INFO, "GLFW3: Window created successfully");
+    else TraceLog(INFO, "GLFW3: Window created successfully");
     
     glfwSetKeyCallback(window, KeyCallback);
     
@@ -95,20 +88,27 @@ int main(void)
     // Load OpenGL 3.3 extensions
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        TraceLog(LOG_WARNING, "GLAD: Cannot load OpenGL extensions");
-        exit(1);
+        TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
+        return 3;
     }
-    else TraceLog(LOG_INFO, "GLAD: OpenGL extensions loaded successfully");
+    else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
     //--------------------------------------------------------
     
     // Initialize rlgl internal buffers and OpenGL state
     rlglInit();
-    rlglInitGraphics(0, 0, screenWidth, screenHeight);
-    rlClearColor(245, 245, 245, 255);   // Define clear color
-    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
     
-    Vector2 size = { 200, 200 };
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+    // Initialize viewport and internal projection/modelview matrices
+    rlViewport(0, 0, screenWidth, screenHeight);
+    rlMatrixMode(RL_PROJECTION);                        // Switch to PROJECTION matrix
+    rlLoadIdentity();                                   // Reset current matrix (PROJECTION)
+    rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f); // Orthographic projection with top-left corner at (0,0)
+    rlMatrixMode(RL_MODELVIEW);                         // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                                   // Reset current matrix (MODELVIEW)
+
+    rlClearColor(245, 245, 245, 255);                   // Define clear color
+    rlEnableDepthTest();                                // Enable DEPTH_TEST for 3D
+    
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)
     
     Camera camera;
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
@@ -128,29 +128,45 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         rlClearScreenBuffers();             // Clear current framebuffer
+        
             // Calculate projection matrix (from perspective) and view matrix from camera look at
             Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             MatrixTranspose(&matProj);
             Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-            Matrix mvp = MatrixMultiply(matView, matProj);
+
+            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
+            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
 
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
             DrawGrid(10, 1.0f);
 
             // NOTE: Internal buffers drawing (3D data)
-            rlglDraw(mvp);
+            rlglDraw();
             
+            // Draw '2D' elements in the scene (GUI)
+#define RLGL_CREATE_MATRIX_MANUALLY
+#if defined(RLGL_CREATE_MATRIX_MANUALLY)
+
             matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
             MatrixTranspose(&matProj);
             matView = MatrixIdentity();
-            mvp = MatrixMultiply(matView, matProj);
             
-            // TODO: 2D drawing on Oculus Rift: requires an ovrLayerQuad layer
-            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 300.0f, 20.0f }, DARKGRAY);
+            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
+            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
+
+#else   // Let rlgl generate and multiply matrix internally
+
+            rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
+            rlLoadIdentity();                                       // Reset internal projection matrix
+            rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+            rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
+            rlLoadIdentity();                                       // Reset internal modelview matrix
+#endif
+            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 600.0f, 20.0f }, DARKGRAY);
 
             // NOTE: Internal buffers drawing (2D data)
-            rlglDraw(mvp);
+            rlglDraw();
             
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -163,7 +179,6 @@ int main(void)
     
     glfwDestroyWindow(window);
     glfwTerminate();
-    
     //--------------------------------------------------------------------------------------
     
     return 0;
@@ -176,7 +191,7 @@ int main(void)
 // GLFW3: Error callback
 static void ErrorCallback(int error, const char* description)
 {
-    TraceLog(LOG_ERROR, description);
+    TraceLog(ERROR, description);
 }
 
 // GLFW3: Keyboard callback
@@ -186,29 +201,6 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
-}
-
-// Output a trace log message
-static void TraceLog(int msgType, const char *text, ...)
-{
-    va_list args;
-    va_start(args, text);
-
-    switch(msgType)
-    {
-        case LOG_INFO: fprintf(stdout, "INFO: "); break;
-        case LOG_ERROR: fprintf(stdout, "ERROR: "); break;
-        case LOG_WARNING: fprintf(stdout, "WARNING: "); break;
-        case LOG_DEBUG: fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    vfprintf(stdout, text, args);
-    fprintf(stdout, "\n");
-
-    va_end(args);
-
-    //if (msgType == LOG_ERROR) exit(1);
 }
 
 // Draw rectangle using rlgl OpenGL 1.1 style coding (translated to OpenGL 3.3 internally)

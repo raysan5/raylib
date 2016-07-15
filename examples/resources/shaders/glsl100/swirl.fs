@@ -8,7 +8,7 @@ varying vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
 
@@ -18,7 +18,7 @@ const float renderHeight = 480.0;     // Use uniforms instead...
 float radius = 250.0;
 float angle = 0.8;
 
-uniform vec2 center = vec2(200.0, 200.0);
+uniform vec2 center;
 
 void main()
 {
@@ -39,7 +39,7 @@ void main()
     }
 
     tc += center;
-    vec3 color = texture2D(texture0, tc/texSize).rgb;
+    vec4 color = texture2D(texture0, tc/texSize)*colDiffuse*fragColor;;
 
-    gl_FragColor = vec4(color, 1.0);;
+    gl_FragColor = vec4(color.rgb, 1.0);;
 }

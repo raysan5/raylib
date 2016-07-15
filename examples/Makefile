@@ -2,7 +2,7 @@
 #
 #   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
-#   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
 #    
 #   This software is provided "as-is", without any express or implied warranty. In no event 
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -78,44 +78,38 @@ endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
+INCLUDES = -I. -I../src -I../src/external
+
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),LINUX)
-        INCLUDES = -I. -I../src -I/usr/local/include/raylib/
-    else ifeq ($(PLATFORM_OS),OSX)
-        INCLUDES = -I. -I../src
-    else
-        INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
+        INCLUDES += -I/usr/local/include/raylib/
+    else ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries headers
         # GLFW3
-            INCLUDES += -I../../external/glfw3/include
+            INCLUDES += -I../src/external/glfw3/include
         # OpenAL Soft
-            INCLUDES += -I../../external/openal_soft/include
+            INCLUDES += -I../src/external/openal_soft/include
     endif
 endif
 
 # define library paths containing required libs
+LFLAGS = -L. -L../src
+
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    LFLAGS = -L. -L../../src -L/opt/vc/lib
+    LFLAGS += -L/opt/vc/lib
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),LINUX)
-        LFLAGS = -L. -L../../src
-    else ifeq ($(PLATFORM_OS),OSX)
-        LFLAGS = -L. -L../src
-    else
-        LFLAGS = -L. -L../../src -LC:/raylib/raylib/src
+    ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries to link with
         # GLFW3
-            LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
-        ifneq ($(PLATFORM_OS),OSX)
+            LFLAGS += -L../src/external/glfw3/lib/$(LIBPATH)
         # OpenAL Soft
-            LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-        endif
+            LFLAGS += -L../src/external/openal_soft/lib/$(LIBPATH)
     endif
 endif
 
@@ -126,8 +120,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl -lX11 \
-               -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl
+        # on XWindow could require also below libraries, just uncomment
+        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
@@ -148,7 +143,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # just adjust the correct path to libraylib.bc
-    LIBS = ../src/libraylib.bc
+    LIBS = ../release/html5/libraylib.bc
 endif
 
 # define additional parameters and flags for windows
@@ -178,6 +173,9 @@ EXAMPLES = \
     core_3d_picking \
     core_3d_camera_free \
     core_3d_camera_first_person \
+    core_2d_camera \
+    core_world_screen \
+    core_oculus_rift \
     shapes_logo_raylib \
     shapes_basic_shapes \
     shapes_colors_palette \
@@ -208,6 +206,7 @@ EXAMPLES = \
     shaders_shapes_textures \
     shaders_custom_uniform \
     shaders_postprocessing \
+    shaders_standard_lighting \
     audio_sound_loading \
     audio_music_stream \
     fix_dylib \
@@ -287,7 +286,19 @@ core_3d_camera_free: core_3d_camera_free.c
 # compile [core] example - 3d camera first person
 core_3d_camera_first_person: core_3d_camera_first_person.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)    
+
+# compile [core] example - 2d camera
+core_2d_camera: core_2d_camera.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
     
+# compile [core] example - world screen
+core_world_screen: core_world_screen.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [core] example - oculus rift
+core_oculus_rift: core_oculus_rift.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
 # compile [shapes] example - raylib logo (with basic shapes)
 shapes_logo_raylib: shapes_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -411,7 +422,11 @@ shaders_custom_uniform: shaders_custom_uniform.c
 # compile [shaders] example - postprocessing shader
 shaders_postprocessing: shaders_postprocessing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
+# compile [shaders] example - standard lighting
+shaders_standard_lighting: shaders_standard_lighting.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
 # compile [audio] example - sound loading and playing (WAV and OGG)
 audio_sound_loading: audio_sound_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)

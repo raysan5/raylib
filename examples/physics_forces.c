@@ -5,19 +5,24 @@
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*   NOTE: This example requires raylib module [rlgl]
+*
+*   Compile example using:
+*   cmd /c IF NOT EXIST pthreadGC2.dll copy C:\raylib\raylib\src\external\pthread\pthreadGC2.dll $(CURRENT_DIRECTORY) /Y
+*
 *   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "math.h"
+
+#define PHYSAC_IMPLEMENTATION
+#include "physac.h"
 
 #define FORCE_AMOUNT        5.0f
 #define FORCE_RADIUS        150
 #define LINE_LENGTH         75
 #define TRIANGLE_LENGTH     12
-
-void DrawRigidbodyCircle(PhysicObject obj, Color color);
 
 int main()
 {
@@ -29,27 +34,25 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [physac] example - forces");
     InitPhysics((Vector2){ 0.0f, -9.81f/2 });      // Initialize physics module
     
-    SetTargetFPS(60);
-    
     // Global variables
     Vector2 mousePosition;
     bool isDebug = false;
     
     // Create rectangle physic objects
-    PhysicObject rectangles[3];
+    PhysicBody rectangles[3];
     for (int i = 0; i < 3; i++)
     {
-        rectangles[i] = CreatePhysicObject((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/3) : (screenHeight/1.5f)) }, 0.0f, (Vector2){ 50, 50 });
+        rectangles[i] = CreatePhysicBody((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/3) : (screenHeight/1.5f)) }, 0.0f, (Vector2){ 50, 50 });
         rectangles[i]->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
         rectangles[i]->rigidbody.friction = 0.1f;
     }
     
     // Create circles physic objects
     // NOTE: when creating circle physic objects, transform.scale must be { 0, 0 } and object radius must be defined in collider.radius and use this value to draw the circle.
-    PhysicObject circles[3];
+    PhysicBody circles[3];
     for (int i = 0; i < 3; i++)
     {
-        circles[i] = CreatePhysicObject((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/1.5f) : (screenHeight/4)) }, 0.0f, (Vector2){ 0, 0 });
+        circles[i] = CreatePhysicBody((Vector2){ screenWidth/4*(i+1), (((i % 2) == 0) ? (screenHeight/1.5f) : (screenHeight/4)) }, 0.0f, (Vector2){ 0, 0 });
         circles[i]->rigidbody.enabled = true;       // Enable physic object rigidbody behaviour
         circles[i]->rigidbody.friction = 0.1f;
         circles[i]->collider.type = COLLIDER_CIRCLE;
@@ -57,11 +60,12 @@ int main()
     }
     
     // Create walls physic objects
-    PhysicObject leftWall = CreatePhysicObject((Vector2){ -25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
-    PhysicObject rightWall = CreatePhysicObject((Vector2){ screenWidth + 25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
-    PhysicObject topWall = CreatePhysicObject((Vector2){ screenWidth/2, -25 }, 0.0f, (Vector2){ screenWidth, 50 });
-    PhysicObject bottomWall = CreatePhysicObject((Vector2){ screenWidth/2, screenHeight + 25 }, 0.0f, (Vector2){ screenWidth, 50 });
+    PhysicBody leftWall = CreatePhysicBody((Vector2){ -25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
+    PhysicBody rightWall = CreatePhysicBody((Vector2){ screenWidth + 25, screenHeight/2 }, 0.0f, (Vector2){ 50, screenHeight });
+    PhysicBody topWall = CreatePhysicBody((Vector2){ screenWidth/2, -25 }, 0.0f, (Vector2){ screenWidth, 50 });
+    PhysicBody bottomWall = CreatePhysicBody((Vector2){ screenWidth/2, screenHeight + 25 }, 0.0f, (Vector2){ screenWidth, 50 });
     
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -69,7 +73,6 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdatePhysics();    // Update all created physic objects
         
         // Update mouse position value
         mousePosition = GetMousePosition();
@@ -166,7 +169,9 @@ int main()
             
             // Draw help messages
             DrawText("Use LEFT MOUSE BUTTON to apply a force", screenWidth/2 - MeasureText("Use LEFT MOUSE BUTTON to apply a force", 20)/2, screenHeight*0.075f, 20, LIGHTGRAY);
-            DrawText("Use R to reset objects position", screenWidth/2 - MeasureText("Use R to reset objects position", 20)/2, screenHeight*0.875f, 20, GRAY);    
+            DrawText("Use R to reset objects position", screenWidth/2 - MeasureText("Use R to reset objects position", 20)/2, screenHeight*0.875f, 20, GRAY);
+            
+            DrawFPS(10, 10);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

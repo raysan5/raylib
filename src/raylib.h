@@ -64,7 +64,7 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
-//#define PLATFORM_OCULUS       // Oculus Rift CV1
+//#define RLGL_OCULUS_SUPPORT   // Oculus Rift CV1 (complementary to PLATFORM_DESKTOP)
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -431,8 +431,8 @@ typedef struct Model {
 // Light type
 typedef struct LightData {
     unsigned int id;        // Light unique id
-    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     bool enabled;           // Light enabled
+    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     
     Vector3 position;       // Light position
     Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
@@ -467,8 +467,6 @@ typedef struct Wave {
     short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
-
-typedef int RawAudioContext;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -527,39 +525,18 @@ typedef struct GestureEvent {
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
-typedef enum { COLLIDER_CIRCLE, COLLIDER_RECTANGLE } ColliderType;
-
-typedef struct Transform {
-    Vector2 position;
-    float rotation;         // Radians (not used)
-    Vector2 scale;          // Just for rectangle physic objects, for circle physic objects use collider radius and keep scale as { 0, 0 }
-} Transform;
-
-typedef struct Rigidbody {
-    bool enabled;           // Acts as kinematic state (collisions are calculated anyway)
-    float mass;
-    Vector2 acceleration;
-    Vector2 velocity;
-    bool applyGravity;
-    bool isGrounded;
-    float friction;         // Normalized value
-    float bounciness;
-} Rigidbody;
-
-typedef struct Collider {
-    bool enabled;
-    ColliderType type;
-    Rectangle bounds;       // Used for COLLIDER_RECTANGLE
-    int radius;             // Used for COLLIDER_CIRCLE
-} Collider;
-
-typedef struct PhysicObjectData {
-    unsigned int id;
-    Transform transform;
-    Rigidbody rigidbody;
-    Collider collider;
-    bool enabled;
-} PhysicObjectData, *PhysicObject;
+// Head Mounted Display devices
+typedef enum {
+    HMD_DEFAULT_DEVICE = 0,
+    HMD_OCULUS_RIFT_DK2,
+    HMD_OCULUS_RIFT_CV1,
+    HMD_VALVE_HTC_VIVE,
+    HMD_SAMSUNG_GEAR_VR,
+    HMD_GOOGLE_CARDBOARD,
+    HMD_SONY_PLAYSTATION_VR,
+    HMD_RAZER_OSVR,
+    HMD_FOVE_VR,
+} HmdDevice;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -577,12 +554,6 @@ extern "C" {            // Prevents name mangling of functions
 void InitWindow(int width, int height, struct android_app *state);  // Init Android Activity and OpenGL Graphics
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
-#endif
-
-#if defined(PLATFORM_OCULUS)
-void InitOculusDevice(void);                                // Init Oculus Rift device
-void CloseOculusDevice(void);                               // Close Oculus Rift device
-void UpdateOculusTracking(void);                            // Update Oculus Rift tracking (position and orientation)
 #endif
 
 void CloseWindow(void);                                     // Close Window and Terminate Context
@@ -678,13 +649,13 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
+void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
-bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-int GetGestureDetected(void);                           // Get latest detected gesture
-void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
-int GetTouchPointsCount(void);                          // Get touch points count
 
+int GetTouchPointsCount(void);                          // Get touch points count
+int GetGestureDetected(void);                           // Get latest detected gesture
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
@@ -834,7 +805,6 @@ Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d mod
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
-void SetModelTexture(Model *model, Texture2D texture);          // Link a texture to a model
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
@@ -886,20 +856,17 @@ void EndBlendMode(void);                                            // End blend
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
-//----------------------------------------------------------------------------------
-// Physics System Functions (Module: physac)
-//----------------------------------------------------------------------------------
-void InitPhysics(Vector2 gravity);                                                      // Initializes pointers array (just pointers, fixed size)
-void UpdatePhysics();                                                                   // Update physic objects, calculating physic behaviours and collisions detection
-void ClosePhysics();                                                                    // Unitialize all physic objects and empty the objects pool
-
-PhysicObject CreatePhysicObject(Vector2 position, float rotation, Vector2 scale);       // Create a new physic object dinamically, initialize it and add to pool
-void DestroyPhysicObject(PhysicObject pObj);                                            // Destroy a specific physic object and take it out of the list
-
-void ApplyForce(PhysicObject pObj, Vector2 force);                                      // Apply directional force to a physic object
-void ApplyForceAtPosition(Vector2 position, float force, float radius);                 // Apply radial force to all physic objects in range
-
-Rectangle TransformToRectangle(Transform transform);                                    // Convert Transform data type to Rectangle (position and scale)
+//------------------------------------------------------------------------------------
+// VR experience Functions (Module: rlgl)
+// NOTE: This functions are useless when using OpenGL 1.1
+//------------------------------------------------------------------------------------
+void InitVrDevice(int hmdDevice);           // Init VR device
+void CloseVrDevice(void);                   // Close VR device
+void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
+void BeginVrDrawing(void);                  // Begin VR drawing configuration
+void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
@@ -926,17 +893,10 @@ void PauseMusicStream(int index);                               // Pause music p
 void ResumeMusicStream(int index);                              // Resume playing paused music
 bool IsMusicPlaying(int index);                                 // Check if music is playing
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
+void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
 float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int GetMusicStreamCount(void);
-void SetMusicPitch(int index, float pitch);
-
-// used to output raw audio streams, returns negative numbers on error
-// if floating point is false the data size is 16bit short, otherwise it is float 32bit
-RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
-
-void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
+int GetMusicStreamCount(void);                                  // Get number of streams loaded
 
 #ifdef __cplusplus
 }

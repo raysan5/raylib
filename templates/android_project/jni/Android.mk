@@ -83,7 +83,7 @@ LOCAL_SRC_FILES  := basic_game.c
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/include
 
 # Required flags for compilation: defines PLATFORM_ANDROID
-LOCAL_CFLAGS     := -Wall -std=c99 -g -DPLATFORM_ANDROID
+LOCAL_CFLAGS     := -Wall -std=c99 -DPLATFORM_ANDROID
 
 # Linker required libraries (not many...)
 LOCAL_LDLIBS     := -llog -landroid -lEGL -lGLESv2 -lOpenSLES

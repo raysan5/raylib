@@ -29,7 +29,7 @@ int main()
     
     // NOTE: By default each cube is mapped to one part of texture atlas
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
-    SetModelTexture(&map, texture);                         // Bind texture to map model
+    map.material.texDiffuse = texture;                      // Set map diffuse texture
     
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };          // Set model position
 

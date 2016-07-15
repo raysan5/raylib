@@ -422,12 +422,7 @@ void UnloadTexture(Texture2D texture)
 // Unload render texture from GPU memory
 void UnloadRenderTexture(RenderTexture2D target)
 {
-    if (target.id != 0)
-    {
-        rlDeleteRenderTextures(target);
-        
-        TraceLog(INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
-    }
+    if (target.id != 0) rlDeleteRenderTextures(target);
 }
 
 // Get pixel data from image in the form of Color struct array

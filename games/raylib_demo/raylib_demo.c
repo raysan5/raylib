@@ -202,8 +202,8 @@ int main()
     camera = (Camera){{ 0.0, 12.0, 15.0 }, { 0.0, 3.0, 0.0 }, { 0.0, 1.0, 0.0 }};
 
     catTexture = LoadTexture("resources/catsham.png");   // Load model texture
-    cat = LoadModel("resources/cat.obj");                 // Load OBJ model
-    SetModelTexture(&cat, catTexture);
+    cat = LoadModel("resources/cat.obj");                // Load OBJ model
+    cat.material.texDiffuse = texture;                   // Set cat model diffuse texture
     
     fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
     fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
