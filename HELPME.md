@@ -7,23 +7,21 @@ please, [let me know][raysan5].
 The following help is highly appreciated:
 
 	- C programming - Can you write / review / test / improve the code? 
-	- Translators / Localizators - Can you translate raylib to another language?
 	- Documentation / Tutorials / Example writters - Can you write some tutorial / example?
 	- Web Development - Can you help with the web? Can you setup a forum?
-	- Porting to Linux, OSX... - Can you compile and test raylib on another OS?
+	- Porting to Linux, OSX, RaspberryPi, consoles... - Can you compile and test raylib on another systems?
 	- Testers of current features and multiple systems - Can you find some bug on raylib?
 
 If you can not help on any of the above points but you still want to contribute in some way... please, consider helping 
-with a small [donation](http://www.raylib.com/helpme.htm) (just some euros...). It will really motivate to continue improving this project (and pay some bills… or some coffee).
+with a small [donation](http://www.raylib.com/helpme.htm) or contributing with [raylib patreon](https://www.patreon.com/raysan5). It will really motivate to continue improving this project (and pay some bills… or some coffee).
 
 raylib philosophy
 ------------------
 
-   * raylib is a tool to LEARN videogames programming, every single function in raylib should be a tutorial on itself (clear code).
-   * raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or 
-	 has not a clear usefulness, better not to include it.
+   * raylib is a tool to LEARN videogames programming, every single function in raylib should be a tutorial on itself.
+   * raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or has not a clear usefulness, better not to include it.
    * raylib is open source and free; educators and institutions can use this tool to TEACH videogames programming completely by free. 
-   * raylib is, hopefully, collaborative; contribution of tutorials / code-examples / bugs-solving / code-comments are highly appreciated.
+   * raylib is collaborative; contribution of tutorials / code-examples / bugs-solving / code-comments are highly appreciated.
    * raylib's license (and its external libs respective licenses) allow using it for commercial products.
 
 contact
