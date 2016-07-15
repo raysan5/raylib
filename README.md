@@ -149,7 +149,7 @@ This new version is so massie that is difficult to list all the improvements, mo
 
 Up to 8 new code examples have been added to show the new raylib features and also some samples to show the usage of [rlgl]() and [audio]() raylib modules as standalone libraries.
 
-Lots of code changes (more than 300 commits) and lots of hours of hard work have concluded in this amazing new raylib 1.5.
+Lots of code changes (more than 400 commits) and lots of hours of hard work have concluded in this amazing new raylib 1.5.
 
 features
 --------
