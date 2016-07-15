@@ -468,8 +468,6 @@ typedef struct Wave {
     short channels;
 } Wave;
 
-typedef int RawAudioContext;
-
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
