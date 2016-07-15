@@ -17,7 +17,7 @@ raylib 1.x
 
 raylib 1.5
 
-    [DONE] Support Oculus Rift CV1
+    [DONE] Support Oculus Rift CV1 and VR stereo rendering (simulator)
     [DONE] Redesign Shaders/Textures system -> New Materials system
     [DONE] Support lighting: Omni, Directional and Spot lights
     [DONE] Redesign physics module (physac)
