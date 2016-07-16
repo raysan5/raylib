@@ -101,14 +101,14 @@ else
     INCLUDES += -Iexternal/openal_soft/include
 endif
 
-# define all object files required
-OBJS = core.o rlgl.o shapes.o text.o textures.o models.o audio.o utils.o \
-       camera.o gestures.o stb_vorbis.o
+# define all object files required with a wildcard
+OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 
 # typing 'make', it will invoke the first target on the file.
 # The target 'all' compile raylib into static, web and dynamic library.
 # TODO: add possibility to compile web and dynamic version of raylib.
 all: libraylib.a
+
 # compile raylib static library for desktop platforms
 libraylib.a : $(OBJS)
 	ar rcs libraylib.a $(OBJS)
@@ -118,57 +118,24 @@ libraylib.bc : $(OBJS)
 	emcc -O1 $(OBJS) -o libraylib.bc
 	@echo "libraylib.bc generated (web version)!"
 
-# compile core module
-# emcc core.c -o core.bc -DPLATFORM_DESKTOP
-core.o: core.c
-	$(CC) -c core.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-
-# compile rlgl module
-rlgl.o: rlgl.c
-	$(CC) -c rlgl.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-
-# compile shapes module
-shapes.o: shapes.c
-	$(CC) -c shapes.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-
-# compile textures module
-textures.o: textures.c
-	$(CC) -c textures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-
-# compile text module
-text.o: text.c
-	$(CC) -c text.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-
-# compile models module
-models.o: models.c
-	$(CC) -c models.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-
-# compile audio module
-audio.o: audio.c
-	$(CC) -c audio.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
-# compile utils module
-utils.o: utils.c
-	$(CC) -c utils.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
-# compile camera module
-camera.o: camera.c
-	$(CC) -c camera.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
-# compile gestures module
-gestures.o: gestures.c
-	$(CC) -c gestures.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+# compile all modules
+%.o : %.c %.h
+ifneq ($(PLATFORM),PLATTFORM_WEB) 
+	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+else
+	emcc $< -o $@ -DPLATFORM_DEKSTOP
+endif
 
 # compile stb_vorbis library
-stb_vorbis.o: external/stb_vorbis.c
-	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
+#stb_vorbis.o: external/stb_vorbis.c
+#	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
 
 # It installs (copy) raylib dev files (static library and header) to standard
 # directories on GNU/Linux platform.
 # TODO: add other platforms.
 install :
 ifeq ($(ROOT),root)
-    ifeq ($(UNAMEOS),Linux)
+    ifeq ($(PLATFORM_OS),LINUX)
 		cp --update libraylib.a /usr/local/lib/libraylib.a
 		cp --update raylib.h /usr/local/include/raylib.h
 		@echo "raylib dev files installed/updated!"
@@ -183,7 +150,7 @@ endif
 # TODO: see 'install' target.
 unistall :
 ifeq ($(ROOT),root)
-    ifeq ($(UNAMEOS),Linux)
+    ifeq ($(PLATFORM_OS),LINUX)
 		rm --force /usr/local/lib/libraylib.a
 		rm --force /usr/local/include/raylib.h
 		@echo "raylib dev files removed!"
