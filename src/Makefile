@@ -196,24 +196,12 @@ endif
 
 # clean everything
 clean:
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-		del *.o libraylib.a
-    else
-		rm -f *.o libraylib.a
-    endif
+ifeq ($(PLATFORM_OS),WINDOWS)
+	del *.o libraylib.a libraylib.bc
+else
+	rm -f *.o libraylib.a libraylib.bc
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-		del *.o libraylib.bc
-    else
-		rm -f *.o libraylib.bc
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-	rm -f *.o libraylib.a
-endif
-	@echo Cleaning done
+	@echo "removed all generated files!"
 
 # instead of defining every module one by one, we can define a pattern
 # this pattern below will automatically compile every module defined on $(OBJS)
