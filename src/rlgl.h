@@ -239,6 +239,19 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // TraceLog message types
     typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+    
+    // Head Mounted Display devices
+    typedef enum {
+        HMD_DEFAULT_DEVICE = 0,
+        HMD_OCULUS_RIFT_DK2,
+        HMD_OCULUS_RIFT_CV1,
+        HMD_VALVE_HTC_VIVE,
+        HMD_SAMSUNG_GEAR_VR,
+        HMD_GOOGLE_CARDBOARD,
+        HMD_SONY_PLAYSTATION_VR,
+        HMD_RAZER_OSVR,
+        HMD_FOVE_VR,
+    } HmdDevice;
 #endif
 
 #ifdef __cplusplus

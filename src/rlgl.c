@@ -2683,8 +2683,8 @@ void ToggleVrMode(void)
     if (!vrEnabled)
     {   
         // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
-        projection = MatrixOrtho(0, GetScreenWidth(), GetScreenHeight(), 0, 0.0f, 1.0f);
+        rlViewport(0, 0, screenWidth, screenHeight);
+        projection = MatrixOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);
         MatrixTranspose(&projection);
         modelview = MatrixIdentity();
     }
