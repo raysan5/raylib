@@ -145,9 +145,9 @@ Redesigned physics module: [physac](https://github.com/raysan5/raylib/blob/devel
 
 Audio chiptunese support and mixing channels: Added support for module audio music (.xm, .mod) loading and playing. Multiple mixing channels are now also supported. All this features thanks to the amazing work of @kd7tck.
 
-Other additions include a [2D camera system](https://github.com/raysan5/raylib/blob/develop/examples/core_2d_camera.c), render textures for offline render (and most comprhensive [postprocessing](https://github.com/raysan5/raylib/blob/develop/examples/shaders_postprocessing.c)) or support for legacy OpenGL 2.1 on desktop platforms.
+Other additions include a [2D camera system](https://github.com/raysan5/raylib/blob/develop/examples/core_2d_camera.c), render textures for offline render (and most comprehensive [postprocessing](https://github.com/raysan5/raylib/blob/develop/examples/shaders_postprocessing.c)) or support for legacy OpenGL 2.1 on desktop platforms.
 
-This new version is so massie that is difficult to list all the improvements, most of raylib modules have been reviewed and [rlgl](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) module has been completely redesigned to accomodate to new material-lighting systems and stereo rendering. You can check [CHANGELOG](https://github.com/raysan5/raylib/blob/develop/CHANGELOG) file for a more detailed list of changes.
+This new version is so massive that is difficult to list all the improvements, most of raylib modules have been reviewed and [rlgl](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) module has been completely redesigned to accomodate to new material-lighting systems and stereo rendering. You can check [CHANGELOG](https://github.com/raysan5/raylib/blob/develop/CHANGELOG) file for a more detailed list of changes.
 
 Up to 8 new code examples have been added to show the new raylib features and also some samples to show the usage of [rlgl]() and [audio]() raylib modules as standalone libraries.
 
