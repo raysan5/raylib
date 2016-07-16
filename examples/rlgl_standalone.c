@@ -8,8 +8,14 @@
 *   Compile rlgl module using:
 *   gcc -c rlgl.c -Wall -std=c99 -DRLGL_STANDALONE -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33
 *
+*   NOTE: rlgl module requires the following header-only files:
+*       external/glad.h - OpenGL extensions loader (stripped to only required extensions)
+*       shader_standard.h - Standard shader for materials and lighting
+*       shader_distortion.h - Distortion shader for VR
+*       raymath.h - Vector and matrix math functions
+*
 *   Compile example using:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) rlgl.o -lglfw3 -lopengl32 -lgdi32 -std=c99
+*   gcc -o rlgl_standalone.exe rlgl_standalone.c rlgl.o -lglfw3 -lopengl32 -lgdi32 -std=c99
 *
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -83,7 +89,7 @@ int main(void)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     
-    // Initialize supported extensions
+    // Load OpenGL 3.3 supported extensions
     rlglLoadExtensions(glfwGetProcAddress);
     //--------------------------------------------------------
     
@@ -101,13 +107,13 @@ int main(void)
     rlClearColor(245, 245, 245, 255);                   // Define clear color
     rlEnableDepthTest();                                // Enable DEPTH_TEST for 3D
     
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)
-    
     Camera camera;
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
+    
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)
     //--------------------------------------------------------------------------------------    
 
     // Main game loop    
@@ -169,8 +175,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     rlglClose();                    // Unload rlgl internal buffers and default shader/texture
     
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    glfwDestroyWindow(window);      // Close window
+    glfwTerminate();                // Free GLFW3 resources
     //--------------------------------------------------------------------------------------
     
     return 0;
