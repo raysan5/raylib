@@ -11,7 +11,7 @@
 *       jar_mod - MOD audio file loading
 *
 *   Compile audio module using:
-*   gcc -c audio.c stb_vorbis.c -DAUDIO_STANDALONE
+*   gcc -c audio.c stb_vorbis.c -Wall -std=c99 -DAUDIO_STANDALONE
 *
 *   Compile example using:
 *   gcc -o $(NAME_PART).exe $(FILE_NAME) audio.o stb_vorbis.o -lopenal32 -std=c99
