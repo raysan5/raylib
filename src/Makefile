@@ -69,11 +69,9 @@ endif
 
 # define compiler: gcc for C program, define as g++ for C++
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # define emscripten compiler
-    CC = emcc
+    CC = emcc # emscripten compiler
 else
-    # define default gcc compiler
-    CC = gcc
+    CC = gcc # default gcc compiler
 endif
 
 # define compiler flags:
@@ -106,16 +104,16 @@ OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 
 # typing 'make', it will invoke the first target on the file.
 # The target 'all' compile raylib into static, web and dynamic library.
-# TODO: add possibility to compile web and dynamic version of raylib.
-all: libraylib.a
+# TODO: add possibility to compile dynamic version of raylib.
+all: libraylib.a libraylib.bc
 
 # compile raylib static library for desktop platforms
 libraylib.a : $(OBJS)
-	ar rcs libraylib.a $(OBJS)
+	ar rcs $@ $(OBJS)
 	@echo "libraylib.a generated (static library)!"
 
 libraylib.bc : $(OBJS)
-	emcc -O1 $(OBJS) -o libraylib.bc
+	emcc -O1 $(OBJS) -o $@
 	@echo "libraylib.bc generated (web version)!"
 
 # compile all modules
@@ -123,7 +121,7 @@ libraylib.bc : $(OBJS)
 ifneq ($(PLATFORM),PLATTFORM_WEB) 
 	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 else
-	emcc $< -o $@ -DPLATFORM_DEKSTOP
+	emcc -c -o $@ $< $(CFLAGS) $(INCLUDES) -D$(GRAPHICS) -DPLATFORM_DEKSTOP
 endif
 
 # compile stb_vorbis library
