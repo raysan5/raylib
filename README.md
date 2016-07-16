@@ -131,25 +131,27 @@ Lots of code changes and lots of hours of hard work have concluded in this amazi
 notes on raylib 1.5
 -------------------
 
-On July 2016, after 5 months of raylib 1.4 release, arrives raylib 1.5. Probably this new version is the biggest boost of the library ever, lots of parts of the library have been redesigned, lots of bugs have been solved and some **AMAZING** new features have been added.
+On July 2016, after 5 months of raylib 1.4 release, arrives raylib 1.5. This new version is the biggest boost of the library until now, lots of parts of the library have been redesigned, lots of bugs have been solved and some **AMAZING** new features have been added.
 
-VR support: **Oculus Rift CV1**. raylib supports Oculus Rift CV1, one of the most anticipated VR devices in the market. Additionally, raylib supports simulated VR stereo rendering, independent of the VR device; it means, raylib can generate stereo renders with custom head-mounted-display device parameteres, that way, any VR device in the market can be **simulated in any platform** just configuring device parameters (and consequently, lens distortion). To enable VR is [extremely easy](https://github.com/raysan5/raylib/blob/develop/examples/core_oculus_rift.c).
+VR support: raylib supports **Oculus Rift CV1**, one of the most anticipated VR devices in the market. Additionally, raylib supports simulated VR stereo rendering, independent of the VR device; it means, raylib can generate stereo renders with custom head-mounted-display device parameteres, that way, any VR device in the market can be **simulated in any platform** just configuring device parameters (and consequently, lens distortion). To enable VR is [extremely easy](https://github.com/raysan5/raylib/blob/develop/examples/core_oculus_rift.c).
 
 New materials system: now raylib supports standard material properties for 3D models, including diffuse-ambient-specular colors and diffuse-normal-specular textures. Just assign values to standard material and everything is processed internally.
 
-New lighting system: added support for up to 8 configurable lights, supported light types are **point light**, **directional light** and **spot light**. Just create a light, configure it and raylib manages render internally for every 3d object using standard material.
+New lighting system: added support for up to 8 configurable lights and 3 light types: **point light**, **directional light** and **spot light**. Just create a light, configure its parameters and raylib manages render internally for every 3d object using standard material.
 
-Complete gamepad support on Raspberry Pi: Gamepad system has been completely redesigned. Now multiple gamepads can be easily used and  configured and gamepad data is read and processed in raw mode in a second thread.
+Complete gamepad support on Raspberry Pi: Gamepad system has been completely redesigned. Now multiple gamepads can be easily configured and used; gamepad data is read and processed in raw mode in a second thread.
 
-Redesigned physics module: physac module has been converted to header only and usage has been simplified. Performance has also been singnificantly improved, now physic objects now are managed internally in a second thread.
+Redesigned physics module: [physac](https://github.com/raysan5/raylib/blob/develop/src/physac.h) module has been converted to header only and usage [has been simplified](https://github.com/raysan5/raylib/blob/develop/examples/physics_basic_rigidbody.c). Performance has also been singnificantly improved, now physic objects are managed internally in a second thread.
 
-Audio chiptunese support and mixing channels: Added support for module audio music (.xm, .mod) loading and playing. Multiple mixing channels are now also supported. All this features thanks to @kd7tck amazing work.
+Audio chiptunese support and mixing channels: Added support for module audio music (.xm, .mod) loading and playing. Multiple mixing channels are now also supported. All this features thanks to the amazing work of @kd7tck.
 
-This new version is so massie that is difficult to list all the improvements, most of raylib modules have been reviewed and [rlgl](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) module has been completely redesigned to accomodate to new material and lighting systems. You can check [CHANGELOG](https://github.com/raysan5/raylib/blob/develop/CHANGELOG) file for a more detailed list of changes.
+Other additions include a [2D camera system](https://github.com/raysan5/raylib/blob/develop/examples/core_2d_camera.c), render textures for offline render (and most comprhensive [postprocessing](https://github.com/raysan5/raylib/blob/develop/examples/shaders_postprocessing.c)) or support for legacy OpenGL 2.1 on desktop platforms.
+
+This new version is so massie that is difficult to list all the improvements, most of raylib modules have been reviewed and [rlgl](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) module has been completely redesigned to accomodate to new material-lighting systems and stereo rendering. You can check [CHANGELOG](https://github.com/raysan5/raylib/blob/develop/CHANGELOG) file for a more detailed list of changes.
 
 Up to 8 new code examples have been added to show the new raylib features and also some samples to show the usage of [rlgl]() and [audio]() raylib modules as standalone libraries.
 
-Lots of code changes (more than 400 commits) and lots of hours of hard work have concluded in this amazing new raylib 1.5.
+Lots of code changes (+400 commits) and lots of hours of hard work have concluded in this amazing new raylib 1.5.
 
 features
 --------
@@ -177,6 +179,8 @@ to accomodate to Android, Raspberry Pi and HTML5.
 On Android, raylib uses `native_app_glue module` (provided by Android NDK) and native Android libraries to manage window/context, inputs and activity cycle.
 
 On Raspberry Pi, raylib uses Videocore API and EGL for window/context management and raw inputs reading.
+
+On Oculus Rift CV1, raylib uses Oculus PC SDK libraries but only the core C library ([LibOVR](https://github.com/raysan5/raylib/tree/develop/src/external/OculusSDK/LibOVR)); runtime library (LibOVRRT32_1.dll) must be linked at compilation time.
 
 raylib is licensed under a zlib/libpng license. View [LICENSE](https://github.com/raysan5/raylib/blob/master/LICENSE.md).
 
