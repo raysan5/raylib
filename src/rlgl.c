@@ -54,12 +54,11 @@
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
     #define GLAD_IMPLEMENTATION
-#if defined(RLGL_STANDALONE)
-    #include "glad.h"               // GLAD extensions loading library, includes OpenGL headers
-#else
-    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
-#endif
-
+    #if defined(RLGL_STANDALONE)
+        #include "glad.h"           // GLAD extensions loading library, includes OpenGL headers
+    #else
+        #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
+    #endif
     #endif
 #endif
 
@@ -84,6 +83,12 @@
 //#define RLGL_OCULUS_SUPPORT       // Enable Oculus Rift code
 #if defined(RLGL_OCULUS_SUPPORT)
     #include "external/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
+#endif
+
+#if defined(RLGL_STANDALONE)
+    #define OCULUSAPI
+#else
+    #define OCULUSAPI static
 #endif
 
 //----------------------------------------------------------------------------------
@@ -362,11 +367,13 @@ static char *ReadTextFile(const char *fileName); // Read chars array from text f
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
+#if !defined(RLGL_STANDALONE)
 static bool InitOculusDevice(void);         // Initialize Oculus device (returns true if success)
 static void CloseOculusDevice(void);        // Close Oculus device
 static void UpdateOculusTracking(void);     // Update Oculus head position-orientation tracking
 static void BeginOculusDrawing(void);       // Setup Oculus buffers for drawing
 static void EndOculusDrawing(void);         // Finish Oculus drawing and blit framebuffer to mirror
+#endif
 
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
 static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);            // Unload texture required buffers
@@ -376,6 +383,8 @@ static void BlitOculusMirror(ovrSession session, OculusMirror mirror);          
 static OculusLayer InitOculusLayer(ovrSession session);                             // Init Oculus layer (similar to photoshop)
 static Matrix FromOvrMatrix(ovrMatrix4f ovrM);  // Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
 #endif
+
+
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
@@ -3936,7 +3945,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 
 #if defined(RLGL_OCULUS_SUPPORT)
 // Initialize Oculus device (returns true if success)
-static bool InitOculusDevice(void)
+OCULUSAPI bool InitOculusDevice(void)
 {
     bool oculusReady = false;
 
@@ -3983,7 +3992,7 @@ static bool InitOculusDevice(void)
 }
 
 // Close Oculus device (and unload buffers)
-static void CloseOculusDevice(void)
+OCULUSAPI void CloseOculusDevice(void)
 {
     UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
     UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
@@ -3993,7 +4002,7 @@ static void CloseOculusDevice(void)
 }
 
 // Update Oculus head position-orientation tracking
-static void UpdateOculusTracking(void)
+OCULUSAPI void UpdateOculusTracking(void)
 {
     frameIndex++;
 
@@ -4016,7 +4025,7 @@ static void UpdateOculusTracking(void)
 }
 
 // Setup Oculus buffers for drawing
-static void BeginOculusDrawing(void)
+OCULUSAPI void BeginOculusDrawing(void)
 {
     GLuint currentTexId;
     int currentIndex;
@@ -4030,7 +4039,7 @@ static void BeginOculusDrawing(void)
 }
 
 // Finish Oculus drawing and blit framebuffer to mirror
-static void EndOculusDrawing(void)
+OCULUSAPI void EndOculusDrawing(void)
 {
     // Unbind current framebuffer (Oculus buffer)
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);

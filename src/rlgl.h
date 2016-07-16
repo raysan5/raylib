@@ -363,6 +363,7 @@ Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a 
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 void TraceLog(int msgType, const char *text, ...);
+float *MatrixToFloat(Matrix mat);
 
 void InitVrDevice(int hmdDevice);           // Init VR device
 void CloseVrDevice(void);                   // Close VR device
@@ -371,6 +372,13 @@ void BeginVrDrawing(void);                  // Begin VR drawing configuration
 void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
+
+// Oculus Rift API for direct access the device (no simulator)
+bool InitOculusDevice(void);                // Initialize Oculus device (returns true if success)
+void CloseOculusDevice(void);               // Close Oculus device
+void UpdateOculusTracking(void);            // Update Oculus head position-orientation tracking
+void BeginOculusDrawing(void);              // Setup Oculus buffers for drawing
+void EndOculusDrawing(void);                // Finish Oculus drawing and blit framebuffer to mirror
 #endif
 
 #ifdef __cplusplus
