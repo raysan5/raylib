@@ -24,11 +24,14 @@
 #
 #******************************************************************************
 
-.PHONY: all clean
+.PHONY: all clean install unistall
 
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
+
+# determine if the file has root access (only for installing raylib)
+ROOT = $(shell whoami)
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -103,25 +106,17 @@ OBJS = core.o rlgl.o shapes.o text.o textures.o models.o audio.o utils.o \
        camera.o gestures.o stb_vorbis.o
 
 # typing 'make', it will invoke the first target on the file.
-# 'all' target compile raylib into static, web and dynamic library versions.
-# WIP: allow compiling of other versions.
+# The target 'all' compile raylib into static, web and dynamic library.
+# TODO: add possibility to compile web and dynamic version of raylib.
 all: libraylib.a
-
 # compile raylib static library for desktop platforms
 libraylib.a : $(OBJS)
 	ar rcs libraylib.a $(OBJS)
-	@echo "\t**libraylib.a generated!**"
+	@echo "libraylib.a generated (static library)!"
 
 libraylib.bc : $(OBJS)
 	emcc -O1 $(OBJS) -o libraylib.bc
-
-# compile raylib library
-# raylib: $(OBJS)
-# ifeq ($(PLATFORM),PLATFORM_WEB)
-#	emcc -O1 $(OBJS) -o libraylib.bc
-#else
-#	ar rcs libraylib.a $(OBJS)
-#endif
+	@echo "libraylib.bc generated (web version)!"
 
 # compile core module
 # emcc core.c -o core.bc -DPLATFORM_DESKTOP
@@ -167,6 +162,37 @@ gestures.o: gestures.c
 # compile stb_vorbis library
 stb_vorbis.o: external/stb_vorbis.c
 	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
+
+# It installs (copy) raylib dev files (static library and header) to standard
+# directories on GNU/Linux platform.
+# TODO: add other platforms.
+install :
+ifeq ($(ROOT),root)
+    ifeq ($(UNAMEOS),Linux)
+		cp --update libraylib.a /usr/local/lib/libraylib.a
+		cp --update raylib.h /usr/local/include/raylib.h
+		@echo "raylib dev files installed/updated!"
+    else
+		@echo "This function works only on GNU/Linux systems"
+    endif
+else
+	@echo "Error: no root permissions"
+endif
+
+# it removes raylib dev files installed on the system.
+# TODO: see 'install' target.
+unistall :
+ifeq ($(ROOT),root)
+    ifeq ($(UNAMEOS),Linux)
+		rm --force /usr/local/lib/libraylib.a
+		rm --force /usr/local/include/raylib.h
+		@echo "raylib dev files removed!"
+    else
+		@echo "This function works only on GNU/Linux systems"
+    endif
+else
+	@echo "Error: no root permissions"
+endif
 
 # clean everything
 clean:
