@@ -2645,6 +2645,10 @@ void InitVrDevice(int hmdDevice)
         vrEnabled = true;
     }
 #endif
+
+#if defined(GRAPHICS_API_OPENGL_11)
+    TraceLog(WARNING, "VR device or simulator not supported on OpenGL 1.1");
+#endif
 }
 
 // Close VR device (or simulator)
@@ -2672,6 +2676,7 @@ bool IsVrDeviceReady(void)
 // Enable/Disable VR experience (device or simulator)
 void ToggleVrMode(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (vrDeviceReady || vrSimulator) vrEnabled = !vrEnabled;
     else vrEnabled = false;
     
@@ -2683,6 +2688,7 @@ void ToggleVrMode(void)
         MatrixTranspose(&projection);
         modelview = MatrixIdentity();
     }
+#endif
 }
 
 // Update VR tracking (position and orientation)
