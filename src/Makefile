@@ -1,25 +1,28 @@
-#**************************************************************************************************
+#******************************************************************************
 #
-#   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
+#  raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
-#   Copyright (c) 2014 Ramon Santamaria (@raysan5)
-#    
-#   This software is provided "as-is", without any express or implied warranty. In no event 
-#   will the authors be held liable for any damages arising from the use of this software.
+#  Copyright (c) 2014 Ramon Santamaria (@raysan5)
 #
-#   Permission is granted to anyone to use this software for any purpose, including commercial 
-#   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+#  This software is provided "as-is", without any express or implied warranty.
+#  In no event will the authors be held liable for any damages arising from
+#  the use of this software.
 #
-#     1. The origin of this software must not be misrepresented; you must not claim that you 
-#     wrote the original software. If you use this software in a product, an acknowledgment 
-#     in the product documentation would be appreciated but is not required.
+#  Permission is granted to anyone to use this software for any purpose,
+#  including commercial applications, and to alter it and redistribute it
+#  freely, subject to the following restrictions:
 #
-#     2. Altered source versions must be plainly marked as such, and must not be misrepresented
-#     as being the original software.
+#    1. The origin of this software must not be misrepresented; you must not
+#    claim that you wrote the original software. If you use this software in a
+#    product, an acknowledgment in the product documentation would be
+#    appreciated but is not required.
 #
-#     3. This notice may not be removed or altered from any source distribution.
+#    2. Altered source versions must be plainly marked as such, and must not
+#    be misrepresented as being the original software.
 #
-#**************************************************************************************************
+#    3. This notice may not be removed or altered from any source distribution.
+#
+#******************************************************************************
 
 .PHONY: all clean
 
@@ -29,7 +32,8 @@ PLATFORM ?= PLATFORM_DESKTOP
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
+    # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
+    # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS=WINDOWS
     else
@@ -74,7 +78,7 @@ endif
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
-#  -fgnu89-inline       declaring inline functions support (GCC optimized, faster)
+#  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 
@@ -82,7 +86,9 @@ CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -Iexternal -I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES = -I. -Iexternal -I/opt/vc/include \
+    -I/opt/vc/include/interface/vmcs_host/linux \
+    -I/opt/vc/include/interface/vcos/pthreads
 else
 # STB libraries and others
     INCLUDES = -I. -Iexternal
@@ -93,19 +99,29 @@ else
 endif
 
 # define all object files required
-OBJS = core.o rlgl.o shapes.o text.o textures.o models.o audio.o utils.o camera.o gestures.o stb_vorbis.o
+OBJS = core.o rlgl.o shapes.o text.o textures.o models.o audio.o utils.o \
+       camera.o gestures.o stb_vorbis.o
 
-# typing 'make' will invoke the default target entry called 'all',
-# in this case, the 'default' target entry is raylib
-all: raylib
+# typing 'make', it will invoke the first target on the file.
+# 'all' target compile raylib into static, web and dynamic library versions.
+# WIP: allow compiling of other versions.
+all: libraylib.a
+
+# compile raylib static library for desktop platforms
+libraylib.a : $(OBJS)
+	ar rcs libraylib.a $(OBJS)
+	@echo "\t**libraylib.a generated!**"
+
+libraylib.bc : $(OBJS)
+	emcc -O1 $(OBJS) -o libraylib.bc
 
 # compile raylib library
-raylib: $(OBJS)
-ifeq ($(PLATFORM),PLATFORM_WEB)
-	emcc -O1 $(OBJS) -o libraylib.bc
-else
-	ar rcs libraylib.a $(OBJS)
-endif
+# raylib: $(OBJS)
+# ifeq ($(PLATFORM),PLATFORM_WEB)
+#	emcc -O1 $(OBJS) -o libraylib.bc
+#else
+#	ar rcs libraylib.a $(OBJS)
+#endif
 
 # compile core module
 # emcc core.c -o core.bc -DPLATFORM_DESKTOP
