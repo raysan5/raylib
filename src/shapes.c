@@ -276,12 +276,29 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 // Draw a triangle
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
-    rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f(v1.x, v1.y);
-        rlVertex2f(v2.x, v2.y);
-        rlVertex2f(v3.x, v3.y);
-    rlEnd();
+    if (rlGetVersion() == OPENGL_11)
+    {
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(v1.x, v1.y);
+            rlVertex2f(v2.x, v2.y);
+            rlVertex2f(v3.x, v3.y);
+        rlEnd();
+    }
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        rlEnableTexture(GetDefaultTexture().id); // Default white texture
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(v1.x, v1.y);
+            rlVertex2f(v2.x, v2.y);
+            rlVertex2f(v2.x, v2.y);
+            rlVertex2f(v3.x, v3.y);
+        rlEnd();
+        
+        rlDisableTexture();
+    }
 }
 
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
