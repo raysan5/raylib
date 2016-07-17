@@ -209,6 +209,7 @@ EXAMPLES = \
     shaders_standard_lighting \
     audio_sound_loading \
     audio_music_stream \
+    audio_module_playing \
     fix_dylib \
 
 
@@ -433,6 +434,10 @@ audio_sound_loading: audio_sound_loading.c
 
 # compile [audio] example - music stream playing (OGG)
 audio_music_stream: audio_music_stream.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [audio] example - module playing (OGG)
+audio_module_playing: audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # fix dylib install path name for each executable (MAC)
