@@ -105,9 +105,7 @@ endif
 # The wildcard takes all files that finish with ".c", then it replaces the
 # extentions with ".o", that are the object files.
 OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
-
-AUDIO_PREREQUISITES = external/stb_vorbis.o external/jar_xm.h \
-                      external/jar_mod.h
+OBJS += external/stb_vorbis.o
 
 # typing 'make', it will invoke the first target on the file.
 # The target 'all' compile raylib into static, web and dynamic library.
@@ -123,6 +121,8 @@ libraylib.bc : $(OBJS)
 	emcc -O1 $(OBJS) -o $@
 	@echo "libraylib.bc generated (web version)!"
 
+# compile all modules with relative prerequisites (header files of the
+# project).
 camera.o : camera.c camera.h raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES)
 
@@ -150,8 +150,8 @@ textures.o : textures.c rlgl.h utils.h
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-audio.o : audio.c audio.h external/stb_vorbis.o
-	$(CC) -c $< external/stb_vorbis.o $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+audio.o : audio.c audio.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile stb_vorbis library
 external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
