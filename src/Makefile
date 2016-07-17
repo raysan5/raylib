@@ -24,11 +24,17 @@
 #
 #******************************************************************************
 
+# Please read the wiki to know how to compile raylib, because there are
+# different methods.
+
 .PHONY: all clean install unistall
 
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
+
+# define if you want shared or static version of library.
+SHARED ?= NO
 
 # determine if the file has root access (only for installing raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root
@@ -84,6 +90,9 @@ endif
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+ifeq ($(SHARED),YES)
+    CFLAGS += -fPIC
+endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
@@ -107,14 +116,16 @@ endif
 OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 OBJS += external/stb_vorbis.o
 
-# typing 'make', it will invoke the first target on the file.
-# The target 'all' compile raylib into static, web and dynamic library.
-all: libraylib.a #libraylib.bc #libraylib.so
-
 # compile raylib static library for desktop platforms.
+# The automatic variable "$@" is the target name, while "$<" is the first
+# prerequisite.
 libraylib.a : $(OBJS)
 	ar rcs $@ $(OBJS)
 	@echo "libraylib.a generated (static library)!"
+
+# compile raylib to shared library version.
+libraylib.so : $(OBJS)
+	$(CC) -shared -o $@ $(OBJS)
 
 # compile raylib for web.
 libraylib.bc : $(OBJS)
@@ -123,13 +134,13 @@ libraylib.bc : $(OBJS)
 
 # compile all modules with relative prerequisites (header files of the
 # project).
-camera.o : camera.c camera.h raylib.h
+camera.o : camera.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES)
 
 core.o : core.c raylib.h rlgl.h utils.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
 
-gestures.o : gestures.c gestures.h raylib.h
+gestures.o : gestures.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE)
 
 models.o : models.c raylib.h rlgl.h raymath.h
@@ -155,7 +166,7 @@ audio.o : audio.c audio.h
 
 # compile stb_vorbis library
 external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
-	$(CC) -c -o $@ $< -O1 $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c -o $@ $< -O1 $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # It installs (copy) raylib dev files (static library and header) to standard
 # directories on GNU/Linux platform.
@@ -163,8 +174,16 @@ external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 install :
 ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
-		cp --update libraylib.a /usr/local/lib/libraylib.a
+        # On GNU/Linux there are some standard directories that contain
+        # libraries and header files. These directory (/usr/local/lib and
+        # /usr/local/include/) are for libraries that are installed
+        # manually (without a package manager).
 		cp --update raylib.h /usr/local/include/raylib.h
+        ifeq ($(SHARED),YES)
+			cp --update libraylib.so /usr/local/lib/libraylib.so
+        else
+			cp --update libraylib.a /usr/local/lib/libraylib.a
+        endif
 		@echo "raylib dev files installed/updated!"
     else
 		@echo "This function works only on GNU/Linux systems"
@@ -178,12 +197,12 @@ endif
 unistall :
 ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
-        # On GNU/Linux there are some standard directories that contain
-        # libraries and header files. These directory (/usr/local/lib and
-        # /usr/local/include/) are for libraries that are installed
-        # manually (without a package manager).
-		rm --force /usr/local/lib/libraylib.a
-		rm --force /usr/local/include/raylib.h
+			rm --force /usr/local/include/raylib.h
+        ifeq ($(SHARED),YES)
+			rm --force /usr/local/lib/libraylib.so
+        else
+			rm --force /usr/local/lib/libraylib.a
+        endif
 		@echo "raylib dev files removed!"
     else
 		@echo "This function works only on GNU/Linux systems"
@@ -195,8 +214,8 @@ endif
 # clean everything
 clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
-	del *.o libraylib.a libraylib.bc
+	del *.o libraylib.a libraylib.bc libraylib.so external/stb_vorbis.o
 else
-	rm -f *.o libraylib.a libraylib.bc
+	rm -f *.o libraylib.a libraylib.bc libraylib.so external/stb_vorbis.o
 endif
 	@echo "removed all generated files!"
