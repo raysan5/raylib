@@ -31,6 +31,8 @@
 PLATFORM ?= PLATFORM_DESKTOP
 
 # determine if the file has root access (only for installing raylib)
+# "whoami" prints the name of the user that calls him (so, if it is the root
+# user, "whoami" prints "root").
 ROOT = $(shell whoami)
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
@@ -100,6 +102,8 @@ else
 endif
 
 # define all object files required with a wildcard
+# The wildcard takes all files that finish with ".c", then it replaces the
+# extentions with ".o", that are the object files.
 OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 
 # typing 'make', it will invoke the first target on the file.
@@ -116,7 +120,13 @@ libraylib.bc : $(OBJS)
 	emcc -O1 $(OBJS) -o $@
 	@echo "libraylib.bc generated (web version)!"
 
-# compile all modules
+# Instead of defining every module one by one, we can define a pattern that
+# automatically compiles every module defined on $(OBJS).
+# core.o : core.c core.h
+#    $(CC) -c -o core.o core.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+#
+# The automatic variables "$@" and "$<" are the target and the first
+# prerequisite.
 %.o : %.c %.h
 ifneq ($(PLATFORM),PLATTFORM_WEB) 
 	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
@@ -125,8 +135,8 @@ else
 endif
 
 # compile stb_vorbis library
-#stb_vorbis.o: external/stb_vorbis.c
-#	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
+stb_vorbis.o: external/stb_vorbis.c
+	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
 
 # It installs (copy) raylib dev files (static library and header) to standard
 # directories on GNU/Linux platform.
@@ -149,6 +159,10 @@ endif
 unistall :
 ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
+        # On GNU/Linux there are some standard directories that contain
+        # libraries and header files. These directory (/usr/local/lib and
+        # /usr/local/include/) are for libraries that are installed
+        # manually (without a package manager).
 		rm --force /usr/local/lib/libraylib.a
 		rm --force /usr/local/include/raylib.h
 		@echo "raylib dev files removed!"
@@ -167,8 +181,3 @@ else
 	rm -f *.o libraylib.a libraylib.bc
 endif
 	@echo "removed all generated files!"
-
-# instead of defining every module one by one, we can define a pattern
-# this pattern below will automatically compile every module defined on $(OBJS)
-#%.o : %.c
-#	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
