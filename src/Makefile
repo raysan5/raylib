@@ -106,37 +106,56 @@ endif
 # extentions with ".o", that are the object files.
 OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 
+AUDIO_PREREQUISITES = external/stb_vorbis.o external/jar_xm.h \
+                      external/jar_mod.h
+
 # typing 'make', it will invoke the first target on the file.
 # The target 'all' compile raylib into static, web and dynamic library.
-# TODO: add possibility to compile dynamic version of raylib.
-all: libraylib.a libraylib.bc
+all: libraylib.a #libraylib.bc #libraylib.so
 
-# compile raylib static library for desktop platforms
+# compile raylib static library for desktop platforms.
 libraylib.a : $(OBJS)
 	ar rcs $@ $(OBJS)
 	@echo "libraylib.a generated (static library)!"
 
+# compile raylib for web.
 libraylib.bc : $(OBJS)
 	emcc -O1 $(OBJS) -o $@
 	@echo "libraylib.bc generated (web version)!"
 
-# Instead of defining every module one by one, we can define a pattern that
-# automatically compiles every module defined on $(OBJS).
-# core.o : core.c core.h
-#    $(CC) -c -o core.o core.c $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-#
-# The automatic variables "$@" and "$<" are the target and the first
-# prerequisite.
-%.o : %.c %.h
-ifneq ($(PLATFORM),PLATTFORM_WEB) 
-	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
-else
-	emcc -c -o $@ $< $(CFLAGS) $(INCLUDES) -D$(GRAPHICS) -DPLATFORM_DEKSTOP
-endif
+camera.o : camera.c camera.h raylib.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES)
+
+core.o : core.c raylib.h rlgl.h utils.h raymath.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
+
+gestures.o : gestures.c gestures.h raylib.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE)
+
+models.o : models.c raylib.h rlgl.h raymath.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
+
+rlgl.o : rlgl.c rlgl.h 
+	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(GRAPHICS)
+
+shapes.o : shapes.c raylib.h rlgl.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE)
+
+text.o : text.c raylib.h utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE)
+
+textures.o : textures.c rlgl.h utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+
+utils.o : utils.c utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+audio.o : audio.c audio.h external/stb_vorbis.o
+	$(CC) -c $< external/stb_vorbis.o $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile stb_vorbis library
-stb_vorbis.o: external/stb_vorbis.c
-	$(CC) -c external/stb_vorbis.c -O1 $(INCLUDES) -D$(PLATFORM)
+external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
+	$(CC) -c -o $@ $< -O1 $(INCLUDES) -D$(PLATFORM)
 
 # It installs (copy) raylib dev files (static library and header) to standard
 # directories on GNU/Linux platform.
