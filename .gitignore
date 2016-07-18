@@ -1,6 +1,9 @@
 # Ignore generated files
 # ...
 
+# Ignore VIM's backup generated files
+*.swp
+
 # Ignore Android generated files and folders
 src_android/obj/
 templates/android_project/bin/
@@ -67,7 +70,6 @@ src/libraylib.bc
 
 # oculus example
 !examples/oculus_glfw_sample/
-
 
 # external libraries DLLs
 !src/external/glfw3/lib/win32/glfw3.dll

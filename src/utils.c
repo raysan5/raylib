@@ -205,6 +205,11 @@ void TraceLog(int msgType, const char *text, ...)
 void TraceLog(int msgType, const char *text, ...)
 {
     static char buffer[100];
+    int traceDebugMsgs = 1;
+    
+#ifdef DO_NOT_TRACE_DEBUG_MSGS
+    traceDebugMsgs = 0;
+#endif
 
     switch(msgType)
     {
@@ -226,7 +231,7 @@ void TraceLog(int msgType, const char *text, ...)
         case INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", buffer, args); break;
         case ERROR: __android_log_vprint(ANDROID_LOG_ERROR, "raylib", buffer, args); break;
         case WARNING: __android_log_vprint(ANDROID_LOG_WARN, "raylib", buffer, args); break;
-        case DEBUG: __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", buffer, args); break;
+        case DEBUG: if (traceDebugMsgs) __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", buffer, args); break;
         default: break;
     }
 

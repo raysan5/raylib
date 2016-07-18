@@ -7,14 +7,18 @@
 *   Features:
 *     Library written in plain C code (C99)
 *     Uses C# PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
-*     Unique OpenGL abstraction layer [rlgl]
-*     Powerful fonts module with SpriteFonts support (including AngelCode fonts and TTF)
+*     Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
+*     Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
+*     Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
 *     Multiple textures support, including compressed formats and mipmaps generation
-*     Basic 3d support for Shapes, Models, Heightmaps and Billboards
-*     Powerful math module for Vector and Matrix operations [raymath]
-*     Audio loading and playing with streaming support (WAV and OGG)
-*     Multiplatform support, including Android devices, Raspberry Pi and HTML5
+*     Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
+*     Materials (diffuse, normal, specular) and Lighting (point, directional, spot) support
+*     Powerful math module for Vector, Matrix and Quaternion operations [raymath]
+*     Audio loading and playing with streaming support and mixing channels (WAV, OGG, XM, MOD)
+*     VR stereo rendering support with configurable HMD device parameters
+*     Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
+*     Custom color palette for fancy visuals on raywhite background
+*     Minimal external dependencies (GLFW3, OpenGL, OpenAL)
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
@@ -23,6 +27,8 @@
 *     stb_image_write (Sean Barret) for image writting (PNG)
 *     stb_vorbis (Sean Barret) for ogg audio loading
 *     stb_truetype (Sean Barret) for ttf fonts loading
+*     jar_xm (Joshua Reisenauer) for XM audio module loading
+*     jar_mod (Joshua Reisenauer) for MOD audio module loading
 *     OpenAL Soft for audio device/context management
 *     tinfl for data decompression (DEFLATE algorithm)
 *
@@ -37,7 +43,7 @@
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2013 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -536,7 +542,7 @@ typedef enum {
     HMD_SONY_PLAYSTATION_VR,
     HMD_RAZER_OSVR,
     HMD_FOVE_VR,
-} HmdDevice;
+} VrDevice;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -778,8 +784,6 @@ const char *SubText(const char *text, int position, int length);                
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
-void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
-void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires
@@ -794,6 +798,8 @@ void DrawRay(Ray ray, Color color);                                             
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
 void DrawLight(Light light);                                                                       // Draw light in 3D world
+void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
+void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
 //DrawTorus(), DrawTeapot() are useless...
 
 //------------------------------------------------------------------------------------
@@ -837,7 +843,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a cu
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
 
 Shader GetDefaultShader(void);                                      // Get default shader
-Shader GetStandardShader(void);                                     // Get default shader
+Shader GetStandardShader(void);                                     // Get standard shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
@@ -860,7 +866,7 @@ void DestroyLight(Light light);                                     // Destroy a
 // VR experience Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-void InitVrDevice(int hmdDevice);           // Init VR device
+void InitVrDevice(int vdDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
 void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
 void BeginVrDrawing(void);                  // Begin VR drawing configuration
