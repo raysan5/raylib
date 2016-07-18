@@ -119,21 +119,27 @@ OBJS += external/stb_vorbis.o
 # compile raylib static library for desktop platforms.
 # The automatic variable "$@" is the target name, while "$<" is the first
 # prerequisite.
+# WARNING: you must type "make clean" before doing this target if you have
+# done "make libraylib.so".
 libraylib.a : $(OBJS)
 	ar rcs $@ $(OBJS)
 	@echo "libraylib.a generated (static library)!"
 
-# compile raylib to shared library version.
+# compile raylib to shared library version for GNU/Linux.
+# WARNING: you must type "make clean" before doing this target if you have
+# done "make libraylib.so".
 libraylib.so : $(OBJS)
 	$(CC) -shared -o $@ $(OBJS)
+	@echo "libraylib.so generated (shared library)!"
 
 # compile raylib for web.
+# WARNING: you must type "make clean" before doing this target if you have
+# done "make libraylib.a/.bc".
 libraylib.bc : $(OBJS)
 	emcc -O1 $(OBJS) -o $@
 	@echo "libraylib.bc generated (web version)!"
 
-# compile all modules with relative prerequisites (header files of the
-# project).
+# It compile all modules with their prerequisite.
 camera.o : camera.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES)
 
@@ -168,8 +174,8 @@ audio.o : audio.c audio.h
 external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 	$(CC) -c -o $@ $< -O1 $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-# It installs (copy) raylib dev files (static library and header) to standard
-# directories on GNU/Linux platform.
+# It installs generated and needed files to compile projects using raylib.
+# The installation works manually.
 # TODO: add other platforms.
 install :
 ifeq ($(ROOT),root)
@@ -178,10 +184,10 @@ ifeq ($(ROOT),root)
         # libraries and header files. These directory (/usr/local/lib and
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
-		cp --update raylib.h /usr/local/include/raylib.h
         ifeq ($(SHARED),YES)
 			cp --update libraylib.so /usr/local/lib/libraylib.so
         else
+			cp --update raylib.h /usr/local/include/raylib.h
 			cp --update libraylib.a /usr/local/lib/libraylib.a
         endif
 		@echo "raylib dev files installed/updated!"
