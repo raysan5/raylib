@@ -1,8 +1,10 @@
 #******************************************************************************
 #
 #  raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
+#  
+#  Many Thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
-#  Copyright (c) 2014 Ramon Santamaria (@raysan5)
+#  Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 #
 #  This software is provided "as-is", without any express or implied warranty.
 #  In no event will the authors be held liable for any damages arising from
@@ -77,9 +79,11 @@ endif
 
 # define compiler: gcc for C program, define as g++ for C++
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CC = emcc # emscripten compiler
+    # emscripten compiler
+    CC = emcc
 else
-    CC = gcc # default gcc compiler
+    # default gcc compiler
+    CC = gcc
 endif
 
 # define compiler flags:
@@ -90,6 +94,7 @@ endif
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+
 ifeq ($(SHARED),YES)
     CFLAGS += -fPIC
 endif
@@ -110,69 +115,101 @@ else
     INCLUDES += -Iexternal/openal_soft/include
 endif
 
+# define output directory for compiled library
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        OUTPUT_PATH = ../release/win32/mingw32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        OUTPUT_PATH = ../release/linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        OUTPUT_PATH = ../release/osx
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    OUTPUT_PATH = ../release/html5
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    OUTPUT_PATH = ../release/rpi
+endif
+
 # define all object files required with a wildcard
 # The wildcard takes all files that finish with ".c", then it replaces the
 # extentions with ".o", that are the object files.
 OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 OBJS += external/stb_vorbis.o
 
-# compile raylib static library for desktop platforms.
-# The automatic variable "$@" is the target name, while "$<" is the first
-# prerequisite.
-# WARNING: you must type "make clean" before doing this target if you have
-# done "make libraylib.so".
-libraylib.a : $(OBJS)
-	ar rcs $@ $(OBJS)
-	@echo "libraylib.a generated (static library)!"
+# typing 'make' will invoke the default target entry called 'all',
+# in this case, the 'default' target entry is raylib
+all: raylib
 
-# compile raylib to shared library version for GNU/Linux.
-# WARNING: you must type "make clean" before doing this target if you have
-# done "make libraylib.so".
-libraylib.so : $(OBJS)
-	$(CC) -shared -o $@ $(OBJS)
-	@echo "libraylib.so generated (shared library)!"
-
-# compile raylib for web.
-# WARNING: you must type "make clean" before doing this target if you have
-# done "make libraylib.a/.bc".
-libraylib.bc : $(OBJS)
-	emcc -O1 $(OBJS) -o $@
+# compile raylib library
+raylib: $(OBJS)
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # compile raylib for web.
+	emcc -O1 $(OBJS) -o $(OUTPUT_PATH)/libraylib.bc
 	@echo "libraylib.bc generated (web version)!"
+else
+    ifeq ($(SHARED),YES)
+    ifeq ($(PLATFORM_OS),LINUX)
+        # compile raylib to shared library version for GNU/Linux.
+        # WARNING: you should type "make clean" before doing this target 
+		$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
+		@echo "libraylib.so generated (shared library)!"
+    endif
+    else
+        # compile raylib static library for desktop platforms.
+		ar rcs $(OUTPUT_PATH)/libraylib.a $(OBJS)
+		@echo "libraylib.a generated (static library)!"
+    endif
+endif
 
-# It compile all modules with their prerequisite.
-camera.o : camera.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
+# compile all modules with their prerequisites
 
+# compile core module
 core.o : core.c raylib.h rlgl.h utils.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
 
-gestures.o : gestures.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE)
-
-models.o : models.c raylib.h rlgl.h raymath.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
-
-rlgl.o : rlgl.c rlgl.h 
+# compile rlgl module
+rlgl.o : rlgl.c rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(GRAPHICS)
-
+    
+# compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE)
-
-text.o : text.c raylib.h utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE)
-
+    
+# compile textures module
 textures.o : textures.c rlgl.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
 
-utils.o : utils.c utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+# compile text module
+text.o : text.c raylib.h utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE)
 
-audio.o : audio.c audio.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+# compile models module
+models.o : models.c raylib.h rlgl.h raymath.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
 
+# compile audio module
+audio.o : audio.c raylib.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+    
 # compile stb_vorbis library
 external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 	$(CC) -c -o $@ $< -O1 $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile utils module
+utils.o : utils.c utils.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+
+# compile camera module
+camera.o : camera.c raylib.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES)
+
+#compile gestures module
+gestures.o : gestures.c raylib.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE)
 
 # It installs generated and needed files to compile projects using raylib.
 # The installation works manually.
@@ -211,7 +248,7 @@ ifeq ($(ROOT),root)
         endif
 		@echo "raylib dev files removed!"
     else
-		@echo "This function works only on GNU/Linux systems"
+		 @echo "This function works only on GNU/Linux systems"
     endif
 else
 	@echo "Error: no root permissions"
@@ -220,8 +257,8 @@ endif
 # clean everything
 clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
-	del *.o libraylib.a libraylib.bc libraylib.so external/stb_vorbis.o
+	del *.o $(OUTPUT_PATH)/libraylib.a $(OUTPUT_PATH)/libraylib.bc $(OUTPUT_PATH)/libraylib.so external/stb_vorbis.o
 else
-	rm -f *.o libraylib.a libraylib.bc libraylib.so external/stb_vorbis.o
+	rm -f *.o $(OUTPUT_PATH)/libraylib.a $(OUTPUT_PATH)/libraylib.bc $(OUTPUT_PATH)/libraylib.so external/stb_vorbis.o
 endif
 	@echo "removed all generated files!"
