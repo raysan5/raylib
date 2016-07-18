@@ -8,8 +8,14 @@
 *   Compile rlgl module using:
 *   gcc -c rlgl.c -Wall -std=c99 -DRLGL_STANDALONE -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33
 *
+*   NOTE: rlgl module requires the following header-only files:
+*       external/glad.h - OpenGL extensions loader (stripped to only required extensions)
+*       shader_standard.h - Standard shader for materials and lighting
+*       shader_distortion.h - Distortion shader for VR
+*       raymath.h - Vector and matrix math functions
+*
 *   Compile example using:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) rlgl.o -lglfw3 -lopengl32 -lgdi32 -std=c99
+*   gcc -o rlgl_standalone.exe rlgl_standalone.c rlgl.o -lglfw3 -lopengl32 -lgdi32 -std=c99
 *
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -18,32 +24,14 @@
 *
 ********************************************************************************************/
 
-#include "glad.h"               // Extensions loading library
 #include <GLFW/glfw3.h>         // Windows/Context and inputs management
 
 #define RLGL_STANDALONE
 #include "rlgl.h"               // rlgl library: OpenGL 1.1 immediate-mode style coding
 
-#include <stdlib.h>             // Required for: abs()
-
-
 #define RED        (Color){ 230, 41, 55, 255 }     // Red
-#define MAROON     (Color){ 190, 33, 55, 255 }     // Maroon
 #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
-#define WHITE      (Color){ 255, 255, 255, 255 }   // White
-
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
-
-// Rectangle type
-typedef struct Rectangle {
-    int x;
-    int y;
-    int width;
-    int height;
-} Rectangle;
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -56,8 +44,6 @@ static void DrawGrid(int slices, float spacing);
 static void DrawCube(Vector3 position, float width, float height, float length, Color color);
 static void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);
 static void DrawRectangleV(Vector2 position, Vector2 size, Color color);
-static void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint);
-static void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint);
 
 //----------------------------------------------------------------------------------
 // Main Entry point
@@ -66,8 +52,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1080;
-    const int screenHeight = 600;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
     
     // GLFW3 Initialization + OpenGL 3.3 Context + Extensions
     //--------------------------------------------------------
@@ -96,41 +82,38 @@ int main(void)
     }
     else TraceLog(INFO, "GLFW3: Window created successfully");
     
+    glfwSetWindowPos(window, 200, 200);
+    
     glfwSetKeyCallback(window, KeyCallback);
     
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
-
-    // Load OpenGL 3.3 extensions
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
-        return 3;
-    }
-    else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
+    
+    // Load OpenGL 3.3 supported extensions
+    rlglLoadExtensions(glfwGetProcAddress);
     //--------------------------------------------------------
     
-    // Initialize rlgl internal buffers and OpenGL state
-    rlglInit();
-    rlglInitGraphics(0, 0, screenWidth, screenHeight);
-    rlClearColor(245, 245, 245, 255);   // Define clear color
-    rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
-    
-    Shader distortion = LoadShader("base.vs", "distortion.fs");
-    
-    // TODO: Upload to distortion shader configuration parameters (screen size, etc.)
-    //SetShaderValue(Shader shader, int uniformLoc, float *value, int size);
-    
-    // Create a RenderTexture2D to be used for render to texture
-    RenderTexture2D target = rlglLoadRenderTexture(screenWidth, screenHeight);
-    
-    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+    // Initialize OpenGL context (states and resources)
+    rlglInit(screenWidth, screenHeight);
+
+    // Initialize viewport and internal projection/modelview matrices
+    rlViewport(0, 0, screenWidth, screenHeight);
+    rlMatrixMode(RL_PROJECTION);                        // Switch to PROJECTION matrix
+    rlLoadIdentity();                                   // Reset current matrix (PROJECTION)
+    rlOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f); // Orthographic projection with top-left corner at (0,0)
+    rlMatrixMode(RL_MODELVIEW);                         // Switch back to MODELVIEW matrix
+    rlLoadIdentity();                                   // Reset current matrix (MODELVIEW)
+
+    rlClearColor(245, 245, 245, 255);                   // Define clear color
+    rlEnableDepthTest();                                // Enable DEPTH_TEST for 3D
     
     Camera camera;
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 60.0f;                               // Camera field-of-view Y
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    
+    Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };        // Cube default position (center)
     //--------------------------------------------------------------------------------------    
 
     // Main game loop    
@@ -143,20 +126,11 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
-        rlEnableRenderTexture(target.id);   // Enable render target
-    
         rlClearScreenBuffers();             // Clear current framebuffer
-    
-        for (int i = 0; i < 2; i++)
-        {
-            rlViewport(i*screenWidth/2, 0, screenWidth/2, screenHeight); 
-    
+        
             // Calculate projection matrix (from perspective) and view matrix from camera look at
-            // TODO: Consider every eye fovy
-            Matrix matProj = MatrixPerspective(camera.fovy, (double)(screenWidth/2)/(double)screenHeight, 0.01, 1000.0);
+            Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             MatrixTranspose(&matProj);
-            
-            // TODO: Recalculate view matrix considering IPD (inter-pupillary-distance)
             Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
             SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
@@ -172,8 +146,7 @@ int main(void)
             // Draw '2D' elements in the scene (GUI)
 #define RLGL_CREATE_MATRIX_MANUALLY
 #if defined(RLGL_CREATE_MATRIX_MANUALLY)
-
-            matProj = MatrixOrtho(0.0, screenWidth/2, screenHeight, 0.0, 0.0, 1.0);
+            matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
             MatrixTranspose(&matProj);
             matView = MatrixIdentity();
             
@@ -184,34 +157,14 @@ int main(void)
 
             rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
             rlLoadIdentity();                                       // Reset internal projection matrix
-            rlOrtho(0.0, screenWidth/2, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
+            rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
             rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
             rlLoadIdentity();                                       // Reset internal modelview matrix
 #endif
-            // TODO: 2D not drawing properly on stereo rendering
-            //DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 500.0f, 20.0f }, DARKGRAY);
+            DrawRectangleV((Vector2){ 10.0f, 10.0f }, (Vector2){ 780.0f, 20.0f }, DARKGRAY);
 
             // NOTE: Internal buffers drawing (2D data)
             rlglDraw();
-        }
-        
-        rlDisableRenderTexture();           // Disable render target
-
-        // Set viewport to default framebuffer size (screen size)
-        rlViewport(0, 0, screenWidth, screenHeight);
-        
-        // Let rlgl reconfigure internal matrices using OpenGL 1.1 style coding
-        rlMatrixMode(RL_PROJECTION);                            // Enable internal projection matrix
-        rlLoadIdentity();                                       // Reset internal projection matrix
-        rlOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0); // Recalculate internal projection matrix
-        rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
-        rlLoadIdentity();                                       // Reset internal modelview matrix
-    
-        // Draw RenderTexture (fbo) using distortion shader 
-        BeginShaderMode(distortion);
-            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-        EndShaderMode();
             
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -220,12 +173,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(distortion);
+    rlglClose();                    // Unload rlgl internal buffers and default shader/texture
     
-    rlglClose();                // Unload rlgl internal buffers and default shader/texture
-    
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    glfwDestroyWindow(window);      // Close window
+    glfwTerminate();                // Free GLFW3 resources
     //--------------------------------------------------------------------------------------
     
     return 0;
@@ -441,56 +392,4 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
             rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Right Back
         rlEnd();
     rlPopMatrix();
-}
-
-// Draw a part of a texture (defined by a rectangle)
-static void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Color tint)
-{
-    Rectangle destRec = { (int)position.x, (int)position.y, abs(sourceRec.width), abs(sourceRec.height) };
-    Vector2 origin = { 0, 0 };
-
-    DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, tint);
-}
-
-// Draw a part of a texture (defined by a rectangle) with 'pro' parameters
-// NOTE: origin is relative to destination rectangle size
-static void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
-{
-    // Check if texture is valid
-    if (texture.id != 0)
-    {
-        if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
-        if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
-        
-        rlEnableTexture(texture.id);
-
-        rlPushMatrix();
-            rlTranslatef(destRec.x, destRec.y, 0);
-            rlRotatef(rotation, 0, 0, 1);
-            rlTranslatef(-origin.x, -origin.y, 0);
-
-            rlBegin(RL_QUADS);
-                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-
-                // Bottom-left corner for texture and quad
-                rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
-                rlVertex2f(0.0f, 0.0f);
-
-                // Bottom-right corner for texture and quad
-                rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-                rlVertex2f(0.0f, destRec.height);
-
-                // Top-right corner for texture and quad
-                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
-                rlVertex2f(destRec.width, destRec.height);
-
-                // Top-left corner for texture and quad
-                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
-                rlVertex2f(destRec.width, 0.0f);
-            rlEnd();
-        rlPopMatrix();
-
-        rlDisableTexture();
-    }
 }

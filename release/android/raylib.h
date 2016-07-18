@@ -7,14 +7,18 @@
 *   Features:
 *     Library written in plain C code (C99)
 *     Uses C# PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL (1.1, 3.3 or ES2)
-*     Unique OpenGL abstraction layer [rlgl]
-*     Powerful fonts module with SpriteFonts support (including AngelCode fonts and TTF)
+*     Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
+*     Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
+*     Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
 *     Multiple textures support, including compressed formats and mipmaps generation
-*     Basic 3d support for Shapes, Models, Heightmaps and Billboards
-*     Powerful math module for Vector and Matrix operations [raymath]
-*     Audio loading and playing with streaming support (WAV and OGG)
-*     Multiplatform support, including Android devices, Raspberry Pi and HTML5
+*     Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
+*     Materials (diffuse, normal, specular) and Lighting (point, directional, spot) support
+*     Powerful math module for Vector, Matrix and Quaternion operations [raymath]
+*     Audio loading and playing with streaming support and mixing channels (WAV, OGG, XM, MOD)
+*     VR stereo rendering support with configurable HMD device parameters
+*     Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
+*     Custom color palette for fancy visuals on raywhite background
+*     Minimal external dependencies (GLFW3, OpenGL, OpenAL)
 *
 *   Used external libs:
 *     GLFW3 (www.glfw.org) for window/context management and input
@@ -23,6 +27,8 @@
 *     stb_image_write (Sean Barret) for image writting (PNG)
 *     stb_vorbis (Sean Barret) for ogg audio loading
 *     stb_truetype (Sean Barret) for ttf fonts loading
+*     jar_xm (Joshua Reisenauer) for XM audio module loading
+*     jar_mod (Joshua Reisenauer) for MOD audio module loading
 *     OpenAL Soft for audio device/context management
 *     tinfl for data decompression (DEFLATE algorithm)
 *
@@ -37,7 +43,7 @@
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2013 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -64,7 +70,7 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
-//#define PLATFORM_OCULUS       // Oculus Rift CV1
+//#define RLGL_OCULUS_SUPPORT   // Oculus Rift CV1 (complementary to PLATFORM_DESKTOP)
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -431,8 +437,8 @@ typedef struct Model {
 // Light type
 typedef struct LightData {
     unsigned int id;        // Light unique id
-    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     bool enabled;           // Light enabled
+    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     
     Vector3 position;       // Light position
     Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
@@ -467,8 +473,6 @@ typedef struct Wave {
     short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
-
-typedef int RawAudioContext;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -527,6 +531,19 @@ typedef struct GestureEvent {
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
+// Head Mounted Display devices
+typedef enum {
+    HMD_DEFAULT_DEVICE = 0,
+    HMD_OCULUS_RIFT_DK2,
+    HMD_OCULUS_RIFT_CV1,
+    HMD_VALVE_HTC_VIVE,
+    HMD_SAMSUNG_GEAR_VR,
+    HMD_GOOGLE_CARDBOARD,
+    HMD_SONY_PLAYSTATION_VR,
+    HMD_RAZER_OSVR,
+    HMD_FOVE_VR,
+} VrDevice;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -543,12 +560,6 @@ extern "C" {            // Prevents name mangling of functions
 void InitWindow(int width, int height, struct android_app *state);  // Init Android Activity and OpenGL Graphics
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
-#endif
-
-#if defined(PLATFORM_OCULUS)
-void InitOculusDevice(void);                                // Init Oculus Rift device
-void CloseOculusDevice(void);                               // Close Oculus Rift device
-void UpdateOculusTracking(void);                            // Update Oculus Rift tracking (position and orientation)
 #endif
 
 void CloseWindow(void);                                     // Close Window and Terminate Context
@@ -644,13 +655,13 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
 //------------------------------------------------------------------------------------
+void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
+bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
 void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
 void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
-bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-int GetGestureDetected(void);                           // Get latest detected gesture
-void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
-int GetTouchPointsCount(void);                          // Get touch points count
 
+int GetTouchPointsCount(void);                          // Get touch points count
+int GetGestureDetected(void);                           // Get latest detected gesture
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
@@ -773,8 +784,6 @@ const char *SubText(const char *text, int position, int length);                
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
-void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
-void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires
@@ -789,6 +798,8 @@ void DrawRay(Ray ray, Color color);                                             
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
 void DrawLight(Light light);                                                                       // Draw light in 3D world
+void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
+void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
 //DrawTorus(), DrawTeapot() are useless...
 
 //------------------------------------------------------------------------------------
@@ -800,7 +811,6 @@ Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d mod
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
-void SetModelTexture(Model *model, Texture2D texture);          // Link a texture to a model
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
@@ -833,7 +843,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a cu
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
 
 Shader GetDefaultShader(void);                                      // Get default shader
-Shader GetStandardShader(void);                                     // Get default shader
+Shader GetStandardShader(void);                                     // Get standard shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
@@ -851,6 +861,18 @@ void EndBlendMode(void);                                            // End blend
 
 Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
+
+//------------------------------------------------------------------------------------
+// VR experience Functions (Module: rlgl)
+// NOTE: This functions are useless when using OpenGL 1.1
+//------------------------------------------------------------------------------------
+void InitVrDevice(int vdDevice);            // Init VR device
+void CloseVrDevice(void);                   // Close VR device
+void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
+void BeginVrDrawing(void);                  // Begin VR drawing configuration
+void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
@@ -877,17 +899,10 @@ void PauseMusicStream(int index);                               // Pause music p
 void ResumeMusicStream(int index);                              // Resume playing paused music
 bool IsMusicPlaying(int index);                                 // Check if music is playing
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
+void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
 float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int GetMusicStreamCount(void);
-void SetMusicPitch(int index, float pitch);
-
-// used to output raw audio streams, returns negative numbers on error
-// if floating point is false the data size is 16bit short, otherwise it is float 32bit
-RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
-
-void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
+int GetMusicStreamCount(void);                                  // Get number of streams loaded
 
 #ifdef __cplusplus
 }

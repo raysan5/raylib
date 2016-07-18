@@ -4,10 +4,11 @@
 *
 *   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
 *       OpenGL 1.1  - Direct map rl* -> gl*
+*       OpenGL 2.1  - Vertex data is stored in VBOs, call rlglDraw() to render
 *       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -239,6 +240,19 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // TraceLog message types
     typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+    
+    // VR Head Mounted Display devices
+    typedef enum {
+        HMD_DEFAULT_DEVICE = 0,
+        HMD_OCULUS_RIFT_DK2,
+        HMD_OCULUS_RIFT_CV1,
+        HMD_VALVE_HTC_VIVE,
+        HMD_SAMSUNG_GEAR_VR,
+        HMD_GOOGLE_CARDBOARD,
+        HMD_SONY_PLAYSTATION_VR,
+        HMD_RAZER_OSVR,
+        HMD_FOVE_VR,
+    } VrDevice;
 #endif
 
 #ifdef __cplusplus
@@ -350,14 +364,22 @@ Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a 
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 void TraceLog(int msgType, const char *text, ...);
+float *MatrixToFloat(Matrix mat);
 
-void InitVrDevice(int hmdDevice);           // Init VR device
+void InitVrDevice(int vrDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
 void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
 void BeginVrDrawing(void);                  // Begin VR drawing configuration
 void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
+
+// Oculus Rift API for direct access the device (no simulator)
+bool InitOculusDevice(void);                // Initialize Oculus device (returns true if success)
+void CloseOculusDevice(void);               // Close Oculus device
+void UpdateOculusTracking(void);            // Update Oculus head position-orientation tracking
+void BeginOculusDrawing(void);              // Setup Oculus buffers for drawing
+void EndOculusDrawing(void);                // Finish Oculus drawing and blit framebuffer to mirror
 #endif
 
 #ifdef __cplusplus

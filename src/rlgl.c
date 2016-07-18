@@ -4,10 +4,11 @@
 *
 *   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
 *       OpenGL 1.1  - Direct map rl* -> gl*
+*       OpenGL 2.1  - Vertex data is stored in VBOs, call rlglDraw() to render
 *       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -54,12 +55,11 @@
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
     #define GLAD_IMPLEMENTATION
-#if defined(RLGL_STANDALONE)
-    #include "glad.h"               // GLAD extensions loading library, includes OpenGL headers
-#else
-    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
-#endif
-
+    #if defined(RLGL_STANDALONE)
+        #include "glad.h"           // GLAD extensions loading library, includes OpenGL headers
+    #else
+        #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
+    #endif
     #endif
 #endif
 
@@ -84,6 +84,12 @@
 //#define RLGL_OCULUS_SUPPORT       // Enable Oculus Rift code
 #if defined(RLGL_OCULUS_SUPPORT)
     #include "external/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
+#endif
+
+#if defined(RLGL_STANDALONE)
+    #define OCULUSAPI
+#else
+    #define OCULUSAPI static
 #endif
 
 //----------------------------------------------------------------------------------
@@ -362,11 +368,13 @@ static char *ReadTextFile(const char *fileName); // Read chars array from text f
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
+#if !defined(RLGL_STANDALONE)
 static bool InitOculusDevice(void);         // Initialize Oculus device (returns true if success)
 static void CloseOculusDevice(void);        // Close Oculus device
 static void UpdateOculusTracking(void);     // Update Oculus head position-orientation tracking
 static void BeginOculusDrawing(void);       // Setup Oculus buffers for drawing
 static void EndOculusDrawing(void);         // Finish Oculus drawing and blit framebuffer to mirror
+#endif
 
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
 static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);            // Unload texture required buffers
@@ -376,6 +384,8 @@ static void BlitOculusMirror(ovrSession session, OculusMirror mirror);          
 static OculusLayer InitOculusLayer(ovrSession session);                             // Init Oculus layer (similar to photoshop)
 static Matrix FromOvrMatrix(ovrMatrix4f ovrM);  // Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
 #endif
+
+
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
@@ -2557,10 +2567,10 @@ void DestroyLight(Light light)
 // Init VR device (or simulator)
 // NOTE: If device is not available, it fallbacks to default device (simulator)
 // NOTE: It modifies the global variable: VrDeviceInfo hmd
-void InitVrDevice(int hmdDevice)
+void InitVrDevice(int vrDevice)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    switch (hmdDevice)
+    switch (vrDevice)
     {
         case HMD_DEFAULT_DEVICE: TraceLog(INFO, "Initializing default VR Device (Oculus Rift CV1)");
         case HMD_OCULUS_RIFT_DK2:
@@ -2585,7 +2595,7 @@ void InitVrDevice(int hmdDevice)
     {
         TraceLog(WARNING, "VR Device not found: Initializing VR Simulator (Oculus Rift CV1)");
 
-        if (hmdDevice == HMD_OCULUS_RIFT_DK2)
+        if (vrDevice == HMD_OCULUS_RIFT_DK2)
         {
             // Oculus Rift DK2 parameters
             hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
@@ -2605,7 +2615,7 @@ void InitVrDevice(int hmdDevice)
             hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
             hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
         }
-        else if ((hmdDevice == HMD_DEFAULT_DEVICE) || (hmdDevice == HMD_OCULUS_RIFT_CV1))
+        else if ((vrDevice == HMD_DEFAULT_DEVICE) || (vrDevice == HMD_OCULUS_RIFT_CV1))
         {
             // Oculus Rift CV1 parameters
             // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
@@ -2645,6 +2655,10 @@ void InitVrDevice(int hmdDevice)
         vrEnabled = true;
     }
 #endif
+
+#if defined(GRAPHICS_API_OPENGL_11)
+    TraceLog(WARNING, "VR device or simulator not supported on OpenGL 1.1");
+#endif
 }
 
 // Close VR device (or simulator)
@@ -2672,17 +2686,19 @@ bool IsVrDeviceReady(void)
 // Enable/Disable VR experience (device or simulator)
 void ToggleVrMode(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     if (vrDeviceReady || vrSimulator) vrEnabled = !vrEnabled;
     else vrEnabled = false;
     
     if (!vrEnabled)
     {   
         // Reset viewport and default projection-modelview matrices
-        rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
-        projection = MatrixOrtho(0, GetScreenWidth(), GetScreenHeight(), 0, 0.0f, 1.0f);
+        rlViewport(0, 0, screenWidth, screenHeight);
+        projection = MatrixOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);
         MatrixTranspose(&projection);
         modelview = MatrixIdentity();
     }
+#endif
 }
 
 // Update VR tracking (position and orientation)
@@ -3930,7 +3946,7 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 
 #if defined(RLGL_OCULUS_SUPPORT)
 // Initialize Oculus device (returns true if success)
-static bool InitOculusDevice(void)
+OCULUSAPI bool InitOculusDevice(void)
 {
     bool oculusReady = false;
 
@@ -3977,7 +3993,7 @@ static bool InitOculusDevice(void)
 }
 
 // Close Oculus device (and unload buffers)
-static void CloseOculusDevice(void)
+OCULUSAPI void CloseOculusDevice(void)
 {
     UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
     UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
@@ -3987,7 +4003,7 @@ static void CloseOculusDevice(void)
 }
 
 // Update Oculus head position-orientation tracking
-static void UpdateOculusTracking(void)
+OCULUSAPI void UpdateOculusTracking(void)
 {
     frameIndex++;
 
@@ -4010,7 +4026,7 @@ static void UpdateOculusTracking(void)
 }
 
 // Setup Oculus buffers for drawing
-static void BeginOculusDrawing(void)
+OCULUSAPI void BeginOculusDrawing(void)
 {
     GLuint currentTexId;
     int currentIndex;
@@ -4024,7 +4040,7 @@ static void BeginOculusDrawing(void)
 }
 
 // Finish Oculus drawing and blit framebuffer to mirror
-static void EndOculusDrawing(void)
+OCULUSAPI void EndOculusDrawing(void)
 {
     // Unbind current framebuffer (Oculus buffer)
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);

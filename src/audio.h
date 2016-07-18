@@ -62,17 +62,16 @@
 
 // Sound source type
 typedef struct Sound {
-    unsigned int source;
-    unsigned int buffer;
-    AudioError error; // if there was any error during the creation or use of this Sound
+    unsigned int source;    // Sound audio source id
+    unsigned int buffer;    // Sound audio buffer id
 } Sound;
 
 // Wave type, defines audio wave data
 typedef struct Wave {
     void *data;                 // Buffer data pointer
     unsigned int dataSize;      // Data size in bytes
-    unsigned int sampleRate;
-    short bitsPerSample;
+    unsigned int sampleRate;    // Samples per second to be played
+    short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
 
