@@ -4,10 +4,11 @@
 *
 *   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
 *       OpenGL 1.1  - Direct map rl* -> gl*
+*       OpenGL 2.1  - Vertex data is stored in VBOs, call rlglDraw() to render
 *       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
 *       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -2566,10 +2567,10 @@ void DestroyLight(Light light)
 // Init VR device (or simulator)
 // NOTE: If device is not available, it fallbacks to default device (simulator)
 // NOTE: It modifies the global variable: VrDeviceInfo hmd
-void InitVrDevice(int hmdDevice)
+void InitVrDevice(int vrDevice)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    switch (hmdDevice)
+    switch (vrDevice)
     {
         case HMD_DEFAULT_DEVICE: TraceLog(INFO, "Initializing default VR Device (Oculus Rift CV1)");
         case HMD_OCULUS_RIFT_DK2:
@@ -2594,7 +2595,7 @@ void InitVrDevice(int hmdDevice)
     {
         TraceLog(WARNING, "VR Device not found: Initializing VR Simulator (Oculus Rift CV1)");
 
-        if (hmdDevice == HMD_OCULUS_RIFT_DK2)
+        if (vrDevice == HMD_OCULUS_RIFT_DK2)
         {
             // Oculus Rift DK2 parameters
             hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
@@ -2614,7 +2615,7 @@ void InitVrDevice(int hmdDevice)
             hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
             hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
         }
-        else if ((hmdDevice == HMD_DEFAULT_DEVICE) || (hmdDevice == HMD_OCULUS_RIFT_CV1))
+        else if ((vrDevice == HMD_DEFAULT_DEVICE) || (vrDevice == HMD_OCULUS_RIFT_CV1))
         {
             // Oculus Rift CV1 parameters
             // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
