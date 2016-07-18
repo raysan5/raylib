@@ -68,8 +68,18 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, GRAY);
-                DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, DARKGRAY);
+                if (collision) 
+                {
+                    DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, RED);
+                    DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, MAROON);
+
+                    DrawCubeWires(cubePosition, cubeSize.x + 0.2f, cubeSize.y + 0.2f, cubeSize.z + 0.2f, GREEN);
+                }
+                else
+                {
+                    DrawCube(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, GRAY);
+                    DrawCubeWires(cubePosition, cubeSize.x, cubeSize.y, cubeSize.z, DARKGRAY);
+                }
                 
                 DrawRay(ray, MAROON);
                 

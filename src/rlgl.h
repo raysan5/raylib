@@ -218,9 +218,9 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
     // Light type
     typedef struct LightData {
         unsigned int id;        // Light unique id
-        int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
         bool enabled;           // Light enabled
-        
+        int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
+
         Vector3 position;       // Light position
         Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
         float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
@@ -239,6 +239,19 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
     
     // TraceLog message types
     typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+    
+    // Head Mounted Display devices
+    typedef enum {
+        HMD_DEFAULT_DEVICE = 0,
+        HMD_OCULUS_RIFT_DK2,
+        HMD_OCULUS_RIFT_CV1,
+        HMD_VALVE_HTC_VIVE,
+        HMD_SAMSUNG_GEAR_VR,
+        HMD_GOOGLE_CARDBOARD,
+        HMD_SONY_PLAYSTATION_VR,
+        HMD_RAZER_OSVR,
+        HMD_FOVE_VR,
+    } HmdDevice;
 #endif
 
 #ifdef __cplusplus
@@ -350,6 +363,7 @@ Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a 
 void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 void TraceLog(int msgType, const char *text, ...);
+float *MatrixToFloat(Matrix mat);
 
 void InitVrDevice(int hmdDevice);           // Init VR device
 void CloseVrDevice(void);                   // Close VR device
@@ -358,6 +372,13 @@ void BeginVrDrawing(void);                  // Begin VR drawing configuration
 void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
+
+// Oculus Rift API for direct access the device (no simulator)
+bool InitOculusDevice(void);                // Initialize Oculus device (returns true if success)
+void CloseOculusDevice(void);               // Close Oculus device
+void UpdateOculusTracking(void);            // Update Oculus head position-orientation tracking
+void BeginOculusDrawing(void);              // Setup Oculus buffers for drawing
+void EndOculusDrawing(void);                // Finish Oculus drawing and blit framebuffer to mirror
 #endif
 
 #ifdef __cplusplus

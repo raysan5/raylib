@@ -31,7 +31,7 @@
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on ReadTextFile()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
 #include <string.h>                 // Required for: strcmp(), strlen(), strtok()
-#include <math.h>                   // Required for: atan()
+#include <math.h>                   // Required for: atan2()
 
 #ifndef RLGL_STANDALONE
     #include "raymath.h"            // Required for Vector3 and Matrix functions
@@ -54,12 +54,11 @@
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
     #define GLAD_IMPLEMENTATION
-#if defined(RLGL_STANDALONE)
-    #include "glad.h"               // GLAD extensions loading library, includes OpenGL headers
-#else
-    #include "external/glad.h"      // GLAD extensions loading library, includes OpenGL headers
-#endif
-
+    #if defined(RLGL_STANDALONE)
+        #include "glad.h"           // GLAD extensions loading library, includes OpenGL headers
+    #else
+        #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
+    #endif
     #endif
 #endif
 
@@ -74,12 +73,22 @@
 #endif
 
 #if !defined(GRAPHICS_API_OPENGL_11) && !defined(RLGL_NO_STANDARD_SHADER)
-    #include "standard_shader.h"    // Standard shader to embed
+    #include "shader_standard.h"    // Standard shader to be embedded
+#endif
+
+#if !defined(GRAPHICS_API_OPENGL_11) && !defined(RLGL_NO_DISTORTION_SHADER)
+    #include "shader_distortion.h"  // Distortion shader to be embedded
 #endif
 
 //#define RLGL_OCULUS_SUPPORT       // Enable Oculus Rift code
 #if defined(RLGL_OCULUS_SUPPORT)
     #include "external/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
+#endif
+
+#if defined(RLGL_STANDALONE)
+    #define OCULUSAPI
+#else
+    #define OCULUSAPI static
 #endif
 
 //----------------------------------------------------------------------------------
@@ -188,6 +197,29 @@ typedef struct {
     //Guint fboId;
 } DrawCall;
 
+// Head-Mounted-Display device parameters
+typedef struct {
+    int hResolution;                // HMD horizontal resolution in pixels
+    int vResolution;                // HMD vertical resolution in pixels
+    float hScreenSize;              // HMD horizontal size in meters
+    float vScreenSize;              // HMD vertical size in meters
+    float vScreenCenter;            // HMD screen center in meters
+    float eyeToScreenDistance;      // HMD distance between eye and display in meters
+    float lensSeparationDistance;   // HMD lens separation distance in meters
+    float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
+    float distortionK[4];           // HMD lens distortion constant parameters
+    float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
+} VrDeviceInfo;
+
+// VR Stereo rendering configuration for simulator
+typedef struct {
+    RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
+    Shader distortionShader;        // VR stereo rendering distortion shader
+    //Rectangle eyesViewport[2];      // VR stereo rendering eyes viewports
+    Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
+    Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
+} VrStereoConfig;
+
 #if defined(RLGL_OCULUS_SUPPORT)
 typedef struct OculusBuffer {
     ovrTextureSwapChain textureChain;
@@ -230,9 +262,9 @@ static DrawMode currentDrawMode;
 
 static float currentDepth = -1.0f;
 
-static DynamicBuffer lines;
-static DynamicBuffer triangles;
-static DynamicBuffer quads;
+static DynamicBuffer lines;                 // Default dynamic buffer for lines data
+static DynamicBuffer triangles;             // Default dynamic buffer for triangles data
+static DynamicBuffer quads;                 // Default dynamic buffer for quads data (used to draw textures)
 
 // Default buffers draw calls
 static DrawCall *draws;
@@ -244,9 +276,10 @@ static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
 // Shader Programs
-static Shader defaultShader;
-static Shader standardShader;               // Lazy initialization when GetStandardShader()
-static Shader currentShader;                // By default, defaultShader
+static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
+static Shader standardShader;               // Shader with support for lighting and materials
+                                            // NOTE: Lazy initialization when GetStandardShader()
+static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
 static bool standardShaderLoaded = false;   // Flag to track if standard shader has been loaded
 
 // Flags for supported extensions
@@ -257,10 +290,6 @@ static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
-
-// Lighting data
-static Light lights[MAX_LIGHTS];            // Lights pool
-static int lightsCount;                     // Counts current enabled physic objects
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
@@ -274,17 +303,14 @@ static OculusMirror mirror;             // Oculus mirror texture and fbo
 static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
 #endif
 
-static bool oculusReady = false;        // Oculus device ready flag
-static bool oculusSimulator = false;    // Oculus device simulator
-static bool vrEnabled = false;          // VR experience enabled (Oculus device or simulator)
-static bool vrControl = true;          // VR controlled by user code, instead of internally
-
-static RenderTexture2D stereoFbo;
-static Shader distortionShader;
-
-// Compressed textures support flags
-static bool texCompDXTSupported = false;    // DDS texture compression support
-static bool npotSupported = false;          // NPOT textures full support
+// VR global variables
+static VrDeviceInfo hmd;                // Current VR device info
+static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
+static bool vrDeviceReady = false;      // VR device ready flag
+static bool vrSimulator = false;        // VR simulator enabled flag
+static bool vrEnabled = false;          // VR experience enabled (device or simulator)
+static bool vrRendering = true;         // VR stereo rendering enabled/disabled flag
+                                        // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -294,6 +320,10 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 //static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
 
+// Compressed textures support flags
+static bool texCompDXTSupported = false;    // DDS texture compression support
+static bool npotSupported = false;          // NPOT textures full support
+
 static int blendMode = 0;   // Track current blending mode
 
 // White texture useful for plain color polys (required by shader)
@@ -302,6 +332,10 @@ static unsigned int whiteTexture;
 // Default framebuffer size (required by Oculus device)
 static int screenWidth;     // Default framebuffer width
 static int screenHeight;    // Default framebuffer height
+
+// Lighting data
+static Light lights[MAX_LIGHTS];            // Lights pool
+static int lightsCount = 0;                 // Enabled lights counter
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -321,15 +355,26 @@ static void UpdateDefaultBuffers(void);     // Update default internal buffers (
 static void DrawDefaultBuffers(int eyesCount); // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
+// Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetStereoConfig(VrDeviceInfo info);
+
 // Set internal projection and modelview matrix depending on eyes tracking data
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
 
 static void SetShaderLights(Shader shader); // Sets shader uniform values for lights array
 
-static char *ReadTextFile(const char *fileName);
+static char *ReadTextFile(const char *fileName); // Read chars array from text file
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
+#if !defined(RLGL_STANDALONE)
+static bool InitOculusDevice(void);         // Initialize Oculus device (returns true if success)
+static void CloseOculusDevice(void);        // Close Oculus device
+static void UpdateOculusTracking(void);     // Update Oculus head position-orientation tracking
+static void BeginOculusDrawing(void);       // Setup Oculus buffers for drawing
+static void EndOculusDrawing(void);         // Finish Oculus drawing and blit framebuffer to mirror
+#endif
+
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
 static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);            // Unload texture required buffers
 static OculusMirror LoadOculusMirror(ovrSession session, int width, int height);    // Load Oculus mirror buffers
@@ -338,6 +383,8 @@ static void BlitOculusMirror(ovrSession session, OculusMirror mirror);          
 static OculusLayer InitOculusLayer(ovrSession session);                             // Init Oculus layer (similar to photoshop)
 static Matrix FromOvrMatrix(ovrMatrix4f ovrM);  // Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
 #endif
+
+
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
@@ -1216,7 +1263,7 @@ void rlglDraw(void)
     // NOTE: Default buffers upload and draw
     UpdateDefaultBuffers();
     
-    if (vrEnabled && vrControl) DrawDefaultBuffers(2);
+    if (vrEnabled && vrRendering) DrawDefaultBuffers(2);
     else DrawDefaultBuffers(1);
 #endif
 }
@@ -1849,6 +1896,8 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     glTexCoordPointer(2, GL_FLOAT, 0, mesh.texcoords);      // Pointer to texture coords array
     if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
     if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
+    
+    // TODO: Support OpenGL 1.1 lighting system
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
@@ -2453,27 +2502,36 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
 {
     Light light = NULL;
     
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Allocate dynamic memory
-    light = (Light)malloc(sizeof(LightData));
-    
-    // Initialize light values with generic values
-    light->id = lightsCount;
-    light->type = type;
-    light->enabled = true;
-    
-    light->position = position;
-    light->target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    light->intensity = 1.0f;
-    light->diffuse = diffuse;
-    
-    // Add new light to the array
-    lights[lightsCount] = light;
-    
-    // Increase enabled lights count
-    lightsCount++;
-#else
-    // TODO: Support OpenGL 1.1 lighting system
+    if (lightsCount < MAX_LIGHTS)
+    {
+        // Allocate dynamic memory
+        light = (Light)malloc(sizeof(LightData));
+        
+        // Initialize light values with generic values
+        light->id = lightsCount;
+        light->type = type;
+        light->enabled = true;
+        
+        light->position = position;
+        light->target = (Vector3){ 0.0f, 0.0f, 0.0f };
+        light->intensity = 1.0f;
+        light->diffuse = diffuse;
+        
+        // Add new light to the array
+        lights[lightsCount] = light;
+        
+        // Increase enabled lights count
+        lightsCount++;
+    }
+    else
+    {
+        TraceLog(WARNING, "Too many lights, only supported up to %i lights", MAX_LIGHTS);
+        
+        // NOTE: Returning latest created light to avoid crashes
+        light = lights[lightsCount];
+    }
+
+#if defined(GRAPHICS_API_OPENGL_11)
     TraceLog(WARNING, "Lighting currently not supported on OpenGL 1.1");
 #endif
 
@@ -2483,157 +2541,170 @@ Light CreateLight(int type, Vector3 position, Color diffuse)
 // Destroy a light and take it out of the list
 void DestroyLight(Light light)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Free dynamic memory allocation
-    free(lights[light->id]);
-    
-    // Remove *obj from the pointers array
-    for (int i = light->id; i < lightsCount; i++)
+    if (light != NULL)
     {
-        // Resort all the following pointers of the array
-        if ((i + 1) < lightsCount)
+        // Free dynamic memory allocation
+        free(lights[light->id]);
+        
+        // Remove *obj from the pointers array
+        for (int i = light->id; i < lightsCount; i++)
         {
-            lights[i] = lights[i + 1];
-            lights[i]->id = lights[i + 1]->id;
+            // Resort all the following pointers of the array
+            if ((i + 1) < lightsCount)
+            {
+                lights[i] = lights[i + 1];
+                lights[i]->id = lights[i + 1]->id;
+            }
+            else free(lights[i]);
         }
-        else free(lights[i]);
+        
+        // Decrease enabled physic objects count
+        lightsCount--;
     }
-    
-    // Decrease enabled physic objects count
-    lightsCount--;
-#endif
 }
 
 // Init VR device (or simulator)
 // NOTE: If device is not available, it fallbacks to default device (simulator)
+// NOTE: It modifies the global variable: VrDeviceInfo hmd
 void InitVrDevice(int hmdDevice)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    switch (hmdDevice)
+    {
+        case HMD_DEFAULT_DEVICE: TraceLog(INFO, "Initializing default VR Device (Oculus Rift CV1)");
+        case HMD_OCULUS_RIFT_DK2:
+        case HMD_OCULUS_RIFT_CV1:
+        {
 #if defined(RLGL_OCULUS_SUPPORT)
-    // Initialize Oculus device
-    ovrResult result = ovr_Initialize(NULL);
-    if (OVR_FAILURE(result))
-    {
-        TraceLog(WARNING, "OVR: Could not initialize Oculus device");
-        oculusReady = false;
-    }
-    else
-    {
-        result = ovr_Create(&session, &luid);
-        if (OVR_FAILURE(result))
-        {
-            TraceLog(WARNING, "OVR: Could not create Oculus session");
-            ovr_Shutdown();
-            oculusReady = false;
-        }
-        else
-        {
-            hmdDesc = ovr_GetHmdDesc(session);
-            
-            TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-            TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-            TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-            TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
-            //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
-            TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
-            
-            // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
-            // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
-            
-            // Initialize Oculus Buffers
-            layer = InitOculusLayer(session);   
-            buffer = LoadOculusBuffer(session, layer.width, layer.height);
-            mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);     // NOTE: hardcoded...
-            layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
-            
-            // Recenter OVR tracking origin
-            ovr_RecenterTrackingOrigin(session);
-            
-            oculusReady = true;
-            vrEnabled = true;
-        }
-    }
+            vrDeviceReady = InitOculusDevice();
 #else
-    oculusReady = false;
+            TraceLog(WARNING, "Oculus Rift not supported by default, recompile raylib with Oculus support");
 #endif
+        } break;
+        case HMD_VALVE_HTC_VIVE:
+        case HMD_SAMSUNG_GEAR_VR:
+        case HMD_GOOGLE_CARDBOARD:
+        case HMD_SONY_PLAYSTATION_VR:
+        case HMD_RAZER_OSVR:
+        case HMD_FOVE_VR: TraceLog(WARNING, "VR Device not supported");
+        default: break;
+    }
 
-    if (!oculusReady)
+    if (!vrDeviceReady)
     {
-        TraceLog(WARNING, "HMD Device not found: Initializing VR simulator");
+        TraceLog(WARNING, "VR Device not found: Initializing VR Simulator (Oculus Rift CV1)");
 
+        if (hmdDevice == HMD_OCULUS_RIFT_DK2)
+        {
+            // Oculus Rift DK2 parameters
+            hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
+            hmd.vResolution = 800;                  // HMD vertical resolution in pixels
+            hmd.hScreenSize = 0.14976f;             // HMD horizontal size in meters
+            hmd.vScreenSize = 0.09356f;             // HMD vertical size in meters
+            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
+            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
+            hmd.lensSeparationDistance = 0.0635f;   // HMD lens separation distance in meters
+            hmd.interpupillaryDistance = 0.064f;    // HMD IPD (distance between pupils) in meters
+            hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
+            hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
+            hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
+            hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
+            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
+            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
+            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
+            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
+        }
+        else if ((hmdDevice == HMD_DEFAULT_DEVICE) || (hmdDevice == HMD_OCULUS_RIFT_CV1))
+        {
+            // Oculus Rift CV1 parameters
+            // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
+            // new Fresnel-hybrid-asymmetric lenses have been added and, consequently, 
+            // previous parameters (DK2) and distortion shader (DK2) doesn't work any more. 
+            // I just defined a set of parameters for simulator that approximate to CV1 stereo rendering 
+            // but result is not the same obtained with Oculus PC SDK.
+            hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
+            hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
+            hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
+            hmd.vScreenSize = 0.0669;               // HMD vertical size in meters
+            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
+            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
+            hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
+            hmd.interpupillaryDistance = 0.07f;     // HMD IPD (distance between pupils) in meters
+            hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
+            hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
+            hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
+            hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
+            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
+            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
+            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
+            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
+        }
+        
         // Initialize framebuffer and textures for stereo rendering
-        stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
+        // NOTE: screen size should match HMD aspect ratio
+        vrConfig.stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
         
-        // Load oculus-distortion shader (oculus parameters setup internally)
-        // TODO: Embed coulus distortion shader (in this function like default shader?)
-        distortionShader = LoadShader("resources/shaders/glsl330/base.vs", "resources/shaders/glsl330/distortion.fs");
+        // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
+        vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
+        if (vrConfig.distortionShader.id != 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
+
+        SetStereoConfig(hmd);
         
-        oculusSimulator = true;
+        vrSimulator = true;
         vrEnabled = true;
     }
+#endif
+
+#if defined(GRAPHICS_API_OPENGL_11)
+    TraceLog(WARNING, "VR device or simulator not supported on OpenGL 1.1");
+#endif
 }
 
 // Close VR device (or simulator)
 void CloseVrDevice(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusReady)
-    {
-        UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
-        UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
-
-        ovr_Destroy(session);   // Free Oculus session data
-        ovr_Shutdown();         // Close Oculus device connection
-    }
+    if (vrDeviceReady) CloseOculusDevice();
     else
 #endif
     {
-        // Unload stereo framebuffer and texture
-        rlDeleteRenderTextures(stereoFbo);
-        
-        // Unload oculus-distortion shader
-        UnloadShader(distortionShader);
+        rlDeleteRenderTextures(vrConfig.stereoFbo); // Unload stereo framebuffer and texture
+        UnloadShader(vrConfig.distortionShader);    // Unload distortion shader
     }
-    
-    oculusReady = false;
+#endif
+    vrDeviceReady = false;
 }
 
 // Detect if VR device is available
 bool IsVrDeviceReady(void)
 {
-    return (oculusReady || oculusSimulator) && vrEnabled;
+    return (vrDeviceReady || vrSimulator) && vrEnabled;
 }
 
 // Enable/Disable VR experience (device or simulator)
 void ToggleVrMode(void)
 {
-    vrEnabled = !vrEnabled;
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (vrDeviceReady || vrSimulator) vrEnabled = !vrEnabled;
+    else vrEnabled = false;
+    
+    if (!vrEnabled)
+    {   
+        // Reset viewport and default projection-modelview matrices
+        rlViewport(0, 0, screenWidth, screenHeight);
+        projection = MatrixOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);
+        MatrixTranspose(&projection);
+        modelview = MatrixIdentity();
+    }
+#endif
 }
 
 // Update VR tracking (position and orientation)
 void UpdateVrTracking(void)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusReady)
-    {
-        frameIndex++;
-
-        ovrPosef eyePoses[2];
-        ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
-        
-        layer.eyeLayer.RenderPose[0] = eyePoses[0];
-        layer.eyeLayer.RenderPose[1] = eyePoses[1];
-        
-        // Get session status information
-        ovrSessionStatus sessionStatus;
-        ovr_GetSessionStatus(session, &sessionStatus);
-        
-        if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
-        if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
-        //if (sessionStatus.HmdPresent)  // HMD is present.
-        //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
-        //if (sessionStatus.HmdMounted)  // HMD is on the user's head.
-        //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
-    }
+    if (vrDeviceReady) UpdateOculusTracking();
     else
 #endif
     {
@@ -2641,122 +2712,20 @@ void UpdateVrTracking(void)
     }
 }
 
-// Set internal projection and modelview matrix depending on eyes tracking data
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
-{   
-    if (vrEnabled)
-    {
-        Matrix eyeProjection = matProjection;
-        Matrix eyeModelView = matModelView;
-        
-#if defined(RLGL_OCULUS_SUPPORT)
-        if (oculusReady)
-        {
-            rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, 
-                       layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
-
-            Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.y, 
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.z, 
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.w };
-            QuaternionInvert(&eyeRenderPose);
-            Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
-            Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
-                                                    -layer.eyeLayer.RenderPose[eye].Position.y, 
-                                                    -layer.eyeLayer.RenderPose[eye].Position.z);
-
-            Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
-            eyeModelView = MatrixMultiply(matModelView, eyeView);               // Combine internal camera matrix (modelview) wih eye-head movement
-
-            eyeProjection = layer.eyeProjections[eye];
-        }
-        else
-#endif
-        {
-            // Setup viewport and projection/modelview matrices using tracking data
-            rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
-            
-            static float IPD = 0.064f;              // InterpupillaryDistance
-            float HScreenSize = 0.14976f;
-            float VScreenSize = 0.0936f;            // HScreenSize/(1280.0f/800.0f) (DK2)
-            float VScreenCenter = 0.04675f;         // VScreenSize/2
-            float EyeToScreenDistance = 0.041f;
-            float LensSeparationDistance = 0.064f;  //0.0635f (DK1)
-            
-            // NOTE: fovy value obtained from device parameters (Oculus Rift CV1)
-            float halfScreenDistance = VScreenSize/2.0f;
-            float fovy = 2.0f*atan(halfScreenDistance/EyeToScreenDistance)*RAD2DEG;
-
-            float viewCenter = (float)HScreenSize*0.25f;
-            float eyeProjectionShift = viewCenter - LensSeparationDistance*0.5f;
-            float projectionCenterOffset = eyeProjectionShift/(float)HScreenSize;   //4.0f*eyeProjectionShift/(float)HScreenSize;
-/*            
-            static float scale[2] = { 0.25, 0.45 };
-
-            if (IsKeyDown(KEY_RIGHT)) scale[0] += 0.01;
-            else if (IsKeyDown(KEY_LEFT)) scale[0] -= 0.01;
-            else if (IsKeyDown(KEY_UP)) scale[1] += 0.01;
-            else if (IsKeyDown(KEY_DOWN)) scale[1] -= 0.01;
-            
-            SetShaderValue(distortionShader, GetShaderLocation(distortionShader, "Scale"), scale, 2);
-
-            if (IsKeyDown(KEY_N)) IPD += 0.02;
-            else if (IsKeyDown(KEY_M)) IPD -= 0.02;
-*/            
-            // The matrixes for offsetting the projection and view for each eye, to achieve stereo effect
-            Vector3 projectionOffset = { -projectionCenterOffset, 0.0f, 0.0f };
-            
-            // Camera movement might seem more natural if we model the head. 
-            // Our axis of rotation is the base of our head, so we might want to add 
-            // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
-            Vector3 viewOffset = { -IPD/2.0f, 0.075f, 0.045f };
-
-            // Negate the left eye versions
-            if (eye == 0)
-            {
-                projectionOffset.x *= -1.0f;
-                viewOffset.x *= -1.0f;
-            }
-
-            // Adjust the view and projection matrixes
-            // View matrix is translated based on the eye offset
-            Matrix projCenter = MatrixPerspective(fovy, (double)((float)screenWidth*0.5f)/(double)screenHeight, 0.01, 1000.0);
-
-            Matrix projTranslation = MatrixTranslate(projectionOffset.x, projectionOffset.y, projectionOffset.z);
-            Matrix viewTranslation = MatrixTranslate(viewOffset.x, viewOffset.y, viewOffset.z);
-
-            eyeProjection = MatrixMultiply(projCenter, projTranslation);    // projection
-            eyeModelView = MatrixMultiply(matModelView, viewTranslation);   // modelview
-            
-            MatrixTranspose(&eyeProjection);
-        }
-
-        SetMatrixModelview(eyeModelView);
-        SetMatrixProjection(eyeProjection);
-    }
-}
-
 // Begin Oculus drawing configuration
 void BeginVrDrawing(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusReady)
+    if (vrDeviceReady)
     {
-        GLuint currentTexId;
-        int currentIndex;
-        
-        ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
-        ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
-
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
-        //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
+        BeginOculusDrawing();
     }
     else
 #endif
     {
         // Setup framebuffer for stereo rendering
-        rlEnableRenderTexture(stereoFbo.id);
+        rlEnableRenderTexture(vrConfig.stereoFbo.id);
     }
 
     // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA) 
@@ -2768,26 +2737,18 @@ void BeginVrDrawing(void)
     //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
     rlClearScreenBuffers();             // Clear current framebuffer(s)
     
-    vrControl = true;
+    vrRendering = true;
+#endif
 }
 
 // End Oculus drawing process (and desktop mirror)
 void EndVrDrawing(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (oculusReady)
+    if (vrDeviceReady)
     {
-        // Unbind current framebuffer (Oculus buffer)
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        
-        ovr_CommitTextureSwapChain(session, buffer.textureChain);
-        
-        ovrLayerHeader *layers = &layer.eyeLayer.Header;
-        ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
-
-        // Blit mirror texture to back buffer
-        BlitOculusMirror(session, mirror);
+        EndOculusDrawing();
     }
     else
 #endif
@@ -2808,9 +2769,9 @@ void EndVrDrawing(void)
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
         // Draw RenderTexture (stereoFbo) using distortion shader 
-        currentShader = distortionShader;
+        currentShader = vrConfig.distortionShader;
 
-        rlEnableTexture(stereoFbo.texture.id);
+        rlEnableTexture(vrConfig.stereoFbo.texture.id);
 
         rlPushMatrix();
             rlBegin(RL_QUADS);
@@ -2823,15 +2784,15 @@ void EndVrDrawing(void)
 
                 // Bottom-right corner for texture and quad
                 rlTexCoord2f(0.0f, 0.0f);
-                rlVertex2f(0.0f, stereoFbo.texture.height);
+                rlVertex2f(0.0f, vrConfig.stereoFbo.texture.height);
 
                 // Top-right corner for texture and quad
                 rlTexCoord2f(1.0f, 0.0f);
-                rlVertex2f(stereoFbo.texture.width, stereoFbo.texture.height);
+                rlVertex2f(vrConfig.stereoFbo.texture.width, vrConfig.stereoFbo.texture.height);
 
                 // Top-left corner for texture and quad
                 rlTexCoord2f(1.0f, 1.0f);
-                rlVertex2f(stereoFbo.texture.width, 0.0f);
+                rlVertex2f(vrConfig.stereoFbo.texture.width, 0.0f);
             rlEnd();
         rlPopMatrix();
 
@@ -2845,7 +2806,8 @@ void EndVrDrawing(void)
 
     rlDisableDepthTest();
     
-    vrControl = false;
+    vrRendering = false;
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -3625,72 +3587,79 @@ static void UnloadDefaultBuffers(void)
 // NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0f
 static void SetShaderLights(Shader shader)
 {
-    int locPoint = glGetUniformLocation(shader.id, "lightsCount");
-    glUniform1i(locPoint, lightsCount);
-    
+    int locPoint = -1;
     char locName[32] = "lights[x].position\0";
 
-    for (int i = 0; i < lightsCount; i++)
+    for (int i = 0; i < MAX_LIGHTS; i++)
     {
         locName[7] = '0' + i;
-        
-        memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
-        locPoint = GetShaderLocation(shader, locName);
-        glUniform1i(locPoint, lights[i]->enabled);
-        
-        memcpy(&locName[10], "type\0", strlen("type\0") + 1);
-        locPoint = GetShaderLocation(shader, locName);
-        glUniform1i(locPoint, lights[i]->type);
-        
-        memcpy(&locName[10], "diffuse\0", strlen("diffuse\0") + 2);
-        locPoint = glGetUniformLocation(shader.id, locName);
-        glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
-        
-        memcpy(&locName[10], "intensity\0", strlen("intensity\0"));
-        locPoint = glGetUniformLocation(shader.id, locName);
-        glUniform1f(locPoint, lights[i]->intensity);
-        
-        switch (lights[i]->type)
+
+        if (lights[i] != NULL)      // Only upload registered lights data
         {
-            case LIGHT_POINT:
+            memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
+            locPoint = GetShaderLocation(shader, locName);
+            glUniform1i(locPoint, lights[i]->enabled);
+            
+            memcpy(&locName[10], "type\0", strlen("type\0") + 1);
+            locPoint = GetShaderLocation(shader, locName);
+            glUniform1i(locPoint, lights[i]->type);
+            
+            memcpy(&locName[10], "diffuse\0", strlen("diffuse\0") + 2);
+            locPoint = glGetUniformLocation(shader.id, locName);
+            glUniform4f(locPoint, (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
+            
+            memcpy(&locName[10], "intensity\0", strlen("intensity\0"));
+            locPoint = glGetUniformLocation(shader.id, locName);
+            glUniform1f(locPoint, lights[i]->intensity);
+            
+            switch (lights[i]->type)
             {
-                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
-                
-                memcpy(&locName[10], "radius\0", strlen("radius\0") + 2);
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform1f(locPoint, lights[i]->radius);
-            } break;
-            case LIGHT_DIRECTIONAL:
-            {
-                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
-                locPoint = GetShaderLocation(shader, locName);
-                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
-                VectorNormalize(&direction);
-                glUniform3f(locPoint, direction.x, direction.y, direction.z);
-            } break;
-            case LIGHT_SPOT:
-            {
-                memcpy(&locName[10], "position\0", strlen("position\0") + 1);
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
-                
-                memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
-                locPoint = GetShaderLocation(shader, locName);
-                
-                Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
-                VectorNormalize(&direction);
-                glUniform3f(locPoint, direction.x, direction.y, direction.z);
-                
-                memcpy(&locName[10], "coneAngle\0", strlen("coneAngle\0"));
-                locPoint = GetShaderLocation(shader, locName);
-                glUniform1f(locPoint, lights[i]->coneAngle);
-            } break;
-            default: break;
+                case LIGHT_POINT:
+                {
+                    memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                    
+                    memcpy(&locName[10], "radius\0", strlen("radius\0") + 2);
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform1f(locPoint, lights[i]->radius);
+                } break;
+                case LIGHT_DIRECTIONAL:
+                {
+                    memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                    locPoint = GetShaderLocation(shader, locName);
+                    Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                    VectorNormalize(&direction);
+                    glUniform3f(locPoint, direction.x, direction.y, direction.z);
+                } break;
+                case LIGHT_SPOT:
+                {
+                    memcpy(&locName[10], "position\0", strlen("position\0") + 1);
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform3f(locPoint, lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
+                    
+                    memcpy(&locName[10], "direction\0", strlen("direction\0") + 2);
+                    locPoint = GetShaderLocation(shader, locName);
+                    
+                    Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                    VectorNormalize(&direction);
+                    glUniform3f(locPoint, direction.x, direction.y, direction.z);
+                    
+                    memcpy(&locName[10], "coneAngle\0", strlen("coneAngle\0"));
+                    locPoint = GetShaderLocation(shader, locName);
+                    glUniform1f(locPoint, lights[i]->coneAngle);
+                } break;
+                default: break;
+            }
+            
+            // TODO: Pass to the shader any other required data from LightData struct
         }
-        
-        // TODO: Pass to the shader any other required data from LightData struct
+        else    // Not enabled lights
+        {
+            memcpy(&locName[10], "enabled\0", strlen("enabled\0") + 1);
+            locPoint = GetShaderLocation(shader, locName);
+            glUniform1i(locPoint, 0);
+        }
     }
 }
 
@@ -3726,6 +3695,124 @@ static char *ReadTextFile(const char *fileName)
     }
 
     return text;
+}
+
+// Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetStereoConfig(VrDeviceInfo hmd)
+{
+    // Compute aspect ratio
+    float aspect = ((float)hmd.hResolution*0.5f)/(float)hmd.vResolution;
+
+    // Compute lens parameters
+    float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
+    float leftLensCenter[2] = { 0.25 + lensShift, 0.5f };
+    float rightLensCenter[2] = { 0.75 - lensShift, 0.5f };
+    float leftScreenCenter[2] = { 0.25f, 0.5f };
+    float rightScreenCenter[2] = { 0.75f, 0.5f };
+    
+    // Compute distortion scale parameters
+    // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
+    float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
+    float lensRadiusSq = lensRadius*lensRadius;
+    float distortionScale = hmd.distortionK[0] + 
+                            hmd.distortionK[1]*lensRadiusSq + 
+                            hmd.distortionK[2]*lensRadiusSq*lensRadiusSq + 
+                            hmd.distortionK[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+    
+    TraceLog(DEBUG, "VR: Distortion Scale: %f", distortionScale);
+    
+    float normScreenWidth = 0.5f;
+    float normScreenHeight = 1.0f;
+    float scaleIn[2] = { 2/normScreenWidth, 2/normScreenHeight/aspect };
+    float scale[2] = { normScreenWidth*0.5/distortionScale, normScreenHeight*0.5*aspect/distortionScale };
+    
+    TraceLog(DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
+    TraceLog(DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
+    TraceLog(DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
+    TraceLog(DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
+    
+    // Update distortion shader with lens and distortion-scale parameters
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftScreenCenter"), leftScreenCenter, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightScreenCenter"), rightScreenCenter, 2);
+    
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+
+    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
+    // ...but with lens distortion it is increased (see Oculus SDK Documentation)
+    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance)*RAD2DEG;     // Really need distortionScale?
+    float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance)*RAD2DEG;
+    
+    // Compute camera projection matrices
+    float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
+    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
+    vrConfig.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
+    vrConfig.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
+    
+    // NOTE: Projection matrices must be transposed due to raymath convention
+    MatrixTranspose(&vrConfig.eyesProjection[0]);
+    MatrixTranspose(&vrConfig.eyesProjection[1]);
+    
+    // Compute camera transformation matrices
+    // NOTE: Camera movement might seem more natural if we model the head. 
+    // Our axis of rotation is the base of our head, so we might want to add 
+    // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions.
+    vrConfig.eyesViewOffset[0] = MatrixTranslate(-hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
+    
+    // Compute eyes Viewports
+    //vrConfig.eyesViewport[0] = (Rectangle){ 0, 0, hmd.hResolution/2, hmd.vResolution };
+    //vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+}
+
+// Set internal projection and modelview matrix depending on eyes tracking data
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
+{
+    if (vrEnabled)
+    {
+        Matrix eyeProjection = matProjection;
+        Matrix eyeModelView = matModelView;
+
+#if defined(RLGL_OCULUS_SUPPORT)
+        if (vrDeviceReady)
+        {
+            rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y, 
+                       layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
+
+            Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.y, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.z, 
+                                                     layer.eyeLayer.RenderPose[eye].Orientation.w };
+            QuaternionInvert(&eyeRenderPose);
+            Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
+            Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.y, 
+                                                    -layer.eyeLayer.RenderPose[eye].Position.z);
+
+            Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
+            eyeModelView = MatrixMultiply(matModelView, eyeView);               // Combine internal camera matrix (modelview) wih eye-head movement
+
+            eyeProjection = layer.eyeProjections[eye];
+        }
+        else
+#endif
+        {
+            // Setup viewport and projection/modelview matrices using tracking data
+            rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
+
+            // Apply view offset to modelview matrix
+            eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
+            
+            eyeProjection = vrConfig.eyesProjection[eye];
+        }
+
+        SetMatrixModelview(eyeModelView);
+        SetMatrixProjection(eyeProjection);
+    }
 }
 #endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
@@ -3857,6 +3944,116 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
+// Initialize Oculus device (returns true if success)
+OCULUSAPI bool InitOculusDevice(void)
+{
+    bool oculusReady = false;
+
+    ovrResult result = ovr_Initialize(NULL);
+    
+    if (OVR_FAILURE(result)) TraceLog(WARNING, "OVR: Could not initialize Oculus device");
+    else
+    {
+        result = ovr_Create(&session, &luid);
+        if (OVR_FAILURE(result))
+        {
+            TraceLog(WARNING, "OVR: Could not create Oculus session");
+            ovr_Shutdown();
+        }
+        else
+        {
+            hmdDesc = ovr_GetHmdDesc(session);
+
+            TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+            TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+            TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+            TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
+            //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
+            TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+            
+            // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
+            // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
+            
+            // Initialize Oculus Buffers
+            layer = InitOculusLayer(session);   
+            buffer = LoadOculusBuffer(session, layer.width, layer.height);
+            mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);     // NOTE: hardcoded...
+            layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
+            
+            // Recenter OVR tracking origin
+            ovr_RecenterTrackingOrigin(session);
+            
+            oculusReady = true;
+            vrEnabled = true;
+        }
+    }
+    
+    return oculusReady;
+}
+
+// Close Oculus device (and unload buffers)
+OCULUSAPI void CloseOculusDevice(void)
+{
+    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
+    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
+
+    ovr_Destroy(session);   // Free Oculus session data
+    ovr_Shutdown();         // Close Oculus device connection
+}
+
+// Update Oculus head position-orientation tracking
+OCULUSAPI void UpdateOculusTracking(void)
+{
+    frameIndex++;
+
+    ovrPosef eyePoses[2];
+    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
+    
+    layer.eyeLayer.RenderPose[0] = eyePoses[0];
+    layer.eyeLayer.RenderPose[1] = eyePoses[1];
+    
+    // Get session status information
+    ovrSessionStatus sessionStatus;
+    ovr_GetSessionStatus(session, &sessionStatus);
+    
+    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
+    if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
+    //if (sessionStatus.HmdPresent)  // HMD is present.
+    //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
+    //if (sessionStatus.HmdMounted)  // HMD is on the user's head.
+    //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
+}
+
+// Setup Oculus buffers for drawing
+OCULUSAPI void BeginOculusDrawing(void)
+{
+    GLuint currentTexId;
+    int currentIndex;
+    
+    ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
+    ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
+}
+
+// Finish Oculus drawing and blit framebuffer to mirror
+OCULUSAPI void EndOculusDrawing(void)
+{
+    // Unbind current framebuffer (Oculus buffer)
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    
+    ovr_CommitTextureSwapChain(session, buffer.textureChain);
+    
+    ovrLayerHeader *layers = &layer.eyeLayer.Header;
+    ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
+
+    // Blit mirror texture to back buffer
+    BlitOculusMirror(session, mirror);
+}
+
 // Load Oculus required buffers: texture-swap-chain, fbo, texture-depth
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
 {

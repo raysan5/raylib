@@ -2,13 +2,26 @@
 *
 *   raylib.audio
 *
-*   Basic functions to manage Audio: InitAudioDevice, LoadAudioFiles, PlayAudioFiles
+*   Basic functions to manage Audio: 
+*       Manage audio device (init/close)
+*       Load and Unload audio files
+*       Play/Stop/Pause/Resume loaded audio
+*       Manage mixing channels
+*       Manage raw audio context
 *
 *   Uses external lib:
 *       OpenAL Soft - Audio device management lib (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
+*       jar_xm - XM module file loading
+*       jar_mod - MOD audio file loading
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
+*       XM audio module support (jar_xm)
+*       MOD audio module support (jar_mod)
+*       Mixing channels support
+*       Raw audio context support
+*
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -49,22 +62,18 @@
 
 // Sound source type
 typedef struct Sound {
-    unsigned int source;
-    unsigned int buffer;
-    AudioError error; // if there was any error during the creation or use of this Sound
+    unsigned int source;    // Sound audio source id
+    unsigned int buffer;    // Sound audio buffer id
 } Sound;
 
 // Wave type, defines audio wave data
 typedef struct Wave {
     void *data;                 // Buffer data pointer
     unsigned int dataSize;      // Data size in bytes
-    unsigned int sampleRate;
-    short bitsPerSample;
+    unsigned int sampleRate;    // Samples per second to be played
+    short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
-
-typedef int RawAudioContext;
-
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -80,7 +89,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
-bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
+bool IsAudioDeviceReady(void);                                  // Check if device has been initialized successfully
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -100,17 +109,14 @@ void PauseMusicStream(int index);                               // Pause music p
 void ResumeMusicStream(int index);                              // Resume playing paused music
 bool IsMusicPlaying(int index);                                 // Check if music is playing
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
+void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
 float GetMusicTimeLength(int index);                            // Get music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int GetMusicStreamCount(void);
-void SetMusicPitch(int index, float pitch);
+int GetMusicStreamCount(void);                                  // Get number of streams loaded
 
-// used to output raw audio streams, returns negative numbers on error
-// if floating point is false the data size is 16bit short, otherwise it is float 32bit
-RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
-
-void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
+int InitRawMixChannel(int sampleRate, int channels, bool floatingPoint);        // Initialize raw audio mix channel for audio buffering
+int BufferRawMixChannel(int mixc, void *data, unsigned short numberElements);   // Buffers data directly to raw mix channel
+void CloseRawMixChannel(int mixc);                                              // Closes and frees raw mix channel
 
 #ifdef __cplusplus
 }

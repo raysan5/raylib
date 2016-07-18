@@ -120,8 +120,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl -lX11 \
-               -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl
+        # on XWindow could require also below libraries, just uncomment
+        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
@@ -208,6 +209,7 @@ EXAMPLES = \
     shaders_standard_lighting \
     audio_sound_loading \
     audio_music_stream \
+    audio_module_playing \
     fix_dylib \
 
 
@@ -432,6 +434,10 @@ audio_sound_loading: audio_sound_loading.c
 
 # compile [audio] example - music stream playing (OGG)
 audio_music_stream: audio_music_stream.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [audio] example - module playing (OGG)
+audio_module_playing: audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # fix dylib install path name for each executable (MAC)

@@ -1,24 +1,24 @@
 changelog
 ---------
 
-Current Release:    raylib 1.5.0 (xx June 2016)
+Current Release:    raylib 1.5.0 (18 July 2016)
 
 NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
 NOTE: Current Release includes all previous updates.
 
 -----------------------------------------------
-Release:     raylib 1.5.0 (xx June 2016)
+Release:     raylib 1.5.0 (18 July 2016)
 -----------------------------------------------
 NOTE: 
   Probably this new version is the biggest boost of the library ever, lots of parts of the library have been redesigned, 
   lots of bugs have been solved and some **AMAZING** new features have been added.
 
 HUGE changes:
-[rlgl] OCULUS RIFT CV1: Added support for VR witha bunch of Oculus-specific functions to init/close device and Oculus rendering.
+[rlgl] OCULUS RIFT CV1: Added support for VR, not oly Oculus Rift CV1 but also stereo rendering simulator (multiplatform).
 [rlgl] MATERIALS SYSTEM: Added support for Materials (.mtl) and multiple material properties: diffuse, specular, normal.
-[rlgl] LIGHTING SYSTEM: Added support for up to 8 lights of 3 different types: Omni, Directional and Spot
-[physac] REDESIGNED: Improved performance and simplified usage, physic objects are managed internally
-[audio] CHIPTUNES: Added support for module audio music (.xm, .mod) loading and playing
+[rlgl] LIGHTING SYSTEM: Added support for up to 8 lights of 3 different types: Omni, Directional and Spot.
+[physac] REDESIGNED: Improved performance and simplified usage, physic objects now are managed internally in a second thread!
+[audio] CHIPTUNES: Added support for module audio music (.xm, .mod) loading and playing. Multiple mixing channels supported.
 
 other changes:
 
@@ -34,6 +34,9 @@ other changes:
 [core] Translate mouse inputs as touch inputs in HTML5
 [core] Improved function GetKeyPressed() to support multiple keys (including function keys)
 [core] Improved gamepad support, specially for RaspberryPi (including multiple gamepads support)
+[rlgl] Support stereo rendering simulation (duplicate draw calls by viewport, optimized)
+[rlgl] Added distortion shader (embeded) to support custom VR simulator: shader_distortion.h
+[rlgl] Added support for OpenGL 2.1 on desktop
 [rlgl] Improved 2D vs 3D drawing system (lines, triangles, quads)
 [rlgl] Improved DXT-ETC1 support on HTML5
 [rlgl] Review function: rlglUnproject()
@@ -43,7 +46,7 @@ other changes:
 [rlgl] Added support for indexed and dynamic mesh data
 [rlgl] Set fixed vertex attribs location points
 [rlgl] Improved mesh data loading support
-[rlgl] Added standard shader (embeded) to support materials and lighting: standard_shader.h
+[rlgl] Added standard shader (embeded) to support materials and lighting: shader_standard.h
 [rlgl] Added light functions: CreateLight(), DestroyLight()
 [rlgl] Added wire mode functions: rlDisableWireMode(), rlEnableWireMode()
 [rlgl] Review function consistency, added: rlglLoadMesh(), rlglUpdateMesh(), rlglDrawMesh(), rlglUnloadMesh()
@@ -77,22 +80,22 @@ other changes:
 [audio] Renamed SoundIsPlaying() to IsSoundPlaying()
 [audio] Renamed MusicIsPlaying() to IsMusicPlaying()
 [audio] Support multiple Music streams (indexed)
+[audio] Support multiple mixing channels
 [gestures] Improved and reviewed gestures system
 [raymath] Added QuaternionInvert()
 [raymath] Removed function: PrintMatrix()
-[raygui] Ported to header-only library
+[raygui] Ported to header-only library (https://github.com/raysan5/raygui)
 [shaders] Added depth drawing shader (requires a depth texture)
 [shaders] Reviewed included shaders and added comments
 [OpenAL Soft] Updated to latest version (1.17.2)
 [GLFW3] Updated to latest version (3.2)
-[GLAD] Converted to header only library
 [stb] Updated to latest headers versions
+[GLAD] Converted to header only library and simplified to only used extensions
 [*] Reorganize library folders: external libs moved to src/external folder
 [*] Reorganize src folder for Android library
 [*] Review external dependencies usage
 [*] Improved Linux and OSX build systems
 [*] Lots of tweaks and bugs corrected all around
-
 
 -----------------------------------------------
 Release:     raylib 1.4.0 (22 February 2016)

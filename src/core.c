@@ -181,11 +181,10 @@ static uint64_t baseTime;               // Base time measure for hi-res timer
 static bool windowShouldClose = false;  // Flag to set window for closing
 #endif
 
-static unsigned int displayWidth, displayHeight;     // Display width and height (monitor, device-screen, LCD, ...)
+// Display size-related data
+static unsigned int displayWidth, displayHeight; // Display width and height (monitor, device-screen, LCD, ...)
 static int screenWidth, screenHeight;       // Screen width and height (used render area)
-static int renderWidth, renderHeight;       // Framebuffer width and height (render area)
-                                            // NOTE: Framebuffer could include black bars
-
+static int renderWidth, renderHeight;       // Framebuffer width and height (render area, including black bars if required)
 static int renderOffsetX = 0;               // Offset X from render area (must be divided by 2)
 static int renderOffsetY = 0;               // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
@@ -214,7 +213,7 @@ static bool cursorHidden;                   // Track if cursor is hidden
 #endif
 
 static Vector2 mousePosition;               // Mouse position on screen
-static Vector2 touchPosition[MAX_TOUCH_POINTS];     // Touch position on screen
+static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
 
 #if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -226,7 +225,7 @@ static double updateTime, drawTime;         // Time measures for update and draw
 static double frameTime;                    // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
-static char configFlags = 0;                // Configuration flags (bit  based)
+static char configFlags = 0;                // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
 //----------------------------------------------------------------------------------

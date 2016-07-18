@@ -431,8 +431,8 @@ typedef struct Model {
 // Light type
 typedef struct LightData {
     unsigned int id;        // Light unique id
-    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     bool enabled;           // Light enabled
+    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
     
     Vector3 position;       // Light position
     Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
@@ -467,8 +467,6 @@ typedef struct Wave {
     short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
-
-typedef int RawAudioContext;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -895,17 +893,10 @@ void PauseMusicStream(int index);                               // Pause music p
 void ResumeMusicStream(int index);                              // Resume playing paused music
 bool IsMusicPlaying(int index);                                 // Check if music is playing
 void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
+void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
 float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
 float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int GetMusicStreamCount(void);
-void SetMusicPitch(int index, float pitch);
-
-// used to output raw audio streams, returns negative numbers on error
-// if floating point is false the data size is 16bit short, otherwise it is float 32bit
-RawAudioContext InitRawAudioContext(int sampleRate, int channels, bool floatingPoint);
-
-void CloseRawAudioContext(RawAudioContext ctx);
-int BufferRawAudioContext(RawAudioContext ctx, void *data, unsigned short numberElements); // returns number of elements buffered
+int GetMusicStreamCount(void);                                  // Get number of streams loaded
 
 #ifdef __cplusplus
 }

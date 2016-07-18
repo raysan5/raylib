@@ -49,7 +49,7 @@ int main()
 
                 DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
 
-                DrawGrid(10, 1.0f);        // Draw a grid
+                DrawGrid(10, 1.0f);         // Draw a grid
 
                 DrawGizmo(position);        // Draw gizmo
 
