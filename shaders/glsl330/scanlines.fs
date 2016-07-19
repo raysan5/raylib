@@ -6,20 +6,23 @@ in vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // Output fragment color
 out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
+// NOTE: Render size values must be passed from code
+const float renderWidth = 800;
+const float renderHeight = 450;
 float offset = 0.0;
-float frequency = 720.0/3.0;
 
 uniform float time;
 
 void main()
 {
+    float frequency = renderHeight/3.0;
 /*
     // Scanlines method 1
     float tval = 0; //time

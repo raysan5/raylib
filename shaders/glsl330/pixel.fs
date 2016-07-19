@@ -6,15 +6,16 @@ in vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // Output fragment color
 out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
-const float renderWidth = 1280.0;
-const float renderHeight = 720.0;
+// NOTE: Render size values must be passed from code
+const float renderWidth = 800;
+const float renderHeight = 450;
 
 uniform float pixelWidth = 5.0;
 uniform float pixelHeight = 5.0;
