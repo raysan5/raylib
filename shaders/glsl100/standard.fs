@@ -34,7 +34,6 @@ struct Light {
 };
 
 const int maxLights = 8;
-uniform int lightsCount;
 uniform Light lights[maxLights];
 
 vec3 CalcPointLight(Light l, vec3 n, vec3 v, float s)
@@ -134,19 +133,15 @@ void main()
     float spec = 1.0;
     if (useSpecular == 1) spec *= normalize(texture2D(texture2, fragTexCoord).r);
     
-    for (int i = 0; i < lightsCount; i++)
+    for (int i = 0; i < maxLights; i++)
     {
         // Check if light is enabled
         if (lights[i].enabled == 1)
         {
             // Calculate lighting based on light type
-            switch (lights[i].type)
-            {
-                case 0: lighting += CalcPointLight(lights[i], n, v, spec); break;
-                case 1: lighting += CalcDirectionalLight(lights[i], n, v, spec); break;
-                case 2: lighting += CalcSpotLight(lights[i], n, v, spec); break;
-                default: break;
-            }
+            if(lights[i].type == 0) lighting += CalcPointLight(lights[i], n, v, spec);
+            else if(lights[i].type == 1) lighting += CalcDirectionalLight(lights[i], n, v, spec);
+            else if(lights[i].type == 2) lighting += CalcSpotLight(lights[i], n, v, spec);
         }
     }
     

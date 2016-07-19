@@ -756,16 +756,10 @@ typedef enum ovrButton_
     ovrButton_RThumb    = 0x00000004,
     ovrButton_RShoulder = 0x00000008,
 
-    // Bit mask of all buttons on the right Touch controller
-    ovrButton_RMask     = ovrButton_A | ovrButton_B | ovrButton_RThumb | ovrButton_RShoulder,
-
     ovrButton_X         = 0x00000100,
     ovrButton_Y         = 0x00000200,
     ovrButton_LThumb    = 0x00000400,  
     ovrButton_LShoulder = 0x00000800,
-
-    // Bit mask of all buttons on the left Touch controller
-    ovrButton_LMask     = ovrButton_X | ovrButton_Y | ovrButton_LThumb | ovrButton_LShoulder,
 
     // Navigation through DPad.
     ovrButton_Up        = 0x00010000,
@@ -778,6 +772,13 @@ typedef enum ovrButton_
     ovrButton_VolDown   = 0x00800000,  // only supported by Remote.
     ovrButton_Home      = 0x01000000,  
     ovrButton_Private   = ovrButton_VolUp | ovrButton_VolDown | ovrButton_Home,
+
+    // Bit mask of all buttons on the right Touch controller
+    ovrButton_RMask = ovrButton_A | ovrButton_B | ovrButton_RThumb | ovrButton_RShoulder,
+
+    // Bit mask of all buttons on the left Touch controller
+    ovrButton_LMask = ovrButton_X | ovrButton_Y | ovrButton_LThumb | ovrButton_LShoulder |
+                      ovrButton_Enter,
 
 
     ovrButton_EnumSize  = 0x7fffffff ///< \internal Force type int32_t.
@@ -823,6 +824,25 @@ typedef enum ovrTouch_
     ovrTouch_EnumSize       = 0x7fffffff ///< \internal Force type int32_t.
 } ovrTouch;
 
+/// Describes the Touch Haptics engine.
+/// Currently, those values will NOT change during a session.
+typedef struct OVR_ALIGNAS(OVR_PTR_SIZE) ovrTouchHapticsDesc_
+{
+    // Haptics engine frequency/sample-rate, sample time in seconds equals 1.0/sampleRateHz
+    int SampleRateHz;
+    // Size of each Haptics sample, sample value range is [0, 2^(Bytes*8)-1]
+    int SampleSizeInBytes;
+
+    // Queue size that would guarantee Haptics engine would not starve for data
+    // Make sure size doesn't drop below it for best results
+    int QueueMinSizeToAvoidStarvation;
+
+    // Minimum, Maximum and Optimal number of samples that can be sent to Haptics through ovr_SubmitControllerVibration
+    int SubmitMinSamples;
+    int SubmitMaxSamples;
+    int SubmitOptimalSamples;
+} ovrTouchHapticsDesc;
+
 /// Specifies which controller is connected; multiple can be connected at once.
 typedef enum ovrControllerType_
 {
@@ -837,6 +857,31 @@ typedef enum ovrControllerType_
 
     ovrControllerType_EnumSize  = 0x7fffffff ///< \internal Force type int32_t.
 } ovrControllerType;
+
+/// Haptics buffer submit mode
+typedef enum ovrHapticsBufferSubmitMode_
+{
+    // Enqueue buffer for later playback
+    ovrHapticsBufferSubmit_Enqueue
+} ovrHapticsBufferSubmitMode;
+
+/// Haptics buffer descriptor, contains amplitude samples used for Touch vibration
+typedef struct ovrHapticsBuffer_
+{
+    const void* Samples;
+    int SamplesCount;
+    ovrHapticsBufferSubmitMode SubmitMode;
+} ovrHapticsBuffer;
+
+/// State of the Haptics playback for Touch vibration
+typedef struct ovrHapticsPlaybackState_
+{
+    // Remaining space available to queue more samples
+    int RemainingQueueSpace;
+
+    // Number of samples currently queued
+    int SamplesQueued;
+} ovrHapticsPlaybackState;
 
 
 /// Provides names for the left and right hand array indexes.
@@ -1358,25 +1403,49 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetInputState(ovrSession session, ovrControll
 ///
 OVR_PUBLIC_FUNCTION(unsigned int) ovr_GetConnectedControllerTypes(ovrSession session);
 
-
-/// Turns on vibration of the given controller.
-///
-/// To disable vibration, call ovr_SetControllerVibration with an amplitude of 0.
-/// Vibration automatically stops after a nominal amount of time, so if you want vibration 
-/// to be continuous over multiple seconds then you need to call this function periodically.
+/// Gets information about Haptics engine for the specified Touch controller.
 ///
 /// \param[in] session Specifies an ovrSession previously returned by ovr_Create.
-/// \param[in] controllerType Specifies the controller to apply the vibration to.
-/// \param[in] frequency Specifies a vibration frequency in the range of 0.0 to 1.0. 
-///            Currently the only valid values are 0.0, 0.5, and 1.0 and other values will
-///            be clamped to one of these.
-/// \param[in] amplitude Specifies a vibration amplitude in the range of 0.0 to 1.0.
+/// \param[in] controllerType The controller to retrieve the information from.
 ///
+/// \return Returns an ovrTouchHapticsDesc.
+///
+OVR_PUBLIC_FUNCTION(ovrTouchHapticsDesc) ovr_GetTouchHapticsDesc(ovrSession session, ovrControllerType controllerType);
+
+/// Sets constant vibration (with specified frequency and amplitude) to a controller.
+/// Note: ovr_SetControllerVibration cannot be used interchangeably with ovr_SubmitControllerVibration.
+///
+/// This method should be called periodically, vibration lasts for a maximum of 2.5 seconds.
+/// It's recommended to call this method once a second, calls will be rejected if called too frequently (over 30hz).
+///
+/// \param[in] session Specifies an ovrSession previously returned by ovr_Create.
+/// \param[in] controllerType The controller to set the vibration to.
+/// \param[in] frequency Vibration frequency. Supported values are: 0.0 (disabled), 0.5 and 1.0. Non valid values will be clamped.
+/// \param[in] amplitude Vibration amplitude in the [0.0, 1.0] range.
 /// \return Returns ovrSuccess upon success.
 ///
-/// \see ovrControllerType
-/// 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrSession session, ovrControllerType controllerType, float frequency, float amplitude);
+
+/// Submits a Haptics buffer (used for vibration) to Touch (only) controllers.
+/// Note: ovr_SubmitControllerVibration cannot be used interchangeably with ovr_SetControllerVibration.
+///
+/// \param[in] session Specifies an ovrSession previously returned by ovr_Create.
+/// \param[in] controllerType Controller where the Haptics buffer will be played.
+/// \param[in] buffer Haptics buffer containing amplitude samples to be played.
+/// \return Returns ovrSuccess upon success.
+/// \see ovrHapticsBuffer
+///
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitControllerVibration(ovrSession session, ovrControllerType controllerType, const ovrHapticsBuffer* buffer);
+
+/// Gets the Haptics engine playback state of a specific Touch controller.
+///
+/// \param[in] session Specifies an ovrSession previously returned by ovr_Create.
+/// \param[in] controllerType Controller where the Haptics buffer wil be played.
+/// \param[in] outState State of the haptics engine.
+/// \return Returns ovrSuccess upon success.
+/// \see ovrHapticsPlaybackState
+/// 
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetControllerVibrationState(ovrSession session, ovrControllerType controllerType, ovrHapticsPlaybackState* outState);
 
 
 ///@}
