@@ -268,9 +268,13 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #if !defined(_STDBOOL_H)
-        typedef enum { false, true } bool;
-        #define _STDBOOL_H
+    #ifndef __APPLE__
+        #if !defined(_STDBOOL_H)
+            typedef enum { false, true } bool;
+            #define _STDBOOL_H
+        #endif
+    #else
+        #include <stdbool.h>
     #endif
 #endif
 
