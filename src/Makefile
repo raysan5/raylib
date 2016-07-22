@@ -169,15 +169,15 @@ endif
 
 # compile core module
 core.o : core.c raylib.h rlgl.h utils.h raymath.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile rlgl module
 rlgl.o : rlgl.c rlgl.h raymath.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(GRAPHICS)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(GRAPHICS)
     
 # compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES)
     
 # compile textures module
 textures.o : textures.c rlgl.h utils.h
@@ -185,11 +185,11 @@ textures.o : textures.c rlgl.h utils.h
 
 # compile text module
 text.o : text.c raylib.h utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES)
 
 # compile models module
 models.o : models.c raylib.h rlgl.h raymath.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE) -D$(PLATFORM)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile audio module
 audio.o : audio.c raylib.h
@@ -209,7 +209,7 @@ camera.o : camera.c raylib.h
 
 #compile gestures module
 gestures.o : gestures.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES)
 
 # It installs generated and needed files to compile projects using raylib.
 # The installation works manually.
