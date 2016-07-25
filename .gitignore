@@ -75,4 +75,4 @@ src/libraylib.bc
 !src/external/glfw3/lib/win32/glfw3.dll
 !src/external/openal_soft/lib/win32/OpenAL32.dll
 !src/external/OculusSDK/LibOVR/LibOVRRT32_1.dll
-!src/external/pthread/pthreadGC2.dll
+!src/external/pthread/lib/pthreadGC2.dll
