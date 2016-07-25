@@ -77,8 +77,27 @@ endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
+# define raylib release directory for compiled library
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        RAYLIB_PATH = ../release/win32/mingw32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_PATH = ../release/linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        RAYLIB_PATH = ../release/osx
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    RAYLIB_PATH = ../release/html5
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH = ../release/rpi
+endif
+
 # define any directories containing required header files
-INCLUDES = -I. -I../src -I../src/external
+INCLUDES = -I. -I../src -I../src/external -I$(RAYLIB_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
@@ -97,7 +116,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # define library paths containing required libs
-LFLAGS = -L. -L../src
+LFLAGS = -L. -L../src -L$(RAYLIB_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS += -L/opt/vc/lib
