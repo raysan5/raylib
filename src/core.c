@@ -1614,7 +1614,14 @@ static void InitGraphicsDevice(int width, int height)
         TraceLog(INFO, "Trying to enable VSYNC");
     }
 
-    //glfwGetFramebufferSize(window, &renderWidth, &renderHeight);    // Get framebuffer size of current window
+#ifdef __APPLE__
+    // Get framebuffer size of current window
+    // NOTE: Required to handle HighDPI display correctly
+    // TODO: Probably should be added for other systems too or managed
+    // internally by GLFW3 callback: glfwSetFramebufferSizeCallback()
+    glfwGetFramebufferSize(window, &renderWidth, &renderHeight);
+#endif
+    
 #endif // defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -1765,6 +1772,7 @@ static void InitGraphicsDevice(int width, int height)
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
 
     // Initialize OpenGL context (states and resources)
+    // NOTE: screenWidth and screenHeight not used, just stored as globals
     rlglInit(screenWidth, screenHeight);
     
     // Initialize screen viewport (area of the screen that you will actually draw to)
