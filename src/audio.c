@@ -482,8 +482,8 @@ Sound LoadSound(char *fileName)
     // Audio file loading
     // NOTE: Buffer space is allocated inside function, Wave must be freed
 
-    if (strcmp(GetExtension(fileName),"wav") == 0) wave = LoadWAV(fileName);
-    else if (strcmp(GetExtension(fileName),"ogg") == 0) wave = LoadOGG(fileName);
+    if (strcmp(GetExtension(fileName), "wav") == 0) wave = LoadWAV(fileName);
+    else if (strcmp(GetExtension(fileName), "ogg") == 0) wave = LoadOGG(fileName);
     else
     {
         TraceLog(WARNING, "[%s] Sound extension not recognized, it can't be loaded", fileName);
@@ -528,7 +528,7 @@ Sound LoadSound(char *fileName)
         // Attach sound buffer to source
         alSourcei(source, AL_BUFFER, buffer);
 
-        TraceLog(INFO, "[%s] Sound file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
+        TraceLog(INFO, "[SND ID %i][BUFR ID %i] Sound file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", source, buffer, wave.sampleRate, wave.bitsPerSample, wave.channels);
 
         // Unallocate WAV data
         UnloadWave(wave);
@@ -759,7 +759,7 @@ void UnloadSound(Sound sound)
     alDeleteSources(1, &sound.source);
     alDeleteBuffers(1, &sound.buffer);
     
-    TraceLog(INFO, "Unloaded sound data");
+    TraceLog(INFO, "[SND ID %i][BUFR ID %i] Unloaded sound data from RAM", sound.source, sound.buffer);
 }
 
 // Play a sound
@@ -837,7 +837,7 @@ int PlayMusicStream(int index, char *fileName)
         else if (mixIndex == (MAX_MIX_CHANNELS - 1)) return ERROR_OUT_OF_MIX_CHANNELS; // error
     }
     
-    if (strcmp(GetExtension(fileName),"ogg") == 0)
+    if (strcmp(GetExtension(fileName), "ogg") == 0)
     {
         // Open audio stream
         musicStreams[index].stream = stb_vorbis_open_filename(fileName, NULL, NULL);
@@ -852,14 +852,13 @@ int PlayMusicStream(int index, char *fileName)
             // Get file info
             stb_vorbis_info info = stb_vorbis_get_info(musicStreams[index].stream);
 
-            TraceLog(INFO, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
-            TraceLog(INFO, "[%s] Ogg channels: %i", fileName, info.channels);
+            TraceLog(DEBUG, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
+            TraceLog(DEBUG, "[%s] Ogg channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
 
             musicStreams[index].loop = true;                  // We loop by default
             musicStreams[index].enabled = true;
             
-
             musicStreams[index].totalSamplesLeft = (unsigned int)stb_vorbis_stream_length_in_samples(musicStreams[index].stream) * info.channels;
             musicStreams[index].totalLengthSeconds = stb_vorbis_stream_length_in_seconds(musicStreams[index].stream);
             
@@ -877,7 +876,7 @@ int PlayMusicStream(int index, char *fileName)
             if (!musicStreams[index].mixc) return ERROR_LOADING_OGG; // error
         }
     }
-    else if (strcmp(GetExtension(fileName),"xm") == 0)
+    else if (strcmp(GetExtension(fileName), "xm") == 0)
     {
         // only stereo is supported for xm
         if (!jar_xm_create_context_from_file(&musicStreams[index].xmctx, 48000, fileName))
@@ -904,7 +903,7 @@ int PlayMusicStream(int index, char *fileName)
             return ERROR_LOADING_XM; // error
         }
     }
-    else if (strcmp(GetExtension(fileName),"mod") == 0)
+    else if (strcmp(GetExtension(fileName), "mod") == 0)
     {
         jar_mod_init(&musicStreams[index].modctx);
         
@@ -1369,7 +1368,7 @@ static void UnloadWave(Wave wave)
 {
     free(wave.data);
     
-    TraceLog(INFO, "Unloaded wave data");
+    TraceLog(INFO, "Unloaded wave data from RAM");
 }
 
 // Some required functions for audio standalone module version
