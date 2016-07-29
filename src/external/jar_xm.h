@@ -1435,7 +1435,7 @@ static void jar_xm_volume_slide(jar_xm_channel_context_t* ch, uint8_t rawval) {
     }
 }
 
-static float jar_xm_envelope_lerp(jar_xm_envelope_point_t* restrict a, jar_xm_envelope_point_t* restrict b, uint16_t pos) {
+static float jar_xm_envelope_lerp(jar_xm_envelope_point_t* a, jar_xm_envelope_point_t* b, uint16_t pos) {
     /* Linear interpolation between two envelope points */
     if(pos <= a->frame) return a->value;
     else if(pos >= b->frame) return b->value;

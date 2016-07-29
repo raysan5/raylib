@@ -78,6 +78,10 @@
 #define JAR_MOD_IMPLEMENTATION
 #include "external/jar_mod.h"       // MOD loading functions
 
+#ifdef _MSC_VER
+    #undef bool
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
