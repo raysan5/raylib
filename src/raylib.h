@@ -397,7 +397,7 @@ typedef struct Mesh {
 // Shader type (generic shader)
 typedef struct Shader {
     unsigned int id;        // Shader program id
-    
+
     // Vertex attributes locations (default locations)
     int vertexLoc;          // Vertex attribute location point    (default-location = 0)
     int texcoordLoc;        // Texcoord attribute location point  (default-location = 1)
@@ -409,7 +409,7 @@ typedef struct Shader {
     // Uniform locations
     int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
     int tintColorLoc;       // Diffuse color uniform location point (fragment shader)
-    
+
     // Texture map locations (generic for any kind of map)
     int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
     int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
@@ -423,11 +423,11 @@ typedef struct Material {
     Texture2D texDiffuse;   // Diffuse texture  (binded to shader mapTexture0Loc)
     Texture2D texNormal;    // Normal texture   (binded to shader mapTexture1Loc)
     Texture2D texSpecular;  // Specular texture (binded to shader mapTexture2Loc)
-    
+
     Color colDiffuse;       // Diffuse color
     Color colAmbient;       // Ambient color
     Color colSpecular;      // Specular color
-    
+
     float glossiness;       // Glossiness level (Ranges from 0 to 1000)
 } Material;
 
@@ -443,14 +443,14 @@ typedef struct LightData {
     unsigned int id;        // Light unique id
     bool enabled;           // Light enabled
     int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-    
+
     Vector3 position;       // Light position
     Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
     float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
-    
+
     Color diffuse;          // Light diffuse color
     float intensity;        // Light intensity level
-    
+
     float coneAngle;        // Light cone max angle: LIGHT_SPOT
 } LightData, *Light;
 
@@ -477,6 +477,11 @@ typedef struct Wave {
     short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
+
+typedef struct MusicBuffer {
+    char *fileName;
+    int index;                  // index in musicStreams
+} MusicBuffer;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -647,7 +652,7 @@ void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
-int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)                   
+int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)
 Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)
 
 #if defined(PLATFORM_ANDROID)
@@ -687,8 +692,8 @@ void SetCameraPanControl(int panKey);                       // Set camera pan ke
 void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
 void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
 
-void SetCameraMoveControls(int frontKey, int backKey, 
-                           int leftKey, int rightKey, 
+void SetCameraMoveControls(int frontKey, int backKey,
+                           int leftKey, int rightKey,
                            int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
 void SetCameraMouseSensitivity(float sensitivity);          // Set camera mouse sensitivity (1st person and 3rd person cameras)
 
@@ -815,6 +820,7 @@ Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d mod
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
+Mesh GenMeshCube(float width, float height, float depth);
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
@@ -896,16 +902,17 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
-void UpdateMusicStream(int index);                              // Updates buffers for music streaming
-void StopMusicStream(int index);                                // Stop music playing (close stream)
-void PauseMusicStream(int index);                               // Pause music playing
-void ResumeMusicStream(int index);                              // Resume playing paused music
-bool IsMusicPlaying(int index);                                 // Check if music is playing
-void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
-void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
-float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
-float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
+MusicBuffer LoadMusicBufferStream(char *fileName, int index);
+int PlayMusicStream(MusicBuffer buffer);                 // Start music playing (open stream)
+void UpdateMusicStream(MusicBuffer buffer);                              // Updates buffers for music streaming
+void StopMusicStream(MusicBuffer buffer);                                // Stop music playing (close stream)
+void PauseMusicStream(MusicBuffer buffer);                               // Pause music playing
+void ResumeMusicStream(MusicBuffer buffer);                              // Resume playing paused music
+bool IsMusicPlaying(MusicBuffer buffer);                                 // Check if music is playing
+void SetMusicVolume(MusicBuffer buffer, float volume);                   // Set volume for music (1.0 is max level)
+void SetMusicPitch(MusicBuffer buffer, float pitch);                     // Set pitch for a music (1.0 is base level)
+float GetMusicTimeLength(MusicBuffer buffer);                            // Get music time length (in seconds)
+float GetMusicTimePlayed(MusicBuffer buffer);                              // Get current music time played (in seconds)
 int GetMusicStreamCount(void);                                  // Get number of streams loaded
 
 #ifdef __cplusplus

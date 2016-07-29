@@ -2,7 +2,7 @@
 *
 *   raylib.audio
 *
-*   Basic functions to manage Audio: 
+*   Basic functions to manage Audio:
 *       Manage audio device (init/close)
 *       Load and Unload audio files
 *       Play/Stop/Pause/Resume loaded audio
@@ -75,6 +75,11 @@ typedef struct Wave {
     short channels;
 } Wave;
 
+typedef struct MusicBuffer {
+    char *fileName;
+    int index;                  // index in musicStreams
+} MusicBuffer;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -102,16 +107,17 @@ bool IsSoundPlaying(Sound sound);                               // Check if a so
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
-void UpdateMusicStream(int index);                              // Updates buffers for music streaming
-void StopMusicStream(int index);                                // Stop music playing (close stream)
-void PauseMusicStream(int index);                               // Pause music playing
-void ResumeMusicStream(int index);                              // Resume playing paused music
-bool IsMusicPlaying(int index);                                 // Check if music is playing
-void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
-void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
-float GetMusicTimeLength(int index);                            // Get music time length (in seconds)
-float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
+MusicBuffer LoadMusicBufferStream(char *fileName, int index);
+int PlayMusicStream(MusicBuffer buffer);                 // Start music playing (open stream)
+void UpdateMusicStream(MusicBuffer buffer);                              // Updates buffers for music streaming
+void StopMusicStream(MusicBuffer buffer);                                // Stop music playing (close stream)
+void PauseMusicStream(MusicBuffer buffer);                               // Pause music playing
+void ResumeMusicStream(MusicBuffer buffer);                              // Resume playing paused music
+bool IsMusicPlaying(MusicBuffer buffer);                                 // Check if music is playing
+void SetMusicVolume(MusicBuffer buffer float volume);                   // Set volume for music (1.0 is max level)
+void SetMusicPitch(MusicBuffer buffer, float pitch);                     // Set pitch for a music (1.0 is base level)
+float GetMusicTimeLength(MusicBuffer buffer);                            // Get music time length (in seconds)
+float GetMusicTimePlayed(MusicBuffer buffer);                            // Get current music time played (in seconds)
 int GetMusicStreamCount(void);                                  // Get number of streams loaded
 
 int InitRawMixChannel(int sampleRate, int channels, bool floatingPoint);        // Initialize raw audio mix channel for audio buffering
