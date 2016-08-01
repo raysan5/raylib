@@ -75,10 +75,9 @@ typedef struct Wave {
     short channels;
 } Wave;
 
-typedef struct MusicBuffer {
-    char *fileName;
-    int index;                  // index in musicStreams
-} MusicBuffer;
+// Music type (file streaming from memory)
+// NOTE: Anything longer than ~10 seconds should be streamed into a mix channel...
+typedef struct Music *Music;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -102,27 +101,24 @@ Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound
+void ResumeSound(Sound sound);                                  // Resume a paused sound
 void StopSound(Sound sound);                                    // Stop playing a sound
 bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-MusicBuffer LoadMusicBufferStream(char *fileName, int index);
-int PlayMusicStream(MusicBuffer buffer);                 // Start music playing (open stream)
-void UpdateMusicStream(MusicBuffer buffer);                              // Updates buffers for music streaming
-void StopMusicStream(MusicBuffer buffer);                                // Stop music playing (close stream)
-void PauseMusicStream(MusicBuffer buffer);                               // Pause music playing
-void ResumeMusicStream(MusicBuffer buffer);                              // Resume playing paused music
-bool IsMusicPlaying(MusicBuffer buffer);                                 // Check if music is playing
-void SetMusicVolume(MusicBuffer buffer float volume);                   // Set volume for music (1.0 is max level)
-void SetMusicPitch(MusicBuffer buffer, float pitch);                     // Set pitch for a music (1.0 is base level)
-float GetMusicTimeLength(MusicBuffer buffer);                            // Get music time length (in seconds)
-float GetMusicTimePlayed(MusicBuffer buffer);                            // Get current music time played (in seconds)
-int GetMusicStreamCount(void);                                  // Get number of streams loaded
-
-int InitRawMixChannel(int sampleRate, int channels, bool floatingPoint);        // Initialize raw audio mix channel for audio buffering
-int BufferRawMixChannel(int mixc, void *data, unsigned short numberElements);   // Buffers data directly to raw mix channel
-void CloseRawMixChannel(int mixc);                                              // Closes and frees raw mix channel
+Music LoadMusicStream(char *fileName);                          // Load music stream from file
+void UnloadMusicStream(Music music);                            // Unload music stream
+void PlayMusicStream(Music music);                              // Start music playing (open stream)
+void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
+void StopMusicStream(Music music);                              // Stop music playing (close stream)
+void PauseMusicStream(Music music);                             // Pause music playing
+void ResumeMusicStream(Music music);                            // Resume playing paused music
+bool IsMusicPlaying(Music music);                               // Check if music is playing
+void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
+void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
+float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
+float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
 #ifdef __cplusplus
 }
