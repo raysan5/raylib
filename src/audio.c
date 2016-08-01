@@ -86,13 +86,13 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_STREAM_BUFFERS          2             // Number of buffers for each audio stream
+#define MAX_STREAM_BUFFERS          2    // Number of buffers for each audio stream
 
 // NOTE: Music buffer size is defined by number of samples, independent of sample size
 // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds
 // and double-buffering system, I concluded that a 4096 samples buffer should be enough
-// In case of music-stalls, just inclease this number
-#define AUDIO_BUFFER_SIZE        4096             // PCM data samples (i.e. short: 32Kb)
+// In case of music-stalls, just increase this number
+#define AUDIO_BUFFER_SIZE        4096    // PCM data samples (i.e. short: 32Kb)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -141,11 +141,11 @@ static Wave LoadWAV(const char *fileName);         // Load WAV file
 static Wave LoadOGG(char *fileName);               // Load OGG file
 static void UnloadWave(Wave wave);                 // Unload wave data
 
-static AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels);
-static void CloseAudioStream(AudioStream stream); // Frees mix channel
-static int BufferAudioStream(AudioStream stream, void *data, int numberElements); // Pushes more audio data into mix channel
-
 static bool BufferMusicStream(Music music, int numBuffersToProcess);  // Fill music buffers with data
+
+static AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels);
+static void BufferAudioStream(AudioStream stream, void *data, int numSamples);
+static void CloseAudioStream(AudioStream stream);
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -492,27 +492,23 @@ Music LoadMusicStream(char *fileName)
         // Open ogg audio stream
         music->ctxOgg = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (music->ctxOgg == NULL)
-        {
-            TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
-        }
+        if (music->ctxOgg == NULL)  TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
         else
         {
             stb_vorbis_info info = stb_vorbis_get_info(music->ctxOgg);  // Get Ogg file info
-
-            TraceLog(DEBUG, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
-            TraceLog(DEBUG, "[%s] Ogg channels: %i", fileName, info.channels);
-            TraceLog(DEBUG, "[%s] Temp memory required: %i", fileName, info.temp_memory_required);
+            //float totalLengthSeconds = stb_vorbis_stream_length_in_seconds(music->ctxOgg);
 
             // TODO: Support 32-bit sampleSize OGGs
             music->stream = InitAudioStream(info.sample_rate, 16, info.channels);
-            
             music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg)*info.channels;
             music->samplesLeft = music->totalSamples;
-            //float totalLengthSeconds = stb_vorbis_stream_length_in_seconds(music->ctxOgg);
-
             music->ctxType = MUSIC_AUDIO_OGG;
             music->loop = true;                  // We loop by default
+
+            TraceLog(DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
+            TraceLog(DEBUG, "[%s] OGG channels: %i", fileName, info.channels);
+            TraceLog(DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
+            
         }
     }
     else if (strcmp(GetExtension(fileName), "xm") == 0)
@@ -523,17 +519,15 @@ Music LoadMusicStream(char *fileName)
         {
             jar_xm_set_max_loop_count(music->ctxXm, 0);     // Set infinite number of loops
 
-            music->totalSamples = (unsigned int)jar_xm_get_remaining_samples(music->ctxXm);
-            music->samplesLeft = music->totalSamples;
-
-            TraceLog(INFO, "[%s] XM number of samples: %i", fileName, music->totalSamples);
-            TraceLog(INFO, "[%s] XM track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
-            
             // NOTE: Only stereo is supported for XM
             music->stream = InitAudioStream(48000, 32, 2);
-            
+            music->totalSamples = (unsigned int)jar_xm_get_remaining_samples(music->ctxXm);
+            music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_MODULE_XM;
             music->loop = true;
+            
+            TraceLog(DEBUG, "[%s] XM number of samples: %i", fileName, music->totalSamples);
+            TraceLog(DEBUG, "[%s] XM track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
         }
         else TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
     }
@@ -543,16 +537,14 @@ Music LoadMusicStream(char *fileName)
 
         if (jar_mod_load_file(&music->ctxMod, fileName))
         {
+            music->stream = InitAudioStream(48000, 16, 2);
             music->totalSamples = (unsigned int)jar_mod_max_samples(&music->ctxMod);
             music->samplesLeft = music->totalSamples;
+            music->ctxType = MUSIC_MODULE_MOD;
+            music->loop = true;
 
             TraceLog(INFO, "[%s] MOD number of samples: %i", fileName, music->samplesLeft);
             TraceLog(INFO, "[%s] MOD track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
-
-            music->stream = InitAudioStream(48000, 16, 2);
-
-            music->ctxType = MUSIC_MODULE_MOD;
-            music->loop = true;
         }
         else TraceLog(WARNING, "[%s] MOD file could not be opened", fileName);
     }
@@ -799,42 +791,18 @@ static void CloseAudioStream(AudioStream stream)
 }
 
 // Push more audio data into audio stream, only one buffer per call
-// NOTE: Returns number of samples that were processed
-static int BufferAudioStream(AudioStream stream, void *data, int numberElements)
-{
-    if (!data || !numberElements)   
-    { 
-        // Pauses audio until data is given
-        alSourcePause(stream.source);
-        return 0;
-    }
-    
+static void BufferAudioStream(AudioStream stream, void *data, int numSamples)
+{   
     ALuint buffer = 0;
     alSourceUnqueueBuffers(stream.source, 1, &buffer);
     
-    if (!buffer) return 0;
-    
-    // Reference
-    //void alBufferData(ALuint bufferName, ALenum format, const ALvoid *data, ALsizei size, ALsizei frequency);
-    
-    // ALuint bufferName: buffer id
-    // ALenum format: Valid formats are 
-    //      AL_FORMAT_MONO8,        // unsigned char
-    //      AL_FORMAT_MONO16,       // short
-    //      AL_FORMAT_STEREO8,
-    //      AL_FORMAT_STEREO16      // stereo data is interleaved: left+right channels sample
-    //      AL_FORMAT_MONO_FLOAT32 (extension)
-    //      AL_FORMAT_STEREO_FLOAT32 (extension)
-    // ALsizei size: Number of bytes, must be coherent with format
-    // ALsizei frequency: sample rate
-    
-    if (stream.sampleSize == 8) alBufferData(buffer, stream.format, (unsigned char *)data, numberElements*sizeof(unsigned char), stream.sampleRate);
-    else if (stream.sampleSize == 16) alBufferData(buffer, stream.format, (short *)data, numberElements*sizeof(short), stream.sampleRate);
-    else if (stream.sampleSize == 32) alBufferData(buffer, stream.format, (float *)data, numberElements*sizeof(float), stream.sampleRate);
+    //TraceLog(DEBUG, "Buffer to refill: %i", buffer);
+
+    if (stream.sampleSize == 8) alBufferData(buffer, stream.format, (unsigned char *)data, numSamples*sizeof(unsigned char), stream.sampleRate);
+    else if (stream.sampleSize == 16) alBufferData(buffer, stream.format, (short *)data, numSamples*sizeof(short), stream.sampleRate);
+    else if (stream.sampleSize == 32) alBufferData(buffer, stream.format, (float *)data, numSamples*sizeof(float), stream.sampleRate);
 
     alSourceQueueBuffers(stream.source, 1, &buffer);
-
-    return numberElements;
 }
 
 // Fill music buffers with new data from music stream
@@ -845,70 +813,49 @@ static bool BufferMusicStream(Music music, int numBuffersToProcess)
 
     int size = 0;              // Total size of data steamed in L+R samples for xm floats, individual L or R for ogg shorts
     bool active = true;        // We can get more data from stream (not finished)
-
-    if (music->ctxType == MUSIC_MODULE_XM) // There is no end of stream for xmfiles, once the end is reached zeros are generated for non looped chiptunes.
-    {
-        for (int i = 0; i < numBuffersToProcess; i++)
-        {
-            if (music->samplesLeft >= AUDIO_BUFFER_SIZE) size = AUDIO_BUFFER_SIZE/2;
-            else size = music->samplesLeft/2;
-
-            // Read 2*shorts and moves them to buffer+size memory location
-            jar_xm_generate_samples(music->ctxXm, pcmf, size); 
-            
-            BufferAudioStream(music->stream, pcmf, size*2);
-
-            music->samplesLeft -= size;
-
-            if (music->samplesLeft <= 0)
-            {
-                active = false;
-                break;
-            }
-        }
-    }
-    else if (music->ctxType == MUSIC_MODULE_MOD)
-    {
-        for (int i = 0; i < numBuffersToProcess; i++)
-        {
-            if (music->samplesLeft >= AUDIO_BUFFER_SIZE) size = AUDIO_BUFFER_SIZE/2;
-            else size = music->samplesLeft/2;
-
-            jar_mod_fillbuffer(&music->ctxMod, pcm, size, 0);
-            
-            BufferAudioStream(music->stream, pcm, size*2);
-
-            music->samplesLeft -= size;
-
-            if (music->samplesLeft <= 0)
-            {
-                active = false;
-                break;
-            }
-        }
-    }
-    else if (music->ctxType == MUSIC_AUDIO_OGG)
+    
+    for (int i = 0; i < numBuffersToProcess; i++)
     {
         if (music->samplesLeft >= AUDIO_BUFFER_SIZE) size = AUDIO_BUFFER_SIZE;
         else size = music->samplesLeft;
 
-        for (int i = 0; i < numBuffersToProcess; i++)
+        switch (music->ctxType)
         {
-            // NOTE: Returns the number of samples stored per channel
-            int numSamples = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, pcm, size);
-            
-            BufferAudioStream(music->stream, pcm, numSamples*music->stream.channels);
-            
-            music->samplesLeft -= (numSamples*music->stream.channels);
-
-            if (music->samplesLeft <= 0)
+            case MUSIC_AUDIO_OGG: 
             {
-                active = false;
-                break;
-            }
+                // NOTE: Returns the number of samples to process (should be the same as size)
+                int numSamples = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, pcm, size);
+
+                BufferAudioStream(music->stream, pcm, numSamples*music->stream.channels);
+                music->samplesLeft -= (numSamples*music->stream.channels);
+                
+            } break;
+            case MUSIC_MODULE_XM: 
+            {
+                // NOTE: Output buffer is 2*numsamples elements (left and right value for each sample)
+                jar_xm_generate_samples(music->ctxXm, pcmf, size/2);
+                BufferAudioStream(music->stream, pcmf, size);           // Using 32bit PCM data
+                music->samplesLeft -= (size/2);
+                
+            } break;
+            case MUSIC_MODULE_MOD: 
+            {
+                // NOTE: Output buffer size is nbsample*channels (default: 48000Hz, 16bit, Stereo)
+                jar_mod_fillbuffer(&music->ctxMod, pcm, size/2, 0); 
+                BufferAudioStream(music->stream, pcm, size);
+                music->samplesLeft -= (size/2);
+                
+            } break;
+            default: break;
+        }
+
+        if (music->samplesLeft <= 0)
+        {
+            active = false;
+            break;
         }
     }
-
+    
     return active;
 }
 

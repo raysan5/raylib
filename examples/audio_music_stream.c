@@ -54,7 +54,6 @@ int main()
             {
                 volume = 1.0;
                 framesCounter = 0;
-                PlayMusicStream(1, "resources/audio/another_file.ogg");
             }
 
             SetMusicVolume(volume);

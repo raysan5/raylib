@@ -39,7 +39,8 @@ int main()
     Sound fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
     
-    PlayMusicStream(0, "resources/audio/guitar_noodling.ogg");
+    Music music = LoadMusicStream("resources/audio/guitar_noodling.ogg");
+    PlayMusicStream(music);
 
     printf("\nPress s or d to play sounds...\n");
     
@@ -59,11 +60,13 @@ int main()
             key = 0;
         }
         
-        UpdateMusicStream(0);
+        UpdateMusicStream(music);
     }
     
-    UnloadSound(fxWav);     // Unload sound data
-    UnloadSound(fxOgg);     // Unload sound data
+    UnloadSound(fxWav);         // Unload sound data
+    UnloadSound(fxOgg);         // Unload sound data
+    
+    UnloadMusicStream(music);   // Unload music stream data
     
     CloseAudioDevice();
     
