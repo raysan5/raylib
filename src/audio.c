@@ -125,28 +125,6 @@ typedef struct Music {
     unsigned int samplesLeft;           // Number of samples left to end
 } MusicData, *Music;
 
-// Audio errors to register
-/*
-typedef enum {
-    ERROR_RAW_CONTEXT_CREATION      = 1,
-    ERROR_XM_CONTEXT_CREATION       = 2,
-    ERROR_MOD_CONTEXT_CREATION      = 4,
-    ERROR_MIX_CHANNEL_CREATION      = 8,
-    ERROR_MUSIC_CHANNEL_CREATION    = 16,
-    ERROR_LOADING_XM                = 32,
-    ERROR_LOADING_MOD               = 64,
-    ERROR_LOADING_WAV               = 128,
-    ERROR_LOADING_OGG               = 256,
-    ERROR_OUT_OF_MIX_CHANNELS       = 512,
-    ERROR_EXTENSION_NOT_RECOGNIZED  = 1024,
-    ERROR_UNABLE_TO_OPEN_RRES_FILE  = 2048,
-    ERROR_INVALID_RRES_FILE         = 4096,
-    ERROR_INVALID_RRES_RESOURCE     = 8192,
-    ERROR_UNINITIALIZED_CHANNELS    = 16384,
-    ERROR_UNINTIALIZED_MUSIC_BUFFER = 32768
-} AudioError;
-*/
-
 #if defined(AUDIO_STANDALONE)
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 #endif
@@ -154,7 +132,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static int lastAudioError = 0;                     // Registers last audio error
+// ...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
