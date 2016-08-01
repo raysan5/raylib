@@ -235,33 +235,64 @@
 
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
-#define LIGHTGRAY  (Color){ 200, 200, 200, 255 }   // Light Gray
-#define GRAY       (Color){ 130, 130, 130, 255 }   // Gray
-#define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
-#define YELLOW     (Color){ 253, 249, 0, 255 }     // Yellow
-#define GOLD       (Color){ 255, 203, 0, 255 }     // Gold
-#define ORANGE     (Color){ 255, 161, 0, 255 }     // Orange
-#define PINK       (Color){ 255, 109, 194, 255 }   // Pink
-#define RED        (Color){ 230, 41, 55, 255 }     // Red
-#define MAROON     (Color){ 190, 33, 55, 255 }     // Maroon
-#define GREEN      (Color){ 0, 228, 48, 255 }      // Green
-#define LIME       (Color){ 0, 158, 47, 255 }      // Lime
-#define DARKGREEN  (Color){ 0, 117, 44, 255 }      // Dark Green
-#define SKYBLUE    (Color){ 102, 191, 255, 255 }   // Sky Blue
-#define BLUE       (Color){ 0, 121, 241, 255 }     // Blue
-#define DARKBLUE   (Color){ 0, 82, 172, 255 }      // Dark Blue
-#define PURPLE     (Color){ 200, 122, 255, 255 }   // Purple
-#define VIOLET     (Color){ 135, 60, 190, 255 }    // Violet
-#define DARKPURPLE (Color){ 112, 31, 126, 255 }    // Dark Purple
-#define BEIGE      (Color){ 211, 176, 131, 255 }   // Beige
-#define BROWN      (Color){ 127, 106, 79, 255 }    // Brown
-#define DARKBROWN  (Color){ 76, 63, 47, 255 }      // Dark Brown
+#ifdef __cplusplus
+    // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
+    #define LIGHTGRAY  Color(200, 200, 200, 255)   // Light Gray
+    #define GRAY       Color(130, 130, 130, 255)   // Gray
+    #define DARKGRAY   Color(80, 80, 80, 255)      // Dark Gray
+    #define YELLOW     Color(253, 249, 0, 255)     // Yellow
+    #define GOLD       Color(255, 203, 0, 255)     // Gold
+    #define ORANGE     Color(255, 161, 0, 255)     // Orange
+    #define PINK       Color(255, 109, 194, 255)   // Pink
+    #define RED        Color(230, 41, 55, 255)     // Red
+    #define MAROON     Color(190, 33, 55, 255)     // Maroon
+    #define GREEN      Color(0, 228, 48, 255)      // Green
+    #define LIME       Color(0, 158, 47, 255)      // Lime
+    #define DARKGREEN  Color(0, 117, 44, 255)      // Dark Green
+    #define SKYBLUE    Color(102, 191, 255, 255)   // Sky Blue
+    #define BLUE       Color(0, 121, 241, 255)     // Blue
+    #define DARKBLUE   Color(0, 82, 172, 255)      // Dark Blue
+    #define PURPLE     Color(200, 122, 255, 255)   // Purple
+    #define VIOLET     Color(135, 60, 190, 255)    // Violet
+    #define DARKPURPLE Color(112, 31, 126, 255)    // Dark Purple
+    #define BEIGE      Color(211, 176, 131, 255)   // Beige
+    #define BROWN      Color(127, 106, 79, 255)    // Brown
+    #define DARKBROWN  Color(76, 63, 47, 255)      // Dark Brown
 
-#define WHITE      (Color){ 255, 255, 255, 255 }   // White
-#define BLACK      (Color){ 0, 0, 0, 255 }         // Black
-#define BLANK      (Color){ 0, 0, 0, 0 }           // Blank (Transparent)
-#define MAGENTA    (Color){ 255, 0, 255, 255 }     // Magenta
-#define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
+    #define WHITE      Color(255, 255, 255, 255)   // White
+    #define BLACK      Color(0, 0, 0, 255)         // Black
+    #define BLANK      Color(0, 0, 0, 0)           // Blank (Transparent)
+    #define MAGENTA    Color(255, 0, 255, 255)     // Magenta
+    #define RAYWHITE   Color(245, 245, 245, 255)   // My own White (raylib logo)
+#else
+    #define LIGHTGRAY  (Color){ 200, 200, 200, 255 }   // Light Gray
+    #define GRAY       (Color){ 130, 130, 130, 255 }   // Gray
+    #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
+    #define YELLOW     (Color){ 253, 249, 0, 255 }     // Yellow
+    #define GOLD       (Color){ 255, 203, 0, 255 }     // Gold
+    #define ORANGE     (Color){ 255, 161, 0, 255 }     // Orange
+    #define PINK       (Color){ 255, 109, 194, 255 }   // Pink
+    #define RED        (Color){ 230, 41, 55, 255 }     // Red
+    #define MAROON     (Color){ 190, 33, 55, 255 }     // Maroon
+    #define GREEN      (Color){ 0, 228, 48, 255 }      // Green
+    #define LIME       (Color){ 0, 158, 47, 255 }      // Lime
+    #define DARKGREEN  (Color){ 0, 117, 44, 255 }      // Dark Green
+    #define SKYBLUE    (Color){ 102, 191, 255, 255 }   // Sky Blue
+    #define BLUE       (Color){ 0, 121, 241, 255 }     // Blue
+    #define DARKBLUE   (Color){ 0, 82, 172, 255 }      // Dark Blue
+    #define PURPLE     (Color){ 200, 122, 255, 255 }   // Purple
+    #define VIOLET     (Color){ 135, 60, 190, 255 }    // Violet
+    #define DARKPURPLE (Color){ 112, 31, 126, 255 }    // Dark Purple
+    #define BEIGE      (Color){ 211, 176, 131, 255 }   // Beige
+    #define BROWN      (Color){ 127, 106, 79, 255 }    // Brown
+    #define DARKBROWN  (Color){ 76, 63, 47, 255 }      // Dark Brown
+
+    #define WHITE      (Color){ 255, 255, 255, 255 }   // White
+    #define BLACK      (Color){ 0, 0, 0, 255 }         // Black
+    #define BLANK      (Color){ 0, 0, 0, 0 }           // Blank (Transparent)
+    #define MAGENTA    (Color){ 255, 0, 255, 255 }     // Magenta
+    #define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -308,6 +339,9 @@ typedef struct Color {
     unsigned char g;
     unsigned char b;
     unsigned char a;
+#ifdef __cplusplus
+    Color(unsigned char cr, unsigned char cg, unsigned char cb, unsigned char ca) : r(cr), g(cg), b(cb), a(ca) { }
+#endif
 } Color;
 
 // Rectangle type
@@ -819,7 +853,8 @@ Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d mod
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
-Mesh GenMeshCube(float width, float height, float depth);
+
+Mesh GenMeshCube(float width, float height, float depth);       // Generate mesh: cube
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
