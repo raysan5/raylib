@@ -59,9 +59,6 @@ int main()
             SetMusicVolume(volume);
         }
 */
-        if (IsWindowMinimized()) PauseMusicStream(music);
-        else ResumeMusicStream(music);
-
         timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*100*4; // We scale by 4 to fit 400 pixels
 
         UpdateMusicStream(music);        // Update music buffer with new stream data

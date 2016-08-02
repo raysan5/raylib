@@ -76,8 +76,20 @@ typedef struct Wave {
 } Wave;
 
 // Music type (file streaming from memory)
-// NOTE: Anything longer than ~10 seconds should be streamed into a mix channel...
+// NOTE: Anything longer than ~10 seconds should be streamed
 typedef struct Music *Music;
+
+// Audio stream type
+// NOTE: Useful to create custom audio streams not bound to a specific file
+typedef struct AudioStream {
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+
+    int format;                 // OpenAL audio format specifier
+    unsigned int source;        // OpenAL audio source id
+    unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
+} AudioStream;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -93,7 +105,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
-bool IsAudioDeviceReady(void);                                  // Check if device has been initialized successfully
+bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -119,6 +131,17 @@ void SetMusicVolume(Music music, float volume);                 // Set volume fo
 void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
 float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
+
+AudioStream InitAudioStream(unsigned int sampleRate, 
+                            unsigned int sampleSize, 
+                            unsigned int channels);             // Init audio stream (to stream audio pcm data)
+void UpdateAudioStream(AudioStream stream, void *data, int numSamples); // Update audio stream buffers with data
+void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
+bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
+void PlayAudioStream(AudioStream stream);                       // Play audio stream
+void PauseAudioStream(AudioStream stream);                      // Pause audio stream
+void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
+void StopAudioStream(AudioStream stream);                       // Stop audio stream
 
 #ifdef __cplusplus
 }

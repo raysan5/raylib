@@ -57,7 +57,7 @@ int main()
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
-    Music xm = LoadMusicStream("resources/audio/2t2m_spa.xm");
+    Music xm = LoadMusicStream("resources/audio/mini1111.xm");
     
     PlayMusicStream(xm);
 
