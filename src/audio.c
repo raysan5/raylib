@@ -101,7 +101,7 @@
 typedef enum { MUSIC_AUDIO_OGG = 0, MUSIC_MODULE_XM, MUSIC_MODULE_MOD } MusicContextType;
 
 // Music type (file streaming from memory)
-typedef struct Music {
+typedef struct MusicData {
     MusicContextType ctxType;           // Type of music context (OGG, XM, MOD)
     stb_vorbis *ctxOgg;                 // OGG audio context
     jar_xm_context_t *ctxXm;            // XM chiptune context

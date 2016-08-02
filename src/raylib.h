@@ -514,7 +514,7 @@ typedef struct Wave {
 
 // Music type (file streaming from memory)
 // NOTE: Anything longer than ~10 seconds should be streamed
-typedef struct Music *Music;
+typedef struct MusicData *Music;
 
 // Audio stream type
 // NOTE: Useful to create custom audio streams not bound to a specific file
