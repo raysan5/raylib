@@ -1047,12 +1047,12 @@ int lua_IsGamepadAvailable(lua_State* L)
 	return 1;
 }
 
-int GetGamepadAxisMovement(lua_State* L)
+int lua_GetGamepadAxisMovement(lua_State* L)
 {
 	int arg1 = LuaGetArgument_int(L, 1);
 	int arg2 = LuaGetArgument_int(L, 2);
 	float result = GetGamepadAxisMovement(arg1, arg2);
-	LuaPush_float(L, result);
+	lua_pushnumber(L, result);
 	return 1;
 }
 
@@ -2318,8 +2318,8 @@ int lua_ResolveCollisionCubicmap(lua_State* L)
 //------------------------------------------------------------------------------------
 int lua_LoadShader(lua_State* L)
 {
-	const char * arg1 = LuaGetArgument_string(L, 1);
-	const char * arg2 = LuaGetArgument_string(L, 2);
+	char * arg1 = (char *)LuaGetArgument_string(L, 1);
+	char * arg2 = (char *)LuaGetArgument_string(L, 2);
 	Shader result = LoadShader(arg1, arg2);
 	LuaPush_Shader(L, result);
 	return 1;
