@@ -16,6 +16,8 @@
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <math.h>           // Required for: sinf()
 
+#define MAX_SAMPLES      20000
+
 int main()
 {
     // Initialization
@@ -28,19 +30,23 @@ int main()
 
     InitAudioDevice();              // Initialize audio device
 
-    AudioStream stream = InitAudioStream(44100, 32, 1);  // Init raw audio stream
+    // Init raw audio stream (sample rate: 22050, sample size: 32bit-float, channels: 1-mono)
+    AudioStream stream = InitAudioStream(22050, 32, 1);
     
     // Fill audio stream with some samples (sine wave)
-    float *data = (float *)malloc(sizeof(float)*44100);
+    float *data = (float *)malloc(sizeof(float)*MAX_SAMPLES);
     
-    for (int i = 0; i < 44100; i++)
+    for (int i = 0; i < MAX_SAMPLES; i++)
     {
-        data[i] = sinf(2*PI*(float)i*DEG2RAD);
+        data[i] = sinf(((2*PI*(float)i)/2)*DEG2RAD);
     }
+    
+    // NOTE: The generated MAX_SAMPLES do not fit to close a perfect loop
+    // for that reason, there is a clip everytime audio stream is looped
     
     PlayAudioStream(stream);
     
-    int totalSamples = 44100;
+    int totalSamples = MAX_SAMPLES;
     int samplesLeft = totalSamples;
     
     Vector2 position = { 0, 0 };
