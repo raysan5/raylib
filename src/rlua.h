@@ -263,7 +263,7 @@ static int LuaIndexTexture2D(lua_State* L)
 	return 1;
 }
 
-// TODO: RenderTexture2D?
+// TODO: Build opaque metatable for RenderTexture2D?
 
 static int LuaIndexSpriteFont(lua_State* L)
 {
@@ -292,7 +292,7 @@ static void LuaBuildOpaqueMetatables(void)
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);
     
-    // TODO?
+    // TODO: Build opaque metatable for RenderTexture2D?
     /*
     luaL_newmetatable(L, "RenderTexture2D");
 	lua_pushcfunction(L, &LuaIndexRenderTexture2D);
@@ -403,13 +403,9 @@ static Camera2D LuaGetArgument_Camera2D(lua_State* L, int index)
 	return result;
 }
 
-// TODO:
-//BoundingBox
-//LightData, *Light
-//MusicData *Music;
-//AudioStream
-
-// TODO: Review Mesh, Shader
+// TODO: LightData, *Light
+// TODO: MusicData *Music;
+// TODO: AudioStream
 
 static BoundingBox LuaGetArgument_BoundingBox(lua_State* L, int index)
 {
@@ -699,7 +695,7 @@ int lua_InitWindow(lua_State* L)
 {
 	int arg1 = LuaGetArgument_int(L, 1);
 	int arg2 = LuaGetArgument_int(L, 2);
-	const char* arg3 = LuaGetArgument_string(L, 3);
+	const char * arg3 = LuaGetArgument_string(L, 3);
 	InitWindow(arg1, arg2, arg3);
 	return 0;
 }
@@ -763,11 +759,17 @@ int lua_IsCursorHidden(lua_State* L)
 	return 1;
 }
 
-// TODO:
-/*
-void EnableCursor(void);                                    // Enables cursor
-void DisableCursor(void);                                   // Disables cursor
-*/
+int lua_EnableCursor(lua_State* L)
+{
+	EnableCursor();
+	return 0;
+}
+
+int lua_DisableCursor(lua_State* L)
+{
+	DisableCursor();
+	return 0;
+}
 
 int lua_ClearBackground(lua_State* L)
 {
@@ -788,9 +790,18 @@ int lua_EndDrawing(lua_State* L)
 	return 0;
 }
 
-// TODO:
-//void Begin2dMode(Camera2D camera);                          // Initialize 2D mode with custom camera
-//void End2dMode(void);                                       // Ends 2D mode custom camera usage
+int lua_Begin2dMode(lua_State* L)
+{
+	Camera2D arg1 = LuaGetArgument_Camera2D(L, 1);
+	Begin2dMode(arg1);
+	return 0;
+}
+
+int lua_End2dMode(lua_State* L)
+{
+	End2dMode();
+	return 0;
+}
 
 int lua_Begin3dMode(lua_State* L)
 {
@@ -805,9 +816,18 @@ int lua_End3dMode(lua_State* L)
 	return 0;
 }
 
-// TODO:
-//void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
-//void EndTextureMode(void);                                  // Ends drawing to render texture
+int lua_BeginTextureMode(lua_State* L)
+{
+	RenderTexture2D arg1 = LuaGetArgument_RenderTexture2D(L, 1);
+	BeginTextureMode(arg1);
+	return 0;
+}
+
+int lua_EndTextureMode(lua_State* L)
+{
+	EndTextureMode();
+	return 0;
+}
 
 int lua_GetMouseRay(lua_State* L)
 {
@@ -818,9 +838,22 @@ int lua_GetMouseRay(lua_State* L)
 	return 1;
 }
 
-// TODO: 
-//Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position from a 3d world space position
-//Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
+int lua_GetWorldToScreen(lua_State* L)
+{
+	Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
+	Camera arg2 = LuaGetArgument_Camera(L, 2);
+	Vector2 result = GetWorldToScreen(arg1, arg2);
+	LuaPush_Vector2(L, result);
+	return 1;
+}
+
+int lua_GetCameraMatrix(lua_State* L)
+{
+	Camera arg1 = LuaGetArgument_Camera(L, 1);
+	Matrix result = GetCameraMatrix(arg1);
+	LuaPush_Matrix(L, &result);
+	return 1;
+}
 
 #if defined(PLATFORM_WEB)
 
@@ -1014,17 +1047,14 @@ int lua_IsGamepadAvailable(lua_State* L)
 	return 1;
 }
 
-// TODO: Review
-// float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
-/*
-int lua_GetGamepadMovement(lua_State* L)
+int GetGamepadAxisMovement(lua_State* L)
 {
 	int arg1 = LuaGetArgument_int(L, 1);
-	Vector2 result = GetGamepadMovement(arg1);
-	LuaPush_Vector2(L, result);
+	int arg2 = LuaGetArgument_int(L, 2);
+	float result = GetGamepadAxisMovement(arg1, arg2);
+	LuaPush_float(L, result);
 	return 1;
 }
-*/
 
 int lua_IsGamepadButtonPressed(lua_State* L)
 {
@@ -1152,14 +1182,32 @@ int lua_GetTouchPosition(lua_State* L)
 	return 1;
 }
 
-// TODO:
-/*
+
 #if defined(PLATFORM_ANDROID)
-bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
-bool IsButtonDown(int button);                          // Detect if an android physic button is being pressed
-bool IsButtonReleased(int button);                      // Detect if an android physic button has been released
+int lua_IsButtonPressed(lua_State* L)
+{
+	int arg1 = LuaGetArgument_int(L, 1);
+	bool result = IsButtonPressed(arg1);
+	lua_pushboolean(L, result);
+	return 1;
+}
+
+int lua_IsButtonDown(lua_State* L)
+{
+	int arg1 = LuaGetArgument_int(L, 1);
+	bool result = IsButtonDown(arg1);
+	lua_pushboolean(L, result);
+	return 1;
+}
+
+int lua_IsButtonReleased(lua_State* L)
+{
+	int arg1 = LuaGetArgument_int(L, 1);
+	bool result = IsButtonReleased(arg1);
+	lua_pushboolean(L, result);
+	return 1;
+}
 #endif
-*/
 
 //------------------------------------------------------------------------------------
 // raylib [gestures] module functions - Gestures and Touch Handling
@@ -1179,8 +1227,7 @@ int lua_IsGestureDetected(lua_State* L)
 	return 1;
 }
 
-// TODO:
-///void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
+// TODO: void ProcessGestureEvent(GestureEvent event);
 
 int lua_UpdateGestures(lua_State* L)
 {
@@ -1655,10 +1702,9 @@ int lua_LoadTexture(lua_State* L)
 	return 1;
 }
 
-// TODO: Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat);
 int lua_LoadTextureEx(lua_State* L)
 {
-	void * arg1 = LuaGetArgument_string(L, 1);  // TODO: How to get a void * ?
+	void * arg1 = LuaGetArgument_string(L, 1);  // NOTE: getting argument as string
     int arg2 = LuaGetArgument_int(L, 2);
 	int arg3 = LuaGetArgument_int(L, 3);
 	int arg4 = LuaGetArgument_int(L, 4);
@@ -1782,7 +1828,13 @@ int lua_GenTextureMipmaps(lua_State* L)
 	return 0;
 }
 
-// TODO: void UpdateTexture(Texture2D texture, void *pixels);                                               // Update GPU texture with new data
+int lua_UpdateTexture(lua_State* L)
+{
+	Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
+    void * arg2 = LuaGetArgument_string(L, 2);          // NOTE: Getting (void *) as string
+	UpdateTexture(arg1, arg2);
+	return 0;
+}
 
 int lua_DrawTexture(lua_State* L)
 {
@@ -1875,7 +1927,7 @@ int lua_DrawText(lua_State* L)
 int lua_DrawTextEx(lua_State* L)
 {
 	SpriteFont arg1 = LuaGetArgument_SpriteFont(L, 1);
-	const char* arg2 = LuaGetArgument_string(L, 2);
+	const char * arg2 = LuaGetArgument_string(L, 2);
 	Vector2 arg3 = LuaGetArgument_Vector2(L, 3);
 	int arg4 = LuaGetArgument_int(L, 4);
 	int arg5 = LuaGetArgument_int(L, 5);
@@ -1912,11 +1964,8 @@ int lua_DrawFPS(lua_State* L)
 	return 0;
 }
 
-// TODO:
-/*
-const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
-const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
-*/
+// TODO: const char *FormatText(const char *text, ...);
+// TODO: const char *SubText(const char *text, int position, int length);
 
 int lua_DrawCube(lua_State* L)
 {
@@ -2108,7 +2157,7 @@ int lua_UnloadModel(lua_State* L)
 	return 0;
 }
 
-// TODO: GenMesh*()
+// TODO: GenMesh*() functionality (not ready yet on raylib 1.6)
 
 int lua_LoadMaterial(lua_State* L)
 {
@@ -2211,7 +2260,7 @@ int lua_CalculateBoundingBox(lua_State* L)
 	Mesh arg1 = LuaGetArgument_Mesh(L, 1);
     BoundingBox result = CalculateBoundingBox(arg1);
 	LuaPush_BoundingBox(L, result);
-	return 0;
+	return 1;
 }
 
 int lua_CheckCollisionSpheres(lua_State* L)
@@ -2269,8 +2318,8 @@ int lua_ResolveCollisionCubicmap(lua_State* L)
 //------------------------------------------------------------------------------------
 int lua_LoadShader(lua_State* L)
 {
-	char * arg1 = (char*)LuaGetArgument_string(L, 1);
-	char * arg2 = (char*)LuaGetArgument_string(L, 2);
+	const char * arg1 = LuaGetArgument_string(L, 1);
+	const char * arg2 = LuaGetArgument_string(L, 2);
 	Shader result = LoadShader(arg1, arg2);
 	LuaPush_Shader(L, result);
 	return 1;
@@ -2401,7 +2450,7 @@ void ToggleVrMode(void);                    // Enable/Disable VR experience (dev
 */
 
 //------------------------------------------------------------------------------------
-// raylib [audio] module functions
+// raylib [audio] module functions - Audio Loading and Playing
 //------------------------------------------------------------------------------------
 int lua_InitAudioDevice(lua_State* L)
 {
@@ -2419,7 +2468,7 @@ int lua_IsAudioDeviceReady(lua_State* L)
 {
 	bool result = IsAudioDeviceReady();
     lua_pushboolean(L, result);
-	return 0;
+	return 1;
 }
 
 int lua_LoadSound(lua_State* L)
@@ -2511,7 +2560,7 @@ int lua_LoadMusicStream(lua_State* L)
 	const char * arg1 = LuaGetArgument_string(L, 1);
     Music result = LoadMusicStream((char *)arg1);
 	LuaPush_Music(L, result);
-	return 0;
+	return 1;
 }
 
 int lua_UnloadMusicStream(lua_State* L)
@@ -3424,24 +3473,6 @@ RLUADEF void InitLuaDevice(void)
 	LuaSetEnum("MIDDLE_BUTTON", 2);
 	LuaEndEnum("MOUSE");
 
-	LuaStartEnum();
-	LuaSetEnum("PLAYER1", 0);
-	LuaSetEnum("PLAYER2", 1);
-	LuaSetEnum("PLAYER3", 2);
-	LuaSetEnum("PLAYER4", 3);
-
-	LuaSetEnum("BUTTON_A", 2);
-	LuaSetEnum("BUTTON_B", 1);
-	LuaSetEnum("BUTTON_X", 3);
-	LuaSetEnum("BUTTON_Y", 4);
-	LuaSetEnum("BUTTON_R1", 7);
-	LuaSetEnum("BUTTON_R2", 5);
-	LuaSetEnum("BUTTON_L1", 6);
-	LuaSetEnum("BUTTON_L2", 8);
-	LuaSetEnum("BUTTON_SELECT", 9);
-	LuaSetEnum("BUTTON_START", 10);
-	LuaEndEnum("GAMEPAD");
-    
 	LuaStartEnum();
 	LuaSetEnum("PLAYER1", 0);
 	LuaSetEnum("PLAYER2", 1);
