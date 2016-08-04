@@ -222,10 +222,10 @@ ifeq ($(ROOT),root)
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
         ifeq ($(SHARED),YES)
-			cp --update libraylib.so /usr/local/lib/libraylib.so
+			cp --update $(OUTPUT_PATH)/libraylib.so /usr/local/lib/libraylib.so
         else
 			cp --update raylib.h /usr/local/include/raylib.h
-			cp --update libraylib.a /usr/local/lib/libraylib.a
+			cp --update $(OUTPUT_PATH)/libraylib.a /usr/local/lib/libraylib.a
         endif
 		@echo "raylib dev files installed/updated!"
     else
