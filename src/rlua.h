@@ -15,7 +15,7 @@
 *       local x2 = rec.x + rec.width
 *
 *   The following types:
-*       Image, Texture2D, SpriteFont
+*       Image, Texture2D, RenderTexture2D, SpriteFont
 *   are immutable, and you can only read their non-pointer arguments (e.g. sprfnt.size).
 *
 *   All other object types are opaque, that is, you cannot access or
@@ -126,9 +126,11 @@ RLUADEF void CloseLuaDevice(void);                  // De-initialize Lua system
 #define LuaPush_SpriteFont(L, sf) LuaPushOpaqueTypeWithMetatable(L, sf, SpriteFont)
 #define LuaPush_Mesh(L, vd) LuaPushOpaqueType(L, vd)
 #define LuaPush_Shader(L, s) LuaPushOpaqueType(L, s)
+#define LuaPush_Light(L, light) LuaPushOpaqueType(L, light)
 #define LuaPush_Sound(L, snd) LuaPushOpaqueType(L, snd)
 #define LuaPush_Wave(L, wav) LuaPushOpaqueType(L, wav)
 #define LuaPush_Music(L, mus) LuaPushOpaqueType(L, mus)
+#define LuaPush_AudioStream(L, aud) LuaPushOpaqueType(L, aud)
 
 #define LuaGetArgument_string luaL_checkstring
 #define LuaGetArgument_int (int)luaL_checkinteger
@@ -142,9 +144,11 @@ RLUADEF void CloseLuaDevice(void);                  // De-initialize Lua system
 #define LuaGetArgument_SpriteFont(L, sf) *(SpriteFont*)LuaGetArgumentOpaqueTypeWithMetatable(L, sf, "SpriteFont")
 #define LuaGetArgument_Mesh(L, vd) *(Mesh*)LuaGetArgumentOpaqueType(L, vd)
 #define LuaGetArgument_Shader(L, s) *(Shader*)LuaGetArgumentOpaqueType(L, s)
+#define LuaGetArgument_Light(L, light) *(Light*)LuaGetArgumentOpaqueType(L, light)
 #define LuaGetArgument_Sound(L, snd) *(Sound*)LuaGetArgumentOpaqueType(L, snd)
 #define LuaGetArgument_Wave(L, wav) *(Wave*)LuaGetArgumentOpaqueType(L, wav)
 #define LuaGetArgument_Music(L, mus) *(Music*)LuaGetArgumentOpaqueType(L, mus)
+#define LuaGetArgument_AudioStream(L, aud) *(AudioStream*)LuaGetArgumentOpaqueType(L, aud)
 
 #define LuaPushOpaqueType(L, str) LuaPushOpaque(L, &str, sizeof(str))
 #define LuaPushOpaqueTypeWithMetatable(L, str, meta) LuaPushOpaqueWithMetatable(L, &str, sizeof(str), #meta)
@@ -263,7 +267,18 @@ static int LuaIndexTexture2D(lua_State* L)
 	return 1;
 }
 
-// TODO: Build opaque metatable for RenderTexture2D?
+static int LuaIndexRenderTexture2D(lua_State* L)
+{
+	RenderTexture2D img = LuaGetArgument_RenderTexture2D(L, 1);
+	const char *key = luaL_checkstring(L, 2);
+	if (!strcmp(key, "texture"))
+		LuaPush_Texture2D(L, img.texture);
+	else if (!strcmp(key, "depth"))
+		LuaPush_Texture2D(L, img.depth);
+	else
+		return 0;
+	return 1;
+}
 
 static int LuaIndexSpriteFont(lua_State* L)
 {
@@ -292,13 +307,11 @@ static void LuaBuildOpaqueMetatables(void)
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);
     
-    // TODO: Build opaque metatable for RenderTexture2D?
-    /*
     luaL_newmetatable(L, "RenderTexture2D");
 	lua_pushcfunction(L, &LuaIndexRenderTexture2D);
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);
-    */
+
 	luaL_newmetatable(L, "SpriteFont");
 	lua_pushcfunction(L, &LuaIndexSpriteFont);
 	lua_setfield(L, -2, "__index");
@@ -402,10 +415,6 @@ static Camera2D LuaGetArgument_Camera2D(lua_State* L, int index)
 	lua_pop(L, 4);
 	return result;
 }
-
-// TODO: LightData, *Light
-// TODO: MusicData *Music;
-// TODO: AudioStream
 
 static BoundingBox LuaGetArgument_BoundingBox(lua_State* L, int index)
 {
@@ -649,6 +658,23 @@ static int lua_Vector3(lua_State* L)
 	return 1;
 }
 
+static int lua_Quaternion(lua_State* L)
+{
+	LuaPush_Quaternion(L, (Quaternion) { (float)luaL_checknumber(L, 1), (float)luaL_checknumber(L, 2), (float)luaL_checknumber(L, 3), (float)luaL_checknumber(L, 4) });
+	return 1;
+}
+
+/*
+static int lua_Matrix(lua_State* L)
+{
+	LuaPush_Matrix(L, (Matrix) { (float)luaL_checknumber(L, 1), (float)luaL_checknumber(L, 2), (float)luaL_checknumber(L, 3), (float)luaL_checknumber(L, 4),
+                                 (float)luaL_checknumber(L, 5), (float)luaL_checknumber(L, 6), (float)luaL_checknumber(L, 7), (float)luaL_checknumber(L, 8),
+                                 (float)luaL_checknumber(L, 9), (float)luaL_checknumber(L, 10), (float)luaL_checknumber(L, 11), (float)luaL_checknumber(L, 12),
+                                 (float)luaL_checknumber(L, 13), (float)luaL_checknumber(L, 14), (float)luaL_checknumber(L, 15), (float)luaL_checknumber(L, 16) });
+	return 1;
+}
+*/
+
 static int lua_Rectangle(lua_State* L)
 {
 	LuaPush_Rectangle(L, (Rectangle) { (int)luaL_checkinteger(L, 1), (int)luaL_checkinteger(L, 2), (int)luaL_checkinteger(L, 3), (int)luaL_checkinteger(L, 4) });
@@ -660,6 +686,14 @@ static int lua_Ray(lua_State* L)
 	Vector2 pos = LuaGetArgument_Vector2(L, 1);
 	Vector2 dir = LuaGetArgument_Vector2(L, 2);
 	LuaPush_Ray(L, (Ray) { { pos.x, pos.y }, { dir.x, dir.y } });
+	return 1;
+}
+
+static int lua_BoundingBox(lua_State* L)
+{
+	Vector3 min = LuaGetArgument_Vector3(L, 1);
+	Vector3 max = LuaGetArgument_Vector3(L, 2);
+	LuaPush_BoundingBox(L, (BoundingBox) { { min.x, min.y }, { max.x, max.y } });
 	return 1;
 }
 
@@ -683,6 +717,22 @@ static int lua_Camera2D(lua_State* L)
 	return 1;
 }
 
+/*
+// NOTE: does it make sense to have this constructor? Probably not...
+static int lua_Material(lua_State* L)
+{
+	Shader sdr = LuaGetArgument_Shader(L, 1);
+	Texture2D td = LuaGetArgument_Texture2D(L, 2);
+	Texture2D tn = LuaGetArgument_Texture2D(L, 3);
+	Texture2D ts = LuaGetArgument_Texture2D(L, 4);
+	Color cd = LuaGetArgument_Color(L, 5);
+	Color ca = LuaGetArgument_Color(L, 6);
+	Color cs = LuaGetArgument_Color(L, 7);
+    float gloss = LuaGetArgument_float(L, 8);
+	LuaPush_Material(L, (Material) { sdr, td, tn, ts cd, ca, cs, gloss });
+	return 1;
+}
+*/
 
 /*************************************************************************************
 *  raylib Lua Functions Bindings
@@ -914,12 +964,47 @@ int lua_GetHexValue(lua_State* L)
 	return 1;
 }
 
-// TODO:
-/*
-float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
-float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array
-float *MatrixToFloat(Matrix mat);                           // Converts Matrix to float array
-*/
+int lua_ColorToFloat(lua_State* L)
+{
+	Color arg1 = LuaGetArgument_Color(L, 1);
+	float * result = ColorToFloat(arg1);
+	lua_createtable(L, 4, 0);
+	for (int i = 0; i < 4; i++)
+	{
+		lua_pushnumber(L, result[i]);
+		lua_rawseti(L, -2, i + 1);
+	}
+	free(result);
+	return 1;
+}
+
+int lua_VectorToFloat(lua_State* L)
+{
+	Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
+	float * result = VectorToFloat(arg1);
+	lua_createtable(L, 3, 0);
+	for (int i = 0; i < 3; i++)
+	{
+		lua_pushnumber(L, result[i]);
+		lua_rawseti(L, -2, i + 1);
+	}
+	free(result);
+	return 1;
+}
+
+int lua_MatrixToFloat(lua_State* L)
+{
+	Matrix arg1 = LuaGetArgument_Matrix(L, 1);
+	float * result = MatrixToFloat(arg1);
+	lua_createtable(L, 16, 0);
+	for (int i = 0; i < 16; i++)
+	{
+		lua_pushnumber(L, result[i]);
+		lua_rawseti(L, -2, i + 1);
+	}
+	free(result);
+	return 1;
+}
 
 int lua_GetRandomValue(lua_State* L)
 {
@@ -1226,8 +1311,6 @@ int lua_IsGestureDetected(lua_State* L)
 	lua_pushboolean(L, result);
 	return 1;
 }
-
-// TODO: void ProcessGestureEvent(GestureEvent event);
 
 int lua_UpdateGestures(lua_State* L)
 {
@@ -1704,7 +1787,7 @@ int lua_LoadTexture(lua_State* L)
 
 int lua_LoadTextureEx(lua_State* L)
 {
-	void * arg1 = LuaGetArgument_string(L, 1);  // NOTE: getting argument as string
+	void * arg1 = (char *)LuaGetArgument_string(L, 1);  // NOTE: getting argument as string
     int arg2 = LuaGetArgument_int(L, 2);
 	int arg3 = LuaGetArgument_int(L, 3);
 	int arg4 = LuaGetArgument_int(L, 4);
@@ -1800,26 +1883,172 @@ int lua_ImageFormat(lua_State* L)
 	return 1;
 }
 
-// TODO:
-/*
-void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                            // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
-Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
-void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
-void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
-void ImageResizeNN(Image *image,int newWidth,int newHeight);                                       // Resize and image (Nearest-Neighbor scaling algorithm)
-Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
-Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint);       // Create an image from text (custom sprite font)
-void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
-void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color); // Draw text (custom sprite font) within an image (destination)
-void ImageFlipVertical(Image *image);                                                              // Flip image vertically
-void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
-void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
-void ImageColorInvert(Image *image);                                                               // Modify image color: invert
-void ImageColorGrayscale(Image *image);                                                            // Modify image color: grayscale
-void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
-void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
-*/
+int lua_ImageDither(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+    int arg2 = LuaGetArgument_int(L, 2);
+    int arg3 = LuaGetArgument_int(L, 3);
+    int arg4 = LuaGetArgument_int(L, 4);
+    int arg5 = LuaGetArgument_int(L, 5);
+	ImageDither(&arg1, arg2, arg3, arg4, arg5);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageCopy(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	Image result = ImageCopy(arg1);
+	LuaPush_Image(L, result);
+	return 1;
+}
+
+int lua_ImageCrop(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	Rectangle arg2 = LuaGetArgument_Rectangle(L, 2);
+	ImageCrop(&arg1, arg2);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageResize(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	int arg2 = LuaGetArgument_int(L, 2);
+	int arg3 = LuaGetArgument_int(L, 3);
+	ImageResize(&arg1, arg2, arg3);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageResizeNN(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	int arg2 = LuaGetArgument_int(L, 2);
+	int arg3 = LuaGetArgument_int(L, 3);
+	ImageResizeNN(&arg1, arg2, arg3);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageText(lua_State* L)
+{
+	const char * arg1 = LuaGetArgument_string(L, 1);
+	int arg2 = LuaGetArgument_int(L, 2);
+	Color arg3 = LuaGetArgument_Color(L, 3);
+	Image result = ImageText(arg1, arg2, arg3);
+	LuaPush_Image(L, result);
+	return 1;
+}
+
+int lua_ImageTextEx(lua_State* L)
+{
+    SpriteFont arg1 = LuaGetArgument_SpriteFont(L, 1);
+	const char * arg2 = LuaGetArgument_string(L, 2);
+	int arg3 = LuaGetArgument_int(L, 3);
+	int arg4 = LuaGetArgument_int(L, 4);
+	Color arg5 = LuaGetArgument_Color(L, 5);
+	Image result = ImageTextEx(arg1, arg2, arg3, arg4, arg5);
+	LuaPush_Image(L, result);
+	return 1;
+}
+
+int lua_ImageDraw(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	Image arg2 = LuaGetArgument_Image(L, 2);
+	Rectangle arg3 = LuaGetArgument_Rectangle(L, 3);
+	Rectangle arg4 = LuaGetArgument_Rectangle(L, 4);
+	ImageDraw(&arg1, arg2, arg3, arg4);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageDrawText(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	Vector2 arg2 = LuaGetArgument_Vector2(L, 2);
+	const char * arg3 = LuaGetArgument_string(L, 3);
+	int arg4 = LuaGetArgument_int(L, 4);
+	Color arg5 = LuaGetArgument_Color(L, 5);
+	ImageDrawText(&arg1, arg2, arg3, arg4, arg5);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageDrawTextEx(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	Vector2 arg2 = LuaGetArgument_Vector2(L, 2);
+	SpriteFont arg3 = LuaGetArgument_SpriteFont(L, 3);
+	const char * arg4 = LuaGetArgument_string(L, 4);
+	int arg5 = LuaGetArgument_int(L, 5);
+    int arg6 = LuaGetArgument_int(L, 6);
+	Color arg7 = LuaGetArgument_Color(L, 7);
+	ImageDrawTextEx(&arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageFlipVertical(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	ImageFlipVertical(&arg1);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageFlipHorizontal(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	ImageFlipHorizontal(&arg1);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageColorTint(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	Color arg2 = LuaGetArgument_Color(L, 2);
+	ImageColorTint(&arg1, arg2);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageColorInvert(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	ImageColorInvert(&arg1);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageColorGrayscale(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	ImageColorGrayscale(&arg1);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageColorContrast(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	float arg2 = LuaGetArgument_float(L, 2);
+	ImageColorContrast(&arg1, arg2);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
+
+int lua_ImageColorBrightness(lua_State* L)
+{
+	Image arg1 = LuaGetArgument_Image(L, 1);
+	int arg2 = LuaGetArgument_int(L, 2);
+	ImageColorBrightness(&arg1, arg2);
+	LuaPush_Image(L, arg1);
+	return 1;
+}
 
 int lua_GenTextureMipmaps(lua_State* L)
 {
@@ -1831,7 +2060,7 @@ int lua_GenTextureMipmaps(lua_State* L)
 int lua_UpdateTexture(lua_State* L)
 {
 	Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
-    void * arg2 = LuaGetArgument_string(L, 2);          // NOTE: Getting (void *) as string
+    void * arg2 = (char *)LuaGetArgument_string(L, 2);  // NOTE: Getting (void *) as string?
 	UpdateTexture(arg1, arg2);
 	return 0;
 }
@@ -2097,12 +2326,27 @@ int lua_DrawGizmo(lua_State* L)
 	return 0;
 }
 
-// TODO:
-/*
-void DrawLight(Light light);                                                                       // Draw light in 3D world
-void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
-void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
-*/
+// TODO: DrawLight(Light light);
+
+int lua_Draw3DLine(lua_State* L)
+{
+	Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
+	Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
+	Color arg3 = LuaGetArgument_Color(L, 3);
+	Draw3DLine(arg1, arg2, arg3);
+	return 0;
+}
+
+int lua_Draw3DCircle(lua_State* L)
+{
+	Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
+    float arg2 = LuaGetArgument_float(L, 2);
+    float arg3 = LuaGetArgument_float(L, 3);
+	Vector3 arg4 = LuaGetArgument_Vector3(L, 4);
+	Color arg5 = LuaGetArgument_Color(L, 5);
+	Draw3DCircle(arg1, arg2, arg3, arg4, arg5);
+	return 0;
+}
 
 //------------------------------------------------------------------------------------
 // raylib [models] module functions
@@ -2287,19 +2531,42 @@ int lua_CheckCollisionBoxSphere(lua_State* L)
 {
 	BoundingBox arg1 = LuaGetArgument_BoundingBox(L, 1);
 	Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
-	float arg3 = LuaGetArgument_float(L, 4);
+	float arg3 = LuaGetArgument_float(L, 3);
 	bool result = CheckCollisionBoxSphere(arg1, arg2, arg3);
 	lua_pushboolean(L, result);
 	return 1;
 }
 
-// TODO:
-/*
-bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                              // Detect collision between ray and sphere
-bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint);   // Detect collision between ray and sphere with extended parameters and collision point detection
-bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                                            // Detect collision between ray and box
-Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Detect collision of player radius with cubicmap
-*/
+int lua_CheckCollisionRaySphere(lua_State* L)
+{
+	Ray arg1 = LuaGetArgument_Ray(L, 1);
+	Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
+	float arg3 = LuaGetArgument_float(L, 3);
+	bool result = CheckCollisionRaySphere(arg1, arg2, arg3);
+	lua_pushboolean(L, result);
+	return 1;
+}
+
+int lua_CheckCollisionRaySphereEx(lua_State* L)
+{
+	Ray arg1 = LuaGetArgument_Ray(L, 1);
+	Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
+	float arg3 = LuaGetArgument_float(L, 3);
+    Vector3 arg4 = LuaGetArgument_Vector3(L, 4);
+	bool result = CheckCollisionRaySphereEx(arg1, arg2, arg3, &arg4);
+	lua_pushboolean(L, result);
+    LuaPush_Vector3(L, arg4);
+	return 2;
+}
+
+int lua_CheckCollisionRayBox(lua_State* L)
+{
+	Ray arg1 = LuaGetArgument_Ray(L, 1);
+	BoundingBox arg2 = LuaGetArgument_BoundingBox(L, 2);
+	bool result = CheckCollisionRayBox(arg1, arg2);
+	lua_pushboolean(L, result);
+	return 1;
+}
 
 int lua_ResolveCollisionCubicmap(lua_State* L)
 {
@@ -2431,23 +2698,55 @@ int lua_EndBlendMode(lua_State* L)
 	return 0;
 }
 
-// TODO:
-//Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
-//void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
+// TODO: Light CreateLight(int type, Vector3 position, Color diffuse);
+// TODO: void DestroyLight(Light light);
 
-// TODO:
-/*
 //------------------------------------------------------------------------------------
 // raylib [rlgl] module functions - VR experience
 //------------------------------------------------------------------------------------
-void InitVrDevice(int vdDevice);            // Init VR device
-void CloseVrDevice(void);                   // Close VR device
-void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
-void BeginVrDrawing(void);                  // Begin VR drawing configuration
-void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
-bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
-void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
-*/
+int lua_InitVrDevice(lua_State* L)
+{
+    int arg1 = LuaGetArgument_int(L, 1);
+	InitVrDevice(arg1);
+	return 0;
+}
+
+int lua_CloseVrDevice(lua_State* L)
+{
+	CloseVrDevice();
+	return 0;
+}
+
+int lua_UpdateVrTracking(lua_State* L)
+{
+	UpdateVrTracking();
+	return 0;
+}
+
+int lua_BeginVrDrawing(lua_State* L)
+{
+	BeginVrDrawing();
+	return 0;
+}
+
+int lua_EndVrDrawing(lua_State* L)
+{
+	EndVrDrawing();
+	return 0;
+}
+
+int lua_IsVrDeviceReady(lua_State* L)
+{
+	bool result = IsVrDeviceReady();
+	lua_pushboolean(L, result);
+	return 1;
+}
+
+int lua_ToggleVrMode(lua_State* L)
+{
+	ToggleVrMode();
+	return 0;
+}
 
 //------------------------------------------------------------------------------------
 // raylib [audio] module functions - Audio Loading and Playing
@@ -2570,6 +2869,13 @@ int lua_UnloadMusicStream(lua_State* L)
 	return 0;
 }
 
+int lua_UpdateMusicStream(lua_State* L)
+{
+    Music arg1 = LuaGetArgument_Music(L, 1);
+	UpdateMusicStream(arg1);
+	return 0;
+}
+
 int lua_PlayMusicStream(lua_State* L)
 {
 	Music arg1 = LuaGetArgument_Music(L, 1);
@@ -2577,12 +2883,6 @@ int lua_PlayMusicStream(lua_State* L)
 	return 0;
 }
 
-int lua_UpdateMusicStream(lua_State* L)
-{
-    Music arg1 = LuaGetArgument_Music(L, 1);
-	UpdateMusicStream(arg1);
-	return 0;
-}
 
 int lua_StopMusicStream(lua_State* L)
 {
@@ -2621,6 +2921,14 @@ int lua_SetMusicVolume(lua_State* L)
 	return 0;
 }
 
+int lua_SetMusicPitch(lua_State* L)
+{
+    Music arg1 = LuaGetArgument_Music(L, 1);
+	float arg2 = LuaGetArgument_float(L, 2);
+	SetMusicPitch(arg1, arg2);
+	return 0;
+}
+
 int lua_GetMusicTimeLength(lua_State* L)
 {
     Music arg1 = LuaGetArgument_Music(L, 1);
@@ -2637,19 +2945,68 @@ int lua_GetMusicTimePlayed(lua_State* L)
 	return 1;
 }
 
-// TODO:
-/*
-AudioStream InitAudioStream(unsigned int sampleRate, 
-                            unsigned int sampleSize, 
-                            unsigned int channels);             // Init audio stream (to stream audio pcm data)
-void UpdateAudioStream(AudioStream stream, void *data, int numSamples); // Update audio stream buffers with data
-void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
-bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
-void PlayAudioStream(AudioStream stream);                       // Play audio stream
-void PauseAudioStream(AudioStream stream);                      // Pause audio stream
-void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
-void StopAudioStream(AudioStream stream);                       // Stop audio stream
-*/
+int lua_InitAudioStream(lua_State* L)
+{
+	int arg1 = LuaGetArgument_int(L, 1);
+	int arg2 = LuaGetArgument_int(L, 2);
+	int arg3 = LuaGetArgument_int(L, 3);
+    AudioStream result = InitAudioStream(arg1, arg2, arg3);
+	LuaPush_AudioStream(L, result);
+	return 1;
+}
+
+int lua_CloseAudioStream(lua_State* L)
+{
+	AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
+	CloseAudioStream(arg1);
+	return 0;
+}
+
+int lua_UpdateAudioStream(lua_State* L)
+{
+    AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
+    void * arg2 = (char *)LuaGetArgument_string(L, 2);
+    int arg3 = LuaGetArgument_int(L, 3);
+	UpdateAudioStream(arg1, arg2, arg3);
+	return 0;
+}
+
+int lua_IsAudioBufferProcessed(lua_State* L)
+{
+    AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
+	bool result = IsAudioBufferProcessed(arg1);
+	lua_pushboolean(L, result);
+	return 1;
+}
+
+int lua_PlayAudioStream(lua_State* L)
+{
+	AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
+	PlayAudioStream(arg1);
+	return 0;
+}
+
+
+int lua_StopAudioStream(lua_State* L)
+{
+    AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
+	StopAudioStream(arg1);
+	return 0;
+}
+
+int lua_PauseAudioStream(lua_State* L)
+{
+    AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
+	PauseAudioStream(arg1);
+	return 0;
+}
+
+int lua_ResumeAudioStream(lua_State* L)
+{
+    AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
+	ResumeAudioStream(arg1);
+	return 0;
+}
 
 //----------------------------------------------------------------------------------
 // raylib [utils] module functions
@@ -3114,29 +3471,49 @@ int lua_QuaternionTransform(lua_State* L)
 
 // raylib Functions (and data types) list
 static luaL_Reg raylib_functions[] = {
-	REG(Color)
+	
+    // Register non-opaque data types
+    REG(Color)
 	REG(Vector2)
 	REG(Vector3)
+    //REG(Matrix)
+    REG(Quaternion)
 	REG(Rectangle)
 	REG(Ray)
 	REG(Camera)
-    // TODO: Additional structs
+	REG(Camera2D)
+    REG(BoundingBox)
+    //REG(Material)
 
-    // TODO: Review registered functions
+    // Register functions
 	REG(InitWindow)
 	REG(CloseWindow)
 	REG(WindowShouldClose)
 	REG(IsWindowMinimized)
 	REG(ToggleFullscreen)
-
 	REG(GetScreenWidth)
 	REG(GetScreenHeight)
+    
+	REG(ShowCursor)
+	REG(HideCursor)
+	REG(IsCursorHidden)
+	REG(EnableCursor)
+	REG(DisableCursor)
+
 	REG(ClearBackground)
 	REG(BeginDrawing)
 	REG(EndDrawing)
+    REG(Begin2dMode)
+	REG(End2dMode)
 	REG(Begin3dMode)
 	REG(End3dMode)
+    REG(BeginTextureMode)
+	REG(EndTextureMode)
+    
 	REG(GetMouseRay)
+	REG(GetWorldToScreen)
+	REG(GetCameraMatrix)
+    
 #if defined(PLATFORM_WEB)
 	REG(SetDrawingLoop)
 #else
@@ -3144,21 +3521,39 @@ static luaL_Reg raylib_functions[] = {
 #endif
 	REG(GetFPS)
 	REG(GetFrameTime)
+    
 	REG(GetColor)
 	REG(GetHexValue)
+	REG(ColorToFloat)
+	REG(VectorToFloat)
+	REG(MatrixToFloat)
 	REG(GetRandomValue)
 	REG(Fade)
 	REG(SetConfigFlags)
 	REG(ShowLogo)
+    
 	REG(IsFileDropped)
 	//REG(*GetDroppedFiles)
 	REG(ClearDroppedFiles)
+	REG(StorageSaveValue)
+	REG(StorageLoadValue)
+    
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 	REG(IsKeyPressed)
 	REG(IsKeyDown)
 	REG(IsKeyReleased)
 	REG(IsKeyUp)
 	REG(GetKeyPressed)
+    REG(SetExitKey)
+    
+	REG(IsGamepadAvailable)
+    REG(GetGamepadAxisMovement)
+	REG(IsGamepadButtonPressed)
+	REG(IsGamepadButtonDown)
+	REG(IsGamepadButtonReleased)
+	REG(IsGamepadButtonUp)
+#endif
+
 	REG(IsMouseButtonPressed)
 	REG(IsMouseButtonDown)
 	REG(IsMouseButtonReleased)
@@ -3168,50 +3563,41 @@ static luaL_Reg raylib_functions[] = {
 	REG(GetMousePosition)
 	REG(SetMousePosition)
 	REG(GetMouseWheelMove)
-	REG(ShowCursor)
-	REG(HideCursor)
-	REG(IsCursorHidden)
-#endif
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-	REG(IsGamepadAvailable)
-    
-	REG(IsGamepadButtonPressed)
-	REG(IsGamepadButtonDown)
-	REG(IsGamepadButtonReleased)
-	REG(IsGamepadButtonUp)
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
 	REG(GetTouchX)
 	REG(GetTouchY)
 	REG(GetTouchPosition)
-#if defined(PLATFORM_WEB)
-	REG(InitGesturesSystem)
-#elif defined(PLATFORM_ANDROID)
-	//REG(InitGesturesSystem)
+
+#if defined(PLATFORM_ANDROID)
+	REG(IsButtonPressed)
+	REG(IsButtonDown)
+	REG(IsButtonReleased)
 #endif
-	REG(UpdateGestures)
-	REG(IsGestureDetected)
-	REG(GetGestureType)
+
 	REG(SetGesturesEnabled)
-	REG(GetGestureDragIntensity)
-	REG(GetGestureDragAngle)
-	REG(GetGestureDragVector)
+	REG(IsGestureDetected)
+	//REG(ProcessGestureEvent)
+	REG(UpdateGestures)
+	REG(GetTouchPointsCount)
+	REG(GetGestureDetected)
 	REG(GetGestureHoldDuration)
-	REG(GetGesturePinchDelta)
+	REG(GetGestureDragVector)
+	REG(GetGestureDragAngle)
+	REG(GetGesturePinchVector)
 	REG(GetGesturePinchAngle)
-#endif
+
 	REG(SetCameraMode)
 	REG(UpdateCamera)
 	REG(UpdateCameraPlayer)
 	REG(SetCameraPosition)
 	REG(SetCameraTarget)
+    REG(SetCameraFovy)
+    
 	REG(SetCameraPanControl)
 	REG(SetCameraAltControl)
 	REG(SetCameraSmoothZoomControl)
 	REG(SetCameraMoveControls)
 	REG(SetCameraMouseSensitivity)
+    
 	REG(DrawPixel)
 	REG(DrawPixelV)
 	REG(DrawLine)
@@ -3230,6 +3616,7 @@ static luaL_Reg raylib_functions[] = {
 	REG(DrawPoly)
 	REG(DrawPolyEx)
 	REG(DrawPolyExLines)
+    
 	REG(CheckCollisionRecs)
 	REG(CheckCollisionCircles)
 	REG(CheckCollisionCircleRec)
@@ -3237,25 +3624,48 @@ static luaL_Reg raylib_functions[] = {
 	REG(CheckCollisionPointRec)
 	REG(CheckCollisionPointCircle)
 	REG(CheckCollisionPointTriangle)
+    
 	REG(LoadImage)
 	REG(LoadImageEx)
 	REG(LoadImageRaw)
 	REG(LoadImageFromRES)
 	REG(LoadTexture)
+	REG(LoadTextureEx)
 	REG(LoadTextureFromRES)
 	REG(LoadTextureFromImage)
+    REG(LoadRenderTexture)
 	REG(UnloadImage)
 	REG(UnloadTexture)
 	REG(GetImageData)
 	REG(GetTextureData)
 	REG(ImageToPOT)
 	REG(ImageFormat)
+    REG(ImageDither)
+    REG(ImageCopy)
+    REG(ImageCrop)
+    REG(ImageResize)
+    REG(ImageResizeNN)
+    REG(ImageText)
+    REG(ImageTextEx)
+    REG(ImageDraw)
+    REG(ImageDrawText)
+    REG(ImageDrawTextEx)
+    REG(ImageFlipVertical)
+    REG(ImageFlipHorizontal)
+    REG(ImageColorTint)
+    REG(ImageColorInvert)
+    REG(ImageColorGrayscale)
+    REG(ImageColorContrast)
+    REG(ImageColorBrightness)
 	REG(GenTextureMipmaps)
+    REG(UpdateTexture)
+    
 	REG(DrawTexture)
 	REG(DrawTextureV)
 	REG(DrawTextureEx)
 	REG(DrawTextureRec)
 	REG(DrawTexturePro)
+    
 	REG(GetDefaultFont)
 	REG(LoadSpriteFont)
 	REG(UnloadSpriteFont)
@@ -3264,6 +3674,9 @@ static luaL_Reg raylib_functions[] = {
 	REG(MeasureText)
 	REG(MeasureTextEx)
 	REG(DrawFPS)
+    //REG(FormatText)
+    //REG(SubText)
+    
 	REG(DrawCube)
 	REG(DrawCubeV)
 	REG(DrawCubeWires)
@@ -3277,49 +3690,92 @@ static luaL_Reg raylib_functions[] = {
 	REG(DrawRay)
 	REG(DrawGrid)
 	REG(DrawGizmo)
+    
 	REG(LoadModel)
 	REG(LoadModelEx)
+    REG(LoadModelFromRES)
 	REG(LoadHeightmap)
 	REG(LoadCubicmap)
 	REG(UnloadModel)
+    //REG(GenMesh*)     // Not ready yet...
+    
 	REG(DrawModel)
 	REG(DrawModelEx)
 	REG(DrawModelWires)
+	REG(DrawModelWiresEx)
 	REG(DrawBillboard)
 	REG(DrawBillboardRec)
+    REG(CalculateBoundingBox)
 	REG(CheckCollisionSpheres)
 	REG(CheckCollisionBoxes)
 	REG(CheckCollisionBoxSphere)
+    REG(CheckCollisionRaySphere)
+    REG(CheckCollisionRaySphereEx)
+    REG(CheckCollisionRayBox)
 	REG(ResolveCollisionCubicmap)
+    
 	REG(LoadShader)
 	REG(UnloadShader)
+    REG(GetDefaultShader)
+    REG(GetStandardShader)
+    REG(GetDefaultTexture)
 	REG(GetShaderLocation)
 	REG(SetShaderValue)
 	REG(SetShaderValuei)
-
+	REG(SetShaderValueMatrix)
+	REG(SetMatrixProjection)
+	REG(SetMatrixModelview)
+	REG(BeginShaderMode)
+	REG(EndShaderMode)
 	REG(BeginBlendMode)
 	REG(EndBlendMode)
+    //REG(CreateLight)
+    //REG(DestroyLight)
+    
+	REG(InitVrDevice)
+	REG(CloseVrDevice)
+	REG(UpdateVrTracking)
+	REG(BeginVrDrawing)
+	REG(EndVrDrawing)
+	REG(IsVrDeviceReady)
+	REG(ToggleVrMode)
+    
 	REG(InitAudioDevice)
 	REG(CloseAudioDevice)
+    REG(IsAudioDeviceReady)
 	REG(LoadSound)
 	REG(LoadSoundFromWave)
 	REG(LoadSoundFromRES)
 	REG(UnloadSound)
 	REG(PlaySound)
 	REG(PauseSound)
+	REG(ResumeSound)
 	REG(StopSound)
 	REG(IsSoundPlaying)
 	REG(SetSoundVolume)
 	REG(SetSoundPitch)
-	REG(PlayMusicStream)
+    
+	REG(LoadMusicStream)
+	REG(UnloadMusicStream)
 	REG(UpdateMusicStream)
+    REG(PlayMusicStream)
 	REG(StopMusicStream)
 	REG(PauseMusicStream)
 	REG(ResumeMusicStream)
 	REG(IsMusicPlaying)
 	REG(SetMusicVolume)
+	REG(SetMusicPitch)
 	REG(GetMusicTimeLength)
 	REG(GetMusicTimePlayed)
+    
+	REG(InitAudioStream)
+	REG(UpdateAudioStream)
+	REG(CloseAudioStream)
+	REG(IsAudioBufferProcessed)
+	REG(PlayAudioStream)
+	REG(PauseAudioStream)
+	REG(ResumeAudioStream)
+	REG(StopAudioStream)
 
 	/// Math and util
 	REG(DecompressData)
