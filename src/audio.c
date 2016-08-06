@@ -183,6 +183,8 @@ void CloseAudioDevice(void)
     alcMakeContextCurrent(NULL);
     alcDestroyContext(context);
     alcCloseDevice(device);
+    
+    TraceLog(INFO, "Audio device closed successfully");
 }
 
 // Check if device has been initialized successfully
