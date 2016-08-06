@@ -39,12 +39,14 @@
 
 #include "raylib.h"         // raylib main header
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"          // TraceLog() function
-                            // NOTE: Includes Android fopen map, InitAssetManager()
-                            
+#include "utils.h"          // Includes Android fopen map, InitAssetManager(), TraceLog()
+
 #define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
 #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
 #include "raymath.h"            // Required for Vector3 and Matrix functions
+
+#define GESTURES_IMPLEMENTATION
+#include "gestures.h"       // Gestures detection functionality
 
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand(), atexit()
@@ -233,6 +235,9 @@ static bool showLogo = false;               // Track if showing logo at init is 
 //----------------------------------------------------------------------------------
 extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
+
+extern void ProcessGestureEvent(GestureEvent event);    // [Module: gestures] Process gesture event and translate it into gestures
+extern void UpdateGestures(void);                       // [Module: gestures] Update gestures detected (called in PollInputEvents())
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -2052,10 +2057,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         // NOTE: Before closing window, while loop must be left!
     }
 #if defined(PLATFORM_DESKTOP)
-    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
-    {
-        TakeScreenshot();
-    }
+    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) TakeScreenshot();
 #endif
     else 
     {
