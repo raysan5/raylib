@@ -91,7 +91,7 @@ while not WindowShouldClose() do                -- Detect window close button or
 
         ClearBackground(RAYWHITE)
 
-        Begin2dMode(camera)    -- ERROR: Lua Error: attempt to index a number value (?)
+        Begin2dMode(camera)
 
             DrawRectangle(-6000, 320, 13000, 8000, DARKGRAY)
             

@@ -47,7 +47,7 @@ local positions = {}
 for i = 1, 8 do
     positions[i] = Vector2(0, 0)
     positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], fonts[i].size*2, spacings[i]).x/2
-    positions[i].y = 60 + fonts[i].size + 50*i
+    positions[i].y = 60 + fonts[i].size + 45*(i - 1)
 end
 
 local colors = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD, BLACK }

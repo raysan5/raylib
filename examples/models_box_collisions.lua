@@ -60,7 +60,7 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
                             enemyBoxPos.z - enemyBoxSize.z/2), 
                     Vector3(enemyBoxPos.x + enemyBoxSize.x/2,
                             enemyBoxPos.y + enemyBoxSize.y/2, 
-                            enemyBoxPos.z + enemyBoxSize.z/2))) then collision = true 
+                            enemyBoxPos.z + enemyBoxSize.z/2)))) then collision = true 
     end
     
     -- Check collisions player vs enemy-sphere

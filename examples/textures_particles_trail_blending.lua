@@ -11,7 +11,6 @@
 
 MAX_PARTICLES = 200
 
--- Particle structure with basic data
 -- Initialization
 -------------------------------------------------------------------------------------------
 local screenWidth = 800
@@ -56,7 +55,7 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
             mouseTail[i].active = true
             mouseTail[i].alpha = 1.0
             mouseTail[i].position = GetMousePosition()
-            i = MAX_PARTICLES
+            break
         end
     end
 
@@ -90,7 +89,7 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
                 if (mouseTail[i].active) then 
                     DrawTexturePro(smoke, Rectangle(0, 0, smoke.width, smoke.height), 
                         Rectangle(mouseTail[i].position.x, mouseTail[i].position.y, 
-                                  smoke.width*mouseTail[i].size, smoke.height*mouseTail[i].size),
+                                  smoke.width*mouseTail[i].size//1, smoke.height*mouseTail[i].size//1),
                         Vector2(smoke.width*mouseTail[i].size/2, smoke.height*mouseTail[i].size/2), 
                         mouseTail[i].rotation, Fade(mouseTail[i].color, mouseTail[i].alpha)) end
             end

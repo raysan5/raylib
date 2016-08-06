@@ -66,7 +66,7 @@ while not WindowShouldClose() do       -- Detect window close button or ESC key
     -- Send new value to the shader to be used on drawing
     SetShaderValue(shader, swirlCenterLoc, swirlCenter, 2)
     
-    UpdateCamera(camera)              -- Update internal camera and our camera
+    camera = UpdateCamera(camera)      -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw

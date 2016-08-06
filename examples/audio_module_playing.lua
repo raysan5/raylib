@@ -11,16 +11,6 @@
 
 MAX_CIRCLES = 64
 
---[[
-typedef struct {        -- TODO: Find a Lua alternative: TABLES?
-    Vector2 position
-    float radius
-    float alpha
-    float speed
-    Color color
-} CircleWave
---]]
-
 -- Initialization
 -------------------------------------------------------------------------------------------
 local screenWidth = 800
@@ -78,7 +68,7 @@ while not WindowShouldClose() do        -- Detect window close button or ESC key
             circles[i].radius = GetRandomValue(10, 40)
             circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius)
             circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius)
-            circles[i].color = colors[GetRandomValue(0, 13)]
+            circles[i].color = colors[GetRandomValue(1, 14)]
             circles[i].speed = GetRandomValue(1, 100)/20000.0
         end
     end
@@ -112,7 +102,7 @@ while not WindowShouldClose() do        -- Detect window close button or ESC key
 
         -- Draw time bar
         DrawRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY)
-        DrawRectangle(20, screenHeight - 20 - 12, timePlayed, 12, MAROON)
+        DrawRectangle(20, screenHeight - 20 - 12, timePlayed//1, 12, MAROON)
         DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, WHITE)
 
     EndDrawing()

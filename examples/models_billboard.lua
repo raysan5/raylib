@@ -34,7 +34,7 @@ SetTargetFPS(60)                   -- Set our game to run at 60 frames-per-secon
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    UpdateCamera(camera)          -- Update internal camera and our camera
+    camera = UpdateCamera(camera)           -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw

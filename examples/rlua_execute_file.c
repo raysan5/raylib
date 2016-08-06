@@ -29,8 +29,8 @@ int main()
     //--------------------------------------------------------------------------------------
 
     // ExecuteLuaFile("core_basic_window.lua");                 // OK!
-		// ExecuteLuaFile("core_input_keys.lua");                   // OK!
-		// ExecuteLuaFile("core_input_mouse.lua");                  // OK!
+    // ExecuteLuaFile("core_input_keys.lua");                   // OK!
+    // ExecuteLuaFile("core_input_mouse.lua");                  // OK!
     // ExecuteLuaFile("core_mouse_wheel.lua");                  // OK!
     // ExecuteLuaFile("core_input_gamepad.lua");                // OK!
     // ExecuteLuaFile("core_random_values.lua");                // OK!
@@ -38,13 +38,13 @@ int main()
     // ExecuteLuaFile("core_drop_files.lua");                   // ERROR: GetDroppedFiles()
     // ExecuteLuaFile("core_storage_values.lua");               // OK!
     // ExecuteLuaFile("core_gestures_detection.lua");           // OK!
-    // ExecuteLuaFile("core_3d_mode.lua");                      // ERROR: Lua Error: attempt to index a number value - Begin3dMode()
-    // ExecuteLuaFile("core_3d_picking.lua");                   // ERROR: Lua Error: attempt to index a number value
-    // ExecuteLuaFile("core_3d_camera_free.lua");               // ERROR: Lua Error: attempt to index a number value
-    // ExecuteLuaFile("core_3d_camera_first_person.lua");       // ERROR: Lua Error: attempt to index a number value
-    // ExecuteLuaFile("core_2d_camera.lua");                    // ERROR: Lua Error: attempt to index a number value - Begin2dMode()
-    // ExecuteLuaFile("core_world_screen.lua");                 // ERROR: Lua Error: attempt to index a number value
-    // ExecuteLuaFile("core_oculus_rift.lua");                  // ERROR: Lua Error: attempt to index a number value
+    // ExecuteLuaFile("core_3d_mode.lua");                      // OK!
+    // ExecuteLuaFile("core_3d_picking.lua");                   // ISSUE: CheckCollisionRayBox() returns false despite touching box
+    // ExecuteLuaFile("core_3d_camera_free.lua");               // OK!
+    // ExecuteLuaFile("core_3d_camera_first_person.lua");       // OK!
+    // ExecuteLuaFile("core_2d_camera.lua");                    // OK!
+    // ExecuteLuaFile("core_world_screen.lua");                 // OK!
+    // ExecuteLuaFile("core_oculus_rift.lua");                  // OK!
     // ExecuteLuaFile("shapes_logo_raylib.lua");                // OK!
     // ExecuteLuaFile("shapes_basic_shapes.lua");               // OK!
     // ExecuteLuaFile("shapes_colors_palette.lua");             // OK!
@@ -54,31 +54,31 @@ int main()
     // ExecuteLuaFile("textures_rectangle.lua");                // OK!
     // ExecuteLuaFile("textures_srcrec_dstrec.lua");            // OK!
     // ExecuteLuaFile("textures_to_image.lua");                 // OK!
-    // ExecuteLuaFile("textures_raw_data.lua");                 // ERROR: Lua Error: attempt to index a number value
-		// ExecuteLuaFile("textures_formats_loading.lua");          // ISSUE: texture.id not exposed to be checked
-		// ExecuteLuaFile("textures_particles_trail_blending.lua"); // ERROR: Using struct
-		// ExecuteLuaFile("textures_image_processing.lua");         // ERROR: GetImageData() --> UpdateTexture()
-		// ExecuteLuaFile("textures_image_drawing.lua");            // OK!
-		// ExecuteLuaFile("text_sprite_fonts.lua");                 // OK!
-		// ExecuteLuaFile("text_bmfont_ttf.lua");                   // OK!
-		// ExecuteLuaFile("text_rbmf_fonts.lua");                   // ERROR: Lua Error: attempt to index a nil value
-		// ExecuteLuaFile("text_format_text.lua");                  // OK! NOTE: Use lua string.format() instead of raylib FormatText()
-		// ExecuteLuaFile("text_font_select.lua");                  // OK!
-		// ExecuteLuaFile("text_writing_anim.lua");                 // ERROR: SubText()
-		// ExecuteLuaFile("models_geometric_shapes.lua");           // ERROR: Lua Error: attempt to index a number value - Begin3dMode(camera)
-		// ExecuteLuaFile("models_box_collisions.lua");             //
-		// ExecuteLuaFile("models_billboard.lua");                  //
-		// ExecuteLuaFile("models_obj_loading.lua");                //
-		// ExecuteLuaFile("models_heightmap.lua");                  //
-    // ExecuteLuaFile("models_cubicmap.lua");                   //
-		// ExecuteLuaFile("shaders_model_shader.lua");              //
-		// ExecuteLuaFile("shaders_shapes_textures.lua");           //
-    // ExecuteLuaFile("shaders_custom_uniform.lua");            //
-    // ExecuteLuaFile("shaders_postprocessing.lua");            //
-    // ExecuteLuaFile("shaders_standard_lighting.lua");         //
+    // ExecuteLuaFile("textures_raw_data.lua");                 // ERROR: bad argument #2 to 'LoadImageEx' (number expected, got no value)
+    // ExecuteLuaFile("textures_formats_loading.lua");          // ISSUE: texture.id not exposed to be checked (not really an issue...)
+    // ExecuteLuaFile("textures_particles_trail_blending.lua"); // OK!
+    // ExecuteLuaFile("textures_image_processing.lua");         // ERROR: GetImageData() --> UpdateTexture()
+    // ExecuteLuaFile("textures_image_drawing.lua");            // OK!
+    // ExecuteLuaFile("text_sprite_fonts.lua");                 // OK!
+    // ExecuteLuaFile("text_bmfont_ttf.lua");                   // OK!
+    // ExecuteLuaFile("text_rbmf_fonts.lua");                   // OK!
+    // ExecuteLuaFile("text_format_text.lua");                  // OK! NOTE: Use lua string.format() instead of raylib FormatText()
+    // ExecuteLuaFile("text_font_select.lua");                  // OK!
+    // ExecuteLuaFile("text_writing_anim.lua");                 // OK!
+    // ExecuteLuaFile("models_geometric_shapes.lua");           // OK!
+    // ExecuteLuaFile("models_box_collisions.lua");             // OK!
+    // ExecuteLuaFile("models_billboard.lua");                  // OK!
+    // ExecuteLuaFile("models_obj_loading.lua");                // OK!
+    // ExecuteLuaFile("models_heightmap.lua");                  // OK!
+    // ExecuteLuaFile("models_cubicmap.lua");                   // OK!
+    // ExecuteLuaFile("shaders_model_shader.lua");              // OK!
+    // ExecuteLuaFile("shaders_shapes_textures.lua");           // OK!
+    // ExecuteLuaFile("shaders_custom_uniform.lua");            // ISSUE: SetShaderValue()
+    // ExecuteLuaFile("shaders_postprocessing.lua");            // OK!
+    // ExecuteLuaFile("shaders_standard_lighting.lua");         // ERROR: CreateLight() returns an opaque pointer (fields can not be accessed)
     // ExecuteLuaFile("audio_sound_loading.lua");               // OK!
     // ExecuteLuaFile("audio_music_stream.lua");                // OK!
-    ExecuteLuaFile("audio_module_playing.lua");              // ERROR: Using struct
+    // ExecuteLuaFile("audio_module_playing.lua");              // OK!
     ExecuteLuaFile("audio_raw_stream.lua");                  // ERROR: UpdateAudioStream()
 
     // De-Initialization
@@ -86,5 +86,5 @@ int main()
     CloseLuaDevice();        // Close Lua device and free resources
     //--------------------------------------------------------------------------------------
 
-	return 0;
+    return 0;
 }

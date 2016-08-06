@@ -909,10 +909,8 @@ void DestroyLight(Light light);                                     // Destroy a
 //------------------------------------------------------------------------------------
 void InitVrDevice(int vdDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
-void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
-void BeginVrDrawing(void);                  // Begin VR drawing configuration
-void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 //------------------------------------------------------------------------------------
