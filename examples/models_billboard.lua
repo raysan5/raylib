@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------------------
 --
---  raylib [core] example - Basic window
+--  raylib [models] example - Drawing billboards
 --
 --  This example has been created using raylib 1.6 (www.raylib.com)
 --  raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,16 +14,27 @@
 local screenWidth = 800
 local screenHeight = 450
 
-InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window")
+InitWindow(screenWidth, screenHeight, "raylib [models] example - drawing billboards")
 
-SetTargetFPS(60)       -- Set target frames-per-second
+-- Define the camera to look into our 3d world
+local camera = Camera(Vector3(5.0, 4.0, 5.0), Vector3(0.0, 2.0, 0.0), Vector3(0.0, 1.0, 0.0), 45.0)
+
+local bill = LoadTexture("resources/billboard.png")     -- Our texture billboard
+local billPosition = Vector3(0.0, 2.0, 0.0)             -- Position where draw billboard
+
+SetCameraMode(CAMERA.ORBITAL)      -- Set an orbital camera mode
+SetCameraPosition(camera.position) -- Set internal camera position to match our camera position
+SetCameraTarget(camera.target)     -- Set internal camera target to match our camera target
+SetCameraFovy(camera.fovy)         -- Set internal camera field-of-view Y
+
+SetTargetFPS(60)                   -- Set our game to run at 60 frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    -- TODO: Update your variables here
+    UpdateCamera(&camera)          -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -32,7 +43,15 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         ClearBackground(RAYWHITE)
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY)
+        Begin3dMode(camera)
+        
+            DrawBillboard(camera, bill, billPosition, 2.0f, WHITE)
+            
+            DrawGrid(10, 1.0f)        -- Draw a grid
+
+        End3dMode()
+
+        DrawFPS(10, 10)
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
@@ -40,5 +59,7 @@ end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
-CloseWindow()           -- Close window and OpenGL context
+UnloadTexture(bill)        -- Unload texture
+
+CloseWindow()              -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------

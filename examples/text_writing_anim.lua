@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------------------
 --
---  raylib [core] example - Basic window
+--  raylib [text] example - Text Writing Animation
 --
 --  This example has been created using raylib 1.6 (www.raylib.com)
 --  raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,16 +14,22 @@
 local screenWidth = 800
 local screenHeight = 450
 
-InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window")
+InitWindow(screenWidth, screenHeight, "raylib [text] example - text writing anim")
 
-SetTargetFPS(60)       -- Set target frames-per-second
+local message = "This sample illustrates a text writing\nanimation effect! Check it out! )"
+
+local framesCounter = 0
+
+SetTargetFPS(60)            -- Set target frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    -- TODO: Update your variables here
+    framesCounter = framesCounter + 1
+    
+    if (IsKeyPressed(KEY.ENTER)) then framesCounter = 0 end
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -32,13 +38,15 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         ClearBackground(RAYWHITE)
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY)
+        DrawText(SubText(message, 0, framesCounter/10), 210, 160, 20, MAROON)
+        
+        DrawText("PRESS [ENTER] to RESTART!", 240, 280, 20, LIGHTGRAY)
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
 end
 
 -- De-Initialization
--------------------------------------------------------------------------------------------
-CloseWindow()           -- Close window and OpenGL context
+-------------------------------------------------------------------------------------------   
+CloseWindow()        -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------

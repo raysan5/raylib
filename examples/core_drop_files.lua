@@ -1,6 +1,8 @@
 -------------------------------------------------------------------------------------------
 --
---  raylib [core] example - Basic window
+--  raylib [core] example - Windows drop files
+--
+--  This example only works on platforms that support drag & drop (Windows, Linux, OSX)
 --
 --  This example has been created using raylib 1.6 (www.raylib.com)
 --  raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,16 +16,19 @@
 local screenWidth = 800
 local screenHeight = 450
 
-InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window")
+InitWindow(screenWidth, screenHeight, "raylib [core] example - drop files")
 
-SetTargetFPS(60)       -- Set target frames-per-second
+local count = 0
+--char **droppedFiles     -- ???
+
+SetTargetFPS(60)
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
-while not WindowShouldClose() do            -- Detect window close button or ESC key
+while not WindowShouldClose() do    -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    -- TODO: Update your variables here
+    if (IsFileDropped()) then droppedFiles = GetDroppedFiles(count) end
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -32,7 +37,19 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         ClearBackground(RAYWHITE)
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY)
+        if (count == 0) then DrawText("Drop your files to this window!", 100, 40, 20, DARKGRAY)
+        else
+            DrawText("Dropped files:", 100, 40, 20, DARKGRAY)
+            
+            for i = 0, count do
+                if (i%2 == 0) then DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5))
+                else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3)) end
+                
+                DrawText(droppedFiles[i], 120, 100 + 40*i, 10, GRAY)
+            end
+            
+            DrawText("Drop new files...", 100, 110 + 40*count, 20, DARKGRAY)
+        end
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
@@ -40,5 +57,7 @@ end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
-CloseWindow()           -- Close window and OpenGL context
+ClearDroppedFiles()    -- Clear internal buffers
+
+CloseWindow()          -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------------------
 --
---  raylib [core] example - Basic window
+--  raylib [textures] example - Texture loading and drawing
 --
 --  This example has been created using raylib 1.6 (www.raylib.com)
 --  raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,9 +14,10 @@
 local screenWidth = 800
 local screenHeight = 450
 
-InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window")
+InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture loading and drawing")
 
-SetTargetFPS(60)       -- Set target frames-per-second
+-- NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
+local texture = LoadTexture("resources/raylib_logo.png")        -- Texture loading
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
@@ -32,7 +33,9 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         ClearBackground(RAYWHITE)
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY)
+        DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE)
+
+        DrawText("this IS a texture!", 360, 370, 10, GRAY)
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
@@ -40,5 +43,7 @@ end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
-CloseWindow()           -- Close window and OpenGL context
+UnloadTexture(texture)       -- Texture unloading
+
+CloseWindow()                -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------

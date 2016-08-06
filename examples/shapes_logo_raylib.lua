@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------------------
 --
---  raylib [core] example - Basic window
+--  raylib [shapes] example - Draw raylib logo using basic shapes
 --
 --  This example has been created using raylib 1.6 (www.raylib.com)
 --  raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,7 +14,7 @@
 local screenWidth = 800
 local screenHeight = 450
 
-InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window")
+InitWindow(screenWidth, screenHeight, "raylib [shapes] example - raylib logo using shapes")
 
 SetTargetFPS(60)       -- Set target frames-per-second
 -------------------------------------------------------------------------------------------
@@ -32,7 +32,11 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         ClearBackground(RAYWHITE)
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY)
+        DrawRectangle(screenWidth/2 - 128, screenHeight/2 - 128, 256, 256, BLACK)
+        DrawRectangle(screenWidth/2 - 112, screenHeight/2 - 112, 224, 224, RAYWHITE)
+        DrawText("raylib", screenWidth/2 - 44, screenHeight/2 + 48, 50, BLACK)
+
+        DrawText("this is NOT a texture!", 350, 370, 10, GRAY)
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
@@ -40,5 +44,5 @@ end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
-CloseWindow()           -- Close window and OpenGL context
+CloseWindow()        -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------------------
 --
---  raylib [core] example - Basic window
+--  raylib [text] example - BMFont and TTF SpriteFonts loading
 --
 --  This example has been created using raylib 1.6 (www.raylib.com)
 --  raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,16 +14,27 @@
 local screenWidth = 800
 local screenHeight = 450
 
-InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window")
+InitWindow(screenWidth, screenHeight, "raylib [text] example - bmfont and ttf sprite fonts loading")
 
-SetTargetFPS(60)       -- Set target frames-per-second
+local msgBm = "THIS IS AN AngelCode SPRITE FONT"
+local msgTtf = "THIS FONT has been GENERATED from TTF"
+
+-- NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
+local fontBm = LoadSpriteFont("resources/fonts/bmfont.fnt")       -- BMFont (AngelCode)
+local fontTtf = LoadSpriteFont("resources/fonts/pixantiqua.ttf")  -- TTF font
+
+local fontPosition = Vector2(0, 0)
+fontPosition.x = screenWidth/2 - MeasureTextEx(fontBm, msgBm, fontBm.size, 0).x/2
+fontPosition.y = screenHeight/2 - fontBm.size/2 - 80
+
+SetTargetFPS(60)            -- Set target frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    -- TODO: Update your variables here
+    -- TODO: Update variables here...
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -32,7 +43,8 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         ClearBackground(RAYWHITE)
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY)
+        DrawTextEx(fontBm, msgBm, fontPosition, fontBm.size, 0, MAROON)
+        DrawTextEx(fontTtf, msgTtf, Vector2(60.0, 240.0), fontTtf.size, 2, LIME)
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
@@ -40,5 +52,8 @@ end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
-CloseWindow()           -- Close window and OpenGL context
+UnloadSpriteFont(fontBm)     -- AngelCode SpriteFont unloading
+UnloadSpriteFont(fontTtf)    -- TTF SpriteFont unloading
+
+CloseWindow()                -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------
