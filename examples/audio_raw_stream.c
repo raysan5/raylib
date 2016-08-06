@@ -25,7 +25,6 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - raw audio streaming");
 
     InitAudioDevice();              // Initialize audio device

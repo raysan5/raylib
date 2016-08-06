@@ -229,6 +229,7 @@ EXAMPLES = \
     audio_sound_loading \
     audio_music_stream \
     audio_module_playing \
+    audio_raw_stream \
     fix_dylib \
 
 
@@ -455,8 +456,12 @@ audio_sound_loading: audio_sound_loading.c
 audio_music_stream: audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [audio] example - module playing (OGG)
+# compile [audio] example - module playing (XM)
 audio_module_playing: audio_module_playing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [audio] example - raw audio streaming
+audio_raw_stream: audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # fix dylib install path name for each executable (MAC)
