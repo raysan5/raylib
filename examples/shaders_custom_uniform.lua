@@ -26,7 +26,7 @@ SetConfigFlags(FLAG.MSAA_4X_HINT)      -- Enable Multi Sampling Anti Aliasing 4x
 InitWindow(screenWidth, screenHeight, "raylib [shaders] example - custom uniform variable")
 
 -- Define the camera to look into our 3d world
-local camera = Camera(Vector3(3.0, 3.0, 3.0), Vector3(0.0, 1.5, 0.0), Vector3(0.0, 1.0, 0.0), 45.0))
+local camera = Camera(Vector3(3.0, 3.0, 3.0), Vector3(0.0, 1.5, 0.0), Vector3(0.0, 1.0, 0.0), 45.0)
 
 local dwarf = LoadModel("resources/model/dwarf.obj")                   -- Load OBJ model
 local texture = LoadTexture("resources/model/dwarf_diffuse.png")       -- Load model texture (diffuse map)
@@ -47,7 +47,7 @@ local swirlCenter = { screenWidth/2, screenHeight/2 }
 local target = LoadRenderTexture(screenWidth, screenHeight)
 
 -- Setup orbital camera
-SetCameraMode(CAMERA.ORBITAL)          -- Set an orbital camera mode
+SetCameraMode(CameraMode.ORBITAL)          -- Set an orbital camera mode
 SetCameraPosition(camera.position)     -- Set internal camera position to match our camera position
 SetCameraTarget(camera.target)         -- Set internal camera target to match our camera target
 
@@ -66,7 +66,7 @@ while not WindowShouldClose() do       -- Detect window close button or ESC key
     -- Send new value to the shader to be used on drawing
     SetShaderValue(shader, swirlCenterLoc, swirlCenter, 2)
     
-    UpdateCamera(&camera)              -- Update internal camera and our camera
+    UpdateCamera(camera)              -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw

@@ -26,7 +26,7 @@ SetConfigFlags(FLAG.MSAA_4X_HINT)      -- Enable Multi Sampling Anti Aliasing 4x
 InitWindow(screenWidth, screenHeight, "raylib [shaders] example - model shader")
 
 -- Define the camera to look into our 3d world
-local camera = Camera(Vector3(4.0, 4.0, 4.0), Vector3(0.0, 1.5, 0.0), Vector3(0.0, 1.0, 0.0), 45.0))
+local camera = Camera(Vector3(4.0, 4.0, 4.0), Vector3(0.0, 1.5, 0.0), Vector3(0.0, 1.0, 0.0), 45.0)
 local position = Vector3(0.0, 0.0, 0.0)   -- Set model position
 
 local dwarf = LoadModel("resources/model/dwarf.obj")                     -- Load OBJ model
@@ -37,30 +37,30 @@ material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png")   -- Load
 material.texNormal = LoadTexture("resources/model/dwarf_normal.png")     -- Load model normal texture
 material.texSpecular = LoadTexture("resources/model/dwarf_specular.png") -- Load model specular texture
 material.colDiffuse = WHITE
-material.colAmbient = (Color){0, 0, 10, 255}
+material.colAmbient = (Color)(0, 0, 10, 255)
 material.colSpecular = WHITE
-material.glossiness = 50.0f
+material.glossiness = 50.0
 
 dwarf.material = material      -- Apply material to model
 
-local spotLight = CreateLight(LIGHT_SPOT, (Vector3){3.0f, 5.0f, 2.0f}, (Color){255, 255, 255, 255})
-spotLight->target = (Vector3){0.0f, 0.0f, 0.0f}
-spotLight->intensity = 2.0f
-spotLight->diffuse = (Color){255, 100, 100, 255}
-spotLight->coneAngle = 60.0f
+local spotLight = CreateLight(LIGHT_SPOT, (Vector3)(3.0, 5.0, 2.0), (Color)(255, 255, 255, 255))
+spotLight.target = (Vector3)(0.0, 0.0, 0.0)
+spotLight.intensity = 2.0
+spotLight.diffuse = (Color)(255, 100, 100, 255)
+spotLight.coneAngle = 60.0
 
-local dirLight = CreateLight(LIGHT_DIRECTIONAL, (Vector3){0.0f, -3.0f, -3.0f}, (Color){255, 255, 255, 255})
-dirLight->target = (Vector3){1.0f, -2.0f, -2.0f}
-dirLight->intensity = 2.0f
-dirLight->diffuse = (Color){100, 255, 100, 255}
+local dirLight = CreateLight(LIGHT_DIRECTIONAL, (Vector3)(0.0, -3.0, -3.0), (Color)(255, 255, 255, 255))
+dirLight.target = (Vector3)(1.0, -2.0, -2.0)
+dirLight.intensity = 2.0
+dirLight.diffuse = (Color)(100, 255, 100, 255)
 
-local pointLight = CreateLight(LIGHT_POINT, (Vector3){0.0f, 4.0f, 5.0f}, (Color){255, 255, 255, 255})
-pointLight->intensity = 2.0f
-pointLight->diffuse = (Color){100, 100, 255, 255}
-pointLight->radius = 3.0f
+local pointLight = CreateLight(LIGHT_POINT, (Vector3)(0.0, 4.0, 5.0), (Color)(255, 255, 255, 255))
+pointLight.intensity = 2.0
+pointLight.diffuse = (Color)(100, 100, 255, 255)
+pointLight.radius = 3.0
 
 -- Setup orbital camera
-SetCameraMode(CAMERA.ORBITAL)          -- Set an orbital camera mode
+SetCameraMode(CameraMode.ORBITAL)          -- Set an orbital camera mode
 SetCameraPosition(camera.position)     -- Set internal camera position to match our camera position
 SetCameraTarget(camera.target)         -- Set internal camera target to match our camera target
 
@@ -71,7 +71,7 @@ SetTargetFPS(60)                       -- Set our game to run at 60 frames-per-s
 while not WindowShouldClose() do       -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    UpdateCamera(&camera)              -- Update internal camera and our camera
+    UpdateCamera(camera)              -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -98,7 +98,7 @@ while not WindowShouldClose() do       -- Detect window close button or ESC key
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
-}
+end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------

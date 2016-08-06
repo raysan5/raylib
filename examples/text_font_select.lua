@@ -87,7 +87,7 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
             btnNextInColor = PURPLE
         end
 
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) then
+        if (IsMouseButtonDown(MOUSE.LEFT_BUTTON)) then
             framesCounter = 20         -- Frames button is 'active'
             btnNextOutColor = MAROON
             btnNextInColor = RED

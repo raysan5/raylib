@@ -325,6 +325,7 @@ static void LuaBuildOpaqueMetatables(void)
 
 static Vector2 LuaGetArgument_Vector2(lua_State* L, int index)
 {
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "x") == LUA_TNUMBER, index, "Expected Vector2");
 	float x = (float)lua_tonumber(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "y") == LUA_TNUMBER, index, "Expected Vector2");
@@ -335,6 +336,7 @@ static Vector2 LuaGetArgument_Vector2(lua_State* L, int index)
 
 static Vector3 LuaGetArgument_Vector3(lua_State* L, int index)
 {
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "x") == LUA_TNUMBER, index, "Expected Vector3");
 	float x = (float)lua_tonumber(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "y") == LUA_TNUMBER, index, "Expected Vector3");
@@ -347,6 +349,7 @@ static Vector3 LuaGetArgument_Vector3(lua_State* L, int index)
 
 static Quaternion LuaGetArgument_Quaternion(lua_State* L, int index)
 {
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "x") == LUA_TNUMBER, index, "Expected Quaternion");
 	float x = (float)lua_tonumber(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "y") == LUA_TNUMBER, index, "Expected Quaternion");
@@ -361,6 +364,7 @@ static Quaternion LuaGetArgument_Quaternion(lua_State* L, int index)
 
 static Color LuaGetArgument_Color(lua_State* L, int index)
 {
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "r") == LUA_TNUMBER, index, "Expected Color");
 	unsigned char r = (unsigned char)lua_tointeger(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "g") == LUA_TNUMBER, index, "Expected Color");
@@ -375,6 +379,7 @@ static Color LuaGetArgument_Color(lua_State* L, int index)
 
 static Rectangle LuaGetArgument_Rectangle(lua_State* L, int index)
 {
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "x") == LUA_TNUMBER, index, "Expected Rectangle");
 	int x = (int)lua_tointeger(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "y") == LUA_TNUMBER, index, "Expected Rectangle");
@@ -390,13 +395,14 @@ static Rectangle LuaGetArgument_Rectangle(lua_State* L, int index)
 static Camera LuaGetArgument_Camera(lua_State* L, int index)
 {
 	Camera result;
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "position") == LUA_TTABLE, index, "Expected Camera");
 	result.position = LuaGetArgument_Vector3(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "target") == LUA_TTABLE, index, "Expected Camera");
 	result.target = LuaGetArgument_Vector3(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "up") == LUA_TTABLE, index, "Expected Camera");
 	result.up = LuaGetArgument_Vector3(L, -1);
-    luaL_argcheck(L, lua_getfield(L, index, "fovy") == LUA_TTABLE, index, "Expected Camera");
+  luaL_argcheck(L, lua_getfield(L, index, "fovy") == LUA_TNUMBER, index, "Expected Camera");
 	result.fovy = LuaGetArgument_float(L, -1);
 	lua_pop(L, 4);
 	return result;
@@ -405,13 +411,14 @@ static Camera LuaGetArgument_Camera(lua_State* L, int index)
 static Camera2D LuaGetArgument_Camera2D(lua_State* L, int index)
 {
 	Camera2D result;
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "offset") == LUA_TTABLE, index, "Expected Camera2D");
 	result.offset = LuaGetArgument_Vector2(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "target") == LUA_TTABLE, index, "Expected Camera2D");
 	result.target = LuaGetArgument_Vector2(L, -1);
-	luaL_argcheck(L, lua_getfield(L, index, "rotation") == LUA_TTABLE, index, "Expected Camera2D");
+	luaL_argcheck(L, lua_getfield(L, index, "rotation") == LUA_TNUMBER, index, "Expected Camera2D");
 	result.rotation = LuaGetArgument_float(L, -1);
-    luaL_argcheck(L, lua_getfield(L, index, "zoom") == LUA_TTABLE, index, "Expected Camera2D");
+  luaL_argcheck(L, lua_getfield(L, index, "zoom") == LUA_TNUMBER, index, "Expected Camera2D");
 	result.zoom = LuaGetArgument_float(L, -1);
 	lua_pop(L, 4);
 	return result;
@@ -420,6 +427,7 @@ static Camera2D LuaGetArgument_Camera2D(lua_State* L, int index)
 static BoundingBox LuaGetArgument_BoundingBox(lua_State* L, int index)
 {
 	BoundingBox result;
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "min") == LUA_TTABLE, index, "Expected BoundingBox");
 	result.min = LuaGetArgument_Vector3(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "max") == LUA_TTABLE, index, "Expected BoundingBox");
@@ -431,6 +439,7 @@ static BoundingBox LuaGetArgument_BoundingBox(lua_State* L, int index)
 static Ray LuaGetArgument_Ray(lua_State* L, int index)
 {
 	Ray result;
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "position") == LUA_TTABLE, index, "Expected Ray");
 	result.position = LuaGetArgument_Vector3(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "direction") == LUA_TTABLE, index, "Expected Ray");
@@ -443,10 +452,12 @@ static Matrix LuaGetArgument_Matrix(lua_State* L, int index)
 {
 	Matrix result = { 0 };
 	float* ptr = &result.m0;
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
+
 	for (int i = 0; i < 16; i++)
 	{
-		lua_geti(L, -1, i+1);
-		ptr[i] = luaL_checkinteger(L, -1);
+		lua_geti(L, index, i+1);
+		ptr[i] = luaL_checknumber(L, -1);
 	}
 	lua_pop(L, 16);
 	return result;
@@ -455,6 +466,7 @@ static Matrix LuaGetArgument_Matrix(lua_State* L, int index)
 static Material LuaGetArgument_Material(lua_State* L, int index)
 {
     Material result;
+		index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
     luaL_argcheck(L, lua_getfield(L, index, "shader") == LUA_TUSERDATA, index, "Expected Material");
 	result.shader = LuaGetArgument_Shader(L, -1);
     luaL_argcheck(L, lua_getfield(L, index, "texDiffuse") == LUA_TUSERDATA, index, "Expected Material");
@@ -463,13 +475,13 @@ static Material LuaGetArgument_Material(lua_State* L, int index)
 	result.texNormal = LuaGetArgument_Texture2D(L, -1);
     luaL_argcheck(L, lua_getfield(L, index, "texSpecular") == LUA_TUSERDATA, index, "Expected Material");
 	result.texSpecular = LuaGetArgument_Texture2D(L, -1);
-    luaL_argcheck(L, lua_getfield(L, index, "colDiffuse") == LUA_TUSERDATA, index, "Expected Material");
+    luaL_argcheck(L, lua_getfield(L, index, "colDiffuse") == LUA_TTABLE, index, "Expected Material");
 	result.colDiffuse = LuaGetArgument_Color(L, -1);
-    luaL_argcheck(L, lua_getfield(L, index, "colAmbient") == LUA_TUSERDATA, index, "Expected Material");
+    luaL_argcheck(L, lua_getfield(L, index, "colAmbient") == LUA_TTABLE, index, "Expected Material");
 	result.colAmbient = LuaGetArgument_Color(L, -1);
-    luaL_argcheck(L, lua_getfield(L, index, "colSpecular") == LUA_TUSERDATA, index, "Expected Material");
+    luaL_argcheck(L, lua_getfield(L, index, "colSpecular") == LUA_TTABLE, index, "Expected Material");
 	result.colSpecular = LuaGetArgument_Color(L, -1);
-    luaL_argcheck(L, lua_getfield(L, index, "glossiness") == LUA_TUSERDATA, index, "Expected Material");
+    luaL_argcheck(L, lua_getfield(L, index, "glossiness") == LUA_TNUMBER, index, "Expected Material");
 	result.glossiness = LuaGetArgument_float(L, -1);
     lua_pop(L, 8);
     return result;
@@ -478,6 +490,7 @@ static Material LuaGetArgument_Material(lua_State* L, int index)
 static Model LuaGetArgument_Model(lua_State* L, int index)
 {
 	Model result;
+	index = lua_absindex(L, index); // Makes sure we use absolute indices because we push multiple values
 	luaL_argcheck(L, lua_getfield(L, index, "mesh") == LUA_TUSERDATA, index, "Expected Model");
 	result.mesh = LuaGetArgument_Mesh(L, -1);
 	luaL_argcheck(L, lua_getfield(L, index, "transform") == LUA_TTABLE, index, "Expected Model");
@@ -3629,6 +3642,7 @@ static luaL_Reg raylib_functions[] = {
     REG(LoadRenderTexture)
 	REG(UnloadImage)
 	REG(UnloadTexture)
+	REG(UnloadRenderTexture)
 	REG(GetImageData)
 	REG(GetTextureData)
 	REG(ImageToPOT)
@@ -3690,6 +3704,10 @@ static luaL_Reg raylib_functions[] = {
 	REG(LoadHeightmap)
 	REG(LoadCubicmap)
 	REG(UnloadModel)
+		REG(LoadMaterial)
+		REG(LoadDefaultMaterial)
+		REG(LoadStandardMaterial)
+		REG(UnloadMaterial)
     //REG(GenMesh*)     // Not ready yet...
     
 	REG(DrawModel)
@@ -3964,6 +3982,8 @@ RLUADEF void InitLuaDevice(void)
 	LuaSetEnum("XBOX_AXIS_RIGHT_Y", 3);
 	LuaSetEnum("XBOX_AXIS_LT_RT", 2);
 #endif
+	LuaSetEnum("XBOX_AXIS_LEFT_X", 0);
+	LuaSetEnum("XBOX_AXIS_LEFT_Y", 1);
 	LuaEndEnum("GAMEPAD");
 
 	lua_pushglobaltable(L);

@@ -42,9 +42,9 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         Begin3dMode(camera)
 
-            DrawModel(dwarf, position, 2.0f, WHITE)   -- Draw 3d model with texture
+            DrawModel(dwarf, position, 2.0, WHITE)   -- Draw 3d model with texture
 
-            DrawGrid(10, 1.0f)         -- Draw a grid
+            DrawGrid(10, 1.0)         -- Draw a grid
 
             DrawGizmo(position)        -- Draw gizmo
 

@@ -21,13 +21,13 @@ local camera = Camera(Vector3(18.0, 16.0, 18.0), Vector3(0.0, 0.0, 0.0), Vector3
 
 local image = LoadImage("resources/heightmap.png")      -- Load heightmap image (RAM)
 local texture = LoadTextureFromImage(image)             -- Convert image to texture (VRAM)
-local map = LoadHeightmap(image, Vector3(16, 8, 16)     -- Load heightmap model with defined size
+local map = LoadHeightmap(image, Vector3(16, 8, 16))    -- Load heightmap model with defined size
 map.material.texDiffuse = texture                       -- Set map diffuse texture
 local mapPosition = Vector3(-8.0, 0.0, -8.0)            -- Set model position (depends on model scaling!)
 
 UnloadImage(image)                 -- Unload heightmap image from RAM, already uploaded to VRAM
 
-SetCameraMode(CAMERA.ORBITAL)      -- Set an orbital camera mode
+SetCameraMode(CameraMode.ORBITAL)      -- Set an orbital camera mode
 SetCameraPosition(camera.position) -- Set internal camera position to match our custom camera position
 
 SetTargetFPS(60)                   -- Set our game to run at 60 frames-per-second
@@ -37,7 +37,7 @@ SetTargetFPS(60)                   -- Set our game to run at 60 frames-per-secon
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    UpdateCamera(&camera)          -- Update internal camera and our camera
+    UpdateCamera(camera)          -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw

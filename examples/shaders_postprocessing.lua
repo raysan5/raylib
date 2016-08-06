@@ -26,7 +26,7 @@ SetConfigFlags(FLAG.MSAA_4X_HINT)      -- Enable Multi Sampling Anti Aliasing 4x
 InitWindow(screenWidth, screenHeight, "raylib [shaders] example - postprocessing shader")
 
 -- Define the camera to look into our 3d world
-local camera = Camera(Vector3(3.0, 3.0, 3.0), Vector3(0.0, 1.5, 0.0), Vector3(0.0, 1.0, 0.0), 45.0))
+local camera = Camera(Vector3(3.0, 3.0, 3.0), Vector3(0.0, 1.5, 0.0), Vector3(0.0, 1.0, 0.0), 45.0)
 
 local dwarf = LoadModel("resources/model/dwarf.obj")                   -- Load OBJ model
 local texture = LoadTexture("resources/model/dwarf_diffuse.png")       -- Load model texture (diffuse map)
@@ -41,7 +41,7 @@ local shader = LoadShader("resources/shaders/glsl330/base.vs",
 local target = LoadRenderTexture(screenWidth, screenHeight)
 
 -- Setup orbital camera
-SetCameraMode(CAMERA.ORBITAL)          -- Set an orbital camera mode
+SetCameraMode(CameraMode.ORBITAL)          -- Set an orbital camera mode
 SetCameraPosition(camera.position)     -- Set internal camera position to match our camera position
 SetCameraTarget(camera.target)         -- Set internal camera target to match our camera target
 
@@ -52,7 +52,7 @@ SetTargetFPS(60)                       -- Set our game to run at 60 frames-per-s
 while not WindowShouldClose() do       -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    UpdateCamera(&camera)              -- Update internal camera and our camera
+    UpdateCamera(camera)              -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -88,7 +88,7 @@ while not WindowShouldClose() do       -- Detect window close button or ESC key
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
-}
+end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
