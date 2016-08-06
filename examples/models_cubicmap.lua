@@ -32,17 +32,17 @@ local mapPosition = Vector3(-16.0, 0.0, -8.0)          -- Set model position
 UnloadImage(image)     -- Unload cubesmap image from RAM, already uploaded to VRAM
 
 SetCameraMode(CameraMode.ORBITAL)      -- Set an orbital camera mode
-SetCameraPosition(camera.position) -- Set internal camera position to match our custom camera position
-SetCameraFovy(camera.fovy)         -- Set internal camera field-of-view Y
+SetCameraPosition(camera.position)     -- Set internal camera position to match our custom camera position
+SetCameraFovy(camera.fovy)             -- Set internal camera field-of-view Y
 
-SetTargetFPS(60)                   -- Set our game to run at 60 frames-per-second
+SetTargetFPS(60)                       -- Set our game to run at 60 frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    UpdateCamera(camera)          -- Update internal camera and our camera
+    camera = UpdateCamera(camera)           -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw
