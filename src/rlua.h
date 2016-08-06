@@ -1326,12 +1326,6 @@ int lua_IsGestureDetected(lua_State* L)
 	return 1;
 }
 
-int lua_UpdateGestures(lua_State* L)
-{
-	UpdateGestures();
-	return 0;
-}
-
 int lua_GetTouchPointsCount(lua_State* L)
 {
 	int result = GetTouchPointsCount();
@@ -3589,10 +3583,8 @@ static luaL_Reg raylib_functions[] = {
 
 	REG(SetGesturesEnabled)
 	REG(IsGestureDetected)
-	//REG(ProcessGestureEvent)
-	REG(UpdateGestures)
-	REG(GetTouchPointsCount)
 	REG(GetGestureDetected)
+    REG(GetTouchPointsCount)
 	REG(GetGestureHoldDuration)
 	REG(GetGestureDragVector)
 	REG(GetGestureDragAngle)

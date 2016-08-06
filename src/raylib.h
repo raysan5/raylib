@@ -570,18 +570,6 @@ typedef enum {
     GESTURE_PINCH_OUT   = 512
 } Gestures;
 
-// Touch action (fingers or mouse)
-typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
-
-// Gesture events
-// NOTE: MAX_TOUCH_POINTS fixed to 2
-typedef struct GestureEvent {
-    int touchAction;
-    int pointCount;
-    int pointerId[MAX_TOUCH_POINTS];
-    Vector2 position[MAX_TOUCH_POINTS];
-} GestureEvent;
-
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
 
@@ -711,11 +699,8 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
-void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
-
-int GetTouchPointsCount(void);                          // Get touch points count
 int GetGestureDetected(void);                           // Get latest detected gesture
+int GetTouchPointsCount(void);                          // Get touch points count
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle

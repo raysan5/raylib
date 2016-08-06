@@ -168,7 +168,7 @@ endif
 # compile all modules with their prerequisites
 
 # compile core module
-core.o : core.c raylib.h rlgl.h utils.h raymath.h
+core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile rlgl module
@@ -205,10 +205,6 @@ utils.o : utils.c utils.h
 
 # compile camera module
 camera.o : camera.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
-
-#compile gestures module
-gestures.o : gestures.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES)
 
 # It installs generated and needed files to compile projects using raylib.
