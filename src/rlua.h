@@ -4,7 +4,7 @@
 *
 *   NOTE 01:
 *   The following types:
-*       Color, Vector2, Vector3, Rectangle, Ray, Camera
+*       Color, Vector2, Vector3, Rectangle, Ray, Camera, Camera2D
 *   are treated as objects with named fields, same as in C.
 *   
 *   Lua defines utility functions for creating those objects.
@@ -178,6 +178,7 @@ static Quaternion LuaGetArgument_Quaternion(lua_State* L, int index);
 static Color LuaGetArgument_Color(lua_State* L, int index);
 static Rectangle LuaGetArgument_Rectangle(lua_State* L, int index);
 static Camera LuaGetArgument_Camera(lua_State* L, int index);
+static Camera2D LuaGetArgument_Camera2D(lua_State* L, int index);
 static Ray LuaGetArgument_Ray(lua_State* L, int index);
 static Matrix LuaGetArgument_Matrix(lua_State* L, int index);
 static Model LuaGetArgument_Model(lua_State* L, int index);
@@ -594,7 +595,7 @@ static void LuaPush_Camera(lua_State* L, Camera cam)
 
 static void LuaPush_Camera2D(lua_State* L, Camera2D cam)
 {
-	lua_createtable(L, 0, 3);
+	lua_createtable(L, 0, 4);
 	LuaPush_Vector2(L, cam.offset);
 	lua_setfield(L, -2, "offset");
 	LuaPush_Vector2(L, cam.target);
@@ -702,8 +703,8 @@ static int lua_Camera(lua_State* L)
 	Vector3 pos = LuaGetArgument_Vector3(L, 1);
 	Vector3 tar = LuaGetArgument_Vector3(L, 2);
 	Vector3 up = LuaGetArgument_Vector3(L, 3);
-    float fovy = LuaGetArgument_float(L, 4);
-	LuaPush_Camera(L, (Camera) { { pos.x, pos.y, pos.z }, { tar.x, tar.y, tar.z }, { up.x, up.y, up.z }, fovy });
+    //float fovy = LuaGetArgument_float(L, 4);      // ???
+	LuaPush_Camera(L, (Camera) { { pos.x, pos.y, pos.z }, { tar.x, tar.y, tar.z }, { up.x, up.y, up.z }, (float)luaL_checknumber(L, 4) });
 	return 1;
 }
 
@@ -3945,9 +3946,33 @@ RLUADEF void InitLuaDevice(void)
 	LuaSetEnum("BUTTON_L2", 8);
 	LuaSetEnum("BUTTON_SELECT", 9);
 	LuaSetEnum("BUTTON_START", 10);
-	LuaEndEnum("GAMEPAD");
     
-    // TODO: XBOX controller buttons enum
+	LuaSetEnum("XBOX_BUTTON_A", 0);
+	LuaSetEnum("XBOX_BUTTON_B", 1);
+	LuaSetEnum("XBOX_BUTTON_X", 2);
+	LuaSetEnum("XBOX_BUTTON_Y", 3);
+	LuaSetEnum("XBOX_BUTTON_LB", 4);
+	LuaSetEnum("XBOX_BUTTON_RB", 5);
+	LuaSetEnum("XBOX_BUTTON_SELECT", 6);
+	LuaSetEnum("XBOX_BUTTON_START", 7);
+
+#if defined(PLATFORM_RPI)
+	LuaSetEnum("XBOX_AXIS_DPAD_X", 7);
+	LuaSetEnum("XBOX_AXIS_DPAD_Y", 6);
+ 	LuaSetEnum("XBOX_AXIS_RIGHT_X", 3);
+	LuaSetEnum("XBOX_AXIS_RIGHT_Y", 4);
+	LuaSetEnum("XBOX_AXIS_LT", 2);
+	LuaSetEnum("XBOX_AXIS_RT", 5);
+#else
+	LuaSetEnum("XBOX_BUTTON_UP", 10);
+	LuaSetEnum("XBOX_BUTTON_DOWN", 12);
+	LuaSetEnum("XBOX_BUTTON_LEFT", 13);
+	LuaSetEnum("XBOX_BUTTON_RIGHT", 11);
+	LuaSetEnum("XBOX_AXIS_RIGHT_X", 4);
+	LuaSetEnum("XBOX_AXIS_RIGHT_Y", 3);
+	LuaSetEnum("XBOX_AXIS_LT_RT", 2);
+#endif
+	LuaEndEnum("GAMEPAD");
 
 	lua_pushglobaltable(L);
 	LuaSetEnumColor("LIGHTGRAY", LIGHTGRAY);
@@ -4028,15 +4053,15 @@ RLUADEF void InitLuaDevice(void)
 	LuaEndEnum("CameraMode");
     
     LuaStartEnum();
-    LuaSetEnum("HMD_DEFAULT_DEVICE", HMD_DEFAULT_DEVICE);
-    LuaSetEnum("HMD_OCULUS_RIFT_DK2", HMD_OCULUS_RIFT_DK2);
-    LuaSetEnum("HMD_OCULUS_RIFT_CV1", HMD_OCULUS_RIFT_CV1);
-    LuaSetEnum("HMD_VALVE_HTC_VIVE", HMD_VALVE_HTC_VIVE);
-    LuaSetEnum("HMD_SAMSUNG_GEAR_VR", HMD_SAMSUNG_GEAR_VR);
-    LuaSetEnum("HMD_GOOGLE_CARDBOARD", HMD_GOOGLE_CARDBOARD);
-    LuaSetEnum("HMD_SONY_PLAYSTATION_VR", HMD_SONY_PLAYSTATION_VR);
-    LuaSetEnum("HMD_RAZER_OSVR", HMD_RAZER_OSVR);
-    LuaSetEnum("HMD_FOVE_VR", HMD_FOVE_VR);
+    LuaSetEnum("DEFAULT_DEVICE", HMD_DEFAULT_DEVICE);
+    LuaSetEnum("OCULUS_RIFT_DK2", HMD_OCULUS_RIFT_DK2);
+    LuaSetEnum("OCULUS_RIFT_CV1", HMD_OCULUS_RIFT_CV1);
+    LuaSetEnum("VALVE_HTC_VIVE", HMD_VALVE_HTC_VIVE);
+    LuaSetEnum("SAMSUNG_GEAR_VR", HMD_SAMSUNG_GEAR_VR);
+    LuaSetEnum("GOOGLE_CARDBOARD", HMD_GOOGLE_CARDBOARD);
+    LuaSetEnum("SONY_PLAYSTATION_VR", HMD_SONY_PLAYSTATION_VR);
+    LuaSetEnum("RAZER_OSVR", HMD_RAZER_OSVR);
+    LuaSetEnum("FOVE_VR", HMD_FOVE_VR);
 	LuaEndEnum("VrDevice");
 
 	lua_pushglobaltable(L);
