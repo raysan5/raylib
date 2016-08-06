@@ -768,7 +768,7 @@ static int lua_BoundingBox(lua_State* L)
 {
     Vector3 min = LuaGetArgument_Vector3(L, 1);
     Vector3 max = LuaGetArgument_Vector3(L, 2);
-    LuaPush_BoundingBox(L, (BoundingBox) { { min.x, min.y }, { max.x, max.y } });
+    LuaPush_BoundingBox(L, (BoundingBox) { { min.x, min.y, min.z }, { max.x, max.y, max.z } });
     return 1;
 }
 
