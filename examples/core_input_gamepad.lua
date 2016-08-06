@@ -36,7 +36,7 @@ while not WindowShouldClose() do    -- Detect window close button or ESC key
         ballPosition.x = ballPosition.x + gamepadMovement.x
         ballPosition.y = ballPosition.y - gamepadMovement.y
 
-        if (IsGamepadButtonPressed(GAMEPAD_PLAYER1, GAMEPAD_BUTTON_A)) then
+        if (IsGamepadButtonPressed(GAMEPAD.PLAYER1, GAMEPAD.BUTTON_A)) then
             ballPosition.x = screenWidth/2
             ballPosition.y = screenHeight/2
         end

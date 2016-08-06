@@ -31,7 +31,7 @@ local mapPosition = Vector3(-16.0, 0.0, -8.0)          -- Set model position
 
 UnloadImage(image)     -- Unload cubesmap image from RAM, already uploaded to VRAM
 
-SetCameraMode(CAMERA.ORBITAL)      -- Set an orbital camera mode
+SetCameraMode(CameraMode.ORBITAL)      -- Set an orbital camera mode
 SetCameraPosition(camera.position) -- Set internal camera position to match our custom camera position
 SetCameraFovy(camera.fovy)         -- Set internal camera field-of-view Y
 
@@ -42,7 +42,7 @@ SetTargetFPS(60)                   -- Set our game to run at 60 frames-per-secon
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    UpdateCamera(&camera)          -- Update internal camera and our camera
+    UpdateCamera(camera)          -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -57,7 +57,7 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         End3dMode()
         
-        DrawTextureEx(cubicmap, (Vector2){ screenWidth - cubicmap.width*4 - 20, 20 }, 0.0, 4.0, WHITE)
+        DrawTextureEx(cubicmap, (Vector2)(screenWidth - cubicmap.width*4 - 20, 20), 0.0, 4.0, WHITE)
         DrawRectangleLines(screenWidth - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN)
         
         DrawText("cubicmap image used to", 658, 90, 10, GRAY)

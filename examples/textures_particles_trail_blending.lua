@@ -12,15 +12,6 @@
 MAX_PARTICLES = 200
 
 -- Particle structure with basic data
-struct.Particle {
-    position,
-    color,
-    alpha,
-    size,
-    rotation,
-    active        -- NOTE: Use it to activate/deactive particle
-}
-
 -- Initialization
 -------------------------------------------------------------------------------------------
 local screenWidth = 800
@@ -33,6 +24,7 @@ local mouseTail = {}
 
 -- Initialize particles
 for i = 1, MAX_PARTICLES do
+    mouseTail[i] = {}
     mouseTail[i].position = Vector2(0, 0)
     mouseTail[i].color = Color(GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255)
     mouseTail[i].alpha = 1.0
@@ -45,7 +37,7 @@ local gravity = 3.0
 
 local smoke = LoadTexture("resources/smoke.png")
 
-local blending = BLEND.ALPHA
+local blending = BlendMode.ALPHA
 
 SetTargetFPS(60)
 -------------------------------------------------------------------------------------------
@@ -80,8 +72,8 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
     end
     
     if (IsKeyPressed(KEY.SPACE)) then
-        if (blending == BLEND.ALPHA) then blending = BLEND_ADDITIVE
-        else blending = BLEND.ALPHA end
+        if (blending == BlendMode.ALPHA) then blending = BlendMode.ADDITIVE
+        else blending = BlendMode.ALPHA end
     end
     ---------------------------------------------------------------------------------------
 
@@ -107,7 +99,7 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
         
         DrawText("PRESS SPACE to CHANGE BLENDING MODE", 180, 20, 20, BLACK)
         
-        if (blending == BLEND_ALPHA) then DrawText("ALPHA BLENDING", 290, screenHeight - 40, 20, BLACK)
+        if (blending == BlendMode.ALPHA) then DrawText("ALPHA BLENDING", 290, screenHeight - 40, 20, BLACK)
         else DrawText("ADDITIVE BLENDING", 280, screenHeight - 40, 20, RAYWHITE) end
         
     EndDrawing()

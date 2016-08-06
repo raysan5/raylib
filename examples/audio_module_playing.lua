@@ -11,6 +11,7 @@
 
 MAX_CIRCLES = 64
 
+--[[
 typedef struct {        -- TODO: Find a Lua alternative: TABLES?
     Vector2 position
     float radius
@@ -18,6 +19,7 @@ typedef struct {        -- TODO: Find a Lua alternative: TABLES?
     float speed
     Color color
 } CircleWave
+--]]
 
 -- Initialization
 -------------------------------------------------------------------------------------------
@@ -35,11 +37,13 @@ local colors = { ORANGE, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK,
 local circles = {}
 
 for i = MAX_CIRCLES, 1, -1 do
+    circles[i] = {}
     circles[i].alpha = 0.0
     circles[i].radius = GetRandomValue(10, 40)
+    circles[i].position = Vector2(0, 0)
     circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius)
     circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius)
-    circles[i].speed = (float)GetRandomValue(1, 100)/20000.0
+    circles[i].speed = GetRandomValue(1, 100)/20000.0
     circles[i].color = colors[GetRandomValue(1, 14)]
 end
 
@@ -64,8 +68,8 @@ while not WindowShouldClose() do        -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
     for i = MAX_CIRCLES, 1, -1 do
-        circles[i].alpha += circles[i].speed
-        circles[i].radius += circles[i].speed*10.0
+        circles[i].alpha = circles[i].alpha + circles[i].speed
+        circles[i].radius = circles[i].radius + circles[i].speed*10.0
         
         if (circles[i].alpha > 1.0) then circles[i].speed = circles[i].speed*-1 end
         
@@ -75,7 +79,7 @@ while not WindowShouldClose() do        -- Detect window close button or ESC key
             circles[i].position.x = GetRandomValue(circles[i].radius, screenWidth - circles[i].radius)
             circles[i].position.y = GetRandomValue(circles[i].radius, screenHeight - circles[i].radius)
             circles[i].color = colors[GetRandomValue(0, 13)]
-            circles[i].speed = (float)GetRandomValue(1, 100)/20000.0
+            circles[i].speed = GetRandomValue(1, 100)/20000.0
         end
     end
 
@@ -108,7 +112,7 @@ while not WindowShouldClose() do        -- Detect window close button or ESC key
 
         -- Draw time bar
         DrawRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY)
-        DrawRectangle(20, screenHeight - 20 - 12, (int)timePlayed, 12, MAROON)
+        DrawRectangle(20, screenHeight - 20 - 12, timePlayed, 12, MAROON)
         DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, WHITE)
 
     EndDrawing()
@@ -126,6 +130,3 @@ CloseAudioDevice()     -- Close audio device (music streaming is automatically s
 
 CloseWindow()          -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------
-
-return 0
-}

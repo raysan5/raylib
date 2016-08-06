@@ -50,7 +50,7 @@ for i = 1, 8 do
     positions[i].y = 60 + fonts[i].size + 50*i
 end
 
-local colors = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD }
+local colors = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD, BLACK }
 
 SetTargetFPS(60)            -- Set target frames-per-second
 -------------------------------------------------------------------------------------------

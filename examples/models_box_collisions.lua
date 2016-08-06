@@ -40,10 +40,10 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
     ---------------------------------------------------------------------------------------
     
     -- Move player
-    if (IsKeyDown(KEY.RIGHT)) then playerPosition.x = playerPosition.x + 0.2f end
-    elseif (IsKeyDown(KEY.LEFT)) then playerPosition.x = playerPosition.x - 0.2f end
-    elseif (IsKeyDown(KEY.DOWN)) then playerPosition.z = playerPosition.z + 0.2f end
-    elseif (IsKeyDown(KEY.UP)) then playerPosition.z = playerPosition.z - 0.2f end
+    if (IsKeyDown(KEY.RIGHT)) then playerPosition.x = playerPosition.x + 0.2
+    elseif (IsKeyDown(KEY.LEFT)) then playerPosition.x = playerPosition.x - 0.2
+    elseif (IsKeyDown(KEY.DOWN)) then playerPosition.z = playerPosition.z + 0.2
+    elseif (IsKeyDown(KEY.UP)) then playerPosition.z = playerPosition.z - 0.2 end
     
     collision = false
     

@@ -29,8 +29,8 @@ int main()
     //--------------------------------------------------------------------------------------
 
     // ExecuteLuaFile("core_basic_window.lua");                 // OK!
-    // ExecuteLuaFile("core_input_keys.lua");                   // OK!
-    // ExecuteLuaFile("core_input_mouse.lua");                  // OK!
+		// ExecuteLuaFile("core_input_keys.lua");                   // OK!
+		// ExecuteLuaFile("core_input_mouse.lua");                  // OK!
     // ExecuteLuaFile("core_mouse_wheel.lua");                  // OK!
     // ExecuteLuaFile("core_input_gamepad.lua");                // OK!
     // ExecuteLuaFile("core_random_values.lua");                // OK!
@@ -55,31 +55,31 @@ int main()
     // ExecuteLuaFile("textures_srcrec_dstrec.lua");            // OK!
     // ExecuteLuaFile("textures_to_image.lua");                 // OK!
     // ExecuteLuaFile("textures_raw_data.lua");                 // ERROR: Lua Error: attempt to index a number value
-    // ExecuteLuaFile("textures_formats_loading.lua");          // ISSUE: texture.id not exposed to be checked
-    // ExecuteLuaFile("textures_particles_trail_blending.lua"); // ERROR: Using struct
-    // ExecuteLuaFile("textures_image_processing.lua");         // ERROR: GetImageData() --> UpdateTexture()
-    // ExecuteLuaFile("textures_image_drawing.lua");            // OK!
-    // ExecuteLuaFile("text_sprite_fonts.lua");                 // OK!
-    // ExecuteLuaFile("text_bmfont_ttf.lua");                   // OK!
-    // ExecuteLuaFile("text_rbmf_fonts.lua");                   // ERROR: Lua Error: attempt to index a nil value
-    // ExecuteLuaFile("text_format_text.lua");                  // OK! NOTE: Use lua string.format() instead of raylib FormatText()
-    // ExecuteLuaFile("text_font_select.lua");                  // OK!
-    // ExecuteLuaFile("text_writing_anim.lua");                 // ERROR: SubText()
-    // ExecuteLuaFile("models_geometric_shapes.lua");           // ERROR: Lua Error: attempt to index a number value - Begin3dMode(camera)
-    // ExecuteLuaFile("models_box_collisions.lua");             //
-    // ExecuteLuaFile("models_billboard.lua");                  //
-    // ExecuteLuaFile("models_obj_loading.lua");                //
-    // ExecuteLuaFile("models_heightmap.lua");                  //
+		// ExecuteLuaFile("textures_formats_loading.lua");          // ISSUE: texture.id not exposed to be checked
+		// ExecuteLuaFile("textures_particles_trail_blending.lua"); // ERROR: Using struct
+		// ExecuteLuaFile("textures_image_processing.lua");         // ERROR: GetImageData() --> UpdateTexture()
+		// ExecuteLuaFile("textures_image_drawing.lua");            // OK!
+		// ExecuteLuaFile("text_sprite_fonts.lua");                 // OK!
+		// ExecuteLuaFile("text_bmfont_ttf.lua");                   // OK!
+		// ExecuteLuaFile("text_rbmf_fonts.lua");                   // ERROR: Lua Error: attempt to index a nil value
+		// ExecuteLuaFile("text_format_text.lua");                  // OK! NOTE: Use lua string.format() instead of raylib FormatText()
+		// ExecuteLuaFile("text_font_select.lua");                  // OK!
+		// ExecuteLuaFile("text_writing_anim.lua");                 // ERROR: SubText()
+		// ExecuteLuaFile("models_geometric_shapes.lua");           // ERROR: Lua Error: attempt to index a number value - Begin3dMode(camera)
+		// ExecuteLuaFile("models_box_collisions.lua");             //
+		// ExecuteLuaFile("models_billboard.lua");                  //
+		// ExecuteLuaFile("models_obj_loading.lua");                //
+		// ExecuteLuaFile("models_heightmap.lua");                  //
     // ExecuteLuaFile("models_cubicmap.lua");                   //
-    // ExecuteLuaFile("shaders_model_shader.lua");              //
-    // ExecuteLuaFile("shaders_shapes_textures.lua");           //
+		// ExecuteLuaFile("shaders_model_shader.lua");              //
+		// ExecuteLuaFile("shaders_shapes_textures.lua");           //
     // ExecuteLuaFile("shaders_custom_uniform.lua");            //
     // ExecuteLuaFile("shaders_postprocessing.lua");            //
     // ExecuteLuaFile("shaders_standard_lighting.lua");         //
     // ExecuteLuaFile("audio_sound_loading.lua");               // OK!
     // ExecuteLuaFile("audio_music_stream.lua");                // OK!
-    // ExecuteLuaFile("audio_module_playing.lua");              // ERROR: Using struct
-    // ExecuteLuaFile("audio_raw_stream.lua");                  // ERROR: UpdateAudioStream()
+    ExecuteLuaFile("audio_module_playing.lua");              // ERROR: Using struct
+    ExecuteLuaFile("audio_raw_stream.lua");                  // ERROR: UpdateAudioStream()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
