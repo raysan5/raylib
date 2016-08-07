@@ -138,6 +138,7 @@ RLUADEF void CloseLuaDevice(void);                  // De-initialize Lua system
 #define LuaGetArgument_char (char)luaL_checkinteger
 #define LuaGetArgument_float (float)luaL_checknumber
 #define LuaGetArgument_double luaL_checknumber
+
 #define LuaGetArgument_Image(L, img) *(Image*)LuaGetArgumentOpaqueTypeWithMetatable(L, img, "Image")
 #define LuaGetArgument_Texture2D(L, tex) *(Texture2D*)LuaGetArgumentOpaqueTypeWithMetatable(L, tex, "Texture2D")
 #define LuaGetArgument_RenderTexture2D(L, rtex) *(RenderTexture2D*)LuaGetArgumentOpaqueTypeWithMetatable(L, rtex, "RenderTexture2D")
@@ -739,17 +740,6 @@ static int lua_Quaternion(lua_State* L)
     return 1;
 }
 
-/*
-static int lua_Matrix(lua_State* L)
-{
-    LuaPush_Matrix(L, (Matrix) { (float)luaL_checknumber(L, 1), (float)luaL_checknumber(L, 2), (float)luaL_checknumber(L, 3), (float)luaL_checknumber(L, 4),
-                                 (float)luaL_checknumber(L, 5), (float)luaL_checknumber(L, 6), (float)luaL_checknumber(L, 7), (float)luaL_checknumber(L, 8),
-                                 (float)luaL_checknumber(L, 9), (float)luaL_checknumber(L, 10), (float)luaL_checknumber(L, 11), (float)luaL_checknumber(L, 12),
-                                 (float)luaL_checknumber(L, 13), (float)luaL_checknumber(L, 14), (float)luaL_checknumber(L, 15), (float)luaL_checknumber(L, 16) });
-    return 1;
-}
-*/
-
 static int lua_Rectangle(lua_State* L)
 {
     LuaPush_Rectangle(L, (Rectangle) { (int)luaL_checkinteger(L, 1), (int)luaL_checkinteger(L, 2), (int)luaL_checkinteger(L, 3), (int)luaL_checkinteger(L, 4) });
@@ -777,8 +767,8 @@ static int lua_Camera(lua_State* L)
     Vector3 pos = LuaGetArgument_Vector3(L, 1);
     Vector3 tar = LuaGetArgument_Vector3(L, 2);
     Vector3 up = LuaGetArgument_Vector3(L, 3);
-    //float fovy = LuaGetArgument_float(L, 4);      // ???
-    LuaPush_Camera(L, (Camera) { { pos.x, pos.y, pos.z }, { tar.x, tar.y, tar.z }, { up.x, up.y, up.z }, (float)luaL_checknumber(L, 4) });
+    float fovy = LuaGetArgument_float(L, 4);
+    LuaPush_Camera(L, (Camera) { { pos.x, pos.y, pos.z }, { tar.x, tar.y, tar.z }, { up.x, up.y, up.z }, fovy });
     return 1;
 }
 
@@ -791,23 +781,6 @@ static int lua_Camera2D(lua_State* L)
     LuaPush_Camera2D(L, (Camera2D) { { off.x, off.y }, { tar.x, tar.y }, rot, zoom });
     return 1;
 }
-
-/*
-// NOTE: does it make sense to have this constructor? Probably not...
-static int lua_Material(lua_State* L)
-{
-    Shader sdr = LuaGetArgument_Shader(L, 1);
-    Texture2D td = LuaGetArgument_Texture2D(L, 2);
-    Texture2D tn = LuaGetArgument_Texture2D(L, 3);
-    Texture2D ts = LuaGetArgument_Texture2D(L, 4);
-    Color cd = LuaGetArgument_Color(L, 5);
-    Color ca = LuaGetArgument_Color(L, 6);
-    Color cs = LuaGetArgument_Color(L, 7);
-    float gloss = LuaGetArgument_float(L, 8);
-    LuaPush_Material(L, (Material) { sdr, td, tn, ts cd, ca, cs, gloss });
-    return 1;
-}
-*/
 
 /*************************************************************************************
 *  raylib Lua Functions Bindings
@@ -1817,14 +1790,11 @@ int lua_LoadImage(lua_State* L)
 
 int lua_LoadImageEx(lua_State* L)
 {
-    //Color * arg1 = LuaGetArgument_Color *(L, 1);
     GET_TABLE(Color, arg1, 1);
-
     int arg2 = LuaGetArgument_int(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
-    Image result = LoadImageEx(arg1, arg2, arg3);
+    Image result = LoadImageEx(arg1, arg2, arg3); // ISSUE: #3 number expected, got no value
     LuaPush_Image(L, result);
-
     free(arg1);
     return 1;
 }
@@ -1860,7 +1830,7 @@ int lua_LoadTexture(lua_State* L)
 
 int lua_LoadTextureEx(lua_State* L)
 {
-    void * arg1 = (char *)LuaGetArgument_string(L, 1);  // NOTE: getting argument as string
+    void * arg1 = (char *)LuaGetArgument_string(L, 1);  // NOTE: getting argument as string?
     int arg2 = LuaGetArgument_int(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
     int arg4 = LuaGetArgument_int(L, 4);
@@ -2056,7 +2026,7 @@ int lua_ImageDrawTextEx(lua_State* L)
     Vector2 arg2 = LuaGetArgument_Vector2(L, 2);
     SpriteFont arg3 = LuaGetArgument_SpriteFont(L, 3);
     const char * arg4 = LuaGetArgument_string(L, 4);
-    int arg5 = LuaGetArgument_int(L, 5);
+    float arg5 = LuaGetArgument_float(L, 5);
     int arg6 = LuaGetArgument_int(L, 6);
     Color arg7 = LuaGetArgument_Color(L, 7);
     ImageDrawTextEx(&arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -2134,7 +2104,7 @@ int lua_UpdateTexture(lua_State* L)
 {
     Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
     void * arg2 = (char *)LuaGetArgument_string(L, 2);  // NOTE: Getting (void *) as string?
-    UpdateTexture(arg1, arg2);
+    UpdateTexture(arg1, arg2);      // ISSUE: #2 string expected, got table -> GetImageData() returns a table!
     return 0;
 }
 
@@ -2231,7 +2201,7 @@ int lua_DrawTextEx(lua_State* L)
     SpriteFont arg1 = LuaGetArgument_SpriteFont(L, 1);
     const char * arg2 = LuaGetArgument_string(L, 2);
     Vector2 arg3 = LuaGetArgument_Vector2(L, 3);
-    int arg4 = LuaGetArgument_int(L, 4);
+    float arg4 = LuaGetArgument_float(L, 4);
     int arg5 = LuaGetArgument_int(L, 5);
     Color arg6 = LuaGetArgument_Color(L, 6);
     DrawTextEx(arg1, arg2, arg3, arg4, arg5, arg6);
@@ -3911,7 +3881,7 @@ static luaL_Reg raylib_functions[] = {
     REG(QuaternionToAxisAngle)
     REG(QuaternionTransform)
 
-    {0,0}
+    {NULL, NULL}  // sentinel: end signal
 };
 
 // Register raylib functionality
@@ -4017,16 +3987,16 @@ RLUADEF void InitLuaDevice(void)
     LuaSetEnum("PLAYER3", 2);
     LuaSetEnum("PLAYER4", 3);
 
-    LuaSetEnum("BUTTON_A", 2);
-    LuaSetEnum("BUTTON_B", 1);
-    LuaSetEnum("BUTTON_X", 3);
-    LuaSetEnum("BUTTON_Y", 4);
-    LuaSetEnum("BUTTON_R1", 7);
-    LuaSetEnum("BUTTON_R2", 5);
-    LuaSetEnum("BUTTON_L1", 6);
-    LuaSetEnum("BUTTON_L2", 8);
-    LuaSetEnum("BUTTON_SELECT", 9);
-    LuaSetEnum("BUTTON_START", 10);
+    LuaSetEnum("PS3_BUTTON_A", 2);
+    LuaSetEnum("PS3_BUTTON_B", 1);
+    LuaSetEnum("PS3_BUTTON_X", 3);
+    LuaSetEnum("PS3_BUTTON_Y", 4);
+    LuaSetEnum("PS3_BUTTON_R1", 7);
+    LuaSetEnum("PS3_BUTTON_R2", 5);
+    LuaSetEnum("PS3_BUTTON_L1", 6);
+    LuaSetEnum("PS3_BUTTON_L2", 8);
+    LuaSetEnum("PS3_BUTTON_SELECT", 9);
+    LuaSetEnum("PS3_BUTTON_START", 10);
     
     LuaSetEnum("XBOX_BUTTON_A", 0);
     LuaSetEnum("XBOX_BUTTON_B", 1);
@@ -4040,7 +4010,7 @@ RLUADEF void InitLuaDevice(void)
 #if defined(PLATFORM_RPI)
     LuaSetEnum("XBOX_AXIS_DPAD_X", 7);
     LuaSetEnum("XBOX_AXIS_DPAD_Y", 6);
-     LuaSetEnum("XBOX_AXIS_RIGHT_X", 3);
+    LuaSetEnum("XBOX_AXIS_RIGHT_X", 3);
     LuaSetEnum("XBOX_AXIS_RIGHT_Y", 4);
     LuaSetEnum("XBOX_AXIS_LT", 2);
     LuaSetEnum("XBOX_AXIS_RT", 5);

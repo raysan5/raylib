@@ -36,8 +36,8 @@ local pixels = {}
 
 for y = 1, height do
     for x = 1, width do
-        if ((((x - 1)/32+(y - 1)//32)//1)%2 == 0) then pixels[y*height + x] = DARKBLUE
-        else pixels[y*height + x] = SKYBLUE end
+        if ((((x - 1)/32+(y - 1)//32)//1)%2 == 0) then pixels[(y - 1)*height + x] = DARKBLUE
+        else pixels[(y - 1)*height + x] = SKYBLUE end
     end
 end
 
