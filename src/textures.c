@@ -1053,7 +1053,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 }
 
 // Create an image from text (custom sprite font)
-Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint)
+Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing, Color tint)
 {
     int length = strlen(text);
     int posX = 0;
@@ -1091,9 +1091,9 @@ Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, 
     Image imText = LoadImageEx(pixels, (int)imSize.x, (int)imSize.y);
     
     // Scale image depending on text size
-    if (fontSize > (int)imSize.y)
+    if (fontSize > imSize.y)
     {
-        float scaleFactor = (float)fontSize/imSize.y;
+        float scaleFactor = fontSize/imSize.y;
         TraceLog(INFO, "Scalefactor: %f", scaleFactor);
         
         // Using nearest-neighbor scaling algorithm for default font
@@ -1114,7 +1114,7 @@ void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize,
 }
 
 // Draw text (custom sprite font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color)
+void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, float fontSize, int spacing, Color color)
 {
     Image imText = ImageTextEx(font, text, fontSize, spacing, color);
     

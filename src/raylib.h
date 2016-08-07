@@ -185,17 +185,20 @@
 #define GAMEPAD_PLAYER4       3     // Not supported
 
 // Gamepad Buttons
-// NOTE: Adjusted for a PS3 USB Controller
-#define GAMEPAD_BUTTON_A        2
-#define GAMEPAD_BUTTON_B        1
-#define GAMEPAD_BUTTON_X        3
-#define GAMEPAD_BUTTON_Y        4
-#define GAMEPAD_BUTTON_R1       7
-#define GAMEPAD_BUTTON_R2       5
-#define GAMEPAD_BUTTON_L1       6
-#define GAMEPAD_BUTTON_L2       8
-#define GAMEPAD_BUTTON_SELECT   9
-#define GAMEPAD_BUTTON_START   10
+
+// PS3 USB Controller
+#define GAMEPAD_PS3_BUTTON_A        2
+#define GAMEPAD_PS3_BUTTON_B        1
+#define GAMEPAD_PS3_BUTTON_X        3
+#define GAMEPAD_PS3_BUTTON_Y        4
+#define GAMEPAD_PS3_BUTTON_R1       7
+#define GAMEPAD_PS3_BUTTON_R2       5
+#define GAMEPAD_PS3_BUTTON_L1       6
+#define GAMEPAD_PS3_BUTTON_L2       8
+#define GAMEPAD_PS3_BUTTON_SELECT   9
+#define GAMEPAD_PS3_BUTTON_START   10
+
+// TODO: Add PS3 d-pad axis
 
 // Xbox360 USB Controller Buttons
 #define GAMEPAD_XBOX_BUTTON_A       0
@@ -782,10 +785,10 @@ void ImageCrop(Image *image, Rectangle crop);                                   
 void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
 void ImageResizeNN(Image *image,int newWidth,int newHeight);                                       // Resize and image (Nearest-Neighbor scaling algorithm)
 Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
-Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint);       // Create an image from text (custom sprite font)
+Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing, Color tint);     // Create an image from text (custom sprite font)
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
 void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color); // Draw text (custom sprite font) within an image (destination)
+void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, float fontSize, int spacing, Color color); // Draw text (custom sprite font) within an image (destination)
 void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
 void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
@@ -812,7 +815,7 @@ void UnloadSpriteFont(SpriteFont spriteFont);                                   
 
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
 void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
-                int fontSize, int spacing, Color tint);
+                float fontSize, int spacing, Color tint);
 int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing);         // Measure string size for SpriteFont
 
