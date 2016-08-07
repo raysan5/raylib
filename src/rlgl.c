@@ -2559,13 +2559,13 @@ void DestroyLight(Light light)
 {
     if (light != NULL)
     {
-				int light_id = light->id;
+        int lightId = light->id;
 
         // Free dynamic memory allocation
-        free(lights[light_id]);
-        
+        free(lights[lightId]);
+
         // Remove *obj from the pointers array
-        for (int i = light_id; i < lightsCount; i++)
+        for (int i = lightId; i < lightsCount; i++)
         {
             // Resort all the following pointers of the array
             if ((i + 1) < lightsCount)

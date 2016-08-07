@@ -300,29 +300,29 @@ static int LuaIndexSpriteFont(lua_State* L)
 
 static int LuaIndexLight(lua_State* L)
 {
-	Light light = LuaGetArgument_Light(L, 1);
-	const char *key = luaL_checkstring(L, 2);
-	if (!strcmp(key, "id"))
-		lua_pushinteger(L, light->id);
-	else if (!strcmp(key, "enabled"))
-		lua_pushboolean(L, light->enabled);
-	else if (!strcmp(key, "type"))
-		lua_pushinteger(L, light->type);
-	else if (!strcmp(key, "position"))
-		LuaPush_Vector3(L, light->position);
-	else if (!strcmp(key, "target"))
-		LuaPush_Vector3(L, light->target);
-	else if (!strcmp(key, "radius"))
-		lua_pushnumber(L, light->radius);
-	else if (!strcmp(key, "diffuse"))
-		LuaPush_Color(L, light->diffuse);
-	else if (!strcmp(key, "intensity"))
-		lua_pushnumber(L, light->intensity);
-	else if (!strcmp(key, "coneAngle"))
-		lua_pushnumber(L, light->coneAngle);
-	else
-		return 0;
-	return 1;
+    Light light = LuaGetArgument_Light(L, 1);
+    const char *key = luaL_checkstring(L, 2);
+    if (!strcmp(key, "id"))
+        lua_pushinteger(L, light->id);
+    else if (!strcmp(key, "enabled"))
+        lua_pushboolean(L, light->enabled);
+    else if (!strcmp(key, "type"))
+        lua_pushinteger(L, light->type);
+    else if (!strcmp(key, "position"))
+        LuaPush_Vector3(L, light->position);
+    else if (!strcmp(key, "target"))
+        LuaPush_Vector3(L, light->target);
+    else if (!strcmp(key, "radius"))
+        lua_pushnumber(L, light->radius);
+    else if (!strcmp(key, "diffuse"))
+        LuaPush_Color(L, light->diffuse);
+    else if (!strcmp(key, "intensity"))
+        lua_pushnumber(L, light->intensity);
+    else if (!strcmp(key, "coneAngle"))
+        lua_pushnumber(L, light->coneAngle);
+    else
+        return 0;
+    return 1;
 }
 
 static int LuaNewIndexLight(lua_State* L)
@@ -335,17 +335,17 @@ static int LuaNewIndexLight(lua_State* L)
         light->enabled = lua_toboolean(L, 3);
     else if (!strcmp(key, "type"))
         light->type = LuaGetArgument_int(L, 3);
-		else if (!strcmp(key, "position"))
+        else if (!strcmp(key, "position"))
         light->position = LuaGetArgument_Vector3(L, 3);
-		else if (!strcmp(key, "target"))
+        else if (!strcmp(key, "target"))
         light->target = LuaGetArgument_Vector3(L, 3);
-		else if (!strcmp(key, "radius"))
+        else if (!strcmp(key, "radius"))
         light->radius = LuaGetArgument_float(L, 3);
-		else if (!strcmp(key, "diffuse"))
+        else if (!strcmp(key, "diffuse"))
         light->diffuse = LuaGetArgument_Color(L, 3);
-		else if (!strcmp(key, "intensity"))
+        else if (!strcmp(key, "intensity"))
         light->intensity = LuaGetArgument_float(L, 3);
-		else if (!strcmp(key, "coneAngle"))
+        else if (!strcmp(key, "coneAngle"))
         light->coneAngle = LuaGetArgument_float(L, 3);
     return 0;
 }
@@ -367,17 +367,17 @@ static void LuaBuildOpaqueMetatables(void)
     lua_setfield(L, -2, "__index");
     lua_pop(L, 1);
 
-		luaL_newmetatable(L, "SpriteFont");
-		lua_pushcfunction(L, &LuaIndexSpriteFont);
-		lua_setfield(L, -2, "__index");
-		lua_pop(L, 1);
+        luaL_newmetatable(L, "SpriteFont");
+        lua_pushcfunction(L, &LuaIndexSpriteFont);
+        lua_setfield(L, -2, "__index");
+        lua_pop(L, 1);
 
-		luaL_newmetatable(L, "Light");
-		lua_pushcfunction(L, &LuaIndexLight);
-		lua_setfield(L, -2, "__index");
-		lua_pushcfunction(L, &LuaNewIndexLight);
-		lua_setfield(L, -2, "__newindex");
-		lua_pop(L, 1);
+        luaL_newmetatable(L, "Light");
+        lua_pushcfunction(L, &LuaIndexLight);
+        lua_setfield(L, -2, "__index");
+        lua_pushcfunction(L, &LuaNewIndexLight);
+        lua_setfield(L, -2, "__newindex");
+        lua_pop(L, 1);
 }
 
 //----------------------------------------------------------------------------------
@@ -1121,14 +1121,14 @@ int lua_IsFileDropped(lua_State* L)
 
 int lua_GetDroppedFiles(lua_State* L)
 {
-	int count = 0;
+    int count = 0;
   char ** result = GetDroppedFiles(&count);
-	lua_createtable(L, count, 0);
-	for (int i = 0; i < count; i++)
-	{
-		lua_pushstring(L, result[i]);
-		lua_rawseti(L, -2, i + 1);
-	}
+    lua_createtable(L, count, 0);
+    for (int i = 0; i < count; i++)
+    {
+        lua_pushstring(L, result[i]);
+        lua_rawseti(L, -2, i + 1);
+    }
   return 1;
 }
 
@@ -2401,9 +2401,9 @@ int lua_DrawGizmo(lua_State* L)
 
 int lua_DrawLight(lua_State* L)
 {
-	Light arg1 = LuaGetArgument_Light(L, 1);
-	DrawLight(arg1);
-	return 0;
+    Light arg1 = LuaGetArgument_Light(L, 1);
+    DrawLight(arg1);
+    return 0;
 }
 
 int lua_Draw3DLine(lua_State* L)
@@ -3769,7 +3769,7 @@ static luaL_Reg raylib_functions[] = {
     REG(DrawGrid)
     REG(DrawGizmo)
 
-		REG(DrawLight)
+        REG(DrawLight)
     
     REG(LoadModel)
     REG(LoadModelEx)

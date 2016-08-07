@@ -35,11 +35,11 @@ int main()
     // ExecuteLuaFile("core_input_gamepad.lua");                // OK!
     // ExecuteLuaFile("core_random_values.lua");                // OK!
     // ExecuteLuaFile("core_color_select.lua");                 // OK!
-    // ExecuteLuaFile("core_drop_files.lua");                   // ERROR: GetDroppedFiles()
+    // ExecuteLuaFile("core_drop_files.lua");                   // OK!
     // ExecuteLuaFile("core_storage_values.lua");               // OK!
     // ExecuteLuaFile("core_gestures_detection.lua");           // OK!
     // ExecuteLuaFile("core_3d_mode.lua");                      // OK!
-    // ExecuteLuaFile("core_3d_picking.lua");                   // ISSUE: CheckCollisionRayBox() returns false despite touching box
+    // ExecuteLuaFile("core_3d_picking.lua");                   // OK!
     // ExecuteLuaFile("core_3d_camera_free.lua");               // OK!
     // ExecuteLuaFile("core_3d_camera_first_person.lua");       // OK!
     // ExecuteLuaFile("core_2d_camera.lua");                    // OK!
@@ -54,8 +54,8 @@ int main()
     // ExecuteLuaFile("textures_rectangle.lua");                // OK!
     // ExecuteLuaFile("textures_srcrec_dstrec.lua");            // OK!
     // ExecuteLuaFile("textures_to_image.lua");                 // OK!
-    // ExecuteLuaFile("textures_raw_data.lua");                 // ERROR: bad argument #2 to 'LoadImageEx' (number expected, got no value)
-    // ExecuteLuaFile("textures_formats_loading.lua");          // ISSUE: texture.id not exposed to be checked (not really an issue...)
+    // ExecuteLuaFile("textures_raw_data.lua");                 // ERROR: LoadImageEx()
+    // ExecuteLuaFile("textures_formats_loading.lua");          // OK!
     // ExecuteLuaFile("textures_particles_trail_blending.lua"); // OK!
     // ExecuteLuaFile("textures_image_processing.lua");         // ERROR: GetImageData() --> UpdateTexture()
     // ExecuteLuaFile("textures_image_drawing.lua");            // OK!
@@ -73,13 +73,13 @@ int main()
     // ExecuteLuaFile("models_cubicmap.lua");                   // OK!
     // ExecuteLuaFile("shaders_model_shader.lua");              // OK!
     // ExecuteLuaFile("shaders_shapes_textures.lua");           // OK!
-    // ExecuteLuaFile("shaders_custom_uniform.lua");            // ISSUE: SetShaderValue()
+    // ExecuteLuaFile("shaders_custom_uniform.lua");            // OK!
     // ExecuteLuaFile("shaders_postprocessing.lua");            // OK!
-    // ExecuteLuaFile("shaders_standard_lighting.lua");         // ERROR: CreateLight() returns an opaque pointer (fields can not be accessed)
+    // ExecuteLuaFile("shaders_standard_lighting.lua");         // OK!
     // ExecuteLuaFile("audio_sound_loading.lua");               // OK!
     // ExecuteLuaFile("audio_music_stream.lua");                // OK!
     // ExecuteLuaFile("audio_module_playing.lua");              // OK!
-    ExecuteLuaFile("audio_raw_stream.lua");                  // ERROR: UpdateAudioStream()
+    // ExecuteLuaFile("audio_raw_stream.lua");                  // ERROR: UpdateAudioStream()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------

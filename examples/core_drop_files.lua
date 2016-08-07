@@ -19,7 +19,7 @@ local screenHeight = 450
 InitWindow(screenWidth, screenHeight, "raylib [core] example - drop files")
 
 local count = 0
---char **droppedFiles     -- ???
+local droppedFiles = {}
 
 SetTargetFPS(60)
 -------------------------------------------------------------------------------------------
@@ -29,9 +29,9 @@ while not WindowShouldClose() do    -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
     if (IsFileDropped()) then 
-			droppedFiles = GetDroppedFiles() 
-			count = #droppedFiles
-		end
+        droppedFiles = GetDroppedFiles() 
+        count = #droppedFiles
+    end
     ---------------------------------------------------------------------------------------
 
     -- Draw
