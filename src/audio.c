@@ -609,8 +609,8 @@ void UpdateMusicStream(Music music)
                     int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, pcm, numSamples);
 
                     // TODO: Review stereo channels Ogg, not enough samples served!
-                    UpdateAudioStream(music->stream, pcm, numSamples*music->stream.channels);
-                    music->samplesLeft -= (numSamples*music->stream.channels);
+                    UpdateAudioStream(music->stream, pcm, numSamplesOgg*music->stream.channels);
+                    music->samplesLeft -= (numSamplesOgg*music->stream.channels);
                     
                 } break;
                 case MUSIC_MODULE_XM: 
