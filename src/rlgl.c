@@ -2559,11 +2559,13 @@ void DestroyLight(Light light)
 {
     if (light != NULL)
     {
+				int light_id = light->id;
+
         // Free dynamic memory allocation
-        free(lights[light->id]);
+        free(lights[light_id]);
         
         // Remove *obj from the pointers array
-        for (int i = light->id; i < lightsCount; i++)
+        for (int i = light_id; i < lightsCount; i++)
         {
             // Resort all the following pointers of the array
             if ((i + 1) < lightsCount)
@@ -2571,7 +2573,6 @@ void DestroyLight(Light light)
                 lights[i] = lights[i + 1];
                 lights[i]->id = lights[i + 1]->id;
             }
-            else free(lights[i]);
         }
         
         // Decrease enabled physic objects count

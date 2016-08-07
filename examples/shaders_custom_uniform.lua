@@ -60,11 +60,11 @@ while not WindowShouldClose() do       -- Detect window close button or ESC key
     ---------------------------------------------------------------------------------------
     local mousePosition = GetMousePosition()
 
-    swirlCenter[0] = mousePosition.x
-    swirlCenter[1] = screenHeight - mousePosition.y
+    swirlCenter[1] = mousePosition.x
+    swirlCenter[2] = screenHeight - mousePosition.y
 
     -- Send new value to the shader to be used on drawing
-    SetShaderValue(shader, swirlCenterLoc, swirlCenter, 2)
+    SetShaderValue(shader, swirlCenterLoc, swirlCenter)
     
     camera = UpdateCamera(camera)      -- Update internal camera and our camera
     ---------------------------------------------------------------------------------------

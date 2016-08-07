@@ -28,7 +28,10 @@ SetTargetFPS(60)
 while not WindowShouldClose() do    -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    if (IsFileDropped()) then droppedFiles = GetDroppedFiles(count) end
+    if (IsFileDropped()) then 
+			droppedFiles = GetDroppedFiles() 
+			count = #droppedFiles
+		end
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -41,11 +44,11 @@ while not WindowShouldClose() do    -- Detect window close button or ESC key
         else
             DrawText("Dropped files:", 100, 40, 20, DARKGRAY)
             
-            for i = 0, count do
+            for i = 0, count-1 do
                 if (i%2 == 0) then DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.5))
                 else DrawRectangle(0, 85 + 40*i, screenWidth, 40, Fade(LIGHTGRAY, 0.3)) end
                 
-                DrawText(droppedFiles[i], 120, 100 + 40*i, 10, GRAY)
+                DrawText(droppedFiles[i+1], 120, 100 + 40*i, 10, GRAY)
             end
             
             DrawText("Drop new files...", 100, 110 + 40*count, 20, DARKGRAY)
