@@ -859,7 +859,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int firstChar, int
 
     unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
     unsigned char *dataBitmap = (unsigned char *)malloc(FONT_TEXTURE_WIDTH*FONT_TEXTURE_HEIGHT*sizeof(unsigned char));   // One channel bitmap returned!
-    stbtt_bakedchar charData[numChars];
+    stbtt_bakedchar *charData = (stbtt_bakedchar *)malloc(sizeof(stbtt_bakedchar)*numChars);
 
     SpriteFont font = { 0 };
     
@@ -922,6 +922,8 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int firstChar, int
         font.charOffsets[i] = (Vector2){ charData[i].xoff, charData[i].yoff };
         font.charAdvanceX[i] = (int)charData[i].xadvance;
     }
+    
+    free(charData);
 
     return font;
 }
