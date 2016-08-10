@@ -13,9 +13,9 @@
 *
 *   NOTE: Memory footprint of this library is aproximately 128 bytes
 *
-*   Initial design by Marc Palau
-*   Redesigned by Albert Martos and Ian Eito
-*   Reviewed by Ramon Santamaria (@raysan5)
+*   Initial design by Marc Palau (2014)
+*   Redesigned by Albert Martos and Ian Eito (2015)
+*   Reviewed by Ramon Santamaria (2015-2016)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
