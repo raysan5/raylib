@@ -48,6 +48,9 @@
 #define GESTURES_IMPLEMENTATION
 #include "gestures.h"       // Gestures detection functionality
 
+#define CAMERA_IMPLEMENTATION
+#include "camera.h"         // Camera system functionality
+
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand(), atexit()
 #include <stdint.h>         // Required for typedef unsigned long long int uint64_t, used by hi-res timer

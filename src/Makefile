@@ -203,10 +203,6 @@ external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-# compile camera module
-camera.o : camera.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
-
 # It installs generated and needed files to compile projects using raylib.
 # The installation works manually.
 # TODO: add other platforms.
