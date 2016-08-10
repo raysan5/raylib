@@ -66,7 +66,7 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 //----------------------------------------------------------------------------------
 
 // Draw a line in 3D world space
-void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
+void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -76,7 +76,7 @@ void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
 }
 
 // Draw a circle in 3D world space
-void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
+void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
 {
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
@@ -578,19 +578,19 @@ void DrawLight(Light light)
         case LIGHT_POINT:
         {
             DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawCircle3D(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
         } break;
         case LIGHT_DIRECTIONAL:
         {                
-            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
             DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
             DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
         } break;
         case LIGHT_SPOT:
         {                
-            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
             DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : BLACK));
             DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
         } break;

@@ -2239,6 +2239,29 @@ int lua_DrawFPS(lua_State* L)
 // NOTE: FormatText() can be replaced by Lua function: string.format()
 // NOTE: SubText() can be replaced by Lua function: string.sub()
 
+//------------------------------------------------------------------------------------
+// raylib [models] module functions - Basic 3d Shapes Drawing Functions
+//------------------------------------------------------------------------------------
+int lua_DrawLine3D(lua_State* L)
+{
+    Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
+    Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
+    Color arg3 = LuaGetArgument_Color(L, 3);
+    DrawLine3D(arg1, arg2, arg3);
+    return 0;
+}
+
+int lua_DrawCircle3D(lua_State* L)
+{
+    Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
+    float arg2 = LuaGetArgument_float(L, 2);
+    float arg3 = LuaGetArgument_float(L, 3);
+    Vector3 arg4 = LuaGetArgument_Vector3(L, 4);
+    Color arg5 = LuaGetArgument_Color(L, 5);
+    DrawCircle3D(arg1, arg2, arg3, arg4, arg5);
+    return 0;
+}
+
 int lua_DrawCube(lua_State* L)
 {
     Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
@@ -2373,26 +2396,6 @@ int lua_DrawLight(lua_State* L)
 {
     Light arg1 = LuaGetArgument_Light(L, 1);
     DrawLight(arg1);
-    return 0;
-}
-
-int lua_Draw3DLine(lua_State* L)
-{
-    Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
-    Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
-    Color arg3 = LuaGetArgument_Color(L, 3);
-    Draw3DLine(arg1, arg2, arg3);
-    return 0;
-}
-
-int lua_Draw3DCircle(lua_State* L)
-{
-    Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
-    float arg2 = LuaGetArgument_float(L, 2);
-    float arg3 = LuaGetArgument_float(L, 3);
-    Vector3 arg4 = LuaGetArgument_Vector3(L, 4);
-    Color arg5 = LuaGetArgument_Color(L, 5);
-    Draw3DCircle(arg1, arg2, arg3, arg4, arg5);
     return 0;
 }
 
@@ -3725,6 +3728,8 @@ static luaL_Reg raylib_functions[] = {
     REG(MeasureTextEx)
     REG(DrawFPS)
     
+    REG(DrawLine3D)
+    REG(DrawCircle3D)
     REG(DrawCube)
     REG(DrawCubeV)
     REG(DrawCubeWires)
@@ -3738,8 +3743,7 @@ static luaL_Reg raylib_functions[] = {
     REG(DrawRay)
     REG(DrawGrid)
     REG(DrawGizmo)
-
-        REG(DrawLight)
+    REG(DrawLight)
     
     REG(LoadModel)
     REG(LoadModelEx)
@@ -3747,10 +3751,10 @@ static luaL_Reg raylib_functions[] = {
     REG(LoadHeightmap)
     REG(LoadCubicmap)
     REG(UnloadModel)
-        REG(LoadMaterial)
-        REG(LoadDefaultMaterial)
-        REG(LoadStandardMaterial)
-        REG(UnloadMaterial)
+    REG(LoadMaterial)
+    REG(LoadDefaultMaterial)
+    REG(LoadStandardMaterial)
+    REG(UnloadMaterial)
     //REG(GenMesh*)     // Not ready yet...
     
     REG(DrawModel)
