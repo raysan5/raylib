@@ -203,7 +203,7 @@ int main()
 
     catTexture = LoadTexture("resources/catsham.png");   // Load model texture
     cat = LoadModel("resources/cat.obj");                // Load OBJ model
-    cat.material.texDiffuse = texture;                   // Set cat model diffuse texture
+    cat.material.texDiffuse = catTexture;                   // Set cat model diffuse texture
     
     fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
     fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
@@ -464,11 +464,11 @@ void UpdateDrawOneFrame(void)
 
                 if (selectedModule == AUDIO)
                 {
-                    if (IsKeyPressed(KEY_SPACE) && !MusicIsPlaying()) PlayMusicStream("resources/audio/guitar_noodling.ogg");         // Play music stream
+                    if (IsKeyPressed(KEY_SPACE) && !MusicIsPlaying()) PlayMusicStream(1,"resources/audio/guitar_noodling.ogg");         // Play music stream
 
                     if (IsKeyPressed('S'))
                     {
-                        StopMusicStream();
+                        StopMusicStream(1);
                         timePlayed = 0.0f;
 
                         for (int i = 0; i < MAX_BALLS; i++)
@@ -484,7 +484,7 @@ void UpdateDrawOneFrame(void)
 
                     if (MusicIsPlaying())
                     {
-                        timePlayed = GetMusicTimePlayed() / GetMusicTimeLength() * 100 * 4;
+                        timePlayed = GetMusicTimePlayed(1) / GetMusicTimeLength(11) * 100 * 4;
 
                         if ((framesCounter%10) == 0)
                         {
