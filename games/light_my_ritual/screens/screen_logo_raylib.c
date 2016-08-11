@@ -75,9 +75,6 @@ void rlInitLogoScreen(void)
     
     state = 0;
     alpha = 1.0f;
-    
-    PlayMusicStream("resources/audio/ambient.ogg");
-    SetMusicVolume(1.0f);
 }
 
 // Logo Screen Update logic
@@ -204,7 +201,7 @@ void rlDrawLogoScreen(void)
 // Logo Screen Unload logic
 void rlUnloadLogoScreen(void)
 {
-    // TODO: Unload LOGO screen variables here!
+    // Unload LOGO screen variables here!
 }
 
 // Logo Screen should finish?

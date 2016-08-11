@@ -35,6 +35,8 @@ bool onTransition = false;
 bool transFadeOut = false;
 int transFromScreen = -1;
 int transToScreen = -1;
+
+static Music music;
     
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
@@ -66,11 +68,13 @@ int main(void)
     
     UnloadImage(image);                         // Unload image from CPU memory (RAM)
     
-    //PlayMusicStream("resources/audio/come_play_with_me.ogg");
-    
     font = LoadSpriteFont("resources/font_arcadian.png");
 	//doors = LoadTexture("resources/textures/doors.png");
     //sndDoor = LoadSound("resources/audio/door.ogg");
+    
+    music = LoadMusicStream("resources/audio/ambient.ogg");
+    PlayMusicStream(music);
+    SetMusicVolume(music, 1.0f);
 
     // Setup and Init first screen
     currentScreen = LOGO_RL;
@@ -104,6 +108,8 @@ int main(void)
     // Unload all global loaded data (i.e. fonts) here!
     UnloadSpriteFont(font);
     //UnloadSound(sndDoor);
+    
+    UnloadMusicStream(music);
     
     free(lightsMap);
     
@@ -218,13 +224,17 @@ void UpdateDrawFrame(void)
                 rlUpdateLogoScreen();
                 
                 if (rlFinishLogoScreen()) TransitionToScreen(TITLE);
-                
+
             } break;
             case TITLE: 
             {
                 UpdateTitleScreen();
                 
-                if (FinishTitleScreen() == 1) TransitionToScreen(GAMEPLAY);
+                if (FinishTitleScreen() == 1)
+                {
+                    StopMusicStream(music);
+                    TransitionToScreen(GAMEPLAY);
+                }
 
             } break;
             case GAMEPLAY:
@@ -244,7 +254,7 @@ void UpdateDrawFrame(void)
         UpdateTransition();
     }
     
-    UpdateMusicStream();
+    if (currentScreen != GAMEPLAY) UpdateMusicStream(music);
     //----------------------------------------------------------------------------------
     
     // Draw
