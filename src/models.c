@@ -920,8 +920,8 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     Color *cubicmapPixels = GetImageData(cubicmap);
     
-    int mapWidth = cubicmap.width*(int)cubeSize.x;
-    int mapHeight = cubicmap.height*(int)cubeSize.z;
+    int mapWidth = cubicmap.width;
+    int mapHeight = cubicmap.height;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
@@ -961,19 +961,19 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     RectangleF topTexUV = { 0.0f, 0.5f, 0.5f, 0.5f };
     RectangleF bottomTexUV = { 0.5f, 0.5f, 0.5f, 0.5f };
 
-    for (int z = 0; z < mapHeight; z += cubeSize.z)
+    for (int z = 0; z < mapHeight; ++z)
     {
-        for (int x = 0; x < mapWidth; x += cubeSize.x)
+        for (int x = 0; x < mapWidth; ++x)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
-            Vector3 v1 = { x - w/2, h2, z - h/2 };
-            Vector3 v2 = { x - w/2, h2, z + h/2 };
-            Vector3 v3 = { x + w/2, h2, z + h/2 };
-            Vector3 v4 = { x + w/2, h2, z - h/2 };
-            Vector3 v5 = { x + w/2, 0, z - h/2 };
-            Vector3 v6 = { x - w/2, 0, z - h/2 };
-            Vector3 v7 = { x - w/2, 0, z + h/2 };
-            Vector3 v8 = { x + w/2, 0, z + h/2 };
+            Vector3 v1 = { w * (x - .5f), h2, h * (z - .5f) };
+            Vector3 v2 = { w * (x - .5f), h2, h * (z + .5f) };
+            Vector3 v3 = { w * (x + .5f), h2, h * (z + .5f) };
+            Vector3 v4 = { w * (x + .5f), h2, h * (z - .5f) };
+            Vector3 v5 = { w * (x + .5f), 0, h * (z - .5f) };
+            Vector3 v6 = { w * (x - .5f), 0, h * (z - .5f) };
+            Vector3 v7 = { w * (x - .5f), 0, h * (z + .5f) };
+            Vector3 v8 = { w * (x + .5f), 0, h * (z + .5f) };
 
             // We check pixel color to be WHITE, we will full cubes
             if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
