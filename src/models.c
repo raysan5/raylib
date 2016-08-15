@@ -966,14 +966,14 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
         for (int x = 0; x < mapWidth; ++x)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
-            Vector3 v1 = { w * (x - .5f), h2, h * (z - .5f) };
-            Vector3 v2 = { w * (x - .5f), h2, h * (z + .5f) };
-            Vector3 v3 = { w * (x + .5f), h2, h * (z + .5f) };
-            Vector3 v4 = { w * (x + .5f), h2, h * (z - .5f) };
-            Vector3 v5 = { w * (x + .5f), 0, h * (z - .5f) };
-            Vector3 v6 = { w * (x - .5f), 0, h * (z - .5f) };
-            Vector3 v7 = { w * (x - .5f), 0, h * (z + .5f) };
-            Vector3 v8 = { w * (x + .5f), 0, h * (z + .5f) };
+            Vector3 v1 = { w*(x - 0.5f), h2, h*(z - 0.5f) };
+            Vector3 v2 = { w*(x - 0.5f), h2, h*(z + 0.5f) };
+            Vector3 v3 = { w*(x + 0.5f), h2, h*(z + 0.5f) };
+            Vector3 v4 = { w*(x + 0.5f), h2, h*(z - 0.5f) };
+            Vector3 v5 = { w*(x + 0.5f), 0, h*(z - 0.5f) };
+            Vector3 v6 = { w*(x - 0.5f), 0, h*(z - 0.5f) };
+            Vector3 v7 = { w*(x - 0.5f), 0, h*(z + 0.5f) };
+            Vector3 v8 = { w*(x + 0.5f), 0, h*(z + 0.5f) };
 
             // We check pixel color to be WHITE, we will full cubes
             if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
