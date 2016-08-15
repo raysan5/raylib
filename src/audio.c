@@ -233,18 +233,30 @@ Sound LoadSoundFromWave(Wave wave)
     if (wave.data != NULL)
     {
         ALenum format = 0;
-        // The OpenAL format is worked out by looking at the number of channels and the bits per sample
+        
+        // The OpenAL format is worked out by looking at the number of channels and the sample size (bits per sample)
         if (wave.channels == 1)
         {
-            if (wave.bitsPerSample == 8 ) format = AL_FORMAT_MONO8;
-            else if (wave.bitsPerSample == 16) format = AL_FORMAT_MONO16;
+            switch (wave.sampleSize)
+            {
+                case 8: format = AL_FORMAT_MONO8; break;
+                case 16: format = AL_FORMAT_MONO16; break;
+                case 32: format = AL_FORMAT_MONO_FLOAT32; break;
+                default: TraceLog(WARNING, "Wave sample size not supported: %i", wave.sampleSize); break;
+            }
         }
         else if (wave.channels == 2)
         {
-            if (wave.bitsPerSample == 8 ) format = AL_FORMAT_STEREO8;
-            else if (wave.bitsPerSample == 16) format = AL_FORMAT_STEREO16;
+            switch (wave.sampleSize)
+            {
+                case 8: format = AL_FORMAT_STEREO8; break;
+                case 16: format = AL_FORMAT_STEREO16; break;
+                case 32: format = AL_FORMAT_STEREO_FLOAT32; break;
+                default: TraceLog(WARNING, "Wave sample size not supported: %i", wave.sampleSize); break;
+            }
         }
-
+        else TraceLog(WARNING, "Wave number of channels not supported: %i", wave.channels);
+        
         // Create an audio source
         ALuint source;
         alGenSources(1, &source);            // Generate pointer to audio source
@@ -259,14 +271,16 @@ Sound LoadSoundFromWave(Wave wave)
         //----------------------------------------
         ALuint buffer;
         alGenBuffers(1, &buffer);            // Generate pointer to buffer
+        
+        unsigned int dataSize = wave.sampleCount*wave.sampleSize/8;    // Size in bytes
 
         // Upload sound data to buffer
-        alBufferData(buffer, format, wave.data, wave.dataSize, wave.sampleRate);
+        alBufferData(buffer, format, wave.data, dataSize, wave.sampleRate);
 
         // Attach sound buffer to source
         alSourcei(source, AL_BUFFER, buffer);
 
-        TraceLog(INFO, "[SND ID %i][BUFR ID %i] Sound data loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", source, buffer, wave.sampleRate, wave.bitsPerSample, wave.channels);
+        TraceLog(INFO, "[SND ID %i][BUFR ID %i] Sound data loaded successfully (SampleRate: %i, SampleSize: %i, Channels: %i)", source, buffer, wave.sampleRate, wave.sampleSize, wave.channels);
 
         sound.source = source;
         sound.buffer = buffer;
@@ -341,8 +355,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
                         fread(&reserved, 1, 1, rresFile);               // <reserved>
 
                         wave.sampleRate = sampleRate;
-                        wave.dataSize = infoHeader.srcSize;
-                        wave.bitsPerSample = bps;
+                        wave.sampleSize = bps;
                         wave.channels = (short)channels;
 
                         unsigned char *data = malloc(infoHeader.size);
@@ -948,18 +961,18 @@ static Wave LoadWAV(const char *fileName)
                 else
                 {
                     // Allocate memory for data
-                    wave.data = (unsigned char *)malloc(sizeof(unsigned char) * waveData.subChunkSize);
+                    wave.data = (unsigned char *)malloc(sizeof(unsigned char)*waveData.subChunkSize);
 
                     // Read in the sound data into the soundData variable
                     fread(wave.data, waveData.subChunkSize, 1, wavFile);
 
                     // Now we set the variables that we need later
-                    wave.dataSize = waveData.subChunkSize;
+                    wave.sampleCount = waveData.subChunkSize;
                     wave.sampleRate = waveFormat.sampleRate;
+                    wave.sampleSize = waveFormat.bitsPerSample;
                     wave.channels = waveFormat.numChannels;
-                    wave.bitsPerSample = waveFormat.bitsPerSample;
 
-                    TraceLog(INFO, "[%s] WAV file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
+                    TraceLog(INFO, "[%s] WAV file loaded successfully (SampleRate: %i, SampleSize: %i, Channels: %i)", fileName, wave.sampleRate, wave.sampleSize, wave.channels);
                 }
             }
         }
@@ -988,35 +1001,24 @@ static Wave LoadOGG(char *fileName)
         stb_vorbis_info info = stb_vorbis_get_info(oggFile);
 
         wave.sampleRate = info.sample_rate;
-        wave.bitsPerSample = 16;
+        wave.sampleSize = 16;                   // 16 bit per sample (short)
         wave.channels = info.channels;
 
-        TraceLog(DEBUG, "[%s] Ogg sample rate: %i", fileName, info.sample_rate);
-        TraceLog(DEBUG, "[%s] Ogg channels: %i", fileName, info.channels);
-
         int totalSamplesLength = (stb_vorbis_stream_length_in_samples(oggFile)*info.channels);
-
-        wave.dataSize = totalSamplesLength*sizeof(short);   // Size must be in bytes
-
-        TraceLog(DEBUG, "[%s] Samples length: %i", fileName, totalSamplesLength);
-
         float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
-
-        TraceLog(DEBUG, "[%s] Total seconds: %f", fileName, totalSeconds);
 
         if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio lenght is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
 
         int totalSamples = totalSeconds*info.sample_rate*info.channels;
+        wave.sampleCount = totalSamples;
 
-        TraceLog(DEBUG, "[%s] Total samples calculated: %i", fileName, totalSamples);
+        wave.data = (short *)malloc(totalSamplesLength*sizeof(short));
 
-        wave.data = malloc(sizeof(short)*totalSamplesLength);
-
-        int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, wave.data, totalSamplesLength);
+        int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, totalSamplesLength);
 
         TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, samplesObtained);
 
-        TraceLog(INFO, "[%s] OGG file loaded successfully (SampleRate: %i, BitRate: %i, Channels: %i)", fileName, wave.sampleRate, wave.bitsPerSample, wave.channels);
+        TraceLog(INFO, "[%s] OGG file loaded successfully (SampleRate: %i, SampleSize: %i, Channels: %i)", fileName, wave.sampleRate, wave.sampleSize, wave.channels);
 
         stb_vorbis_close(oggFile);
     }
