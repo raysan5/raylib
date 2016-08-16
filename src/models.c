@@ -81,12 +81,12 @@ void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rot
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
         rlRotatef(rotationAngle, rotation.x, rotation.y, rotation.z);
-        
+
         rlBegin(RL_LINES);
             for (int i = 0; i < 360; i += 10)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
-                
+
                 rlVertex3f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius, 0.0f);
                 rlVertex3f(sin(DEG2RAD*(i + 10)) * radius, cos(DEG2RAD*(i + 10)) * radius, 0.0f);
             }
@@ -583,13 +583,13 @@ void DrawLight(Light light)
             DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
         } break;
         case LIGHT_DIRECTIONAL:
-        {                
+        {
             DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
             DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
             DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
         } break;
         case LIGHT_SPOT:
-        {                
+        {
             DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
             DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : BLACK));
             DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
@@ -602,7 +602,7 @@ void DrawLight(Light light)
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
-    
+
     // TODO: Initialize default data for model in case loading fails, maybe a cube?
 
     if (strcmp(GetExtension(fileName), "obj") == 0) model.mesh = LoadOBJ(fileName);
@@ -612,7 +612,7 @@ Model LoadModel(const char *fileName)
     else
     {
         rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-        
+
         model.transform = MatrixIdentity();
         model.material = LoadDefaultMaterial();
     }
@@ -626,12 +626,12 @@ Model LoadModelEx(Mesh data, bool dynamic)
     Model model = { 0 };
 
     model.mesh = data;
-    
+
     rlglLoadMesh(&model.mesh, dynamic);  // Upload vertex data to GPU
-    
+
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
-    
+
     return model;
 }
 
@@ -723,11 +723,11 @@ Model LoadModelFromRES(const char *rresName, int resId)
 Model LoadHeightmap(Image heightmap, Vector3 size)
 {
     Model model = { 0 };
-    
+
     model.mesh = GenMeshHeightmap(heightmap, size);
-    
+
     rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-    
+
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
 
@@ -738,11 +738,11 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
 Model LoadCubicmap(Image cubicmap)
 {
     Model model = { 0 };
-    
+
     model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
-    
+
     rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-    
+
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
 
@@ -755,7 +755,7 @@ void UnloadModel(Model model)
     rlglUnloadMesh(&model.mesh);
 
     UnloadMaterial(model.material);
-    
+
     TraceLog(INFO, "Unloaded model data from RAM and VRAM");
 }
 
@@ -763,10 +763,10 @@ void UnloadModel(Model model)
 Material LoadMaterial(const char *fileName)
 {
     Material material = { 0 };
-    
+
     if (strcmp(GetExtension(fileName), "mtl") == 0) material = LoadMTL(fileName);
     else TraceLog(WARNING, "[%s] Material extension not recognized, it can't be loaded", fileName);
-    
+
     return material;
 }
 
@@ -774,7 +774,7 @@ Material LoadMaterial(const char *fileName)
 Material LoadDefaultMaterial(void)
 {
     Material material = { 0 };
-    
+
     material.shader = GetDefaultShader();
     material.texDiffuse = GetDefaultTexture();      // White texture (1x1 pixel)
     //material.texNormal;           // NOTE: By default, not set
@@ -783,9 +783,9 @@ Material LoadDefaultMaterial(void)
     material.colDiffuse = WHITE;    // Diffuse color
     material.colAmbient = WHITE;    // Ambient color
     material.colSpecular = WHITE;   // Specular color
-    
+
     material.glossiness = 100.0f;   // Glossiness level
-    
+
     return material;
 }
 
@@ -794,7 +794,7 @@ Material LoadDefaultMaterial(void)
 Material LoadStandardMaterial(void)
 {
     Material material = LoadDefaultMaterial();
-    
+
     material.shader = GetStandardShader();
 
     return material;
@@ -812,12 +812,12 @@ void UnloadMaterial(Material material)
 static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
-    
+
     Mesh mesh = { 0 };
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
-    
+
     Color *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
@@ -908,7 +908,7 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
             trisCounter += 2;
         }
     }
-    
+
     free(pixels);
 
     return mesh;
@@ -919,7 +919,7 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Mesh mesh = { 0 };
 
     Color *cubicmapPixels = GetImageData(cubicmap);
-    
+
     int mapWidth = cubicmap.width;
     int mapHeight = cubicmap.height;
 
@@ -1262,9 +1262,9 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     free(mapVertices);
     free(mapNormals);
     free(mapTexcoords);
-    
+
     free(cubicmapPixels);   // Free image pixel data
-    
+
     return mesh;
 }
 
@@ -1273,7 +1273,7 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
-    
+
     DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
@@ -1285,13 +1285,13 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
     Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
     Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
-    
+
     // Combine model transformation matrix (model.transform) with matrix generated by function parameters (matTransform)
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
-    
+
     model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
     model.material.colDiffuse = tint;       // TODO: Multiply tint color by diffuse color?
-    
+
     rlglDrawMesh(model.mesh, model.material, model.transform);
 }
 
@@ -1299,9 +1299,9 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 void DrawModelWires(Model model, Vector3 position, float scale, Color tint)
 {
     rlEnableWireMode();
-    
+
     DrawModel(model, position, scale, tint);
-    
+
     rlDisableWireMode();
 }
 
@@ -1309,9 +1309,9 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color tint)
 void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
     rlEnableWireMode();
-    
+
     DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
-    
+
     rlDisableWireMode();
 }
 
@@ -1319,7 +1319,7 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
     Rectangle sourceRec = { 0, 0, texture.width, texture.height };
-    
+
     DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
 }
 
@@ -1334,7 +1334,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
     //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
-    
+
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
 /*
@@ -1384,13 +1384,13 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
-    
+
     size.x = fabsf(box.max.x - box.min.x);
     size.y = fabsf(box.max.y - box.min.y);
     size.z = fabsf(box.max.z - box.min.z);
-    
+
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
-    
+
     DrawCubeWires(center, size.x, size.y, size.z, color);
 }
 
@@ -1451,14 +1451,14 @@ bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radius
 bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius)
 {
     bool collision = false;
-    
+
     Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
     float distance = VectorLength(raySpherePos);
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
-    
+
     if (d >= 0.0f) collision = true;
-    
+
     return collision;
 }
 
@@ -1466,29 +1466,29 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
 bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint)
 {
     bool collision = false;
-    
+
     Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
     float distance = VectorLength(raySpherePos);
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
-    
+
     if (d >= 0.0f) collision = true;
-    
+
     // Calculate collision point
     Vector3 offset = ray.direction;
     float collisionDistance = 0;
-    
+
     // Check if ray origin is inside the sphere to calculate the correct collision point
     if (distance < sphereRadius) collisionDistance = vector + sqrt(d);
     else collisionDistance = vector - sqrt(d);
-    
+
     VectorScale(&offset, collisionDistance);
     Vector3 cPoint = VectorAdd(ray.position, offset);
-    
+
     collisionPoint->x = cPoint.x;
     collisionPoint->y = cPoint.y;
     collisionPoint->z = cPoint.z;
-    
+
     return collision;
 }
 
@@ -1496,7 +1496,7 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 {
     bool collision = false;
-    
+
     float t[8];
     t[0] = (box.min.x - ray.position.x)/ray.direction.x;
     t[1] = (box.max.x - ray.position.x)/ray.direction.x;
@@ -1506,9 +1506,9 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     t[5] = (box.max.z - ray.position.z)/ray.direction.z;
     t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
-    
+
     collision = !(t[7] < 0 || t[6] > t[7]);
-    
+
     return collision;
 }
 
@@ -1524,19 +1524,19 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
     {
         minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
         maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
-    
+
         for (int i = 1; i < mesh.vertexCount; i++)
         {
             minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
             maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
         }
     }
-    
+
     // Create the bounding box
     BoundingBox box;
     box.min = minVertex;
     box.max = maxVertex;
-    
+
     return box;
 }
 
@@ -1546,9 +1546,9 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
 Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius)
 {
     #define CUBIC_MAP_HALF_BLOCK_SIZE   0.5
-    
+
     Color *cubicmapPixels = GetImageData(cubicmap);
-    
+
     // Detect the cell where the player is located
     Vector3 impactDirection = { 0.0f, 0.0f, 0.0f };
 
@@ -1784,7 +1784,7 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
         playerPosition->y = (1.5f - radius) - 0.01f;
         impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
     }
-    
+
     free(cubicmapPixels);
 
     return impactDirection;
@@ -2049,9 +2049,9 @@ static Mesh LoadOBJ(const char *fileName)
 static Material LoadMTL(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     128
-    
+
     Material material = { 0 };  // LoadDefaultMaterial();
-    
+
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };
     char *mapFileName = NULL;
@@ -2069,14 +2069,14 @@ static Material LoadMTL(const char *fileName)
     while (!feof(mtlFile))
     {
         fgets(buffer, MAX_BUFFER_SIZE, mtlFile);
-        
+
         switch (buffer[0])
         {
             case 'n':   // newmtl string    Material name. Begins a new material description.
             {
                 // TODO: Support multiple materials in a single .mtl
                 sscanf(buffer, "newmtl %s", mapFileName);
-                
+
                 TraceLog(INFO, "[%s] Loading material...", mapFileName);
             }
             case 'i':   // illum int        Illumination model
@@ -2123,7 +2123,7 @@ static Material LoadMTL(const char *fileName)
                 {
                     int shininess = 0;
                     sscanf(buffer, "Ns %i", &shininess);
-                    
+
                     material.glossiness = (float)shininess;
                 }
                 else if (buffer[1] == 'i')  // Ni int   Refraction index.
@@ -2192,7 +2192,7 @@ static Material LoadMTL(const char *fileName)
                 float ialpha = 0.0f;
                 sscanf(buffer, "Tr %f", &ialpha);
                 material.colDiffuse.a = (unsigned char)((1.0f - ialpha)*255);
-                
+
             } break;
             case 'r':   // refl string      Reflection texture map
             default: break;
@@ -2203,6 +2203,6 @@ static Material LoadMTL(const char *fileName)
 
     // NOTE: At this point we have all material data
     TraceLog(INFO, "[%s] Material loaded successfully", fileName);
-    
+
     return material;
 }

@@ -930,8 +930,8 @@ RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pit
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
-RLAPI AudioStream InitAudioStream(unsigned int sampleRate, 
-                                  unsigned int sampleSize, 
+RLAPI AudioStream InitAudioStream(unsigned int sampleRate,
+                                  unsigned int sampleSize,
                                   unsigned int channels);             // Init audio stream (to stream audio pcm data)
 RLAPI void UpdateAudioStream(AudioStream stream, void *data, int numSamples); // Update audio stream buffers with data
 RLAPI void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
