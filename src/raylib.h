@@ -788,10 +788,10 @@ const char *SubText(const char *text, int position, int length);                
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
-void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
+void DrawCube(Vector3 position, float width, float height, float length, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
-void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires
-void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float lenght, Color color); // Draw cube textured
+void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);        // Draw cube wires
+void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float height, float length, Color color); // Draw cube textured
 void DrawSphere(Vector3 centerPos, float radius, Color color);                                     // Draw sphere
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color);            // Draw sphere with extended parameters
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color);         // Draw sphere wires
