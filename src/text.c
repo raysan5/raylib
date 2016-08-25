@@ -593,6 +593,8 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     }
 
     spriteFont.size = spriteFont.charRecs[0].height;
+    
+    TraceLog(INFO, "Image file loaded correctly as SpriteFont");
 
     return spriteFont;
 }
