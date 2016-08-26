@@ -48,8 +48,10 @@
 #define GESTURES_IMPLEMENTATION
 #include "gestures.h"       // Gestures detection functionality
 
-#define CAMERA_IMPLEMENTATION
-#include "camera.h"         // Camera system functionality
+#if !defined(PLATFORM_ANDROID)
+    #define CAMERA_IMPLEMENTATION
+    #include "camera.h"     // Camera system functionality
+#endif
 
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Declares malloc() and free() for memory management, rand(), atexit()
