@@ -486,6 +486,7 @@ typedef struct Ray {
 typedef struct Sound {
     unsigned int source;    // OpenAL audio source id
     unsigned int buffer;    // OpenAL audio buffer id
+    int format;             // OpenAL audio format specifier
 } Sound;
 
 // Wave type, defines audio wave data
@@ -908,6 +909,7 @@ RLAPI bool IsAudioDeviceReady(void);                                  // Check i
 RLAPI Sound LoadSound(char *fileName);                                // Load sound to memory
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 RLAPI Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
+RLAPI void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
 RLAPI void PauseSound(Sound sound);                                   // Pause a sound

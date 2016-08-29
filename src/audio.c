@@ -284,6 +284,7 @@ Sound LoadSoundFromWave(Wave wave)
 
         sound.source = source;
         sound.buffer = buffer;
+        sound.format = format;
     }
 
     return sound;
@@ -407,6 +408,33 @@ void UnloadSound(Sound sound)
     alDeleteBuffers(1, &sound.buffer);
 
     TraceLog(INFO, "[SND ID %i][BUFR ID %i] Unloaded sound data from RAM", sound.source, sound.buffer);
+}
+
+// Update sound buffer with new data
+// NOTE: data must match sound.format
+void UpdateSound(Sound sound, void *data, int numSamples)
+{
+    ALint sampleRate, sampleSize, channels;
+    alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
+    alGetBufferi(sound.buffer, AL_BITS, &sampleSize);       // It could also be retrieved from sound.format
+    alGetBufferi(sound.buffer, AL_CHANNELS, &channels);     // It could also be retrieved from sound.format
+    
+    TraceLog(DEBUG, "UpdateSound() : AL_FREQUENCY: %i", sampleRate);
+    TraceLog(DEBUG, "UpdateSound() : AL_BITS: %i", sampleSize);
+    TraceLog(DEBUG, "UpdateSound() : AL_CHANNELS: %i", channels);
+
+    unsigned int dataSize = numSamples*sampleSize/8;        // Size of data in bytes
+    
+    alSourceStop(sound.source);                 // Stop sound
+    alSourcei(sound.source, AL_BUFFER, 0);      // Unbind buffer from sound to update
+    //alDeleteBuffers(1, &sound.buffer);          // Delete current buffer data
+    //alGenBuffers(1, &sound.buffer);             // Generate new buffer
+
+    // Upload new data to sound buffer
+    alBufferData(sound.buffer, sound.format, data, dataSize, sampleRate);
+
+    // Attach sound buffer to source again
+    alSourcei(sound.source, AL_BUFFER, sound.buffer);
 }
 
 // Play a sound
