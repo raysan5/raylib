@@ -57,7 +57,9 @@ int main()
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
-    PlayMusicStream(0, "resources/audio/2t2m_spa.xm");         // Play module stream
+    Music xm = LoadMusicStream("resources/audio/mini1111.xm");
+    
+    PlayMusicStream(xm);
 
     float timePlayed = 0.0f;
 
@@ -88,9 +90,9 @@ int main()
         }
 
         // Get timePlayed scaled to bar dimensions
-        timePlayed = (GetMusicTimePlayed(0)/GetMusicTimeLength(0)*(screenWidth - 40))*2;
+        timePlayed = (GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40))*2;
         
-        UpdateMusicStream(0);        // Update music buffer with new stream data
+        UpdateMusicStream(xm);        // Update music buffer with new stream data
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -128,6 +130,8 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);           // Unload shader
     UnloadRenderTexture(target);    // Unload render texture
+    
+    UnloadMusicStream(xm);          // Unload music stream buffers from RAM
     
     CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
 

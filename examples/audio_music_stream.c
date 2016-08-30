@@ -24,7 +24,9 @@ int main()
 
     InitAudioDevice();              // Initialize audio device
 
-    PlayMusicStream(0, "resources/audio/guitar_noodling.ogg");         // Play music stream
+    Music music = LoadMusicStream("resources/audio/guitar_noodling.ogg");
+    
+    PlayMusicStream(music);
 
     int framesCounter = 0;
     float timePlayed = 0.0f;
@@ -52,18 +54,14 @@ int main()
             {
                 volume = 1.0;
                 framesCounter = 0;
-                PlayMusicStream(1, "resources/audio/another_file.ogg");
             }
 
             SetMusicVolume(volume);
         }
 */
-        if (IsWindowMinimized()) PauseMusicStream(0);
-        else ResumeMusicStream(0);
+        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*100*4; // We scale by 4 to fit 400 pixels
 
-        timePlayed = GetMusicTimePlayed(0)/GetMusicTimeLength(0)*100*4; // We scale by 4 to fit 400 pixels
-        
-        UpdateMusicStream(0);        // Update music buffer with new stream data
+        UpdateMusicStream(music);        // Update music buffer with new stream data
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -83,9 +81,11 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
+    UnloadMusicStream(music);   // Unload music stream buffers from RAM
 
-    CloseWindow();          // Close window and OpenGL context
+    CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
+
+    CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

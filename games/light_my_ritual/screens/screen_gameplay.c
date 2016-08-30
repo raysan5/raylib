@@ -64,7 +64,7 @@ typedef struct Enemy {
     Color color;
 } Enemy;
 
-typedef struct Light {
+typedef struct LightSpot {
     Vector2 position;
     int radius;
     int requiredEnergy;
@@ -74,7 +74,7 @@ typedef struct Light {
     int framesCounter;
     int currentFrame;
     Rectangle frameRec;
-} Light;
+} LightSpot;
 
 typedef enum { LEVEL_I, LEVEL_II, LEVEL_III, LEVEL_FINISHED } LightedLevel;
 
@@ -92,9 +92,9 @@ static bool pause;
 
 static Player player;
 
-static Light lightsI[MAX_LIGHTS_I];
-static Light lightsII[MAX_LIGHTS_II];
-static Light lightsIII[MAX_LIGHTS_III];
+static LightSpot lightsI[MAX_LIGHTS_I];
+static LightSpot lightsII[MAX_LIGHTS_II];
+static LightSpot lightsIII[MAX_LIGHTS_III];
 
 static Enemy enemies[MAX_ENEMIES];
 
@@ -132,6 +132,8 @@ static Texture2D circleIon, circleIIon, circleIIIon;
 static Rectangle lightOff, lightOn;
 
 static Sound fxLightOn, fxLightOff;
+
+static Music music;
 
 // Debug variables
 static bool enemiesStopped;
@@ -286,7 +288,8 @@ void InitGameplayScreen(void)
     
     enemiesStopped = false;
     
-    PlayMusicStream("resources/audio/ritual.ogg");
+    music = LoadMusicStream("resources/audio/ritual.ogg");
+    PlayMusicStream(music);
 }
 
 // Gameplay Screen Update logic
@@ -549,10 +552,12 @@ void UpdateGameplayScreen(void)
     {
         alphaRitual += 0.02f;
         
-        SetMusicVolume(1.0f - alphaRitual);  
+        SetMusicVolume(music, 1.0f - alphaRitual);  
         
         if (alphaRitual > 1.0f) finishScreen = 1;
     }
+    
+    UpdateMusicStream(music);
 }
 
 // Gameplay Screen Draw logic
@@ -757,6 +762,8 @@ void UnloadGameplayScreen(void)
     // Unload sounds
     UnloadSound(fxLightOn);
     UnloadSound(fxLightOff);
+    
+    UnloadMusicStream(music);
 }
 
 // Gameplay Screen should finish?

@@ -6,7 +6,7 @@
 *
 *   Developed by: Ramon Santamaria (Ray San)
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   raylib - Copyright (c) 2015 Ramon Santamaria (Ray San - raysan@raysanweb.com)
@@ -23,7 +23,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
-const int screenWidth = 1280;      // Moved to screens.h
+const int screenWidth = 1280;     // Moved to screens.h
 const int screenHeight = 720;     // Moved to screens.h
 
 // Required variables to manage screen transitions (fade-in, fade-out)
@@ -35,6 +35,7 @@ int transToScreen = -1;
 int framesCounter = 0;
 
 //static Sound levelWin;
+Music music;
 
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
@@ -57,10 +58,11 @@ int main(void)
     //SetupFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(screenWidth, screenHeight, windowTitle);
 
-    // TODO: Load global data here (assets that must be available in all screens, i.e. fonts)
+    // Load global data here (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
     
     levelWin = LoadSound("resources/win.wav");
+    music = LoadMusicStream("resources/ambient.ogg");
     
     // Setup and Init first screen
     currentScreen = LOGO;
@@ -85,8 +87,9 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     
-    // TODO: Unload all global loaded data (i.e. fonts) here!
+    // Unload all global loaded data (i.e. fonts) here!
     UnloadSound(levelWin);
+    UnloadMusicStream(music);
     
     CloseAudioDevice();
     
@@ -197,6 +200,8 @@ void UpdateDrawFrame(void)
             InitLevel08Screen();
         }
         
+        UpdateMusicStream(music);
+        
         switch(currentScreen) 
         {
             case LOGO: 
@@ -209,8 +214,8 @@ void UpdateDrawFrame(void)
                     TransitionToScreen(LEVEL00);
                     InitLevel00Screen();
                     
-                    PlayMusicStream("resources/ambient.ogg");
-                    SetMusicVolume(0.6f);
+                    PlayMusicStream(music);
+                    SetMusicVolume(music, 0.6f);
                 }
             } break;
             case LEVEL00: 

@@ -2,7 +2,7 @@
 *
 *   SKULLY ESCAPE [KING GAME JAM 2015]
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
@@ -32,6 +32,8 @@ int transFromScreen = -1;
 int transToScreen = -1;
 
 static int framesCounter = 0;
+
+Music music;
     
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
@@ -57,7 +59,8 @@ int main(void)
     // Global data loading (assets that must be available in all screens, i.e. fonts)
     InitAudioDevice();
     
-    PlayMusicStream("resources/audio/come_play_with_me.ogg");
+    music = LoadMusicStream("resources/audio/come_play_with_me.ogg");
+    PlayMusicStream(music);
     
     font = LoadSpriteFont("resources/textures/alagard.png");
 	doors = LoadTexture("resources/textures/doors.png");
@@ -92,6 +95,8 @@ int main(void)
     UnloadTexture(doors);
     UnloadSound(sndDoor);
     UnloadSound(sndScream);
+    
+    UnloadMusicStream(music);
     
     CloseAudioDevice();
     
@@ -368,7 +373,7 @@ void UpdateDrawFrame(void)
         UpdateTransition();
     }
     
-    UpdateMusicStream();
+    UpdateMusicStream(music);
     //----------------------------------------------------------------------------------
     
     // Draw

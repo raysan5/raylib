@@ -168,7 +168,7 @@ endif
 # compile all modules with their prerequisites
 
 # compile core module
-core.o : core.c raylib.h rlgl.h utils.h raymath.h
+core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
 # compile rlgl module
@@ -203,14 +203,6 @@ external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
 
-# compile camera module
-camera.o : camera.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
-
-#compile gestures module
-gestures.o : gestures.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
-
 # It installs generated and needed files to compile projects using raylib.
 # The installation works manually.
 # TODO: add other platforms.
@@ -222,10 +214,10 @@ ifeq ($(ROOT),root)
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
         ifeq ($(SHARED),YES)
-			cp --update libraylib.so /usr/local/lib/libraylib.so
+			cp --update $(OUTPUT_PATH)/libraylib.so /usr/local/lib/libraylib.so
         else
 			cp --update raylib.h /usr/local/include/raylib.h
-			cp --update libraylib.a /usr/local/lib/libraylib.a
+			cp --update $(OUTPUT_PATH)/libraylib.a /usr/local/lib/libraylib.a
         endif
 		@echo "raylib dev files installed/updated!"
     else

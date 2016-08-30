@@ -332,6 +332,10 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world
 unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
 void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
 
+// VR functions exposed to core module but not to raylib users
+void BeginVrDrawing(void);                  // Begin VR drawing configuration
+void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
 
@@ -368,10 +372,8 @@ float *MatrixToFloat(Matrix mat);
 
 void InitVrDevice(int vrDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
-void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
-void BeginVrDrawing(void);                  // Begin VR drawing configuration
-void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 // Oculus Rift API for direct access the device (no simulator)

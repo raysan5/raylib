@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.5.0 (www.raylib.com)
+*   raylib 1.6.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
@@ -185,17 +185,20 @@
 #define GAMEPAD_PLAYER4       3     // Not supported
 
 // Gamepad Buttons
-// NOTE: Adjusted for a PS3 USB Controller
-#define GAMEPAD_BUTTON_A        2
-#define GAMEPAD_BUTTON_B        1
-#define GAMEPAD_BUTTON_X        3
-#define GAMEPAD_BUTTON_Y        4
-#define GAMEPAD_BUTTON_R1       7
-#define GAMEPAD_BUTTON_R2       5
-#define GAMEPAD_BUTTON_L1       6
-#define GAMEPAD_BUTTON_L2       8
-#define GAMEPAD_BUTTON_SELECT   9
-#define GAMEPAD_BUTTON_START   10
+
+// PS3 USB Controller
+#define GAMEPAD_PS3_BUTTON_A        2
+#define GAMEPAD_PS3_BUTTON_B        1
+#define GAMEPAD_PS3_BUTTON_X        3
+#define GAMEPAD_PS3_BUTTON_Y        4
+#define GAMEPAD_PS3_BUTTON_R1       7
+#define GAMEPAD_PS3_BUTTON_R2       5
+#define GAMEPAD_PS3_BUTTON_L1       6
+#define GAMEPAD_PS3_BUTTON_L2       8
+#define GAMEPAD_PS3_BUTTON_SELECT   9
+#define GAMEPAD_PS3_BUTTON_START   10
+
+// TODO: Add PS3 d-pad axis
 
 // Xbox360 USB Controller Buttons
 #define GAMEPAD_XBOX_BUTTON_A       0
@@ -233,35 +236,43 @@
 #define ANDROID_VOLUME_UP       24
 #define ANDROID_VOLUME_DOWN     25
 
+// NOTE: MSC C++ compiler does not support compound literals (C99 feature)
+// Plain structures in C++ (without constructors) can be initialized from { } initializers.
+#ifdef __cplusplus
+    #define CLITERAL
+#else
+    #define CLITERAL    (Color)
+#endif
+
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
-#define LIGHTGRAY  (Color){ 200, 200, 200, 255 }   // Light Gray
-#define GRAY       (Color){ 130, 130, 130, 255 }   // Gray
-#define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
-#define YELLOW     (Color){ 253, 249, 0, 255 }     // Yellow
-#define GOLD       (Color){ 255, 203, 0, 255 }     // Gold
-#define ORANGE     (Color){ 255, 161, 0, 255 }     // Orange
-#define PINK       (Color){ 255, 109, 194, 255 }   // Pink
-#define RED        (Color){ 230, 41, 55, 255 }     // Red
-#define MAROON     (Color){ 190, 33, 55, 255 }     // Maroon
-#define GREEN      (Color){ 0, 228, 48, 255 }      // Green
-#define LIME       (Color){ 0, 158, 47, 255 }      // Lime
-#define DARKGREEN  (Color){ 0, 117, 44, 255 }      // Dark Green
-#define SKYBLUE    (Color){ 102, 191, 255, 255 }   // Sky Blue
-#define BLUE       (Color){ 0, 121, 241, 255 }     // Blue
-#define DARKBLUE   (Color){ 0, 82, 172, 255 }      // Dark Blue
-#define PURPLE     (Color){ 200, 122, 255, 255 }   // Purple
-#define VIOLET     (Color){ 135, 60, 190, 255 }    // Violet
-#define DARKPURPLE (Color){ 112, 31, 126, 255 }    // Dark Purple
-#define BEIGE      (Color){ 211, 176, 131, 255 }   // Beige
-#define BROWN      (Color){ 127, 106, 79, 255 }    // Brown
-#define DARKBROWN  (Color){ 76, 63, 47, 255 }      // Dark Brown
+#define LIGHTGRAY  CLITERAL{ 200, 200, 200, 255 }   // Light Gray
+#define GRAY       CLITERAL{ 130, 130, 130, 255 }   // Gray
+#define DARKGRAY   CLITERAL{ 80, 80, 80, 255 }      // Dark Gray
+#define YELLOW     CLITERAL{ 253, 249, 0, 255 }     // Yellow
+#define GOLD       CLITERAL{ 255, 203, 0, 255 }     // Gold
+#define ORANGE     CLITERAL{ 255, 161, 0, 255 }     // Orange
+#define PINK       CLITERAL{ 255, 109, 194, 255 }   // Pink
+#define RED        CLITERAL{ 230, 41, 55, 255 }     // Red
+#define MAROON     CLITERAL{ 190, 33, 55, 255 }     // Maroon
+#define GREEN      CLITERAL{ 0, 228, 48, 255 }      // Green
+#define LIME       CLITERAL{ 0, 158, 47, 255 }      // Lime
+#define DARKGREEN  CLITERAL{ 0, 117, 44, 255 }      // Dark Green
+#define SKYBLUE    CLITERAL{ 102, 191, 255, 255 }   // Sky Blue
+#define BLUE       CLITERAL{ 0, 121, 241, 255 }     // Blue
+#define DARKBLUE   CLITERAL{ 0, 82, 172, 255 }      // Dark Blue
+#define PURPLE     CLITERAL{ 200, 122, 255, 255 }   // Purple
+#define VIOLET     CLITERAL{ 135, 60, 190, 255 }    // Violet
+#define DARKPURPLE CLITERAL{ 112, 31, 126, 255 }    // Dark Purple
+#define BEIGE      CLITERAL{ 211, 176, 131, 255 }   // Beige
+#define BROWN      CLITERAL{ 127, 106, 79, 255 }    // Brown
+#define DARKBROWN  CLITERAL{ 76, 63, 47, 255 }      // Dark Brown
 
-#define WHITE      (Color){ 255, 255, 255, 255 }   // White
-#define BLACK      (Color){ 0, 0, 0, 255 }         // Black
-#define BLANK      (Color){ 0, 0, 0, 0 }           // Blank (Transparent)
-#define MAGENTA    (Color){ 255, 0, 255, 255 }     // Magenta
-#define RAYWHITE   (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
+#define WHITE      CLITERAL{ 255, 255, 255, 255 }   // White
+#define BLACK      CLITERAL{ 0, 0, 0, 255 }         // Black
+#define BLANK      CLITERAL{ 0, 0, 0, 0 }           // Blank (Transparent)
+#define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
+#define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -397,7 +408,7 @@ typedef struct Mesh {
 // Shader type (generic shader)
 typedef struct Shader {
     unsigned int id;        // Shader program id
-    
+
     // Vertex attributes locations (default locations)
     int vertexLoc;          // Vertex attribute location point    (default-location = 0)
     int texcoordLoc;        // Texcoord attribute location point  (default-location = 1)
@@ -409,7 +420,7 @@ typedef struct Shader {
     // Uniform locations
     int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
     int tintColorLoc;       // Diffuse color uniform location point (fragment shader)
-    
+
     // Texture map locations (generic for any kind of map)
     int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
     int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
@@ -423,11 +434,11 @@ typedef struct Material {
     Texture2D texDiffuse;   // Diffuse texture  (binded to shader mapTexture0Loc)
     Texture2D texNormal;    // Normal texture   (binded to shader mapTexture1Loc)
     Texture2D texSpecular;  // Specular texture (binded to shader mapTexture2Loc)
-    
+
     Color colDiffuse;       // Diffuse color
     Color colAmbient;       // Ambient color
     Color colSpecular;      // Specular color
-    
+
     float glossiness;       // Glossiness level (Ranges from 0 to 1000)
 } Material;
 
@@ -443,14 +454,14 @@ typedef struct LightData {
     unsigned int id;        // Light unique id
     bool enabled;           // Light enabled
     int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-    
+
     Vector3 position;       // Light position
     Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
     float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
-    
+
     Color diffuse;          // Light diffuse color
     float intensity;        // Light intensity level
-    
+
     float coneAngle;        // Light cone max angle: LIGHT_SPOT
 } LightData, *Light;
 
@@ -465,8 +476,8 @@ typedef struct Ray {
 
 // Sound source type
 typedef struct Sound {
-    unsigned int source;    // Sound audio source id
-    unsigned int buffer;    // Sound audio buffer id
+    unsigned int source;    // OpenAL audio source id
+    unsigned int buffer;    // OpenAL audio buffer id
 } Sound;
 
 // Wave type, defines audio wave data
@@ -477,6 +488,22 @@ typedef struct Wave {
     short bitsPerSample;        // Sample size in bits
     short channels;
 } Wave;
+
+// Music type (file streaming from memory)
+// NOTE: Anything longer than ~10 seconds should be streamed
+typedef struct MusicData *Music;
+
+// Audio stream type
+// NOTE: Useful to create custom audio streams not bound to a specific file
+typedef struct AudioStream {
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+
+    int format;                 // OpenAL audio format specifier
+    unsigned int source;        // OpenAL audio source id
+    unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
+} AudioStream;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -519,18 +546,6 @@ typedef enum {
     GESTURE_PINCH_IN    = 256,
     GESTURE_PINCH_OUT   = 512
 } Gestures;
-
-// Touch action (fingers or mouse)
-typedef enum { TOUCH_UP, TOUCH_DOWN, TOUCH_MOVE } TouchAction;
-
-// Gesture events
-// NOTE: MAX_TOUCH_POINTS fixed to 2
-typedef struct GestureEvent {
-    int touchAction;
-    int pointCount;
-    int pointerId[MAX_TOUCH_POINTS];
-    Vector2 position[MAX_TOUCH_POINTS];
-} GestureEvent;
 
 // Camera system modes
 typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
@@ -647,7 +662,7 @@ void SetMousePosition(Vector2 position);                // Set mouse position XY
 int GetMouseWheelMove(void);                            // Returns mouse wheel movement Y
 
 int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
-int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)                   
+int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)
 Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)
 
 #if defined(PLATFORM_ANDROID)
@@ -661,11 +676,8 @@ bool IsButtonReleased(int button);                      // Detect if an android 
 //------------------------------------------------------------------------------------
 void SetGesturesEnabled(unsigned int gestureFlags);     // Enable a set of gestures using flags
 bool IsGestureDetected(int gesture);                    // Check if a gesture have been detected
-void ProcessGestureEvent(GestureEvent event);           // Process gesture event and translate it into gestures
-void UpdateGestures(void);                              // Update gestures detected (called automatically in PollInputEvents())
-
-int GetTouchPointsCount(void);                          // Get touch points count
 int GetGestureDetected(void);                           // Get latest detected gesture
+int GetTouchPointsCount(void);                          // Get touch points count
 float GetGestureHoldDuration(void);                     // Get gesture hold time in milliseconds
 Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
 float GetGestureDragAngle(void);                        // Get gesture drag angle
@@ -687,8 +699,8 @@ void SetCameraPanControl(int panKey);                       // Set camera pan ke
 void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
 void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
 
-void SetCameraMoveControls(int frontKey, int backKey, 
-                           int leftKey, int rightKey, 
+void SetCameraMoveControls(int frontKey, int backKey,
+                           int leftKey, int rightKey,
                            int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
 void SetCameraMouseSensitivity(float sensitivity);          // Set camera mouse sensitivity (1st person and 3rd person cameras)
 
@@ -747,10 +759,10 @@ void ImageCrop(Image *image, Rectangle crop);                                   
 void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize and image (bilinear filtering)
 void ImageResizeNN(Image *image,int newWidth,int newHeight);                                       // Resize and image (Nearest-Neighbor scaling algorithm)
 Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
-Image ImageTextEx(SpriteFont font, const char *text, int fontSize, int spacing, Color tint);       // Create an image from text (custom sprite font)
+Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing, Color tint);     // Create an image from text (custom sprite font)
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
 void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
-void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, int fontSize, int spacing, Color color); // Draw text (custom sprite font) within an image (destination)
+void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, float fontSize, int spacing, Color color); // Draw text (custom sprite font) within an image (destination)
 void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
 void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
@@ -777,7 +789,7 @@ void UnloadSpriteFont(SpriteFont spriteFont);                                   
 
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
 void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
-                int fontSize, int spacing, Color tint);
+                float fontSize, int spacing, Color tint);
 int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing);         // Measure string size for SpriteFont
 
@@ -788,6 +800,8 @@ const char *SubText(const char *text, int position, int length);                
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
+void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
+void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
 void DrawCube(Vector3 position, float width, float height, float lenght, Color color);             // Draw cube
 void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);        // Draw cube wires
@@ -802,8 +816,6 @@ void DrawRay(Ray ray, Color color);                                             
 void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
 void DrawLight(Light light);                                                                       // Draw light in 3D world
-void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
-void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
 //DrawTorus(), DrawTeapot() are useless...
 
 //------------------------------------------------------------------------------------
@@ -815,6 +827,8 @@ Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d mod
 Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 void UnloadModel(Model model);                                  // Unload 3d model from memory
+
+Mesh GenMeshCube(float width, float height, float depth);       // Generate mesh: cube
 
 Material LoadMaterial(const char *fileName);                    // Load material data (from file)
 Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
@@ -872,10 +886,8 @@ void DestroyLight(Light light);                                     // Destroy a
 //------------------------------------------------------------------------------------
 void InitVrDevice(int vdDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
-void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
-void BeginVrDrawing(void);                  // Begin VR drawing configuration
-void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 //------------------------------------------------------------------------------------
@@ -883,7 +895,7 @@ void ToggleVrMode(void);                    // Enable/Disable VR experience (dev
 //------------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
-bool IsAudioDeviceReady(void);                                  // True if call to InitAudioDevice() was successful and CloseAudioDevice() has not been called yet
+bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -891,22 +903,35 @@ Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound
+void ResumeSound(Sound sound);                                  // Resume a paused sound
 void StopSound(Sound sound);                                    // Stop playing a sound
 bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
-void UpdateMusicStream(int index);                              // Updates buffers for music streaming
-void StopMusicStream(int index);                                // Stop music playing (close stream)
-void PauseMusicStream(int index);                               // Pause music playing
-void ResumeMusicStream(int index);                              // Resume playing paused music
-bool IsMusicPlaying(int index);                                 // Check if music is playing
-void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
-void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
-float GetMusicTimeLength(int index);                            // Get current music time length (in seconds)
-float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int GetMusicStreamCount(void);                                  // Get number of streams loaded
+Music LoadMusicStream(char *fileName);                          // Load music stream from file
+void UnloadMusicStream(Music music);                            // Unload music stream
+void PlayMusicStream(Music music);                              // Start music playing (open stream)
+void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
+void StopMusicStream(Music music);                              // Stop music playing (close stream)
+void PauseMusicStream(Music music);                             // Pause music playing
+void ResumeMusicStream(Music music);                            // Resume playing paused music
+bool IsMusicPlaying(Music music);                               // Check if music is playing
+void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
+void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
+float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
+float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
+
+AudioStream InitAudioStream(unsigned int sampleRate, 
+                            unsigned int sampleSize, 
+                            unsigned int channels);             // Init audio stream (to stream audio pcm data)
+void UpdateAudioStream(AudioStream stream, void *data, int numSamples); // Update audio stream buffers with data
+void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
+bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
+void PlayAudioStream(AudioStream stream);                       // Play audio stream
+void PauseAudioStream(AudioStream stream);                      // Pause audio stream
+void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
+void StopAudioStream(AudioStream stream);                       // Stop audio stream
 
 #ifdef __cplusplus
 }

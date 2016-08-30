@@ -2,7 +2,7 @@
 *
 *   raylib.audio
 *
-*   Basic functions to manage Audio: 
+*   Basic functions to manage Audio:
 *       Manage audio device (init/close)
 *       Load and Unload audio files
 *       Play/Stop/Pause/Resume loaded audio
@@ -75,6 +75,22 @@ typedef struct Wave {
     short channels;
 } Wave;
 
+// Music type (file streaming from memory)
+// NOTE: Anything longer than ~10 seconds should be streamed
+typedef struct Music *Music;
+
+// Audio stream type
+// NOTE: Useful to create custom audio streams not bound to a specific file
+typedef struct AudioStream {
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+
+    int format;                 // OpenAL audio format specifier
+    unsigned int source;        // OpenAL audio source id
+    unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
+} AudioStream;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -89,7 +105,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 void InitAudioDevice(void);                                     // Initialize audio device and context
 void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
-bool IsAudioDeviceReady(void);                                  // Check if device has been initialized successfully
+bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
@@ -97,26 +113,35 @@ Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound
+void ResumeSound(Sound sound);                                  // Resume a paused sound
 void StopSound(Sound sound);                                    // Stop playing a sound
 bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 
-int PlayMusicStream(int index, char *fileName);                 // Start music playing (open stream)
-void UpdateMusicStream(int index);                              // Updates buffers for music streaming
-void StopMusicStream(int index);                                // Stop music playing (close stream)
-void PauseMusicStream(int index);                               // Pause music playing
-void ResumeMusicStream(int index);                              // Resume playing paused music
-bool IsMusicPlaying(int index);                                 // Check if music is playing
-void SetMusicVolume(int index, float volume);                   // Set volume for music (1.0 is max level)
-void SetMusicPitch(int index, float pitch);                     // Set pitch for a music (1.0 is base level)
-float GetMusicTimeLength(int index);                            // Get music time length (in seconds)
-float GetMusicTimePlayed(int index);                            // Get current music time played (in seconds)
-int GetMusicStreamCount(void);                                  // Get number of streams loaded
+Music LoadMusicStream(char *fileName);                          // Load music stream from file
+void UnloadMusicStream(Music music);                            // Unload music stream
+void PlayMusicStream(Music music);                              // Start music playing (open stream)
+void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
+void StopMusicStream(Music music);                              // Stop music playing (close stream)
+void PauseMusicStream(Music music);                             // Pause music playing
+void ResumeMusicStream(Music music);                            // Resume playing paused music
+bool IsMusicPlaying(Music music);                               // Check if music is playing
+void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
+void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
+float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
+float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
-int InitRawMixChannel(int sampleRate, int channels, bool floatingPoint);        // Initialize raw audio mix channel for audio buffering
-int BufferRawMixChannel(int mixc, void *data, unsigned short numberElements);   // Buffers data directly to raw mix channel
-void CloseRawMixChannel(int mixc);                                              // Closes and frees raw mix channel
+AudioStream InitAudioStream(unsigned int sampleRate, 
+                            unsigned int sampleSize, 
+                            unsigned int channels);             // Init audio stream (to stream audio pcm data)
+void UpdateAudioStream(AudioStream stream, void *data, int numSamples); // Update audio stream buffers with data
+void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
+bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
+void PlayAudioStream(AudioStream stream);                       // Play audio stream
+void PauseAudioStream(AudioStream stream);                      // Pause audio stream
+void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
+void StopAudioStream(AudioStream stream);                       // Stop audio stream
 
 #ifdef __cplusplus
 }

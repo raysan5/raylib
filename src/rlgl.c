@@ -415,14 +415,14 @@ void rlMatrixMode(int mode)
     }
 }
 
-void rlFrustum(double left, double right, double bottom, double top, double near, double far)
+void rlFrustum(double left, double right, double bottom, double top, double zNear, double zFar)
 {
-    glFrustum(left, right, bottom, top, near, far);
+    glFrustum(left, right, bottom, top, zNear, zFar);
 }
 
-void rlOrtho(double left, double right, double bottom, double top, double near, double far)
+void rlOrtho(double left, double right, double bottom, double top, double zNear, double zFar)
 {
-    glOrtho(left, right, bottom, top, near, far);
+    glOrtho(left, right, bottom, top, zNear, zFar);
 }
 
 void rlPushMatrix(void) { glPushMatrix(); }
@@ -1056,8 +1056,13 @@ void rlglInit(int width, int height)
     // We get a list of available extensions and we check for some of them (compressed textures)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
-    const char *extList[numExt];
     
+#ifdef _MSC_VER
+    const char **extList = malloc(sizeof(const char *)*numExt);
+#else
+    const char *extList[numExt];
+#endif
+  
     for (int i = 0; i < numExt; i++) extList[i] = (char *)glGetStringi(GL_EXTENSIONS, i);
     
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -1136,6 +1141,10 @@ void rlglInit(int width, int height)
         // ASTC texture compression support
         if (strcmp(extList[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) texCompASTCSupported = true;
     }
+    
+#ifdef _MSC_VER
+    free(extList);
+#endif
     
 #if defined(GRAPHICS_API_OPENGL_ES2)
     if (vaoSupported) TraceLog(INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
@@ -2550,11 +2559,13 @@ void DestroyLight(Light light)
 {
     if (light != NULL)
     {
+        int lightId = light->id;
+
         // Free dynamic memory allocation
-        free(lights[light->id]);
-        
+        free(lights[lightId]);
+
         // Remove *obj from the pointers array
-        for (int i = light->id; i < lightsCount; i++)
+        for (int i = lightId; i < lightsCount; i++)
         {
             // Resort all the following pointers of the array
             if ((i + 1) < lightsCount)
@@ -2562,7 +2573,6 @@ void DestroyLight(Light light)
                 lights[i] = lights[i + 1];
                 lights[i]->id = lights[i + 1]->id;
             }
-            else free(lights[i]);
         }
         
         // Decrease enabled physic objects count
@@ -2891,11 +2901,18 @@ static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShade
 
         glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
 
+#ifdef _MSC_VER
+        char *log = malloc(maxLength);
+#else
         char log[maxLength];
-
+#endif
         glGetShaderInfoLog(vertexShader, maxLength, &length, log);
 
         TraceLog(INFO, "%s", log);
+        
+#ifdef _MSC_VER
+        free(log);
+#endif
     }
     else TraceLog(INFO, "[VSHDR ID %i] Vertex shader compiled successfully", vertexShader);
 
@@ -2912,11 +2929,18 @@ static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShade
 
         glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
 
+#ifdef _MSC_VER
+        char *log = malloc(maxLength);
+#else
         char log[maxLength];
-
+#endif
         glGetShaderInfoLog(fragmentShader, maxLength, &length, log);
 
         TraceLog(INFO, "%s", log);
+
+#ifdef _MSC_VER
+        free(log);
+#endif
     }
     else TraceLog(INFO, "[FSHDR ID %i] Fragment shader compiled successfully", fragmentShader);
 
@@ -2950,12 +2974,18 @@ static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShade
 
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 
+#ifdef _MSC_VER
+        char *log = malloc(maxLength);
+#else
         char log[maxLength];
-
+#endif
         glGetProgramInfoLog(program, maxLength, &length, log);
 
         TraceLog(INFO, "%s", log);
-
+        
+#ifdef _MSC_VER
+        free(log);
+#endif
         glDeleteProgram(program);
 
         program = 0;

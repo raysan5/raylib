@@ -102,7 +102,7 @@ int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const
  * @deprecated This function is unsafe!
  * @see jar_xm_create_context_safe()
  */
-int jar_xm_create_context(jar_xm_context_t**, const char* moddata, uint32_t rate);
+int jar_xm_create_context(jar_xm_context_t** ctx, const char* moddata, uint32_t rate);
 
 /** Create a XM context.
  *
@@ -114,17 +114,17 @@ int jar_xm_create_context(jar_xm_context_t**, const char* moddata, uint32_t rate
  * @returns 1 if module data is not sane
  * @returns 2 if memory allocation failed
  */
-int jar_xm_create_context_safe(jar_xm_context_t**, const char* moddata, size_t moddata_length, uint32_t rate);
+int jar_xm_create_context_safe(jar_xm_context_t** ctx, const char* moddata, size_t moddata_length, uint32_t rate);
 
 /** Free a XM context created by jar_xm_create_context(). */
-void jar_xm_free_context(jar_xm_context_t*);
+void jar_xm_free_context(jar_xm_context_t* ctx);
 
 /** Play the module and put the sound samples in an output buffer.
  *
  * @param output buffer of 2*numsamples elements (A left and right value for each sample)
  * @param numsamples number of samples to generate
  */
-void jar_xm_generate_samples(jar_xm_context_t*, float* output, size_t numsamples);
+void jar_xm_generate_samples(jar_xm_context_t* ctx, float* output, size_t numsamples);
 
 /** Play the module, resample from 32 bit to 16 bit, and put the sound samples in an output buffer.
  *
@@ -173,12 +173,12 @@ void jar_xm_generate_samples_8bit(jar_xm_context_t* ctx, char* output, size_t nu
  *
  * @param loopcnt maximum number of loops. Use 0 to loop
  * indefinitely. */
-void jar_xm_set_max_loop_count(jar_xm_context_t*, uint8_t loopcnt);
+void jar_xm_set_max_loop_count(jar_xm_context_t* ctx, uint8_t loopcnt);
 
 /** Get the loop count of the currently playing module. This value is
  * 0 when the module is still playing, 1 when the module has looped
  * once, etc. */
-uint8_t jar_xm_get_loop_count(jar_xm_context_t*);
+uint8_t jar_xm_get_loop_count(jar_xm_context_t* ctx);
 
 
 
@@ -188,7 +188,7 @@ uint8_t jar_xm_get_loop_count(jar_xm_context_t*);
  *
  * @return whether the channel was muted.
  */
-bool jar_xm_mute_channel(jar_xm_context_t*, uint16_t, bool);
+bool jar_xm_mute_channel(jar_xm_context_t* ctx, uint16_t, bool);
 
 /** Mute or unmute an instrument.
  *
@@ -197,43 +197,43 @@ bool jar_xm_mute_channel(jar_xm_context_t*, uint16_t, bool);
  *
  * @return whether the instrument was muted.
  */
-bool jar_xm_mute_instrument(jar_xm_context_t*, uint16_t, bool);
+bool jar_xm_mute_instrument(jar_xm_context_t* ctx, uint16_t, bool);
 
 
 
 /** Get the module name as a NUL-terminated string. */
-const char* jar_xm_get_module_name(jar_xm_context_t*);
+const char* jar_xm_get_module_name(jar_xm_context_t* ctx);
 
 /** Get the tracker name as a NUL-terminated string. */
-const char* jar_xm_get_tracker_name(jar_xm_context_t*);
+const char* jar_xm_get_tracker_name(jar_xm_context_t* ctx);
 
 
 
 /** Get the number of channels. */
-uint16_t jar_xm_get_number_of_channels(jar_xm_context_t*);
+uint16_t jar_xm_get_number_of_channels(jar_xm_context_t* ctx);
 
 /** Get the module length (in patterns). */
 uint16_t jar_xm_get_module_length(jar_xm_context_t*);
 
 /** Get the number of patterns. */
-uint16_t jar_xm_get_number_of_patterns(jar_xm_context_t*);
+uint16_t jar_xm_get_number_of_patterns(jar_xm_context_t* ctx);
 
 /** Get the number of rows of a pattern.
  *
  * @note Pattern numbers go from 0 to
  * jar_xm_get_number_of_patterns(...)-1.
  */
-uint16_t jar_xm_get_number_of_rows(jar_xm_context_t*, uint16_t);
+uint16_t jar_xm_get_number_of_rows(jar_xm_context_t* ctx, uint16_t);
 
 /** Get the number of instruments. */
-uint16_t jar_xm_get_number_of_instruments(jar_xm_context_t*);
+uint16_t jar_xm_get_number_of_instruments(jar_xm_context_t* ctx);
 
 /** Get the number of samples of an instrument.
  *
  * @note Instrument numbers go from 1 to
  * jar_xm_get_number_of_instruments(...).
  */
-uint16_t jar_xm_get_number_of_samples(jar_xm_context_t*, uint16_t);
+uint16_t jar_xm_get_number_of_samples(jar_xm_context_t* ctx, uint16_t);
 
 
 
@@ -242,7 +242,7 @@ uint16_t jar_xm_get_number_of_samples(jar_xm_context_t*, uint16_t);
  * @param bpm will receive the current BPM
  * @param tempo will receive the current tempo (ticks per line)
  */
-void jar_xm_get_playing_speed(jar_xm_context_t*, uint16_t* bpm, uint16_t* tempo);
+void jar_xm_get_playing_speed(jar_xm_context_t* ctx, uint16_t* bpm, uint16_t* tempo);
 
 /** Get the current position in the module being played.
  *
@@ -257,7 +257,7 @@ void jar_xm_get_playing_speed(jar_xm_context_t*, uint16_t* bpm, uint16_t* tempo)
  * generated samples (divide by sample rate to get seconds of
  * generated audio)
  */
-void jar_xm_get_position(jar_xm_context_t*, uint8_t* pattern_index, uint8_t* pattern, uint8_t* row, uint64_t* samples);
+void jar_xm_get_position(jar_xm_context_t* ctx, uint8_t* pattern_index, uint8_t* pattern, uint8_t* row, uint64_t* samples);
 
 /** Get the latest time (in number of generated samples) when a
  * particular instrument was triggered in any channel.
@@ -265,7 +265,7 @@ void jar_xm_get_position(jar_xm_context_t*, uint8_t* pattern_index, uint8_t* pat
  * @note Instrument numbers go from 1 to
  * jar_xm_get_number_of_instruments(...).
  */
-uint64_t jar_xm_get_latest_trigger_of_instrument(jar_xm_context_t*, uint16_t);
+uint64_t jar_xm_get_latest_trigger_of_instrument(jar_xm_context_t* ctx, uint16_t);
 
 /** Get the latest time (in number of generated samples) when a
  * particular sample was triggered in any channel.
@@ -276,21 +276,21 @@ uint64_t jar_xm_get_latest_trigger_of_instrument(jar_xm_context_t*, uint16_t);
  * @note Sample numbers go from 0 to
  * jar_xm_get_nubmer_of_samples(...,instr)-1.
  */
-uint64_t jar_xm_get_latest_trigger_of_sample(jar_xm_context_t*, uint16_t instr, uint16_t sample);
+uint64_t jar_xm_get_latest_trigger_of_sample(jar_xm_context_t* ctx, uint16_t instr, uint16_t sample);
 
 /** Get the latest time (in number of generated samples) when any
  * instrument was triggered in a given channel.
  *
  * @note Channel numbers go from 1 to jar_xm_get_number_of_channels(...).
  */
-uint64_t jar_xm_get_latest_trigger_of_channel(jar_xm_context_t*, uint16_t);
+uint64_t jar_xm_get_latest_trigger_of_channel(jar_xm_context_t* ctx, uint16_t);
 
 /** Get the number of remaining samples. Divide by 2 to get the number of individual LR data samples.
  *
  * @note This is the remaining number of samples before the loop starts module again, or halts if on last pass.
  * @note This function is very slow and should only be run once, if at all.
  */
-uint64_t jar_xm_get_remaining_samples(jar_xm_context_t*);
+uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx);
 
 #ifdef __cplusplus
 }
@@ -308,7 +308,7 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t*);
 #include <math.h>
 #include <string.h>
 
-#if JAR_XM_DEBUG
+#ifdef JAR_XM_DEBUG
 #include <stdio.h>
 #define DEBUG(fmt, ...) do {                                        \
         fprintf(stderr, "%s(): " fmt "\n", __func__, __VA_ARGS__);    \
@@ -638,7 +638,7 @@ int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, siz
     /* Initialize most of the fields to 0, 0.f, NULL or false depending on type */
     memset(mempool, 0, bytes_needed);
 
-    ctx = (*ctxp = (jar_xm_context_t*)mempool);
+    ctx = (*ctxp = (jar_xm_context_t *)mempool);
     ctx->allocated_memory = mempool; /* Keep original pointer for free() */
     mempool += sizeof(jar_xm_context_t);
 
@@ -685,19 +685,17 @@ int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, siz
     return 0;
 }
 
-void jar_xm_free_context(jar_xm_context_t* context) {
-    free(context->allocated_memory);
+void jar_xm_free_context(jar_xm_context_t* ctx) {
+    free(ctx->allocated_memory);
 }
 
-void jar_xm_set_max_loop_count(jar_xm_context_t* context, uint8_t loopcnt) {
-    context->max_loop_count = loopcnt;
+void jar_xm_set_max_loop_count(jar_xm_context_t* ctx, uint8_t loopcnt) {
+    ctx->max_loop_count = loopcnt;
 }
 
-uint8_t jar_xm_get_loop_count(jar_xm_context_t* context) {
-    return context->loop_count;
+uint8_t jar_xm_get_loop_count(jar_xm_context_t* ctx) {
+    return ctx->loop_count;
 }
-
-
 
 bool jar_xm_mute_channel(jar_xm_context_t* ctx, uint16_t channel, bool mute) {
     bool old = ctx->channels[channel - 1].muted;
@@ -1435,7 +1433,7 @@ static void jar_xm_volume_slide(jar_xm_channel_context_t* ch, uint8_t rawval) {
     }
 }
 
-static float jar_xm_envelope_lerp(jar_xm_envelope_point_t* restrict a, jar_xm_envelope_point_t* restrict b, uint16_t pos) {
+static float jar_xm_envelope_lerp(jar_xm_envelope_point_t* a, jar_xm_envelope_point_t* b, uint16_t pos) {
     /* Linear interpolation between two envelope points */
     if(pos <= a->frame) return a->value;
     else if(pos >= b->frame) return b->value;

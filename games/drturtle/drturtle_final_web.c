@@ -12,7 +12,7 @@
 *
 *   Enjoy using raylib. :)
 *
-*   This game has been created using raylib 1.1 (www.raylib.com)
+*   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
@@ -53,6 +53,8 @@ SpriteFont font;
 Sound eat;
 Sound die;
 Sound growl;
+
+Music music;
 
 // Define scrolling variables
 int backScrolling = 0;
@@ -124,8 +126,9 @@ int main()
     die = LoadSound("resources/die.wav");
     growl = LoadSound("resources/gamera.wav");
     
-    // Start playing streaming music
-    PlayMusicStream("resources/speeding.ogg");
+    // Load music stream and start playing music
+    music = LoadMusicStream("resources/speeding.ogg");
+    PlayMusicStream(music);
     
     playerBounds = (Rectangle){ 30 + 14, playerRail*120 + 90 + 14, 100, 100 };
     
@@ -190,10 +193,10 @@ int main()
     UnloadSound(die);
     UnloadSound(growl);
     
-    StopMusicStream();      // Stop music
-    CloseAudioDevice();     // Close audio device
+    UnloadMusicStream(music);   // Unload music
+    CloseAudioDevice();         // Close audio device
     
-    CloseWindow();          // Close window and OpenGL context
+    CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     
     return 0;
@@ -206,8 +209,8 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    UpdateMusicStream();
-    
+    UpdateMusicStream(music);   // Refill music stream buffers (if required)
+        
     framesCounter++;
     
     // Sea color tint effect

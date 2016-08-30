@@ -66,7 +66,7 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 //----------------------------------------------------------------------------------
 
 // Draw a line in 3D world space
-void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
+void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -76,7 +76,7 @@ void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
 }
 
 // Draw a circle in 3D world space
-void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
+void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
 {
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
@@ -578,19 +578,19 @@ void DrawLight(Light light)
         case LIGHT_POINT:
         {
             DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawCircle3D(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
         } break;
         case LIGHT_DIRECTIONAL:
         {                
-            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
             DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
             DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
         } break;
         case LIGHT_SPOT:
         {                
-            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
             DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : BLACK));
             DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
         } break;
@@ -920,8 +920,8 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     Color *cubicmapPixels = GetImageData(cubicmap);
     
-    int mapWidth = cubicmap.width*(int)cubeSize.x;
-    int mapHeight = cubicmap.height*(int)cubeSize.z;
+    int mapWidth = cubicmap.width;
+    int mapHeight = cubicmap.height;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
@@ -961,19 +961,19 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     RectangleF topTexUV = { 0.0f, 0.5f, 0.5f, 0.5f };
     RectangleF bottomTexUV = { 0.5f, 0.5f, 0.5f, 0.5f };
 
-    for (int z = 0; z < mapHeight; z += cubeSize.z)
+    for (int z = 0; z < mapHeight; ++z)
     {
-        for (int x = 0; x < mapWidth; x += cubeSize.x)
+        for (int x = 0; x < mapWidth; ++x)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
-            Vector3 v1 = { x - w/2, h2, z - h/2 };
-            Vector3 v2 = { x - w/2, h2, z + h/2 };
-            Vector3 v3 = { x + w/2, h2, z + h/2 };
-            Vector3 v4 = { x + w/2, h2, z - h/2 };
-            Vector3 v5 = { x + w/2, 0, z - h/2 };
-            Vector3 v6 = { x - w/2, 0, z - h/2 };
-            Vector3 v7 = { x - w/2, 0, z + h/2 };
-            Vector3 v8 = { x + w/2, 0, z + h/2 };
+            Vector3 v1 = { w * (x - .5f), h2, h * (z - .5f) };
+            Vector3 v2 = { w * (x - .5f), h2, h * (z + .5f) };
+            Vector3 v3 = { w * (x + .5f), h2, h * (z + .5f) };
+            Vector3 v4 = { w * (x + .5f), h2, h * (z - .5f) };
+            Vector3 v5 = { w * (x + .5f), 0, h * (z - .5f) };
+            Vector3 v6 = { w * (x - .5f), 0, h * (z - .5f) };
+            Vector3 v7 = { w * (x - .5f), 0, h * (z + .5f) };
+            Vector3 v8 = { w * (x + .5f), 0, h * (z + .5f) };
 
             // We check pixel color to be WHITE, we will full cubes
             if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
@@ -1898,9 +1898,7 @@ static Mesh LoadOBJ(const char *fileName)
 
                 if (dataType == 't')    // Read texCoord
                 {
-                    float useless = 0;
-
-                    fscanf(objFile, "%f %f %f", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y, &useless);
+                    fscanf(objFile, "%f %f %*[^\n]", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y, &useless);
                     countTexCoords++;
 
                     fscanf(objFile, "%c", &dataType);
@@ -1959,6 +1957,7 @@ static Mesh LoadOBJ(const char *fileName)
 
                 if ((numNormals == 0) && (numTexCoords == 0)) fscanf(objFile, "%i %i %i", &vNum[0], &vNum[1], &vNum[2]);
                 else if (numNormals == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vNum[0], &vtNum[0], &vNum[1], &vtNum[1], &vNum[2], &vtNum[2]);
+                else if (numTexCoords == 0) fscanf(objFile, "%i//%i %i//%i %i//%i", &vNum[0], &vnNum[0], &vNum[1], &vnNum[1], &vNum[2], &vnNum[2]);
                 else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vNum[0], &vtNum[0], &vnNum[0], &vNum[1], &vtNum[1], &vnNum[1], &vNum[2], &vtNum[2], &vnNum[2]);
 
                 mesh.vertices[vCounter] = midVertices[vNum[0]-1].x;
