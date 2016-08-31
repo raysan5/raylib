@@ -1898,9 +1898,7 @@ static Mesh LoadOBJ(const char *fileName)
 
                 if (dataType == 't')    // Read texCoord
                 {
-                    float useless = 0;
-
-                    fscanf(objFile, "%f %f %f", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y, &useless);
+                    fscanf(objFile, "%f %f%*[^\n]s\n", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y);
                     countTexCoords++;
 
                     fscanf(objFile, "%c", &dataType);
@@ -1959,6 +1957,7 @@ static Mesh LoadOBJ(const char *fileName)
 
                 if ((numNormals == 0) && (numTexCoords == 0)) fscanf(objFile, "%i %i %i", &vNum[0], &vNum[1], &vNum[2]);
                 else if (numNormals == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vNum[0], &vtNum[0], &vNum[1], &vtNum[1], &vNum[2], &vtNum[2]);
+                else if (numTexCoords == 0) fscanf(objFile, "%i//%i %i//%i %i//%i", &vNum[0], &vnNum[0], &vNum[1], &vnNum[1], &vNum[2], &vnNum[2]);
                 else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vNum[0], &vtNum[0], &vnNum[0], &vNum[1], &vtNum[1], &vnNum[1], &vNum[2], &vtNum[2], &vnNum[2]);
 
                 mesh.vertices[vCounter] = midVertices[vNum[0]-1].x;
