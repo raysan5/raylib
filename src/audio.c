@@ -1068,7 +1068,7 @@ static void UnloadWave(Wave wave)
 const char *GetExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
-    if(!dot || dot == fileName) return "";
+    if (!dot || dot == fileName) return "";
     return (dot + 1);
 }
 
@@ -1083,7 +1083,7 @@ void TraceLog(int msgType, const char *text, ...)
     traceDebugMsgs = 0;
 #endif
 
-    switch(msgType)
+    switch (msgType)
     {
         case INFO: fprintf(stdout, "INFO: "); break;
         case ERROR: fprintf(stdout, "ERROR: "); break;

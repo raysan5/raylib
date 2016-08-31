@@ -319,7 +319,7 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
     // NOTE: Some ugly hacks are made to support Latin-1 Extended characters directly
     // written in C code files (codified by default as UTF-8)
 
-    for(int i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
         // TODO: Right now we are supposing characters that follow a continous order and start at FONT_FIRST_CHAR,
         // this sytem can be improved to support any characters order and init value...
@@ -514,9 +514,9 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     Color *pixels = GetImageData(image);
 
     // Parse image data to get charSpacing and lineSpacing
-    for(y = 0; y < image.height; y++)
+    for (y = 0; y < image.height; y++)
     {
-        for(x = 0; x < image.width; x++)
+        for (x = 0; x < image.width; x++)
         {
             if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
         }
@@ -529,7 +529,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     int charHeight = 0;
     int j = 0;
 
-    while(!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
+    while (!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
 
     charHeight = j;
 
@@ -539,9 +539,9 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     int xPosToRead = charSpacing;
 
     // Parse image data to get rectangle sizes
-    while((lineSpacing + lineToRead * (charHeight + lineSpacing)) < image.height)
+    while ((lineSpacing + lineToRead * (charHeight + lineSpacing)) < image.height)
     {
-        while((xPosToRead < image.width) &&
+        while ((xPosToRead < image.width) &&
               !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
         {
             tempCharValues[index] = firstChar + index;
@@ -552,7 +552,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 
             int charWidth = 0;
 
-            while(!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
+            while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
 
             tempCharRecs[index].width = charWidth;
 
@@ -648,11 +648,11 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         rbmfFileData = (unsigned int *)malloc(numPixelBits * sizeof(unsigned int));
 
-        for(int i = 0; i < numPixelBits; i++) fread(&rbmfFileData[i], sizeof(unsigned int), 1, rbmfFile);
+        for (int i = 0; i < numPixelBits; i++) fread(&rbmfFileData[i], sizeof(unsigned int), 1, rbmfFile);
 
         rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars * sizeof(unsigned char));
 
-        for(int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
+        for (int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
 
         // Re-construct image from rbmfFileData
         //-----------------------------------------

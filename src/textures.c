@@ -1612,7 +1612,7 @@ static Image LoadDDS(const char *fileName)
 
                 image.mipmaps = header.mipmapCount;
 
-                switch(header.ddspf.fourCC)
+                switch (header.ddspf.fourCC)
                 {
                     case FOURCC_DXT1:
                     {

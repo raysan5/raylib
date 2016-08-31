@@ -2451,7 +2451,7 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     printf("%s, numTouches: %d %s%s%s%s\n", emscripten_event_type_to_string(eventType), event->numTouches,
            event->ctrlKey ? " CTRL" : "", event->shiftKey ? " SHIFT" : "", event->altKey ? " ALT" : "", event->metaKey ? " META" : "");
 
-    for(int i = 0; i < event->numTouches; ++i)
+    for (int i = 0; i < event->numTouches; ++i)
     {
         const EmscriptenTouchPoint *t = &event->touches[i];
 

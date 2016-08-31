@@ -270,25 +270,25 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
             // Back Face
-            rlNormal3f( 0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
+            rlNormal3f(0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Left Of The Texture and Quad
             // Top Face
-            rlNormal3f( 0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
+            rlNormal3f(0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
             // Bottom Face
-            rlNormal3f( 0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
+            rlNormal3f(0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
             // Right face
-            rlNormal3f( 1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
+            rlNormal3f(1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
@@ -1905,14 +1905,14 @@ static Mesh LoadOBJ(const char *fileName)
                 }
                 else if (dataType == 'n')    // Read normals
                 {
-                    fscanf(objFile, "%f %f %f", &midNormals[countNormals].x, &midNormals[countNormals].y, &midNormals[countNormals].z );
+                    fscanf(objFile, "%f %f %f", &midNormals[countNormals].x, &midNormals[countNormals].y, &midNormals[countNormals].z);
                     countNormals++;
 
                     fscanf(objFile, "%c", &dataType);
                 }
                 else    // Read vertex
                 {
-                    fscanf(objFile, "%f %f %f", &midVertices[countVertex].x, &midVertices[countVertex].y, &midVertices[countVertex].z );
+                    fscanf(objFile, "%f %f %f", &midVertices[countVertex].x, &midVertices[countVertex].y, &midVertices[countVertex].z);
                     countVertex++;
 
                     fscanf(objFile, "%c", &dataType);
