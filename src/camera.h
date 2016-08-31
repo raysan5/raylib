@@ -348,7 +348,7 @@ void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey,
 }
 
 // Set camera mouse sensitivity (1st person and 3rd person cameras)
-void SetCameracameraMouseSensitivity(float sensitivity)
+void SetCameraMouseSensitivity(float sensitivity)
 {
     cameraMouseSensitivity = (sensitivity/10000.0f);
 }

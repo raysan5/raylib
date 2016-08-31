@@ -6,7 +6,7 @@
 *   The following types:
 *       Color, Vector2, Vector3, Rectangle, Ray, Camera, Camera2D
 *   are treated as objects with named fields, same as in C.
-*   
+*
 *   Lua defines utility functions for creating those objects.
 *   Usage:
 *       local cl = Color(255,255,255,255)
@@ -27,7 +27,7 @@
 *   NOTE 02:
 *   Some raylib functions take a pointer to an array, and the size of that array.
 *   The equivalent Lua functions take only an array table of the specified type UNLESS
-*   it's a pointer to a large char array (e.g. for images), then it takes (and potentially returns) 
+*   it's a pointer to a large char array (e.g. for images), then it takes (and potentially returns)
 *   a Lua string (without the size argument, as Lua strings are sized by default).
 *
 *   NOTE 03:
@@ -362,7 +362,7 @@ static void LuaBuildOpaqueMetatables(void)
     lua_pushcfunction(L, &LuaIndexTexture2D);
     lua_setfield(L, -2, "__index");
     lua_pop(L, 1);
-    
+
     luaL_newmetatable(L, "RenderTexture2D");
     lua_pushcfunction(L, &LuaIndexRenderTexture2D);
     lua_setfield(L, -2, "__index");
@@ -3112,7 +3112,7 @@ int lua_TraceLog(lua_State* L)
     lua_getfield(L, 1, "format"); /// fmt, args..., [string], format()
     lua_rotate(L, 1, 2); /// [string], format(), fmt, args...
     lua_call(L, num_args, 1); /// [string], formatted_string
-    
+
     TraceLog(arg1, "%s", luaL_checkstring(L,-1));
     return 0;
 }
@@ -3525,7 +3525,7 @@ int lua_QuaternionTransform(lua_State* L)
 
 // raylib Functions (and data types) list
 static luaL_Reg raylib_functions[] = {
-    
+
     // Register non-opaque data types
     REG(Color)
     REG(Vector2)
@@ -3547,7 +3547,7 @@ static luaL_Reg raylib_functions[] = {
     REG(ToggleFullscreen)
     REG(GetScreenWidth)
     REG(GetScreenHeight)
-    
+
     REG(ShowCursor)
     REG(HideCursor)
     REG(IsCursorHidden)
@@ -3563,11 +3563,11 @@ static luaL_Reg raylib_functions[] = {
     REG(End3dMode)
     REG(BeginTextureMode)
     REG(EndTextureMode)
-    
+
     REG(GetMouseRay)
     REG(GetWorldToScreen)
     REG(GetCameraMatrix)
-    
+
 #if defined(PLATFORM_WEB)
     REG(SetDrawingLoop)
 #else
@@ -3575,7 +3575,7 @@ static luaL_Reg raylib_functions[] = {
 #endif
     REG(GetFPS)
     REG(GetFrameTime)
-    
+
     REG(GetColor)
     REG(GetHexValue)
     REG(ColorToFloat)
@@ -3585,13 +3585,13 @@ static luaL_Reg raylib_functions[] = {
     REG(Fade)
     REG(SetConfigFlags)
     REG(ShowLogo)
-    
+
     REG(IsFileDropped)
     REG(GetDroppedFiles)
     REG(ClearDroppedFiles)
     REG(StorageSaveValue)
     REG(StorageLoadValue)
-    
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
     REG(IsKeyPressed)
     REG(IsKeyDown)
@@ -3599,7 +3599,7 @@ static luaL_Reg raylib_functions[] = {
     REG(IsKeyUp)
     REG(GetKeyPressed)
     REG(SetExitKey)
-    
+
     REG(IsGamepadAvailable)
     REG(GetGamepadAxisMovement)
     REG(IsGamepadButtonPressed)
@@ -3643,13 +3643,13 @@ static luaL_Reg raylib_functions[] = {
     REG(SetCameraPosition)
     REG(SetCameraTarget)
     REG(SetCameraFovy)
-    
+
     REG(SetCameraPanControl)
     REG(SetCameraAltControl)
     REG(SetCameraSmoothZoomControl)
     REG(SetCameraMoveControls)
     REG(SetCameraMouseSensitivity)
-    
+
     REG(DrawPixel)
     REG(DrawPixelV)
     REG(DrawLine)
@@ -3668,7 +3668,7 @@ static luaL_Reg raylib_functions[] = {
     REG(DrawPoly)
     REG(DrawPolyEx)
     REG(DrawPolyExLines)
-    
+
     REG(CheckCollisionRecs)
     REG(CheckCollisionCircles)
     REG(CheckCollisionCircleRec)
@@ -3676,7 +3676,7 @@ static luaL_Reg raylib_functions[] = {
     REG(CheckCollisionPointRec)
     REG(CheckCollisionPointCircle)
     REG(CheckCollisionPointTriangle)
-    
+
     REG(LoadImage)
     REG(LoadImageEx)
     REG(LoadImageRaw)
@@ -3712,13 +3712,13 @@ static luaL_Reg raylib_functions[] = {
     REG(ImageColorBrightness)
     REG(GenTextureMipmaps)
     REG(UpdateTexture)
-    
+
     REG(DrawTexture)
     REG(DrawTextureV)
     REG(DrawTextureEx)
     REG(DrawTextureRec)
     REG(DrawTexturePro)
-    
+
     REG(GetDefaultFont)
     REG(LoadSpriteFont)
     REG(UnloadSpriteFont)
@@ -3727,7 +3727,7 @@ static luaL_Reg raylib_functions[] = {
     REG(MeasureText)
     REG(MeasureTextEx)
     REG(DrawFPS)
-    
+
     REG(DrawLine3D)
     REG(DrawCircle3D)
     REG(DrawCube)
@@ -3744,7 +3744,7 @@ static luaL_Reg raylib_functions[] = {
     REG(DrawGrid)
     REG(DrawGizmo)
     REG(DrawLight)
-    
+
     REG(LoadModel)
     REG(LoadModelEx)
     REG(LoadModelFromRES)
@@ -3756,7 +3756,7 @@ static luaL_Reg raylib_functions[] = {
     REG(LoadStandardMaterial)
     REG(UnloadMaterial)
     //REG(GenMesh*)     // Not ready yet...
-    
+
     REG(DrawModel)
     REG(DrawModelEx)
     REG(DrawModelWires)
@@ -3771,7 +3771,7 @@ static luaL_Reg raylib_functions[] = {
     REG(CheckCollisionRaySphereEx)
     REG(CheckCollisionRayBox)
     REG(ResolveCollisionCubicmap)
-    
+
     REG(LoadShader)
     REG(UnloadShader)
     REG(GetDefaultShader)
@@ -3789,13 +3789,13 @@ static luaL_Reg raylib_functions[] = {
     REG(EndBlendMode)
     REG(CreateLight)
     REG(DestroyLight)
-    
+
     REG(InitVrDevice)
     REG(CloseVrDevice)
     REG(IsVrDeviceReady)
     REG(UpdateVrTracking)
     REG(ToggleVrMode)
-    
+
     REG(InitAudioDevice)
     REG(CloseAudioDevice)
     REG(IsAudioDeviceReady)
@@ -3810,7 +3810,7 @@ static luaL_Reg raylib_functions[] = {
     REG(IsSoundPlaying)
     REG(SetSoundVolume)
     REG(SetSoundPitch)
-    
+
     REG(LoadMusicStream)
     REG(UnloadMusicStream)
     REG(UpdateMusicStream)
@@ -3823,7 +3823,7 @@ static luaL_Reg raylib_functions[] = {
     REG(SetMusicPitch)
     REG(GetMusicTimeLength)
     REG(GetMusicTimePlayed)
-    
+
     REG(InitAudioStream)
     REG(UpdateAudioStream)
     REG(CloseAudioStream)
@@ -3906,7 +3906,7 @@ RLUADEF void InitLuaDevice(void)
 {
     mainLuaState = luaL_newstate();
     L = mainLuaState;
-    
+
     LuaStartEnum();
     LuaSetEnum("FULLSCREEN_MODE", 1);
     LuaSetEnum("SHOW_LOGO", 2);
@@ -4001,7 +4001,7 @@ RLUADEF void InitLuaDevice(void)
     LuaSetEnum("PS3_BUTTON_L2", 8);
     LuaSetEnum("PS3_BUTTON_SELECT", 9);
     LuaSetEnum("PS3_BUTTON_START", 10);
-    
+
     LuaSetEnum("XBOX_BUTTON_A", 0);
     LuaSetEnum("XBOX_BUTTON_B", 1);
     LuaSetEnum("XBOX_BUTTON_X", 2);
@@ -4086,9 +4086,9 @@ RLUADEF void InitLuaDevice(void)
     LuaSetEnum("ADDITIVE", BLEND_ADDITIVE);
     LuaSetEnum("MULTIPLIED", BLEND_MULTIPLIED);
     LuaEndEnum("BlendMode");
-    
+
     LuaStartEnum();
-    LuaSetEnum("POINT", LIGHT_POINT); 
+    LuaSetEnum("POINT", LIGHT_POINT);
     LuaSetEnum("DIRECTIONAL", LIGHT_DIRECTIONAL);
     LuaSetEnum("SPOT", LIGHT_SPOT);
     LuaEndEnum("LightType");
@@ -4114,7 +4114,7 @@ RLUADEF void InitLuaDevice(void)
     LuaSetEnum("FIRST_PERSON", CAMERA_FIRST_PERSON);
     LuaSetEnum("THIRD_PERSON", CAMERA_THIRD_PERSON);
     LuaEndEnum("CameraMode");
-    
+
     LuaStartEnum();
     LuaSetEnum("DEFAULT_DEVICE", HMD_DEFAULT_DEVICE);
     LuaSetEnum("OCULUS_RIFT_DK2", HMD_OCULUS_RIFT_DK2);
@@ -4138,9 +4138,9 @@ RLUADEF void InitLuaDevice(void)
     lua_pushboolean(L, true);
 #if defined(PLATFORM_DESKTOP)
     lua_setglobal(L, "PLATFORM_DESKTOP");
-#elif defined(PLATFORM_ANDROID) 
+#elif defined(PLATFORM_ANDROID)
     lua_setglobal(L, "PLATFORM_ANDROID");
-#elif defined(PLATFORM_RPI) 
+#elif defined(PLATFORM_RPI)
     lua_setglobal(L, "PLATFORM_RPI");
 #elif defined(PLATFORM_WEB)
     lua_setglobal(L, "PLATFORM_WEB");
@@ -4148,7 +4148,7 @@ RLUADEF void InitLuaDevice(void)
 
     luaL_openlibs(L);
     LuaBuildOpaqueMetatables();
-    
+
     LuaRegisterRayLib(0);
 }
 
@@ -4173,7 +4173,7 @@ RLUADEF void ExecuteLuaCode(const char *code)
     }
 
     int result = luaL_dostring(L, code);
-    
+
     switch (result)
     {
         case LUA_OK: break;
@@ -4193,7 +4193,7 @@ RLUADEF void ExecuteLuaFile(const char *filename)
     }
 
     int result = luaL_dofile(L, filename);
-    
+
     switch (result)
     {
         case LUA_OK: break;

@@ -68,11 +68,11 @@ typedef struct Sound {
 
 // Wave type, defines audio wave data
 typedef struct Wave {
+    unsigned int sampleCount;   // Number of samples
+    unsigned int sampleRate;    // Frequency (samples per second)
+    unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    unsigned int channels;      // Number of channels (1-mono, 2-stereo)
     void *data;                 // Buffer data pointer
-    unsigned int dataSize;      // Data size in bytes
-    unsigned int sampleRate;    // Samples per second to be played
-    short bitsPerSample;        // Sample size in bits
-    short channels;
 } Wave;
 
 // Music type (file streaming from memory)
@@ -110,6 +110,7 @@ bool IsAudioDeviceReady(void);                                  // Check if audi
 Sound LoadSound(char *fileName);                                // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
+void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
 void PauseSound(Sound sound);                                   // Pause a sound

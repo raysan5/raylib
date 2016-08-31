@@ -4,7 +4,7 @@
 #
 #   Game template makefile
 #
-#   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+#   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 #    
 #   This software is provided "as-is", without any express or implied warranty. In no event 
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -27,7 +27,6 @@
 LOCAL_PATH := $(call my-dir)
 
 # OpenAL module (prebuilt static library)
-# NOTE: Shared library brokes the build! Why?
 #--------------------------------------------------------------------
 include $(CLEAR_VARS)
 
@@ -41,7 +40,6 @@ LOCAL_SRC_FILES := libs/libopenal.a
 LOCAL_EXPORT_C_INCLUDES := include
 
 # Build static library
-#include $(PREBUILT_SHARED_LIBRARY)
 include $(PREBUILT_STATIC_LIBRARY)
 #--------------------------------------------------------------------
 

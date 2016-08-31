@@ -49,7 +49,7 @@ ipch/
 # Ignore compiled binaries
 *.o
 *.exe
-!tools/rrem.exe
+!tools/rREM/rrem.exe
 
 # Ignore files build by xcode
 *.mode*v*
