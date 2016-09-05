@@ -427,7 +427,9 @@ typedef struct Shader {
 
     // Uniform locations
     int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
-    int tintColorLoc;       // Diffuse color uniform location point (fragment shader)
+    int colDiffuseLoc;      // Diffuse color uniform location point (fragment shader)
+    int colAmbientLoc;      // Ambient color uniform location point (fragment shader)
+    int colSpecularLoc;     // Specular color uniform location point (fragment shader)
 
     // Texture map locations (generic for any kind of map)
     int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
@@ -464,7 +466,7 @@ typedef struct LightData {
     int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
 
     Vector3 position;       // Light position
-    Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
+    Vector3 target;         // Light direction: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
     float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
 
     Color diffuse;          // Light diffuse color

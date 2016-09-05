@@ -168,7 +168,9 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
         // Uniform locations
         int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
-        int tintColorLoc;       // Color uniform location point (fragment shader)
+        int colDiffuseLoc;       // Color uniform location point (fragment shader)
+        int colAmbientLoc;      // Ambient color uniform location point (fragment shader)
+        int colSpecularLoc;     // Specular color uniform location point (fragment shader)
 
         // Texture map locations (generic for any kind of map)
         int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
