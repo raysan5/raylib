@@ -548,7 +548,7 @@ void ImageFormat(Image *image, int newFormat)
 {
     if (image->format != newFormat)
     {
-        if ((image->format < 8) && (newFormat < 8))
+        if ((image->format < COMPRESSED_DXT1_RGB) && (newFormat < COMPRESSED_DXT1_RGB))
         {
             Color *pixels = GetImageData(*image);
 
@@ -676,12 +676,40 @@ void ImageFormat(Image *image, int newFormat)
     }
 }
 
+// Apply alpha mask to image
+// NOTE: alphaMask must be should be same size as image
+void ImageAlphaMask(Image *image, Image alphaMask)
+{
+    if (image->format >= COMPRESSED_DXT1_RGB)
+    {
+        TraceLog(WARNING, "Alpha mask can not be applied to compressed data formats");
+        return;
+    }
+    else
+    {
+        // Force mask to be Grayscale
+        Image mask = ImageCopy(alphaMask);
+        ImageFormat(&mask, UNCOMPRESSED_GRAYSCALE);
+        
+        // Convert image to RGBA
+        if (image->format != UNCOMPRESSED_R8G8B8A8) ImageFormat(image, UNCOMPRESSED_R8G8B8A8);
+
+        // Apply alpha mask to alpha channel
+        for (int i = 0, k = 3; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 4)
+        {
+            ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+        }
+
+        UnloadImage(mask);
+    }
+}
+
 // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 // NOTE: In case selected bpp do not represent an known 16bit format,
 // dithered data is stored in the LSB part of the unsigned short
 void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
 {
-    if (image->format >= 8)
+    if (image->format >= COMPRESSED_DXT1_RGB)
     {
         TraceLog(WARNING, "Compressed data formats can not be dithered");
         return;
