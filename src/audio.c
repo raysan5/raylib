@@ -218,11 +218,15 @@ Wave LoadWave(const char *fileName)
 }
 
 // Load wave data from float array data (32bit)
-Wave LoadWaveEx(float *data, int sampleRate, int sampleSize, int channels)
+Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels)
 {
     Wave wave;
     
     wave.data = data;
+    wave.sampleCount = sampleCount;
+    wave.sampleRate = sampleRate;
+    wave.sampleSize = sampleSize;
+    wave.channels = channels;
     
     WaveFormat(&wave, sampleRate, sampleSize, channels);
     
@@ -579,15 +583,15 @@ Wave WaveCopy(Wave wave)
 {
     Wave newWave;
 
-    if (wave.sampleSize == 8) newWave.data = (unsigned char *)malloc(wave.sampleCount*sizeof(unsigned char));
-    else if (wave.sampleSize == 16) newWave.data = (short *)malloc(wave.sampleCount*sizeof(short));
-    else if (wave.sampleSize == 32) newWave.data = (float *)malloc(wave.sampleCount*sizeof(float));
+    if (wave.sampleSize == 8) newWave.data = (unsigned char *)malloc(wave.sampleCount*wave.channels*sizeof(unsigned char));
+    else if (wave.sampleSize == 16) newWave.data = (short *)malloc(wave.sampleCount*wave.channels*sizeof(short));
+    else if (wave.sampleSize == 32) newWave.data = (float *)malloc(wave.sampleCount*wave.channels*sizeof(float));
     else TraceLog(WARNING, "Wave sample size not supported for copy");
 
     if (newWave.data != NULL)
     {
         // NOTE: Size must be provided in bytes
-        memcpy(newWave.data, wave.data, wave.sampleCount);
+        memcpy(newWave.data, wave.data, wave.sampleCount*wave.channels*wave.sampleSize/8);
 
         newWave.sampleCount = wave.sampleCount;
         newWave.sampleRate = wave.sampleRate;
@@ -602,7 +606,23 @@ Wave WaveCopy(Wave wave)
 // NOTE: Security check in case of out-of-range
 void WaveCrop(Wave *wave, int initSample, int finalSample)
 {
-    // TODO: Crop wave to a samples range
+    if ((initSample >= 0) && (finalSample > 0) && (finalSample < wave->sampleCount))
+    {
+        // TODO: Review cropping (it could be simplified...)
+        
+        float *samples = GetWaveData(*wave);
+        float *cropSamples = (float *)malloc((finalSample - initSample)*sizeof(float));
+        
+        for (int i = initSample; i < finalSample; i++) cropSamples[i] = samples[i];
+
+        free(wave->data);
+        wave->data = cropSamples;
+        int sampleSize = wave->sampleSize;
+        wave->sampleSize = 32;
+
+        WaveFormat(wave, wave->sampleRate, sampleSize, wave->channels);
+    }
+    else TraceLog(WARNING, "Wave crop range out of bounds");
 }
 
 // Get samples data from wave as a floats array

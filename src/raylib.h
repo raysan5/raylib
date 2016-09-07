@@ -910,7 +910,7 @@ RLAPI void CloseAudioDevice(void);                                    // Close t
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file into RAM
-RLAPI Wave LoadWaveEx(float *data, int sampleRate, int sampleSize, int channels); // Load wave data from float array data (32bit)
+RLAPI Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from float array data (32bit)
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound to memory
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 RLAPI Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
