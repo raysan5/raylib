@@ -337,7 +337,7 @@ static int screenHeight;    // Default framebuffer height
 // Lighting data
 static Light lights[MAX_LIGHTS];            // Lights pool
 static int lightsCount = 0;                 // Enabled lights counter
-static int lightsLocs[MAX_LIGHTS][8];       // 8 possible location points per light: 
+static int lightsLocs[MAX_LIGHTS][8];       // Lights location points in shader: 8 possible points per light: 
                                             // enabled, type, position, target, radius, diffuse, intensity, coneAngle
 
 //----------------------------------------------------------------------------------
@@ -3713,7 +3713,7 @@ static void SetShaderLightsValues(Shader shader)
                 } break;
                 case LIGHT_DIRECTIONAL:
                 {
-                    Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                    Vector3 direction = VectorSubtract(lights[i]->target, lights[i]->position);
                     VectorNormalize(&direction);
                     glUniform3f(lightsLocs[i][3], direction.x, direction.y, direction.z);
                 } break;
@@ -3721,7 +3721,7 @@ static void SetShaderLightsValues(Shader shader)
                 {
                     glUniform3f(lightsLocs[i][2], lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
                     
-                    Vector3 direction = { lights[i]->target.x - lights[i]->position.x, lights[i]->target.y - lights[i]->position.y, lights[i]->target.z - lights[i]->position.z };
+                    Vector3 direction = VectorSubtract(lights[i]->target, lights[i]->position);
                     VectorNormalize(&direction);
                     glUniform3f(lightsLocs[i][3], direction.x, direction.y, direction.z);
                     

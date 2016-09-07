@@ -677,7 +677,8 @@ void ImageFormat(Image *image, int newFormat)
 }
 
 // Apply alpha mask to image
-// NOTE: alphaMask must be should be same size as image
+// NOTE 1: Returned image is RGBA - 32bit
+// NOTE 2: alphaMask should be same size as image
 void ImageAlphaMask(Image *image, Image alphaMask)
 {
     if (image->format >= COMPRESSED_DXT1_RGB)
