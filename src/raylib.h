@@ -484,13 +484,6 @@ typedef struct Ray {
     Vector3 direction;      // Ray direction
 } Ray;
 
-// Sound source type
-typedef struct Sound {
-    unsigned int source;    // OpenAL audio source id
-    unsigned int buffer;    // OpenAL audio buffer id
-    int format;             // OpenAL audio format specifier
-} Sound;
-
 // Wave type, defines audio wave data
 typedef struct Wave {
     unsigned int sampleCount;   // Number of samples
@@ -499,6 +492,13 @@ typedef struct Wave {
     unsigned int channels;      // Number of channels (1-mono, 2-stereo)
     void *data;                 // Buffer data pointer
 } Wave;
+
+// Sound source type
+typedef struct Sound {
+    unsigned int source;    // OpenAL audio source id
+    unsigned int buffer;    // OpenAL audio buffer id
+    int format;             // OpenAL audio format specifier
+} Sound;
 
 // Music type (file streaming from memory)
 // NOTE: Anything longer than ~10 seconds should be streamed
@@ -909,10 +909,13 @@ RLAPI void InitAudioDevice(void);                                     // Initial
 RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 
-RLAPI Sound LoadSound(char *fileName);                                // Load sound to memory
+RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file into RAM
+RLAPI Wave LoadWaveEx(float *data, int sampleRate, int sampleSize, int channels); // Load wave data from float array data (32bit)
+RLAPI Sound LoadSound(const char *fileName);                          // Load sound to memory
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 RLAPI Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 RLAPI void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
+RLAPI void UnloadWave(Wave wave);
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
 RLAPI void PauseSound(Sound sound);                                   // Pause a sound
@@ -921,8 +924,11 @@ RLAPI void StopSound(Sound sound);                                    // Stop pl
 RLAPI bool IsSoundPlaying(Sound sound);                               // Check if a sound is currently playing
 RLAPI void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
 RLAPI void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
-
-RLAPI Music LoadMusicStream(char *fileName);                          // Load music stream from file
+RLAPI void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels);  // Convert wave data to desired format
+RLAPI Wave WaveCopy(Wave wave);                                       // Copy a wave to a new wave
+RLAPI void WaveCrop(Wave *wave, int initSample, int finalSample);     // Crop a wave to defined samples range
+RLAPI float *GetWaveData(Wave wave);                                  // Get samples data from wave as a floats array
+RLAPI Music LoadMusicStream(const char *fileName);                    // Load music stream from file
 RLAPI void UnloadMusicStream(Music music);                            // Unload music stream
 RLAPI void PlayMusicStream(Music music);                              // Start music playing (open stream)
 RLAPI void UpdateMusicStream(Music music);                            // Updates buffers for music streaming

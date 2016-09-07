@@ -126,9 +126,8 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static Wave LoadWAV(const char *fileName);         // Load WAV file
-static Wave LoadOGG(char *fileName);               // Load OGG file
-static void UnloadWave(Wave wave);                 // Unload wave data
+static Wave LoadWAV(const char *fileName);          // Load WAV file
+static Wave LoadOGG(const char *fileName);          // Load OGG file
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -206,20 +205,39 @@ bool IsAudioDeviceReady(void)
 // Module Functions Definition - Sounds loading and playing (.WAV)
 //----------------------------------------------------------------------------------
 
-// Load sound to memory
-// NOTE: The entire file is loaded to memory to be played (no-streaming)
-Sound LoadSound(char *fileName)
+// Load wave data from file into RAM
+Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
 
     if (strcmp(GetExtension(fileName), "wav") == 0) wave = LoadWAV(fileName);
     else if (strcmp(GetExtension(fileName), "ogg") == 0) wave = LoadOGG(fileName);
-    else TraceLog(WARNING, "[%s] Sound extension not recognized, it can't be loaded", fileName);
+    else TraceLog(WARNING, "[%s] File extension not recognized, it can't be loaded", fileName);
 
+    return wave;
+}
+
+// Load wave data from float array data (32bit)
+Wave LoadWaveEx(float *data, int sampleRate, int sampleSize, int channels)
+{
+    Wave wave;
+    
+    wave.data = data;
+    
+    WaveFormat(&wave, sampleRate, sampleSize, channels);
+    
+    return wave;
+}
+
+// Load sound to memory
+// NOTE: The entire file is loaded to memory to be played (no-streaming)
+Sound LoadSound(const char *fileName)
+{
+    Wave wave = LoadWave(fileName);
+    
     Sound sound = LoadSoundFromWave(wave);
-
-    // Sound is loaded, we can unload wave
-    UnloadWave(wave);
+    
+    UnloadWave(wave);       // Sound is loaded, we can unload wave
 
     return sound;
 }
@@ -401,6 +419,14 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
     return sound;
 }
 
+// Unload Wave data
+void UnloadWave(Wave wave)
+{
+    free(wave.data);
+
+    TraceLog(INFO, "Unloaded wave data from RAM");
+}
+
 // Unload sound
 void UnloadSound(Sound sound)
 {
@@ -504,12 +530,102 @@ void SetSoundPitch(Sound sound, float pitch)
     alSourcef(sound.source, AL_PITCH, pitch);
 }
 
+// Convert wave data to desired format
+void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
+{
+    if (wave->sampleSize != sampleSize)
+    {
+        float *samples = GetWaveData(*wave);   //Color *pixels = GetImageData(*image);
+
+        free(wave->data);
+
+        //image->format = newFormat;
+
+        if (sampleSize == 8)
+        {
+            wave->data = (unsigned char *)malloc(wave->sampleCount*sizeof(unsigned char));
+
+            for (int i = 0; i < wave->sampleCount; i++)
+            {
+                ((unsigned char *)wave->data)[i] = (unsigned char)((float)samples[i]);  // TODO: review conversion
+            }
+        }
+        else if (sampleSize == 16)
+        {
+            wave->data = (short *)malloc(wave->sampleCount*sizeof(short));
+            
+            for (int i = 0; i < wave->sampleCount; i++)
+            {
+                ((short *)wave->data)[i] = (short)((float)samples[i]);  // TODO: review conversion
+            }
+        }
+        else if (sampleSize == 32)
+        {
+            wave->data = (float *)malloc(wave->sampleCount*sizeof(float));
+            
+            for (int i = 0; i < wave->sampleCount; i++)
+            {
+                ((float *)wave->data)[i] = (float)samples[i];  // TODO: review conversion
+            }
+        }
+        else TraceLog(WARNING, "Wave formatting: Sample size not supported");
+    }
+    
+    // TODO: Consider channels (mono vs stereo)
+}
+
+// Copy a wave to a new wave
+Wave WaveCopy(Wave wave)
+{
+    Wave newWave;
+
+    if (wave.sampleSize == 8) newWave.data = (unsigned char *)malloc(wave.sampleCount*sizeof(unsigned char));
+    else if (wave.sampleSize == 16) newWave.data = (short *)malloc(wave.sampleCount*sizeof(short));
+    else if (wave.sampleSize == 32) newWave.data = (float *)malloc(wave.sampleCount*sizeof(float));
+    else TraceLog(WARNING, "Wave sample size not supported for copy");
+
+    if (newWave.data != NULL)
+    {
+        // NOTE: Size must be provided in bytes
+        memcpy(newWave.data, wave.data, wave.sampleCount);
+
+        newWave.sampleCount = wave.sampleCount;
+        newWave.sampleRate = wave.sampleRate;
+        newWave.sampleSize = wave.sampleSize;
+        newWave.channels = wave.channels;
+    }
+
+    return newWave;
+}
+
+// Crop a wave to defined samples range
+// NOTE: Security check in case of out-of-range
+void WaveCrop(Wave *wave, int initSample, int finalSample)
+{
+    // TODO: Crop wave to a samples range
+}
+
+// Get samples data from wave as a floats array
+float *GetWaveData(Wave wave)
+{
+    float *samples = (float *)malloc(wave.sampleCount*sizeof(float));
+    
+    for (int i = 0; i < wave.sampleCount; i++)
+    {
+        if (wave.sampleSize == 8) samples[i] = (float)((unsigned char *)wave.data)[i];  // TODO: review conversion
+        else if (wave.sampleSize == 16) samples[i] = (float)((short *)wave.data)[i];    // TODO: review conversion
+        else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];           // TODO: review conversion
+    }
+    
+    return samples;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Music loading and stream playing (.OGG)
 //----------------------------------------------------------------------------------
 
 // Load music stream from file
-Music LoadMusicStream(char *fileName)
+Music LoadMusicStream(const char *fileName)
 {
     Music music = (MusicData *)malloc(sizeof(MusicData));
 
@@ -1013,7 +1129,7 @@ static Wave LoadWAV(const char *fileName)
 
 // Load OGG file into Wave structure
 // NOTE: Using stb_vorbis library
-static Wave LoadOGG(char *fileName)
+static Wave LoadOGG(const char *fileName)
 {
     Wave wave;
 
@@ -1052,14 +1168,6 @@ static Wave LoadOGG(char *fileName)
     }
 
     return wave;
-}
-
-// Unload Wave data
-static void UnloadWave(Wave wave)
-{
-    free(wave.data);
-
-    TraceLog(INFO, "Unloaded wave data from RAM");
 }
 
 // Some required functions for audio standalone module version
