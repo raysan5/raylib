@@ -535,6 +535,7 @@ void SetSoundPitch(Sound sound, float pitch)
 }
 
 // Convert wave data to desired format
+// TODO: Consider channels (mono - stereo)
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
     if (wave->sampleSize != sampleSize)
@@ -542,8 +543,12 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
         float *samples = GetWaveData(*wave);   //Color *pixels = GetImageData(*image);
 
         free(wave->data);
+        
+        wave->sampleSize = sampleSize;
 
-        //image->format = newFormat;
+        //sample *= 4.0f;    // Arbitrary gain to get reasonable output volume...
+        //if (sample > 1.0f) sample = 1.0f;
+        //if (sample < -1.0f) sample = -1.0f;
 
         if (sampleSize == 8)
         {
@@ -551,7 +556,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 
             for (int i = 0; i < wave->sampleCount; i++)
             {
-                ((unsigned char *)wave->data)[i] = (unsigned char)((float)samples[i]);  // TODO: review conversion
+                ((unsigned char *)wave->data)[i] = (unsigned char)((float)samples[i]*127 + 128);
             }
         }
         else if (sampleSize == 16)
@@ -560,7 +565,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
             
             for (int i = 0; i < wave->sampleCount; i++)
             {
-                ((short *)wave->data)[i] = (short)((float)samples[i]);  // TODO: review conversion
+                ((short *)wave->data)[i] = (short)((float)samples[i]*32000);  // SHRT_MAX = 32767
             }
         }
         else if (sampleSize == 32)
@@ -569,13 +574,17 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
             
             for (int i = 0; i < wave->sampleCount; i++)
             {
-                ((float *)wave->data)[i] = (float)samples[i];  // TODO: review conversion
+                ((float *)wave->data)[i] = (float)samples[i];
             }
         }
         else TraceLog(WARNING, "Wave formatting: Sample size not supported");
     }
     
-    // TODO: Consider channels (mono vs stereo)
+    // NOTE: Only supported 1 or 2 channels (mono or stereo)
+    if ((channels > 0) && (channels < 3) && (wave->channels != channels))
+    {
+        // TODO: Add/remove channels interlaced data if required...
+    }
 }
 
 // Copy a wave to a new wave
@@ -626,15 +635,16 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
 }
 
 // Get samples data from wave as a floats array
+// NOTE: Returned sample values are normalized to range [-1..1]
 float *GetWaveData(Wave wave)
 {
     float *samples = (float *)malloc(wave.sampleCount*sizeof(float));
     
     for (int i = 0; i < wave.sampleCount; i++)
     {
-        if (wave.sampleSize == 8) samples[i] = (float)((unsigned char *)wave.data)[i];  // TODO: review conversion
-        else if (wave.sampleSize == 16) samples[i] = (float)((short *)wave.data)[i];    // TODO: review conversion
-        else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];           // TODO: review conversion
+        if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
+        else if (wave.sampleSize == 16) samples[i] = (float)((short *)wave.data)[i]/32767.0f;
+        else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
     }
     
     return samples;
