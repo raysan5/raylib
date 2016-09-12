@@ -999,8 +999,11 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 }
 
 // Draw an image (source) within an image (destination)
+// TODO: Feel this function could be simplified...
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
 {
+    bool cropRequired = false;
+    
     // Security checks to avoid size and rectangle issues (out of bounds)
     // Check that srcRec is inside src image
     if (srcRec.x < 0) srcRec.x = 0;
@@ -1016,47 +1019,69 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
     {
         srcRec.height = src.height - srcRec.y;
         TraceLog(WARNING, "Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
+        cropRequired = true;
     }
-
-    // Check that dstRec is inside dst image
-    if (dstRec.x < 0) dstRec.x = 0;
-    if (dstRec.y < 0) dstRec.y = 0;
-
-    if ((dstRec.x + dstRec.width) > dst->width)
-    {
-        dstRec.width = dst->width - dstRec.x;
-        TraceLog(WARNING, "Destination rectangle width out of bounds, rescaled width: %i", dstRec.width);
-    }
-
-    if ((dstRec.y + dstRec.height) > dst->height)
-    {
-        dstRec.height = dst->height - dstRec.y;
-        TraceLog(WARNING, "Destination rectangle height out of bounds, rescaled height: %i", dstRec.height);
-    }
-
-    // Get dstination image data as Color pixels array to work with it
-    Color *dstPixels = GetImageData(*dst);
-
+    
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
     ImageCrop(&srcCopy, srcRec);        // Crop source image to desired source rectangle
-
+    
+    // Check that dstRec is inside dst image
+    // TODO: Allow negative position within destination with cropping
+    if (dstRec.x < 0) dstRec.x = 0;
+    if (dstRec.y < 0) dstRec.y = 0;
+    
     // Scale source image in case destination rec size is different than source rec size
     if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height))
     {
         ImageResize(&srcCopy, dstRec.width, dstRec.height);
     }
 
-    // Get source image data as Color array
+    if ((dstRec.x + dstRec.width) > dst->width)
+    {
+        dstRec.width = dst->width - dstRec.x;
+        TraceLog(WARNING, "Destination rectangle width out of bounds, rescaled width: %i", dstRec.width);
+        cropRequired = true;
+    }
+
+    if ((dstRec.y + dstRec.height) > dst->height)
+    {
+        dstRec.height = dst->height - dstRec.y;
+        TraceLog(WARNING, "Destination rectangle height out of bounds, rescaled height: %i", dstRec.height);
+        cropRequired = true;
+    }
+    
+    if (cropRequired)
+    {
+        // Crop destination rectangle if out of bounds
+        Rectangle crop = { 0, 0, dstRec.width, dstRec.height };
+        ImageCrop(&srcCopy, crop);
+    }
+   
+    // Get image data as Color pixels array to work with it
+    Color *dstPixels = GetImageData(*dst);
     Color *srcPixels = GetImageData(srcCopy);
 
-    UnloadImage(srcCopy);
+    UnloadImage(srcCopy);       // Source copy not required any more...
+    
+    Color srcCol, dstCol;
 
     // Blit pixels, copy source image into destination
+    // TODO: Probably out-of-bounds blitting could be considering here instead of so much cropping...
     for (int j = dstRec.y; j < (dstRec.y + dstRec.height); j++)
     {
         for (int i = dstRec.x; i < (dstRec.x + dstRec.width); i++)
         {
-            dstPixels[j*dst->width + i] = srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)];
+            // Alpha blending implementation
+            dstCol = dstPixels[j*dst->width + i];
+            srcCol = srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)];
+            
+            dstCol.r = ((srcCol.a*(srcCol.r - dstCol.r)) >> 8) + dstCol.r;
+            dstCol.g = ((srcCol.a*(srcCol.g - dstCol.g)) >> 8) + dstCol.g;
+            dstCol.b = ((srcCol.a*(srcCol.b - dstCol.b)) >> 8) + dstCol.b;
+            
+            dstPixels[j*dst->width + i] = dstCol;
+            
+            // TODO: Support other blending options
         }
     }
 
@@ -1074,7 +1099,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 {
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize / defaultFontSize;
+    int spacing = fontSize/defaultFontSize;
 
     Image imText = ImageTextEx(GetDefaultFont(), text, fontSize, spacing, color);
 
@@ -1098,7 +1123,8 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     Color *fontPixels = GetImageData(imFont);
 
     // Create image to store text
-    Color *pixels = (Color *)malloc(sizeof(Color)*(int)imSize.x*(int)imSize.y);
+    // NOTE: Pixels are initialized to BLANK color (0, 0, 0, 0)
+    Color *pixels = (Color *)calloc((int)imSize.x*(int)imSize.y, sizeof(Color));
 
     for (int i = 0; i < length; i++)
     {
@@ -1139,7 +1165,8 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 // Draw text (default font) within an image (destination)
 void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
 {
-    ImageDrawTextEx(dst, position, GetDefaultFont(), text, fontSize, 0, color);
+    // NOTE: For default font, sapcing is set to desired font size / default font size (10)
+    ImageDrawTextEx(dst, position, GetDefaultFont(), text, fontSize, fontSize/10, color);
 }
 
 // Draw text (custom sprite font) within an image (destination)
@@ -1438,19 +1465,19 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
                 // Bottom-left corner for texture and quad
-                rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
+                rlTexCoord2f((float)sourceRec.x/texture.width, (float)sourceRec.y/texture.height);
                 rlVertex2f(0.0f, 0.0f);
 
                 // Bottom-right corner for texture and quad
-                rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+                rlTexCoord2f((float)sourceRec.x/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
                 rlVertex2f(0.0f, destRec.height);
 
                 // Top-right corner for texture and quad
-                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+                rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
                 rlVertex2f(destRec.width, destRec.height);
 
                 // Top-left corner for texture and quad
-                rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+                rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)sourceRec.y/texture.height);
                 rlVertex2f(destRec.width, 0.0f);
             rlEnd();
         rlPopMatrix();
