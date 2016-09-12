@@ -1765,7 +1765,7 @@ static Image LoadPKM(const char *fileName)
 
             int size = image.width*image.height*bpp/8;  // Total data size in bytes
 
-            image.data = (unsigned char*)malloc(size * sizeof(unsigned char));
+            image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
 
             fread(image.data, 1, size, pkmFile);
 
@@ -1858,7 +1858,7 @@ static Image LoadKTX(const char *fileName)
             int dataSize;
             fread(&dataSize, sizeof(unsigned int), 1, ktxFile);
 
-            image.data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+            image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
 
             fread(image.data, 1, dataSize, ktxFile);
 

@@ -113,7 +113,7 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
             rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10)) * radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sin(DEG2RAD*(i + 10))*radius, centerY + cos(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
@@ -131,7 +131,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
                 
                 rlVertex2i(center.x, center.y);
                 rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 10)) * radius, center.y + cos(DEG2RAD*(i + 10)) * radius);
+                rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
             }
         rlEnd();
     }
@@ -146,8 +146,8 @@ void DrawCircleV(Vector2 center, float radius, Color color)
                 
                 rlVertex2i(center.x, center.y);
                 rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 10)) * radius, center.y + cos(DEG2RAD*(i + 10)) * radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 20)) * radius, center.y + cos(DEG2RAD*(i + 20)) * radius);
+                rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
+                rlVertex2f(center.x + sin(DEG2RAD*(i + 20))*radius, center.y + cos(DEG2RAD*(i + 20))*radius);
             }
         rlEnd();
         
@@ -165,7 +165,7 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
         for (int i = 0; i < 360; i += 10)
         {
             rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10)) * radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sin(DEG2RAD*(i + 10))*radius, centerY + cos(DEG2RAD*(i + 10))*radius);
         }
    rlEnd();
 }

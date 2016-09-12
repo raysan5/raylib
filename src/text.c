@@ -201,7 +201,7 @@ extern void LoadDefaultFont(void)
         defaultFont.charValues[i] = FONT_FIRST_CHAR + i;  // First char is 32
 
         defaultFont.charRecs[i].x = currentPosX;
-        defaultFont.charRecs[i].y = charsDivisor + currentLine * (charsHeight + charsDivisor);
+        defaultFont.charRecs[i].y = charsDivisor + currentLine*(charsHeight + charsDivisor);
         defaultFont.charRecs[i].width = charsWidth[i];
         defaultFont.charRecs[i].height = charsHeight;
 
@@ -297,7 +297,7 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize / defaultFontSize;
+    int spacing = fontSize/defaultFontSize;
 
     DrawTextEx(defaultFont, text, position, (float)fontSize, spacing, color);
 }
@@ -408,7 +408,7 @@ int MeasureText(const char *text, int fontSize)
 
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize / defaultFontSize;
+    int spacing = fontSize/defaultFontSize;
 
     vec = MeasureTextEx(defaultFont, text, fontSize, spacing);
 
@@ -539,7 +539,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     int xPosToRead = charSpacing;
 
     // Parse image data to get rectangle sizes
-    while ((lineSpacing + lineToRead * (charHeight + lineSpacing)) < image.height)
+    while ((lineSpacing + lineToRead*(charHeight + lineSpacing)) < image.height)
     {
         while ((xPosToRead < image.width) &&
               !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
@@ -547,7 +547,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
             tempCharValues[index] = firstChar + index;
 
             tempCharRecs[index].x = xPosToRead;
-            tempCharRecs[index].y = lineSpacing + lineToRead * (charHeight + lineSpacing);
+            tempCharRecs[index].y = lineSpacing + lineToRead*(charHeight + lineSpacing);
             tempCharRecs[index].height = charHeight;
 
             int charWidth = 0;
@@ -646,11 +646,11 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         int numPixelBits = rbmfHeader.imgWidth*rbmfHeader.imgHeight/32;
 
-        rbmfFileData = (unsigned int *)malloc(numPixelBits * sizeof(unsigned int));
+        rbmfFileData = (unsigned int *)malloc(numPixelBits*sizeof(unsigned int));
 
         for (int i = 0; i < numPixelBits; i++) fread(&rbmfFileData[i], sizeof(unsigned int), 1, rbmfFile);
 
-        rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars * sizeof(unsigned char));
+        rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars*sizeof(unsigned char));
 
         for (int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
 
@@ -701,7 +701,7 @@ static SpriteFont LoadRBMF(const char *fileName)
             spriteFont.charValues[i] = (int)rbmfHeader.firstChar + i;
 
             spriteFont.charRecs[i].x = currentPosX;
-            spriteFont.charRecs[i].y = charsDivisor + currentLine * ((int)rbmfHeader.charHeight + charsDivisor);
+            spriteFont.charRecs[i].y = charsDivisor + currentLine*((int)rbmfHeader.charHeight + charsDivisor);
             spriteFont.charRecs[i].width = (int)rbmfCharWidthData[i];
             spriteFont.charRecs[i].height = (int)rbmfHeader.charHeight;
 
@@ -714,11 +714,11 @@ static SpriteFont LoadRBMF(const char *fileName)
             if (testPosX > spriteFont.texture.width)
             {
                 currentLine++;
-                currentPosX = 2 * charsDivisor + (int)rbmfCharWidthData[i];
+                currentPosX = 2*charsDivisor + (int)rbmfCharWidthData[i];
                 testPosX = currentPosX;
 
                 spriteFont.charRecs[i].x = charsDivisor;
-                spriteFont.charRecs[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
+                spriteFont.charRecs[i].y = charsDivisor + currentLine*(rbmfHeader.charHeight + charsDivisor);
             }
             else currentPosX = testPosX;
         }

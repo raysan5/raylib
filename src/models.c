@@ -88,7 +88,7 @@ void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rot
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
                 rlVertex3f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius, 0.0f);
-                rlVertex3f(sin(DEG2RAD*(i + 10)) * radius, cos(DEG2RAD*(i + 10)) * radius, 0.0f);
+                rlVertex3f(sin(DEG2RAD*(i + 10))*radius, cos(DEG2RAD*(i + 10))*radius, 0.0f);
             }
         rlEnd();
     rlPopMatrix();
@@ -325,25 +325,25 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i))) * cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
                 }
             }
         rlEnd();
@@ -364,26 +364,26 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
                 }
             }
         rlEnd();
@@ -407,21 +407,21 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 // Draw Body -------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
-                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom); //Bottom Right
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop); //Top Right
+                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom); //Bottom Right
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
 
-                    rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop); //Top Left
-                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop); //Top Right
+                    rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop); //Top Left
+                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
+                    rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
                 }
             }
             else
@@ -430,8 +430,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
                 }
             }
 
@@ -439,8 +439,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
-                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -460,17 +460,17 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 
             for (int i = 0; i < 360; i += 360/sides)
             {
-                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
 
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
 
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
-                rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
+                rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
 
-                rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
-                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
+                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -516,7 +516,7 @@ void DrawRay(Ray ray, Color color)
 // Draw a grid centered at (0, 0, 0)
 void DrawGrid(int slices, float spacing)
 {
-    int halfSlices = slices / 2;
+    int halfSlices = slices/2;
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
@@ -577,22 +577,30 @@ void DrawLight(Light light)
     {
         case LIGHT_POINT:
         {
-            DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
-            DrawCircle3D(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
+            
+            DrawCircle3D(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : GRAY));
         } break;
         case LIGHT_DIRECTIONAL:
         {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
-            DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
+            
+            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
         } break;
         case LIGHT_SPOT:
         {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
-            DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : BLACK));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
+            
+            Vector3 dir = VectorSubtract(light->target, light->position);
+            VectorNormalize(&dir);
+            
+            DrawCircle3D(light->position, 0.5f, 0.0f, dir, (light->enabled ? light->diffuse : GRAY));
+            
+            //DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : GRAY));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
         } break;
         default: break;
     }
@@ -1361,19 +1369,19 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
 
         // Bottom-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
+        rlTexCoord2f((float)sourceRec.x/texture.width, (float)sourceRec.y/texture.height);
         rlVertex3f(a.x, a.y, a.z);
 
         // Top-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlTexCoord2f((float)sourceRec.x/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
         rlVertex3f(d.x, d.y, d.z);
 
         // Top-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
         rlVertex3f(c.x, c.y, c.z);
 
         // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)sourceRec.y/texture.height);
         rlVertex3f(b.x, b.y, b.z);
     rlEnd();
 
@@ -1693,8 +1701,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     else playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
 
                     // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius/3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius/3))
                     {
                         impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }
@@ -1716,8 +1724,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     else playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
 
                     // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius/3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius/3))
                     {
                         impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }
@@ -1739,8 +1747,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     else playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
 
                     // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius/3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius/3))
                     {
                         impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }
@@ -1762,8 +1770,8 @@ Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *p
                     else playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
 
                     // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
+                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius/3) &&
+                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius/3))
                     {
                         impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
                     }

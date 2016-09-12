@@ -482,7 +482,7 @@ void PlaySound(Sound sound)
     //int sampleRate;
     //alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);    // AL_CHANNELS, AL_BITS (bps)
 
-    //float seconds = (float)byteOffset / sampleRate;      // Number of seconds since the beginning of the sound
+    //float seconds = (float)byteOffset/sampleRate;      // Number of seconds since the beginning of the sound
     //or
     //float result;
     //alGetSourcef(sound.source, AL_SEC_OFFSET, &result);   // AL_SAMPLE_OFFSET

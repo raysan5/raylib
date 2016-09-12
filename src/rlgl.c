@@ -708,7 +708,7 @@ void rlVertex3f(float x, float y, float z)
             case RL_LINES:
             {
                 // Verify that MAX_LINES_BATCH limit not reached
-                if (lines.vCounter / 2 < MAX_LINES_BATCH)
+                if (lines.vCounter/2 < MAX_LINES_BATCH)
                 {
                     lines.vertices[3*lines.vCounter] = x;
                     lines.vertices[3*lines.vCounter + 1] = y;
@@ -722,7 +722,7 @@ void rlVertex3f(float x, float y, float z)
             case RL_TRIANGLES:
             {
                 // Verify that MAX_TRIANGLES_BATCH limit not reached
-                if (triangles.vCounter / 3 < MAX_TRIANGLES_BATCH)
+                if (triangles.vCounter/3 < MAX_TRIANGLES_BATCH)
                 {
                     triangles.vertices[3*triangles.vCounter] = x;
                     triangles.vertices[3*triangles.vCounter + 1] = y;
@@ -736,7 +736,7 @@ void rlVertex3f(float x, float y, float z)
             case RL_QUADS:
             {
                 // Verify that MAX_QUADS_BATCH limit not reached
-                if (quads.vCounter / 4 < MAX_QUADS_BATCH)
+                if (quads.vCounter/4 < MAX_QUADS_BATCH)
                 {
                     quads.vertices[3*quads.vCounter] = x;
                     quads.vertices[3*quads.vCounter + 1] = y;
@@ -3542,7 +3542,7 @@ static void DrawDefaultBuffers(int eyesCount)
             for (int i = 0; i < drawsCounter; i++)
             {
                 quadsCount = draws[i].vertexCount/4;
-                numIndicesToProcess = quadsCount*6;  // Get number of Quads * 6 index by Quad
+                numIndicesToProcess = quadsCount*6;  // Get number of Quads*6 index by Quad
 
                 //TraceLog(DEBUG, "Quads to render: %i - Vertex Count: %i", quadsCount, draws[i].vertexCount);
 
