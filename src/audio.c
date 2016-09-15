@@ -225,12 +225,16 @@ Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, in
     wave.data = data;
     wave.sampleCount = sampleCount;
     wave.sampleRate = sampleRate;
-    wave.sampleSize = sampleSize;
+    wave.sampleSize = 32;
     wave.channels = channels;
     
-    WaveFormat(&wave, sampleRate, sampleSize, channels);
+    // NOTE: Copy wave data to work with, 
+    // user is responsible of input data to free
+    Wave cwave = WaveCopy(wave);
     
-    return wave;
+    WaveFormat(&cwave, sampleRate, sampleSize, channels);
+    
+    return cwave;
 }
 
 // Load sound to memory
@@ -578,6 +582,8 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
             }
         }
         else TraceLog(WARNING, "Wave formatting: Sample size not supported");
+        
+        free(samples);
     }
     
     // NOTE: Only supported 1 or 2 channels (mono or stereo)
@@ -615,7 +621,8 @@ Wave WaveCopy(Wave wave)
 // NOTE: Security check in case of out-of-range
 void WaveCrop(Wave *wave, int initSample, int finalSample)
 {
-    if ((initSample >= 0) && (finalSample > 0) && (finalSample < wave->sampleCount))
+    if ((initSample >= 0) && (initSample < finalSample) && 
+        (finalSample > 0) && (finalSample < wave->sampleCount))
     {
         // TODO: Review cropping (it could be simplified...)
         
@@ -636,6 +643,7 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
 
 // Get samples data from wave as a floats array
 // NOTE: Returned sample values are normalized to range [-1..1]
+// TODO: Consider multiple channels (mono - stereo)
 float *GetWaveData(Wave wave)
 {
     float *samples = (float *)malloc(wave.sampleCount*sizeof(float));
@@ -759,26 +767,37 @@ void ResumeMusicStream(Music music)
 }
 
 // Stop music playing (close stream)
+// TODO: Restart XM context
 void StopMusicStream(Music music)
 {
     alSourceStop(music->stream.source);
+    
+    switch (music->ctxType)
+    {
+        case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
+        case MUSIC_MODULE_XM: break;
+        case MUSIC_MODULE_MOD: jar_mod_seek_start(&music->ctxMod); break;
+        default: break;
+    }
+    
+    music->samplesLeft = music->totalSamples;
 }
 
 // Update (re-fill) music buffers if data already processed
 void UpdateMusicStream(Music music)
 {
+    ALenum state;
     ALint processed = 0;
-
-    // Determine if music stream is ready to be written
-    alGetSourcei(music->stream.source, AL_BUFFERS_PROCESSED, &processed);
-
-    int numBuffersToProcess = processed;
+    
+    alGetSourcei(music->stream.source, AL_SOURCE_STATE, &state);          // Get music stream state
+    alGetSourcei(music->stream.source, AL_BUFFERS_PROCESSED, &processed); // Get processed buffers
 
     if (processed > 0)
     {
         bool active = true;
         short pcm[AUDIO_BUFFER_SIZE];
         float pcmf[AUDIO_BUFFER_SIZE];
+        int numBuffersToProcess = processed;
 
         int numSamples = 0;     // Total size of data steamed in L+R samples for xm floats,
                                 // individual L or R for ogg shorts
@@ -833,28 +852,23 @@ void UpdateMusicStream(Music music)
                 break;
             }
         }
-
-        // Reset audio stream for looping
-        if (!active && music->loop)
-        {
-            // Restart music context (if required)
-            //if (music->ctxType == MUSIC_MODULE_XM)
-            if (music->ctxType == MUSIC_MODULE_MOD) jar_mod_seek_start(&music->ctxMod);
-            else if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_seek_start(music->ctxOgg);
-
-            // Reset samples left to total samples
-            music->samplesLeft = music->totalSamples;
-        }
-
+        
         // This error is registered when UpdateAudioStream() fails
         if (alGetError() == AL_INVALID_VALUE) TraceLog(WARNING, "OpenAL: Error buffering data...");
 
-        ALenum state;
-        alGetSourcei(music->stream.source, AL_SOURCE_STATE, &state);
-
-        if (state != AL_PLAYING && active) alSourcePlay(music->stream.source);
-
-        if (!active) StopMusicStream(music);
+        // Reset audio stream for looping
+        if (!active) 
+        {
+            StopMusicStream(music);        // Stop music (and reset)
+            
+            if (music->loop) PlayMusicStream(music);    // Play again
+        }
+        else
+        {
+            // NOTE: In case window is minimized, music stream is stopped,
+            // just make sure to play again on window restore
+            if (state != AL_PLAYING) PlayMusicStream(music);
+        }
     }
 }
 

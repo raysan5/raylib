@@ -62,6 +62,7 @@ int main()
     PlayMusicStream(xm);
 
     float timePlayed = 0.0f;
+    bool pause = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -71,7 +72,29 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        for (int i = MAX_CIRCLES - 1; i >= 0; i--)
+        UpdateMusicStream(xm);        // Update music buffer with new stream data
+        
+        // Restart music playing (stop and play)
+        if (IsKeyPressed(KEY_SPACE)) 
+        {
+            StopMusicStream(xm);
+            PlayMusicStream(xm);
+        }
+        
+        // Pause/Resume music playing 
+        if (IsKeyPressed(KEY_P))
+        {
+            pause = !pause;
+            
+            if (pause) PauseMusicStream(xm);
+            else ResumeMusicStream(xm);
+        }
+        
+        // Get timePlayed scaled to bar dimensions
+        timePlayed = (GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40))*2;
+        
+        // Color circles animation
+        for (int i = MAX_CIRCLES - 1; (i >= 0) && !pause; i--)
         {
             circles[i].alpha += circles[i].speed;
             circles[i].radius += circles[i].speed*10.0f;
@@ -88,11 +111,6 @@ int main()
                 circles[i].speed = (float)GetRandomValue(1, 100)/20000.0f;
             }
         }
-
-        // Get timePlayed scaled to bar dimensions
-        timePlayed = (GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40))*2;
-        
-        UpdateMusicStream(xm);        // Update music buffer with new stream data
         //----------------------------------------------------------------------------------
 
         // Draw
