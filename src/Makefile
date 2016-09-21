@@ -100,6 +100,8 @@ ifeq ($(SHARED),YES)
     CFLAGS += -fPIC
     SHAREDFLAG = BUILDING_DLL
     SHAREDLIBS = -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lopenal32 -lgdi32
+else
+    SHAREDFLAG = BUILDING_STATIC
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
