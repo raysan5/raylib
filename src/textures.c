@@ -39,6 +39,16 @@
 #include "utils.h"              // rRES data decompression utility function
                                 // NOTE: Includes Android fopen function map
 
+// Support only desired texture formats, by default: JPEG, PNG, BMP, TGA
+//#define STBI_NO_JPEG          // Image format .jpg and .jpeg
+//#define STBI_NO_PNG
+//#define STBI_NO_BMP
+//#define STBI_NO_TGA
+#define STBI_NO_PSD
+#define STBI_NO_GIF
+#define STBI_NO_HDR
+#define STBI_NO_PIC
+#define STBI_NO_PNM             // Image format .ppm and .pgm
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image.h" // Required for: stbi_load()
                                 // NOTE: Used to read image data (multiple formats support)
@@ -95,10 +105,17 @@ Image LoadImage(const char *fileName)
     if ((strcmp(GetExtension(fileName),"png") == 0) ||
         (strcmp(GetExtension(fileName),"bmp") == 0) ||
         (strcmp(GetExtension(fileName),"tga") == 0) ||
-        (strcmp(GetExtension(fileName),"jpg") == 0) ||
-        (strcmp(GetExtension(fileName),"gif") == 0) ||
-        (strcmp(GetExtension(fileName),"psd") == 0) ||
-        (strcmp(GetExtension(fileName),"pic") == 0))
+        (strcmp(GetExtension(fileName),"jpg") == 0)
+#ifndef STBI_NO_GIF
+        || (strcmp(GetExtension(fileName),"gif") == 0)
+#endif
+#ifndef STBI_NO_PSD
+        || (strcmp(GetExtension(fileName),"psd") == 0)
+#endif
+#ifndef STBI_NO_PIC
+        || (strcmp(GetExtension(fileName),"pic") == 0)
+#endif
+       )
     {
         int imgWidth = 0;
         int imgHeight = 0;
