@@ -182,10 +182,8 @@ typedef enum { MOVE_FRONT = 0, MOVE_LEFT, MOVE_BACK, MOVE_RIGHT, MOVE_UP, MOVE_D
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Camera internalCamera = {{ 2.0f, 0.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
-
 static Vector2 cameraAngle = { 0.0f, 0.0f };
-static float cameraTargetDistance = 5.0f;
+static float cameraTargetDistance = 5.0f;             // TODO: Remove! Use predefined camera->target to camera->position distance
 static Vector2 cameraMousePosition = { 0.0f, 0.0f };
 static Vector2 cameraMouseVariation = { 0.0f, 0.0f };
 
@@ -202,8 +200,6 @@ static int cameraMode = CAMERA_CUSTOM;                // Current internal camera
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void ProcessCamera(Camera *camera, Vector3 *playerPosition);
-
 #if defined(CAMERA_STANDALONE)
 // NOTE: Camera controls depend on some raylib input functions
 // TODO: Set your own input functions (used in ProcessCamera())
@@ -228,142 +224,56 @@ void SetCameraMode(int mode)
 {
     if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_FREE))
     {
-        cameraMode = CAMERA_THIRD_PERSON;
-        cameraTargetDistance = 5.0f;
+        cameraTargetDistance = 5.0f;        // TODO: Review hardcode!
         cameraAngle.y = -40*DEG2RAD;
-        ProcessCamera(&internalCamera, &internalCamera.position);
     }
     else if ((cameraMode == CAMERA_FIRST_PERSON) && (mode == CAMERA_ORBITAL))
     {
-        cameraMode = CAMERA_THIRD_PERSON;
-        cameraTargetDistance = 5.0f;
+        cameraTargetDistance = 5.0f;        // TODO: Review hardcode!
         cameraAngle.y = -40*DEG2RAD;
-        ProcessCamera(&internalCamera, &internalCamera.position);
     }
     else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_FREE))
     {
-        cameraTargetDistance = 10.0f;
+        cameraTargetDistance = 10.0f;       // TODO: Review hardcode!
         cameraAngle.x = 45*DEG2RAD;
         cameraAngle.y = -40*DEG2RAD;
-        internalCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-        ProcessCamera(&internalCamera, &internalCamera.position);
         
         ShowCursor();
     }
     else if ((cameraMode == CAMERA_CUSTOM) && (mode == CAMERA_ORBITAL))
     {
-        cameraTargetDistance = 10.0f;
+        //cameraTargetDistance = 10.0f;     // TODO: Review hardcode!
         cameraAngle.x = 225*DEG2RAD;
         cameraAngle.y = -40*DEG2RAD;
-        internalCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-        ProcessCamera(&internalCamera, &internalCamera.position);
     }
-
+    
+    /*
+    Vector3 v1 = internalCamera.position;
+    Vector3 v2 = internalCamera.target;
+    
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+    
+    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
+    */
+    
     cameraMode = mode;
 }
 
-// Update camera (player position is ignored)
-void UpdateCamera(Camera *camera)
-{
-    Vector3 position = { 0.0f, 0.0f, 0.0f };
-    
-    // Process internal camera and player position (if required)
-    if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, &position);
-
-    *camera = internalCamera;
-}
-
-// Update camera and player position (1st person and 3rd person cameras)
-void UpdateCameraPlayer(Camera *camera, Vector3 *position)
-{
-    // Process internal camera and player position (if required)
-    if (cameraMode != CAMERA_CUSTOM) ProcessCamera(&internalCamera, position);
-
-    *camera = internalCamera;
-}
-
-// Set internal camera position
-void SetCameraPosition(Vector3 position)
-{
-    internalCamera.position = position;
-    
-    Vector3 v1 = internalCamera.position;
-    Vector3 v2 = internalCamera.target;
-    
-    float dx = v2.x - v1.x;
-    float dy = v2.y - v1.y;
-    float dz = v2.z - v1.z;
-    
-    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
-}
-
-// Set internal camera target
-void SetCameraTarget(Vector3 target)
-{
-    internalCamera.target = target;
-    
-    Vector3 v1 = internalCamera.position;
-    Vector3 v2 = internalCamera.target;
-    
-    float dx = v2.x - v1.x;
-    float dy = v2.y - v1.y;
-    float dz = v2.z - v1.z;
-    
-    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
-}
-
-// Set internal camera fovy
-void SetCameraFovy(float fovy)
-{
-    internalCamera.fovy = fovy;
-}
-
-// Set camera pan key to combine with mouse movement (free camera)
-void SetCameraPanControl(int panKey)
-{
-    cameraPanControlKey = panKey;
-}
-
-// Set camera alt key to combine with mouse movement (free camera)
-void SetCameraAltControl(int altKey)
-{
-    cameraAltControlKey = altKey;
-}
-
-// Set camera smooth zoom key to combine with mouse (free camera)
-void SetCameraSmoothZoomControl(int szKey)
-{
-    cameraSmoothZoomControlKey = szKey;
-}
-
-// Set camera move controls (1st person and 3rd person cameras)
-void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey, int upKey, int downKey)
-{
-    cameraMoveControl[MOVE_FRONT] = frontKey;
-    cameraMoveControl[MOVE_LEFT] = leftKey;
-    cameraMoveControl[MOVE_BACK] = backKey;
-    cameraMoveControl[MOVE_RIGHT] = rightKey;
-    cameraMoveControl[MOVE_UP] = upKey;
-    cameraMoveControl[MOVE_DOWN] = downKey;
-}
-
-// Set camera mouse sensitivity (1st person and 3rd person cameras)
-void SetCameraMouseSensitivity(float sensitivity)
-{
-    cameraMouseSensitivity = (sensitivity/10000.0f);
-}
-
-//----------------------------------------------------------------------------------
-// Module specific Functions Definition
-//----------------------------------------------------------------------------------
-
-// Process desired camera mode and controls
+// Update camera depending on selected mode
 // NOTE: Camera controls depend on some raylib functions:
 //       Mouse: GetMousePosition(), SetMousePosition(), IsMouseButtonDown(), GetMouseWheelMove()
 //       System: GetScreenWidth(), GetScreenHeight(), ShowCursor(), HideCursor()
 //       Keys:  IsKeyDown()
-static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
+void UpdateCamera(Camera *camera)
 {
+    /*
+    if (cameraMode != CAMERA_CUSTOM)
+    {
+        
+    }
+    */
     // Mouse movement detection
     Vector2 mousePosition = GetMousePosition();
     int mouseWheelMove = GetMouseWheelMove();
@@ -523,46 +433,38 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
             // Keyboard inputs
             if (IsKeyDown(cameraMoveControl[MOVE_FRONT]))
             {
-                playerPosition->x -= sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z -= cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
-                
+                camera->position.x -= sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
                 camera->position.y += sin(cameraAngle.y)/PLAYER_MOVEMENT_DIVIDER;
+                camera->position.z -= cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
 
                 isMoving = true;
             }
             else if (IsKeyDown(cameraMoveControl[MOVE_BACK]))
             {
-                playerPosition->x += sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z += cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
-                
+                camera->position.x += sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
                 camera->position.y -= sin(cameraAngle.y)/PLAYER_MOVEMENT_DIVIDER;
+                camera->position.z += cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
 
                 isMoving = true;
             }
 
             if (IsKeyDown(cameraMoveControl[MOVE_LEFT]))
             {
-                playerPosition->x -= cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z += sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                camera->position.x -= cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                camera->position.z += sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
 
                 isMoving = true;
             }
             else if (IsKeyDown(cameraMoveControl[MOVE_RIGHT]))
             {
-                playerPosition->x += cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
-                playerPosition->z -= sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                camera->position.x += cos(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
+                camera->position.z -= sin(cameraAngle.x)/PLAYER_MOVEMENT_DIVIDER;
 
                 isMoving = true;
             }
 
-            if (IsKeyDown(cameraMoveControl[MOVE_UP]))
-            {
-                playerPosition->y += 1.0f/PLAYER_MOVEMENT_DIVIDER;
-            }
-            else if (IsKeyDown(cameraMoveControl[MOVE_DOWN]))
-            {
-                playerPosition->y -= 1.0f/PLAYER_MOVEMENT_DIVIDER;
-            }
+            if (IsKeyDown(cameraMoveControl[MOVE_UP])) camera->position.y += 1.0f/PLAYER_MOVEMENT_DIVIDER;
+            else if (IsKeyDown(cameraMoveControl[MOVE_DOWN])) camera->position.y -= 1.0f/PLAYER_MOVEMENT_DIVIDER;
 
             if (cameraMode == CAMERA_THIRD_PERSON)
             {
@@ -581,9 +483,9 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 if (cameraTargetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
 
                 // Camera is always looking at player
-                camera->target.x = playerPosition->x + CAMERA_THIRD_PERSON_OFFSET.x*cos(cameraAngle.x) + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x);
-                camera->target.y = playerPosition->y + PLAYER_HEIGHT*CAMERA_FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION + CAMERA_THIRD_PERSON_OFFSET.y;
-                camera->target.z = playerPosition->z + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x) - CAMERA_THIRD_PERSON_OFFSET.x*sin(cameraAngle.x);
+                camera->target.x = camera->position.x + CAMERA_THIRD_PERSON_OFFSET.x*cos(cameraAngle.x) + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x);
+                camera->target.y = camera->position.y + PLAYER_HEIGHT*CAMERA_FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION + CAMERA_THIRD_PERSON_OFFSET.y;
+                camera->target.z = camera->position.z + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x) - CAMERA_THIRD_PERSON_OFFSET.x*sin(cameraAngle.x);
 
                 // Camera position update
                 camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
@@ -610,9 +512,12 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
                 camera->target.y = camera->position.y + sin(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
                 camera->target.z = camera->position.z - cos(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
 
-                camera->position.x = playerPosition->x;
-                camera->position.y = (playerPosition->y + PLAYER_HEIGHT*CAMERA_FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION) - sin(cameraMoveCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
-                camera->position.z = playerPosition->z;
+                // Camera position update
+                //camera->position.y = (playerPosition.y + PLAYER_HEIGHT*CAMERA_FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION) 
+                // - sin(cameraMoveCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
+                
+                // TODO: Review limits, avoid moving under the ground (y = 0.0f) and over the 'eyes position', weird movement (rounding issues...)
+                camera->position.y -= sin(cameraMoveCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
 
                 camera->up.x = sin(cameraMoveCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
                 camera->up.z = -sin(cameraMoveCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
@@ -620,6 +525,72 @@ static void ProcessCamera(Camera *camera, Vector3 *playerPosition)
         } break;
         default: break;
     }
+}
+
+/*
+// Set internal camera position
+void SetCameraPosition(Vector3 position)
+{
+    internalCamera.position = position;
+    
+    Vector3 v1 = internalCamera.position;
+    Vector3 v2 = internalCamera.target;
+    
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+    
+    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
+}
+
+// Set internal camera target
+void SetCameraTarget(Vector3 target)
+{
+    internalCamera.target = target;
+    
+    Vector3 v1 = internalCamera.position;
+    Vector3 v2 = internalCamera.target;
+    
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+    
+    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
+}
+*/
+// Set camera pan key to combine with mouse movement (free camera)
+void SetCameraPanControl(int panKey)
+{
+    cameraPanControlKey = panKey;
+}
+
+// Set camera alt key to combine with mouse movement (free camera)
+void SetCameraAltControl(int altKey)
+{
+    cameraAltControlKey = altKey;
+}
+
+// Set camera smooth zoom key to combine with mouse (free camera)
+void SetCameraSmoothZoomControl(int szKey)
+{
+    cameraSmoothZoomControlKey = szKey;
+}
+
+// Set camera move controls (1st person and 3rd person cameras)
+void SetCameraMoveControls(int frontKey, int backKey, int leftKey, int rightKey, int upKey, int downKey)
+{
+    cameraMoveControl[MOVE_FRONT] = frontKey;
+    cameraMoveControl[MOVE_LEFT] = leftKey;
+    cameraMoveControl[MOVE_BACK] = backKey;
+    cameraMoveControl[MOVE_RIGHT] = rightKey;
+    cameraMoveControl[MOVE_UP] = upKey;
+    cameraMoveControl[MOVE_DOWN] = downKey;
+}
+
+// Set camera mouse sensitivity (1st person and 3rd person cameras)
+void SetCameraMouseSensitivity(float sensitivity)
+{
+    cameraMouseSensitivity = (sensitivity/10000.0f);
 }
 
 #endif // CAMERA_IMPLEMENTATION
