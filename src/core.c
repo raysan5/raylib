@@ -689,7 +689,8 @@ void EndTextureMode(void)
 // Set target FPS for the game
 void SetTargetFPS(int fps)
 {
-    targetTime = 1.0/(double)fps;
+    if (fps < 1) targetTime = 0.0;
+    else targetTime = 1.0/(double)fps;
 
     TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
 }
