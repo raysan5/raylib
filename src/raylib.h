@@ -559,7 +559,13 @@ typedef enum {
 } Gestures;
 
 // Camera system modes
-typedef enum { CAMERA_CUSTOM = 0, CAMERA_FREE, CAMERA_ORBITAL, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON } CameraMode;
+typedef enum { 
+    CAMERA_CUSTOM = 0, 
+    CAMERA_FREE, 
+    CAMERA_ORBITAL, 
+    CAMERA_FIRST_PERSON, 
+    CAMERA_THIRD_PERSON 
+} CameraMode;
 
 // Head Mounted Display devices
 typedef enum {
@@ -698,22 +704,15 @@ RLAPI float GetGesturePinchAngle(void);                       // Get gesture pin
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: camera)
 //------------------------------------------------------------------------------------
-RLAPI void SetCameraMode(int mode);                               // Set camera mode (multiple camera modes available)
+RLAPI void SetCameraMode(Camera, int mode);                       // Set camera mode (multiple camera modes available)
 RLAPI void UpdateCamera(Camera *camera);                          // Update camera (player position is ignored)
-RLAPI void UpdateCameraPlayer(Camera *camera, Vector3 *position); // Update camera and player position (1st person and 3rd person cameras)
-
-RLAPI void SetCameraPosition(Vector3 position);                   // Set internal camera position
-RLAPI void SetCameraTarget(Vector3 target);                       // Set internal camera target
-RLAPI void SetCameraFovy(float fovy);                             // Set internal camera field-of-view-y
 
 RLAPI void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 RLAPI void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
 RLAPI void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
-
 RLAPI void SetCameraMoveControls(int frontKey, int backKey,
                            int leftKey, int rightKey,
                            int upKey, int downKey);               // Set camera move controls (1st person and 3rd person cameras)
-RLAPI void SetCameraMouseSensitivity(float sensitivity);          // Set camera mouse sensitivity (1st person and 3rd person cameras)
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
