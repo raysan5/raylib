@@ -37,25 +37,22 @@ int main()
     Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
                                "resources/shaders/glsl330/grayscale.fs");   // Load model shader
 
-    dwarf.material.shader = shader;            // Set shader effect to 3d model
-    dwarf.material.texDiffuse = texture;       // Bind texture to model
+    dwarf.material.shader = shader;             // Set shader effect to 3d model
+    dwarf.material.texDiffuse = texture;        // Bind texture to model
     
-    Vector3 position = { 0.0f, 0.0f, 0.0f };   // Set model position
+    Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
     
-    // Setup orbital camera
-    SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
-    SetCameraPosition(camera.position);     // Set internal camera position to match our camera position
-    SetCameraTarget(camera.target);         // Set internal camera target to match our camera target
+    SetCameraMode(camera, CAMERA_ORBITAL);      // Set an orbital camera mode
 
-    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())            // Detect window close button or ESC key
+    while (!WindowShouldClose())                // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);              // Update internal camera and our camera
+        UpdateCamera(&camera);                  // Update internal camera and our camera
         //----------------------------------------------------------------------------------
 
         // Draw

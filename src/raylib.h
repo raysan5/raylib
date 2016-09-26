@@ -705,14 +705,14 @@ RLAPI float GetGesturePinchAngle(void);                       // Get gesture pin
 // Camera System Functions (Module: camera)
 //------------------------------------------------------------------------------------
 RLAPI void SetCameraMode(Camera, int mode);                       // Set camera mode (multiple camera modes available)
-RLAPI void UpdateCamera(Camera *camera);                          // Update camera (player position is ignored)
+RLAPI void UpdateCamera(Camera *camera);                          // Update camera position for selected mode
 
 RLAPI void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
 RLAPI void SetCameraAltControl(int altKey);                       // Set camera alt key to combine with mouse movement (free camera)
 RLAPI void SetCameraSmoothZoomControl(int szKey);                 // Set camera smooth zoom key to combine with mouse (free camera)
 RLAPI void SetCameraMoveControls(int frontKey, int backKey,
-                           int leftKey, int rightKey,
-                           int upKey, int downKey);               // Set camera move controls (1st person and 3rd person cameras)
+                                 int rightKey, int leftKey,
+                                 int upKey, int downKey);         // Set camera move controls (1st person and 3rd person cameras)
 
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
