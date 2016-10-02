@@ -347,11 +347,11 @@ void DrawPolyEx(Vector2 *points, int numPoints, Color color)
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 0; i < numPoints - 2; i++)
+            for (int i = 1; i < numPoints - 1; i++)
             {
+                rlVertex2f(points[0].x, points[0].y);
                 rlVertex2f(points[i].x, points[i].y);
                 rlVertex2f(points[i + 1].x, points[i + 1].y);
-                rlVertex2f(points[i + 2].x, points[i + 2].y);
             }
         rlEnd();
     }
