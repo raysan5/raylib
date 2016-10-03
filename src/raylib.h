@@ -839,9 +839,7 @@ RLAPI Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a 
 RLAPI Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 RLAPI void UnloadModel(Model model);                                  // Unload 3d model from memory
 
-RLAPI Mesh GenMeshCube(float width, float height, float depth);       // Generate mesh: cube
-
-RLAPI Material LoadMaterial(const char *fileName);                    // Load material data (from file)
+RLAPI Material LoadMaterial(const char *fileName);                    // Load material data (.MTL)
 RLAPI Material LoadDefaultMaterial(void);                             // Load default material (uses default models shader)
 RLAPI Material LoadStandardMaterial(void);                            // Load standard material (uses material attributes and lighting shader)
 RLAPI void UnloadMaterial(Material material);                         // Unload material textures from VRAM
@@ -862,8 +860,7 @@ RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float 
 RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                              // Detect collision between ray and sphere
 RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint);   // Detect collision between ray and sphere with extended parameters and collision point detection
 RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                                            // Detect collision between ray and box
-RLAPI Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius);   // Detect collision of player radius with cubicmap
-                                                                                                                // NOTE: Return the normal vector of the impacted surface
+
 //------------------------------------------------------------------------------------
 // Shaders System Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
