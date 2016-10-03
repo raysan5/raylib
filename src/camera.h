@@ -147,7 +147,7 @@ void SetCameraMoveControls(int frontKey, int backKey,
 #define CAMERA_FREE_PANNING_DIVIDER                     5.1f
 
 // ORBITAL_CAMERA
-#define CAMERA_ORBITAL_SPEED                            0.01f
+#define CAMERA_ORBITAL_SPEED                            0.01f       // Radians per frame
 
 // FIRST_PERSON
 //#define CAMERA_FIRST_PERSON_MOUSE_SENSITIVITY           0.003f
@@ -159,8 +159,6 @@ void SetCameraMoveControls(int frontKey, int backKey,
 #define CAMERA_FIRST_PERSON_STEP_DIVIDER                30.0f
 #define CAMERA_FIRST_PERSON_WAVING_DIVIDER              200.0f
 
-#define CAMERA_FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION  0.85f
-
 // THIRD_PERSON
 //#define CAMERA_THIRD_PERSON_MOUSE_SENSITIVITY           0.003f
 #define CAMERA_THIRD_PERSON_DISTANCE_CLAMP              1.2f
@@ -169,7 +167,7 @@ void SetCameraMoveControls(int frontKey, int backKey,
 #define CAMERA_THIRD_PERSON_OFFSET                      (Vector3){ 0.4f, 0.0f, 0.0f }
 
 // PLAYER (used by camera)
-#define PLAYER_MOVEMENT_DIVIDER                         20.0f
+#define PLAYER_MOVEMENT_SENSITIVITY                     20.0f
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -182,6 +180,7 @@ typedef enum { MOVE_FRONT = 0, MOVE_BACK, MOVE_RIGHT, MOVE_LEFT, MOVE_UP, MOVE_D
 //----------------------------------------------------------------------------------
 static Vector2 cameraAngle = { 0.0f, 0.0f };          // TODO: Remove! Compute it in UpdateCamera()
 static float cameraTargetDistance = 0.0f;             // TODO: Remove! Compute it in UpdateCamera()
+static float playerEyesPosition = 1.85f;              // Default player eyes position from ground (in meters) 
 
 static int cameraMoveControl[6]  = { 'W', 'S', 'D', 'A', 'E', 'Q' };
 static int cameraPanControlKey = 2;                   // raylib: MOUSE_MIDDLE_BUTTON
@@ -227,16 +226,18 @@ void SetCameraMode(Camera camera, int mode)
     cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
     
     Vector2 distance = { 0.0f, 0.0f };
-    distance.x = sqrt(dx*dx + dy*dy);
-    distance.y = sqrt(dx*dx + dz*dz);
+    distance.x = sqrt(dx*dx + dz*dz);
+    distance.y = sqrt(dx*dx + dy*dy);
     
-    // TODO: Review cameraAngle calculation
-    //cameraAngle.x = asin(fabs(dx)/distance.x);
-    //cameraAngle.y = -asin(fabs(dz)/distance.y);
+    // Camera angle calculation
+    cameraAngle.x = asin(fabs(dx)/distance.x);  // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
+    cameraAngle.y = -asin(fabs(dy)/distance.y); // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     // NOTE: Just testing what cameraAngle means
-    cameraAngle.x = 90.0f*DEG2RAD;      // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
-    cameraAngle.y = -80.0f*DEG2RAD;     // Camera angle in plane XY (0 aligned with X, move positive CW)
+    //cameraAngle.x = 0.0f*DEG2RAD;      // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
+    //cameraAngle.y = -60.0f*DEG2RAD;     // Camera angle in plane XY (0 aligned with X, move positive CW)
+    
+    playerEyesPosition = camera.position.y;
 
     cameraMode = mode;
 }
@@ -361,27 +362,33 @@ void UpdateCamera(Camera *camera)
             }
 
             // Input keys checks
-            if (altKey)
+            if (panKey)
             {
-                if (szoomKey)       // Camera smooth zoom
+                if (altKey)     // Alternative key behaviour
                 {
-                    if (panKey) cameraTargetDistance += (mousePositionDelta.y*CAMERA_FREE_SMOOTH_ZOOM_SENSITIVITY);
-                }
-                else if (panKey)
-                {
-                    cameraAngle.x += mousePositionDelta.x*-CAMERA_FREE_MOUSE_SENSITIVITY;
-                    cameraAngle.y += mousePositionDelta.y*-CAMERA_FREE_MOUSE_SENSITIVITY;
+                    if (szoomKey)
+                    {
+                        // Camera smooth zoom
+                        cameraTargetDistance += (mousePositionDelta.y*CAMERA_FREE_SMOOTH_ZOOM_SENSITIVITY);
+                    }
+                    else
+                    {
+                        // Camera rotation
+                        cameraAngle.x += mousePositionDelta.x*-CAMERA_FREE_MOUSE_SENSITIVITY;
+                        cameraAngle.y += mousePositionDelta.y*-CAMERA_FREE_MOUSE_SENSITIVITY;
 
-                    // Angle clamp
-                    if (cameraAngle.y > CAMERA_FREE_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FREE_MIN_CLAMP*DEG2RAD;
-                    else if (cameraAngle.y < CAMERA_FREE_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FREE_MAX_CLAMP*DEG2RAD;
+                        // Angle clamp
+                        if (cameraAngle.y > CAMERA_FREE_MIN_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FREE_MIN_CLAMP*DEG2RAD;
+                        else if (cameraAngle.y < CAMERA_FREE_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FREE_MAX_CLAMP*DEG2RAD;
+                    }
                 }
-            }
-            else if (panKey)        // Paning
-            {
-                camera->target.x += ((mousePositionDelta.x*-CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*sin(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
-                camera->target.y += ((mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
-                camera->target.z += ((mousePositionDelta.x*CAMERA_FREE_MOUSE_SENSITIVITY)*sin(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                else
+                {
+                    // Camera panning
+                    camera->target.x += ((mousePositionDelta.x*-CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*sin(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                    camera->target.y += ((mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                    camera->target.z += ((mousePositionDelta.x*CAMERA_FREE_MOUSE_SENSITIVITY)*sin(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                }
             }
 
         } break;
@@ -400,20 +407,20 @@ void UpdateCamera(Camera *camera)
             camera->position.x += (sin(cameraAngle.x)*direction[MOVE_BACK] -
                                    sin(cameraAngle.x)*direction[MOVE_FRONT] -
                                    cos(cameraAngle.x)*direction[MOVE_LEFT] +
-                                   cos(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_DIVIDER;
+                                   cos(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
                                    
             camera->position.y += (sin(cameraAngle.y)*direction[MOVE_FRONT] -
                                    sin(cameraAngle.y)*direction[MOVE_BACK] +
-                                   1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])/PLAYER_MOVEMENT_DIVIDER;
+                                   1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])/PLAYER_MOVEMENT_SENSITIVITY;
                                    
             camera->position.z += (cos(cameraAngle.x)*direction[MOVE_BACK] -
                                    cos(cameraAngle.x)*direction[MOVE_FRONT] +
                                    sin(cameraAngle.x)*direction[MOVE_LEFT] -
-                                   sin(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_DIVIDER;
+                                   sin(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
 
-            bool isMoving = false;  // TODO: Really required for swinging?
+            bool isMoving = false;  // Required for swinging
 
-            //for (int i = 0; i < 6; i++) if (direction[i]) { isMoving = true; break; }
+            for (int i = 0; i < 6; i++) if (direction[i]) { isMoving = true; break; }
             
             // Camera orientation calculation
             cameraAngle.x += (mousePositionDelta.x*-CAMERA_MOUSE_MOVE_SENSITIVITY);
@@ -433,7 +440,7 @@ void UpdateCamera(Camera *camera)
 
                 // Camera is always looking at player
                 camera->target.x = camera->position.x + CAMERA_THIRD_PERSON_OFFSET.x*cos(cameraAngle.x) + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x);
-                camera->target.y = camera->position.y + CAMERA_FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION + CAMERA_THIRD_PERSON_OFFSET.y;
+                camera->target.y = camera->position.y + CAMERA_THIRD_PERSON_OFFSET.y;
                 camera->target.z = camera->position.z + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x) - CAMERA_THIRD_PERSON_OFFSET.x*sin(cameraAngle.x);
             }
             else    // CAMERA_FIRST_PERSON
@@ -450,11 +457,8 @@ void UpdateCamera(Camera *camera)
                 if (isMoving) swingCounter++;
 
                 // Camera position update
-                //camera->position.y = (playerPosition.y + PLAYER_HEIGHT*CAMERA_FIRST_PERSON_HEIGHT_RELATIVE_EYES_POSITION) 
-                // - sin(swingCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
-                
-                // TODO: Review limits, avoid moving under the ground (y = 0.0f) and over the 'eyes position', weird movement (rounding issues...)
-                camera->position.y -= sin(swingCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
+                // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
+                camera->position.y = playerEyesPosition - sin(swingCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
 
                 camera->up.x = sin(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
                 camera->up.z = -sin(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
