@@ -1483,15 +1483,20 @@ static void InitGraphicsDevice(int width, int height)
     displayHeight = screenHeight;
 #endif  // defined(PLATFORM_WEB)
 
-    glfwDefaultWindowHints();                     // Set default windows hints
+    glfwDefaultWindowHints();                       // Set default windows hints
 
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);     // Avoid window being resizable
-    //glfwWindowHint(GLFW_DECORATED, GL_TRUE);    // Border and buttons on Window
-    //glfwWindowHint(GLFW_RED_BITS, 8);           // Framebuffer red color component bits
-    //glfwWindowHint(GLFW_DEPTH_BITS, 16);        // Depthbuffer bits (24 by default)
-    //glfwWindowHint(GLFW_REFRESH_RATE, 0);       // Refresh rate for fullscreen window
+    if (configFlags & FLAG_RESIZABLE_WINDOW)
+    {
+        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);    // Resizable window
+    }
+    else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
+    
+    //glfwWindowHint(GLFW_DECORATED, GL_TRUE);      // Border and buttons on Window
+    //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
+    //glfwWindowHint(GLFW_DEPTH_BITS, 16);          // Depthbuffer bits (24 by default)
+    //glfwWindowHint(GLFW_REFRESH_RATE, 0);         // Refresh rate for fullscreen window
     //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);    // Default OpenGL API to use. Alternative: GLFW_OPENGL_ES_API
-    //glfwWindowHint(GLFW_AUX_BUFFERS, 0);        // Number of auxiliar buffers
+    //glfwWindowHint(GLFW_AUX_BUFFERS, 0);          // Number of auxiliar buffers
 
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
@@ -1499,7 +1504,7 @@ static void InitGraphicsDevice(int width, int height)
 
     if (configFlags & FLAG_MSAA_4X_HINT)
     {
-        glfwWindowHint(GLFW_SAMPLES, 4);       // Enables multisampling x4 (MSAA), default is 0
+        glfwWindowHint(GLFW_SAMPLES, 4);            // Enables multisampling x4 (MSAA), default is 0
         TraceLog(INFO, "Trying to enable MSAA x4");
     }
 

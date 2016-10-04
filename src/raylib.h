@@ -101,11 +101,12 @@
 
 // raylib Config Flags
 #define FLAG_FULLSCREEN_MODE    1
-#define FLAG_SHOW_LOGO          2
-#define FLAG_SHOW_MOUSE_CURSOR  4
-#define FLAG_CENTERED_MODE      8
-#define FLAG_MSAA_4X_HINT      16
-#define FLAG_VSYNC_HINT        32
+#define FLAG_RESIZABLE_WINDOW   2
+#define FLAG_SHOW_LOGO          4
+#define FLAG_SHOW_MOUSE_CURSOR  8
+#define FLAG_CENTERED_MODE     16
+#define FLAG_MSAA_4X_HINT      32
+#define FLAG_VSYNC_HINT        64
 
 // Keyboard Function Keys
 #define KEY_SPACE            32
