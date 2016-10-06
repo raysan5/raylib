@@ -1501,9 +1501,9 @@ public:
         if (len == 0)
             twist->w = T(1);    // identity
         else
-            twist /= len;       // normalize
+            *twist /= len;       // normalize
 
-        return *this * twist.Inverted();
+        return *this * twist->Inverted();
     }
 
     // Normalized linear interpolation of quaternions

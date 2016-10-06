@@ -8,12 +8,13 @@ varying vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
 
-const float renderWidth = 1280;
-const float renderHeight = 720;
+// NOTE: Render size values must be passed from code
+const float renderWidth = 800;
+const float renderHeight = 450;
 
 float stitchingSize = 6.0f;
 

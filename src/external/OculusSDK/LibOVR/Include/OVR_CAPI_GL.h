@@ -9,6 +9,8 @@
 
 #include "OVR_CAPI.h"
 
+#if !defined(OVR_EXPORTING_CAPI)
+
 /// Creates a TextureSwapChain suitable for use with OpenGL.
 ///
 /// \param[in]  session Specifies an ovrSession previously returned by ovr_Create.
@@ -95,5 +97,6 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetMirrorTextureBufferGL(ovrSession session,
                                                             ovrMirrorTexture mirrorTexture,
                                                             unsigned int* out_TexId);
 
+#endif // !defined(OVR_EXPORTING_CAPI)
 
 #endif    // OVR_CAPI_GL_h

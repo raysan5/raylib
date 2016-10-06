@@ -5,9 +5,16 @@
 *   This example has been created using raylib 1.5 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
+*   NOTE:
+*   Physac requires multi-threading, when InitPhysics() a second thread is created to manage
+*   physics calculations. To accomplish that, physac uses pthread Win32 library that can be
+*   found inside raylib/src/external/pthread directory. 
 *
-*   Compile example using:
-*   cmd /c IF NOT EXIST pthreadGC2.dll copy C:\raylib\raylib\src\external\pthread\pthreadGC2.dll $(CURRENT_DIRECTORY) /Y
+*   Add pthread library when compiling physac example:
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) $(RAYLIB_DIR)\raylib_icon -L../src/external/pthread/lib \
+*   -I../src -I../src/external/pthread/include -lraylib -lglfw3 -lopengl32 -lgdi32 -lpthreadGC2 -std=c99 -Wall
+*
+*   Note that pthreadGC2.dll must be also copied to project directory!
 *
 *   Copyright (c) 2016 Victor Fisac and Ramon Santamaria (@raysan5)
 *

@@ -249,6 +249,7 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  - [Chris Hemingway](https://github.com/cHemingway) for improving raylib on OSX build system.
  - [Emanuele Petriglia](https://github.com/LelixSuper) for working on multiple GNU/Linux improvements and developing [TicTacToe](https://github.com/LelixSuper/TicTacToe) raylib game.
  - [Joshua Reisenauer](https://github.com/kd7tck) for adding audio modules support (XM, MOD) and reviewing audio system.
+ - Marcelo Paez (paezao) for his help on OSX to solve High DPI display issue. Thanks Marcelo!
  
 	
 [raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"

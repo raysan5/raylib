@@ -77,8 +77,27 @@ endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
+# define raylib release directory for compiled library
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        RAYLIB_PATH = ../release/win32/mingw32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_PATH = ../release/linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        RAYLIB_PATH = ../release/osx
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    RAYLIB_PATH = ../release/html5
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH = ../release/rpi
+endif
+
 # define any directories containing required header files
-INCLUDES = -I. -I../src -I../src/external
+INCLUDES = -I. -I../src -I../src/external -I$(RAYLIB_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
@@ -97,7 +116,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # define library paths containing required libs
-LFLAGS = -L. -L../src
+LFLAGS = -L. -L../src -L$(RAYLIB_PATH)
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS += -L/opt/vc/lib
@@ -120,7 +139,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl
+        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
         # on XWindow could require also below libraries, just uncomment
         #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
@@ -210,6 +229,7 @@ EXAMPLES = \
     audio_sound_loading \
     audio_music_stream \
     audio_module_playing \
+    audio_raw_stream \
     fix_dylib \
 
 
@@ -436,8 +456,12 @@ audio_sound_loading: audio_sound_loading.c
 audio_music_stream: audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [audio] example - module playing (OGG)
+# compile [audio] example - module playing (XM)
 audio_module_playing: audio_module_playing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [audio] example - raw audio streaming
+audio_raw_stream: audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # fix dylib install path name for each executable (MAC)

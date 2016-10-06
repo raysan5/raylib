@@ -59,7 +59,7 @@
 // - Initialize the jar_mod_context_t buffer. Must be called before doing anything else.
 //   Return 1 if success. 0 in case of error.
 // -------------------------------------------
-// mulong jar_mod_load_file(jar_mod_context_t * modctx, char* filename)
+// mulong jar_mod_load_file(jar_mod_context_t * modctx, const char* filename)
 //
 // - "Load" a MOD from file, context must already be initialized.
 //   Return size of file in bytes.
@@ -247,7 +247,7 @@ bool   jar_mod_init(jar_mod_context_t * modctx);
 bool   jar_mod_setcfg(jar_mod_context_t * modctx, int samplerate, int bits, int stereo, int stereo_separation, int filter);
 void   jar_mod_fillbuffer(jar_mod_context_t * modctx, short * outbuffer, unsigned long nbsample, jar_mod_tracker_buffer_state * trkbuf);
 void   jar_mod_unload(jar_mod_context_t * modctx);
-mulong jar_mod_load_file(jar_mod_context_t * modctx, char* filename);
+mulong jar_mod_load_file(jar_mod_context_t * modctx, const char* filename);
 mulong jar_mod_current_samples(jar_mod_context_t * modctx);
 mulong jar_mod_max_samples(jar_mod_context_t * modctx);
 void   jar_mod_seek_start(jar_mod_context_t * ctx);
@@ -1516,7 +1516,7 @@ void jar_mod_unload( jar_mod_context_t * modctx)
 
 
 
-mulong jar_mod_load_file(jar_mod_context_t * modctx, char* filename)
+mulong jar_mod_load_file(jar_mod_context_t * modctx, const char* filename)
 {
     mulong fsize = 0;
     if(modctx->modfile)

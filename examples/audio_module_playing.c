@@ -57,9 +57,12 @@ int main()
     // Create a RenderTexture2D to be used for render to texture
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
-    PlayMusicStream(0, "resources/audio/2t2m_spa.xm");         // Play module stream
+    Music xm = LoadMusicStream("resources/audio/mini1111.xm");
+    
+    PlayMusicStream(xm);
 
     float timePlayed = 0.0f;
+    bool pause = false;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -69,7 +72,29 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        for (int i = MAX_CIRCLES - 1; i >= 0; i--)
+        UpdateMusicStream(xm);        // Update music buffer with new stream data
+        
+        // Restart music playing (stop and play)
+        if (IsKeyPressed(KEY_SPACE)) 
+        {
+            StopMusicStream(xm);
+            PlayMusicStream(xm);
+        }
+        
+        // Pause/Resume music playing 
+        if (IsKeyPressed(KEY_P))
+        {
+            pause = !pause;
+            
+            if (pause) PauseMusicStream(xm);
+            else ResumeMusicStream(xm);
+        }
+        
+        // Get timePlayed scaled to bar dimensions
+        timePlayed = (GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40))*2;
+        
+        // Color circles animation
+        for (int i = MAX_CIRCLES - 1; (i >= 0) && !pause; i--)
         {
             circles[i].alpha += circles[i].speed;
             circles[i].radius += circles[i].speed*10.0f;
@@ -86,11 +111,6 @@ int main()
                 circles[i].speed = (float)GetRandomValue(1, 100)/20000.0f;
             }
         }
-
-        // Get timePlayed scaled to bar dimensions
-        timePlayed = (GetMusicTimePlayed(0)/GetMusicTimeLength(0)*(screenWidth - 40))*2;
-        
-        UpdateMusicStream(0);        // Update music buffer with new stream data
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -128,6 +148,8 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);           // Unload shader
     UnloadRenderTexture(target);    // Unload render texture
+    
+    UnloadMusicStream(xm);          // Unload music stream buffers from RAM
     
     CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
 

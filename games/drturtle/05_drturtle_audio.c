@@ -12,7 +12,7 @@
 *
 *   Enjoy using raylib. :)
 *
-*   This game has been created using raylib 1.1 (www.raylib.com)
+*   This game has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
@@ -59,8 +59,9 @@ int main()
     Sound die = LoadSound("resources/die.wav");
     Sound growl = LoadSound("resources/gamera.wav");
     
-    // Start playing streaming music
-    PlayMusicStream("resources/speeding.ogg");
+    // Load music stream and start playing music
+    Music music = LoadMusicStream("resources/speeding.ogg");
+    PlayMusicStream(music);
 
     // Define scrolling variables
     int backScrolling = 0;
@@ -118,6 +119,8 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
+        UpdateMusicStream(music);   // Refill music stream buffers (if required)
+        
         framesCounter++;
 
         // Game screens management
@@ -458,10 +461,10 @@ int main()
     UnloadSound(die);
     UnloadSound(growl);
     
-    StopMusicStream();      // Stop music
-    CloseAudioDevice();     // Close audio device
+    UnloadMusicStream(music);   // Unload music
+    CloseAudioDevice();         // Close audio device
     
-    CloseWindow();          // Close window and OpenGL context
+    CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     
     return 0;
