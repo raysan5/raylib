@@ -2710,6 +2710,12 @@ bool IsVrDeviceReady(void)
     return (vrDeviceReady || vrSimulator) && vrEnabled;
 }
 
+// Detect if VR simulator is running
+bool IsVrSimulator(void)
+{
+    return vrSimulator;
+}
+
 // Enable/Disable VR experience (device or simulator)
 void ToggleVrMode(void)
 {

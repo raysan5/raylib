@@ -37,6 +37,8 @@ int main()
     
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
+    SetCameraMode(camera, CAMERA_FIRST_PERSON);
+    
     SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -45,7 +47,8 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateVrTracking();
+        if (IsVrSimulator()) UpdateCamera(&camera);
+        else UpdateVrTracking();
         
         if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();
         //----------------------------------------------------------------------------------
@@ -61,7 +64,7 @@ int main()
                 DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
-                DrawGrid(10, 1.0f);
+                DrawGrid(40, 1.0f);
 
             End3dMode();
 
