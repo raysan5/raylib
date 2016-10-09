@@ -129,7 +129,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
                 
-                rlVertex2i(center.x, center.y);
+                rlVertex2f(center.x, center.y);
                 rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
                 rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
             }
@@ -144,7 +144,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
                 
-                rlVertex2i(center.x, center.y);
+                rlVertex2f(center.x, center.y);
                 rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
                 rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
                 rlVertex2f(center.x + sin(DEG2RAD*(i + 20))*radius, center.y + cos(DEG2RAD*(i + 20))*radius);
@@ -330,7 +330,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlVertex2i(0, 0);
+                rlVertex2f(0, 0);
                 rlVertex2f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius);
                 rlVertex2f(sin(DEG2RAD*(i + 360/sides))*radius, cos(DEG2RAD*(i + 360/sides))*radius);
             }
