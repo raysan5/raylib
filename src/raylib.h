@@ -176,13 +176,8 @@
 
 // Mouse Buttons
 #define MOUSE_LEFT_BUTTON     0
-#if defined(PLATFORM_WEB)
-    #define MOUSE_RIGHT_BUTTON    2
-    #define MOUSE_MIDDLE_BUTTON   1
-#else
-    #define MOUSE_RIGHT_BUTTON    1
-    #define MOUSE_MIDDLE_BUTTON   2
-#endif
+#define MOUSE_RIGHT_BUTTON    1
+#define MOUSE_MIDDLE_BUTTON   2
 
 // Touch points registered
 #define MAX_TOUCH_POINTS     2
