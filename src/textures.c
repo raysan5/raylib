@@ -229,7 +229,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 // TODO: Review function to support multiple color modes
 Image LoadImageFromRES(const char *rresName, int resId)
 {
-    Image image;
+    Image image = { 0 };
     bool found = false;
 
     char id[4];             // rRES file identifier
