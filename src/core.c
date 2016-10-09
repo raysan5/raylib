@@ -18,6 +18,10 @@
 *
 *   On PLATFORM_RPI, graphic device is managed by EGL and input system is coded in raw mode.
 *
+*   Module Configuration Flags:
+*
+*       RL_LOAD_DEFAULT_FONT - Use external module functions to load default raylib font (module: text)
+*
 *   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
@@ -130,6 +134,8 @@
     #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 #endif
 
+#define RL_LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -238,11 +244,10 @@ static bool showLogo = false;               // Track if showing logo at init is 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
+#if defined(RL_LOAD_DEFAULT_FONT)
 extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
-
-extern void ProcessGestureEvent(GestureEvent event);    // [Module: gestures] Process gesture event and translate it into gestures
-extern void UpdateGestures(void);                       // [Module: gestures] Update gestures detected (called in PollInputEvents())
+#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -311,9 +316,11 @@ void InitWindow(int width, int height, const char *title)
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
 
-    // Load default font for convenience
+#if defined(RL_LOAD_DEFAULT_FONT)
+    // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
+#endif
 
     // Init hi-res timer
     InitTimer();
@@ -420,7 +427,9 @@ void InitWindow(int width, int height, struct android_app *state)
 // Close Window and Terminate Context
 void CloseWindow(void)
 {
+#if defined(RL_LOAD_DEFAULT_FONT)
     UnloadDefaultFont();
+#endif
 
     rlglClose();                // De-init rlgl
 
@@ -2245,9 +2254,11 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
 
-                    // Load default font for convenience
+                    #if defined(RL_LOAD_DEFAULT_FONT)
+                    // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();
+                    #endif
 
                     // TODO: GPU assets reload in case of lost focus (lost context)
                     // NOTE: This problem has been solved just unbinding and rebinding context from display

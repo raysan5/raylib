@@ -293,13 +293,17 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 // NOTE: chars spacing is proportional to fontSize
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 {
-    Vector2 position = { (float)posX, (float)posY };
+    // Check if default font has been loaded
+    if (defaultFont.texture.id != 0)
+    {
+        Vector2 position = { (float)posX, (float)posY };
 
-    int defaultFontSize = 10;   // Default Font chars height in pixel
-    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize/defaultFontSize;
+        int defaultFontSize = 10;   // Default Font chars height in pixel
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
 
-    DrawTextEx(defaultFont, text, position, (float)fontSize, spacing, color);
+        DrawTextEx(GetDefaultFont(), text, position, (float)fontSize, spacing, color);
+    }
 }
 
 // Draw text using SpriteFont
@@ -404,13 +408,17 @@ const char *SubText(const char *text, int position, int length)
 // Measure string width for default font
 int MeasureText(const char *text, int fontSize)
 {
-    Vector2 vec;
+    Vector2 vec = { 0.0f, 0.0f };
 
-    int defaultFontSize = 10;   // Default Font chars height in pixel
-    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize/defaultFontSize;
+    // Check if default font has been loaded
+    if (defaultFont.texture.id != 0)
+    {
+        int defaultFontSize = 10;   // Default Font chars height in pixel
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
 
-    vec = MeasureTextEx(defaultFont, text, fontSize, spacing);
+        vec = MeasureTextEx(GetDefaultFont(), text, fontSize, spacing);
+    }
 
     return (int)vec.x;
 }
