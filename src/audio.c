@@ -79,6 +79,10 @@
 #define JAR_MOD_IMPLEMENTATION
 #include "external/jar_mod.h"       // MOD loading functions
 
+#define DR_FLAC_IMPLEMENTATION
+#define DR_FLAC_NO_WIN32_IO
+#include "external/dr_flac.h"       // FLAC loading functions
+
 #ifdef _MSC_VER
     #undef bool
 #endif
@@ -98,12 +102,13 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-typedef enum { MUSIC_AUDIO_OGG = 0, MUSIC_MODULE_XM, MUSIC_MODULE_MOD } MusicContextType;
+typedef enum { MUSIC_AUDIO_OGG = 0, MUSIC_AUDIO_FLAC, MUSIC_MODULE_XM, MUSIC_MODULE_MOD } MusicContextType;
 
 // Music type (file streaming from memory)
 typedef struct MusicData {
     MusicContextType ctxType;           // Type of music context (OGG, XM, MOD)
     stb_vorbis *ctxOgg;                 // OGG audio context
+    drflac *ctxFlac;                    // FLAC audio context
     jar_xm_context_t *ctxXm;            // XM chiptune context
     jar_mod_context_t ctxMod;           // MOD chiptune context
 
@@ -128,6 +133,7 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 static Wave LoadWAV(const char *fileName);          // Load WAV file
 static Wave LoadOGG(const char *fileName);          // Load OGG file
+static Wave LoadFLAC(const char *fileName);         // Load FLAC file
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -212,6 +218,7 @@ Wave LoadWave(const char *fileName)
 
     if (strcmp(GetExtension(fileName), "wav") == 0) wave = LoadWAV(fileName);
     else if (strcmp(GetExtension(fileName), "ogg") == 0) wave = LoadOGG(fileName);
+    else if (strcmp(GetExtension(fileName), "flac") == 0) wave = LoadFLAC(fileName);
     else TraceLog(WARNING, "[%s] File extension not recognized, it can't be loaded", fileName);
 
     return wave;
@@ -672,7 +679,7 @@ Music LoadMusicStream(const char *fileName)
         // Open ogg audio stream
         music->ctxOgg = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-        if (music->ctxOgg == NULL)  TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
+        if (music->ctxOgg == NULL) TraceLog(WARNING, "[%s] OGG audio file could not be opened", fileName);
         else
         {
             stb_vorbis_info info = stb_vorbis_get_info(music->ctxOgg);  // Get Ogg file info
@@ -689,6 +696,24 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(DEBUG, "[%s] OGG channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
 
+        }
+    }
+    else if (strcmp(GetExtension(fileName), "flac") == 0)
+    {
+        music->ctxFlac = drflac_open_file(fileName);
+        
+        if (music->ctxFlac == NULL) TraceLog(WARNING, "[%s] FLAC audio file could not be opened", fileName);
+        else
+        {
+            music->stream = InitAudioStream(music->ctxFlac->sampleRate, music->ctxFlac->bitsPerSample, music->ctxFlac->channels);
+            music->totalSamples = music->ctxFlac->totalSampleCount;
+            music->samplesLeft = music->totalSamples;
+            music->ctxType = MUSIC_AUDIO_FLAC;
+            music->loop = true;                  // We loop by default
+            
+            TraceLog(DEBUG, "[%s] FLAC sample rate: %i", fileName, music->ctxFlac->sampleRate);
+            TraceLog(DEBUG, "[%s] FLAC bits per sample: %i", fileName, music->ctxFlac->bitsPerSample);
+            TraceLog(DEBUG, "[%s] FLAC channels: %i", fileName, music->ctxFlac->channels);
         }
     }
     else if (strcmp(GetExtension(fileName), "xm") == 0)
@@ -739,6 +764,7 @@ void UnloadMusicStream(Music music)
     CloseAudioStream(music->stream);
 
     if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
+    else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
     else if (music->ctxType == MUSIC_MODULE_XM) jar_xm_free_context(music->ctxXm);
     else if (music->ctxType == MUSIC_MODULE_MOD) jar_mod_unload(&music->ctxMod);
 
@@ -817,6 +843,20 @@ void UpdateMusicStream(Music music)
                     // TODO: Review stereo channels Ogg, not enough samples served!
                     UpdateAudioStream(music->stream, pcm, numSamplesOgg*music->stream.channels);
                     music->samplesLeft -= (numSamplesOgg*music->stream.channels);
+
+                } break;
+                case MUSIC_AUDIO_FLAC:
+                {
+                    if (music->samplesLeft >= AUDIO_BUFFER_SIZE) numSamples = AUDIO_BUFFER_SIZE;
+                    else numSamples = music->samplesLeft;
+                    
+                    int pcmi[AUDIO_BUFFER_SIZE];
+                    
+                    // NOTE: Returns the number of samples to process (should be the same as numSamples)
+                    int numSamplesFlac = drflac_read_s32(music->ctxFlac, numSamples, pcmi);
+
+                    UpdateAudioStream(music->stream, pcmi, numSamples*music->stream.channels);
+                    music->samplesLeft -= (numSamples*music->stream.channels);
 
                 } break;
                 case MUSIC_MODULE_XM:
@@ -1211,6 +1251,24 @@ static Wave LoadOGG(const char *fileName)
         stb_vorbis_close(oggFile);
     }
 
+    return wave;
+}
+
+// Load FLAC file into Wave structure
+// NOTE: Using dr_flac library
+static Wave LoadFLAC(const char *fileName)
+{
+    Wave wave;
+
+    // Decode an entire FLAC file in one go
+    uint64_t totalSampleCount;
+    wave.data = drflac_open_and_decode_file_s32(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
+    
+    wave.sampleCount = (int)totalSampleCount;
+    wave.sampleSize = 32;
+    
+    if (wave.data == NULL) TraceLog(WARNING, "[%s] FLAC data could not be loaded", fileName);
+    
     return wave;
 }
 
