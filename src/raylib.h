@@ -892,7 +892,7 @@ RLAPI void InitVrDevice(int vdDevice);            // Init VR device
 RLAPI void CloseVrDevice(void);                   // Close VR device
 RLAPI bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
 RLAPI bool IsVrSimulator(void);                   // Detect if VR simulator is running
-RLAPI void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
+RLAPI void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 //------------------------------------------------------------------------------------

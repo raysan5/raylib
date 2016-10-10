@@ -375,7 +375,7 @@ float *MatrixToFloat(Matrix mat);
 void InitVrDevice(int vrDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
-void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
+void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 // Oculus Rift API for direct access the device (no simulator)

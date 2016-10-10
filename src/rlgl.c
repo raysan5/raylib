@@ -1522,7 +1522,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     target.texture.id = 0;
     target.texture.width = width;
     target.texture.height = height;
-    target.texture.format = UNCOMPRESSED_R8G8B8;
+    target.texture.format = UNCOMPRESSED_R8G8B8A8;
     target.texture.mipmaps = 1;
     
     target.depth.id = 0;
@@ -1539,7 +1539,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
     
 #if defined(GRAPHICS_API_OPENGL_33)
@@ -2734,16 +2734,17 @@ void ToggleVrMode(void)
 #endif
 }
 
-// Update VR tracking (position and orientation)
-void UpdateVrTracking(void)
+// Update VR tracking (position and orientation) and camera
+void UpdateVrTracking(Camera *camera)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (vrDeviceReady) UpdateOculusTracking();
-    else
-#endif
+    if (vrDeviceReady)
     {
-        // TODO: Use alternative inputs (mouse, keyboard) to simulate tracking data (eyes position/orientation)
+        UpdateOculusTracking();
+        
+        // TODO: Update camera data (position, target, up) with tracking data
     }
+#endif
 }
 
 // Begin Oculus drawing configuration
