@@ -90,7 +90,7 @@ static const char fStandardShaderStr[] =
 "    if (diff > 0.0)\n"
 "    {\n"
 "        vec3 h = normalize(-l.direction + v);\n"
-"        spec = pow(dot(n, h), 3.0 + glossiness)*s;\n"
+"        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;\n"
 "    }\n"
 "    return (diff*l.diffuse.rgb + spec*colSpecular.rgb);\n"
 "}\n"
@@ -103,7 +103,7 @@ static const char fStandardShaderStr[] =
 "    if (diff > 0.0)\n"
 "    {\n"
 "        vec3 h = normalize(lightDir + v);\n"
-"        spec = pow(dot(n, h), 3.0 + glossiness)*s;\n"
+"        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;\n"
 "    }\n"
 "    return (diff*l.intensity*l.diffuse.rgb + spec*colSpecular.rgb);\n"
 "}\n"
@@ -124,7 +124,7 @@ static const char fStandardShaderStr[] =
 "    if (diffAttenuation > 0.0)\n"
 "    {\n"
 "        vec3 h = normalize(lightDir + v);\n"
-"        spec = pow(dot(n, h), 3.0 + glossiness)*s;\n"
+"        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;\n"
 "    }\n"
 "    return (falloff*(diffAttenuation*l.diffuse.rgb + spec*colSpecular.rgb));\n"
 "}\n"
@@ -152,9 +152,9 @@ static const char fStandardShaderStr[] =
 "    }\n"
 "    float spec = 1.0;\n"
 #if defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_21)
-"    if (useSpecular == 1) spec *= normalize(texture2D(texture2, fragTexCoord).r);\n"
+"    if (useSpecular == 1) spec = texture2D(texture2, fragTexCoord).r;\n"
 #elif defined(GRAPHICS_API_OPENGL_33)
-"    if (useSpecular == 1) spec *= normalize(texture(texture2, fragTexCoord).r);\n"
+"    if (useSpecular == 1) spec = texture(texture2, fragTexCoord).r;\n"
 #endif
 "    for (int i = 0; i < maxLights; i++)\n"
 "    {\n"

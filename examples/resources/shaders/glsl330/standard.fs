@@ -50,7 +50,7 @@ vec3 ComputeLightPoint(Light l, vec3 n, vec3 v, float s)
     if (diff > 0.0)
     {
         vec3 h = normalize(-l.direction + v);
-        spec = pow(dot(n, h), 3.0 + glossiness)*s;
+        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;
     }
     
     return (diff*l.diffuse.rgb + spec*colSpecular.rgb);
@@ -68,7 +68,7 @@ vec3 ComputeLightDirectional(Light l, vec3 n, vec3 v, float s)
     if (diff > 0.0)
     {
         vec3 h = normalize(lightDir + v);
-        spec = pow(dot(n, h), 3.0 + glossiness)*s;
+        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;
     }
     
     // Combine results
@@ -101,7 +101,7 @@ vec3 ComputeLightSpot(Light l, vec3 n, vec3 v, float s)
     if (diffAttenuation > 0.0)
     {
         vec3 h = normalize(lightDir + v);
-        spec = pow(dot(n, h), 3.0 + glossiness)*s;
+        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;
     }
     
     return (falloff*(diffAttenuation*l.diffuse.rgb + spec*colSpecular.rgb));
@@ -131,7 +131,7 @@ void main()
     
     // Calculate specular texture color fetching or set to maximum specular value by default
     float spec = 1.0;
-    if (useSpecular == 1) spec *= normalize(texture(texture2, fragTexCoord).r);
+    if (useSpecular == 1) spec = texture(texture2, fragTexCoord).r;
     
     for (int i = 0; i < maxLights; i++)
     {
