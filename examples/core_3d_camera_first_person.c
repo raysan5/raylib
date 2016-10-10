@@ -47,7 +47,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);                  // Update camera and player position
+        UpdateCamera(&camera);                  // Update camera
         //----------------------------------------------------------------------------------
 
         // Draw

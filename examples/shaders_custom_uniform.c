@@ -51,9 +51,7 @@ int main()
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
     
     // Setup orbital camera
-    SetCameraMode(CAMERA_ORBITAL);          // Set an orbital camera mode
-    SetCameraPosition(camera.position);     // Set internal camera position to match our camera position
-    SetCameraTarget(camera.target);         // Set internal camera target to match our camera target
+    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -71,7 +69,7 @@ int main()
         // Send new value to the shader to be used on drawing
         SetShaderValue(shader, swirlCenterLoc, swirlCenter, 2);
         
-        UpdateCamera(&camera);              // Update internal camera and our camera
+        UpdateCamera(&camera);              // Update camera
         //----------------------------------------------------------------------------------
 
         // Draw
