@@ -855,7 +855,7 @@ void UpdateMusicStream(Music music)
                     // NOTE: Returns the number of samples to process (should be the same as numSamples)
                     int numSamplesFlac = drflac_read_s32(music->ctxFlac, numSamples, pcmi);
 
-                    UpdateAudioStream(music->stream, pcmi, numSamples*music->stream.channels);
+                    UpdateAudioStream(music->stream, pcmi, numSamplesFlac*music->stream.channels);
                     music->samplesLeft -= (numSamples*music->stream.channels);
 
                 } break;
