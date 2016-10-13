@@ -657,6 +657,7 @@ RLAPI int GetKeyPressed(void);                                // Get latest key 
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
+RLAPI const char *GetGamepadName(int gamepad);                // Return gamepad internal name id
 RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
 RLAPI bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
 RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed

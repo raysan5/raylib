@@ -1166,6 +1166,17 @@ bool IsGamepadAvailable(int gamepad)
     return result;
 }
 
+// Return gamepad internal name id
+const char *GetGamepadName(int gamepad)
+{
+#if defined(PLATFORM_DESKTOP)
+    if (glfwJoystickPresent(gamepad) == 1) return glfwGetJoystickName(gamepad);
+    else return NULL;
+#else
+    return NULL;
+#endif
+}
+
 // Return axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
@@ -1192,7 +1203,11 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
+    
+    if ((currentGamepadState[button] != previousGamepadState[button]) && (currentGamepadState[button] == 1)) pressed = true;
+    else pressed = false;
 
+    /*
     currentGamepadState[button] = IsGamepadButtonDown(gamepad, button);
 
     if (currentGamepadState[button] != previousGamepadState[button])
@@ -1201,6 +1216,7 @@ bool IsGamepadButtonPressed(int gamepad, int button)
         previousGamepadState[button] = currentGamepadState[button];
     }
     else pressed = false;
+    */
 
     return pressed;
 }
@@ -1222,6 +1238,8 @@ bool IsGamepadButtonDown(int gamepad, int button)
 
     if ((buttons != NULL) && (buttons[button] == GLFW_PRESS)) result = true;
     else result = false;
+
+    //result = currentGamepadState[button];
 #endif
 
     return result;
@@ -1233,14 +1251,19 @@ bool IsGamepadButtonReleased(int gamepad, int button)
     bool released = false;
 
     currentGamepadState[button] = IsGamepadButtonUp(gamepad, button);
+    
+    if ((currentGamepadState[button] != previousGamepadState[button]) && (currentGamepadState[button] == 0)) released = true;
+    else released = false;
 
+    /*
     if (currentGamepadState[button] != previousGamepadState[button])
     {
         if (currentGamepadState[button]) released = true;
         previousGamepadState[button] = currentGamepadState[button];
     }
     else released = false;
-
+    */
+    
     return released;
 }
 
@@ -1984,8 +2007,26 @@ static void PollInputEvents(void)
 
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
+    
+    // Register previous gamepad states
+    for (int i = 0; i < 32; i++) previousGamepadState[i] = currentGamepadState[i];
+    
+    // Get current gamepad state (no callback)
+    if (glfwJoystickPresent(GAMEPAD_PLAYER1))
+    {
+        const unsigned char *buttons;
+        int buttonsCount;
 
-    glfwPollEvents();       // Register keyboard/mouse events... and window events!
+        buttons = glfwGetJoystickButtons(GAMEPAD_PLAYER1, &buttonsCount);
+        
+        for (int i = 0; (buttons != NULL) && (buttonsCount < 32) && (i < buttonsCount); i++)
+        {
+            if (buttons[i] == GLFW_PRESS) currentGamepadState[i] = true;
+            else currentGamepadState[i] = false;
+        }
+    }
+
+    glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
 #endif
 
 #if defined(PLATFORM_ANDROID)
