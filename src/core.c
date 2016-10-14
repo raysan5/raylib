@@ -128,11 +128,11 @@
     //#define DEFAULT_GAMEPAD_DEV     "/dev/input/eventN"
 
     #define MOUSE_SENSITIVITY         0.8f
-
-    #define MAX_GAMEPADS              2         // Max number of gamepads supported
-    #define MAX_GAMEPAD_BUTTONS       11        // Max bumber of buttons supported (per gamepad)
-    #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 #endif
+
+#define MAX_GAMEPADS              4         // Max number of gamepads supported
+#define MAX_GAMEPAD_BUTTONS       11        // Max bumber of buttons supported (per gamepad)
+#define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
 #define RL_LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
 
@@ -174,15 +174,11 @@ static int defaultKeyboardMode;                 // Used to store default keyboar
 // Mouse input variables
 static int mouseStream = -1;                    // Mouse device file descriptor
 static bool mouseReady = false;                 // Flag to know if mouse is ready
-pthread_t mouseThreadId;                        // Mouse reading thread id
+static pthread_t mouseThreadId;                 // Mouse reading thread id
 
 // Gamepad input variables
-static int gamepadStream[MAX_GAMEPADS] = { -1 };    // Gamepad device file descriptor (two gamepads supported)
-static bool gamepadReady[MAX_GAMEPADS] = { false }; // Flag to know if gamepad is ready (two gamepads supported)
-pthread_t gamepadThreadId;                          // Gamepad reading thread id
-
-int gamepadButtons[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];        // Gamepad buttons state
-float gamepadAxisValues[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];      // Gamepad axis state
+static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descriptor
+static pthread_t gamepadThreadId;               // Gamepad reading thread id
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -207,18 +203,23 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 static const char *windowTitle;             // Window text title...
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 
-static char previousKeyState[512] = { 0 };  // Required to check if key pressed/released once
-static char currentKeyState[512] = { 0 };   // Required to check if key pressed/released once
+// Register keyboard states
+static char previousKeyState[512] = { 0 };  // Registers previous frame key state
+static char currentKeyState[512] = { 0 };   // Registers current frame key state
 
-static char previousGamepadState[32] = {0}; // Required to check if gamepad btn pressed/released once
-static char currentGamepadState[32] = {0};  // Required to check if gamepad btn pressed/released once
+// Register mouse states
+static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
+static char currentMouseState[3] = { 0 };   // Registers current mouse button state
+static int previousMouseWheelY = 0;         // Registers previous mouse wheel variation
+static int currentMouseWheelY = 0;          // Registers current mouse wheel variation
 
-static char previousMouseState[3] = { 0 };  // Required to check if mouse btn pressed/released once
-static char currentMouseState[3] = { 0 };   // Required to check if mouse btn pressed/released once
+// Register gamepads states
+static bool gamepadReady[MAX_GAMEPADS] = { false };             // Flag to know if gamepad is ready
+static float gamepadAxisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];  // Gamepad axis state
+static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS] = { 0 };
+static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS] = { 0 };
 
-static int previousMouseWheelY = 0;         // Required to track mouse wheel variation
-static int currentMouseWheelY = 0;          // Required to track mouse wheel variation
-
+// Keyboard configuration
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
 static int lastKeyPressed = -1;             // Register last key pressed
 
@@ -1157,11 +1158,7 @@ bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
 
-#if defined(PLATFORM_RPI)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
-#else
-    if (glfwJoystickPresent(gamepad) == 1) result = true;
-#endif
 
     return result;
 }
@@ -1182,19 +1179,10 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
 
-#if defined(PLATFORM_RPI)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad])
     {
-        if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisValues[gamepad][axis];
+        if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisState[gamepad][axis];
     }
-#else
-    const float *axes;
-    int axisCount = 0;
-
-    axes = glfwGetJoystickAxes(gamepad, &axisCount);
-
-    if (axis < axisCount) value = axes[axis];
-#endif
 
     return value;
 }
@@ -1204,19 +1192,9 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
     
-    if ((currentGamepadState[button] != previousGamepadState[button]) && (currentGamepadState[button] == 1)) pressed = true;
-    else pressed = false;
-
-    /*
-    currentGamepadState[button] = IsGamepadButtonDown(gamepad, button);
-
-    if (currentGamepadState[button] != previousGamepadState[button])
-    {
-        if (currentGamepadState[button]) pressed = true;
-        previousGamepadState[button] = currentGamepadState[button];
-    }
-    else pressed = false;
-    */
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
+        (currentGamepadState[gamepad][button] == 1)) pressed = true;
 
     return pressed;
 }
@@ -1226,21 +1204,8 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
 
-#if defined(PLATFORM_RPI)
-    // Get gamepad buttons information
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 1)) result = true;
-    else result = false;
-#else
-    const unsigned char *buttons;
-    int buttonsCount;
-
-    buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
-
-    if ((buttons != NULL) && (buttons[button] == GLFW_PRESS)) result = true;
-    else result = false;
-
-    //result = currentGamepadState[button];
-#endif
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+        (currentGamepadState[gamepad][button] == 1)) result = true;
 
     return result;
 }
@@ -1249,21 +1214,11 @@ bool IsGamepadButtonDown(int gamepad, int button)
 bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
-
-    currentGamepadState[button] = IsGamepadButtonUp(gamepad, button);
     
-    if ((currentGamepadState[button] != previousGamepadState[button]) && (currentGamepadState[button] == 0)) released = true;
-    else released = false;
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
+        (currentGamepadState[gamepad][button] == 0)) released = true;
 
-    /*
-    if (currentGamepadState[button] != previousGamepadState[button])
-    {
-        if (currentGamepadState[button]) released = true;
-        previousGamepadState[button] = currentGamepadState[button];
-    }
-    else released = false;
-    */
-    
     return released;
 }
 
@@ -1272,19 +1227,8 @@ bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
 
-#if defined(PLATFORM_RPI)
-    // Get gamepad buttons information
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (gamepadButtons[gamepad][button] == 0)) result = true;
-    else result = false;
-#else
-    const unsigned char *buttons;
-    int buttonsCount;
-
-    buttons = glfwGetJoystickButtons(gamepad, &buttonsCount);
-
-    if ((buttons != NULL) && (buttons[button] == GLFW_RELEASE)) result = true;
-    else result = false;
-#endif
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+        (currentGamepadState[gamepad][button] == 0)) result = true;
 
     return result;
 }
@@ -2008,22 +1952,41 @@ static void PollInputEvents(void)
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
     
-    // Register previous gamepad states
-    for (int i = 0; i < 32; i++) previousGamepadState[i] = currentGamepadState[i];
-    
-    // Get current gamepad state (no callback)
-    if (glfwJoystickPresent(GAMEPAD_PLAYER1))
+    // Register gamepads buttons events
+    for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        const unsigned char *buttons;
-        int buttonsCount;
-
-        buttons = glfwGetJoystickButtons(GAMEPAD_PLAYER1, &buttonsCount);
-        
-        for (int i = 0; (buttons != NULL) && (buttonsCount < 32) && (i < buttonsCount); i++)
+        if (glfwJoystickPresent(i))     // Check if gamepad is available
         {
-            if (buttons[i] == GLFW_PRESS) currentGamepadState[i] = true;
-            else currentGamepadState[i] = false;
+            gamepadReady[i] = true;
+            
+            // Register previous gamepad states
+            for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
+    
+            // Get current gamepad state
+            // NOTE: There is no callback available, so we get it manually
+            const unsigned char *buttons;
+            int buttonsCount;
+
+            buttons = glfwGetJoystickButtons(i, &buttonsCount);
+            
+            for (int k = 0; (buttons != NULL) && (k < buttonsCount) && (buttonsCount < MAX_GAMEPAD_BUTTONS); k++)
+            {
+                if (buttons[i] == GLFW_PRESS) currentGamepadState[i][k] = 1;
+                else currentGamepadState[i][k] = 0;
+            }
+            
+            // Get current axis state
+            const float *axes;
+            int axisCount = 0;
+
+            axes = glfwGetJoystickAxes(i, &axisCount);
+            
+            for (int k = 0; (axes != NULL) && (k < axisCount) && (k < MAX_GAMEPAD_AXIS); k++)
+            {
+                gamepadAxisState[i][k] = axes[k];
+            }
         }
+        else gamepadReady[i] = false;
     }
 
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
@@ -2854,7 +2817,7 @@ static void *GamepadThread(void *arg)
                     if (gamepadEvent.number < MAX_GAMEPAD_BUTTONS)
                     {
                         // 1 - button pressed, 0 - button released
-                        gamepadButtons[i][gamepadEvent.number] = (int)gamepadEvent.value;
+                        currentGamepadState[i][gamepadEvent.number] = (int)gamepadEvent.value;
                     }
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)
@@ -2864,7 +2827,7 @@ static void *GamepadThread(void *arg)
                     if (gamepadEvent.number < MAX_GAMEPAD_AXIS)
                     {
                         // NOTE: Scaling of gamepadEvent.value to get values between -1..1
-                        gamepadAxisValues[i][gamepadEvent.number] = (float)gamepadEvent.value/32768;
+                        gamepadAxisState[i][gamepadEvent.number] = (float)gamepadEvent.value/32768;
                     }
                 }
             }
