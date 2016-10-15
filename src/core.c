@@ -1179,9 +1179,9 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
 
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad])
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (axis < MAX_GAMEPAD_AXIS))
     {
-        if (axis < MAX_GAMEPAD_AXIS) value = gamepadAxisState[gamepad][axis];
+        value = gamepadAxisState[gamepad][axis];
     }
 
     return value;
@@ -1192,7 +1192,7 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
     
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
         (currentGamepadState[gamepad][button] == 1)) pressed = true;
 
@@ -1204,7 +1204,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
 
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] == 1)) result = true;
 
     return result;
@@ -1215,7 +1215,7 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
     
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
         (currentGamepadState[gamepad][button] == 0)) released = true;
 
@@ -1227,7 +1227,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
 
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] == 0)) result = true;
 
     return result;
