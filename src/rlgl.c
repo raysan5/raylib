@@ -2653,7 +2653,7 @@ void InitVrDevice(int vrDevice)
             hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
             hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
             hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
-            hmd.vScreenSize = 0.0669;               // HMD vertical size in meters
+            hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
             hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
             hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
             hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
@@ -3786,8 +3786,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
     // Compute lens parameters
     float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
-    float leftLensCenter[2] = { 0.25 + lensShift, 0.5f };
-    float rightLensCenter[2] = { 0.75 - lensShift, 0.5f };
+    float leftLensCenter[2] = { 0.25f + lensShift, 0.5f };
+    float rightLensCenter[2] = { 0.75f - lensShift, 0.5f };
     float leftScreenCenter[2] = { 0.25f, 0.5f };
     float rightScreenCenter[2] = { 0.75f, 0.5f };
     
@@ -3804,8 +3804,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     
     float normScreenWidth = 0.5f;
     float normScreenHeight = 1.0f;
-    float scaleIn[2] = { 2/normScreenWidth, 2/normScreenHeight/aspect };
-    float scale[2] = { normScreenWidth*0.5/distortionScale, normScreenHeight*0.5*aspect/distortionScale };
+    float scaleIn[2] = { 2.0f/normScreenWidth, 2.0f/normScreenHeight/aspect };
+    float scale[2] = { normScreenWidth*0.5f/distortionScale, normScreenHeight*0.5f*aspect/distortionScale };
     
     TraceLog(DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
     TraceLog(DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);

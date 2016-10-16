@@ -1118,7 +1118,7 @@ Image ImageText(const char *text, int fontSize, Color color)
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
     int spacing = fontSize/defaultFontSize;
 
-    Image imText = ImageTextEx(GetDefaultFont(), text, fontSize, spacing, color);
+    Image imText = ImageTextEx(GetDefaultFont(), text, (float)fontSize, spacing, color);
 
     return imText;
 }
@@ -1183,7 +1183,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
 {
     // NOTE: For default font, sapcing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, position, GetDefaultFont(), text, fontSize, fontSize/10, color);
+    ImageDrawTextEx(dst, position, GetDefaultFont(), text, (float)fontSize, fontSize/10, color);
 }
 
 // Draw text (custom sprite font) within an image (destination)
@@ -1317,7 +1317,7 @@ void ImageColorContrast(Image *image, float contrast)
     if (contrast < -100) contrast = -100;
     if (contrast > 100) contrast = 100;
 
-    contrast = (100.0 + contrast)/100.0;
+    contrast = (100.0f + contrast)/100.0f;
     contrast *= contrast;
 
     Color *pixels = GetImageData(*image);
@@ -1326,7 +1326,7 @@ void ImageColorContrast(Image *image, float contrast)
     {
         for (int x = 0; x < image->width; x++)
         {
-            float pR = (float)pixels[y*image->width + x].r/255.0;
+            float pR = (float)pixels[y*image->width + x].r/255.0f;
             pR -= 0.5;
             pR *= contrast;
             pR += 0.5;
@@ -1334,7 +1334,7 @@ void ImageColorContrast(Image *image, float contrast)
             if (pR < 0) pR = 0;
             if (pR > 255) pR = 255;
 
-            float pG = (float)pixels[y*image->width + x].g/255.0;
+            float pG = (float)pixels[y*image->width + x].g/255.0f;
             pG -= 0.5;
             pG *= contrast;
             pG += 0.5;
@@ -1342,7 +1342,7 @@ void ImageColorContrast(Image *image, float contrast)
             if (pG < 0) pG = 0;
             if (pG > 255) pG = 255;
 
-            float pB = (float)pixels[y*image->width + x].b/255.0;
+            float pB = (float)pixels[y*image->width + x].b/255.0f;
             pB -= 0.5;
             pB *= contrast;
             pB += 0.5;

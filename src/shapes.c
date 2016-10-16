@@ -71,7 +71,7 @@ void DrawPixelV(Vector2 position, Color color)
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(position.x, position.y);
-        rlVertex2i(position.x + 1, position.y + 1);
+        rlVertex2f(position.x + 1.0f, position.y + 1.0f);
     rlEnd();
 }
 
@@ -98,7 +98,7 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw a color-filled circle
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
-    DrawCircleV((Vector2){ centerX, centerY }, radius, color);
+    DrawCircleV((Vector2){ (float)centerX, (float)centerY }, radius, color);
 }
 
 // Draw a gradient-filled circle
@@ -111,9 +111,9 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
             rlVertex2i(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10))*radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
@@ -130,8 +130,8 @@ void DrawCircleV(Vector2 center, float radius, Color color)
                 rlColor4ub(color.r, color.g, color.b, color.a);
                 
                 rlVertex2f(center.x, center.y);
-                rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
             }
         rlEnd();
     }
@@ -145,9 +145,9 @@ void DrawCircleV(Vector2 center, float radius, Color color)
                 rlColor4ub(color.r, color.g, color.b, color.a);
                 
                 rlVertex2f(center.x, center.y);
-                rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 20))*radius, center.y + cos(DEG2RAD*(i + 20))*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 20))*radius, center.y + cosf(DEG2RAD*(i + 20))*radius);
             }
         rlEnd();
         
@@ -164,8 +164,8 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
         for (int i = 0; i < 360; i += 10)
         {
-            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10))*radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
    rlEnd();
 }
