@@ -4,7 +4,7 @@
 #
 #   Static library compilation
 #
-#   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+#   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 #    
 #   This software is provided "as-is", without any express or implied warranty. In no event 
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -42,7 +42,6 @@ LOCAL_SRC_FILES  :=\
                     ../../textures.c \
                     ../../text.c \
                     ../../shapes.c \
-                    ../../gestures.c \
                     ../../models.c \
                     ../../utils.c \
                     ../../audio.c \

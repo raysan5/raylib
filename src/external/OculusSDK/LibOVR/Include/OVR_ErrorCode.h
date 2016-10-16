@@ -88,6 +88,7 @@ typedef enum ovrErrorType_
     ovrError_ClientSkippedDestroy       = -1012,   ///< The client failed to call ovr_Destroy on an active session before calling ovr_Shutdown. Or the client crashed.
     ovrError_ClientSkippedShutdown      = -1013,   ///< The client failed to call ovr_Shutdown or the client crashed.
     ovrError_ServiceDeadlockDetected    = -1014,   ///< The service watchdog discovered a deadlock.
+    ovrError_InvalidOperation           = -1015,   ///< Function call is invalid for object's current state
 
     /* Audio error range, reserved for Audio errors. */
     ovrError_AudioDeviceNotFound        = -2001,   ///< Failure to find the specified audio device.
@@ -115,6 +116,9 @@ typedef enum ovrErrorType_
     ovrError_HybridGraphicsNotSupported = -3018,   ///< The system is using hybrid graphics (Optimus, etc...), which is not support.
     ovrError_DisplayManagerInit         = -3019,   ///< Initialization of the DisplayManager failed.
     ovrError_TrackerDriverInit          = -3020,   ///< Failed to get the interface for an attached tracker
+    ovrError_LibSignCheck               = -3021,   ///< LibOVRRT signature check failure.
+    ovrError_LibPath                    = -3022,   ///< LibOVRRT path failure.
+    ovrError_LibSymbols                 = -3023,   ///< LibOVRRT symbol resolution failure.
 
     /* Rendering errors */
     ovrError_DisplayLost                = -6000,   ///< In the event of a system-wide graphics reset or cable unplug this is returned to the app.
@@ -129,6 +133,11 @@ typedef enum ovrErrorType_
 
     /* Fatal errors */
     ovrError_RuntimeException           = -7000,   ///< A runtime exception occurred. The application is required to shutdown LibOVR and re-initialize it before this error state will be cleared.
+
+    /* Calibration errors */
+    ovrError_NoCalibration              = -9000,   ///< Result of a missing calibration block
+    ovrError_OldVersion                 = -9001,   ///< Result of an old calibration block
+    ovrError_MisformattedBlock          = -9002,   ///< Result of a bad calibration block due to lengths
 
 
 } ovrErrorType;

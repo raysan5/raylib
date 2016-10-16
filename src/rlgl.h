@@ -107,7 +107,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
     // byte type
     typedef unsigned char byte;
-    
+
     // Color type, RGBA (32bit)
     typedef struct Color {
         unsigned char r;
@@ -117,7 +117,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
     } Color;
 
     // Texture formats (support depends on OpenGL version)
-    typedef enum { 
+    typedef enum {
         UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
         UNCOMPRESSED_GRAY_ALPHA,
         UNCOMPRESSED_R5G6B5,            // 16 bpp
@@ -157,7 +157,7 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
     // Shader type (generic shader)
     typedef struct Shader {
         unsigned int id;        // Shader program id
-        
+
         // Vertex attributes locations (default locations)
         int vertexLoc;          // Vertex attribute location point (default-location = 0)
         int texcoordLoc;        // Texcoord attribute location point (default-location = 1)
@@ -168,8 +168,10 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
         // Uniform locations
         int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
-        int tintColorLoc;       // Color uniform location point (fragment shader)
-        
+        int colDiffuseLoc;       // Color uniform location point (fragment shader)
+        int colAmbientLoc;      // Ambient color uniform location point (fragment shader)
+        int colSpecularLoc;     // Specular color uniform location point (fragment shader)
+
         // Texture map locations (generic for any kind of map)
         int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
         int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
@@ -185,14 +187,14 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
         int mipmaps;            // Mipmap levels, 1 by default
         int format;             // Data format (TextureFormat)
     } Texture2D;
-    
+
     // RenderTexture2D type, for texture rendering
     typedef struct RenderTexture2D {
         unsigned int id;        // Render texture (fbo) id
         Texture2D texture;      // Color buffer attachment texture
         Texture2D depth;        // Depth buffer attachment texture
     } RenderTexture2D;
-    
+
     // Material type
     typedef struct Material {
         Shader shader;          // Standard shader (supports 3 map types: diffuse, normal, specular)
@@ -204,10 +206,10 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Color colDiffuse;       // Diffuse color
         Color colAmbient;       // Ambient color
         Color colSpecular;      // Specular color
-        
+
         float glossiness;       // Glossiness level (Ranges from 0 to 1000)
     } Material;
-    
+
     // Camera type, defines a camera position/orientation in 3d space
     typedef struct Camera {
         Vector3 position;       // Camera position
@@ -225,22 +227,22 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
         Vector3 position;       // Light position
         Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
         float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
-        
+
         Color diffuse;          // Light diffuse color
         float intensity;        // Light intensity level
-        
+
         float coneAngle;        // Light cone max angle: LIGHT_SPOT
     } LightData, *Light;
-    
+
     // Light types
     typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
 
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
-    
+
     // TraceLog message types
     typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
-    
+
     // VR Head Mounted Display devices
     typedef enum {
         HMD_DEFAULT_DEVICE = 0,
@@ -332,6 +334,10 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world
 unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
 void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
 
+// VR functions exposed to core module but not to raylib users
+void BeginVrDrawing(void);                  // Begin VR drawing configuration
+void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
 
@@ -368,10 +374,8 @@ float *MatrixToFloat(Matrix mat);
 
 void InitVrDevice(int vrDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
-void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
-void BeginVrDrawing(void);                  // Begin VR drawing configuration
-void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 // Oculus Rift API for direct access the device (no simulator)

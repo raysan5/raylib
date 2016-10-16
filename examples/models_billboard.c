@@ -26,20 +26,17 @@ int main()
     Texture2D bill = LoadTexture("resources/billboard.png");     // Our texture billboard
     Vector3 billPosition = { 0.0f, 2.0f, 0.0f };                 // Position where draw billboard
     
-    SetCameraMode(CAMERA_ORBITAL);      // Set an orbital camera mode
-    SetCameraPosition(camera.position); // Set internal camera position to match our camera position
-    SetCameraTarget(camera.target);     // Set internal camera target to match our camera target
-    SetCameraFovy(camera.fovy);         // Set internal camera field-of-view Y
+    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
-    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())        // Detect window close button or ESC key
+    while (!WindowShouldClose())            // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);          // Update internal camera and our camera
+        UpdateCamera(&camera);              // Update camera
         //----------------------------------------------------------------------------------
 
         // Draw

@@ -14,6 +14,8 @@
 #if defined (_WIN32)
 #include <Unknwn.h>
 
+#if !defined(OVR_EXPORTING_CAPI)
+
 //-----------------------------------------------------------------------------------
 // ***** Direct3D Specific
 
@@ -149,6 +151,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetMirrorTextureBufferDX(ovrSession session,
                                                             IID iid,
                                                             void** out_Buffer);
 
+#endif // !defined(OVR_EXPORTING_CAPI)
 
 #endif // _WIN32
 

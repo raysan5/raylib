@@ -35,7 +35,7 @@
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
 
-# define if you want shared or static version of library.
+# define YES if you want shared/dynamic version of library instead of static (default)
 SHARED ?= NO
 
 # determine if the file has root access (only for installing raylib)
@@ -95,8 +95,13 @@ endif
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 
+# if shared library required, make sure code is compiled as position independent
 ifeq ($(SHARED),YES)
     CFLAGS += -fPIC
+    SHAREDFLAG = BUILDING_DLL
+    SHAREDLIBS = -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lopenal32 -lgdi32
+else
+    SHAREDFLAG = BUILDING_STATIC
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -152,12 +157,16 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "libraylib.bc generated (web version)!"
 else
     ifeq ($(SHARED),YES)
-    ifeq ($(PLATFORM_OS),LINUX)
-        # compile raylib to shared library version for GNU/Linux.
-        # WARNING: you should type "make clean" before doing this target 
-		$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
-		@echo "libraylib.so generated (shared library)!"
-    endif
+        ifeq ($(PLATFORM_OS),LINUX)
+            # compile raylib to shared library version for GNU/Linux.
+            # WARNING: you should type "make clean" before doing this target 
+			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
+			@echo "raylib shared library (libraylib.so) generated!"
+        endif
+        ifeq ($(PLATFORM_OS),WINDOWS)
+			$(CC) -shared -o $(OUTPUT_PATH)/raylib.dll $(OBJS) $(SHAREDLIBS) -Wl,--out-implib,$(OUTPUT_PATH)/libraylibdll.a
+			@echo "raylib dynamic library (raylib.dll) and MSVC required import library (libraylibdll.a) generated!"
+        endif
     else
         # compile raylib static library for desktop platforms.
 		ar rcs $(OUTPUT_PATH)/libraylib.a $(OBJS)
@@ -168,8 +177,8 @@ endif
 # compile all modules with their prerequisites
 
 # compile core module
-core.o : core.c raylib.h rlgl.h utils.h raymath.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
 
 # compile rlgl module
 rlgl.o : rlgl.c rlgl.h raymath.h
@@ -177,23 +186,23 @@ rlgl.o : rlgl.c rlgl.h raymath.h
     
 # compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(SHAREDFLAG)
     
 # compile textures module
 textures.o : textures.c rlgl.h utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS) -D$(SHAREDFLAG)
 
 # compile text module
 text.o : text.c raylib.h utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(SHAREDFLAG)
 
 # compile models module
 models.o : models.c raylib.h rlgl.h raymath.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
 
 # compile audio module
 audio.o : audio.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
     
 # compile stb_vorbis library
 external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
@@ -201,15 +210,7 @@ external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 
 # compile utils module
 utils.o : utils.c utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM)
-
-# compile camera module
-camera.o : camera.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
-
-#compile gestures module
-gestures.o : gestures.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
 
 # It installs generated and needed files to compile projects using raylib.
 # The installation works manually.
@@ -222,10 +223,10 @@ ifeq ($(ROOT),root)
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
         ifeq ($(SHARED),YES)
-			cp --update libraylib.so /usr/local/lib/libraylib.so
+			cp --update $(OUTPUT_PATH)/libraylib.so /usr/local/lib/libraylib.so
         else
 			cp --update raylib.h /usr/local/include/raylib.h
-			cp --update libraylib.a /usr/local/lib/libraylib.a
+			cp --update $(OUTPUT_PATH)/libraylib.a /usr/local/lib/libraylib.a
         endif
 		@echo "raylib dev files installed/updated!"
     else

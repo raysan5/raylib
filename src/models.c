@@ -66,7 +66,7 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
 //----------------------------------------------------------------------------------
 
 // Draw a line in 3D world space
-void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
+void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 {
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -76,19 +76,19 @@ void Draw3DLine(Vector3 startPos, Vector3 endPos, Color color)
 }
 
 // Draw a circle in 3D world space
-void Draw3DCircle(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
+void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
 {
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
         rlRotatef(rotationAngle, rotation.x, rotation.y, rotation.z);
-        
+
         rlBegin(RL_LINES);
             for (int i = 0; i < 360; i += 10)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
-                
+
                 rlVertex3f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius, 0.0f);
-                rlVertex3f(sin(DEG2RAD*(i + 10)) * radius, cos(DEG2RAD*(i + 10)) * radius, 0.0f);
+                rlVertex3f(sin(DEG2RAD*(i + 10))*radius, cos(DEG2RAD*(i + 10))*radius, 0.0f);
             }
         rlEnd();
     rlPopMatrix();
@@ -270,25 +270,25 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
             // Back Face
-            rlNormal3f( 0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
+            rlNormal3f(0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Left Of The Texture and Quad
             // Top Face
-            rlNormal3f( 0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
+            rlNormal3f(0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
             // Bottom Face
-            rlNormal3f( 0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
+            rlNormal3f(0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Left Of The Texture and Quad
             rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
             // Right face
-            rlNormal3f( 1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
+            rlNormal3f(1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
             rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
             rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
             rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
@@ -325,25 +325,25 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i))) * cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
                 }
             }
         rlEnd();
@@ -364,26 +364,26 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*((j+1)*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * sin(DEG2RAD*(j*360/slices)),
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1))) * cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i)) * sin(DEG2RAD*(j*360/slices)),
+                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
                                sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i)) * cos(DEG2RAD*(j*360/slices)));
+                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
                 }
             }
         rlEnd();
@@ -407,21 +407,21 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 // Draw Body -------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
-                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom); //Bottom Right
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop); //Top Right
+                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom); //Bottom Right
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
 
-                    rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop); //Top Left
-                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom); //Bottom Left
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop); //Top Right
+                    rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop); //Top Left
+                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
+                    rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
                 }
             }
             else
@@ -430,8 +430,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
+                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
                 }
             }
 
@@ -439,8 +439,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
-                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -460,17 +460,17 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 
             for (int i = 0; i < 360; i += 360/sides)
             {
-                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
 
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusBottom, 0, cos(DEG2RAD*(i+360/sides)) * radiusBottom);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
 
-                rlVertex3f(sin(DEG2RAD*(i+360/sides)) * radiusTop, height, cos(DEG2RAD*(i+360/sides)) * radiusTop);
-                rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
+                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
+                rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
 
-                rlVertex3f(sin(DEG2RAD*i) * radiusTop, height, cos(DEG2RAD*i) * radiusTop);
-                rlVertex3f(sin(DEG2RAD*i) * radiusBottom, 0, cos(DEG2RAD*i) * radiusBottom);
+                rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
+                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -516,7 +516,7 @@ void DrawRay(Ray ray, Color color)
 // Draw a grid centered at (0, 0, 0)
 void DrawGrid(int slices, float spacing)
 {
-    int halfSlices = slices / 2;
+    int halfSlices = slices/2;
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)
@@ -577,22 +577,30 @@ void DrawLight(Light light)
     {
         case LIGHT_POINT:
         {
-            DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : BLACK));
-            Draw3DCircle(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : BLACK));
+            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
+            
+            DrawCircle3D(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : GRAY));
         } break;
         case LIGHT_DIRECTIONAL:
-        {                
-            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
-            DrawSphereWires(light->position, 0.3f*light->intensity, 4, 8, (light->enabled ? light->diffuse : BLACK));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
+        {
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
+            
+            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
         } break;
         case LIGHT_SPOT:
-        {                
-            Draw3DLine(light->position, light->target, (light->enabled ? light->diffuse : BLACK));
-            DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : BLACK));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : BLACK));
+        {
+            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
+            
+            Vector3 dir = VectorSubtract(light->target, light->position);
+            VectorNormalize(&dir);
+            
+            DrawCircle3D(light->position, 0.5f, 0.0f, dir, (light->enabled ? light->diffuse : GRAY));
+            
+            //DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : GRAY));
+            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
         } break;
         default: break;
     }
@@ -602,7 +610,7 @@ void DrawLight(Light light)
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
-    
+
     // TODO: Initialize default data for model in case loading fails, maybe a cube?
 
     if (strcmp(GetExtension(fileName), "obj") == 0) model.mesh = LoadOBJ(fileName);
@@ -612,7 +620,7 @@ Model LoadModel(const char *fileName)
     else
     {
         rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-        
+
         model.transform = MatrixIdentity();
         model.material = LoadDefaultMaterial();
     }
@@ -626,12 +634,12 @@ Model LoadModelEx(Mesh data, bool dynamic)
     Model model = { 0 };
 
     model.mesh = data;
-    
+
     rlglLoadMesh(&model.mesh, dynamic);  // Upload vertex data to GPU
-    
+
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
-    
+
     return model;
 }
 
@@ -723,11 +731,11 @@ Model LoadModelFromRES(const char *rresName, int resId)
 Model LoadHeightmap(Image heightmap, Vector3 size)
 {
     Model model = { 0 };
-    
+
     model.mesh = GenMeshHeightmap(heightmap, size);
-    
+
     rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-    
+
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
 
@@ -738,11 +746,11 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
 Model LoadCubicmap(Image cubicmap)
 {
     Model model = { 0 };
-    
+
     model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
-    
+
     rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-    
+
     model.transform = MatrixIdentity();
     model.material = LoadDefaultMaterial();
 
@@ -755,7 +763,7 @@ void UnloadModel(Model model)
     rlglUnloadMesh(&model.mesh);
 
     UnloadMaterial(model.material);
-    
+
     TraceLog(INFO, "Unloaded model data from RAM and VRAM");
 }
 
@@ -763,10 +771,10 @@ void UnloadModel(Model model)
 Material LoadMaterial(const char *fileName)
 {
     Material material = { 0 };
-    
+
     if (strcmp(GetExtension(fileName), "mtl") == 0) material = LoadMTL(fileName);
     else TraceLog(WARNING, "[%s] Material extension not recognized, it can't be loaded", fileName);
-    
+
     return material;
 }
 
@@ -774,7 +782,7 @@ Material LoadMaterial(const char *fileName)
 Material LoadDefaultMaterial(void)
 {
     Material material = { 0 };
-    
+
     material.shader = GetDefaultShader();
     material.texDiffuse = GetDefaultTexture();      // White texture (1x1 pixel)
     //material.texNormal;           // NOTE: By default, not set
@@ -783,9 +791,9 @@ Material LoadDefaultMaterial(void)
     material.colDiffuse = WHITE;    // Diffuse color
     material.colAmbient = WHITE;    // Ambient color
     material.colSpecular = WHITE;   // Specular color
-    
+
     material.glossiness = 100.0f;   // Glossiness level
-    
+
     return material;
 }
 
@@ -794,7 +802,7 @@ Material LoadDefaultMaterial(void)
 Material LoadStandardMaterial(void)
 {
     Material material = LoadDefaultMaterial();
-    
+
     material.shader = GetStandardShader();
 
     return material;
@@ -812,12 +820,12 @@ void UnloadMaterial(Material material)
 static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
-    
+
     Mesh mesh = { 0 };
 
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
-    
+
     Color *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
@@ -908,7 +916,7 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
             trisCounter += 2;
         }
     }
-    
+
     free(pixels);
 
     return mesh;
@@ -919,9 +927,9 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Mesh mesh = { 0 };
 
     Color *cubicmapPixels = GetImageData(cubicmap);
-    
-    int mapWidth = cubicmap.width*(int)cubeSize.x;
-    int mapHeight = cubicmap.height*(int)cubeSize.z;
+
+    int mapWidth = cubicmap.width;
+    int mapHeight = cubicmap.height;
 
     // NOTE: Max possible number of triangles numCubes * (12 triangles by cube)
     int maxTriangles = cubicmap.width*cubicmap.height*12;
@@ -961,19 +969,19 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     RectangleF topTexUV = { 0.0f, 0.5f, 0.5f, 0.5f };
     RectangleF bottomTexUV = { 0.5f, 0.5f, 0.5f, 0.5f };
 
-    for (int z = 0; z < mapHeight; z += cubeSize.z)
+    for (int z = 0; z < mapHeight; ++z)
     {
-        for (int x = 0; x < mapWidth; x += cubeSize.x)
+        for (int x = 0; x < mapWidth; ++x)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
-            Vector3 v1 = { x - w/2, h2, z - h/2 };
-            Vector3 v2 = { x - w/2, h2, z + h/2 };
-            Vector3 v3 = { x + w/2, h2, z + h/2 };
-            Vector3 v4 = { x + w/2, h2, z - h/2 };
-            Vector3 v5 = { x + w/2, 0, z - h/2 };
-            Vector3 v6 = { x - w/2, 0, z - h/2 };
-            Vector3 v7 = { x - w/2, 0, z + h/2 };
-            Vector3 v8 = { x + w/2, 0, z + h/2 };
+            Vector3 v1 = { w*(x - 0.5f), h2, h*(z - 0.5f) };
+            Vector3 v2 = { w*(x - 0.5f), h2, h*(z + 0.5f) };
+            Vector3 v3 = { w*(x + 0.5f), h2, h*(z + 0.5f) };
+            Vector3 v4 = { w*(x + 0.5f), h2, h*(z - 0.5f) };
+            Vector3 v5 = { w*(x + 0.5f), 0, h*(z - 0.5f) };
+            Vector3 v6 = { w*(x - 0.5f), 0, h*(z - 0.5f) };
+            Vector3 v7 = { w*(x - 0.5f), 0, h*(z + 0.5f) };
+            Vector3 v8 = { w*(x + 0.5f), 0, h*(z + 0.5f) };
 
             // We check pixel color to be WHITE, we will full cubes
             if ((cubicmapPixels[z*cubicmap.width + x].r == 255) &&
@@ -1262,9 +1270,9 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     free(mapVertices);
     free(mapNormals);
     free(mapTexcoords);
-    
+
     free(cubicmapPixels);   // Free image pixel data
-    
+
     return mesh;
 }
 
@@ -1273,7 +1281,7 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
     Vector3 vScale = { scale, scale, scale };
     Vector3 rotationAxis = { 0.0f, 0.0f, 0.0f };
-    
+
     DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
@@ -1285,13 +1293,13 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
     Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
     Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
-    
+
     // Combine model transformation matrix (model.transform) with matrix generated by function parameters (matTransform)
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
-    
+
     model.transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
     model.material.colDiffuse = tint;       // TODO: Multiply tint color by diffuse color?
-    
+
     rlglDrawMesh(model.mesh, model.material, model.transform);
 }
 
@@ -1299,9 +1307,9 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 void DrawModelWires(Model model, Vector3 position, float scale, Color tint)
 {
     rlEnableWireMode();
-    
+
     DrawModel(model, position, scale, tint);
-    
+
     rlDisableWireMode();
 }
 
@@ -1309,9 +1317,9 @@ void DrawModelWires(Model model, Vector3 position, float scale, Color tint)
 void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {
     rlEnableWireMode();
-    
+
     DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
-    
+
     rlDisableWireMode();
 }
 
@@ -1319,7 +1327,7 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint)
 {
     Rectangle sourceRec = { 0, 0, texture.width, texture.height };
-    
+
     DrawBillboardRec(camera, texture, sourceRec, center, size, tint);
 }
 
@@ -1334,7 +1342,7 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 
     Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
     //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
-    
+
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
 /*
@@ -1361,19 +1369,19 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
         rlColor4ub(tint.r, tint.g, tint.b, tint.a);
 
         // Bottom-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)sourceRec.y / texture.height);
+        rlTexCoord2f((float)sourceRec.x/texture.width, (float)sourceRec.y/texture.height);
         rlVertex3f(a.x, a.y, a.z);
 
         // Top-left corner for texture and quad
-        rlTexCoord2f((float)sourceRec.x / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlTexCoord2f((float)sourceRec.x/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
         rlVertex3f(d.x, d.y, d.z);
 
         // Top-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)(sourceRec.y + sourceRec.height) / texture.height);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
         rlVertex3f(c.x, c.y, c.z);
 
         // Bottom-right corner for texture and quad
-        rlTexCoord2f((float)(sourceRec.x + sourceRec.width) / texture.width, (float)sourceRec.y / texture.height);
+        rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)sourceRec.y/texture.height);
         rlVertex3f(b.x, b.y, b.z);
     rlEnd();
 
@@ -1384,13 +1392,13 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
 void DrawBoundingBox(BoundingBox box, Color color)
 {
     Vector3 size;
-    
+
     size.x = fabsf(box.max.x - box.min.x);
     size.y = fabsf(box.max.y - box.min.y);
     size.z = fabsf(box.max.z - box.min.z);
-    
+
     Vector3 center = { box.min.x + size.x/2.0f, box.min.y + size.y/2.0f, box.min.z + size.z/2.0f };
-    
+
     DrawCubeWires(center, size.x, size.y, size.z, color);
 }
 
@@ -1451,14 +1459,14 @@ bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radius
 bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius)
 {
     bool collision = false;
-    
+
     Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
     float distance = VectorLength(raySpherePos);
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
-    
+
     if (d >= 0.0f) collision = true;
-    
+
     return collision;
 }
 
@@ -1466,29 +1474,29 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
 bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint)
 {
     bool collision = false;
-    
+
     Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
     float distance = VectorLength(raySpherePos);
     float vector = VectorDotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
-    
+
     if (d >= 0.0f) collision = true;
-    
+
     // Calculate collision point
     Vector3 offset = ray.direction;
     float collisionDistance = 0;
-    
+
     // Check if ray origin is inside the sphere to calculate the correct collision point
     if (distance < sphereRadius) collisionDistance = vector + sqrt(d);
     else collisionDistance = vector - sqrt(d);
-    
+
     VectorScale(&offset, collisionDistance);
     Vector3 cPoint = VectorAdd(ray.position, offset);
-    
+
     collisionPoint->x = cPoint.x;
     collisionPoint->y = cPoint.y;
     collisionPoint->z = cPoint.z;
-    
+
     return collision;
 }
 
@@ -1496,7 +1504,7 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 bool CheckCollisionRayBox(Ray ray, BoundingBox box)
 {
     bool collision = false;
-    
+
     float t[8];
     t[0] = (box.min.x - ray.position.x)/ray.direction.x;
     t[1] = (box.max.x - ray.position.x)/ray.direction.x;
@@ -1506,9 +1514,9 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     t[5] = (box.max.z - ray.position.z)/ray.direction.z;
     t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
     t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
-    
+
     collision = !(t[7] < 0 || t[6] > t[7]);
-    
+
     return collision;
 }
 
@@ -1524,270 +1532,20 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
     {
         minVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
         maxVertex = (Vector3){ mesh.vertices[0], mesh.vertices[1], mesh.vertices[2] };
-    
+
         for (int i = 1; i < mesh.vertexCount; i++)
         {
             minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
             maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
         }
     }
-    
+
     // Create the bounding box
     BoundingBox box;
     box.min = minVertex;
     box.max = maxVertex;
-    
+
     return box;
-}
-
-// Detect and resolve cubicmap collisions
-// NOTE: player position (or camera) is modified inside this function
-// TODO: This functions needs to be completely reviewed!
-Vector3 ResolveCollisionCubicmap(Image cubicmap, Vector3 mapPosition, Vector3 *playerPosition, float radius)
-{
-    #define CUBIC_MAP_HALF_BLOCK_SIZE   0.5
-    
-    Color *cubicmapPixels = GetImageData(cubicmap);
-    
-    // Detect the cell where the player is located
-    Vector3 impactDirection = { 0.0f, 0.0f, 0.0f };
-
-    int locationCellX = 0;
-    int locationCellY = 0;
-
-    locationCellX = floor(playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE);
-    locationCellY = floor(playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE);
-
-    if ((locationCellX >= 0) && (locationCellY >= 0) && (locationCellX < cubicmap.width) && (locationCellY < cubicmap.height))
-    {
-        // Multiple Axis --------------------------------------------------------------------------------------------
-
-        // Axis x-, y-
-        if ((locationCellX > 0) && (locationCellY > 0))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
-                {
-                    playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                }
-            }
-        }
-
-        // Axis x-, y+
-        if ((locationCellX > 0) && (locationCellY < cubicmap.height - 1))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
-                {
-                    playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                }
-            }
-        }
-
-        // Axis x+, y-
-        if ((locationCellX < cubicmap.width - 1) && (locationCellY > 0))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
-                {
-                    playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                }
-            }
-        }
-
-        // Axis x+, y+
-        if ((locationCellX < cubicmap.width - 1) && (locationCellY < cubicmap.height - 1))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r != 0) &&
-                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
-                {
-                    playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                }
-            }
-        }
-
-        // Single Axis ---------------------------------------------------------------------------------------------------
-
-        // Axis x-
-        if (locationCellX > 0)
-        {
-            if (cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r != 0)
-            {
-                if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius)
-                {
-                    playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 1.0f, 0.0f, 0.0f };
-                }
-            }
-        }
-        // Axis x+
-        if (locationCellX < cubicmap.width - 1)
-        {
-            if (cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r != 0)
-            {
-                if ((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius)
-                {
-                    playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 1.0f, 0.0f, 0.0f };
-                }
-            }
-        }
-        // Axis y-
-        if (locationCellY > 0)
-        {
-            if (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r != 0)
-            {
-                if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius)
-                {
-                    playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 0.0f, 0.0f, 1.0f };
-                }
-            }
-        }
-        // Axis y+
-        if (locationCellY < cubicmap.height - 1)
-        {
-            if (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r != 0)
-            {
-                if ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius)
-                {
-                    playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    impactDirection = (Vector3){ 0.0f, 0.0f, 1.0f };
-                }
-            }
-        }
-
-        // Diagonals -------------------------------------------------------------------------------------------------------
-
-        // Axis x-, y-
-        if ((locationCellX > 0) && (locationCellY > 0))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX - 1)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
-                {
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    else playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-                    // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
-                    {
-                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                    }
-                }
-            }
-        }
-
-        // Axis x-, y+
-        if ((locationCellX > 0) && (locationCellY < cubicmap.height - 1))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX - 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX - 1)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
-                {
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) > (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX + mapPosition.x - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    else playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-                    // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX < radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
-                    {
-                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                    }
-                }
-            }
-        }
-
-        // Axis x+, y-
-        if ((locationCellX < cubicmap.width - 1) && (locationCellY > 0))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY - 1)*cubicmap.width + (locationCellX + 1)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius))
-                {
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < (1 - ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY))) playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    else playerPosition->z = locationCellY + mapPosition.z - (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-                    // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY < radius / 3))
-                    {
-                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                    }
-                }
-            }
-        }
-
-        // Axis x+, y+
-        if ((locationCellX < cubicmap.width - 1) && (locationCellY < cubicmap.height - 1))
-        {
-            if ((cubicmapPixels[locationCellY*cubicmap.width + (locationCellX + 1)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX)].r == 0) &&
-                (cubicmapPixels[(locationCellY + 1)*cubicmap.width + (locationCellX + 1)].r != 0))
-            {
-                if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius) &&
-                    ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius))
-                {
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX) < ((playerPosition->z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY)) playerPosition->x = locationCellX + mapPosition.x + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-                    else playerPosition->z = locationCellY + mapPosition.z + (CUBIC_MAP_HALF_BLOCK_SIZE - radius);
-
-                    // Return ricochet
-                    if (((playerPosition->x - mapPosition.x + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellX > 1 - radius / 3) &&
-                        ((playerPosition->z - mapPosition.z + CUBIC_MAP_HALF_BLOCK_SIZE) - locationCellY > 1 - radius / 3))
-                    {
-                        impactDirection = (Vector3){ 1.0f, 0.0f, 1.0f };
-                    }
-                }
-            }
-        }
-    }
-
-    // Floor collision
-    if (playerPosition->y <= radius)
-    {
-        playerPosition->y = radius + 0.01f;
-        impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
-    }
-    // Roof collision
-    else if (playerPosition->y >= (1.5f - radius))
-    {
-        playerPosition->y = (1.5f - radius) - 0.01f;
-        impactDirection = (Vector3) { impactDirection.x, 1, impactDirection.z};
-    }
-    
-    free(cubicmapPixels);
-
-    return impactDirection;
 }
 
 //----------------------------------------------------------------------------------
@@ -1898,23 +1656,21 @@ static Mesh LoadOBJ(const char *fileName)
 
                 if (dataType == 't')    // Read texCoord
                 {
-                    float useless = 0;
-
-                    fscanf(objFile, "%f %f %f", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y, &useless);
+                    fscanf(objFile, "%f %f%*[^\n]s\n", &midTexCoords[countTexCoords].x, &midTexCoords[countTexCoords].y);
                     countTexCoords++;
 
                     fscanf(objFile, "%c", &dataType);
                 }
                 else if (dataType == 'n')    // Read normals
                 {
-                    fscanf(objFile, "%f %f %f", &midNormals[countNormals].x, &midNormals[countNormals].y, &midNormals[countNormals].z );
+                    fscanf(objFile, "%f %f %f", &midNormals[countNormals].x, &midNormals[countNormals].y, &midNormals[countNormals].z);
                     countNormals++;
 
                     fscanf(objFile, "%c", &dataType);
                 }
                 else    // Read vertex
                 {
-                    fscanf(objFile, "%f %f %f", &midVertices[countVertex].x, &midVertices[countVertex].y, &midVertices[countVertex].z );
+                    fscanf(objFile, "%f %f %f", &midVertices[countVertex].x, &midVertices[countVertex].y, &midVertices[countVertex].z);
                     countVertex++;
 
                     fscanf(objFile, "%c", &dataType);
@@ -1959,6 +1715,7 @@ static Mesh LoadOBJ(const char *fileName)
 
                 if ((numNormals == 0) && (numTexCoords == 0)) fscanf(objFile, "%i %i %i", &vNum[0], &vNum[1], &vNum[2]);
                 else if (numNormals == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vNum[0], &vtNum[0], &vNum[1], &vtNum[1], &vNum[2], &vtNum[2]);
+                else if (numTexCoords == 0) fscanf(objFile, "%i//%i %i//%i %i//%i", &vNum[0], &vnNum[0], &vNum[1], &vnNum[1], &vNum[2], &vnNum[2]);
                 else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vNum[0], &vtNum[0], &vnNum[0], &vNum[1], &vtNum[1], &vnNum[1], &vNum[2], &vtNum[2], &vnNum[2]);
 
                 mesh.vertices[vCounter] = midVertices[vNum[0]-1].x;
@@ -2049,9 +1806,9 @@ static Mesh LoadOBJ(const char *fileName)
 static Material LoadMTL(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     128
-    
+
     Material material = { 0 };  // LoadDefaultMaterial();
-    
+
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };
     char *mapFileName = NULL;
@@ -2069,14 +1826,14 @@ static Material LoadMTL(const char *fileName)
     while (!feof(mtlFile))
     {
         fgets(buffer, MAX_BUFFER_SIZE, mtlFile);
-        
+
         switch (buffer[0])
         {
             case 'n':   // newmtl string    Material name. Begins a new material description.
             {
                 // TODO: Support multiple materials in a single .mtl
                 sscanf(buffer, "newmtl %s", mapFileName);
-                
+
                 TraceLog(INFO, "[%s] Loading material...", mapFileName);
             }
             case 'i':   // illum int        Illumination model
@@ -2123,7 +1880,7 @@ static Material LoadMTL(const char *fileName)
                 {
                     int shininess = 0;
                     sscanf(buffer, "Ns %i", &shininess);
-                    
+
                     material.glossiness = (float)shininess;
                 }
                 else if (buffer[1] == 'i')  // Ni int   Refraction index.
@@ -2192,7 +1949,7 @@ static Material LoadMTL(const char *fileName)
                 float ialpha = 0.0f;
                 sscanf(buffer, "Tr %f", &ialpha);
                 material.colDiffuse.a = (unsigned char)((1.0f - ialpha)*255);
-                
+
             } break;
             case 'r':   // refl string      Reflection texture map
             default: break;
@@ -2203,6 +1960,6 @@ static Material LoadMTL(const char *fileName)
 
     // NOTE: At this point we have all material data
     TraceLog(INFO, "[%s] Material loaded successfully", fileName);
-    
+
     return material;
 }
