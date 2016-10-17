@@ -79,8 +79,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    #include <jni.h>                        // Java native interface
-    #include <android/sensor.h>             // Android sensors functions
+    //#include <android/sensor.h>           // Android sensors functions (accelerometer, gyroscope, light...)
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
@@ -361,7 +360,7 @@ void InitWindow(int width, int height, const char *title)
 
 #if defined(PLATFORM_ANDROID)
 // Android activity initialization
-void InitWindow(int width, int height, struct android_app *state)
+void InitWindow(int width, int height, void *state)
 {
     TraceLog(INFO, "Initializing raylib (v1.6.0)");
 
@@ -370,7 +369,7 @@ void InitWindow(int width, int height, struct android_app *state)
     screenWidth = width;
     screenHeight = height;
 
-    app = state;
+    app = (struct android_app *)state;
     internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
@@ -524,6 +523,7 @@ int GetScreenHeight(void)
     return screenHeight;
 }
 
+#if !defined(PLATFORM_ANDROID)
 // Show mouse cursor
 void ShowCursor()
 {
@@ -580,6 +580,7 @@ void DisableCursor()
 #endif
     cursorHidden = true;
 }
+#endif  // !defined(PLATFORM_ANDROID)
 
 // Sets Background Color
 void ClearBackground(Color color)
@@ -1099,19 +1100,13 @@ Matrix GetCameraMatrix(Camera camera)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Detect if a key has been pressed once
 bool IsKeyPressed(int key)
 {
     bool pressed = false;
 
-#if defined(PLATFORM_ANDROID)
-    if ((currentButtonState[key] != previousButtonState[key]) && (currentButtonState[key] == 0)) pressed = true;
-    else pressed = false;
-#else
     if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 1)) pressed = true;
     else pressed = false;
-#endif
 
     return pressed;
 }
@@ -1128,13 +1123,8 @@ bool IsKeyReleased(int key)
 {
     bool released = false;
     
-#if defined(PLATFORM_ANDROID)
-    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 1)) released = true;
-    else released = false;
-#else
     if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
     else released = false;
-#endif
 
     return released;
 }
@@ -1161,6 +1151,7 @@ void SetExitKey(int key)
 #endif
 }
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
 // Detect if a gamepad is available

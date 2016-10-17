@@ -77,10 +77,6 @@
     #define PLATFORM_DESKTOP
 #endif
 
-#if defined(PLATFORM_ANDROID)
-    typedef struct android_app; // Define android_app struct (android_native_app_glue.h)
-#endif
-
 #if defined(_WIN32) && defined(BUILDING_DLL)
     #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 DLL
 #elif defined(_WIN32) && defined(RAYLIB_DLL)
@@ -591,7 +587,7 @@ extern "C" {            // Prevents name mangling of functions
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-RLAPI void InitWindow(int width, int height, struct android_app *state);  // Init Android Activity and OpenGL Graphics
+RLAPI void InitWindow(int width, int height, void *state);        // Init Android Activity and OpenGL Graphics (struct android_app)
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 RLAPI void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
@@ -603,11 +599,13 @@ RLAPI void ToggleFullscreen(void);                                // Fullscreen 
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
+#if !defined(PLATFORM_ANDROID)
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor
 RLAPI bool IsCursorHidden(void);                                  // Returns true if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor
 RLAPI void DisableCursor(void);                                   // Disables cursor
+#endif
 
 RLAPI void ClearBackground(Color color);                          // Sets Background Color
 RLAPI void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
