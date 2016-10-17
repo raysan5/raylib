@@ -372,11 +372,11 @@ static char *ReadTextFile(const char *fileName);        // Read chars array from
 
 #if defined(RLGL_OCULUS_SUPPORT)
 #if !defined(RLGL_STANDALONE)
-static bool InitOculusDevice(void);         // Initialize Oculus device (returns true if success)
-static void CloseOculusDevice(void);        // Close Oculus device
-static void UpdateOculusTracking(void);     // Update Oculus head position-orientation tracking
-static void BeginOculusDrawing(void);       // Setup Oculus buffers for drawing
-static void EndOculusDrawing(void);         // Finish Oculus drawing and blit framebuffer to mirror
+static bool InitOculusDevice(void);                 // Initialize Oculus device (returns true if success)
+static void CloseOculusDevice(void);                // Close Oculus device
+static void UpdateOculusTracking(Camera *camera);   // Update Oculus head position-orientation tracking
+static void BeginOculusDrawing(void);               // Setup Oculus buffers for drawing
+static void EndOculusDrawing(void);                 // Finish Oculus drawing and blit framebuffer to mirror
 #endif
 
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
@@ -2735,15 +2735,11 @@ void ToggleVrMode(void)
 }
 
 // Update VR tracking (position and orientation) and camera
+// NOTE: Camera (position, target, up) gets update with head tracking information
 void UpdateVrTracking(Camera *camera)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (vrDeviceReady)
-    {
-        UpdateOculusTracking();
-        
-        // TODO: Update camera data (position, target, up) with tracking data
-    }
+    if (vrDeviceReady) UpdateOculusTracking(camera);
 #endif
 }
 
@@ -4083,7 +4079,7 @@ OCULUSAPI void CloseOculusDevice(void)
 }
 
 // Update Oculus head position-orientation tracking
-OCULUSAPI void UpdateOculusTracking(void)
+OCULUSAPI void UpdateOculusTracking(Camera *camera)
 {
     frameIndex++;
 
@@ -4092,6 +4088,10 @@ OCULUSAPI void UpdateOculusTracking(void)
     
     layer.eyeLayer.RenderPose[0] = eyePoses[0];
     layer.eyeLayer.RenderPose[1] = eyePoses[1];
+    
+    // TODO: Update external camera with eyePoses data (position, orientation)
+    // NOTE: We can simplify to simple camera if we consider IPD and HMD device configuration again later
+    // it will be useful for the user to draw, lets say, billboards oriented to camera
     
     // Get session status information
     ovrSessionStatus sessionStatus;

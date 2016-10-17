@@ -381,7 +381,7 @@ void ToggleVrMode(void);                    // Enable/Disable VR experience (dev
 // Oculus Rift API for direct access the device (no simulator)
 bool InitOculusDevice(void);                // Initialize Oculus device (returns true if success)
 void CloseOculusDevice(void);               // Close Oculus device
-void UpdateOculusTracking(void);            // Update Oculus head position-orientation tracking
+void UpdateOculusTracking(Camera *camera);  // Update Oculus head position-orientation tracking (and camera)
 void BeginOculusDrawing(void);              // Setup Oculus buffers for drawing
 void EndOculusDrawing(void);                // Finish Oculus drawing and blit framebuffer to mirror
 #endif
