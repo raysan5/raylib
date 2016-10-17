@@ -174,6 +174,14 @@
 #define KEY_Y                89
 #define KEY_Z                90
 
+#if defined(PLATFORM_ANDROID)
+    // Android Physical Buttons
+    #define KEY_BACK              4
+    #define KEY_MENU             82
+    #define KEY_VOLUME_UP        24
+    #define KEY_VOLUME_DOWN      25
+#endif
+
 // Mouse Buttons
 #define MOUSE_LEFT_BUTTON     0
 #define MOUSE_RIGHT_BUTTON    1
@@ -213,6 +221,13 @@
 #define GAMEPAD_XBOX_BUTTON_RB      5
 #define GAMEPAD_XBOX_BUTTON_SELECT  6
 #define GAMEPAD_XBOX_BUTTON_START   7
+#define GAMEPAD_XBOX_BUTTON_UP      10
+#define GAMEPAD_XBOX_BUTTON_RIGHT   11
+#define GAMEPAD_XBOX_BUTTON_DOWN    12
+#define GAMEPAD_XBOX_BUTTON_LEFT    13
+
+#define GAMEPAD_XBOX_AXIS_LEFT_X    0
+#define GAMEPAD_XBOX_AXIS_LEFT_Y    1
 
 #if defined(PLATFORM_RPI)
     #define GAMEPAD_XBOX_AXIS_DPAD_X    7
@@ -222,23 +237,10 @@
     #define GAMEPAD_XBOX_AXIS_LT        2
     #define GAMEPAD_XBOX_AXIS_RT        5
 #else
-    #define GAMEPAD_XBOX_BUTTON_UP      10
-    #define GAMEPAD_XBOX_BUTTON_DOWN    12
-    #define GAMEPAD_XBOX_BUTTON_LEFT    13
-    #define GAMEPAD_XBOX_BUTTON_RIGHT   11
     #define GAMEPAD_XBOX_AXIS_RIGHT_X   4
     #define GAMEPAD_XBOX_AXIS_RIGHT_Y   3
     #define GAMEPAD_XBOX_AXIS_LT_RT     2
 #endif
-
-#define GAMEPAD_XBOX_AXIS_LEFT_X    0
-#define GAMEPAD_XBOX_AXIS_LEFT_Y    1
-
-// Android Physic Buttons
-#define ANDROID_BACK            4
-#define ANDROID_MENU            82
-#define ANDROID_VOLUME_UP       24
-#define ANDROID_VOLUME_DOWN     25
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -648,7 +650,6 @@ RLAPI int StorageLoadValue(int position);                         // Storage loa
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 RLAPI bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
 RLAPI bool IsKeyDown(int key);                                // Detect if a key is being pressed
 RLAPI bool IsKeyReleased(int key);                            // Detect if a key has been released once
@@ -656,6 +657,7 @@ RLAPI bool IsKeyUp(int key);                                  // Detect if a key
 RLAPI int GetKeyPressed(void);                                // Get latest key pressed
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 RLAPI const char *GetGamepadName(int gamepad);                // Return gamepad internal name id
 RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
@@ -678,12 +680,6 @@ RLAPI int GetMouseWheelMove(void);                            // Returns mouse w
 RLAPI int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
 RLAPI int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)
 RLAPI Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)
-
-#if defined(PLATFORM_ANDROID)
-bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
-bool IsButtonDown(int button);                          // Detect if an android physic button is being pressed
-bool IsButtonReleased(int button);                      // Detect if an android physic button has been released
-#endif
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)

@@ -131,7 +131,7 @@
 #endif
 
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
-#define MAX_GAMEPAD_BUTTONS       11        // Max bumber of buttons supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
 #define RL_LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
@@ -158,9 +158,6 @@ static const char *internalDataPath;            // Android internal data path to
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
-
-static int previousButtonState[128] = { 1 };    // Required to check if button pressed/released once
-static int currentButtonState[128] = { 1 };     // Required to check if button pressed/released once
 #endif
 
 #if defined(PLATFORM_RPI)
@@ -203,10 +200,6 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 static const char *windowTitle;             // Window text title...
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 
-// Register keyboard states
-static char previousKeyState[512] = { 0 };  // Registers previous frame key state
-static char currentKeyState[512] = { 0 };   // Registers current frame key state
-
 // Register mouse states
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
 static char currentMouseState[3] = { 0 };   // Registers current mouse button state
@@ -221,10 +214,15 @@ static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS] = { 0 };
 
 // Keyboard configuration
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
-static int lastKeyPressed = -1;             // Register last key pressed
 
 static bool cursorHidden;                   // Track if cursor is hidden
 #endif
+
+// Register keyboard states
+static char previousKeyState[512] = { 0 };  // Registers previous frame key state
+static char currentKeyState[512] = { 0 };   // Registers current frame key state
+
+static int lastKeyPressed = -1;             // Register last key pressed
 
 static Vector2 mousePosition;               // Mouse position on screen
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -524,6 +522,63 @@ int GetScreenWidth(void)
 int GetScreenHeight(void)
 {
     return screenHeight;
+}
+
+// Show mouse cursor
+void ShowCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    #endif
+#endif
+    cursorHidden = false;
+}
+
+// Hide mouse cursor
+void HideCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XColor Col;
+        const char Nil[] = {0};
+
+        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
+        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
+
+        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
+        XFreeCursor(glfwGetX11Display(), Cur);
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    #endif
+#endif
+    cursorHidden = true;
+}
+
+// Check if mouse cursor is hidden
+bool IsCursorHidden()
+{
+    return cursorHidden;
+}
+
+// Enable mouse cursor
+void EnableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
+    cursorHidden = false;
+}
+
+// Disable mouse cursor
+void DisableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+    cursorHidden = true;
 }
 
 // Sets Background Color
@@ -1050,8 +1105,13 @@ bool IsKeyPressed(int key)
 {
     bool pressed = false;
 
+#if defined(PLATFORM_ANDROID)
+    if ((currentButtonState[key] != previousButtonState[key]) && (currentButtonState[key] == 0)) pressed = true;
+    else pressed = false;
+#else
     if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 1)) pressed = true;
     else pressed = false;
+#endif
 
     return pressed;
 }
@@ -1067,9 +1127,14 @@ bool IsKeyDown(int key)
 bool IsKeyReleased(int key)
 {
     bool released = false;
-
+    
+#if defined(PLATFORM_ANDROID)
+    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 1)) released = true;
+    else released = false;
+#else
     if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
     else released = false;
+#endif
 
     return released;
 }
@@ -1091,64 +1156,9 @@ int GetKeyPressed(void)
 // NOTE: default exitKey is ESCAPE
 void SetExitKey(int key)
 {
+#if !defined(PLATFORM_ANDROID)
     exitKey = key;
-}
-
-// Hide mouse cursor
-void HideCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
-        XColor Col;
-        const char Nil[] = {0};
-
-        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
-        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
-
-        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
-        XFreeCursor(glfwGetX11Display(), Cur);
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    #endif
 #endif
-    cursorHidden = true;
-}
-
-// Show mouse cursor
-void ShowCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
-        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    #endif
-#endif
-    cursorHidden = false;
-}
-
-// Disable mouse cursor
-void DisableCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-#endif
-    cursorHidden = true;
-}
-
-// Enable mouse cursor
-void EnableCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-#endif
-    cursorHidden = false;
-}
-
-// Check if mouse cursor is hidden
-bool IsCursorHidden()
-{
-    return cursorHidden;
 }
 
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
@@ -1204,7 +1214,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
 
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (currentGamepadState[gamepad][button] == 1)) result = true;
 
     return result;
@@ -1386,37 +1396,6 @@ Vector2 GetTouchPosition(int index)
 
     return position;
 }
-
-#if defined(PLATFORM_ANDROID)
-// Detect if a button has been pressed once
-bool IsButtonPressed(int button)
-{
-    bool pressed = false;
-
-    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 0)) pressed = true;
-    else pressed = false;
-
-    return pressed;
-}
-
-// Detect if a button is being pressed (button held down)
-bool IsButtonDown(int button)
-{
-    if (currentButtonState[button] == 0) return true;
-    else return false;
-}
-
-// Detect if a button has been released once
-bool IsButtonReleased(int button)
-{
-    bool released = false;
-
-    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 1)) released = true;
-    else released = false;
-
-    return released;
-}
-#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -1900,8 +1879,9 @@ static bool GetKeyStatus(int key)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetKey(window, key);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual keyboard
-    return false;
+    // NOTE: Android supports up to 260 keys
+    if (key < 0 || key > 260) return false;
+    else return currentKeyState[key];
 #elif defined(PLATFORM_RPI)
     // NOTE: Keys states are filled in PollInputEvents()
     if (key < 0 || key > 511) return false;
@@ -1929,6 +1909,9 @@ static void PollInputEvents(void)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
+    
+    // Reset last key pressed registered
+    lastKeyPressed = -1;
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -1939,9 +1922,8 @@ static void PollInputEvents(void)
 
     mousePosition.x = (float)mouseX;
     mousePosition.y = (float)mouseY;
-
+    
     // Keyboard input polling (automatically managed by GLFW3 through callback)
-    lastKeyPressed = -1;
 
     // Register previous keys states
     for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
@@ -1971,7 +1953,7 @@ static void PollInputEvents(void)
             
             for (int k = 0; (buttons != NULL) && (k < buttonsCount) && (buttonsCount < MAX_GAMEPAD_BUTTONS); k++)
             {
-                if (buttons[i] == GLFW_PRESS) currentGamepadState[i][k] = 1;
+                if (buttons[k] == GLFW_PRESS) currentGamepadState[i][k] = 1;
                 else currentGamepadState[i][k] = 0;
             }
             
@@ -1994,7 +1976,8 @@ static void PollInputEvents(void)
 
 #if defined(PLATFORM_ANDROID)
     // Register previous keys states
-    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
+    // NOTE: Android supports up to 260 keys
+    for (int i = 0; i < 260; i++) previousKeyState[i] = currentKeyState[i];
 
     // Poll Events (registered events)
     // NOTE: Activity is paused if not enabled (appEnabled)
@@ -2371,7 +2354,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         //int32_t AKeyEvent_getMetaState(event);
 
         // Save current button and its state
-        currentButtonState[keycode] = AKeyEvent_getAction(event);  // Down = 0, Up = 1
+        // NOTE: Android key action is 0 for down and 1 for up
+        if (AKeyEvent_getAction(event) == 0)
+        {
+            currentKeyState[keycode] = 1;  // Key down
+            lastKeyPressed = keycode;
+        }
+        else currentKeyState[keycode] = 0;  // Key up
 
         if (keycode == AKEYCODE_POWER)
         {
