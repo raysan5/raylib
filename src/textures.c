@@ -694,28 +694,45 @@ void ImageFormat(Image *image, int newFormat)
 }
 
 // Apply alpha mask to image
-// NOTE 1: Returned image is RGBA - 32bit
+// NOTE 1: Returned image is GRAY_ALPHA (16bit) or RGBA (32bit)
 // NOTE 2: alphaMask should be same size as image
 void ImageAlphaMask(Image *image, Image alphaMask)
 {
-    if (image->format >= COMPRESSED_DXT1_RGB)
+    if ((image->width != alphaMask.width) || (image->height != alphaMask.height))
+    {
+        TraceLog(WARNING, "Alpha mask must be same size as image");
+    }
+    else if (image->format >= COMPRESSED_DXT1_RGB)
     {
         TraceLog(WARNING, "Alpha mask can not be applied to compressed data formats");
-        return;
     }
     else
     {
         // Force mask to be Grayscale
         Image mask = ImageCopy(alphaMask);
-        ImageFormat(&mask, UNCOMPRESSED_GRAYSCALE);
+        if (mask.format != UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, UNCOMPRESSED_GRAYSCALE);
         
-        // Convert image to RGBA
-        if (image->format != UNCOMPRESSED_R8G8B8A8) ImageFormat(image, UNCOMPRESSED_R8G8B8A8);
-
-        // Apply alpha mask to alpha channel
-        for (int i = 0, k = 3; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 4)
+        // In case image is only grayscale, we just add alpha channel
+        if (image->format == UNCOMPRESSED_GRAYSCALE)
         {
-            ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+            ImageFormat(image, UNCOMPRESSED_GRAY_ALPHA);
+            
+            // Apply alpha mask to alpha channel
+            for (int i = 0, k = 1; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
+            {
+                ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+            }
+        }
+        else
+        {
+            // Convert image to RGBA
+            if (image->format != UNCOMPRESSED_R8G8B8A8) ImageFormat(image, UNCOMPRESSED_R8G8B8A8);
+
+            // Apply alpha mask to alpha channel
+            for (int i = 0, k = 3; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 4)
+            {
+                ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+            }
         }
 
         UnloadImage(mask);

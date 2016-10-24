@@ -355,7 +355,7 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
             else rec = spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR];
         }
 
-        if (rec.x > 0)
+        if (rec.x >= 0)
         {
             DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].x*scaleFactor,
                                                                  position.y + textOffsetY + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].y*scaleFactor,
@@ -811,8 +811,12 @@ static SpriteFont LoadBMFont(const char *fileName)
     strncat(texPath, texFileName, strlen(texFileName));
 
     TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
+    
+    Image imFont = LoadImage(texPath);
 
-    font.texture = LoadTexture(texPath);
+    if (imFont.format == UNCOMPRESSED_GRAYSCALE) ImageAlphaMask(&imFont, imFont);
+
+    font.texture = LoadTextureFromImage(imFont);
     font.size = fontSize;
     font.numChars = numChars;
     font.charValues = (int *)malloc(numChars*sizeof(int));
@@ -820,12 +824,14 @@ static SpriteFont LoadBMFont(const char *fileName)
     font.charOffsets = (Vector2 *)malloc(numChars*sizeof(Vector2));
     font.charAdvanceX = (int *)malloc(numChars*sizeof(int));
 
+    UnloadImage(imFont);
+    
     free(texPath);
 
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
 
     bool unorderedChars = false;
-    int firstChar = 0;
+    int firstChar = 32;
 
     for (int i = 0; i < numChars; i++)
     {
@@ -833,8 +839,20 @@ static SpriteFont LoadBMFont(const char *fileName)
         sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
 
-        if (i == 0) firstChar = charId;
-        else if (i != (charId - firstChar)) unorderedChars = true;
+        if ((i == 0) && (charId != FONT_FIRST_CHAR))
+        {
+            TraceLog(WARNING, "BMFont not supported: expected SPACE(32) as first character, falling back to default font");
+            firstChar = charId;
+            break;
+        }
+        else if ((i < (126 - FONT_FIRST_CHAR)) && (i != (charId - FONT_FIRST_CHAR)))
+        {
+            // NOTE: We expect the first 95 chars (32..126) to be ordered for quick drawing access,
+            // characters above are stored and we look for them (search algorythm) when drawing
+            TraceLog(WARNING, "BMFont not supported: unordered chars data, falling back to default font");
+            unorderedChars = true;
+            break;
+        }
 
         // Save data properly in sprite font
         font.charValues[i] = charId;
@@ -844,9 +862,6 @@ static SpriteFont LoadBMFont(const char *fileName)
     }
 
     fclose(fntFile);
-
-    if (firstChar != FONT_FIRST_CHAR) TraceLog(WARNING, "BMFont not supported: expected SPACE(32) as first character, falling back to default font");
-    else if (unorderedChars) TraceLog(WARNING, "BMFont not supported: unordered chars data, falling back to default font");
 
     // NOTE: Font data could be not ordered by charId: 32,33,34,35... raylib does not support unordered BMFonts
     if ((firstChar != FONT_FIRST_CHAR) || (unorderedChars) || (font.texture.id == 0))
