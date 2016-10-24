@@ -463,6 +463,9 @@ void CloseWindow(void)
     // Wait for mouse and gamepad threads to finish before closing
     // NOTE: Those threads should already have finished at this point
     // because they are controlled by windowShouldClose variable
+    
+    windowShouldClose = true;   // Added to force threads to exit when the close window is called
+    
     pthread_join(mouseThreadId, NULL);
     pthread_join(gamepadThreadId, NULL);
 #endif
