@@ -90,14 +90,20 @@
     #define MAX_QUADS_BATCH         1024    // Be careful with text, every letter maps a quad
 #endif
 
+// Texture parameters (equivalent to OpenGL defines)
+#define RL_TEXTURE_MAG_FILTER     0x2800
+#define RL_TEXTURE_MIN_FILTER     0x2801
+#define RL_TEXTURE_WRAP_S         0x2802
+#define RL_TEXTURE_WRAP_T         0x2803
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
+
 typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
-
-typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
@@ -296,6 +302,7 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 //------------------------------------------------------------------------------------
 void rlEnableTexture(unsigned int id);          // Enable texture usage
 void rlDisableTexture(void);                    // Disable texture usage
+void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
 void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
 void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
 void rlEnableDepthTest(void);                   // Enable depth test

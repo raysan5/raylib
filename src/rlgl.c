@@ -871,6 +871,48 @@ void rlDisableTexture(void)
 #endif
 }
 
+// Set texture parameters
+// TODO: Review this function to choose right filter/wrap value
+void rlTextureParameters(unsigned int id, int param, int value)
+{
+/*
+// TextureWrapMode
+#define GL_REPEAT                         0x2901
+#define GL_CLAMP_TO_EDGE                  0x812F
+
+// TextureMagFilter
+#define GL_NEAREST                        0x2600
+#define GL_LINEAR                         0x2601
+
+// TextureMinFilter 
+#define GL_NEAREST                        0x2600
+#define GL_LINEAR                         0x2601
+#define GL_NEAREST_MIPMAP_NEAREST         0x2700
+#define GL_LINEAR_MIPMAP_NEAREST          0x2701
+#define GL_NEAREST_MIPMAP_LINEAR          0x2702
+#define GL_LINEAR_MIPMAP_LINEAR           0x2703
+*/    
+    
+    int glValue = 0;
+    
+    glBindTexture(GL_TEXTURE_2D, id);
+    
+    switch (value)
+    {
+        case FILTER_POINT: glValue = GL_NEAREST; break;
+        case FILTER_BILINEAR: glValue = GL_LINEAR; break;
+        case FILTER_TRILINEAR: glValue = GL_LINEAR; break;
+        //case WRAP_REPEAT: glValue = GL_REPEAT; break;
+        //case WRAP_CLAMP: glValue = GL_CLAMP_TO_EDGE; break;
+        //case WRAP_MIRROR: glValue = GL_NEAREST; break;
+        default: break;
+    }
+
+    glTexParameteri(GL_TEXTURE_2D, param, glValue);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 // Enable rendering to texture (fbo)
 void rlEnableRenderTexture(unsigned int id)
 {
