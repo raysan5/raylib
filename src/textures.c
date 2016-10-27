@@ -442,6 +442,20 @@ void UnloadRenderTexture(RenderTexture2D target)
     if (target.id != 0) rlDeleteRenderTextures(target);
 }
 
+// Set texture scale filter
+void SetTextureFilter(Texture2D texture, int filterMode)
+{
+    rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, filterMode);
+    rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, filterMode);
+}
+
+// Set texture wrap mode
+void SetTextureWrap(Texture2D texture, int wrapMode)
+{
+    rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, wrapMode);
+    rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, wrapMode);
+}
+
 // Get pixel data from image in the form of Color struct array
 Color *GetImageData(Image image)
 {
