@@ -272,6 +272,27 @@ SpriteFont LoadSpriteFont(const char *fileName)
     return spriteFont;
 }
 
+// Generate SpriteFont from TTF file
+// NOTE: You can pass an array with desired characters, those characters should be available in the font
+// if array is NULL, default char set is selected 32..126
+SpriteFont GenSpriteFont(const char *fileName, int fontSize, int *fontChars)
+{
+    SpriteFont spriteFont = { 0 };
+    
+    if (strcmp(GetExtension(fileName),"ttf") == 0) 
+    {
+        spriteFont = LoadTTF(fileName, fontSize, FONT_FIRST_CHAR, DEFAULT_TTF_NUMCHARS);
+    }
+
+    if (spriteFont.texture.id == 0)
+    {
+        TraceLog(WARNING, "[%s] SpriteFont could not be generated, using default font", fileName);
+        spriteFont = GetDefaultFont();
+    }
+
+    return spriteFont;
+}
+
 // Unload SpriteFont from GPU memory
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
@@ -287,6 +308,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
         TraceLog(DEBUG, "Unloaded sprite font data");
     }
 }
+
 
 // Draw text (using default font)
 // NOTE: fontSize work like in any drawing program but if fontSize is lower than font-base-size, then font-base-size is used
