@@ -222,6 +222,7 @@ static char previousKeyState[512] = { 0 };  // Registers previous frame key stat
 static char currentKeyState[512] = { 0 };   // Registers current frame key state
 
 static int lastKeyPressed = -1;             // Register last key pressed
+static int lastGamepadButtonPressed = -1;   // Register last gamepad button pressed
 
 static Vector2 mousePosition;               // Mouse position on screen
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -1236,6 +1237,13 @@ bool IsGamepadButtonUp(int gamepad, int button)
 
     return result;
 }
+
+// Get the last gamepad button pressed
+int GetGamepadButtonPressed(void)
+{
+    return lastGamepadButtonPressed;
+}
+
 #endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 
 
@@ -1906,6 +1914,9 @@ static void PollInputEvents(void)
     
     // Reset last key pressed registered
     lastKeyPressed = -1;
+    
+    // Reset last gamepad button pressed registered
+    lastGamepadButtonPressed = -1;
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -1947,7 +1958,11 @@ static void PollInputEvents(void)
             
             for (int k = 0; (buttons != NULL) && (k < buttonsCount) && (buttonsCount < MAX_GAMEPAD_BUTTONS); k++)
             {
-                if (buttons[k] == GLFW_PRESS) currentGamepadState[i][k] = 1;
+                if (buttons[k] == GLFW_PRESS)
+                {
+                    currentGamepadState[i][k] = 1;
+                    lastGamepadButtonPressed = k;
+                }
                 else currentGamepadState[i][k] = 0;
             }
             
@@ -2801,6 +2816,8 @@ static void *GamepadThread(void *arg)
                     {
                         // 1 - button pressed, 0 - button released
                         currentGamepadState[i][gamepadEvent.number] = (int)gamepadEvent.value;
+                        
+                        if ((int)gamepadEvent.value == 1) lastGamepadButtonPressed = gamepadEvent.number;
                     }
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)

@@ -192,21 +192,32 @@
 #define GAMEPAD_PLAYER3       2
 #define GAMEPAD_PLAYER4       3
 
-// Gamepad Buttons
+// Gamepad Buttons/Axis
 
-// PS3 USB Controller
-#define GAMEPAD_PS3_BUTTON_A        2
-#define GAMEPAD_PS3_BUTTON_B        1
-#define GAMEPAD_PS3_BUTTON_X        3
-#define GAMEPAD_PS3_BUTTON_Y        4
-#define GAMEPAD_PS3_BUTTON_R1       7
-#define GAMEPAD_PS3_BUTTON_R2       5
+// PS3 USB Controller Buttons
+#define GAMEPAD_PS3_BUTTON_TRIANGLE 0
+#define GAMEPAD_PS3_BUTTON_CIRCLE   1
+#define GAMEPAD_PS3_BUTTON_CROSS    2
+#define GAMEPAD_PS3_BUTTON_SQUARE   3
 #define GAMEPAD_PS3_BUTTON_L1       6
-#define GAMEPAD_PS3_BUTTON_L2       8
+#define GAMEPAD_PS3_BUTTON_R1       7
+#define GAMEPAD_PS3_BUTTON_L2       4
+#define GAMEPAD_PS3_BUTTON_R2       5
+#define GAMEPAD_PS3_BUTTON_START    8
 #define GAMEPAD_PS3_BUTTON_SELECT   9
-#define GAMEPAD_PS3_BUTTON_START   10
+#define GAMEPAD_PS3_BUTTON_UP      24
+#define GAMEPAD_PS3_BUTTON_RIGHT   25
+#define GAMEPAD_PS3_BUTTON_DOWN    26
+#define GAMEPAD_PS3_BUTTON_LEFT    27
+#define GAMEPAD_PS3_BUTTON_PS      12
 
-// TODO: Add PS3 d-pad axis
+// PS3 USB Controller Axis
+#define GAMEPAD_PS3_AXIS_LEFT_X     0
+#define GAMEPAD_PS3_AXIS_LEFT_Y     1
+#define GAMEPAD_PS3_AXIS_RIGHT_X    2
+#define GAMEPAD_PS3_AXIS_RIGHT_Y    5
+#define GAMEPAD_PS3_AXIS_L2         3       // 1.0(not pressed) --> -1.0(completely pressed)
+#define GAMEPAD_PS3_AXIS_R2         4       // 1.0(not pressed) --> -1.0(completely pressed)
 
 // Xbox360 USB Controller Buttons
 #define GAMEPAD_XBOX_BUTTON_A       0
@@ -221,22 +232,27 @@
 #define GAMEPAD_XBOX_BUTTON_RIGHT   11
 #define GAMEPAD_XBOX_BUTTON_DOWN    12
 #define GAMEPAD_XBOX_BUTTON_LEFT    13
+#define GAMEPAD_XBOX_BUTTON_HOME    9
 
+// Xbox360 USB Controller Axis
 #define GAMEPAD_XBOX_AXIS_LEFT_X    0
 #define GAMEPAD_XBOX_AXIS_LEFT_Y    1
+#define GAMEPAD_XBOX_AXIS_RIGHT_X   2
+#define GAMEPAD_XBOX_AXIS_RIGHT_Y   3
+#define GAMEPAD_XBOX_AXIS_LT        4       // -1.0(not pressed) --> 1.0(completely pressed)
+#define GAMEPAD_XBOX_AXIS_RT        5       // -1.0(not pressed) --> 1.0(completely pressed)
 
+/*
+// NOTE: For Raspberry Pi, axis must be reconfigured
 #if defined(PLATFORM_RPI)
-    #define GAMEPAD_XBOX_AXIS_DPAD_X    7
-    #define GAMEPAD_XBOX_AXIS_DPAD_Y    6
+    #define GAMEPAD_XBOX_AXIS_LEFT_X    7
+    #define GAMEPAD_XBOX_AXIS_LEFT_Y    6
     #define GAMEPAD_XBOX_AXIS_RIGHT_X   3
     #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4
     #define GAMEPAD_XBOX_AXIS_LT        2
     #define GAMEPAD_XBOX_AXIS_RT        5
-#else
-    #define GAMEPAD_XBOX_AXIS_RIGHT_X   4
-    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   3
-    #define GAMEPAD_XBOX_AXIS_LT_RT     2
 #endif
+*/
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -533,6 +549,12 @@ typedef enum {
     COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } TextureFormat;
 
+// Texture parameters: filter mode
+typedef enum { FILTER_POINT = 0, FILTER_BILINEAR, FILTER_TRILINEAR } TextureFilterMode;
+
+// Texture parameters: wrap mode
+typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
+
 // Color blending modes (pre-defined)
 typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
 
@@ -663,6 +685,7 @@ RLAPI bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gam
 RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
 RLAPI bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
 RLAPI bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
+RLAPI int GetGamepadButtonPressed(void);                      // Get the last gamepad button pressed
 #endif
 
 RLAPI bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
@@ -752,6 +775,7 @@ RLAPI void UnloadTexture(Texture2D texture);                                    
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory
 RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
+RLAPI void UpdateTexture(Texture2D texture, void *pixels);                                               // Update GPU texture with new data
 RLAPI void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
 RLAPI void ImageFormat(Image *image, int newFormat);                                                     // Convert image data to desired format
 RLAPI void ImageAlphaMask(Image *image, Image alphaMask);                                                // Apply alpha mask to image
@@ -773,7 +797,8 @@ RLAPI void ImageColorGrayscale(Image *image);                                   
 RLAPI void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 RLAPI void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
-RLAPI void UpdateTexture(Texture2D texture, void *pixels);                                               // Update GPU texture with new data
+RLAPI void SetTextureFilter(Texture2D texture, int filterMode);
+RLAPI void SetTextureWrap(Texture2D texture, int wrapMode);
 
 RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
