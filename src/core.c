@@ -208,8 +208,8 @@ static int currentMouseWheelY = 0;          // Registers current mouse wheel var
 // Register gamepads states
 static bool gamepadReady[MAX_GAMEPADS] = { false };             // Flag to know if gamepad is ready
 static float gamepadAxisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];  // Gamepad axis state
-static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS] = { 0 };
-static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS] = { 0 };
+static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
+static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
 
 // Keyboard configuration
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
