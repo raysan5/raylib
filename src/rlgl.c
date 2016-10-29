@@ -140,6 +140,14 @@
     #define GL_COMPRESSED_RGBA_ASTC_8x8_KHR     0x93b7
 #endif
 
+#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+    #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT   0x84FF
+#endif
+
+#ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
+    #define GL_TEXTURE_MAX_ANISOTROPY_EXT       0x84FE
+#endif
+
 #if defined(GRAPHICS_API_OPENGL_11)
     #define GL_UNSIGNED_SHORT_5_6_5     0x8363
     #define GL_UNSIGNED_SHORT_5_5_5_1   0x8034
@@ -283,14 +291,21 @@ static Shader standardShader;               // Shader with support for lighting 
 static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
 static bool standardShaderLoaded = false;   // Flag to track if standard shader has been loaded
 
-// Flags for supported extensions
+// Extension supported flag: VAO
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
 
-// Compressed textures support flags
+// Extension supported flag: Compressed textures
 static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
+
+// Extension supported flag: Anisotropic filtering
+static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
+static float maxAnisotropicLevel = 0.0f;        // Maximum anisotropy level supported (minimum is 2.0f)
+
+// Extension supported flag: Clamp mirror wrap mode
+static bool texClampMirrorSupported = false;    // Clamp mirror wrap mode supported
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
@@ -871,44 +886,33 @@ void rlDisableTexture(void)
 #endif
 }
 
-// Set texture parameters
-// TODO: Review this function to choose right filter/wrap value
+// Set texture parameters (wrap mode/filter mode)
 void rlTextureParameters(unsigned int id, int param, int value)
 {
-/*
-// TextureWrapMode
-#define GL_REPEAT                         0x2901
-#define GL_CLAMP_TO_EDGE                  0x812F
-
-// TextureMagFilter
-#define GL_NEAREST                        0x2600
-#define GL_LINEAR                         0x2601
-
-// TextureMinFilter 
-#define GL_NEAREST                        0x2600
-#define GL_LINEAR                         0x2601
-#define GL_NEAREST_MIPMAP_NEAREST         0x2700
-#define GL_LINEAR_MIPMAP_NEAREST          0x2701
-#define GL_NEAREST_MIPMAP_LINEAR          0x2702
-#define GL_LINEAR_MIPMAP_LINEAR           0x2703
-*/    
-    
-    int glValue = 0;
-    
     glBindTexture(GL_TEXTURE_2D, id);
-    
-    switch (value)
+
+    switch (param)
     {
-        case FILTER_POINT: glValue = GL_NEAREST; break;
-        case FILTER_BILINEAR: glValue = GL_LINEAR; break;
-        case FILTER_TRILINEAR: glValue = GL_LINEAR; break;
-        //case WRAP_REPEAT: glValue = GL_REPEAT; break;
-        //case WRAP_CLAMP: glValue = GL_CLAMP_TO_EDGE; break;
-        //case WRAP_MIRROR: glValue = GL_NEAREST; break;
+        case RL_TEXTURE_WRAP_S:
+        case RL_TEXTURE_WRAP_T:
+        {
+            if ((value == RL_WRAP_CLAMP_MIRROR) && !texClampMirrorSupported) TraceLog(WARNING, "Clamp mirror wrap mode not supported");
+            else glTexParameteri(GL_TEXTURE_2D, param, value);
+        } break;
+        case RL_TEXTURE_MAG_FILTER:
+        case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
+        case RL_TEXTURE_ANISOTROPIC_FILTER:
+        {
+            if (value <= maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+            else if (maxAnisotropicLevel > 0.0f)
+            {
+                TraceLog(WARNING, "[TEX ID %i] Maximum anisotropic filter level supported is %iX", id, maxAnisotropicLevel);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+            }
+            else TraceLog(WARNING, "Anisotropic filtering not supported");
+        } break;
         default: break;
     }
-
-    glTexParameteri(GL_TEXTURE_2D, param, glValue);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -1166,7 +1170,7 @@ void rlglInit(int width, int height)
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
         if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) npotSupported = true;
-#endif   
+#endif
         
         // DDS texture compression support
         if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
@@ -1185,6 +1189,16 @@ void rlglInit(int width, int height)
 
         // ASTC texture compression support
         if (strcmp(extList[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) texCompASTCSupported = true;
+        
+        // Anisotropic texture filter support
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_filter_anisotropic") == 0)
+        {
+            texAnisotropicFilterSupported = true;
+            glGetFloatv(0x84FF, &maxAnisotropicLevel);   // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT      
+        }
+        
+        // Clamp mirror wrap mode supported
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texClampMirrorSupported = true;
     }
     
 #ifdef _MSC_VER
@@ -1204,6 +1218,9 @@ void rlglInit(int width, int height)
     if (texCompETC2Supported) TraceLog(INFO, "[EXTENSION] ETC2/EAC compressed textures supported");
     if (texCompPVRTSupported) TraceLog(INFO, "[EXTENSION] PVRT compressed textures supported");
     if (texCompASTCSupported) TraceLog(INFO, "[EXTENSION] ASTC compressed textures supported");
+    
+    if (texAnisotropicFilterSupported) TraceLog(INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", maxAnisotropicLevel);
+    if (texClampMirrorSupported) TraceLog(INFO, "[EXTENSION] Clamp mirror wrap texture mode supported");
 
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
@@ -1729,6 +1746,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+        //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
         TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
 

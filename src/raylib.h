@@ -550,7 +550,16 @@ typedef enum {
 } TextureFormat;
 
 // Texture parameters: filter mode
-typedef enum { FILTER_POINT = 0, FILTER_BILINEAR, FILTER_TRILINEAR } TextureFilterMode;
+// NOTE 1: Filtering considers mipmaps if available in the texture
+// NOTE 2: Filter is accordingly set for minification and magnification
+typedef enum { 
+    FILTER_POINT = 0,               // No filter, just pixel aproximation
+    FILTER_BILINEAR,                // Linear filtering
+    FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+    FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+    FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+    FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+} TextureFilterMode;
 
 // Texture parameters: wrap mode
 typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
@@ -797,8 +806,8 @@ RLAPI void ImageColorGrayscale(Image *image);                                   
 RLAPI void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 RLAPI void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
-RLAPI void SetTextureFilter(Texture2D texture, int filterMode);
-RLAPI void SetTextureWrap(Texture2D texture, int wrapMode);
+RLAPI void SetTextureFilter(Texture2D texture, int filterMode);                                          // Set texture scaling filter mode
+RLAPI void SetTextureWrap(Texture2D texture, int wrapMode);                                              // Set texture wrapping mode
 
 RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2

@@ -91,10 +91,22 @@
 #endif
 
 // Texture parameters (equivalent to OpenGL defines)
-#define RL_TEXTURE_MAG_FILTER     0x2800
-#define RL_TEXTURE_MIN_FILTER     0x2801
-#define RL_TEXTURE_WRAP_S         0x2802
-#define RL_TEXTURE_WRAP_T         0x2803
+#define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
+#define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
+#define RL_TEXTURE_MAG_FILTER           0x2800      // GL_TEXTURE_MAG_FILTER
+#define RL_TEXTURE_MIN_FILTER           0x2801      // GL_TEXTURE_MIN_FILTER
+#define RL_TEXTURE_ANISOTROPIC_FILTER   0x3000      // Anisotropic filter (custom identifier)
+
+#define RL_FILTER_NEAREST               0x2600      // GL_NEAREST
+#define RL_FILTER_LINEAR                0x2601      // GL_LINEAR
+#define RL_FILTER_MIP_NEAREST           0x2700      // GL_NEAREST_MIPMAP_NEAREST
+#define RL_FILTER_NEAREST_MIP_LINEAR    0x2702      // GL_NEAREST_MIPMAP_LINEAR
+#define RL_FILTER_LINEAR_MIP_NEAREST    0x2701      // GL_LINEAR_MIPMAP_NEAREST
+#define RL_FILTER_MIP_LINEAR            0x2703      // GL_LINEAR_MIPMAP_LINEAR
+
+#define RL_WRAP_REPEAT                  0x2901      // GL_REPEAT
+#define RL_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
+#define RL_WRAP_CLAMP_MIRROR            0x8742      // GL_MIRROR_CLAMP_EXT
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -242,6 +254,21 @@ typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
     // Light types
     typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
+    
+    // Texture parameters: filter mode
+    // NOTE 1: Filtering considers mipmaps if available in the texture
+    // NOTE 2: Filter is accordingly set for minification and magnification
+    typedef enum { 
+        FILTER_POINT = 0,               // No filter, just pixel aproximation
+        FILTER_BILINEAR,                // Linear filtering
+        FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+        FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+        FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+        FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+    } TextureFilterMode;
+    
+    // Texture parameters: wrap mode
+    typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
 
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
