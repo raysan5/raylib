@@ -33,6 +33,7 @@
 #include "utils.h"          // Required for: GetExtension()
 
 // Following libs are used on LoadTTF()
+//#define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "external/stb_truetype.h"      // Required for: stbtt_BakeFontBitmap()
 
@@ -268,20 +269,35 @@ SpriteFont LoadSpriteFont(const char *fileName)
         TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
+    else SetTextureFilter(spriteFont.texture, FILTER_BILINEAR);
 
     return spriteFont;
 }
 
-// Generate SpriteFont from TTF file
+// Load SpriteFont from TTF file with custom parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
-SpriteFont GenSpriteFont(const char *fileName, int fontSize, int *fontChars)
+SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars)
 {
     SpriteFont spriteFont = { 0 };
     
     if (strcmp(GetExtension(fileName),"ttf") == 0) 
     {
-        spriteFont = LoadTTF(fileName, fontSize, FONT_FIRST_CHAR, DEFAULT_TTF_NUMCHARS);
+        int firstChar = 0;
+        int totalChars = 0;
+        
+        if ((fontChars == NULL) || (numChars == 0))
+        {
+            firstChar = 32;     // Default first character: SPACE[32]
+            totalChars = 95;    // Default charset [32..126]
+        }
+        else
+        {
+            firstChar = fontChars[0];
+            totalChars = numChars;
+        }
+        
+        spriteFont = LoadTTF(fileName, fontSize, firstChar, totalChars);
     }
 
     if (spriteFont.texture.id == 0)
@@ -522,7 +538,7 @@ void DrawFPS(int posX, int posY)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-// Load a Image font file (XNA style)
+// Load an Image font file (XNA style)
 static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 {
     #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
@@ -595,15 +611,24 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
         xPosToRead = charSpacing;
     }
 
-    free(pixels);
-
     TraceLog(DEBUG, "SpriteFont data parsed correctly from image");
+    
+    // NOTE: We need to remove key color borders from image to avoid weird 
+    // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
+    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
+
+    // Create a new image with the processed color data (key color replaced by BLANK)
+    Image fontClear = LoadImageEx(pixels, image.width, image.height);
+    
+    free(pixels);    // Free pixels array memory
 
     // Create spritefont with all data parsed from image
     SpriteFont spriteFont = { 0 };
 
-    spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
+    spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
     spriteFont.numChars = index;
+    
+    UnloadImage(fontClear);     // Unload processed image once converted to texture
 
     // We got tempCharValues and tempCharsRecs populated with chars data
     // Now we move temp data to sized charValues and charRecs arrays
@@ -900,12 +925,15 @@ static SpriteFont LoadBMFont(const char *fileName)
 // TODO: Review texture packing method and generation (use oversampling)
 static SpriteFont LoadTTF(const char *fileName, int fontSize, int firstChar, int numChars)
 {
-    // NOTE: Generated font uses some hardcoded values
-    #define FONT_TEXTURE_WIDTH      512     // Font texture width
-    #define FONT_TEXTURE_HEIGHT     512     // Font texture height
+    // NOTE: Font texture size is predicted (being as much conservative as possible)
+    // Predictive method consist of supposing same number of chars by line-column (sqrtf)
+    // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
+    int textureSize = GetNextPOT(ceil((float)fontSize*3/4)*ceil(sqrtf((float)numChars)));
+    
+    TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
 
     unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
-    unsigned char *dataBitmap = (unsigned char *)malloc(FONT_TEXTURE_WIDTH*FONT_TEXTURE_HEIGHT*sizeof(unsigned char));   // One channel bitmap returned!
+    unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
     stbtt_bakedchar *charData = (stbtt_bakedchar *)malloc(sizeof(stbtt_bakedchar)*numChars);
 
     SpriteFont font = { 0 };
@@ -914,40 +942,44 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int firstChar, int
 
     if (ttfFile == NULL)
     {
-        TraceLog(WARNING, "[%s] FNT file could not be opened", fileName);
+        TraceLog(WARNING, "[%s] TTF file could not be opened", fileName);
         return font;
     }
 
     fread(ttfBuffer, 1, 1<<25, ttfFile);
 
     // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
-    stbtt_BakeFontBitmap(ttfBuffer,0, fontSize, dataBitmap, FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, firstChar, numChars, charData);
+    // TODO: Replace this function by a proper packing method and support random chars order
+    int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, firstChar, numChars, charData);
 
+    //if (result > 0) TraceLog(INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
+    if (result < 0) TraceLog(WARNING, "TTF spritefont loading: Not all the characters fit in the font");
+    
     free(ttfBuffer);
 
     // Convert image data from grayscale to to UNCOMPRESSED_GRAY_ALPHA
-    unsigned char *dataGrayAlpha = (unsigned char *)malloc(FONT_TEXTURE_WIDTH*FONT_TEXTURE_HEIGHT*sizeof(unsigned char)*2); // Two channels
-    int k = 0;
+    unsigned char *dataGrayAlpha = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char)*2); // Two channels
 
-    for (int i = 0; i < FONT_TEXTURE_WIDTH*FONT_TEXTURE_HEIGHT; i++)
+    for (int i = 0, k = 0; i < textureSize*textureSize; i++, k += 2)
     {
         dataGrayAlpha[k] = 255;
         dataGrayAlpha[k + 1] = dataBitmap[i];
-
-        k += 2;
     }
 
     free(dataBitmap);
 
     // Sprite font generation from TTF extracted data
     Image image;
-    image.width = FONT_TEXTURE_WIDTH;
-    image.height = FONT_TEXTURE_HEIGHT;
+    image.width = textureSize;
+    image.height = textureSize;
     image.mipmaps = 1;
     image.format = UNCOMPRESSED_GRAY_ALPHA;
     image.data = dataGrayAlpha;
-
+    
     font.texture = LoadTextureFromImage(image);
+    
+    //WritePNG("generated_ttf_image.png", (unsigned char *)image.data, image.width, image.height, 2);
+    
     UnloadImage(image);     // Unloads dataGrayAlpha
 
     font.size = fontSize;

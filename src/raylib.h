@@ -686,7 +686,6 @@ RLAPI bool IsKeyUp(int key);                                  // Detect if a key
 RLAPI int GetKeyPressed(void);                                // Get latest key pressed
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
 RLAPI const char *GetGamepadName(int gamepad);                // Return gamepad internal name id
 RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
@@ -695,7 +694,6 @@ RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gam
 RLAPI bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
 RLAPI bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
 RLAPI int GetGamepadButtonPressed(void);                      // Get the last gamepad button pressed
-#endif
 
 RLAPI bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
 RLAPI bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
@@ -821,6 +819,7 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 //------------------------------------------------------------------------------------
 RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load a SpriteFont image into GPU memory
+RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars);    // Load a SpriteFont from TTF font with parameters
 RLAPI void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory
 
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
