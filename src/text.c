@@ -44,7 +44,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FONT_FIRST_CHAR         32      // NOTE: Expected first char for a sprite font
 #define MAX_FORMATTEXT_LENGTH   64
 #define MAX_SUBTEXT_LENGTH      64
 
@@ -69,6 +68,8 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+static int GetCharIndex(SpriteFont font, int letter);
+
 static SpriteFont LoadImageFont(Image image, Color key, int firstChar); // Load a Image font file (XNA style)
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
 static SpriteFont LoadBMFont(const char *fileName); // Load a BMFont file (AngelCode font file)
@@ -197,7 +198,7 @@ extern void LoadDefaultFont(void)
 
     for (int i = 0; i < defaultFont.numChars; i++)
     {
-        defaultFont.charValues[i] = FONT_FIRST_CHAR + i;  // First char is 32
+        defaultFont.charValues[i] = 32 + i;  // First char is 32
 
         defaultFont.charRecs[i].x = currentPosX;
         defaultFont.charRecs[i].y = charsDivisor + currentLine*(charsHeight + charsDivisor);
@@ -248,6 +249,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
     // Default hardcoded values for ttf file loading
     #define DEFAULT_TTF_FONTSIZE    32      // Font first character (32 - space)
     #define DEFAULT_TTF_NUMCHARS    95      // ASCII 32..126 is 95 glyphs
+    #define DEFAULT_FIRST_CHAR      32      // Expected first char for image spritefont
 
     SpriteFont spriteFont = { 0 };
 
@@ -258,7 +260,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
     else
     {
         Image image = LoadImage(fileName);
-        if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, FONT_FIRST_CHAR);
+        if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);
         UnloadImage(image);
     }
 
@@ -267,7 +269,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
         TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
-    else SetTextureFilter(spriteFont.texture, FILTER_BILINEAR);
+    else SetTextureFilter(spriteFont.texture, FILTER_POINT);    // By default we set point filter (best performance)
 
     return spriteFont;
 }
@@ -356,22 +358,18 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
 
     for (int i = 0; i < length; i++)
     {
-        // TODO: Right now we are supposing characters that follow a continous order and start at FONT_FIRST_CHAR,
-        // this sytem can be improved to support any characters order and init value...
-        // An intermediate table could be created to link char values with predefined char position index in chars rectangle array
-
         if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
         {
             // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
             letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR];
+            rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)letter)];
             i++;
         }
         else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
         {
             // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
             letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR + 64];
+            rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)letter + 64)];
             i++;
         }
         else
@@ -383,17 +381,19 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
                 textOffsetX = 0;
                 rec.x = -1;
             }
-            else rec = spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR];
+            else rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)text[i])];
         }
 
         if (rec.x >= 0)
         {
-            DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].x*scaleFactor,
-                                                                 position.y + textOffsetY + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].y*scaleFactor,
+            int index = GetCharIndex(spriteFont, (int)text[i]);
+            
+            DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[index].x*scaleFactor,
+                                                                 position.y + textOffsetY + spriteFont.charOffsets[index].y*scaleFactor,
                                                                  rec.width*scaleFactor, rec.height*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
 
-            if (spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR] == 0) textOffsetX += (rec.width*scaleFactor + spacing);
-            else textOffsetX += (spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR]*scaleFactor + spacing);
+            if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (rec.width*scaleFactor + spacing);
+            else textOffsetX += (spriteFont.charAdvanceX[index]*scaleFactor + spacing);
         }
     }
 }
@@ -473,8 +473,10 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
 
         if (text[i] != '\n')
         {
-            if (spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR] != 0) textWidth += spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR];
-            else textWidth += (spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR].width + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].x);
+            int index = GetCharIndex(spriteFont, (int)text[i]);
+            
+            if (spriteFont.charAdvanceX[index] != 0) textWidth += spriteFont.charAdvanceX[index];
+            else textWidth += (spriteFont.charRecs[index].width + spriteFont.charOffsets[index].x);
         }
         else
         {
@@ -530,6 +532,27 @@ void DrawFPS(int posX, int posY)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
+
+static int GetCharIndex(SpriteFont font, int letter)
+{
+//#define UNORDERED_CHARSET
+#if defined(UNORDERED_CHARSET)
+    int index = 0;
+    
+    for (int i = 0; i < font.numChars; i++)
+    {
+        if (font.charValues[i] == letter)
+        {
+            index = i;
+            break;
+        }
+    }
+    
+    return index;
+#else
+    return (letter - 32);
+#endif
+}
 
 // Load an Image font file (XNA style)
 static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
@@ -857,6 +880,7 @@ static SpriteFont LoadBMFont(const char *fileName)
     if (imFont.format == UNCOMPRESSED_GRAYSCALE) ImageAlphaMask(&imFont, imFont);
 
     font.texture = LoadTextureFromImage(imFont);
+    
     font.size = fontSize;
     font.numChars = numChars;
     font.charValues = (int *)malloc(numChars*sizeof(int));
@@ -870,29 +894,11 @@ static SpriteFont LoadBMFont(const char *fileName)
 
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
 
-    bool unorderedChars = false;
-    int firstChar = 32;
-
     for (int i = 0; i < numChars; i++)
     {
         fgets(buffer, MAX_BUFFER_SIZE, fntFile);
         sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
-
-        if ((i == 0) && (charId != FONT_FIRST_CHAR))
-        {
-            TraceLog(WARNING, "BMFont not supported: expected SPACE(32) as first character, falling back to default font");
-            firstChar = charId;
-            break;
-        }
-        else if ((i < (126 - FONT_FIRST_CHAR)) && (i != (charId - FONT_FIRST_CHAR)))
-        {
-            // NOTE: We expect the first 95 chars (32..126) to be ordered for quick drawing access,
-            // characters above are stored and we look for them (search algorythm) when drawing
-            TraceLog(WARNING, "BMFont not supported: unordered chars data, falling back to default font");
-            unorderedChars = true;
-            break;
-        }
 
         // Save data properly in sprite font
         font.charValues[i] = charId;
@@ -903,8 +909,7 @@ static SpriteFont LoadBMFont(const char *fileName)
 
     fclose(fntFile);
 
-    // NOTE: Font data could be not ordered by charId: 32,33,34,35... raylib does not support unordered BMFonts
-    if ((firstChar != FONT_FIRST_CHAR) || (unorderedChars) || (font.texture.id == 0))
+    if (font.texture.id == 0)
     {
         UnloadSpriteFont(font);
         font = GetDefaultFont();
