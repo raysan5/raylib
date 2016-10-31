@@ -198,6 +198,7 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
+static bool cursorHidden = false;           // Track if cursor is hidden
 
 // Register mouse states
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
@@ -213,8 +214,6 @@ static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Curre
 
 // Keyboard configuration
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
-
-static bool cursorHidden;                   // Track if cursor is hidden
 #endif
 
 // Register keyboard states
@@ -1155,15 +1154,16 @@ void SetExitKey(int key)
 #endif
 }
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
 
 // Detect if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
-
+    
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
+#endif
 
     return result;
 }
@@ -1183,11 +1183,10 @@ const char *GetGamepadName(int gamepad)
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
-
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (axis < MAX_GAMEPAD_AXIS))
-    {
-        value = gamepadAxisState[gamepad][axis];
-    }
+    
+#if !defined(PLATFORM_ANDROID)
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (axis < MAX_GAMEPAD_AXIS)) value = gamepadAxisState[gamepad][axis];
+#endif
 
     return value;
 }
@@ -1196,10 +1195,12 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
-    
+
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
         (currentGamepadState[gamepad][button] == 1)) pressed = true;
+#endif
 
     return pressed;
 }
@@ -1209,8 +1210,10 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
 
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (currentGamepadState[gamepad][button] == 1)) result = true;
+#endif
 
     return result;
 }
@@ -1220,9 +1223,11 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
     
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
         (currentGamepadState[gamepad][button] == 0)) released = true;
+#endif
 
     return released;
 }
@@ -1232,8 +1237,10 @@ bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
 
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] == 0)) result = true;
+#endif
 
     return result;
 }
@@ -1243,9 +1250,6 @@ int GetGamepadButtonPressed(void)
 {
     return lastGamepadButtonPressed;
 }
-
-#endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-
 
 // Detect if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
