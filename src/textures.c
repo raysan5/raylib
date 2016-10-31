@@ -8,7 +8,7 @@
 *       stb_image - Multiple formats image loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                   NOTE: stb_image has been slightly modified, original library: https://github.com/nothings/stb
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -1241,7 +1241,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     // NOTE: GetTextureData() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
 
-    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Required for color tint
+    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Convert to 32 bit for color tint
     ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
     Color *fontPixels = GetImageData(imFont);

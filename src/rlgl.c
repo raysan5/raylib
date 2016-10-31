@@ -35,7 +35,7 @@
 #include <math.h>                   // Required for: atan2()
 
 #ifndef RLGL_STANDALONE
-    #include "raymath.h"            // Required for Vector3 and Matrix functions
+    #include "raymath.h"            // Required for: Vector3 and Matrix functions
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
