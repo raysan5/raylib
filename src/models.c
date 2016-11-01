@@ -1411,7 +1411,7 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
     float dy = centerA.y - centerB.y;      // Y distance between centers
     float dz = centerA.z - centerB.z;      // Y distance between centers
 
-    float distance = sqrt(dx*dx + dy*dy + dz*dz);  // Distance between centers
+    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers
 
     if (distance <= (radiusA + radiusB)) collision = true;
 
@@ -1441,14 +1441,14 @@ bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radius
 
     float dmin = 0;
 
-    if (centerSphere.x < box.min.x) dmin += pow(centerSphere.x - box.min.x, 2);
-    else if (centerSphere.x > box.max.x) dmin += pow(centerSphere.x - box.max.x, 2);
+    if (centerSphere.x < box.min.x) dmin += powf(centerSphere.x - box.min.x, 2);
+    else if (centerSphere.x > box.max.x) dmin += powf(centerSphere.x - box.max.x, 2);
 
-    if (centerSphere.y < box.min.y) dmin += pow(centerSphere.y - box.min.y, 2);
-    else if (centerSphere.y > box.max.y) dmin += pow(centerSphere.y - box.max.y, 2);
+    if (centerSphere.y < box.min.y) dmin += powf(centerSphere.y - box.min.y, 2);
+    else if (centerSphere.y > box.max.y) dmin += powf(centerSphere.y - box.max.y, 2);
 
-    if (centerSphere.z < box.min.z) dmin += pow(centerSphere.z - box.min.z, 2);
-    else if (centerSphere.z > box.max.z) dmin += pow(centerSphere.z - box.max.z, 2);
+    if (centerSphere.z < box.min.z) dmin += powf(centerSphere.z - box.min.z, 2);
+    else if (centerSphere.z > box.max.z) dmin += powf(centerSphere.z - box.max.z, 2);
 
     if (dmin <= (radiusSphere*radiusSphere)) collision = true;
 
@@ -1487,8 +1487,8 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
     float collisionDistance = 0;
 
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    if (distance < sphereRadius) collisionDistance = vector + sqrt(d);
-    else collisionDistance = vector - sqrt(d);
+    if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
+    else collisionDistance = vector - sqrtf(d);
 
     VectorScale(&offset, collisionDistance);
     Vector3 cPoint = VectorAdd(ray.position, offset);
