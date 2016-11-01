@@ -42,7 +42,7 @@ int main()
     
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
     
-    SetCameraMode(camera, CAMERA_ORBITAL);      // Set an orbital camera mode
+    SetCameraMode(camera, CAMERA_FREE);      // Set an orbital camera mode
 
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -70,6 +70,9 @@ int main()
             End3dMode();
             
             DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            
+            DrawText(FormatText("Camera position: (%.2f, %.2f, %.2f)", camera.position.x, camera.position.y, camera.position.z), 600, 20, 10, BLACK);
+            DrawText(FormatText("Camera target: (%.2f, %.2f, %.2f)", camera.target.x, camera.target.y, camera.target.z), 600, 40, 10, GRAY);
 
             DrawFPS(10, 10);
 

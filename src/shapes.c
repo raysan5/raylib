@@ -4,7 +4,7 @@
 *
 *   Basic functions to draw 2d Shapes and check collisions
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -25,9 +25,8 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>     // Required for abs() function
-#include <math.h>       // Math related functions, sin() and cos() used on DrawCircle*
-                        // sqrt() and pow() and abs() used on CheckCollision*
+#include <stdlib.h>     // Required for: abs()
+#include <math.h>       // Required for: sinf(), cosf(), sqrtf()
 
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
@@ -71,7 +70,7 @@ void DrawPixelV(Vector2 position, Color color)
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(position.x, position.y);
-        rlVertex2i(position.x + 1, position.y + 1);
+        rlVertex2f(position.x + 1.0f, position.y + 1.0f);
     rlEnd();
 }
 
@@ -98,7 +97,7 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw a color-filled circle
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
-    DrawCircleV((Vector2){ centerX, centerY }, radius, color);
+    DrawCircleV((Vector2){ (float)centerX, (float)centerY }, radius, color);
 }
 
 // Draw a gradient-filled circle
@@ -111,9 +110,9 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
             rlVertex2i(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10))*radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
@@ -129,9 +128,9 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
                 
-                rlVertex2i(center.x, center.y);
-                rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
+                rlVertex2f(center.x, center.y);
+                rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
             }
         rlEnd();
     }
@@ -144,10 +143,10 @@ void DrawCircleV(Vector2 center, float radius, Color color)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
                 
-                rlVertex2i(center.x, center.y);
-                rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 10))*radius, center.y + cos(DEG2RAD*(i + 10))*radius);
-                rlVertex2f(center.x + sin(DEG2RAD*(i + 20))*radius, center.y + cos(DEG2RAD*(i + 20))*radius);
+                rlVertex2f(center.x, center.y);
+                rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 20))*radius, center.y + cosf(DEG2RAD*(i + 20))*radius);
             }
         rlEnd();
         
@@ -164,8 +163,8 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
         for (int i = 0; i < 360; i += 10)
         {
-            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10))*radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
    rlEnd();
 }
@@ -330,9 +329,9 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlVertex2i(0, 0);
-                rlVertex2f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius);
-                rlVertex2f(sin(DEG2RAD*(i + 360/sides))*radius, cos(DEG2RAD*(i + 360/sides))*radius);
+                rlVertex2f(0, 0);
+                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
+                rlVertex2f(sinf(DEG2RAD*(i + 360/sides))*radius, cosf(DEG2RAD*(i + 360/sides))*radius);
             }
         rlEnd();
     rlPopMatrix();
@@ -434,7 +433,7 @@ bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, floa
     float dx = center2.x - center1.x;      // X distance between centers
     float dy = center2.y - center1.y;      // Y distance between centers
 
-    float distance = sqrt(dx*dx + dy*dy);  // Distance between centers
+    float distance = sqrtf(dx*dx + dy*dy); // Distance between centers
 
     if (distance <= (radius1 + radius2)) collision = true;
 
@@ -457,7 +456,7 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     if (dx <= (rec.width/2)) { return true; } 
     if (dy <= (rec.height/2)) { return true; }
 
-    float cornerDistanceSq = pow(dx - rec.width/2, 2) + pow(dy - rec.height/2, 2);
+    float cornerDistanceSq = (dx - rec.width/2)*(dx - rec.width/2) + (dy - rec.height/2)*(dy - rec.height/2);
 
     return (cornerDistanceSq <= (radius*radius));
 }

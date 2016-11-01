@@ -30,12 +30,14 @@ int main()
     
     // Define the camera to look into our 3d world
     Camera camera;
-    camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
+    camera.position = (Vector3){ 5.0f, 2.0f, 5.0f };    // Camera position
+    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 60.0f;                                // Camera field-of-view Y
     
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
+    
+    SetCameraMode(camera, CAMERA_FIRST_PERSON);         // Set first person camera mode
     
     SetTargetFPS(90);                   // Set our game to run at 90 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -45,9 +47,10 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateVrTracking();
+        if (IsVrSimulator()) UpdateCamera(&camera);     // Update camera (simulator mode)
+        else UpdateVrTracking(&camera);                 // Update camera with device tracking data
         
-        if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();
+        if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();    // Toggle VR mode
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -61,7 +64,7 @@ int main()
                 DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
-                DrawGrid(10, 1.0f);
+                DrawGrid(40, 1.0f);
 
             End3dMode();
 

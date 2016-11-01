@@ -39,7 +39,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);          // Update internal camera and our camera
+        UpdateCamera(&camera);          // Update camera
         
         if (IsKeyDown('Z')) camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
         //----------------------------------------------------------------------------------

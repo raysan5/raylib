@@ -2824,6 +2824,28 @@ int lua_IsAudioDeviceReady(lua_State* L)
     return 1;
 }
 
+int lua_LoadWave(lua_State* L)
+{
+    const char * arg1 = LuaGetArgument_string(L, 1);
+    Wave result = LoadWave((char *)arg1);
+    LuaPush_Wave(L, result);
+    return 1;
+}
+
+int lua_LoadWaveEx(lua_State* L)
+{
+    // TODO: Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels);
+    
+    int arg1 = 0;
+    int arg2 = LuaGetArgument_int(L, 2);
+    int arg3 = LuaGetArgument_int(L, 3);
+    int arg4 = LuaGetArgument_int(L, 4);
+    int arg5 = LuaGetArgument_int(L, 5);
+    Wave result = LoadWaveEx(arg1, arg2, arg3, arg4, arg5);
+    LuaPush_Wave(L, result);
+    return 1;
+}
+
 int lua_LoadSound(lua_State* L)
 {
     const char * arg1 = LuaGetArgument_string(L, 1);
@@ -2847,6 +2869,22 @@ int lua_LoadSoundFromRES(lua_State* L)
     Sound result = LoadSoundFromRES(arg1, arg2);
     LuaPush_Sound(L, result);
     return 1;
+}
+
+int lua_UpdateSound(lua_State* L)
+{
+    Sound arg1 = LuaGetArgument_Sound(L, 1);
+    const char * arg2 = LuaGetArgument_string(L, 2);
+    int * arg3 = LuaGetArgument_int(L, 3);
+    UpdateSound(arg1, arg2, arg3);
+    return 0;
+}
+
+int lua_UnloadWave(lua_State* L)
+{
+    Wave arg1 = LuaGetArgument_Wave(L, 1);
+    UnloadWave(arg1);
+    return 0;
 }
 
 int lua_UnloadSound(lua_State* L)
@@ -2906,6 +2944,43 @@ int lua_SetSoundPitch(lua_State* L)
     float arg2 = LuaGetArgument_float(L, 2);
     SetSoundPitch(arg1, arg2);
     return 0;
+}
+
+int lua_WaveFormat(lua_State* L)
+{
+    Wave arg1 = LuaGetArgument_Wave(L, 1);
+    int arg2 = LuaGetArgument_int(L, 2);
+    int arg3 = LuaGetArgument_int(L, 3);
+    int arg4 = LuaGetArgument_int(L, 4);
+    WaveFormat(arg1, arg2, arg3, arg4);
+    return 0;
+}
+
+int lua_LoadMusicStream(lua_State* L)
+{
+    Wave arg1 = LuaGetArgument_Wave(L, 1);
+    Wave result = WaveCopy(arg1);
+    LuaPush_Wave(L, result);
+    return 1;
+}
+
+int lua_WaveCrop(lua_State* L)
+{
+    Wave arg1 = LuaGetArgument_Wave(L, 1);
+    int arg2 = LuaGetArgument_int(L, 2);
+    int arg3 = LuaGetArgument_int(L, 3);
+    WaveCrop(arg1, arg2, arg3);
+    return 0;
+}
+
+int lua_GetWaveData(lua_State* L)
+{
+    // TODO: float *GetWaveData(Wave wave);
+    
+    Wave arg1 = LuaGetArgument_Wave(L, 1);
+    float result = GetWaveData(arg1);
+    LuaPush_float(L, result);
+    return 1;
 }
 
 int lua_LoadMusicStream(lua_State* L)
@@ -3799,9 +3874,13 @@ static luaL_Reg raylib_functions[] = {
     REG(InitAudioDevice)
     REG(CloseAudioDevice)
     REG(IsAudioDeviceReady)
+    REG(LoadWave)
+    REG(LoadWaveEx)
     REG(LoadSound)
     REG(LoadSoundFromWave)
     REG(LoadSoundFromRES)
+    REG(UpdateSound)
+    REG(UnloadWave)
     REG(UnloadSound)
     REG(PlaySound)
     REG(PauseSound)
@@ -3810,6 +3889,10 @@ static luaL_Reg raylib_functions[] = {
     REG(IsSoundPlaying)
     REG(SetSoundVolume)
     REG(SetSoundPitch)
+    REG(WaveFormat)
+    REG(WaveCopy)
+    REG(WaveCrop)
+    REG(GetWaveData)
 
     REG(LoadMusicStream)
     REG(UnloadMusicStream)

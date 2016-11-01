@@ -38,7 +38,6 @@ uniform Light lights[maxLights];
 
 vec3 ComputeLightPoint(Light l, vec3 n, vec3 v, float s)
 {
-/*
     vec3 surfacePos = vec3(modelMatrix*vec4(fragPosition, 1.0));
     vec3 surfaceToLight = l.position - surfacePos;
     
@@ -51,17 +50,14 @@ vec3 ComputeLightPoint(Light l, vec3 n, vec3 v, float s)
     if (diff > 0.0)
     {
         vec3 h = normalize(-l.direction + v);
-        spec = pow(dot(n, h), 3.0 + glossiness)*s;
+        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;
     }
     
     return (diff*l.diffuse.rgb + spec*colSpecular.rgb);
-*/
-    return vec3(0.5);
 }
 
 vec3 ComputeLightDirectional(Light l, vec3 n, vec3 v, float s)
 {
-/*
     vec3 lightDir = normalize(-l.direction);
     
     // Diffuse shading
@@ -72,18 +68,15 @@ vec3 ComputeLightDirectional(Light l, vec3 n, vec3 v, float s)
     if (diff > 0.0)
     {
         vec3 h = normalize(lightDir + v);
-        spec = pow(dot(n, h), 3.0 + glossiness)*s;
+        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;
     }
     
     // Combine results
     return (diff*l.intensity*l.diffuse.rgb + spec*colSpecular.rgb);
-*/
-    return vec3(0.5);
 }
 
 vec3 ComputeLightSpot(Light l, vec3 n, vec3 v, float s)
 {
-/*
     vec3 surfacePos = vec3(modelMatrix*vec4(fragPosition, 1));
     vec3 lightToSurface = normalize(surfacePos - l.position);
     vec3 lightDir = normalize(-l.direction);
@@ -108,12 +101,10 @@ vec3 ComputeLightSpot(Light l, vec3 n, vec3 v, float s)
     if (diffAttenuation > 0.0)
     {
         vec3 h = normalize(lightDir + v);
-        spec = pow(dot(n, h), 3.0 + glossiness)*s;
+        spec = pow(abs(dot(n, h)), 3.0 + glossiness)*s;
     }
     
     return (falloff*(diffAttenuation*l.diffuse.rgb + spec*colSpecular.rgb));
-*/
-    return vec3(0.5);
 }
 
 void main()
@@ -140,7 +131,7 @@ void main()
     
     // Calculate specular texture color fetching or set to maximum specular value by default
     float spec = 1.0;
-    if (useSpecular == 1) spec *= normalize(texture2D(texture2, fragTexCoord).r);
+    if (useSpecular == 1) spec = texture2D(texture2, fragTexCoord).r;
     
     for (int i = 0; i < maxLights; i++)
     {

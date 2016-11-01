@@ -90,14 +90,32 @@
     #define MAX_QUADS_BATCH         1024    // Be careful with text, every letter maps a quad
 #endif
 
+// Texture parameters (equivalent to OpenGL defines)
+#define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
+#define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
+#define RL_TEXTURE_MAG_FILTER           0x2800      // GL_TEXTURE_MAG_FILTER
+#define RL_TEXTURE_MIN_FILTER           0x2801      // GL_TEXTURE_MIN_FILTER
+#define RL_TEXTURE_ANISOTROPIC_FILTER   0x3000      // Anisotropic filter (custom identifier)
+
+#define RL_FILTER_NEAREST               0x2600      // GL_NEAREST
+#define RL_FILTER_LINEAR                0x2601      // GL_LINEAR
+#define RL_FILTER_MIP_NEAREST           0x2700      // GL_NEAREST_MIPMAP_NEAREST
+#define RL_FILTER_NEAREST_MIP_LINEAR    0x2702      // GL_NEAREST_MIPMAP_LINEAR
+#define RL_FILTER_LINEAR_MIP_NEAREST    0x2701      // GL_LINEAR_MIPMAP_NEAREST
+#define RL_FILTER_MIP_LINEAR            0x2703      // GL_LINEAR_MIPMAP_LINEAR
+
+#define RL_WRAP_REPEAT                  0x2901      // GL_REPEAT
+#define RL_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
+#define RL_WRAP_CLAMP_MIRROR            0x8742      // GL_MIRROR_CLAMP_EXT
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
+
 typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
-
-typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
@@ -236,6 +254,21 @@ typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
 
     // Light types
     typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
+    
+    // Texture parameters: filter mode
+    // NOTE 1: Filtering considers mipmaps if available in the texture
+    // NOTE 2: Filter is accordingly set for minification and magnification
+    typedef enum { 
+        FILTER_POINT = 0,               // No filter, just pixel aproximation
+        FILTER_BILINEAR,                // Linear filtering
+        FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+        FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+        FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+        FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+    } TextureFilterMode;
+    
+    // Texture parameters: wrap mode
+    typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
 
     // Color blending modes (pre-defined)
     typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
@@ -296,6 +329,7 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 //------------------------------------------------------------------------------------
 void rlEnableTexture(unsigned int id);          // Enable texture usage
 void rlDisableTexture(void);                    // Disable texture usage
+void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
 void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
 void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
 void rlEnableDepthTest(void);                   // Enable depth test
@@ -375,13 +409,13 @@ float *MatrixToFloat(Matrix mat);
 void InitVrDevice(int vrDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
 bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
-void UpdateVrTracking(void);                // Update VR tracking (position and orientation)
+void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
 // Oculus Rift API for direct access the device (no simulator)
 bool InitOculusDevice(void);                // Initialize Oculus device (returns true if success)
 void CloseOculusDevice(void);               // Close Oculus device
-void UpdateOculusTracking(void);            // Update Oculus head position-orientation tracking
+void UpdateOculusTracking(Camera *camera);  // Update Oculus head position-orientation tracking (and camera)
 void BeginOculusDrawing(void);              // Setup Oculus buffers for drawing
 void EndOculusDrawing(void);                // Finish Oculus drawing and blit framebuffer to mirror
 #endif

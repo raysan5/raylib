@@ -21,16 +21,13 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
+    Camera camera = {{ 10.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
     
     Vector2 cubeScreenPosition;
     
-    SetCameraMode(CAMERA_FREE);         // Set a free camera mode
-    SetCameraPosition(camera.position); // Set internal camera position to match our camera position
-    SetCameraTarget(camera.target);     // Set internal camera target to match our camera target
-    SetCameraFovy(camera.fovy);         // Set internal camera field-of-view Y
+    SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -40,7 +37,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);          // Update internal camera and our camera
+        UpdateCamera(&camera);          // Update camera
         
         // Calculate cube screen space position (with a little offset to be in top)
         cubeScreenPosition = GetWorldToScreen((Vector3){cubePosition.x, cubePosition.y + 2.5f, cubePosition.z}, camera);

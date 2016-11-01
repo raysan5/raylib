@@ -431,6 +431,11 @@ ALC_API ALCboolean ALC_APIENTRY alcResetDeviceSOFT(ALCdevice *device, const ALCi
 #endif
 #endif
 
+#ifndef AL_SOFT_gain_clamp_ex
+#define AL_SOFT_gain_clamp_ex 1
+#define AL_GAIN_LIMIT_SOFT                       0x200E
+#endif
+
 #ifdef __cplusplus
 }
 #endif
