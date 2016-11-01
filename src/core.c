@@ -58,12 +58,12 @@
 #endif
 
 #include <stdio.h>          // Standard input / output lib
-#include <stdlib.h>         // Declares malloc() and free() for memory management, rand(), atexit()
-#include <stdint.h>         // Required for typedef unsigned long long int uint64_t, used by hi-res timer
-#include <time.h>           // Useful to initialize random seed - Android/RPI hi-res timer (NOTE: Linux only!)
-#include <math.h>           // Math related functions, tan() used to set perspective
-#include <string.h>         // String function definitions, memset()
-#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
+#include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
+#include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
+#include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
+#include <math.h>           // Required for: tan() [Used in Begin3dMode() to set perspective]
+#include <string.h>         // Required for: strcmp()
+//#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
@@ -222,6 +222,7 @@ static char currentKeyState[512] = { 0 };   // Registers current frame key state
 
 static int lastKeyPressed = -1;             // Register last key pressed
 static int lastGamepadButtonPressed = -1;   // Register last gamepad button pressed
+static int gamepadAxisCount = 0;            // Register number of available gamepad axis
 
 static Vector2 mousePosition;               // Mouse position on screen
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -1168,15 +1169,34 @@ bool IsGamepadAvailable(int gamepad)
     return result;
 }
 
+// Check gamepad name (if available)
+bool IsGamepadName(int gamepad, const char *name)
+{
+    bool result = false;
+    const char *gamepadName = NULL; 
+    
+    if (gamepadReady[gamepad]) gamepadName = GetGamepadName(gamepad);
+    
+    if ((name != NULL) && (gamepadName != NULL)) result = (strcmp(name, gamepadName) == 0);
+    
+    return result;
+}
+
 // Return gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
 #if defined(PLATFORM_DESKTOP)
-    if (glfwJoystickPresent(gamepad) == 1) return glfwGetJoystickName(gamepad);
+    if (gamepadReady[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
 #else
     return NULL;
 #endif
+}
+
+// Return gamepad axis count
+int GetGamepadAxisCount(int gamepad)
+{
+    return gamepadAxisCount;
 }
 
 // Return axis movement vector for a gamepad
@@ -1921,6 +1941,7 @@ static void PollInputEvents(void)
     
     // Reset last gamepad button pressed registered
     lastGamepadButtonPressed = -1;
+    gamepadAxisCount = 0;
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -1943,13 +1964,19 @@ static void PollInputEvents(void)
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
     
+    // Check if gamepads are ready
+    // NOTE: We do it here in case of disconection
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (glfwJoystickPresent(i)) gamepadReady[i] = true;
+        else gamepadReady[i] = false;
+    }
+    
     // Register gamepads buttons events
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        if (glfwJoystickPresent(i))     // Check if gamepad is available
+        if (gamepadReady[i])     // Check if gamepad is available
         {
-            gamepadReady[i] = true;
-            
             // Register previous gamepad states
             for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
     
@@ -1980,8 +2007,9 @@ static void PollInputEvents(void)
             {
                 gamepadAxisState[i][k] = axes[k];
             }
+            
+            gamepadAxisCount = axisCount;
         }
-        else gamepadReady[i] = false;
     }
 
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
