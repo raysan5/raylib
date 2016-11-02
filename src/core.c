@@ -96,8 +96,8 @@
     #include <sys/ioctl.h>      // UNIX System call for device-specific input/output operations - ioctl()
     #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
-    #include <linux/joystick.h>
-
+    #include <linux/joystick.h> // Linux: Joystick support library
+    
     #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
 
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
@@ -175,6 +175,7 @@ static pthread_t mouseThreadId;                 // Mouse reading thread id
 // Gamepad input variables
 static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descriptor
 static pthread_t gamepadThreadId;               // Gamepad reading thread id
+static char gamepadName[64];                    // Gamepad name holder
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -1188,6 +1189,10 @@ const char *GetGamepadName(int gamepad)
 #if defined(PLATFORM_DESKTOP)
     if (gamepadReady[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
+#elif defined(PLATFORM_RPI)
+	if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGNAME(64), &gamepadName);
+
+    return gamepadName;
 #else
     return NULL;
 #endif
@@ -1196,6 +1201,11 @@ const char *GetGamepadName(int gamepad)
 // Return gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
+#if defined(PLATFORM_RPI)
+    int axisCount = 0;
+    if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGAXES, &axisCount);
+    gamepadAxisCount = axisCount;
+#endif
     return gamepadAxisCount;
 }
 
@@ -1939,9 +1949,11 @@ static void PollInputEvents(void)
     // Reset last key pressed registered
     lastKeyPressed = -1;
     
-    // Reset last gamepad button pressed registered
+#if !defined(PLATFORM_RPI)
+    // Reset last gamepad button/axis registered state
     lastGamepadButtonPressed = -1;
     gamepadAxisCount = 0;
+#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -2850,6 +2862,7 @@ static void *GamepadThread(void *arg)
                         currentGamepadState[i][gamepadEvent.number] = (int)gamepadEvent.value;
                         
                         if ((int)gamepadEvent.value == 1) lastGamepadButtonPressed = gamepadEvent.number;
+                        else lastGamepadButtonPressed = -1;
                     }
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)

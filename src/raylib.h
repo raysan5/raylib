@@ -216,8 +216,8 @@
 #define GAMEPAD_PS3_AXIS_LEFT_Y     1
 #define GAMEPAD_PS3_AXIS_RIGHT_X    2
 #define GAMEPAD_PS3_AXIS_RIGHT_Y    5
-#define GAMEPAD_PS3_AXIS_L2         3       // 1.0(not pressed) --> -1.0(completely pressed)
-#define GAMEPAD_PS3_AXIS_R2         4       // 1.0(not pressed) --> -1.0(completely pressed)
+#define GAMEPAD_PS3_AXIS_L2         3       // [1..-1] (pressure-level)
+#define GAMEPAD_PS3_AXIS_R2         4       // [1..-1] (pressure-level)
 
 // Xbox360 USB Controller Buttons
 #define GAMEPAD_XBOX_BUTTON_A       0
@@ -232,27 +232,25 @@
 #define GAMEPAD_XBOX_BUTTON_RIGHT   11
 #define GAMEPAD_XBOX_BUTTON_DOWN    12
 #define GAMEPAD_XBOX_BUTTON_LEFT    13
-#define GAMEPAD_XBOX_BUTTON_HOME    9
+#define GAMEPAD_XBOX_BUTTON_HOME    8
 
 // Xbox360 USB Controller Axis
-#define GAMEPAD_XBOX_AXIS_LEFT_X    0
-#define GAMEPAD_XBOX_AXIS_LEFT_Y    1
-#define GAMEPAD_XBOX_AXIS_RIGHT_X   2
-#define GAMEPAD_XBOX_AXIS_RIGHT_Y   3
-#define GAMEPAD_XBOX_AXIS_LT        4       // -1.0(not pressed) --> 1.0(completely pressed)
-#define GAMEPAD_XBOX_AXIS_RT        5       // -1.0(not pressed) --> 1.0(completely pressed)
+#define GAMEPAD_XBOX_AXIS_LEFT_X    0       // [-1..1] (left->right)
+#define GAMEPAD_XBOX_AXIS_LEFT_Y    1       // [1..-1] (up->down)
+#define GAMEPAD_XBOX_AXIS_RIGHT_X   2       // [-1..1] (left->right)
+#define GAMEPAD_XBOX_AXIS_RIGHT_Y   3       // [1..-1] (up->down)
+#define GAMEPAD_XBOX_AXIS_LT        4       // [-1..1] (pressure-level)
+#define GAMEPAD_XBOX_AXIS_RT        5       // [-1..1] (pressure-level)
 
-/*
 // NOTE: For Raspberry Pi, axis must be reconfigured
 #if defined(PLATFORM_RPI)
-    #define GAMEPAD_XBOX_AXIS_LEFT_X    7
-    #define GAMEPAD_XBOX_AXIS_LEFT_Y    6
-    #define GAMEPAD_XBOX_AXIS_RIGHT_X   3
-    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4
-    #define GAMEPAD_XBOX_AXIS_LT        2
-    #define GAMEPAD_XBOX_AXIS_RT        5
+    #define GAMEPAD_XBOX_AXIS_LEFT_X    0   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_LEFT_Y    1   // [-1..1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_X   3   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4   // [-1..1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_LT        2   // [-1..1] (pressure-level)
+    #define GAMEPAD_XBOX_AXIS_RT        5   // [-1..1] (pressure-level)
 #endif
-*/
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
