@@ -66,7 +66,7 @@ int main()
                     DrawTexture(texXboxPad, 0, 0, DARKGRAY);
                     
                     // Draw buttons: xbox home
-                    if (IsGamepadButtonDown(GAMEPAD_PLAYER1, GAMEPAD_XBOX_BUTTON_HOME)) DrawCircle(396, 222, 13, RED);
+                    if (IsGamepadButtonDown(GAMEPAD_PLAYER1, GAMEPAD_XBOX_BUTTON_HOME)) DrawCircle(394, 89, 19, RED);
 
                     // Draw buttons: basic
                     if (IsGamepadButtonDown(GAMEPAD_PLAYER1, GAMEPAD_XBOX_BUTTON_START)) DrawCircle(436, 150, 9, RED);
@@ -156,6 +156,8 @@ int main()
                 }
                 else
                 {
+                    DrawText("- GENERIC GAMEPAD -", 280, 180, 20, GRAY);
+                    
                     // TODO: Draw generic gamepad
                 }
                 
