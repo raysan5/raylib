@@ -235,13 +235,6 @@
 #define GAMEPAD_XBOX_BUTTON_HOME    8
 
 // Xbox360 USB Controller Axis
-#define GAMEPAD_XBOX_AXIS_LEFT_X    0       // [-1..1] (left->right)
-#define GAMEPAD_XBOX_AXIS_LEFT_Y    1       // [1..-1] (up->down)
-#define GAMEPAD_XBOX_AXIS_RIGHT_X   2       // [-1..1] (left->right)
-#define GAMEPAD_XBOX_AXIS_RIGHT_Y   3       // [1..-1] (up->down)
-#define GAMEPAD_XBOX_AXIS_LT        4       // [-1..1] (pressure-level)
-#define GAMEPAD_XBOX_AXIS_RT        5       // [-1..1] (pressure-level)
-
 // NOTE: For Raspberry Pi, axis must be reconfigured
 #if defined(PLATFORM_RPI)
     #define GAMEPAD_XBOX_AXIS_LEFT_X    0   // [-1..1] (left->right)
@@ -249,6 +242,13 @@
     #define GAMEPAD_XBOX_AXIS_RIGHT_X   3   // [-1..1] (left->right)
     #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4   // [-1..1] (up->down)
     #define GAMEPAD_XBOX_AXIS_LT        2   // [-1..1] (pressure-level)
+    #define GAMEPAD_XBOX_AXIS_RT        5   // [-1..1] (pressure-level)
+#else
+    #define GAMEPAD_XBOX_AXIS_LEFT_X    0   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_LEFT_Y    1   // [1..-1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_X   2   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   3   // [1..-1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_LT        4   // [-1..1] (pressure-level)
     #define GAMEPAD_XBOX_AXIS_RT        5   // [-1..1] (pressure-level)
 #endif
 
