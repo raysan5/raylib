@@ -344,13 +344,13 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float fontSize, int spacing, Color tint)
 {
     int length = strlen(text);
-    int textOffsetX = 0;
-    int textOffsetY = 0;    // Line break!
+    int textOffsetX = 0;        // Offset between characters
+    int textOffsetY = 0;        // Required for line break!
     float scaleFactor;
-    unsigned char letter;
-
-    Rectangle rec;
-
+    
+    unsigned char letter;       // Current character
+    int index;                  // Index position in sprite font
+    
     scaleFactor = fontSize/spriteFont.size;
 
     // NOTE: Some ugly hacks are made to support Latin-1 Extended characters directly
@@ -358,41 +358,37 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
 
     for (int i = 0; i < length; i++)
     {
-        if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
+        if ((unsigned char)text[i] == '\n')
         {
-            // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
-            letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)letter)];
-            i++;
-        }
-        else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
-        {
-            // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
-            letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)letter + 64)];
-            i++;
+            // NOTE: Fixed line spacing of 1.5 lines
+            textOffsetY += ((spriteFont.size + spriteFont.size/2)*scaleFactor);
+            textOffsetX = 0;
         }
         else
         {
-            if ((unsigned char)text[i] == '\n')
+            if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
             {
-                // NOTE: Fixed line spacing of 1.5 lines
-                textOffsetY += ((spriteFont.size + spriteFont.size/2)*scaleFactor);
-                textOffsetX = 0;
-                rec.x = -1;
+                // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
+                letter = (unsigned char)text[i + 1];
+                index = GetCharIndex(spriteFont, (int)letter);
+                i++;
             }
-            else rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)text[i])];
-        }
+            else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
+            {
+                // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
+                letter = (unsigned char)text[i + 1];
+                index = GetCharIndex(spriteFont, (int)letter + 64);
+                i++;
+            }
+            else index = GetCharIndex(spriteFont, (int)text[i]);
 
-        if (rec.x >= 0)
-        {
-            int index = GetCharIndex(spriteFont, (int)text[i]);
-            
-            DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[index].x*scaleFactor,
-                                                                 position.y + textOffsetY + spriteFont.charOffsets[index].y*scaleFactor,
-                                                                 rec.width*scaleFactor, rec.height*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
+            DrawTexturePro(spriteFont.texture, spriteFont.charRecs[index], 
+                           (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[index].x*scaleFactor,
+                                        position.y + textOffsetY + spriteFont.charOffsets[index].y*scaleFactor,
+                                        spriteFont.charRecs[index].width*scaleFactor, 
+                                        spriteFont.charRecs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
 
-            if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (rec.width*scaleFactor + spacing);
+            if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (spriteFont.charRecs[index].width*scaleFactor + spacing);
             else textOffsetX += (spriteFont.charAdvanceX[index]*scaleFactor + spacing);
         }
     }
@@ -535,7 +531,7 @@ void DrawFPS(int posX, int posY)
 
 static int GetCharIndex(SpriteFont font, int letter)
 {
-//#define UNORDERED_CHARSET
+#define UNORDERED_CHARSET
 #if defined(UNORDERED_CHARSET)
     int index = 0;
     
