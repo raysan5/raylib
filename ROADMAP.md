@@ -4,16 +4,16 @@ roadmap
 Current version of raylib is quite complete and functional but there is still a lot of things to add and improve.
 Here it is a wish list of features I would like to add and functions to improve.
 
-Note that around the raylib source code there are multiple TODO points with pending revisions/bugs. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
+Note raylib source code has multiple TODO points with pending things to review and improve. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
 raylib 1.x
 
-    [IN PROGRESS] LUA scripting support (wrapper to lua lib)
+    [DONE] LUA scripting support (wrapper to lua lib)
     Basic GPU stats sytem (memory, draws, time...)
+    Improved custom file-format (.rres) and packaging tool
     Procedural image generation functions (spot, gradient, noise...)
     Procedural mesh generation functions (cube, cone, sphere...)
     Touch-based camera controls for Android
-    Skybox and Fog support
 
 raylib 1.5
 
