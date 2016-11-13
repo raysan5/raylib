@@ -826,7 +826,7 @@ RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color co
 RLAPI void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
                 float fontSize, int spacing, Color tint);
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
-RLAPI Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing);         // Measure string size for SpriteFont
+RLAPI Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing);       // Measure string size for SpriteFont
 
 RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS on top-left corner
 RLAPI const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
