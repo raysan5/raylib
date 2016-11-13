@@ -8,12 +8,17 @@ Note raylib source code has multiple TODO points with pending things to review a
 
 raylib 1.x
 
-    [DONE] LUA scripting support (wrapper to lua lib)
     Basic GPU stats sytem (memory, draws, time...)
     Improved custom file-format (.rres) and packaging tool
     Procedural image generation functions (spot, gradient, noise...)
     Procedural mesh generation functions (cube, cone, sphere...)
     Touch-based camera controls for Android
+    Gamepad support on HTML5
+    
+raylib 1.6
+
+    [DONE] LUA scripting support (raylib lua wrapper)
+    [DONE] Redesigned audio module
 
 raylib 1.5
 
