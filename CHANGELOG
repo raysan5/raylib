@@ -1,10 +1,59 @@
 changelog
 ---------
 
-Current Release:    raylib 1.5.0 (18 July 2016)
+Current Release:    raylib 1.6.0 (20 November 2016)
 
-NOTE: Only versions marked as 'Release' are available in installer, updates are only available as source.
-NOTE: Current Release includes all previous updates.
+-----------------------------------------------
+Release:     raylib 1.6.0 (20 November 2016)
+-----------------------------------------------
+NOTE: 
+  This new raylib version commemorates raylib 3rd anniversary and represents another complete review of the library. 
+  It includes some interesting new features and is a stepping stone towards raylib future.
+
+HUGE changes:
+[rlua] LUA BINDING: Complete raylib LUA binding, all raylib functions ported to LUA plus the +60 code examples.
+[audio] COMPLETE REDESIGN: Improved music support and also raw audio data processing and playing. FLAC support added.
+[physac] COMPLETE REWRITE: Improved performance, functionality and simplified usage, moved to own repository and added multiple examples!
+
+other changes:
+
+[core] Corrected issue on OSX with HighDPI display
+[core] Added flag to allow resizable window
+[core] Allow no default font loading
+[core] Corrected old issue with mouse buttons on web
+[core] Improved gamepad support, unified across platforms
+[core] Reviewed Android key inputs system, unified with desktop
+[rlgl] Redesigned lighting shader system
+[rlgl] Reviewed UpdateVrTracking() and rlglLoadRenderTexture()
+[rlgl] Updated standard shader for better performance
+[shapes] Corrected issue on DrawPolyEx()
+[textures] Simplified supported image formats support
+[textures] Improved text drawing within an image: ImageDrawText()
+[textures] Support image alpha mixing: ImageAlphaMask()
+[textures] Support textures filtering: SetTextureFilter()
+[textures] Support textures wrap modes: SetTextureWrap()
+[text] Improved TTF spritefont generation: LoadSpriteFontTTF()
+[text] Improved AngelCode fonts support
+[text] Reviewed spacing formatting
+[text] Added TraceLog info on image spritefont loading
+[text] Improved text measurement: MeasureTextEx()
+[models] Improved OBJ loading flexibility
+[models] Removed function: ResolveCollisionCubicmap()
+[camera] Redesigned camera system and ported to header-only
+[gestures] Redesigned gestures module to header-only
+[audio] Simplified Music loading and playing system
+[audio] Added trace on audio device closing
+[audio] Reviewed Wave struct for reter flexivility
+[audio] Support sound data update: UpdateSound()
+[audio] Added support for FLAC audio loading/streaming
+[raygui] Removed raygui from raylib repo (moved to own repo)
+[build] Added OpenAL static library
+[build] Added Visual Studio 2015 projects
+[build] Support shared/dynamic raylib compilation
+[*] Updated LibOVR to SDK version 1.8
+[*] Updated games to latest raylib version
+[*] Improved Android support
+[*] Improved examples and added new ones
 
 -----------------------------------------------
 Release:     raylib 1.5.0 (18 July 2016)
