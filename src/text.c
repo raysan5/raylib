@@ -444,14 +444,14 @@ int MeasureText(const char *text, int fontSize)
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
-        vec = MeasureTextEx(GetDefaultFont(), text, fontSize, spacing);
+        vec = MeasureTextEx(GetDefaultFont(), text, (float)fontSize, spacing);
     }
 
     return (int)vec.x;
 }
 
 // Measure string size for SpriteFont
-Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing)
+Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing)
 {
     int len = strlen(text);
     int tempLen = 0;            // Used to count longer text line num chars
@@ -461,7 +461,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
     int tempTextWidth = 0;      // Used to count longer text line width
 
     int textHeight = spriteFont.size;
-    float scaleFactor;
+    float scaleFactor = fontSize/spriteFont.size;
 
     for (int i = 0; i < len; i++)
     {
@@ -486,9 +486,6 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
     }
 
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
-
-    if (fontSize <= spriteFont.size) scaleFactor = 1.0f;
-    else scaleFactor = (float)fontSize/spriteFont.size;
 
     Vector2 vec;
     vec.x = (float)tempTextWidth*scaleFactor + (tempLen - 1)*spacing; // Adds chars spacing to measure
