@@ -117,14 +117,13 @@ typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
 
 typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
+typedef unsigned char byte;
+
 #if defined(RLGL_STANDALONE)
     #ifndef __cplusplus
     // Boolean type
     typedef enum { false, true } bool;
     #endif
-
-    // byte type
-    typedef unsigned char byte;
 
     // Color type, RGBA (32bit)
     typedef struct Color {

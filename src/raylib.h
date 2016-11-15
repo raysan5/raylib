@@ -305,9 +305,6 @@
     #endif
 #endif
 
-// byte type
-typedef unsigned char byte;
-
 // Vector2 type
 typedef struct Vector2 {
     float x;
