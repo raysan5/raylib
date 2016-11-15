@@ -22,7 +22,7 @@
 *
 *       RL_LOAD_DEFAULT_FONT - Use external module functions to load default raylib font (module: text)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -58,12 +58,12 @@
 #endif
 
 #include <stdio.h>          // Standard input / output lib
-#include <stdlib.h>         // Declares malloc() and free() for memory management, rand(), atexit()
-#include <stdint.h>         // Required for typedef unsigned long long int uint64_t, used by hi-res timer
-#include <time.h>           // Useful to initialize random seed - Android/RPI hi-res timer (NOTE: Linux only!)
-#include <math.h>           // Math related functions, tan() used to set perspective
-#include <string.h>         // String function definitions, memset()
-#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
+#include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
+#include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
+#include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
+#include <math.h>           // Required for: tan() [Used in Begin3dMode() to set perspective]
+#include <string.h>         // Required for: strcmp()
+//#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
@@ -79,8 +79,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    #include <jni.h>                        // Java native interface
-    #include <android/sensor.h>             // Android sensors functions
+    //#include <android/sensor.h>           // Android sensors functions (accelerometer, gyroscope, light...)
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
@@ -97,8 +96,8 @@
     #include <sys/ioctl.h>      // UNIX System call for device-specific input/output operations - ioctl()
     #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
-    #include <linux/joystick.h>
-
+    #include <linux/joystick.h> // Linux: Joystick support library
+    
     #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
 
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
@@ -131,7 +130,7 @@
 #endif
 
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
-#define MAX_GAMEPAD_BUTTONS       11        // Max bumber of buttons supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
 #define RL_LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
@@ -158,9 +157,6 @@ static const char *internalDataPath;            // Android internal data path to
 static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
-
-static int previousButtonState[128] = { 1 };    // Required to check if button pressed/released once
-static int currentButtonState[128] = { 1 };     // Required to check if button pressed/released once
 #endif
 
 #if defined(PLATFORM_RPI)
@@ -179,6 +175,7 @@ static pthread_t mouseThreadId;                 // Mouse reading thread id
 // Gamepad input variables
 static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descriptor
 static pthread_t gamepadThreadId;               // Gamepad reading thread id
+static char gamepadName[64];                    // Gamepad name holder
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -202,10 +199,7 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 static const char *windowTitle;             // Window text title...
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
-
-// Register keyboard states
-static char previousKeyState[512] = { 0 };  // Registers previous frame key state
-static char currentKeyState[512] = { 0 };   // Registers current frame key state
+static bool cursorHidden = false;           // Track if cursor is hidden
 
 // Register mouse states
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
@@ -216,15 +210,20 @@ static int currentMouseWheelY = 0;          // Registers current mouse wheel var
 // Register gamepads states
 static bool gamepadReady[MAX_GAMEPADS] = { false };             // Flag to know if gamepad is ready
 static float gamepadAxisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];  // Gamepad axis state
-static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS] = { 0 };
-static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS] = { 0 };
+static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
+static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
 
 // Keyboard configuration
 static int exitKey = KEY_ESCAPE;            // Default exit key (ESC)
-static int lastKeyPressed = -1;             // Register last key pressed
-
-static bool cursorHidden;                   // Track if cursor is hidden
 #endif
+
+// Register keyboard states
+static char previousKeyState[512] = { 0 };  // Registers previous frame key state
+static char currentKeyState[512] = { 0 };   // Registers current frame key state
+
+static int lastKeyPressed = -1;             // Register last key pressed
+static int lastGamepadButtonPressed = -1;   // Register last gamepad button pressed
+static int gamepadAxisCount = 0;            // Register number of available gamepad axis
 
 static Vector2 mousePosition;               // Mouse position on screen
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -363,7 +362,7 @@ void InitWindow(int width, int height, const char *title)
 
 #if defined(PLATFORM_ANDROID)
 // Android activity initialization
-void InitWindow(int width, int height, struct android_app *state)
+void InitWindow(int width, int height, void *state)
 {
     TraceLog(INFO, "Initializing raylib (v1.6.0)");
 
@@ -372,7 +371,7 @@ void InitWindow(int width, int height, struct android_app *state)
     screenWidth = width;
     screenHeight = height;
 
-    app = state;
+    app = (struct android_app *)state;
     internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
@@ -466,6 +465,9 @@ void CloseWindow(void)
     // Wait for mouse and gamepad threads to finish before closing
     // NOTE: Those threads should already have finished at this point
     // because they are controlled by windowShouldClose variable
+    
+    windowShouldClose = true;   // Added to force threads to exit when the close window is called
+    
     pthread_join(mouseThreadId, NULL);
     pthread_join(gamepadThreadId, NULL);
 #endif
@@ -525,6 +527,65 @@ int GetScreenHeight(void)
 {
     return screenHeight;
 }
+
+#if !defined(PLATFORM_ANDROID)
+// Show mouse cursor
+void ShowCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    #endif
+#endif
+    cursorHidden = false;
+}
+
+// Hide mouse cursor
+void HideCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    #ifdef __linux
+        XColor Col;
+        const char Nil[] = {0};
+
+        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
+        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
+
+        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
+        XFreeCursor(glfwGetX11Display(), Cur);
+    #else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    #endif
+#endif
+    cursorHidden = true;
+}
+
+// Check if mouse cursor is hidden
+bool IsCursorHidden()
+{
+    return cursorHidden;
+}
+
+// Enable mouse cursor
+void EnableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
+    cursorHidden = false;
+}
+
+// Disable mouse cursor
+void DisableCursor()
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+    cursorHidden = true;
+}
+#endif  // !defined(PLATFORM_ANDROID)
 
 // Sets Background Color
 void ClearBackground(Color color)
@@ -1044,7 +1105,6 @@ Matrix GetCameraMatrix(Camera camera)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Input (Keyboard, Mouse, Gamepad) Functions
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Detect if a key has been pressed once
 bool IsKeyPressed(int key)
 {
@@ -1067,7 +1127,7 @@ bool IsKeyDown(int key)
 bool IsKeyReleased(int key)
 {
     bool released = false;
-
+    
     if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
     else released = false;
 
@@ -1091,64 +1151,9 @@ int GetKeyPressed(void)
 // NOTE: default exitKey is ESCAPE
 void SetExitKey(int key)
 {
+#if !defined(PLATFORM_ANDROID)
     exitKey = key;
-}
-
-// Hide mouse cursor
-void HideCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
-        XColor Col;
-        const char Nil[] = {0};
-
-        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
-        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
-
-        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
-        XFreeCursor(glfwGetX11Display(), Cur);
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    #endif
 #endif
-    cursorHidden = true;
-}
-
-// Show mouse cursor
-void ShowCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
-        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    #endif
-#endif
-    cursorHidden = false;
-}
-
-// Disable mouse cursor
-void DisableCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-#endif
-    cursorHidden = true;
-}
-
-// Enable mouse cursor
-void EnableCursor()
-{
-#if defined(PLATFORM_DESKTOP)
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-#endif
-    cursorHidden = false;
-}
-
-// Check if mouse cursor is hidden
-bool IsCursorHidden()
-{
-    return cursorHidden;
 }
 
 // NOTE: Gamepad support not implemented in emscripten GLFW3 (PLATFORM_WEB)
@@ -1157,9 +1162,24 @@ bool IsCursorHidden()
 bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
-
+    
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
+#endif
 
+    return result;
+}
+
+// Check gamepad name (if available)
+bool IsGamepadName(int gamepad, const char *name)
+{
+    bool result = false;
+    const char *gamepadName = NULL; 
+    
+    if (gamepadReady[gamepad]) gamepadName = GetGamepadName(gamepad);
+    
+    if ((name != NULL) && (gamepadName != NULL)) result = (strcmp(name, gamepadName) == 0);
+    
     return result;
 }
 
@@ -1167,22 +1187,36 @@ bool IsGamepadAvailable(int gamepad)
 const char *GetGamepadName(int gamepad)
 {
 #if defined(PLATFORM_DESKTOP)
-    if (glfwJoystickPresent(gamepad) == 1) return glfwGetJoystickName(gamepad);
+    if (gamepadReady[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
+#elif defined(PLATFORM_RPI)
+	if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGNAME(64), &gamepadName);
+
+    return gamepadName;
 #else
     return NULL;
 #endif
+}
+
+// Return gamepad axis count
+int GetGamepadAxisCount(int gamepad)
+{
+#if defined(PLATFORM_RPI)
+    int axisCount = 0;
+    if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGAXES, &axisCount);
+    gamepadAxisCount = axisCount;
+#endif
+    return gamepadAxisCount;
 }
 
 // Return axis movement vector for a gamepad
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
-
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (axis < MAX_GAMEPAD_AXIS))
-    {
-        value = gamepadAxisState[gamepad][axis];
-    }
+    
+#if !defined(PLATFORM_ANDROID)
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (axis < MAX_GAMEPAD_AXIS)) value = gamepadAxisState[gamepad][axis];
+#endif
 
     return value;
 }
@@ -1191,10 +1225,12 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
-    
+
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
         (currentGamepadState[gamepad][button] == 1)) pressed = true;
+#endif
 
     return pressed;
 }
@@ -1204,8 +1240,10 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool result = false;
 
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
+#if !defined(PLATFORM_ANDROID)
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (currentGamepadState[gamepad][button] == 1)) result = true;
+#endif
 
     return result;
 }
@@ -1215,9 +1253,11 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
     
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
         (currentGamepadState[gamepad][button] == 0)) released = true;
+#endif
 
     return released;
 }
@@ -1227,13 +1267,19 @@ bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool result = false;
 
+#if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
         (currentGamepadState[gamepad][button] == 0)) result = true;
+#endif
 
     return result;
 }
-#endif  //defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 
+// Get the last gamepad button pressed
+int GetGamepadButtonPressed(void)
+{
+    return lastGamepadButtonPressed;
+}
 
 // Detect if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
@@ -1386,37 +1432,6 @@ Vector2 GetTouchPosition(int index)
 
     return position;
 }
-
-#if defined(PLATFORM_ANDROID)
-// Detect if a button has been pressed once
-bool IsButtonPressed(int button)
-{
-    bool pressed = false;
-
-    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 0)) pressed = true;
-    else pressed = false;
-
-    return pressed;
-}
-
-// Detect if a button is being pressed (button held down)
-bool IsButtonDown(int button)
-{
-    if (currentButtonState[button] == 0) return true;
-    else return false;
-}
-
-// Detect if a button has been released once
-bool IsButtonReleased(int button)
-{
-    bool released = false;
-
-    if ((currentButtonState[button] != previousButtonState[button]) && (currentButtonState[button] == 1)) released = true;
-    else released = false;
-
-    return released;
-}
-#endif
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -1900,8 +1915,9 @@ static bool GetKeyStatus(int key)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetKey(window, key);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual keyboard
-    return false;
+    // NOTE: Android supports up to 260 keys
+    if (key < 0 || key > 260) return false;
+    else return currentKeyState[key];
 #elif defined(PLATFORM_RPI)
     // NOTE: Keys states are filled in PollInputEvents()
     if (key < 0 || key > 511) return false;
@@ -1929,6 +1945,15 @@ static void PollInputEvents(void)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
+    
+    // Reset last key pressed registered
+    lastKeyPressed = -1;
+    
+#if !defined(PLATFORM_RPI)
+    // Reset last gamepad button/axis registered state
+    lastGamepadButtonPressed = -1;
+    gamepadAxisCount = 0;
+#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -1939,9 +1964,8 @@ static void PollInputEvents(void)
 
     mousePosition.x = (float)mouseX;
     mousePosition.y = (float)mouseY;
-
+    
     // Keyboard input polling (automatically managed by GLFW3 through callback)
-    lastKeyPressed = -1;
 
     // Register previous keys states
     for (int i = 0; i < 512; i++) previousKeyState[i] = currentKeyState[i];
@@ -1952,13 +1976,19 @@ static void PollInputEvents(void)
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
     
+    // Check if gamepads are ready
+    // NOTE: We do it here in case of disconection
+    for (int i = 0; i < MAX_GAMEPADS; i++)
+    {
+        if (glfwJoystickPresent(i)) gamepadReady[i] = true;
+        else gamepadReady[i] = false;
+    }
+    
     // Register gamepads buttons events
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        if (glfwJoystickPresent(i))     // Check if gamepad is available
+        if (gamepadReady[i])     // Check if gamepad is available
         {
-            gamepadReady[i] = true;
-            
             // Register previous gamepad states
             for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
     
@@ -1971,7 +2001,11 @@ static void PollInputEvents(void)
             
             for (int k = 0; (buttons != NULL) && (k < buttonsCount) && (buttonsCount < MAX_GAMEPAD_BUTTONS); k++)
             {
-                if (buttons[i] == GLFW_PRESS) currentGamepadState[i][k] = 1;
+                if (buttons[k] == GLFW_PRESS)
+                {
+                    currentGamepadState[i][k] = 1;
+                    lastGamepadButtonPressed = k;
+                }
                 else currentGamepadState[i][k] = 0;
             }
             
@@ -1985,8 +2019,9 @@ static void PollInputEvents(void)
             {
                 gamepadAxisState[i][k] = axes[k];
             }
+            
+            gamepadAxisCount = axisCount;
         }
-        else gamepadReady[i] = false;
     }
 
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
@@ -1994,7 +2029,8 @@ static void PollInputEvents(void)
 
 #if defined(PLATFORM_ANDROID)
     // Register previous keys states
-    for (int i = 0; i < 128; i++) previousButtonState[i] = currentButtonState[i];
+    // NOTE: Android supports up to 260 keys
+    for (int i = 0; i < 260; i++) previousKeyState[i] = currentKeyState[i];
 
     // Poll Events (registered events)
     // NOTE: Activity is paused if not enabled (appEnabled)
@@ -2371,7 +2407,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         //int32_t AKeyEvent_getMetaState(event);
 
         // Save current button and its state
-        currentButtonState[keycode] = AKeyEvent_getAction(event);  // Down = 0, Up = 1
+        // NOTE: Android key action is 0 for down and 1 for up
+        if (AKeyEvent_getAction(event) == 0)
+        {
+            currentKeyState[keycode] = 1;  // Key down
+            lastKeyPressed = keycode;
+        }
+        else currentKeyState[keycode] = 0;  // Key up
 
         if (keycode == AKEYCODE_POWER)
         {
@@ -2818,6 +2860,9 @@ static void *GamepadThread(void *arg)
                     {
                         // 1 - button pressed, 0 - button released
                         currentGamepadState[i][gamepadEvent.number] = (int)gamepadEvent.value;
+                        
+                        if ((int)gamepadEvent.value == 1) lastGamepadButtonPressed = gamepadEvent.number;
+                        else lastGamepadButtonPressed = -1;
                     }
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)

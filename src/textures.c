@@ -8,7 +8,7 @@
 *       stb_image - Multiple formats image loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                   NOTE: stb_image has been slightly modified, original library: https://github.com/nothings/stb
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -442,6 +442,96 @@ void UnloadRenderTexture(RenderTexture2D target)
     if (target.id != 0) rlDeleteRenderTextures(target);
 }
 
+// Set texture scaling filter mode
+void SetTextureFilter(Texture2D texture, int filterMode)
+{
+    switch (filterMode)
+    {
+        case FILTER_POINT:
+        {
+            if (texture.mipmaps > 1)
+            {
+                // RL_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_NEAREST);
+                
+                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+            }
+            else
+            {
+                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_NEAREST);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+            }
+        } break;
+        case FILTER_BILINEAR:
+        {
+            if (texture.mipmaps > 1)
+            {
+                // RL_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
+                // Alternative: RL_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR_MIP_NEAREST);
+                
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+            else
+            {
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+        } break;
+        case FILTER_TRILINEAR:
+        {
+            if (texture.mipmaps > 1)
+            {
+                // RL_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
+                
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+            else
+            {
+                TraceLog(WARNING, "[TEX ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
+                
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+        } break;
+        case FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 4); break;
+        case FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 8); break;
+        case FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 16); break;
+        default: break;
+    }
+}
+
+// Set texture wrapping mode
+void SetTextureWrap(Texture2D texture, int wrapMode)
+{
+    switch (wrapMode)
+    {
+        case WRAP_REPEAT:
+        {
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_REPEAT);
+        } break;
+        case WRAP_CLAMP:
+        {
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP);
+        } break;
+        case WRAP_MIRROR:
+        {
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP_MIRROR);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP_MIRROR);
+        } break;
+        default: break;
+    }
+}
+
 // Get pixel data from image in the form of Color struct array
 Color *GetImageData(Image image)
 {
@@ -694,28 +784,45 @@ void ImageFormat(Image *image, int newFormat)
 }
 
 // Apply alpha mask to image
-// NOTE 1: Returned image is RGBA - 32bit
+// NOTE 1: Returned image is GRAY_ALPHA (16bit) or RGBA (32bit)
 // NOTE 2: alphaMask should be same size as image
 void ImageAlphaMask(Image *image, Image alphaMask)
 {
-    if (image->format >= COMPRESSED_DXT1_RGB)
+    if ((image->width != alphaMask.width) || (image->height != alphaMask.height))
+    {
+        TraceLog(WARNING, "Alpha mask must be same size as image");
+    }
+    else if (image->format >= COMPRESSED_DXT1_RGB)
     {
         TraceLog(WARNING, "Alpha mask can not be applied to compressed data formats");
-        return;
     }
     else
     {
         // Force mask to be Grayscale
         Image mask = ImageCopy(alphaMask);
-        ImageFormat(&mask, UNCOMPRESSED_GRAYSCALE);
+        if (mask.format != UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, UNCOMPRESSED_GRAYSCALE);
         
-        // Convert image to RGBA
-        if (image->format != UNCOMPRESSED_R8G8B8A8) ImageFormat(image, UNCOMPRESSED_R8G8B8A8);
-
-        // Apply alpha mask to alpha channel
-        for (int i = 0, k = 3; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 4)
+        // In case image is only grayscale, we just add alpha channel
+        if (image->format == UNCOMPRESSED_GRAYSCALE)
         {
-            ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+            ImageFormat(image, UNCOMPRESSED_GRAY_ALPHA);
+            
+            // Apply alpha mask to alpha channel
+            for (int i = 0, k = 1; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
+            {
+                ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+            }
+        }
+        else
+        {
+            // Convert image to RGBA
+            if (image->format != UNCOMPRESSED_R8G8B8A8) ImageFormat(image, UNCOMPRESSED_R8G8B8A8);
+
+            // Apply alpha mask to alpha channel
+            for (int i = 0, k = 3; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 4)
+            {
+                ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+            }
         }
 
         UnloadImage(mask);
@@ -1118,7 +1225,7 @@ Image ImageText(const char *text, int fontSize, Color color)
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
     int spacing = fontSize/defaultFontSize;
 
-    Image imText = ImageTextEx(GetDefaultFont(), text, fontSize, spacing, color);
+    Image imText = ImageTextEx(GetDefaultFont(), text, (float)fontSize, spacing, color);
 
     return imText;
 }
@@ -1134,7 +1241,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     // NOTE: GetTextureData() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
 
-    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Required for color tint
+    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Convert to 32 bit for color tint
     ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
     Color *fontPixels = GetImageData(imFont);
@@ -1183,7 +1290,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color)
 {
     // NOTE: For default font, sapcing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, position, GetDefaultFont(), text, fontSize, fontSize/10, color);
+    ImageDrawTextEx(dst, position, GetDefaultFont(), text, (float)fontSize, fontSize/10, color);
 }
 
 // Draw text (custom sprite font) within an image (destination)
@@ -1317,7 +1424,7 @@ void ImageColorContrast(Image *image, float contrast)
     if (contrast < -100) contrast = -100;
     if (contrast > 100) contrast = 100;
 
-    contrast = (100.0 + contrast)/100.0;
+    contrast = (100.0f + contrast)/100.0f;
     contrast *= contrast;
 
     Color *pixels = GetImageData(*image);
@@ -1326,7 +1433,7 @@ void ImageColorContrast(Image *image, float contrast)
     {
         for (int x = 0; x < image->width; x++)
         {
-            float pR = (float)pixels[y*image->width + x].r/255.0;
+            float pR = (float)pixels[y*image->width + x].r/255.0f;
             pR -= 0.5;
             pR *= contrast;
             pR += 0.5;
@@ -1334,7 +1441,7 @@ void ImageColorContrast(Image *image, float contrast)
             if (pR < 0) pR = 0;
             if (pR > 255) pR = 255;
 
-            float pG = (float)pixels[y*image->width + x].g/255.0;
+            float pG = (float)pixels[y*image->width + x].g/255.0f;
             pG -= 0.5;
             pG *= contrast;
             pG += 0.5;
@@ -1342,7 +1449,7 @@ void ImageColorContrast(Image *image, float contrast)
             if (pG < 0) pG = 0;
             if (pG > 255) pG = 255;
 
-            float pB = (float)pixels[y*image->width + x].b/255.0;
+            float pB = (float)pixels[y*image->width + x].b/255.0f;
             pB -= 0.5;
             pB *= contrast;
             pB += 0.5;

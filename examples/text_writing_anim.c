@@ -32,7 +32,8 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        framesCounter++;
+        if (IsKeyDown(KEY_SPACE)) framesCounter += 8;
+        else framesCounter++;
         
         if (IsKeyPressed(KEY_ENTER)) framesCounter = 0;
         //----------------------------------------------------------------------------------
@@ -45,7 +46,8 @@ int main()
 
             DrawText(SubText(message, 0, framesCounter/10), 210, 160, 20, MAROON);
             
-            DrawText("PRESS [ENTER] to RESTART!", 240, 280, 20, LIGHTGRAY);
+            DrawText("PRESS [ENTER] to RESTART!", 240, 260, 20, LIGHTGRAY);
+            DrawText("PRESS [SPACE] to SPEED UP!", 239, 300, 20, LIGHTGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

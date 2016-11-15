@@ -4,7 +4,7 @@
 *
 *   Basic functions to draw 3d shapes and load/draw 3d models (.OBJ)
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -87,8 +87,8 @@ void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rot
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlVertex3f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius, 0.0f);
-                rlVertex3f(sin(DEG2RAD*(i + 10))*radius, cos(DEG2RAD*(i + 10))*radius, 0.0f);
+                rlVertex3f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius, 0.0f);
+                rlVertex3f(sinf(DEG2RAD*(i + 10))*radius, cosf(DEG2RAD*(i + 10))*radius, 0.0f);
             }
         rlEnd();
     rlPopMatrix();
@@ -325,25 +325,25 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i)))*sin(DEG2RAD*((j+1)*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i)))*cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i)))*sinf(DEG2RAD*((j+1)*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i)))*cosf(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
                 }
             }
         rlEnd();
@@ -364,26 +364,26 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*((j+1)*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*((j+1)*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*((j+1)*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*((j+1)*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
 
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sin(DEG2RAD*(j*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cos(DEG2RAD*(j*360/slices)));
-                    rlVertex3f(cos(DEG2RAD*(270+(180/(rings + 1))*i))*sin(DEG2RAD*(j*360/slices)),
-                               sin(DEG2RAD*(270+(180/(rings + 1))*i)),
-                               cos(DEG2RAD*(270+(180/(rings + 1))*i))*cos(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*sinf(DEG2RAD*(j*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*(i+1))),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*(i+1)))*cosf(DEG2RAD*(j*360/slices)));
+                    rlVertex3f(cosf(DEG2RAD*(270+(180/(rings + 1))*i))*sinf(DEG2RAD*(j*360/slices)),
+                               sinf(DEG2RAD*(270+(180/(rings + 1))*i)),
+                               cosf(DEG2RAD*(270+(180/(rings + 1))*i))*cosf(DEG2RAD*(j*360/slices)));
                 }
             }
         rlEnd();
@@ -407,21 +407,21 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 // Draw Body -------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
-                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom); //Bottom Right
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom); //Bottom Right
+                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
 
-                    rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop); //Top Left
-                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop); //Top Left
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
+                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
+                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop);
                 }
             }
             else
@@ -430,8 +430,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(0, height, 0);
-                    rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
-                    rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
+                    rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
                 }
             }
 
@@ -439,8 +439,8 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
-                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -460,17 +460,17 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 
             for (int i = 0; i < 360; i += 360/sides)
             {
-                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
 
-                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusBottom, 0, cos(DEG2RAD*(i+360/sides))*radiusBottom);
-                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop);
 
-                rlVertex3f(sin(DEG2RAD*(i+360/sides))*radiusTop, height, cos(DEG2RAD*(i+360/sides))*radiusTop);
-                rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
 
-                rlVertex3f(sin(DEG2RAD*i)*radiusTop, height, cos(DEG2RAD*i)*radiusTop);
-                rlVertex3f(sin(DEG2RAD*i)*radiusBottom, 0, cos(DEG2RAD*i)*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
     rlPopMatrix();
@@ -1411,7 +1411,7 @@ bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, floa
     float dy = centerA.y - centerB.y;      // Y distance between centers
     float dz = centerA.z - centerB.z;      // Y distance between centers
 
-    float distance = sqrt(dx*dx + dy*dy + dz*dz);  // Distance between centers
+    float distance = sqrtf(dx*dx + dy*dy + dz*dz);  // Distance between centers
 
     if (distance <= (radiusA + radiusB)) collision = true;
 
@@ -1441,14 +1441,14 @@ bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radius
 
     float dmin = 0;
 
-    if (centerSphere.x < box.min.x) dmin += pow(centerSphere.x - box.min.x, 2);
-    else if (centerSphere.x > box.max.x) dmin += pow(centerSphere.x - box.max.x, 2);
+    if (centerSphere.x < box.min.x) dmin += powf(centerSphere.x - box.min.x, 2);
+    else if (centerSphere.x > box.max.x) dmin += powf(centerSphere.x - box.max.x, 2);
 
-    if (centerSphere.y < box.min.y) dmin += pow(centerSphere.y - box.min.y, 2);
-    else if (centerSphere.y > box.max.y) dmin += pow(centerSphere.y - box.max.y, 2);
+    if (centerSphere.y < box.min.y) dmin += powf(centerSphere.y - box.min.y, 2);
+    else if (centerSphere.y > box.max.y) dmin += powf(centerSphere.y - box.max.y, 2);
 
-    if (centerSphere.z < box.min.z) dmin += pow(centerSphere.z - box.min.z, 2);
-    else if (centerSphere.z > box.max.z) dmin += pow(centerSphere.z - box.max.z, 2);
+    if (centerSphere.z < box.min.z) dmin += powf(centerSphere.z - box.min.z, 2);
+    else if (centerSphere.z > box.max.z) dmin += powf(centerSphere.z - box.max.z, 2);
 
     if (dmin <= (radiusSphere*radiusSphere)) collision = true;
 
@@ -1487,8 +1487,8 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
     float collisionDistance = 0;
 
     // Check if ray origin is inside the sphere to calculate the correct collision point
-    if (distance < sphereRadius) collisionDistance = vector + sqrt(d);
-    else collisionDistance = vector - sqrt(d);
+    if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
+    else collisionDistance = vector - sqrtf(d);
 
     VectorScale(&offset, collisionDistance);
     Vector3 cPoint = VectorAdd(ray.position, offset);
@@ -1811,7 +1811,7 @@ static Material LoadMTL(const char *fileName)
 
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };
-    char *mapFileName = NULL;
+    char mapFileName[128];
 
     FILE *mtlFile;
 

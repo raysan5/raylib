@@ -706,7 +706,7 @@ Music LoadMusicStream(const char *fileName)
         else
         {
             music->stream = InitAudioStream(music->ctxFlac->sampleRate, music->ctxFlac->bitsPerSample, music->ctxFlac->channels);
-            music->totalSamples = music->ctxFlac->totalSampleCount;
+            music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_FLAC;
             music->loop = true;                  // We loop by default
@@ -853,7 +853,7 @@ void UpdateMusicStream(Music music)
                     int pcmi[AUDIO_BUFFER_SIZE];
                     
                     // NOTE: Returns the number of samples to process (should be the same as numSamples)
-                    int numSamplesFlac = drflac_read_s32(music->ctxFlac, numSamples, pcmi);
+                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s32(music->ctxFlac, numSamples, pcmi);
 
                     UpdateAudioStream(music->stream, pcmi, numSamplesFlac*music->stream.channels);
                     music->samplesLeft -= (numSamples*music->stream.channels);
@@ -1237,7 +1237,7 @@ static Wave LoadOGG(const char *fileName)
 
         if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio lenght is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
 
-        int totalSamples = totalSeconds*info.sample_rate*info.channels;
+        int totalSamples = (int)(totalSeconds*info.sample_rate*info.channels);
         wave.sampleCount = totalSamples;
 
         wave.data = (short *)malloc(totalSamplesLength*sizeof(short));

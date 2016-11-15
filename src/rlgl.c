@@ -35,7 +35,7 @@
 #include <math.h>                   // Required for: atan2()
 
 #ifndef RLGL_STANDALONE
-    #include "raymath.h"            // Required for Vector3 and Matrix functions
+    #include "raymath.h"            // Required for: Vector3 and Matrix functions
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -138,6 +138,14 @@
 #endif
 #ifndef GL_COMPRESSED_RGBA_ASTC_8x8_KHR
     #define GL_COMPRESSED_RGBA_ASTC_8x8_KHR     0x93b7
+#endif
+
+#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+    #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT   0x84FF
+#endif
+
+#ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
+    #define GL_TEXTURE_MAX_ANISOTROPY_EXT       0x84FE
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -283,14 +291,21 @@ static Shader standardShader;               // Shader with support for lighting 
 static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
 static bool standardShaderLoaded = false;   // Flag to track if standard shader has been loaded
 
-// Flags for supported extensions
+// Extension supported flag: VAO
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
 
-// Compressed textures support flags
+// Extension supported flag: Compressed textures
 static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
+
+// Extension supported flag: Anisotropic filtering
+static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
+static float maxAnisotropicLevel = 0.0f;        // Maximum anisotropy level supported (minimum is 2.0f)
+
+// Extension supported flag: Clamp mirror wrap mode
+static bool texClampMirrorSupported = false;    // Clamp mirror wrap mode supported
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
@@ -372,11 +387,11 @@ static char *ReadTextFile(const char *fileName);        // Read chars array from
 
 #if defined(RLGL_OCULUS_SUPPORT)
 #if !defined(RLGL_STANDALONE)
-static bool InitOculusDevice(void);         // Initialize Oculus device (returns true if success)
-static void CloseOculusDevice(void);        // Close Oculus device
-static void UpdateOculusTracking(void);     // Update Oculus head position-orientation tracking
-static void BeginOculusDrawing(void);       // Setup Oculus buffers for drawing
-static void EndOculusDrawing(void);         // Finish Oculus drawing and blit framebuffer to mirror
+static bool InitOculusDevice(void);                 // Initialize Oculus device (returns true if success)
+static void CloseOculusDevice(void);                // Close Oculus device
+static void UpdateOculusTracking(Camera *camera);   // Update Oculus head position-orientation tracking
+static void BeginOculusDrawing(void);               // Setup Oculus buffers for drawing
+static void EndOculusDrawing(void);                 // Finish Oculus drawing and blit framebuffer to mirror
 #endif
 
 static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
@@ -871,6 +886,37 @@ void rlDisableTexture(void)
 #endif
 }
 
+// Set texture parameters (wrap mode/filter mode)
+void rlTextureParameters(unsigned int id, int param, int value)
+{
+    glBindTexture(GL_TEXTURE_2D, id);
+
+    switch (param)
+    {
+        case RL_TEXTURE_WRAP_S:
+        case RL_TEXTURE_WRAP_T:
+        {
+            if ((value == RL_WRAP_CLAMP_MIRROR) && !texClampMirrorSupported) TraceLog(WARNING, "Clamp mirror wrap mode not supported");
+            else glTexParameteri(GL_TEXTURE_2D, param, value);
+        } break;
+        case RL_TEXTURE_MAG_FILTER:
+        case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
+        case RL_TEXTURE_ANISOTROPIC_FILTER:
+        {
+            if (value <= maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+            else if (maxAnisotropicLevel > 0.0f)
+            {
+                TraceLog(WARNING, "[TEX ID %i] Maximum anisotropic filter level supported is %iX", id, maxAnisotropicLevel);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+            }
+            else TraceLog(WARNING, "Anisotropic filtering not supported");
+        } break;
+        default: break;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 // Enable rendering to texture (fbo)
 void rlEnableRenderTexture(unsigned int id)
 {
@@ -1124,7 +1170,7 @@ void rlglInit(int width, int height)
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
         if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) npotSupported = true;
-#endif   
+#endif
         
         // DDS texture compression support
         if ((strcmp(extList[i], (const char *)"GL_EXT_texture_compression_s3tc") == 0) ||
@@ -1143,6 +1189,16 @@ void rlglInit(int width, int height)
 
         // ASTC texture compression support
         if (strcmp(extList[i], (const char *)"GL_KHR_texture_compression_astc_hdr") == 0) texCompASTCSupported = true;
+        
+        // Anisotropic texture filter support
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_filter_anisotropic") == 0)
+        {
+            texAnisotropicFilterSupported = true;
+            glGetFloatv(0x84FF, &maxAnisotropicLevel);   // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT      
+        }
+        
+        // Clamp mirror wrap mode supported
+        if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texClampMirrorSupported = true;
     }
     
 #ifdef _MSC_VER
@@ -1162,6 +1218,9 @@ void rlglInit(int width, int height)
     if (texCompETC2Supported) TraceLog(INFO, "[EXTENSION] ETC2/EAC compressed textures supported");
     if (texCompPVRTSupported) TraceLog(INFO, "[EXTENSION] PVRT compressed textures supported");
     if (texCompASTCSupported) TraceLog(INFO, "[EXTENSION] ASTC compressed textures supported");
+    
+    if (texAnisotropicFilterSupported) TraceLog(INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", maxAnisotropicLevel);
+    if (texClampMirrorSupported) TraceLog(INFO, "[EXTENSION] Clamp mirror wrap texture mode supported");
 
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
@@ -1687,6 +1746,7 @@ void rlglGenerateMipmaps(Texture2D texture)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+        //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
         TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
 
@@ -2653,7 +2713,7 @@ void InitVrDevice(int vrDevice)
             hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
             hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
             hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
-            hmd.vScreenSize = 0.0669;               // HMD vertical size in meters
+            hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
             hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
             hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
             hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
@@ -2735,15 +2795,11 @@ void ToggleVrMode(void)
 }
 
 // Update VR tracking (position and orientation) and camera
+// NOTE: Camera (position, target, up) gets update with head tracking information
 void UpdateVrTracking(Camera *camera)
 {
 #if defined(RLGL_OCULUS_SUPPORT)
-    if (vrDeviceReady)
-    {
-        UpdateOculusTracking();
-        
-        // TODO: Update camera data (position, target, up) with tracking data
-    }
+    if (vrDeviceReady) UpdateOculusTracking(camera);
 #endif
 }
 
@@ -3786,8 +3842,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
     // Compute lens parameters
     float lensShift = (hmd.hScreenSize*0.25f - hmd.lensSeparationDistance*0.5f)/hmd.hScreenSize;
-    float leftLensCenter[2] = { 0.25 + lensShift, 0.5f };
-    float rightLensCenter[2] = { 0.75 - lensShift, 0.5f };
+    float leftLensCenter[2] = { 0.25f + lensShift, 0.5f };
+    float rightLensCenter[2] = { 0.75f - lensShift, 0.5f };
     float leftScreenCenter[2] = { 0.25f, 0.5f };
     float rightScreenCenter[2] = { 0.75f, 0.5f };
     
@@ -3804,8 +3860,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     
     float normScreenWidth = 0.5f;
     float normScreenHeight = 1.0f;
-    float scaleIn[2] = { 2/normScreenWidth, 2/normScreenHeight/aspect };
-    float scale[2] = { normScreenWidth*0.5/distortionScale, normScreenHeight*0.5*aspect/distortionScale };
+    float scaleIn[2] = { 2.0f/normScreenWidth, 2.0f/normScreenHeight/aspect };
+    float scale[2] = { normScreenWidth*0.5f/distortionScale, normScreenHeight*0.5f*aspect/distortionScale };
     
     TraceLog(DEBUG, "VR: Distortion Shader: LeftLensCenter = { %f, %f }", leftLensCenter[0], leftLensCenter[1]);
     TraceLog(DEBUG, "VR: Distortion Shader: RightLensCenter = { %f, %f }", rightLensCenter[0], rightLensCenter[1]);
@@ -3826,7 +3882,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
     // ...but with lens distortion it is increased (see Oculus SDK Documentation)
     //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance)*RAD2DEG;     // Really need distortionScale?
-    float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance)*RAD2DEG;
+    float fovy = 2.0f*(float)atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance)*RAD2DEG;
     
     // Compute camera projection matrices
     float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
@@ -4083,7 +4139,7 @@ OCULUSAPI void CloseOculusDevice(void)
 }
 
 // Update Oculus head position-orientation tracking
-OCULUSAPI void UpdateOculusTracking(void)
+OCULUSAPI void UpdateOculusTracking(Camera *camera)
 {
     frameIndex++;
 
@@ -4092,6 +4148,10 @@ OCULUSAPI void UpdateOculusTracking(void)
     
     layer.eyeLayer.RenderPose[0] = eyePoses[0];
     layer.eyeLayer.RenderPose[1] = eyePoses[1];
+    
+    // TODO: Update external camera with eyePoses data (position, orientation)
+    // NOTE: We can simplify to simple camera if we consider IPD and HMD device configuration again later
+    // it will be useful for the user to draw, lets say, billboards oriented to camera
     
     // Get session status information
     ovrSessionStatus sessionStatus;

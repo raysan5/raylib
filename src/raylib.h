@@ -77,10 +77,6 @@
     #define PLATFORM_DESKTOP
 #endif
 
-#if defined(PLATFORM_ANDROID)
-    typedef struct android_app; // Define android_app struct (android_native_app_glue.h)
-#endif
-
 #if defined(_WIN32) && defined(BUILDING_DLL)
     #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 DLL
 #elif defined(_WIN32) && defined(RAYLIB_DLL)
@@ -93,7 +89,7 @@
 // Some basic Defines
 //----------------------------------------------------------------------------------
 #ifndef PI
-    #define PI 3.14159265358979323846
+    #define PI 3.14159265358979323846f
 #endif
 
 #define DEG2RAD (PI/180.0f)
@@ -174,6 +170,14 @@
 #define KEY_Y                89
 #define KEY_Z                90
 
+#if defined(PLATFORM_ANDROID)
+    // Android Physical Buttons
+    #define KEY_BACK              4
+    #define KEY_MENU             82
+    #define KEY_VOLUME_UP        24
+    #define KEY_VOLUME_DOWN      25
+#endif
+
 // Mouse Buttons
 #define MOUSE_LEFT_BUTTON     0
 #define MOUSE_RIGHT_BUTTON    1
@@ -188,21 +192,32 @@
 #define GAMEPAD_PLAYER3       2
 #define GAMEPAD_PLAYER4       3
 
-// Gamepad Buttons
+// Gamepad Buttons/Axis
 
-// PS3 USB Controller
-#define GAMEPAD_PS3_BUTTON_A        2
-#define GAMEPAD_PS3_BUTTON_B        1
-#define GAMEPAD_PS3_BUTTON_X        3
-#define GAMEPAD_PS3_BUTTON_Y        4
-#define GAMEPAD_PS3_BUTTON_R1       7
-#define GAMEPAD_PS3_BUTTON_R2       5
+// PS3 USB Controller Buttons
+#define GAMEPAD_PS3_BUTTON_TRIANGLE 0
+#define GAMEPAD_PS3_BUTTON_CIRCLE   1
+#define GAMEPAD_PS3_BUTTON_CROSS    2
+#define GAMEPAD_PS3_BUTTON_SQUARE   3
 #define GAMEPAD_PS3_BUTTON_L1       6
-#define GAMEPAD_PS3_BUTTON_L2       8
+#define GAMEPAD_PS3_BUTTON_R1       7
+#define GAMEPAD_PS3_BUTTON_L2       4
+#define GAMEPAD_PS3_BUTTON_R2       5
+#define GAMEPAD_PS3_BUTTON_START    8
 #define GAMEPAD_PS3_BUTTON_SELECT   9
-#define GAMEPAD_PS3_BUTTON_START   10
+#define GAMEPAD_PS3_BUTTON_UP      24
+#define GAMEPAD_PS3_BUTTON_RIGHT   25
+#define GAMEPAD_PS3_BUTTON_DOWN    26
+#define GAMEPAD_PS3_BUTTON_LEFT    27
+#define GAMEPAD_PS3_BUTTON_PS      12
 
-// TODO: Add PS3 d-pad axis
+// PS3 USB Controller Axis
+#define GAMEPAD_PS3_AXIS_LEFT_X     0
+#define GAMEPAD_PS3_AXIS_LEFT_Y     1
+#define GAMEPAD_PS3_AXIS_RIGHT_X    2
+#define GAMEPAD_PS3_AXIS_RIGHT_Y    5
+#define GAMEPAD_PS3_AXIS_L2         3       // [1..-1] (pressure-level)
+#define GAMEPAD_PS3_AXIS_R2         4       // [1..-1] (pressure-level)
 
 // Xbox360 USB Controller Buttons
 #define GAMEPAD_XBOX_BUTTON_A       0
@@ -213,32 +228,29 @@
 #define GAMEPAD_XBOX_BUTTON_RB      5
 #define GAMEPAD_XBOX_BUTTON_SELECT  6
 #define GAMEPAD_XBOX_BUTTON_START   7
+#define GAMEPAD_XBOX_BUTTON_UP      10
+#define GAMEPAD_XBOX_BUTTON_RIGHT   11
+#define GAMEPAD_XBOX_BUTTON_DOWN    12
+#define GAMEPAD_XBOX_BUTTON_LEFT    13
+#define GAMEPAD_XBOX_BUTTON_HOME    8
 
+// Xbox360 USB Controller Axis
+// NOTE: For Raspberry Pi, axis must be reconfigured
 #if defined(PLATFORM_RPI)
-    #define GAMEPAD_XBOX_AXIS_DPAD_X    7
-    #define GAMEPAD_XBOX_AXIS_DPAD_Y    6
-    #define GAMEPAD_XBOX_AXIS_RIGHT_X   3
-    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4
-    #define GAMEPAD_XBOX_AXIS_LT        2
-    #define GAMEPAD_XBOX_AXIS_RT        5
+    #define GAMEPAD_XBOX_AXIS_LEFT_X    0   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_LEFT_Y    1   // [-1..1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_X   3   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   4   // [-1..1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_LT        2   // [-1..1] (pressure-level)
+    #define GAMEPAD_XBOX_AXIS_RT        5   // [-1..1] (pressure-level)
 #else
-    #define GAMEPAD_XBOX_BUTTON_UP      10
-    #define GAMEPAD_XBOX_BUTTON_DOWN    12
-    #define GAMEPAD_XBOX_BUTTON_LEFT    13
-    #define GAMEPAD_XBOX_BUTTON_RIGHT   11
-    #define GAMEPAD_XBOX_AXIS_RIGHT_X   4
-    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   3
-    #define GAMEPAD_XBOX_AXIS_LT_RT     2
+    #define GAMEPAD_XBOX_AXIS_LEFT_X    0   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_LEFT_Y    1   // [1..-1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_X   2   // [-1..1] (left->right)
+    #define GAMEPAD_XBOX_AXIS_RIGHT_Y   3   // [1..-1] (up->down)
+    #define GAMEPAD_XBOX_AXIS_LT        4   // [-1..1] (pressure-level)
+    #define GAMEPAD_XBOX_AXIS_RT        5   // [-1..1] (pressure-level)
 #endif
-
-#define GAMEPAD_XBOX_AXIS_LEFT_X    0
-#define GAMEPAD_XBOX_AXIS_LEFT_Y    1
-
-// Android Physic Buttons
-#define ANDROID_BACK            4
-#define ANDROID_MENU            82
-#define ANDROID_VOLUME_UP       24
-#define ANDROID_VOLUME_DOWN     25
 
 // NOTE: MSC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized from { } initializers.
@@ -535,6 +547,21 @@ typedef enum {
     COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
 } TextureFormat;
 
+// Texture parameters: filter mode
+// NOTE 1: Filtering considers mipmaps if available in the texture
+// NOTE 2: Filter is accordingly set for minification and magnification
+typedef enum { 
+    FILTER_POINT = 0,               // No filter, just pixel aproximation
+    FILTER_BILINEAR,                // Linear filtering
+    FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
+    FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
+    FILTER_ANISOTROPIC_8X,          // Anisotropic filtering 8x
+    FILTER_ANISOTROPIC_16X,         // Anisotropic filtering 16x
+} TextureFilterMode;
+
+// Texture parameters: wrap mode
+typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
+
 // Color blending modes (pre-defined)
 typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
 
@@ -589,7 +616,7 @@ extern "C" {            // Prevents name mangling of functions
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-RLAPI void InitWindow(int width, int height, struct android_app *state);  // Init Android Activity and OpenGL Graphics
+RLAPI void InitWindow(int width, int height, void *state);        // Init Android Activity and OpenGL Graphics (struct android_app)
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 RLAPI void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
 #endif
@@ -601,11 +628,13 @@ RLAPI void ToggleFullscreen(void);                                // Fullscreen 
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
+#if !defined(PLATFORM_ANDROID)
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor
 RLAPI bool IsCursorHidden(void);                                  // Returns true if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor
 RLAPI void DisableCursor(void);                                   // Disables cursor
+#endif
 
 RLAPI void ClearBackground(Color color);                          // Sets Background Color
 RLAPI void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
@@ -648,7 +677,6 @@ RLAPI int StorageLoadValue(int position);                         // Storage loa
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 RLAPI bool IsKeyPressed(int key);                             // Detect if a key has been pressed once
 RLAPI bool IsKeyDown(int key);                                // Detect if a key is being pressed
 RLAPI bool IsKeyReleased(int key);                            // Detect if a key has been released once
@@ -657,13 +685,15 @@ RLAPI int GetKeyPressed(void);                                // Get latest key 
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
 
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Detect if a gamepad is available
+RLAPI bool IsGamepadName(int gamepad, const char *name);      // Check gamepad name (if available)
 RLAPI const char *GetGamepadName(int gamepad);                // Return gamepad internal name id
-RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
 RLAPI bool IsGamepadButtonPressed(int gamepad, int button);   // Detect if a gamepad button has been pressed once
 RLAPI bool IsGamepadButtonDown(int gamepad, int button);      // Detect if a gamepad button is being pressed
 RLAPI bool IsGamepadButtonReleased(int gamepad, int button);  // Detect if a gamepad button has been released once
 RLAPI bool IsGamepadButtonUp(int gamepad, int button);        // Detect if a gamepad button is NOT being pressed
-#endif
+RLAPI int GetGamepadButtonPressed(void);                      // Get the last gamepad button pressed
+RLAPI int GetGamepadAxisCount(int gamepad);                   // Return gamepad axis count for a gamepad
+RLAPI float GetGamepadAxisMovement(int gamepad, int axis);    // Return axis movement value for a gamepad axis
 
 RLAPI bool IsMouseButtonPressed(int button);                  // Detect if a mouse button has been pressed once
 RLAPI bool IsMouseButtonDown(int button);                     // Detect if a mouse button is being pressed
@@ -678,12 +708,6 @@ RLAPI int GetMouseWheelMove(void);                            // Returns mouse w
 RLAPI int GetTouchX(void);                                    // Returns touch position X for touch point 0 (relative to screen size)
 RLAPI int GetTouchY(void);                                    // Returns touch position Y for touch point 0 (relative to screen size)
 RLAPI Vector2 GetTouchPosition(int index);                    // Returns touch position XY for a touch point index (relative to screen size)
-
-#if defined(PLATFORM_ANDROID)
-bool IsButtonPressed(int button);                       // Detect if an android physic button has been pressed
-bool IsButtonDown(int button);                          // Detect if an android physic button is being pressed
-bool IsButtonReleased(int button);                      // Detect if an android physic button has been released
-#endif
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: gestures)
@@ -758,6 +782,7 @@ RLAPI void UnloadTexture(Texture2D texture);                                    
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory
 RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
+RLAPI void UpdateTexture(Texture2D texture, void *pixels);                                               // Update GPU texture with new data
 RLAPI void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
 RLAPI void ImageFormat(Image *image, int newFormat);                                                     // Convert image data to desired format
 RLAPI void ImageAlphaMask(Image *image, Image alphaMask);                                                // Apply alpha mask to image
@@ -779,7 +804,8 @@ RLAPI void ImageColorGrayscale(Image *image);                                   
 RLAPI void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 RLAPI void GenTextureMipmaps(Texture2D texture);                                                         // Generate GPU mipmaps for a texture
-RLAPI void UpdateTexture(Texture2D texture, void *pixels);                                               // Update GPU texture with new data
+RLAPI void SetTextureFilter(Texture2D texture, int filterMode);                                          // Set texture scaling filter mode
+RLAPI void SetTextureWrap(Texture2D texture, int wrapMode);                                              // Set texture wrapping mode
 
 RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
 RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
@@ -793,13 +819,14 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 //------------------------------------------------------------------------------------
 RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load a SpriteFont image into GPU memory
+RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars);    // Load a SpriteFont from TTF font with parameters
 RLAPI void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory
 
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
 RLAPI void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
                 float fontSize, int spacing, Color tint);
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
-RLAPI Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing);         // Measure string size for SpriteFont
+RLAPI Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing);       // Measure string size for SpriteFont
 
 RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS on top-left corner
 RLAPI const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
