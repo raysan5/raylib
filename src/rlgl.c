@@ -2,11 +2,30 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
-*       OpenGL 1.1  - Direct map rl* -> gl*
-*       OpenGL 2.1  - Vertex data is stored in VBOs, call rlglDraw() to render
-*       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
-*       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
+*   rlgl allows usage of OpenGL 1.1 style functions (rlVertex) that are internally mapped to 
+*   selected OpenGL version (1.1, 2.1, 3.3 Core, ES 2.0). 
+*
+*   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal 
+*   VBO buffers (and VAOs if available). It requires calling 3 functions:
+*       rlglInit()  - Initialize internal buffers and auxiliar resources
+*       rlglDraw()  - Process internal buffers and send required draw calls
+*       rlglClose() - De-initialize internal buffers data and other auxiliar resources
+*
+*   External libs:
+*       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
+*       GLAD        - OpenGL extensions loading (OpenGL 3.3 Core only)
+*
+*   Module Configuration Flags:
+*       GRAPHICS_API_OPENGL_11  - Use OpenGL 1.1 backend
+*       GRAPHICS_API_OPENGL_21  - Use OpenGL 2.1 backend
+*       GRAPHICS_API_OPENGL_33  - Use OpenGL 3.3 Core profile backend
+*       GRAPHICS_API_OPENGL_ES2 - Use OpenGL ES 2.0 backend
+*
+*       RLGL_STANDALONE             - Use rlgl as standalone library (no raylib dependency)
+*       RLGL_NO_STANDARD_SHADER     - Avoid standard shader (shader_standard.h) inclusion
+*       RLGL_NO_DISTORTION_SHADER   - Avoid stereo rendering distortion sahder (shader_distortion.h) inclusion
+*       RLGL_OCULUS_SUPPORT         - Enable Oculus Rift CV1 functionality
+*
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *

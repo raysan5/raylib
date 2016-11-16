@@ -2,24 +2,29 @@
 *
 *   raylib.audio
 *
-*   Basic functions to manage Audio:
+*   This module provides basic functionality to work with audio:
 *       Manage audio device (init/close)
-*       Load and Unload audio files
+*       Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
 *       Play/Stop/Pause/Resume loaded audio
 *       Manage mixing channels
 *       Manage raw audio context
 *
-*   Uses external lib:
-*       OpenAL Soft - Audio device management lib (http://kcat.strangesoft.net/openal.html)
-*       stb_vorbis - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
-*       jar_xm - XM module file loading
-*       jar_mod - MOD audio file loading
+*   External libs:
+*       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
+*       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
+*       jar_xm      - XM module file loading
+*       jar_mod     - MOD audio file loading
+*       dr_flac     - FLAC audio file loading
+*
+*   Module Configuration Flags:
+*       AUDIO_STANDALONE    - Use this module as standalone library (independently of raylib)
 *
 *   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
 *       XM audio module support (jar_xm)
 *       MOD audio module support (jar_mod)
 *       Mixing channels support
 *       Raw audio context support
+*
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *

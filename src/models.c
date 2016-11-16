@@ -4,6 +4,12 @@
 *
 *   Basic functions to draw 3d shapes and load/draw 3d models (.OBJ)
 *
+*   External libs:
+*       rlgl     - raylib OpenGL abstraction layer
+*
+*   Module Configuration Flags:
+*       ...
+*
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
@@ -34,8 +40,7 @@
 #include <string.h>         // Required for: strcmp()
 #include <math.h>           // Required for: sin(), cos()
 
-#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "raymath.h"        // Matrix data type and Matrix functions
+#include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

@@ -4,6 +4,12 @@
 *
 *   Basic functions to draw 2d Shapes and check collisions
 *
+*   External libs:
+*       rlgl     - raylib OpenGL abstraction layer
+*
+*   Module Configuration Flags:
+*       ...
+*
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
@@ -25,10 +31,10 @@
 
 #include "raylib.h"
 
+#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
+
 #include <stdlib.h>     // Required for: abs()
 #include <math.h>       // Required for: sinf(), cosf(), sqrtf()
-
-#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
