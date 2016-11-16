@@ -38,6 +38,9 @@ PLATFORM ?= PLATFORM_DESKTOP
 # define YES if you want shared/dynamic version of library instead of static (default)
 SHARED ?= NO
 
+# define NO to use OpenAL Soft as static library (or shared by default)
+SHARED_OPENAL ?= NO
+
 # determine if the file has root access (only for installing raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root
 # user, "whoami" prints "root").
@@ -99,9 +102,18 @@ CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 ifeq ($(SHARED),YES)
     CFLAGS += -fPIC
     SHAREDFLAG = BUILDING_DLL
-    SHAREDLIBS = -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lopenal32 -lgdi32
+    SHAREDLIBS = -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lgdi32
 else
     SHAREDFLAG = BUILDING_STATIC
+endif
+
+# if static OpenAL Soft required, define the corresponding flags
+ifeq ($(SHARED_OPENAL),NO)
+    SHAREDLIBS += -lopenal32 -lwinmm
+    SHAREDOPENALFLAG = AL_LIBTYPE_STATIC
+else
+    SHAREDLIBS += -lopenal32dll
+    SHAREDOPENALFLAG = SHARED_OPENAL
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -165,7 +177,7 @@ else
         endif
         ifeq ($(PLATFORM_OS),WINDOWS)
 			$(CC) -shared -o $(OUTPUT_PATH)/raylib.dll $(OBJS) $(SHAREDLIBS) -Wl,--out-implib,$(OUTPUT_PATH)/libraylibdll.a
-			@echo "raylib dynamic library (raylib.dll) and MSVC required import library (libraylibdll.a) generated!"
+			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
         endif
     else
         # compile raylib static library for desktop platforms.
@@ -202,7 +214,7 @@ models.o : models.c raylib.h rlgl.h raymath.h
 
 # compile audio module
 audio.o : audio.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG) -D$(SHAREDOPENALFLAG)
     
 # compile stb_vorbis library
 external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
