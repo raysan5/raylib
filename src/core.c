@@ -1176,11 +1176,12 @@ bool IsGamepadName(int gamepad, const char *name)
 {
     bool result = false;
     const char *gamepadName = NULL; 
-    
+
+#if !defined(PLATFORM_ANDROID)
     if (gamepadReady[gamepad]) gamepadName = GetGamepadName(gamepad);
-    
     if ((name != NULL) && (gamepadName != NULL)) result = (strcmp(name, gamepadName) == 0);
-    
+#endif
+
     return result;
 }
 
