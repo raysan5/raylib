@@ -2786,13 +2786,13 @@ void CloseVrDevice(void)
 // Detect if VR device is available
 bool IsVrDeviceReady(void)
 {
-    return (vrDeviceReady || vrSimulator) && vrEnabled;
+    return (vrDeviceReady && vrEnabled);
 }
 
 // Detect if VR simulator is running
 bool IsVrSimulator(void)
 {
-    return vrSimulator;
+    return (vrSimulator && vrEnabled);
 }
 
 // Enable/Disable VR experience (device or simulator)

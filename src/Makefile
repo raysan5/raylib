@@ -41,6 +41,11 @@ SHARED ?= NO
 # define NO to use OpenAL Soft as static library (or shared by default)
 SHARED_OPENAL ?= NO
 
+# on PLATFORM_WEB force OpenAL Soft shared library
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    SHARED_OPENAL ?= YES
+endif
+
 # determine if the file has root access (only for installing raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root
 # user, "whoami" prints "root").

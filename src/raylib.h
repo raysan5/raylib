@@ -724,7 +724,7 @@ RLAPI float GetGesturePinchAngle(void);                       // Get gesture pin
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: camera)
 //------------------------------------------------------------------------------------
-RLAPI void SetCameraMode(Camera, int mode);                       // Set camera mode (multiple camera modes available)
+RLAPI void SetCameraMode(Camera camera, int mode);                // Set camera mode (multiple camera modes available)
 RLAPI void UpdateCamera(Camera *camera);                          // Update camera position for selected mode
 
 RLAPI void SetCameraPanControl(int panKey);                       // Set camera pan key to combine with mouse movement (free camera)
@@ -835,7 +835,7 @@ RLAPI const char *SubText(const char *text, int position, int length);          
 // Basic 3d Shapes Drawing Functions (Module: models)
 //------------------------------------------------------------------------------------
 RLAPI void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color);                                    // Draw a line in 3D world space
-RLAPI void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color);    // Draw a circle in 3D world space
+RLAPI void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color); // Draw a circle in 3D world space
 RLAPI void DrawCube(Vector3 position, float width, float height, float length, Color color);             // Draw cube
 RLAPI void DrawCubeV(Vector3 position, Vector3 size, Color color);                                       // Draw cube (Vector version)
 RLAPI void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);        // Draw cube wires
@@ -850,7 +850,7 @@ RLAPI void DrawRay(Ray ray, Color color);                                       
 RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 RLAPI void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
 RLAPI void DrawLight(Light light);                                                                       // Draw light in 3D world
-//DrawTorus(), DrawTeapot() are useless...
+//DrawTorus(), DrawTeapot() could be useful?
 
 //------------------------------------------------------------------------------------
 // Model 3d Loading and Drawing Functions (Module: models)
@@ -917,7 +917,7 @@ RLAPI void DestroyLight(Light light);                                     // Des
 //------------------------------------------------------------------------------------
 RLAPI void InitVrDevice(int vdDevice);            // Init VR device
 RLAPI void CloseVrDevice(void);                   // Close VR device
-RLAPI bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+RLAPI bool IsVrDeviceReady(void);                 // Detect if VR device is ready
 RLAPI bool IsVrSimulator(void);                   // Detect if VR simulator is running
 RLAPI void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
@@ -926,7 +926,7 @@ RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experienc
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
 RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
-RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context (and music stream)
+RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file into RAM
@@ -950,9 +950,9 @@ RLAPI void WaveCrop(Wave *wave, int initSample, int finalSample);     // Crop a 
 RLAPI float *GetWaveData(Wave wave);                                  // Get samples data from wave as a floats array
 RLAPI Music LoadMusicStream(const char *fileName);                    // Load music stream from file
 RLAPI void UnloadMusicStream(Music music);                            // Unload music stream
-RLAPI void PlayMusicStream(Music music);                              // Start music playing (open stream)
+RLAPI void PlayMusicStream(Music music);                              // Start music playing
 RLAPI void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
-RLAPI void StopMusicStream(Music music);                              // Stop music playing (close stream)
+RLAPI void StopMusicStream(Music music);                              // Stop music playing
 RLAPI void PauseMusicStream(Music music);                             // Pause music playing
 RLAPI void ResumeMusicStream(Music music);                            // Resume playing paused music
 RLAPI bool IsMusicPlaying(Music music);                               // Check if music is playing
@@ -963,7 +963,7 @@ RLAPI float GetMusicTimePlayed(Music music);                          // Get cur
 
 RLAPI AudioStream InitAudioStream(unsigned int sampleRate,
                                   unsigned int sampleSize,
-                                  unsigned int channels);             // Init audio stream (to stream audio pcm data)
+                                  unsigned int channels);             // Init audio stream (to stream raw audio pcm data)
 RLAPI void UpdateAudioStream(AudioStream stream, void *data, int numSamples); // Update audio stream buffers with data
 RLAPI void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
 RLAPI bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill

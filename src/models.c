@@ -81,11 +81,11 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
 }
 
 // Draw a circle in 3D world space
-void DrawCircle3D(Vector3 center, float radius, float rotationAngle, Vector3 rotation, Color color)
+void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, float rotationAngle, Color color)
 {
     rlPushMatrix();
         rlTranslatef(center.x, center.y, center.z);
-        rlRotatef(rotationAngle, rotation.x, rotation.y, rotation.z);
+        rlRotatef(rotationAngle, rotationAxis.x, rotationAxis.y, rotationAxis.z);
 
         rlBegin(RL_LINES);
             for (int i = 0; i < 360; i += 10)
@@ -584,9 +584,9 @@ void DrawLight(Light light)
         {
             DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
             
-            DrawCircle3D(light->position, light->radius, 0.0f, (Vector3){ 0, 0, 0 }, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 1, 0, 0 }, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, 90.0f, (Vector3){ 0, 1, 0 }, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 0, 0 }, 0.0f, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, (Vector3){ 1, 0, 0 }, 90.0f, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 1, 0 },90.0f, (light->enabled ? light->diffuse : GRAY));
         } break;
         case LIGHT_DIRECTIONAL:
         {
@@ -602,7 +602,7 @@ void DrawLight(Light light)
             Vector3 dir = VectorSubtract(light->target, light->position);
             VectorNormalize(&dir);
             
-            DrawCircle3D(light->position, 0.5f, 0.0f, dir, (light->enabled ? light->diffuse : GRAY));
+            DrawCircle3D(light->position, 0.5f, dir, 0.0f, (light->enabled ? light->diffuse : GRAY));
             
             //DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : GRAY));
             DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));

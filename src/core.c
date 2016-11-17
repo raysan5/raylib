@@ -668,7 +668,7 @@ void Begin3dMode(Camera camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    if (IsVrDeviceReady()) BeginVrDrawing();
+    if (IsVrDeviceReady() || IsVrSimulator()) BeginVrDrawing();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
 
@@ -698,7 +698,7 @@ void End3dMode(void)
 {
     rlglDraw();                         // Process internal buffers (update + draw)
 
-    if (IsVrDeviceReady()) EndVrDrawing();
+    if (IsVrDeviceReady() || IsVrSimulator()) EndVrDrawing();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack

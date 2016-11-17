@@ -423,7 +423,8 @@ float *MatrixToFloat(Matrix mat);
 
 void InitVrDevice(int vrDevice);            // Init VR device
 void CloseVrDevice(void);                   // Close VR device
-bool IsVrDeviceReady(void);                 // Detect if VR device (or simulator) is ready
+bool IsVrDeviceReady(void);                 // Detect if VR device is ready
+bool IsVrSimulator(void);                   // Detect if VR simulator is running
 void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
 
