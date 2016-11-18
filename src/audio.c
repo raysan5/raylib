@@ -49,8 +49,11 @@
 
 #if defined(AUDIO_STANDALONE)
     #include "audio.h"
+    #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"
+    #include "utils.h"          // Required for: DecompressData()
+                                // NOTE: Includes Android fopen() function map
 #endif
 
 #include "AL/al.h"              // OpenAL basic header
@@ -66,13 +69,6 @@
 #endif
 #ifndef AL_FORMAT_STEREO_FLOAT32
     #define AL_FORMAT_STEREO_FLOAT32 0x10011
-#endif
-
-#if defined(AUDIO_STANDALONE)
-    #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
-#else
-    #include "utils.h"          // Required for: DecompressData()
-                                // NOTE: Includes Android fopen() function map
 #endif
 
 //#define STB_VORBIS_HEADER_ONLY
@@ -122,7 +118,7 @@ typedef struct MusicData {
     bool loop;                          // Repeat music after finish (loop)
     unsigned int totalSamples;          // Total number of samples
     unsigned int samplesLeft;           // Number of samples left to end
-} MusicData, *Music;
+} MusicData;
 
 #if defined(AUDIO_STANDALONE)
 typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;

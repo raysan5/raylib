@@ -1817,6 +1817,7 @@ static Material LoadMTL(const char *fileName)
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };
     char mapFileName[128];
+    int result = 0;
 
     FILE *mtlFile;
 
@@ -1901,13 +1902,13 @@ static Material LoadMTL(const char *fileName)
                     {
                         if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
                         {
-                            sscanf(buffer, "map_Kd %s", mapFileName);
-                            if (mapFileName != NULL) material.texDiffuse = LoadTexture(mapFileName);
+                            result = sscanf(buffer, "map_Kd %s", mapFileName);
+                            if (result != EOF) material.texDiffuse = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
                         {
-                            sscanf(buffer, "map_Ks %s", mapFileName);
-                            if (mapFileName != NULL) material.texSpecular = LoadTexture(mapFileName);
+                            result = sscanf(buffer, "map_Ks %s", mapFileName);
+                            if (result != EOF) material.texSpecular = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
                         {
@@ -1916,13 +1917,13 @@ static Material LoadMTL(const char *fileName)
                     } break;
                     case 'B':       // map_Bump string      Bump texture map.
                     {
-                        sscanf(buffer, "map_Bump %s", mapFileName);
-                        if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+                        result = sscanf(buffer, "map_Bump %s", mapFileName);
+                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
                     } break;
                     case 'b':       // map_bump string      Bump texture map.
                     {
-                        sscanf(buffer, "map_bump %s", mapFileName);
-                        if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+                        result = sscanf(buffer, "map_bump %s", mapFileName);
+                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
                     } break;
                     case 'd':       // map_d string         Opacity texture map.
                     {
@@ -1946,8 +1947,8 @@ static Material LoadMTL(const char *fileName)
             } break;
             case 'b':   // bump string      Bump texture map
             {
-                sscanf(buffer, "bump %s", mapFileName);
-                if (mapFileName != NULL) material.texNormal = LoadTexture(mapFileName);
+                result = sscanf(buffer, "bump %s", mapFileName);
+                if (result != EOF) material.texNormal = LoadTexture(mapFileName);
             } break;
             case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
             {

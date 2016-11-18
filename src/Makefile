@@ -39,7 +39,7 @@ PLATFORM ?= PLATFORM_DESKTOP
 SHARED ?= NO
 
 # define NO to use OpenAL Soft as static library (or shared by default)
-SHARED_OPENAL ?= NO
+SHARED_OPENAL ?= YES
 
 # on PLATFORM_WEB force OpenAL Soft shared library
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -188,6 +188,11 @@ else
         # compile raylib static library for desktop platforms.
 		ar rcs $(OUTPUT_PATH)/libraylib.a $(OBJS)
 		@echo "libraylib.a generated (static library)!"
+        ifeq ($(SHARED_OPENAL),NO)
+			@echo "expected OpenAL Soft static library linking"
+        else
+			@echo "expected OpenAL Soft shared library linking"
+        endif
     endif
 endif
 

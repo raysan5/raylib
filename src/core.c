@@ -1175,9 +1175,10 @@ bool IsGamepadAvailable(int gamepad)
 bool IsGamepadName(int gamepad, const char *name)
 {
     bool result = false;
-    const char *gamepadName = NULL; 
 
 #if !defined(PLATFORM_ANDROID)
+    const char *gamepadName = NULL; 
+
     if (gamepadReady[gamepad]) gamepadName = GetGamepadName(gamepad);
     if ((name != NULL) && (gamepadName != NULL)) result = (strcmp(name, gamepadName) == 0);
 #endif
@@ -1977,7 +1978,11 @@ static void PollInputEvents(void)
 
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
-    
+#endif
+
+// NOTE: GLFW3 joystick functionality not available in web
+// TODO: Support joysticks using emscripten API
+#if defined(PLATFORM_DESKTOP)
     // Check if gamepads are ready
     // NOTE: We do it here in case of disconection
     for (int i = 0; i < MAX_GAMEPADS; i++)
