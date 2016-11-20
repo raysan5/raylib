@@ -1785,6 +1785,8 @@ int lua_LoadImage(lua_State* L)
 
 int lua_LoadImageEx(lua_State* L)
 {
+    // TODO: Image LoadImageEx(Color *pixels, int width, int height);
+    
     GET_TABLE(Color, arg1, 1);
     int arg2 = LuaGetArgument_int(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
@@ -1883,6 +1885,8 @@ int lua_UnloadRenderTexture(lua_State* L)
 
 int lua_GetImageData(lua_State* L)
 {
+    // TODO: Color *GetImageData(Image image);
+    
     Image arg1 = LuaGetArgument_Image(L, 1);
     Color * result = GetImageData(arg1);
     lua_createtable(L, arg1.width*arg1.height, 0);
@@ -1905,6 +1909,8 @@ int lua_GetTextureData(lua_State* L)
 
 int lua_UpdateTexture(lua_State* L)
 {
+    // TODO: void UpdateTexture(Texture2D texture, void *pixels);
+    
     Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
     void * arg2 = (char *)LuaGetArgument_string(L, 2);  // NOTE: Getting (void *) as string?
     UpdateTexture(arg1, arg2);      // ISSUE: #2 string expected, got table -> GetImageData() returns a table!
@@ -2893,6 +2899,8 @@ int lua_LoadSoundFromRES(lua_State* L)
 
 int lua_UpdateSound(lua_State* L)
 {
+    // TODO: void UpdateSound(Sound sound, void *data, int numSamples);
+    
     Sound arg1 = LuaGetArgument_Sound(L, 1);
     const char * arg2 = LuaGetArgument_string(L, 2);
     int * arg3 = LuaGetArgument_int(L, 3);
@@ -3033,7 +3041,6 @@ int lua_PlayMusicStream(lua_State* L)
     return 0;
 }
 
-
 int lua_StopMusicStream(lua_State* L)
 {
     Music arg1 = LuaGetArgument_Music(L, 1);
@@ -3114,6 +3121,8 @@ int lua_CloseAudioStream(lua_State* L)
 
 int lua_UpdateAudioStream(lua_State* L)
 {
+    // TODO: void UpdateAudioStream(AudioStream stream, void *data, int numSamples);
+    
     AudioStream arg1 = LuaGetArgument_AudioStream(L, 1);
     void * arg2 = (char *)LuaGetArgument_string(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
@@ -3688,7 +3697,6 @@ static luaL_Reg raylib_functions[] = {
     REG(StorageSaveValue)
     REG(StorageLoadValue)
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
     REG(IsKeyPressed)
     REG(IsKeyDown)
     REG(IsKeyReleased)
@@ -3696,7 +3704,6 @@ static luaL_Reg raylib_functions[] = {
     REG(GetKeyPressed)
     REG(SetExitKey)
 
-    
     REG(IsGamepadAvailable)
     REG(IsGamepadName)
     REG(GetGamepadName)
@@ -3707,7 +3714,6 @@ static luaL_Reg raylib_functions[] = {
     REG(GetGamepadButtonPressed)
     REG(GetGamepadAxisCount)
     REG(GetGamepadAxisMovement)
-#endif
 
     REG(IsMouseButtonPressed)
     REG(IsMouseButtonDown)
