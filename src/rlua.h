@@ -1095,14 +1095,14 @@ int lua_IsFileDropped(lua_State* L)
 int lua_GetDroppedFiles(lua_State* L)
 {
     int count = 0;
-  char ** result = GetDroppedFiles(&count);
+    char ** result = GetDroppedFiles(&count);
     lua_createtable(L, count, 0);
     for (int i = 0; i < count; i++)
     {
         lua_pushstring(L, result[i]);
         lua_rawseti(L, -2, i + 1);
     }
-  return 1;
+    return 1;
 }
 
 int lua_ClearDroppedFiles(lua_State* L)
@@ -1130,7 +1130,6 @@ int lua_StorageLoadValue(lua_State* L)
 //------------------------------------------------------------------------------------
 // raylib [core] module functions - Input Handling
 //------------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 int lua_IsKeyPressed(lua_State* L)
 {
     int arg1 = LuaGetArgument_int(L, 1);
@@ -1185,12 +1184,22 @@ int lua_IsGamepadAvailable(lua_State* L)
     return 1;
 }
 
-int lua_GetGamepadAxisMovement(lua_State* L)
+int lua_IsGamepadName(lua_State* L)
 {
     int arg1 = LuaGetArgument_int(L, 1);
-    int arg2 = LuaGetArgument_int(L, 2);
-    float result = GetGamepadAxisMovement(arg1, arg2);
-    lua_pushnumber(L, result);
+    const char * arg2 = LuaGetArgument_string(L, 2);
+    bool result = IsGamepadName(arg1, arg2);
+    lua_pushboolean(L, result);
+    return 1;
+}
+
+int lua_GetGamepadName(lua_State* L)
+{
+    // TODO: Return gamepad name id
+    
+    int arg1 = LuaGetArgument_int(L, 1);
+    char * result = GetGamepadName(arg1);
+    //lua_pushboolean(L, result);
     return 1;
 }
 
@@ -1229,7 +1238,30 @@ int lua_IsGamepadButtonUp(lua_State* L)
     lua_pushboolean(L, result);
     return 1;
 }
-#endif
+
+int lua_GetGamepadButtonPressed(lua_State* L)
+{
+    int result = GetGamepadButtonPressed();
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int lua_GetGamepadAxisCount(lua_State* L)
+{
+    int arg1 = LuaGetArgument_int(L, 1);
+    int result = GetGamepadAxisCount(arg1);
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+int lua_GetGamepadAxisMovement(lua_State* L)
+{
+    int arg1 = LuaGetArgument_int(L, 1);
+    int arg2 = LuaGetArgument_int(L, 2);
+    float result = GetGamepadAxisMovement(arg1, arg2);
+    lua_pushnumber(L, result);
+    return 1;
+}
 
 int lua_IsMouseButtonPressed(lua_State* L)
 {
@@ -1419,8 +1451,9 @@ int lua_GetGesturePinchAngle(lua_State* L)
 //------------------------------------------------------------------------------------
 int lua_SetCameraMode(lua_State* L)
 {
-    int arg1 = LuaGetArgument_int(L, 1);
-    SetCameraMode(arg1);
+    Camera arg1 = LuaGetArgument_Camera(L, 1);
+    int arg2 = LuaGetArgument_int(L, 2);
+    SetCameraMode(arg1, arg2);
     return 0;
 }
 
@@ -1430,37 +1463,6 @@ int lua_UpdateCamera(lua_State* L)
     UpdateCamera(&arg1);
     LuaPush_Camera(L, arg1);
     return 1;
-}
-
-int lua_UpdateCameraPlayer(lua_State* L)
-{
-    Camera arg1 = LuaGetArgument_Camera(L, 1);
-    Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
-    UpdateCameraPlayer(&arg1, &arg2);
-    LuaPush_Camera(L, arg1);
-    LuaPush_Vector3(L, arg2);
-    return 2;
-}
-
-int lua_SetCameraPosition(lua_State* L)
-{
-    Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
-    SetCameraPosition(arg1);
-    return 0;
-}
-
-int lua_SetCameraTarget(lua_State* L)
-{
-    Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
-    SetCameraTarget(arg1);
-    return 0;
-}
-
-int lua_SetCameraFovy(lua_State* L)
-{
-    float arg1 = LuaGetArgument_float(L, 1);
-    SetCameraFovy(arg1);
-    return 0;
 }
 
 int lua_SetCameraPanControl(lua_State* L)
@@ -1493,13 +1495,6 @@ int lua_SetCameraMoveControls(lua_State* L)
     int arg5 = LuaGetArgument_int(L, 5);
     int arg6 = LuaGetArgument_int(L, 6);
     SetCameraMoveControls(arg1, arg2, arg3, arg4, arg5, arg6);
-    return 0;
-}
-
-int lua_SetCameraMouseSensitivity(lua_State* L)
-{
-    float arg1 = LuaGetArgument_float(L, 1);
-    SetCameraMouseSensitivity(arg1);
     return 0;
 }
 
@@ -1908,6 +1903,14 @@ int lua_GetTextureData(lua_State* L)
     return 1;
 }
 
+int lua_UpdateTexture(lua_State* L)
+{
+    Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
+    void * arg2 = (char *)LuaGetArgument_string(L, 2);  // NOTE: Getting (void *) as string?
+    UpdateTexture(arg1, arg2);      // ISSUE: #2 string expected, got table -> GetImageData() returns a table!
+    return 0;
+}
+
 int lua_ImageToPOT(lua_State* L)
 {
     Image arg1 = LuaGetArgument_Image(L, 1);
@@ -2100,11 +2103,19 @@ int lua_GenTextureMipmaps(lua_State* L)
     return 0;
 }
 
-int lua_UpdateTexture(lua_State* L)
+int lua_SetTextureFilter(lua_State* L)
 {
     Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
-    void * arg2 = (char *)LuaGetArgument_string(L, 2);  // NOTE: Getting (void *) as string?
-    UpdateTexture(arg1, arg2);      // ISSUE: #2 string expected, got table -> GetImageData() returns a table!
+    int arg2 = LuaGetArgument_int(L, 2);
+    SetTextureFilter(arg1, arg2);
+    return 0;
+}
+
+int lua_SetTextureWrap(lua_State* L)
+{
+    Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
+    int arg2 = LuaGetArgument_int(L, 2);
+    SetTextureWrap(arg1, arg2);
     return 0;
 }
 
@@ -2174,6 +2185,18 @@ int lua_LoadSpriteFont(lua_State* L)
 {
     const char * arg1 = LuaGetArgument_string(L, 1);
     SpriteFont result = LoadSpriteFont(arg1);
+    LuaPush_SpriteFont(L, result);
+    return 1;
+}
+
+int lua_LoadSpriteFontTTF(lua_State* L)
+{
+    const char * arg1 = LuaGetArgument_string(L, 1);
+    int arg2 = LuaGetArgument_int(L, 2);
+    int arg3 = LuaGetArgument_int(L, 3);
+    int arg4 = LuaGetArgument_int(L, 4);
+    //LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars);
+    SpriteFont result = LoadSpriteFontTTF(arg1, arg2, arg3, &arg4);
     LuaPush_SpriteFont(L, result);
     return 1;
 }
@@ -2255,8 +2278,8 @@ int lua_DrawCircle3D(lua_State* L)
 {
     Vector3 arg1 = LuaGetArgument_Vector3(L, 1);
     float arg2 = LuaGetArgument_float(L, 2);
-    float arg3 = LuaGetArgument_float(L, 3);
-    Vector3 arg4 = LuaGetArgument_Vector3(L, 4);
+    Vector3 arg3 = LuaGetArgument_Vector3(L, 3);
+    float arg4 = LuaGetArgument_float(L, 4);
     Color arg5 = LuaGetArgument_Color(L, 5);
     DrawCircle3D(arg1, arg2, arg3, arg4, arg5);
     return 0;
@@ -2619,18 +2642,6 @@ int lua_CheckCollisionRayBox(lua_State* L)
     return 1;
 }
 
-int lua_ResolveCollisionCubicmap(lua_State* L)
-{
-    Image arg1 = LuaGetArgument_Image(L, 1);
-    Vector3 arg2 = LuaGetArgument_Vector3(L, 2);
-    Vector3 arg3 = LuaGetArgument_Vector3(L, 3);
-    float arg4 = LuaGetArgument_float(L, 4);
-    Vector3 result = ResolveCollisionCubicmap(arg1, arg2, &arg3, arg4);
-    LuaPush_Vector3(L, result);
-    LuaPush_Vector3(L, arg3);
-    return 2;
-}
-
 //------------------------------------------------------------------------------------
 // raylib [raymath] module functions - Shaders
 //------------------------------------------------------------------------------------
@@ -2790,10 +2801,19 @@ int lua_IsVrDeviceReady(lua_State* L)
     return 1;
 }
 
+int lua_IsVrSimulator(lua_State* L)
+{
+    bool result = IsVrSimulator();
+    lua_pushboolean(L, result);
+    return 1;
+}
+
 int lua_UpdateVrTracking(lua_State* L)
 {
-    UpdateVrTracking();
-    return 0;
+    Camera arg1 = LuaGetArgument_Camera(L, 1);
+    UpdateVrTracking(&arg1);
+    LuaPush_Camera(L, arg1);
+    return 1;
 }
 
 int lua_ToggleVrMode(lua_State* L)
@@ -2952,11 +2972,11 @@ int lua_WaveFormat(lua_State* L)
     int arg2 = LuaGetArgument_int(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
     int arg4 = LuaGetArgument_int(L, 4);
-    WaveFormat(arg1, arg2, arg3, arg4);
+    WaveFormat(&arg1, arg2, arg3, arg4);
     return 0;
 }
 
-int lua_LoadMusicStream(lua_State* L)
+int lua_WaveCopy(lua_State* L)
 {
     Wave arg1 = LuaGetArgument_Wave(L, 1);
     Wave result = WaveCopy(arg1);
@@ -2969,7 +2989,7 @@ int lua_WaveCrop(lua_State* L)
     Wave arg1 = LuaGetArgument_Wave(L, 1);
     int arg2 = LuaGetArgument_int(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
-    WaveCrop(arg1, arg2, arg3);
+    WaveCrop(&arg1, arg2, arg3);
     return 0;
 }
 
@@ -2978,9 +2998,10 @@ int lua_GetWaveData(lua_State* L)
     // TODO: float *GetWaveData(Wave wave);
     
     Wave arg1 = LuaGetArgument_Wave(L, 1);
-    float result = GetWaveData(arg1);
-    LuaPush_float(L, result);
-    return 1;
+    float * result = GetWaveData(arg1);
+    //LuaPush_float(L, result);
+    //lua_pushnumber(L, result);
+    return 0;
 }
 
 int lua_LoadMusicStream(lua_State* L)
@@ -3675,12 +3696,17 @@ static luaL_Reg raylib_functions[] = {
     REG(GetKeyPressed)
     REG(SetExitKey)
 
+    
     REG(IsGamepadAvailable)
-    REG(GetGamepadAxisMovement)
+    REG(IsGamepadName)
+    REG(GetGamepadName)
     REG(IsGamepadButtonPressed)
     REG(IsGamepadButtonDown)
     REG(IsGamepadButtonReleased)
     REG(IsGamepadButtonUp)
+    REG(GetGamepadButtonPressed)
+    REG(GetGamepadAxisCount)
+    REG(GetGamepadAxisMovement)
 #endif
 
     REG(IsMouseButtonPressed)
@@ -3714,16 +3740,10 @@ static luaL_Reg raylib_functions[] = {
 
     REG(SetCameraMode)
     REG(UpdateCamera)
-    REG(UpdateCameraPlayer)
-    REG(SetCameraPosition)
-    REG(SetCameraTarget)
-    REG(SetCameraFovy)
-
     REG(SetCameraPanControl)
     REG(SetCameraAltControl)
     REG(SetCameraSmoothZoomControl)
     REG(SetCameraMoveControls)
-    REG(SetCameraMouseSensitivity)
 
     REG(DrawPixel)
     REG(DrawPixelV)
@@ -3766,6 +3786,7 @@ static luaL_Reg raylib_functions[] = {
     REG(UnloadRenderTexture)
     REG(GetImageData)
     REG(GetTextureData)
+    REG(UpdateTexture)
     REG(ImageToPOT)
     REG(ImageFormat)
     REG(ImageDither)
@@ -3786,8 +3807,9 @@ static luaL_Reg raylib_functions[] = {
     REG(ImageColorContrast)
     REG(ImageColorBrightness)
     REG(GenTextureMipmaps)
-    REG(UpdateTexture)
-
+    REG(SetTextureFilter)
+    REG(SetTextureWrap)
+    
     REG(DrawTexture)
     REG(DrawTextureV)
     REG(DrawTextureEx)
@@ -3796,6 +3818,7 @@ static luaL_Reg raylib_functions[] = {
 
     REG(GetDefaultFont)
     REG(LoadSpriteFont)
+    REG(LoadSpriteFontTTF)
     REG(UnloadSpriteFont)
     REG(DrawText)
     REG(DrawTextEx)
@@ -3845,7 +3868,6 @@ static luaL_Reg raylib_functions[] = {
     REG(CheckCollisionRaySphere)
     REG(CheckCollisionRaySphereEx)
     REG(CheckCollisionRayBox)
-    REG(ResolveCollisionCubicmap)
 
     REG(LoadShader)
     REG(UnloadShader)
@@ -3868,6 +3890,7 @@ static luaL_Reg raylib_functions[] = {
     REG(InitVrDevice)
     REG(CloseVrDevice)
     REG(IsVrDeviceReady)
+    REG(IsVrSimulator)
     REG(UpdateVrTracking)
     REG(ToggleVrMode)
 
