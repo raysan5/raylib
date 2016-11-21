@@ -229,6 +229,7 @@ EXAMPLES = \
     text_font_select \
     text_writing_anim \
     text_ttf_loading \
+    text_bmfont_unordered \
     models_geometric_shapes \
     models_box_collisions \
     models_billboard \
@@ -416,6 +417,10 @@ text_writing_anim: text_writing_anim.c
 
 # compile [text] example - text ttf loading
 text_ttf_loading: text_ttf_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - text bmfont unordered
+text_bmfont_unordered: text_bmfont_unordered.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic geometric 3d shapes
