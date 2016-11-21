@@ -37,14 +37,13 @@ void android_main(struct android_app *app)
 
     InitAudioDevice();                  // Initialize audio device
     
-    Sound fx = LoadSound("coin.wav");   // Load WAV audio file (placed on assets folder)
-    
     Texture2D texture = LoadTexture("raylib_logo.png");     // Load texture (placed on assets folder)
 
-    int framesCounter = 0;          // Used to count frames
-    
+    Sound fx = LoadSound("coin.wav");   // Load WAV audio file (placed on assets folder)
     Music ambient = LoadMusicStream("ambient.ogg");
     PlayMusicStream(ambient);
+
+    int framesCounter = 0;          // Used to count frames
     
     SetTargetFPS(60);               // Not required on Android, already locked to 60 fps
     //--------------------------------------------------------------------------------------

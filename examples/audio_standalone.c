@@ -32,6 +32,8 @@
 
 int main()
 {
+    // Initialization
+    //--------------------------------------------------------------------------------------
     unsigned char key;
     
     InitAudioDevice();
@@ -43,7 +45,9 @@ int main()
     PlayMusicStream(music);
 
     printf("\nPress s or d to play sounds...\n");
-    
+    //--------------------------------------------------------------------------------------
+
+    // Main loop
     while (key != KEY_ESCAPE)
     {
         if (kbhit()) key = getch();
@@ -63,15 +67,15 @@ int main()
         UpdateMusicStream(music);
     }
     
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
     UnloadSound(fxWav);         // Unload sound data
     UnloadSound(fxOgg);         // Unload sound data
     
     UnloadMusicStream(music);   // Unload music stream data
     
     CloseAudioDevice();
-    
-    printf("\n\nPress ENTER to close...");
-    getchar();
+    //--------------------------------------------------------------------------------------
 
     return 0;
 }

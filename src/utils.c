@@ -2,11 +2,15 @@
 *
 *   raylib.utils
 *
-*   Utils Functions Definitions
+*   Some utility functions
 *
-*   Uses external libs:
-*       tinfl - zlib DEFLATE algorithm decompression lib
+*   External libs:
+*       tinfl           - zlib DEFLATE algorithm decompression
 *       stb_image_write - PNG writting functions
+*
+*   Module Configuration Flags:
+*       DO_NOT_TRACE_DEBUG_MSGS - Avoid showing DEBUG TraceLog() messages
+*
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -46,7 +50,9 @@
 #endif
 
 #include "external/tinfl.c"         // Required for: tinfl_decompress_mem_to_mem()
-                                    // NOTE: Deflate algorythm data decompression
+                                    // NOTE: DEFLATE algorythm data decompression
+
+#define DO_NOT_TRACE_DEBUG_MSGS     // Avoid DEBUG messages tracing
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition

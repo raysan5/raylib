@@ -23,7 +23,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - drop files");
     
     int count = 0;
-    char **droppedFiles;
+    char **droppedFiles = { 0 };
     
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------

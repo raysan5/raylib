@@ -2,6 +2,8 @@
 #
 #   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
+#   NOTE: By default examples are compiled using raylib static library and OpenAL Soft shared library
+#
 #   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
 #    
 #   This software is provided "as-is", without any express or implied warranty. In no event 
@@ -25,6 +27,9 @@
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
+
+# define NO to use OpenAL Soft as static library (shared by default)
+SHARED_OPENAL ?= YES
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -62,12 +67,13 @@ endif
 
 # define compiler flags:
 #  -O2         defines optimization level
+#  -s          strip unnecessary data from build
 #  -Wall       turns on most, but not all, compiler warnings
 #  -std=c99    use standard C from 1999 revision
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
+    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O2 -Wall -std=c99
+    CFLAGS = -O2 -s -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
@@ -151,7 +157,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lopengl32 -lopenal32 -lgdi32
+        LIBS = -lraylib -lglfw3 -lopengl32 -lgdi32
+        # if static OpenAL Soft required, define the corresponding libs
+        ifeq ($(SHARED_OPENAL),NO)
+            LIBS += -lopenal32 -lwinmm
+            CFLAGS += -Wl,-allow-multiple-definition
+        else
+            LIBS += -lopenal32dll
+        endif
     endif
     endif
 endif
@@ -215,6 +228,8 @@ EXAMPLES = \
     text_format_text \
     text_font_select \
     text_writing_anim \
+    text_ttf_loading \
+    text_bmfont_unordered \
     models_geometric_shapes \
     models_box_collisions \
     models_billboard \
@@ -398,6 +413,14 @@ text_font_select: text_font_select.c
 
 # compile [text] example - text writing animation
 text_writing_anim: text_writing_anim.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - text ttf loading
+text_ttf_loading: text_ttf_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - text bmfont unordered
+text_bmfont_unordered: text_bmfont_unordered.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic geometric 3d shapes

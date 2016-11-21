@@ -153,11 +153,33 @@ Up to 8 new code examples have been added to show the new raylib features and al
 
 Lots of code changes (+400 commits) and lots of hours of hard work have concluded in this amazing new raylib 1.5.
 
+notes on raylib 1.6
+-------------------
+
+On November 2016, only 4 months after raylib 1.5, arrives raylib 1.6. This new version represents another big review of the library and includes some interesting additions. This version conmmemorates raylib 3rd anniversary (raylib 1.0 was published on November 2013) and it is a stepping stone for raylib future. raylib roadmap has been reviewed and redefined to focus on its primary objective: create a simple and easy-to-use library to learn videogames programming. Some of the new features:
+
+Complete raylib LUA binding. All raylib functions plus the +60 code examples have been ported to LUA, now LUA users can enjoy coding videogames in LUA while using all the internal power of raylib. This addition also open the doors to LUA scripting support for a future raylib-based engine, being able to move game logic (Init, Update, Draw, De-Init) to LUA scripts while keep using raylib functionality.
+
+Completely redesigned audio module. Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added (+20 new functions) to allow raw audio processing and streaming. FLAC file format support has also been added. In the same line, OpenAL Soft backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
+
+Physac module has been moved to its own repository and it has been improved A LOT, actually, library has been completely rewritten from scratch by @victorfisac, multiple samples have been added together with countless new features to match current standard 2D physic libraries. Results are amazing!
+
+Camera and gestures modules have been reviewed, highly simplified and ported to single-file header-only libraries for easier portability and usage flexibility. Consequently, camera system usage has been simplified in all examples.
+
+Improved Gamepad support on Windows and Raspberry Pi with the addition of new functions for custom gamepad configurations but supporting by default PS3 and Xbox-based gamepads.
+
+Improved textures and text functionality, adding new functions for texture filtering control and better TTF/AngelCode fonts loading and generation support.
+
+Build system improvement. Added support for raylib dynamic library generation (raylib.dll) for users that prefer dynamic library linking. Also thinking on advance users, it has been added pre-configured Visual Studio C++ 2015 solution with raylib project and C/C++ examples for users that prefer that professional IDE and compiler.
+
+New examples, new functions, complete code-base review, multiple bugs corrected... this is raylib 1.6. Enjoy making games.
+
+
 features
 --------
  
    *  Written in plain C code (C99)
-   *  Uses C# PascalCase/camelCase notation
+   *  Uses PascalCase/camelCase notation
    *  Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2)
    *  Unique OpenGL abstraction layer (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
    *  Powerful fonts module with multiple SpriteFonts formats support (XNA bitmap fonts, AngelCode fonts, TTF)
@@ -166,7 +188,7 @@ features
    *  Materials (diffuse, normal, specular) and Lighting (point, directional, spot) support
    *  Shaders support, including Model shaders and Postprocessing shaders
    *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
-   *  Audio loading and playing with streaming support and mixing channels (WAV, OGG, XM, MOD)
+   *  Audio loading and playing with streaming support and mixing channels (WAV, OGG, FLAC, XM, MOD)
    *  VR stereo rendering support with configurable HMD device parameters
    *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi**, **HTML5** and **Oculus Rift CV1**
    *  Custom color palette for fancy visuals on raywhite background

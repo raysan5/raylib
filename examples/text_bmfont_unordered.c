@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Text Writing Animation
+*   raylib [text] example - BMFont unordered chars loading and drawing
 *
 *   This example has been created using raylib 1.4 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -18,12 +18,15 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - text writing anim");
-    
-    const char message[128] = "This sample illustrates a text writing\nanimation effect! Check it out! ;)";
-    
-    int framesCounter = 0;
-    
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - bmfont unordered loading and drawing");
+
+    // NOTE: Using chars outside the [32..127] limits!
+    // NOTE: If a character is not found in the font, it just renders a space
+    const char msg[256] = "ASCII extended characters:\n¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆ\nÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæ\nçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
+
+    // NOTE: Loaded font has an unordered list of characters (chars in the range 32..255)
+    SpriteFont font = LoadSpriteFont("resources/fonts/pixantiqua.fnt");       // BMFont (AngelCode)
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -32,10 +35,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyDown(KEY_SPACE)) framesCounter += 8;
-        else framesCounter++;
-        
-        if (IsKeyPressed(KEY_ENTER)) framesCounter = 0;
+        // TODO: Update variables here...
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -44,18 +44,21 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawText(SubText(message, 0, framesCounter/10), 210, 160, 20, MAROON);
+            DrawText("Font name:       PixAntiqua", 40, 50, 20, GRAY);
+            DrawText(FormatText("Font base size:           %i", font.size), 40, 80, 20, GRAY);
+            DrawText(FormatText("Font chars number:     %i", font.numChars), 40, 110, 20, GRAY);
             
-            DrawText("PRESS [ENTER] to RESTART!", 240, 260, 20, LIGHTGRAY);
-            DrawText("PRESS [SPACE] to SPEED UP!", 239, 300, 20, LIGHTGRAY);
+            DrawTextEx(font, msg, (Vector2){ 40, 180 }, font.size, 0, MAROON);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------   
-    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+    UnloadSpriteFont(font);     // AngelCode SpriteFont unloading
+    
+    CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

@@ -7,7 +7,8 @@
 *   Compile example using:
 *   gcc -o $(NAME_PART).exe $(FILE_NAME) $(RAYLIB_DIR)\raylib_icon          /
 *       -I../src -I../src/external/lua/include -L../src/external/lua/lib    /
-*       -lraylib -lglfw3 -lopengl32 -lopenal32 -llua53 -lgdi32 -std=c99
+*       -lraylib -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -llua53      /
+*       -std=c99 -Wl,-allow-multiple-definition -Wl,--subsystem,windows
 *
 *   This example has been created using raylib 1.6 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -28,7 +29,7 @@ int main()
     InitLuaDevice();
     //--------------------------------------------------------------------------------------
 
-    // ExecuteLuaFile("core_basic_window.lua");                 // OK!
+    ExecuteLuaFile("core_basic_window.lua");                    // OK!
     // ExecuteLuaFile("core_input_keys.lua");                   // OK!
     // ExecuteLuaFile("core_input_mouse.lua");                  // OK!
     // ExecuteLuaFile("core_mouse_wheel.lua");                  // OK!

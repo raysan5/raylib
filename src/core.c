@@ -4,23 +4,24 @@
 *
 *   Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
-*   The following platforms are supported:
-*       PLATFORM_DESKTOP - Windows, Linux, Mac (OSX)
-*       PLATFORM_ANDROID - Only OpenGL ES 2.0 devices
-*       PLATFORM_RPI - Rapsberry Pi (tested on Raspbian)
-*       PLATFORM_WEB - Emscripten, HTML5
-*       Oculus Rift CV1 (with desktop mirror) - View [rlgl] module to enable it
+*   The following platforms are supported: Windows, Linux, Mac (OSX), Android, Raspberry Pi, HTML5, Oculus Rift CV1
 *
-*   On PLATFORM_DESKTOP, the external lib GLFW3 (www.glfw.com) is used to manage graphic
-*   device, OpenGL context and input on multiple operating systems (Windows, Linux, OSX).
-*
-*   On PLATFORM_ANDROID, graphic device is managed by EGL and input system by Android activity.
-*
-*   On PLATFORM_RPI, graphic device is managed by EGL and input system is coded in raw mode.
+*   External libs:
+*       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
+*       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
+*       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person) 
+*       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *   Module Configuration Flags:
+*       PLATFORM_DESKTOP     - Windows, Linux, Mac (OSX)
+*       PLATFORM_ANDROID     - Android (only OpenGL ES 2.0 devices), graphic device is managed by EGL and input system by Android activity.
+*       PLATFORM_RPI         - Rapsberry Pi (tested on Raspbian), graphic device is managed by EGL and input system is coded in raw mode.
+*       PLATFORM_WEB         - HTML5 (using emscripten compiler)
 *
 *       RL_LOAD_DEFAULT_FONT - Use external module functions to load default raylib font (module: text)
+*
+*   NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for render mirror - View [rlgl] module to enable it
+*
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -96,8 +97,8 @@
     #include <sys/ioctl.h>      // UNIX System call for device-specific input/output operations - ioctl()
     #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
-    #include <linux/joystick.h>
-
+    #include <linux/joystick.h> // Linux: Joystick support library
+    
     #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
 
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
@@ -175,6 +176,7 @@ static pthread_t mouseThreadId;                 // Mouse reading thread id
 // Gamepad input variables
 static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descriptor
 static pthread_t gamepadThreadId;               // Gamepad reading thread id
+static char gamepadName[64];                    // Gamepad name holder
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -666,7 +668,7 @@ void Begin3dMode(Camera camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
-    if (IsVrDeviceReady()) BeginVrDrawing();
+    if (IsVrDeviceReady() || IsVrSimulator()) BeginVrDrawing();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
 
@@ -696,7 +698,7 @@ void End3dMode(void)
 {
     rlglDraw();                         // Process internal buffers (update + draw)
 
-    if (IsVrDeviceReady()) EndVrDrawing();
+    if (IsVrDeviceReady() || IsVrSimulator()) EndVrDrawing();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
@@ -1173,12 +1175,14 @@ bool IsGamepadAvailable(int gamepad)
 bool IsGamepadName(int gamepad, const char *name)
 {
     bool result = false;
+
+#if !defined(PLATFORM_ANDROID)
     const char *gamepadName = NULL; 
-    
+
     if (gamepadReady[gamepad]) gamepadName = GetGamepadName(gamepad);
-    
     if ((name != NULL) && (gamepadName != NULL)) result = (strcmp(name, gamepadName) == 0);
-    
+#endif
+
     return result;
 }
 
@@ -1188,6 +1192,10 @@ const char *GetGamepadName(int gamepad)
 #if defined(PLATFORM_DESKTOP)
     if (gamepadReady[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
+#elif defined(PLATFORM_RPI)
+	if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGNAME(64), &gamepadName);
+
+    return gamepadName;
 #else
     return NULL;
 #endif
@@ -1196,6 +1204,11 @@ const char *GetGamepadName(int gamepad)
 // Return gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
+#if defined(PLATFORM_RPI)
+    int axisCount = 0;
+    if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGAXES, &axisCount);
+    gamepadAxisCount = axisCount;
+#endif
     return gamepadAxisCount;
 }
 
@@ -1939,9 +1952,11 @@ static void PollInputEvents(void)
     // Reset last key pressed registered
     lastKeyPressed = -1;
     
-    // Reset last gamepad button pressed registered
+#if !defined(PLATFORM_RPI)
+    // Reset last gamepad button/axis registered state
     lastGamepadButtonPressed = -1;
     gamepadAxisCount = 0;
+#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // Mouse input polling
@@ -1963,7 +1978,11 @@ static void PollInputEvents(void)
 
     previousMouseWheelY = currentMouseWheelY;
     currentMouseWheelY = 0;
-    
+#endif
+
+// NOTE: GLFW3 joystick functionality not available in web
+// TODO: Support joysticks using emscripten API
+#if defined(PLATFORM_DESKTOP)
     // Check if gamepads are ready
     // NOTE: We do it here in case of disconection
     for (int i = 0; i < MAX_GAMEPADS; i++)
@@ -2850,6 +2869,7 @@ static void *GamepadThread(void *arg)
                         currentGamepadState[i][gamepadEvent.number] = (int)gamepadEvent.value;
                         
                         if ((int)gamepadEvent.value == 1) lastGamepadButtonPressed = gamepadEvent.number;
+                        else lastGamepadButtonPressed = -1;
                     }
                 }
                 else if (gamepadEvent.type == JS_EVENT_AXIS)

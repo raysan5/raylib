@@ -4,6 +4,12 @@
 *
 *   Basic functions to load SpriteFonts and draw Text
 *
+*   External libs:
+*       stb_truetype - Load TTF file and rasterize characters data
+*
+*   Module Configuration Flags:
+*       ...
+*
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
@@ -33,7 +39,7 @@
 #include "utils.h"          // Required for: GetExtension(), GetNextPOT()
 
 // Following libs are used on LoadTTF()
-//#define STBTT_STATIC
+#define STBTT_STATIC        // Define stb_truetype functions static to this module
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "external/stb_truetype.h"      // Required for: stbtt_BakeFontBitmap()
 
@@ -344,13 +350,13 @@ void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float fontSize, int spacing, Color tint)
 {
     int length = strlen(text);
-    int textOffsetX = 0;
-    int textOffsetY = 0;    // Line break!
+    int textOffsetX = 0;        // Offset between characters
+    int textOffsetY = 0;        // Required for line break!
     float scaleFactor;
-    unsigned char letter;
-
-    Rectangle rec;
-
+    
+    unsigned char letter;       // Current character
+    int index;                  // Index position in sprite font
+    
     scaleFactor = fontSize/spriteFont.size;
 
     // NOTE: Some ugly hacks are made to support Latin-1 Extended characters directly
@@ -358,41 +364,37 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
 
     for (int i = 0; i < length; i++)
     {
-        if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
+        if ((unsigned char)text[i] == '\n')
         {
-            // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
-            letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)letter)];
-            i++;
-        }
-        else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
-        {
-            // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
-            letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)letter + 64)];
-            i++;
+            // NOTE: Fixed line spacing of 1.5 lines
+            textOffsetY += ((spriteFont.size + spriteFont.size/2)*scaleFactor);
+            textOffsetX = 0;
         }
         else
         {
-            if ((unsigned char)text[i] == '\n')
+            if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
             {
-                // NOTE: Fixed line spacing of 1.5 lines
-                textOffsetY += ((spriteFont.size + spriteFont.size/2)*scaleFactor);
-                textOffsetX = 0;
-                rec.x = -1;
+                // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
+                letter = (unsigned char)text[i + 1];
+                index = GetCharIndex(spriteFont, (int)letter);
+                i++;
             }
-            else rec = spriteFont.charRecs[GetCharIndex(spriteFont, (int)text[i])];
-        }
+            else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
+            {
+                // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
+                letter = (unsigned char)text[i + 1];
+                index = GetCharIndex(spriteFont, (int)letter + 64);
+                i++;
+            }
+            else index = GetCharIndex(spriteFont, (int)text[i]);
 
-        if (rec.x >= 0)
-        {
-            int index = GetCharIndex(spriteFont, (int)text[i]);
-            
-            DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[index].x*scaleFactor,
-                                                                 position.y + textOffsetY + spriteFont.charOffsets[index].y*scaleFactor,
-                                                                 rec.width*scaleFactor, rec.height*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
+            DrawTexturePro(spriteFont.texture, spriteFont.charRecs[index], 
+                           (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[index].x*scaleFactor,
+                                        position.y + textOffsetY + spriteFont.charOffsets[index].y*scaleFactor,
+                                        spriteFont.charRecs[index].width*scaleFactor, 
+                                        spriteFont.charRecs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
 
-            if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (rec.width*scaleFactor + spacing);
+            if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (spriteFont.charRecs[index].width*scaleFactor + spacing);
             else textOffsetX += (spriteFont.charAdvanceX[index]*scaleFactor + spacing);
         }
     }
@@ -448,14 +450,14 @@ int MeasureText(const char *text, int fontSize)
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
         int spacing = fontSize/defaultFontSize;
 
-        vec = MeasureTextEx(GetDefaultFont(), text, fontSize, spacing);
+        vec = MeasureTextEx(GetDefaultFont(), text, (float)fontSize, spacing);
     }
 
     return (int)vec.x;
 }
 
 // Measure string size for SpriteFont
-Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing)
+Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing)
 {
     int len = strlen(text);
     int tempLen = 0;            // Used to count longer text line num chars
@@ -465,7 +467,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
     int tempTextWidth = 0;      // Used to count longer text line width
 
     int textHeight = spriteFont.size;
-    float scaleFactor;
+    float scaleFactor = fontSize/spriteFont.size;
 
     for (int i = 0; i < len; i++)
     {
@@ -490,9 +492,6 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
     }
 
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
-
-    if (fontSize <= spriteFont.size) scaleFactor = 1.0f;
-    else scaleFactor = (float)fontSize/spriteFont.size;
 
     Vector2 vec;
     vec.x = (float)tempTextWidth*scaleFactor + (tempLen - 1)*spacing; // Adds chars spacing to measure
@@ -535,7 +534,7 @@ void DrawFPS(int posX, int posY)
 
 static int GetCharIndex(SpriteFont font, int letter)
 {
-//#define UNORDERED_CHARSET
+#define UNORDERED_CHARSET
 #if defined(UNORDERED_CHARSET)
     int index = 0;
     
@@ -876,10 +875,18 @@ static SpriteFont LoadBMFont(const char *fileName)
     TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
     
     Image imFont = LoadImage(texPath);
+    
+    if (imFont.format == UNCOMPRESSED_GRAYSCALE) 
+    {
+        Image imCopy = ImageCopy(imFont);
+        
+        for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;  // WHITE pixel
 
-    if (imFont.format == UNCOMPRESSED_GRAYSCALE) ImageAlphaMask(&imFont, imFont);
-
-    font.texture = LoadTextureFromImage(imFont);
+        ImageAlphaMask(&imCopy, imFont);
+        font.texture = LoadTextureFromImage(imCopy);
+        UnloadImage(imCopy);
+    }
+    else font.texture = LoadTextureFromImage(imFont);
     
     font.size = fontSize;
     font.numChars = numChars;
