@@ -875,10 +875,18 @@ static SpriteFont LoadBMFont(const char *fileName)
     TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
     
     Image imFont = LoadImage(texPath);
+    
+    if (imFont.format == UNCOMPRESSED_GRAYSCALE) 
+    {
+        Image imCopy = ImageCopy(imFont);
+        
+        for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;  // WHITE pixel
 
-    if (imFont.format == UNCOMPRESSED_GRAYSCALE) ImageAlphaMask(&imFont, imFont);
-
-    font.texture = LoadTextureFromImage(imFont);
+        ImageAlphaMask(&imCopy, imFont);
+        font.texture = LoadTextureFromImage(imCopy);
+        UnloadImage(imCopy);
+    }
+    else font.texture = LoadTextureFromImage(imFont);
     
     font.size = fontSize;
     font.numChars = numChars;
