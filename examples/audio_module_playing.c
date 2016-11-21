@@ -30,6 +30,8 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
+    SetConfigFlags(FLAG_MSAA_4X_HINT);      // NOTE: Try to enable MSAA 4X
+    
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - module playing (streaming)");
 
     InitAudioDevice();              // Initialize audio device
@@ -49,13 +51,6 @@ int main()
         circles[i].speed = (float)GetRandomValue(1, 100)/20000.0f;
         circles[i].color = colors[GetRandomValue(0, 13)];
     }
-    
-    // Load postprocessing bloom shader
-    Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
-                               "resources/shaders/glsl330/bloom.fs");
-
-    // Create a RenderTexture2D to be used for render to texture
-    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
     Music xm = LoadMusicStream("resources/audio/mini1111.xm");
     
@@ -117,28 +112,17 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BLACK);
+            ClearBackground(WHITE);
             
-            BeginTextureMode(target);   // Enable drawing to texture
-
-                for (int i = MAX_CIRCLES - 1; i >= 0; i--)
-                {
-                    DrawCircleV(circles[i].position, circles[i].radius, Fade(circles[i].color, circles[i].alpha));
-                }
-                
-            EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
+            for (int i = MAX_CIRCLES - 1; i >= 0; i--)
+            {
+                DrawCircleV(circles[i].position, circles[i].radius, Fade(circles[i].color, circles[i].alpha));
+            }
             
-            BeginShaderMode(shader);
-
-                // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-                DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-                
-            EndShaderMode();
-
             // Draw time bar
             DrawRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY);
             DrawRectangle(20, screenHeight - 20 - 12, (int)timePlayed, 12, MAROON);
-            DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, WHITE);
+            DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -146,9 +130,6 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);           // Unload shader
-    UnloadRenderTexture(target);    // Unload render texture
-    
     UnloadMusicStream(xm);          // Unload music stream buffers from RAM
     
     CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
