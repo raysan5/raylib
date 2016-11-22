@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------------------
 --
---  raylib [models] example - Drawing billboards
+--  raylib [text] example - BMFont unordered chars loading and drawing
 --
 --  This example has been created using raylib 1.6 (www.raylib.com)
 --  raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -14,24 +14,23 @@
 local screenWidth = 800
 local screenHeight = 450
 
-InitWindow(screenWidth, screenHeight, "raylib [models] example - drawing billboards")
+InitWindow(screenWidth, screenHeight, "raylib [text] example - bmfont unordered loading and drawing")
 
--- Define the camera to look into our 3d world
-local camera = Camera(Vector3(5.0, 4.0, 5.0), Vector3(0.0, 2.0, 0.0), Vector3(0.0, 1.0, 0.0), 45.0)
+-- NOTE: Using chars outside the [32..127] limits!
+-- NOTE: If a character is not found in the font, it just renders a space
+local msg = "ASCII extended characters:\n¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆ\nÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæ\nçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
 
-local bill = LoadTexture("resources/billboard.png")     -- Our texture billboard
-local billPosition = Vector3(0.0, 2.0, 0.0)             -- Position where draw billboard
+-- NOTE: Loaded font has an unordered list of characters (chars in the range 32..255)
+local font = LoadSpriteFont("resources/fonts/pixantiqua.fnt")       -- BMFont (AngelCode)
 
-SetCameraMode(camera, CameraMode.ORBITAL)   -- Set an orbital camera mode
-
-SetTargetFPS(60)                            -- Set our game to run at 60 frames-per-second
+SetTargetFPS(60)
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    camera = UpdateCamera(camera)           -- Update camera
+    -- TODO: Update variables here...
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -40,15 +39,11 @@ while not WindowShouldClose() do            -- Detect window close button or ESC
 
         ClearBackground(RAYWHITE)
 
-        Begin3dMode(camera)
+        DrawText("Font name:       PixAntiqua", 40, 50, 20, GRAY)
+        DrawText(string.format("Font base size:           %i", font.size), 40, 80, 20, GRAY)
+        DrawText(string.format("Font chars number:     %i", font.numChars), 40, 110, 20, GRAY)
         
-            DrawBillboard(camera, bill, billPosition, 2.0, WHITE)
-            
-            DrawGrid(10, 1.0)        -- Draw a grid
-
-        End3dMode()
-
-        DrawFPS(10, 10)
+        DrawTextEx(font, msg, Vector2(40, 180), font.size, 0, MAROON)
 
     EndDrawing()
     ---------------------------------------------------------------------------------------
@@ -56,7 +51,7 @@ end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
-UnloadTexture(bill)        -- Unload texture
+UnloadSpriteFont(font)      -- AngelCode SpriteFont unloading
 
-CloseWindow()              -- Close window and OpenGL context
+CloseWindow()                -- Close window and OpenGL context
 -------------------------------------------------------------------------------------------

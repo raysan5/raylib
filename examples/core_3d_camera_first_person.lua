@@ -19,7 +19,7 @@ local screenHeight = 450
 InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera first person")
 
 -- Define the camera to look into our 3d world (position, target, up vector)
-local camera = Camera(Vector3(0.0, 10.0, 10.0), Vector3(0.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0), 60.0)
+local camera = Camera(Vector3(4.0, 2.0, 4.0), Vector3(0.0, 1.8, 0.0), Vector3(0.0, 1.0, 0.0), 60.0)
 
 -- Generates some random columns
 local heights = {}
@@ -34,17 +34,16 @@ end
 
 local playerPosition = Vector3(4.0, 2.0, 4.0)       -- Define player position
 
-SetCameraMode(CameraMode.FIRST_PERSON)         -- Set a first person camera mode
-SetCameraFovy(camera.fovy)                 -- Set internal camera field-of-view Y
+SetCameraMode(camera, CameraMode.FIRST_PERSON)      -- Set a first person camera mode
 
-SetTargetFPS(60)                           -- Set our game to run at 60 frames-per-second
+SetTargetFPS(60)                                    -- Set our game to run at 60 frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
-while not WindowShouldClose() do           -- Detect window close button or ESC key
+while not WindowShouldClose() do                    -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    camera, playerPosition = UpdateCameraPlayer(camera, playerPosition) -- Update camera and player position
+    camera = UpdateCamera(camera)                   -- Update camera
     ---------------------------------------------------------------------------------------
 
     -- Draw

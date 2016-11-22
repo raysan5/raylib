@@ -2105,8 +2105,9 @@ int lua_ImageColorBrightness(lua_State* L)
 int lua_GenTextureMipmaps(lua_State* L)
 {
     Texture2D arg1 = LuaGetArgument_Texture2D(L, 1);
-    GenTextureMipmaps(arg1);
-    return 0;
+    GenTextureMipmaps(&arg1);
+    LuaPush_Texture2D(L, arg1);
+    return 1;
 }
 
 int lua_SetTextureFilter(lua_State* L)
@@ -4096,24 +4097,36 @@ RLUADEF void InitLuaDevice(void)
     LuaSetEnum("RIGHT_BUTTON", 1);
     LuaSetEnum("MIDDLE_BUTTON", 2);
     LuaEndEnum("MOUSE");
-
+    
     LuaStartEnum();
     LuaSetEnum("PLAYER1", 0);
     LuaSetEnum("PLAYER2", 1);
     LuaSetEnum("PLAYER3", 2);
     LuaSetEnum("PLAYER4", 3);
 
-    LuaSetEnum("PS3_BUTTON_A", 2);
-    LuaSetEnum("PS3_BUTTON_B", 1);
-    LuaSetEnum("PS3_BUTTON_X", 3);
-    LuaSetEnum("PS3_BUTTON_Y", 4);
-    LuaSetEnum("PS3_BUTTON_R1", 7);
-    LuaSetEnum("PS3_BUTTON_R2", 5);
+    LuaSetEnum("PS3_BUTTON_TRIANGLE", 0);
+    LuaSetEnum("PS3_BUTTON_CIRCLE", 1);
+    LuaSetEnum("PS3_BUTTON_CROSS", 2);
+    LuaSetEnum("PS3_BUTTON_SQUARE", 3);
     LuaSetEnum("PS3_BUTTON_L1", 6);
-    LuaSetEnum("PS3_BUTTON_L2", 8);
+    LuaSetEnum("PS3_BUTTON_R1", 7);
+    LuaSetEnum("PS3_BUTTON_L2", 4);
+    LuaSetEnum("PS3_BUTTON_R2",  5);
+    LuaSetEnum("PS3_BUTTON_START", 8);
     LuaSetEnum("PS3_BUTTON_SELECT", 9);
-    LuaSetEnum("PS3_BUTTON_START", 10);
+    LuaSetEnum("PS3_BUTTON_UP", 24);
+    LuaSetEnum("PS3_BUTTON_RIGHT", 25);
+    LuaSetEnum("PS3_BUTTON_DOWN", 26);
+    LuaSetEnum("PS3_BUTTON_LEFT", 27);
+    LuaSetEnum("PS3_BUTTON_PS", 12);
+    LuaSetEnum("PS3_AXIS_LEFT_X", 0);
+    LuaSetEnum("PS3_AXIS_LEFT_Y", 1);
+    LuaSetEnum("PS3_AXIS_RIGHT_X", 2);
+    LuaSetEnum("PS3_AXIS_RIGHT_Y", 5);
+    LuaSetEnum("PS3_AXIS_L2", 3);       // [1..-1] (pressure-level)
+    LuaSetEnum("PS3_AXIS_R2", 4);       // [1..-1] (pressure-level)
 
+// Xbox360 USB Controller Buttons
     LuaSetEnum("XBOX_BUTTON_A", 0);
     LuaSetEnum("XBOX_BUTTON_B", 1);
     LuaSetEnum("XBOX_BUTTON_X", 2);
@@ -4122,25 +4135,26 @@ RLUADEF void InitLuaDevice(void)
     LuaSetEnum("XBOX_BUTTON_RB", 5);
     LuaSetEnum("XBOX_BUTTON_SELECT", 6);
     LuaSetEnum("XBOX_BUTTON_START", 7);
-
-#if defined(PLATFORM_RPI)
-    LuaSetEnum("XBOX_AXIS_DPAD_X", 7);
-    LuaSetEnum("XBOX_AXIS_DPAD_Y", 6);
-    LuaSetEnum("XBOX_AXIS_RIGHT_X", 3);
-    LuaSetEnum("XBOX_AXIS_RIGHT_Y", 4);
-    LuaSetEnum("XBOX_AXIS_LT", 2);
-    LuaSetEnum("XBOX_AXIS_RT", 5);
-#else
     LuaSetEnum("XBOX_BUTTON_UP", 10);
+    LuaSetEnum("XBOX_BUTTON_RIGHT", 11);
     LuaSetEnum("XBOX_BUTTON_DOWN", 12);
     LuaSetEnum("XBOX_BUTTON_LEFT", 13);
-    LuaSetEnum("XBOX_BUTTON_RIGHT", 11);
-    LuaSetEnum("XBOX_AXIS_RIGHT_X", 4);
-    LuaSetEnum("XBOX_AXIS_RIGHT_Y", 3);
-    LuaSetEnum("XBOX_AXIS_LT_RT", 2);
+    LuaSetEnum("XBOX_BUTTON_HOME", 8);
+#if defined(PLATFORM_RPI)
+    LuaSetEnum("XBOX_AXIS_LEFT_X", 0);      // [-1..1] (left->right)
+    LuaSetEnum("XBOX_AXIS_LEFT_Y", 1);      // [-1..1] (up->down)
+    LuaSetEnum("XBOX_AXIS_RIGHT_X", 3);     // [-1..1] (left->right)
+    LuaSetEnum("XBOX_AXIS_RIGHT_Y", 4);     // [-1..1] (up->down)
+    LuaSetEnum("XBOX_AXIS_LT", 2);          // [-1..1] (pressure-level)
+    LuaSetEnum("XBOX_AXIS_RT", 5);          // [-1..1] (pressure-level)
+#else
+    LuaSetEnum("XBOX_AXIS_LEFT_X", 0);      // [-1..1] (left->right)
+    LuaSetEnum("XBOX_AXIS_LEFT_Y", 1);      // [1..-1] (up->down)
+    LuaSetEnum("XBOX_AXIS_RIGHT_X", 2);     // [-1..1] (left->right)
+    LuaSetEnum("XBOX_AXIS_RIGHT_Y", 3);     // [1..-1] (up->down)
+    LuaSetEnum("XBOX_AXIS_LT", 4);          // [-1..1] (pressure-level)
+    LuaSetEnum("XBOX_AXIS_RT", 5);          // [-1..1] (pressure-level)
 #endif
-    LuaSetEnum("XBOX_AXIS_LEFT_X", 0);
-    LuaSetEnum("XBOX_AXIS_LEFT_Y", 1);
     LuaEndEnum("GAMEPAD");
 
     lua_pushglobaltable(L);
@@ -4204,6 +4218,15 @@ RLUADEF void InitLuaDevice(void)
     LuaSetEnum("DIRECTIONAL", LIGHT_DIRECTIONAL);
     LuaSetEnum("SPOT", LIGHT_SPOT);
     LuaEndEnum("LightType");
+    
+    LuaStartEnum();
+    LuaSetEnum("POINT", FILTER_POINT);
+    LuaSetEnum("BILINEAR", FILTER_BILINEAR);
+    LuaSetEnum("TRILINEAR", FILTER_TRILINEAR);
+    LuaSetEnum("ANISOTROPIC_4X", FILTER_ANISOTROPIC_4X);
+    LuaSetEnum("ANISOTROPIC_8X", FILTER_ANISOTROPIC_8X);
+    LuaSetEnum("ANISOTROPIC_16X", FILTER_ANISOTROPIC_16X);
+    LuaEndEnum("TextureFilter");
 
     LuaStartEnum();
     LuaSetEnum("NONE", GESTURE_NONE);

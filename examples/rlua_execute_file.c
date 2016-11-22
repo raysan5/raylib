@@ -66,6 +66,8 @@ int main()
     // ExecuteLuaFile("text_format_text.lua");                  // OK! NOTE: Use lua string.format() instead of raylib FormatText()
     // ExecuteLuaFile("text_font_select.lua");                  // OK!
     // ExecuteLuaFile("text_writing_anim.lua");                 // OK!
+    // ExecuteLuaFile("text_ttf_loading.lua");                  // ISSUE: Attempt to index a SpriteFont value (local 'font')
+    // ExecuteLuaFile("text_bmfont_unordered.lua");             // OK!
     // ExecuteLuaFile("models_geometric_shapes.lua");           // OK!
     // ExecuteLuaFile("models_box_collisions.lua");             // OK!
     // ExecuteLuaFile("models_billboard.lua");                  // OK!
@@ -81,7 +83,7 @@ int main()
     // ExecuteLuaFile("audio_music_stream.lua");                // OK!
     // ExecuteLuaFile("audio_module_playing.lua");              // OK!
     // ExecuteLuaFile("audio_raw_stream.lua");                  // ERROR: UpdateAudioStream()
-
+    
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseLuaDevice();        // Close Lua device and free resources
