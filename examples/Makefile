@@ -245,6 +245,11 @@ EXAMPLES = \
     audio_music_stream \
     audio_module_playing \
     audio_raw_stream \
+    physics_demo \
+    physics_friction \
+    physics_movement \
+    physics_restitution \
+    physics_shatter \
     fix_dylib \
 
 
@@ -487,6 +492,26 @@ audio_module_playing: audio_module_playing.c
 audio_raw_stream: audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [physac] example - physics demo
+physics_demo: physics_demo.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics friction
+physics_friction: physics_friction.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics movement
+physics_movement: physics_movement.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics restitution
+physics_restitution: physics_restitution.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics shatter
+physics_shatter: physics_shatter.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+    
 # fix dylib install path name for each executable (MAC)
 fix_dylib:
 ifeq ($(PLATFORM_OS),OSX)
