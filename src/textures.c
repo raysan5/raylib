@@ -1516,14 +1516,14 @@ void ImageColorBrightness(Image *image, int brightness)
 }
 
 // Generate GPU mipmaps for a texture
-void GenTextureMipmaps(Texture2D texture)
+void GenTextureMipmaps(Texture2D *texture)
 {
 #if PLATFORM_WEB
-    int potWidth = GetNextPOT(texture.width);
-    int potHeight = GetNextPOT(texture.height);
+    int potWidth = GetNextPOT(texture->width);
+    int potHeight = GetNextPOT(texture->height);
 
     // Check if texture is POT
-    if ((potWidth != texture.width) || (potHeight != texture.height))
+    if ((potWidth != texture->width) || (potHeight != texture->height))
     {
         TraceLog(WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
     }

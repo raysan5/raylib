@@ -1719,15 +1719,15 @@ void rlglUpdateTexture(unsigned int id, int width, int height, int format, void 
 }
 
 // Generate mipmap data for selected texture
-void rlglGenerateMipmaps(Texture2D texture)
+void rlglGenerateMipmaps(Texture2D *texture)
 {
-    glBindTexture(GL_TEXTURE_2D, texture.id);
+    glBindTexture(GL_TEXTURE_2D, texture->id);
     
     // Check if texture is power-of-two (POT)
     bool texIsPOT = false;
    
-    if (((texture.width > 0) && ((texture.width & (texture.width - 1)) == 0)) && 
-        ((texture.height > 0) && ((texture.height & (texture.height - 1)) == 0))) texIsPOT = true;
+    if (((texture->width > 0) && ((texture->width & (texture->width - 1)) == 0)) && 
+        ((texture->height > 0) && ((texture->height & (texture->height - 1)) == 0))) texIsPOT = true;
 
     if ((texIsPOT) || (npotSupported))
     {
@@ -1737,13 +1737,13 @@ void rlglGenerateMipmaps(Texture2D texture)
         
         // NOTE: data size is reallocated to fit mipmaps data
         // NOTE: CPU mipmap generation only supports RGBA 32bit data
-        int mipmapCount = GenerateMipmaps(data, texture.width, texture.height);
+        int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
 
-        int size = texture.width*texture.height*4;  // RGBA 32bit only
+        int size = texture->width*texture->height*4;  // RGBA 32bit only
         int offset = size;
 
-        int mipWidth = texture.width/2;
-        int mipHeight = texture.height/2;
+        int mipWidth = texture->width/2;
+        int mipHeight = texture->height/2;
 
         // Load the mipmaps
         for (int level = 1; level < mipmapCount; level++)
@@ -1757,23 +1757,29 @@ void rlglGenerateMipmaps(Texture2D texture)
             mipHeight /= 2;
         }
         
-        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture.id);
+        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture->id);
         
         // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
         free(data);
         
+        texture->mipmaps = mipmapCount + 1;
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
-        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
+        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture->id);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps (must be available)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps
+        
+        #define MIN(a,b) (((a)<(b))?(a):(b))
+        #define MAX(a,b) (((a)>(b))?(a):(b))
+        
+        texture->mipmaps =  1 + floor(log2(MAX(texture->width, texture->height)));
 #endif
     }
-    else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture.id);
+    else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }

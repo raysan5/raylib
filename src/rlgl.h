@@ -371,7 +371,7 @@ void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
-void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
+void rlglGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
 
 void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
