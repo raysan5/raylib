@@ -160,15 +160,15 @@ On November 2016, only 4 months after raylib 1.5, arrives raylib 1.6. This new v
 
 Complete raylib LUA binding. All raylib functions plus the +60 code examples have been ported to LUA, now LUA users can enjoy coding videogames in LUA while using all the internal power of raylib. This addition also open the doors to LUA scripting support for a future raylib-based engine, being able to move game logic (Init, Update, Draw, De-Init) to LUA scripts while keep using raylib functionality.
 
-Completely redesigned audio module. Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added to allow raw audio processing and playing. FLAC file format support has also been added. In the same line, OpenAL Soft backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
+Completely redesigned audio module. Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added (+20 new functions) to allow raw audio processing and streaming. FLAC file format support has also been added. In the same line, OpenAL Soft backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
+
+Physac module has been moved to its own repository and it has been improved A LOT, actually, library has been completely rewritten from scratch by @victorfisac, multiple samples have been added together with countless new features to match current standard 2D physic libraries. Results are amazing!
 
 Camera and gestures modules have been reviewed, highly simplified and ported to single-file header-only libraries for easier portability and usage flexibility. Consequently, camera system usage has been simplified in all examples.
 
 Improved Gamepad support on Windows and Raspberry Pi with the addition of new functions for custom gamepad configurations but supporting by default PS3 and Xbox-based gamepads.
 
 Improved textures and text functionality, adding new functions for texture filtering control and better TTF/AngelCode fonts loading and generation support.
-
-Physac module has been moved to its own repository and it has been improved A LOT, actually, library has been completely rewritten by @victorfisac, multiple samples have been added and countless new features to match current standard 2D physic libraries.
 
 Build system improvement. Added support for raylib dynamic library generation (raylib.dll) for users that prefer dynamic library linking. Also thinking on advance users, it has been added pre-configured Visual Studio C++ 2015 solution with raylib project and C/C++ examples for users that prefer that professional IDE and compiler.
 

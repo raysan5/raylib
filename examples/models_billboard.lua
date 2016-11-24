@@ -22,19 +22,16 @@ local camera = Camera(Vector3(5.0, 4.0, 5.0), Vector3(0.0, 2.0, 0.0), Vector3(0.
 local bill = LoadTexture("resources/billboard.png")     -- Our texture billboard
 local billPosition = Vector3(0.0, 2.0, 0.0)             -- Position where draw billboard
 
-SetCameraMode(CameraMode.ORBITAL)      -- Set an orbital camera mode
-SetCameraPosition(camera.position) -- Set internal camera position to match our camera position
-SetCameraTarget(camera.target)     -- Set internal camera target to match our camera target
-SetCameraFovy(camera.fovy)         -- Set internal camera field-of-view Y
+SetCameraMode(camera, CameraMode.ORBITAL)   -- Set an orbital camera mode
 
-SetTargetFPS(60)                   -- Set our game to run at 60 frames-per-second
+SetTargetFPS(60)                            -- Set our game to run at 60 frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
 while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    camera = UpdateCamera(camera)           -- Update internal camera and our camera
+    camera = UpdateCamera(camera)           -- Update camera
     ---------------------------------------------------------------------------------------
 
     -- Draw

@@ -47,15 +47,13 @@ local swirlCenter = { screenWidth/2, screenHeight/2 }
 local target = LoadRenderTexture(screenWidth, screenHeight)
 
 -- Setup orbital camera
-SetCameraMode(CameraMode.ORBITAL)          -- Set an orbital camera mode
-SetCameraPosition(camera.position)     -- Set internal camera position to match our camera position
-SetCameraTarget(camera.target)         -- Set internal camera target to match our camera target
+SetCameraMode(camera, CameraMode.ORBITAL)   -- Set an orbital camera mode
 
-SetTargetFPS(60)                       -- Set our game to run at 60 frames-per-second
+SetTargetFPS(60)                            -- Set our game to run at 60 frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
-while not WindowShouldClose() do       -- Detect window close button or ESC key
+while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
     local mousePosition = GetMousePosition()
@@ -66,7 +64,7 @@ while not WindowShouldClose() do       -- Detect window close button or ESC key
     -- Send new value to the shader to be used on drawing
     SetShaderValue(shader, swirlCenterLoc, swirlCenter)
     
-    camera = UpdateCamera(camera)      -- Update internal camera and our camera
+    camera = UpdateCamera(camera)           -- Update camera
     ---------------------------------------------------------------------------------------
 
     -- Draw
@@ -75,13 +73,13 @@ while not WindowShouldClose() do       -- Detect window close button or ESC key
 
         ClearBackground(RAYWHITE)
         
-        BeginTextureMode(target)       -- Enable drawing to texture
+        BeginTextureMode(target)            -- Enable drawing to texture
 
             Begin3dMode(camera)
 
                 DrawModel(dwarf, position, 2.0, WHITE)   -- Draw 3d model with texture
 
-                DrawGrid(10, 1.0)     -- Draw a grid
+                DrawGrid(10, 1.0)           -- Draw a grid
 
             End3dMode()
             

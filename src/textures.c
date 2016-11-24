@@ -4,9 +4,13 @@
 *
 *   Basic functions to load and draw Textures (2d)
 *
-*   Uses external lib:
-*       stb_image - Multiple formats image loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
-*                   NOTE: stb_image has been slightly modified, original library: https://github.com/nothings/stb
+*   External libs:
+*       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
+*                          NOTE: stb_image has been slightly modified to support Android platform.
+*       stb_image_resize - Multiple image resize algorythms
+*
+*   Module Configuration Flags:
+*       ...
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -1512,14 +1516,14 @@ void ImageColorBrightness(Image *image, int brightness)
 }
 
 // Generate GPU mipmaps for a texture
-void GenTextureMipmaps(Texture2D texture)
+void GenTextureMipmaps(Texture2D *texture)
 {
 #if PLATFORM_WEB
-    int potWidth = GetNextPOT(texture.width);
-    int potHeight = GetNextPOT(texture.height);
+    int potWidth = GetNextPOT(texture->width);
+    int potHeight = GetNextPOT(texture->height);
 
     // Check if texture is POT
-    if ((potWidth != texture.width) || (potHeight != texture.height))
+    if ((potWidth != texture->width) || (potHeight != texture->height))
     {
         TraceLog(WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
     }

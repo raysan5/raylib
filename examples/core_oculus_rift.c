@@ -47,10 +47,10 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsVrSimulator()) UpdateCamera(&camera);     // Update camera (simulator mode)
-        else UpdateVrTracking(&camera);                 // Update camera with device tracking data
+        if (IsVrSimulator()) UpdateCamera(&camera);             // Update camera (simulator mode)
+        else if (IsVrDeviceReady()) UpdateVrTracking(&camera);  // Update camera with device tracking data
         
-        if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();    // Toggle VR mode
+        if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();            // Toggle VR mode
         //----------------------------------------------------------------------------------
 
         // Draw

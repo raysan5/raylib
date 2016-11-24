@@ -23,10 +23,7 @@ local cubePosition = Vector3(0.0, 0.0, 0.0)
 
 local cubeScreenPosition = Vector2(0, 0)
 
-SetCameraMode(CameraMode.FREE)          -- Set a free camera mode
-SetCameraPosition(camera.position)      -- Set internal camera position to match our camera position
-SetCameraTarget(camera.target)          -- Set internal camera target to match our camera target
-SetCameraFovy(camera.fovy)              -- Set internal camera field-of-view Y
+SetCameraMode(camera, CameraMode.FREE)  -- Set a free camera mode
 
 SetTargetFPS(60)                        -- Set our game to run at 60 frames-per-second
 ----------------------------------------------------------------------------------------
@@ -35,7 +32,7 @@ SetTargetFPS(60)                        -- Set our game to run at 60 frames-per-
 while not WindowShouldClose() do        -- Detect window close button or ESC key
     -- Update
     ------------------------------------------------------------------------------------
-    camera = UpdateCamera(camera)       -- Update internal camera and our camera
+    camera = UpdateCamera(camera)       -- Update camera
     
     -- Calculate cube screen space position (with a little offset to be in top)
     cubeScreenPosition = GetWorldToScreen(Vector3(cubePosition.x, cubePosition.y + 2.5, cubePosition.z), camera)

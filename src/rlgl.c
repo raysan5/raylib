@@ -2,11 +2,30 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   raylib now uses OpenGL 1.1 style functions (rlVertex) that are mapped to selected OpenGL version:
-*       OpenGL 1.1  - Direct map rl* -> gl*
-*       OpenGL 2.1  - Vertex data is stored in VBOs, call rlglDraw() to render
-*       OpenGL 3.3  - Vertex data is stored in VAOs, call rlglDraw() to render
-*       OpenGL ES 2 - Vertex data is stored in VBOs or VAOs (when available), call rlglDraw() to render
+*   rlgl allows usage of OpenGL 1.1 style functions (rlVertex) that are internally mapped to 
+*   selected OpenGL version (1.1, 2.1, 3.3 Core, ES 2.0). 
+*
+*   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal 
+*   VBO buffers (and VAOs if available). It requires calling 3 functions:
+*       rlglInit()  - Initialize internal buffers and auxiliar resources
+*       rlglDraw()  - Process internal buffers and send required draw calls
+*       rlglClose() - De-initialize internal buffers data and other auxiliar resources
+*
+*   External libs:
+*       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
+*       GLAD        - OpenGL extensions loading (OpenGL 3.3 Core only)
+*
+*   Module Configuration Flags:
+*       GRAPHICS_API_OPENGL_11  - Use OpenGL 1.1 backend
+*       GRAPHICS_API_OPENGL_21  - Use OpenGL 2.1 backend
+*       GRAPHICS_API_OPENGL_33  - Use OpenGL 3.3 Core profile backend
+*       GRAPHICS_API_OPENGL_ES2 - Use OpenGL ES 2.0 backend
+*
+*       RLGL_STANDALONE             - Use rlgl as standalone library (no raylib dependency)
+*       RLGL_NO_STANDARD_SHADER     - Avoid standard shader (shader_standard.h) inclusion
+*       RLGL_NO_DISTORTION_SHADER   - Avoid stereo rendering distortion sahder (shader_distortion.h) inclusion
+*       RLGL_OCULUS_SUPPORT         - Enable Oculus Rift CV1 functionality
+*
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -1700,15 +1719,15 @@ void rlglUpdateTexture(unsigned int id, int width, int height, int format, void 
 }
 
 // Generate mipmap data for selected texture
-void rlglGenerateMipmaps(Texture2D texture)
+void rlglGenerateMipmaps(Texture2D *texture)
 {
-    glBindTexture(GL_TEXTURE_2D, texture.id);
+    glBindTexture(GL_TEXTURE_2D, texture->id);
     
     // Check if texture is power-of-two (POT)
     bool texIsPOT = false;
    
-    if (((texture.width > 0) && ((texture.width & (texture.width - 1)) == 0)) && 
-        ((texture.height > 0) && ((texture.height & (texture.height - 1)) == 0))) texIsPOT = true;
+    if (((texture->width > 0) && ((texture->width & (texture->width - 1)) == 0)) && 
+        ((texture->height > 0) && ((texture->height & (texture->height - 1)) == 0))) texIsPOT = true;
 
     if ((texIsPOT) || (npotSupported))
     {
@@ -1718,13 +1737,13 @@ void rlglGenerateMipmaps(Texture2D texture)
         
         // NOTE: data size is reallocated to fit mipmaps data
         // NOTE: CPU mipmap generation only supports RGBA 32bit data
-        int mipmapCount = GenerateMipmaps(data, texture.width, texture.height);
+        int mipmapCount = GenerateMipmaps(data, texture->width, texture->height);
 
-        int size = texture.width*texture.height*4;  // RGBA 32bit only
+        int size = texture->width*texture->height*4;  // RGBA 32bit only
         int offset = size;
 
-        int mipWidth = texture.width/2;
-        int mipHeight = texture.height/2;
+        int mipWidth = texture->width/2;
+        int mipHeight = texture->height/2;
 
         // Load the mipmaps
         for (int level = 1; level < mipmapCount; level++)
@@ -1738,23 +1757,29 @@ void rlglGenerateMipmaps(Texture2D texture)
             mipHeight /= 2;
         }
         
-        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture.id);
+        TraceLog(WARNING, "[TEX ID %i] Mipmaps generated manually on CPU side", texture->id);
         
         // NOTE: Once mipmaps have been generated and data has been uploaded to GPU VRAM, we can discard RAM data
         free(data);
         
+        texture->mipmaps = mipmapCount + 1;
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
         //glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);   // Hint for mipmaps generation algorythm: GL_FASTEST, GL_NICEST, GL_DONT_CARE
         glGenerateMipmap(GL_TEXTURE_2D);    // Generate mipmaps automatically
-        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture.id);
+        TraceLog(INFO, "[TEX ID %i] Mipmaps generated automatically", texture->id);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps (must be available)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);   // Activate Trilinear filtering for mipmaps
+        
+        #define MIN(a,b) (((a)<(b))?(a):(b))
+        #define MAX(a,b) (((a)>(b))?(a):(b))
+        
+        texture->mipmaps =  1 + floor(log2(MAX(texture->width, texture->height)));
 #endif
     }
-    else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture.id);
+    else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -2767,13 +2792,13 @@ void CloseVrDevice(void)
 // Detect if VR device is available
 bool IsVrDeviceReady(void)
 {
-    return (vrDeviceReady || vrSimulator) && vrEnabled;
+    return (vrDeviceReady && vrEnabled);
 }
 
 // Detect if VR simulator is running
 bool IsVrSimulator(void)
 {
-    return vrSimulator;
+    return (vrSimulator && vrEnabled);
 }
 
 // Enable/Disable VR experience (device or simulator)

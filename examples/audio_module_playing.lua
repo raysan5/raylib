@@ -37,13 +37,6 @@ for i = MAX_CIRCLES, 1, -1 do
     circles[i].color = colors[GetRandomValue(1, 14)]
 end
 
--- Load postprocessing bloom shader
-local shader = LoadShader("resources/shaders/glsl330/base.vs", 
-                          "resources/shaders/glsl330/bloom.fs")
-
--- Create a RenderTexture2D to be used for render to texture
-local target = LoadRenderTexture(screenWidth, screenHeight)
-
 local xm = LoadMusicStream("resources/audio/mini1111.xm")
 
 PlayMusicStream(xm)
@@ -83,22 +76,11 @@ while not WindowShouldClose() do        -- Detect window close button or ESC key
     ---------------------------------------------------------------------------------------
     BeginDrawing()
 
-        ClearBackground(BLACK)
+        ClearBackground(RAYWHITE)
         
-        BeginTextureMode(target)   -- Enable drawing to texture
-
-            for i = MAX_CIRCLES, 1, -1 do
-                DrawCircleV(circles[i].position, circles[i].radius, Fade(circles[i].color, circles[i].alpha))
-            end
-            
-        EndTextureMode()           -- End drawing to texture (now we have a texture available for next passes)
-        
-        BeginShaderMode(shader)
-
-            -- NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-            DrawTextureRec(target.texture, Rectangle(0, 0, target.texture.width, -target.texture.height), Vector2(0, 0), WHITE)
-            
-        EndShaderMode()
+        for i = MAX_CIRCLES, 1, -1 do
+            DrawCircleV(circles[i].position, circles[i].radius, Fade(circles[i].color, circles[i].alpha))
+        end
 
         -- Draw time bar
         DrawRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY)
@@ -111,10 +93,7 @@ end
 
 -- De-Initialization
 -------------------------------------------------------------------------------------------
-UnloadShader(shader)           -- Unload shader
-UnloadRenderTexture(target)    -- Unload render texture
-
-UnloadMusicStream(xm)          -- Unload music stream buffers from RAM
+UnloadMusicStream(xm)  -- Unload music stream buffers from RAM
 
 CloseAudioDevice()     -- Close audio device (music streaming is automatically stopped)
 

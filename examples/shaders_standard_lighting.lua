@@ -60,18 +60,16 @@ pointLight.diffuse = Color(100, 100, 255, 255)
 pointLight.radius = 3.0
 
 -- Setup orbital camera
-SetCameraMode(CameraMode.ORBITAL)      -- Set an orbital camera mode
-SetCameraPosition(camera.position)     -- Set internal camera position to match our camera position
-SetCameraTarget(camera.target)         -- Set internal camera target to match our camera target
+SetCameraMode(camera, CameraMode.ORBITAL)   -- Set an orbital camera mode
 
-SetTargetFPS(60)                       -- Set our game to run at 60 frames-per-second
+SetTargetFPS(60)                            -- Set our game to run at 60 frames-per-second
 -------------------------------------------------------------------------------------------
 
 -- Main game loop
-while not WindowShouldClose() do       -- Detect window close button or ESC key
+while not WindowShouldClose() do            -- Detect window close button or ESC key
     -- Update
     ---------------------------------------------------------------------------------------
-    camera = UpdateCamera(camera)      -- Update internal camera and our camera
+    camera = UpdateCamera(camera)           -- Update camera
     ---------------------------------------------------------------------------------------
 
     -- Draw

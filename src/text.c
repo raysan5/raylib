@@ -4,6 +4,12 @@
 *
 *   Basic functions to load SpriteFonts and draw Text
 *
+*   External libs:
+*       stb_truetype - Load TTF file and rasterize characters data
+*
+*   Module Configuration Flags:
+*       ...
+*
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
@@ -33,7 +39,7 @@
 #include "utils.h"          // Required for: GetExtension(), GetNextPOT()
 
 // Following libs are used on LoadTTF()
-//#define STBTT_STATIC
+#define STBTT_STATIC        // Define stb_truetype functions static to this module
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "external/stb_truetype.h"      // Required for: stbtt_BakeFontBitmap()
 
@@ -869,10 +875,18 @@ static SpriteFont LoadBMFont(const char *fileName)
     TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
     
     Image imFont = LoadImage(texPath);
+    
+    if (imFont.format == UNCOMPRESSED_GRAYSCALE) 
+    {
+        Image imCopy = ImageCopy(imFont);
+        
+        for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;  // WHITE pixel
 
-    if (imFont.format == UNCOMPRESSED_GRAYSCALE) ImageAlphaMask(&imFont, imFont);
-
-    font.texture = LoadTextureFromImage(imFont);
+        ImageAlphaMask(&imCopy, imFont);
+        font.texture = LoadTextureFromImage(imCopy);
+        UnloadImage(imCopy);
+    }
+    else font.texture = LoadTextureFromImage(imFont);
     
     font.size = fontSize;
     font.numChars = numChars;

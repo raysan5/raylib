@@ -390,7 +390,7 @@ publish, and distribute this file as you see fit.
 
 
 #define STBI_NO_HDR		// RaySan: not required by raylib
-#define STBI_NO_SIMD    // RaySan: issues when compiling with GCC 4.7.2
+//#define STBI_NO_SIMD    // RaySan: issues when compiling with GCC 4.7.2
 
 #ifndef STBI_NO_STDIO
 #include <stdio.h>
@@ -398,7 +398,7 @@ publish, and distribute this file as you see fit.
 
 // NOTE: Added to work with raylib on Android
 #if defined(PLATFORM_ANDROID)
-    #include "utils.h"  // Android fopen function map
+    #include "utils.h"  // RaySan: Android fopen function map
 #endif
 
 #define STBI_VERSION 1

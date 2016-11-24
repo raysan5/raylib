@@ -11,21 +11,25 @@ NOTE:
   It includes some interesting new features and is a stepping stone towards raylib future.
 
 HUGE changes:
-[rlua] LUA BINDING: Complete raylib LUA binding, all raylib functions ported to LUA plus the +60 code examples.
-[audio] COMPLETE REDESIGN: Improved music support and also raw audio data processing and playing. FLAC support added.
+[rlua] LUA BINDING: Complete raylib LUA binding, ALL raylib functions ported to LUA plus the +60 code examples.
+[audio] COMPLETE REDESIGN: Improved music support and also raw audio data processing and playing, +20 new functions added.
 [physac] COMPLETE REWRITE: Improved performance, functionality and simplified usage, moved to own repository and added multiple examples!
 
-other changes:
+Other changes:
 
 [core] Corrected issue on OSX with HighDPI display
 [core] Added flag to allow resizable window
 [core] Allow no default font loading
 [core] Corrected old issue with mouse buttons on web
 [core] Improved gamepad support, unified across platforms
+[core] Gamepad id functionality: GetGamepadName(), IsGamepadName()
+[core] Gamepad buttons/axis checking functionality:
 [core] Reviewed Android key inputs system, unified with desktop
 [rlgl] Redesigned lighting shader system
-[rlgl] Reviewed UpdateVrTracking() and rlglLoadRenderTexture()
 [rlgl] Updated standard shader for better performance
+[rlgl] Support alpha on framebuffer: rlglLoadRenderTexture()
+[rlgl] Reviewed UpdateVrTracking() to update camera
+[rlgl] Added IsVrSimulator() to check for VR simulator
 [shapes] Corrected issue on DrawPolyEx()
 [textures] Simplified supported image formats support
 [textures] Improved text drawing within an image: ImageDrawText()
@@ -33,17 +37,18 @@ other changes:
 [textures] Support textures filtering: SetTextureFilter()
 [textures] Support textures wrap modes: SetTextureWrap()
 [text] Improved TTF spritefont generation: LoadSpriteFontTTF()
-[text] Improved AngelCode fonts support
-[text] Reviewed spacing formatting
+[text] Improved AngelCode fonts support (unordered chars)
 [text] Added TraceLog info on image spritefont loading
 [text] Improved text measurement: MeasureTextEx()
 [models] Improved OBJ loading flexibility
+[models] Reviewed functions: DrawLine3D(), DrawCircle3D()
 [models] Removed function: ResolveCollisionCubicmap()
 [camera] Redesigned camera system and ported to header-only
+[camera] Removed function: UpdateCameraPlayer()
 [gestures] Redesigned gestures module to header-only
 [audio] Simplified Music loading and playing system
 [audio] Added trace on audio device closing
-[audio] Reviewed Wave struct for reter flexivility
+[audio] Reviewed Wave struct, improved flexibility
 [audio] Support sound data update: UpdateSound()
 [audio] Added support for FLAC audio loading/streaming
 [raygui] Removed raygui from raylib repo (moved to own repo)
@@ -52,8 +57,8 @@ other changes:
 [build] Support shared/dynamic raylib compilation
 [*] Updated LibOVR to SDK version 1.8
 [*] Updated games to latest raylib version
-[*] Improved Android support
 [*] Improved examples and added new ones
+[*] Improved Android support
 
 -----------------------------------------------
 Release:     raylib 1.5.0 (18 July 2016)

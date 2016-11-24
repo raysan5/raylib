@@ -42,7 +42,7 @@ int main()
     
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
     
-    SetCameraMode(camera, CAMERA_FREE);      // Set an orbital camera mode
+    SetCameraMode(camera, CAMERA_FREE);         // Set an orbital camera mode
 
     SetTargetFPS(60);                           // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);                  // Update internal camera and our camera
+        UpdateCamera(&camera);                  // Update camera
         //----------------------------------------------------------------------------------
 
         // Draw
