@@ -112,7 +112,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(WHITE);
+            ClearBackground(RAYWHITE);
             
             for (int i = MAX_CIRCLES - 1; i >= 0; i--)
             {
