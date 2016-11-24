@@ -318,6 +318,7 @@ static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
+#endif
 
 // Extension supported flag: Anisotropic filtering
 static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
@@ -325,7 +326,6 @@ static float maxAnisotropicLevel = 0.0f;        // Maximum anisotropy level supp
 
 // Extension supported flag: Clamp mirror wrap mode
 static bool texClampMirrorSupported = false;    // Clamp mirror wrap mode supported
-#endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
 // OVR device variables
@@ -1733,7 +1733,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
-        void *data = rlglReadTexturePixels(texture);
+        void *data = rlglReadTexturePixels(*texture);
         
         // NOTE: data size is reallocated to fit mipmaps data
         // NOTE: CPU mipmap generation only supports RGBA 32bit data
