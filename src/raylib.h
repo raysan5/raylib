@@ -19,7 +19,7 @@
 *     Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
 *     Custom color palette for fancy visuals on raywhite background
 *     Minimal external dependencies (GLFW3, OpenGL, OpenAL)
-*     Complete binding for LUA [rlua]
+*     Complete binding for Lua [rlua]
 *
 *   External libs:
 *     GLFW3 (www.glfw.org) for window/context management and input [core]
