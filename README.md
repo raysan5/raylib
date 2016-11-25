@@ -272,7 +272,7 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  - [Emanuele Petriglia](https://github.com/LelixSuper) for working on multiple GNU/Linux improvements and developing [TicTacToe](https://github.com/LelixSuper/TicTacToe) raylib game.
  - [Joshua Reisenauer](https://github.com/kd7tck) for adding audio modules support (XM, MOD) and reviewing audio system.
  - Marcelo Paez (paezao) for his help on OSX to solve High DPI display issue. Thanks Marcelo!
- - [Ghassan Al-Mashareqa](https://github.com/ghassanpl) for his amazing contribution with raylib LUA module, I just work over his solid code to implement [rlua](https://github.com/raysan5/raylib/blob/master/src/rlua.h)
+ - [Ghassan Al-Mashareqa](https://github.com/ghassanpl) for his amazing contribution with raylib LUA module, I just work over his code to implement [rlua](https://github.com/raysan5/raylib/blob/master/src/rlua.h)
  - [Teodor Stoenescu](https://github.com/teodor-stoenescu) for his improvements on OBJ object loading.
  
 Please, if I forget someone in this list, excuse me and write me an email to remind me to add you!
