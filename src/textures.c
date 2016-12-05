@@ -317,6 +317,7 @@ Image LoadImageFromRES(const char *rresName, int resId)
                 else
                 {
                     // Depending on type, skip the right amount of parameters
+					/* TODO: Review
                     switch (infoHeader.type)
                     {
                         case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
@@ -326,7 +327,7 @@ Image LoadImageFromRES(const char *rresName, int resId)
                         case 4: break;                                  // RAW: No parameters
                         default: break;
                     }
-
+					*/
                     // Jump DATA to read next infoHeader
                     fseek(rresFile, infoHeader.size, SEEK_CUR);
                 }
@@ -1100,18 +1101,18 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
     Color *output = (Color *)malloc(newWidth*newHeight*sizeof(Color));
 
     // EDIT: added +1 to account for an early rounding problem
-    int x_ratio = (int)((image->width<<16)/newWidth) + 1;
-    int y_ratio = (int)((image->height<<16)/newHeight) + 1;
+    int xRatio = (int)((image->width << 16)/newWidth) + 1;
+    int yRatio = (int)((image->height << 16)/newHeight) + 1;
 
     int x2, y2;
-    for (int i = 0; i < newHeight; i++)
+    for (int y = 0; y < newHeight; y++)
     {
-        for (int j = 0; j < newWidth; j++)
+        for (int x = 0; x < newWidth; x++)
         {
-            x2 = ((j*x_ratio) >> 16);
-            y2 = ((i*y_ratio) >> 16);
+            x2 = ((x*xRatio) >> 16);
+            y2 = ((y*yRatio) >> 16);
 
-            output[(i*newWidth) + j] = pixels[(y2*image->width) + x2] ;
+            output[(y*newWidth) + x] = pixels[(y2*image->width) + x2] ;
         }
     }
 
@@ -1584,7 +1585,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
         rlEnableTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef(destRec.x, destRec.y, 0);
+            rlTranslatef((float)destRec.x, (float)destRec.y, 0);
             rlRotatef(rotation, 0, 0, 1);
             rlTranslatef(-origin.x, -origin.y, 0);
 
@@ -1598,15 +1599,15 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
 
                 // Bottom-right corner for texture and quad
                 rlTexCoord2f((float)sourceRec.x/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
-                rlVertex2f(0.0f, destRec.height);
+                rlVertex2f(0.0f, (float)destRec.height);
 
                 // Top-right corner for texture and quad
                 rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)(sourceRec.y + sourceRec.height)/texture.height);
-                rlVertex2f(destRec.width, destRec.height);
+                rlVertex2f((float)destRec.width, (float)destRec.height);
 
                 // Top-left corner for texture and quad
                 rlTexCoord2f((float)(sourceRec.x + sourceRec.width)/texture.width, (float)sourceRec.y/texture.height);
-                rlVertex2f(destRec.width, 0.0f);
+                rlVertex2f((float)destRec.width, 0.0f);
             rlEnd();
         rlPopMatrix();
 

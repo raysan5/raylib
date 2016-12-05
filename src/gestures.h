@@ -179,7 +179,7 @@ static int tapCounter = 0;                      // TAP counter (one tap implies 
 
 // Hold gesture variables
 static bool resetHold = false;                  // HOLD reset to get first touch point again
-static float timeHold = 0.0f;                   // HOLD duration in milliseconds
+static double timeHold = 0.0f;                  // HOLD duration in milliseconds
 
 // Drag gesture variables
 static Vector2 dragVector = { 0.0f , 0.0f };    // DRAG vector (between initial and current position)
@@ -423,11 +423,11 @@ float GetGestureHoldDuration(void)
 {
     // NOTE: time is calculated on current gesture HOLD
     
-    float time = 0.0f;
+    double time = 0.0;
     
-    if (currentGesture == GESTURE_HOLD) time = (float)GetCurrentTime() - timeHold;
+    if (currentGesture == GESTURE_HOLD) time = GetCurrentTime() - timeHold;
     
-    return time;
+    return (float)time;
 }
 
 // Get drag vector (between initial touch point to current)
@@ -474,7 +474,7 @@ static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition)
 {
     float angle;
 
-    angle = atan2(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x)*(180.0f/PI);
+    angle = atan2f(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x)*(180.0f/PI);
     
     if (angle < 0) angle += 360.0f;
 
@@ -489,7 +489,7 @@ static float Vector2Distance(Vector2 v1, Vector2 v2)
     float dx = v2.x - v1.x;
     float dy = v2.y - v1.y;
 
-    result = sqrt(dx*dx + dy*dy);
+    result = (float)sqrt(dx*dx + dy*dy);
 
     return result;
 }

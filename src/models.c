@@ -707,6 +707,7 @@ Model LoadModelFromRES(const char *rresName, int resId)
                 else
                 {
                     // Depending on type, skip the right amount of parameters
+					/* Review
                     switch (infoHeader.type)
                     {
                         case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
@@ -716,6 +717,7 @@ Model LoadModelFromRES(const char *rresName, int resId)
                         case 4: break;                                  // RAW: No parameters
                         default: break;
                     }
+					*/
 
                     // Jump DATA to read next infoHeader
                     fseek(rresFile, infoHeader.size, SEEK_CUR);
@@ -1517,8 +1519,8 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     t[3] = (box.max.y - ray.position.y)/ray.direction.y;
     t[4] = (box.min.z - ray.position.z)/ray.direction.z;
     t[5] = (box.max.z - ray.position.z)/ray.direction.z;
-    t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
-    t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
+    t[6] = (float)fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
+    t[7] = (float)fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
 
     collision = !(t[7] < 0 || t[6] > t[7]);
 

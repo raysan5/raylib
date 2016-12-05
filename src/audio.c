@@ -411,6 +411,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
                 else
                 {
                     // Depending on type, skip the right amount of parameters
+					/* TODO: Review
                     switch (infoHeader.type)
                     {
                         case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
@@ -420,6 +421,7 @@ Sound LoadSoundFromRES(const char *rresName, int resId)
                         case 4: break;   // RAW: No parameters
                         default: break;
                     }
+					*/
 
                     // Jump DATA to read next infoHeader
                     fseek(rresFile, infoHeader.size, SEEK_CUR);
@@ -604,7 +606,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 // Copy a wave to a new wave
 Wave WaveCopy(Wave wave)
 {
-    Wave newWave;
+	Wave newWave = { 0 };
 
     if (wave.sampleSize == 8) newWave.data = (unsigned char *)malloc(wave.sampleCount*wave.channels*sizeof(unsigned char));
     else if (wave.sampleSize == 16) newWave.data = (short *)malloc(wave.sampleCount*wave.channels*sizeof(short));
@@ -822,8 +824,8 @@ void UpdateMusicStream(Music music)
     if (processed > 0)
     {
         bool active = true;
-        short pcm[AUDIO_BUFFER_SIZE];
-        float pcmf[AUDIO_BUFFER_SIZE];
+        short pcm[AUDIO_BUFFER_SIZE];				// TODO: Dynamic allocation (uses more than 16KB of stack)
+        float pcmf[AUDIO_BUFFER_SIZE];				// TODO: Dynamic allocation (uses more than 16KB of stack)
         int numBuffersToProcess = processed;
 
         int numSamples = 0;     // Total size of data steamed in L+R samples for xm floats,
@@ -952,7 +954,7 @@ float GetMusicTimePlayed(Music music)
     float secondsPlayed = 0.0f;
 
     unsigned int samplesPlayed = music->totalSamples - music->samplesLeft;
-    secondsPlayed = (float)samplesPlayed/(music->stream.sampleRate*music->stream.channels);
+    secondsPlayed = (float)(samplesPlayed/(music->stream.sampleRate*music->stream.channels));
 
     return secondsPlayed;
 }
@@ -1004,17 +1006,17 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     {
         if (stream.sampleSize == 8)
         {
-            unsigned char pcm[AUDIO_BUFFER_SIZE] = { 0 };
+            unsigned char pcm[AUDIO_BUFFER_SIZE] = { 0 };	// TODO: Dynamic allocation (uses more than 16KB of stack)
             alBufferData(stream.buffers[i], stream.format, pcm, AUDIO_BUFFER_SIZE*sizeof(unsigned char), stream.sampleRate);
         }
         else if (stream.sampleSize == 16)
         {
-            short pcm[AUDIO_BUFFER_SIZE] = { 0 };
+            short pcm[AUDIO_BUFFER_SIZE] = { 0 };	// TODO: Dynamic allocation (uses more than 16KB of stack)
             alBufferData(stream.buffers[i], stream.format, pcm, AUDIO_BUFFER_SIZE*sizeof(short), stream.sampleRate);
         }
         else if (stream.sampleSize == 32)
         {
-            float pcm[AUDIO_BUFFER_SIZE] = { 0.0f };
+            float pcm[AUDIO_BUFFER_SIZE] = { 0.0f };	// TODO: Dynamic allocation (uses more than 16KB of stack)
             alBufferData(stream.buffers[i], stream.format, pcm, AUDIO_BUFFER_SIZE*sizeof(float), stream.sampleRate);
         }
     }

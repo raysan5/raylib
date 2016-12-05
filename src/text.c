@@ -367,7 +367,7 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
         if ((unsigned char)text[i] == '\n')
         {
             // NOTE: Fixed line spacing of 1.5 lines
-            textOffsetY += ((spriteFont.size + spriteFont.size/2)*scaleFactor);
+            textOffsetY += (int)((spriteFont.size + spriteFont.size/2)*scaleFactor);
             textOffsetX = 0;
         }
         else
@@ -394,8 +394,8 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
                                         spriteFont.charRecs[index].width*scaleFactor, 
                                         spriteFont.charRecs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
 
-            if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (spriteFont.charRecs[index].width*scaleFactor + spacing);
-            else textOffsetX += (spriteFont.charAdvanceX[index]*scaleFactor + spacing);
+            if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (int)(spriteFont.charRecs[index].width*scaleFactor + spacing);
+            else textOffsetX += (int)(spriteFont.charAdvanceX[index]*scaleFactor + spacing);
         }
     }
 }
@@ -460,14 +460,14 @@ int MeasureText(const char *text, int fontSize)
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing)
 {
     int len = strlen(text);
-    int tempLen = 0;            // Used to count longer text line num chars
+    int tempLen = 0;				// Used to count longer text line num chars
     int lenCounter = 0;
 
-    int textWidth = 0;
-    int tempTextWidth = 0;      // Used to count longer text line width
+    float textWidth = 0;
+	float tempTextWidth = 0;		// Used to count longer text line width
 
-    int textHeight = spriteFont.size;
-    float scaleFactor = fontSize/spriteFont.size;
+	float textHeight = (float)spriteFont.size;
+    float scaleFactor = fontSize/(float)spriteFont.size;
 
     for (int i = 0; i < len; i++)
     {
@@ -485,7 +485,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, i
             if (tempTextWidth < textWidth) tempTextWidth = textWidth;
             lenCounter = 0;
             textWidth = 0;
-            textHeight += (spriteFont.size + spriteFont.size/2); // NOTE: Fixed line spacing of 1.5 lines
+            textHeight += ((float)spriteFont.size*1.5f); // NOTE: Fixed line spacing of 1.5 lines
         }
 
         if (tempLen < lenCounter) tempLen = lenCounter;
@@ -494,8 +494,8 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, i
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
     Vector2 vec;
-    vec.x = (float)tempTextWidth*scaleFactor + (tempLen - 1)*spacing; // Adds chars spacing to measure
-    vec.y = (float)textHeight*scaleFactor;
+    vec.x = tempTextWidth*scaleFactor + (float)((tempLen - 1)*spacing); // Adds chars spacing to measure
+    vec.y = textHeight*scaleFactor;
 
     return vec;
 }
@@ -504,10 +504,8 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, i
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    char buffer[20];
-
     // NOTE: We are rendering fps every second for better viewing on high framerates
-    // TODO: Not working properly on ANDROID and RPI
+    // TODO: Not working properly on ANDROID and RPI (for high framerates)
 
     static float fps = 0.0f;
     static int counter = 0;
@@ -520,12 +518,11 @@ void DrawFPS(int posX, int posY)
     else
     {
         fps = GetFPS();
-        refreshRate = fps;
+        refreshRate = (int)fps;
         counter = 0;
     }
-
-    sprintf(buffer, "%2.0f FPS", fps);
-    DrawText(buffer, posX, posY, 20, LIME);
+    
+    DrawText(FormatText("%2.0f FPS", fps), posX, posY, 20, LIME);
 }
 
 //----------------------------------------------------------------------------------

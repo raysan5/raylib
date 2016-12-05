@@ -779,7 +779,7 @@ float GetFrameTime(void)
     // As we are operate quite a lot with frameTime,
     // it could be no stable, so we round it before passing it around
     // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime =  round(frameTime*10000)/10000.0;
+    double roundedFrameTime = round(frameTime*10000)/10000.0;
 
     return (float)roundedFrameTime;    // Time in seconds to run a frame
 }
@@ -1089,7 +1089,7 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     QuaternionTransform(&worldPos, matProj);
 
     // Calculate normalized device coordinates (inverted y)
-    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.z };
+    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
 
     // Calculate 2d screen position vector
     Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)GetScreenWidth(), (ndcPos.y + 1.0f)/2.0f*(float)GetScreenHeight() };

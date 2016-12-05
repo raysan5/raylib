@@ -902,6 +902,10 @@ void rlDisableTexture(void)
 #if defined(GRAPHICS_API_OPENGL_11)
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
+#else
+    // NOTE: If quads batch limit is reached, 
+    // we force a draw call and next batch starts
+    if (quads.vCounter/4 >= MAX_QUADS_BATCH) rlglDraw();
 #endif
 }
 
@@ -922,11 +926,11 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
         case RL_TEXTURE_ANISOTROPIC_FILTER:
         {
-            if (value <= maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+            if (value <= maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (maxAnisotropicLevel > 0.0f)
             {
                 TraceLog(WARNING, "[TEX ID %i] Maximum anisotropic filter level supported is %iX", id, maxAnisotropicLevel);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
             else TraceLog(WARNING, "Anisotropic filtering not supported");
         } break;
@@ -1776,7 +1780,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
         #define MIN(a,b) (((a)<(b))?(a):(b))
         #define MAX(a,b) (((a)>(b))?(a):(b))
         
-        texture->mipmaps =  1 + floor(log2(MAX(texture->width, texture->height)));
+        texture->mipmaps =  1 + (int)floor(log2(MAX(texture->width, texture->height)));
 #endif
     }
     else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);

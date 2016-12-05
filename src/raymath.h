@@ -222,16 +222,16 @@ RMDEF Vector3 VectorPerpendicular(Vector3 v)
 {
     Vector3 result;
 
-    float min = fabs(v.x);
+    float min = fabsf(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
-    if (fabs(v.y) < min)
+    if (fabsf(v.y) < min)
     {
-        min = fabs(v.y);
+        min = fabsf(v.y);
         cardinalAxis = (Vector3){0.0f, 1.0f, 0.0f};
     }
 
-    if(fabs(v.z) < min)
+    if(fabsf(v.z) < min)
     {
         cardinalAxis = (Vector3){0.0f, 0.0f, 1.0f};
     }
@@ -256,7 +256,7 @@ RMDEF float VectorLength(const Vector3 v)
 {
     float length;
 
-    length = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 
     return length;
 }
@@ -284,7 +284,7 @@ RMDEF void VectorNormalize(Vector3 *v)
 
     length = VectorLength(*v);
 
-    if (length == 0) length = 1.0f;
+    if (length == 0.0f) length = 1.0f;
 
     ilength = 1.0f/length;
 
@@ -302,7 +302,7 @@ RMDEF float VectorDistance(Vector3 v1, Vector3 v2)
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
 
-    result = sqrt(dx*dx + dy*dy + dz*dz);
+    result = sqrtf(dx*dx + dy*dy + dz*dz);
 
     return result;
 }
@@ -590,7 +590,7 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 
     float x = axis.x, y = axis.y, z = axis.z;
 
-    float length = sqrt(x*x + y*y + z*z);
+    float length = sqrtf(x*x + y*y + z*z);
 
     if ((length != 1.0f) && (length != 0.0f))
     {
