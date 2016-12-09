@@ -1780,7 +1780,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
         #define MIN(a,b) (((a)<(b))?(a):(b))
         #define MAX(a,b) (((a)>(b))?(a):(b))
         
-        texture->mipmaps =  1 + (int)floor(log2(MAX(texture->width, texture->height)));
+        texture->mipmaps =  1 + (int)floor(log(MAX(texture->width, texture->height))/log(2));
 #endif
     }
     else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);
