@@ -264,6 +264,7 @@ static void SwapBuffers(void);                          // Copy back buffer to f
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 static void TakeScreenshot(void);                       // Takes a screenshot and saves it in the same folder as executable
+static void SetupViewport(void);
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -744,8 +745,7 @@ void EndTextureMode(void)
     rlDisableRenderTexture();           // Disable render target
 
     // Set viewport to default framebuffer size (screen size)
-    // TODO: consider possible viewport offsets
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    SetupViewport();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
@@ -1776,19 +1776,8 @@ static void InitGraphicsDevice(int width, int height)
     // NOTE: screenWidth and screenHeight not used, just stored as globals
     rlglInit(screenWidth, screenHeight);
 
-#ifdef __APPLE__
-    // Get framebuffer size of current window
-    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
-    // is automatically reasized to adapt to new DPI.
-    // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-    rlViewport(renderOffsetX/2, renderOffsetY/2, fbWidth - renderOffsetX, fbHeight - renderOffsetY);
-#else
-    // Initialize screen viewport (area of the screen that you will actually draw to)
-    // NOTE: Viewport must be recalculated if screen is resized
-    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
-#endif
+    // Setup default viewport
+    SetupViewport();
 
     // Initialize internal projection and modelview matrices
     // NOTE: Default to orthographic projection mode with top-left corner at (0,0)
@@ -1802,6 +1791,23 @@ static void InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_ANDROID)
     windowReady = true;             // IMPORTANT!
+#endif
+}
+
+static void SetupViewport(void)
+{
+#ifdef __APPLE__
+    // Get framebuffer size of current window
+    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
+    // is automatically reasized to adapt to new DPI.
+    // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    rlViewport(renderOffsetX/2, renderOffsetY/2,  fbWidth - renderOffsetX, fbHeight - renderOffsetY);
+#else
+    // Initialize screen viewport (area of the screen that you will actually draw to)
+    // NOTE: Viewport must be recalculated if screen is resized
+    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
 #endif
 }
 
