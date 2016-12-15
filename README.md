@@ -193,6 +193,7 @@ features
    *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi**, **HTML5** and **Oculus Rift CV1**
    *  Custom color palette for fancy visuals on raywhite background
    *  Minimal external dependencies (GLFW3, OpenGL, OpenAL)
+   *  Complete binding to LUA
 
 raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option by far I found for 
 multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, ...).
