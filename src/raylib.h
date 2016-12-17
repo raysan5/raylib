@@ -770,10 +770,8 @@ RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Ve
 RLAPI Image LoadImage(const char *fileName);                                                             // Load an image into CPU memory (RAM)
 RLAPI Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image data from Color array data (RGBA - 32bit)
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image data from RAW file
-RLAPI Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
 RLAPI Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat);                     // Load a texture from raw data into GPU memory
-RLAPI Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load a texture to be used for rendering
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
@@ -857,7 +855,6 @@ RLAPI void DrawLight(Light light);                                              
 //------------------------------------------------------------------------------------
 RLAPI Model LoadModel(const char *fileName);                          // Load a 3d model (.OBJ)
 RLAPI Model LoadModelEx(Mesh data, bool dynamic);                     // Load a 3d model (from mesh data)
-RLAPI Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d model from rRES file (raylib Resource)
 RLAPI Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 RLAPI Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 RLAPI void UnloadModel(Model model);                                  // Unload 3d model from memory
@@ -933,7 +930,6 @@ RLAPI Wave LoadWave(const char *fileName);                            // Load wa
 RLAPI Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from float array data (32bit)
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound to memory
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
-RLAPI Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 RLAPI void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound

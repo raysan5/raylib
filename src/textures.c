@@ -37,11 +37,10 @@
 #include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                                // Required: rlglLoadTexture() rlDeleteTextures(),
-                                //           rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+                                // Required for: rlglLoadTexture() rlDeleteTextures(),
+                                //      rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"              // rRES data decompression utility function
-                                // NOTE: Includes Android fopen function map
+#include "utils.h"              // Required for: fopen() Android mapping, TraceLog()
 
 // Support only desired texture formats, by default: JPEG, PNG, BMP, TGA
 //#define STBI_NO_JPEG          // Image format .jpg and .jpeg
@@ -216,7 +215,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 
         fread(image.data, size, 1, rawFile);
 
-        // TODO: Check if data have been read
+        // TODO: Check if data has been read
 
         image.width = width;
         image.height = height;
@@ -225,119 +224,6 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 
         fclose(rawFile);
     }
-
-    return image;
-}
-
-// Load an image from rRES file (raylib Resource)
-// TODO: Review function to support multiple color modes
-Image LoadImageFromRES(const char *rresName, int resId)
-{
-    Image image = { 0 };
-    bool found = false;
-
-    char id[4];             // rRES file identifier
-    unsigned char version;  // rRES file version and subversion
-    char useless;           // rRES header reserved data
-    short numRes;
-
-    ResInfoHeader infoHeader;
-
-    FILE *rresFile = fopen(rresName, "rb");
-
-    if (rresFile == NULL)
-    {
-        TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
-    }
-    else
-    {
-        // Read rres file (basic file check - id)
-        fread(&id[0], sizeof(char), 1, rresFile);
-        fread(&id[1], sizeof(char), 1, rresFile);
-        fread(&id[2], sizeof(char), 1, rresFile);
-        fread(&id[3], sizeof(char), 1, rresFile);
-        fread(&version, sizeof(char), 1, rresFile);
-        fread(&useless, sizeof(char), 1, rresFile);
-
-        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
-        {
-            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
-        }
-        else
-        {
-            // Read number of resources embedded
-            fread(&numRes, sizeof(short), 1, rresFile);
-
-            for (int i = 0; i < numRes; i++)
-            {
-                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
-
-                if (infoHeader.id == resId)
-                {
-                    found = true;
-
-                    // Check data is of valid IMAGE type
-                    if (infoHeader.type == 0)   // IMAGE data type
-                    {
-                        // TODO: Check data compression type
-                        // NOTE: We suppose compression type 2 (DEFLATE - default)
-
-                        short imgWidth, imgHeight;
-                        char colorFormat, mipmaps;
-
-                        fread(&imgWidth, sizeof(short), 1, rresFile);   // Image width
-                        fread(&imgHeight, sizeof(short), 1, rresFile);  // Image height
-                        fread(&colorFormat, 1, 1, rresFile);            // Image data color format (default: RGBA 32 bit)
-                        fread(&mipmaps, 1, 1, rresFile);                // Mipmap images included (default: 0)
-
-                        image.width = (int)imgWidth;
-                        image.height = (int)imgHeight;
-
-                        unsigned char *compData = malloc(infoHeader.size);
-
-                        fread(compData, infoHeader.size, 1, rresFile);
-
-                        unsigned char *imgData = DecompressData(compData, infoHeader.size, infoHeader.srcSize);
-
-                        // TODO: Review color mode
-                        //image.data = (unsigned char *)malloc(sizeof(unsigned char)*imgWidth*imgHeight*4);
-                        image.data = imgData;
-
-                        //free(imgData);
-
-                        free(compData);
-
-                        TraceLog(INFO, "[%s] Image loaded successfully from resource, size: %ix%i", rresName, image.width, image.height);
-                    }
-                    else
-                    {
-                        TraceLog(WARNING, "[%s] Required resource do not seem to be a valid IMAGE resource", rresName);
-                    }
-                }
-                else
-                {
-                    // Depending on type, skip the right amount of parameters
-					/* TODO: Review
-                    switch (infoHeader.type)
-                    {
-                        case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
-                        case 1: fseek(rresFile, 6, SEEK_CUR); break;    // SOUND: Jump 6 bytes of parameters
-                        case 2: fseek(rresFile, 5, SEEK_CUR); break;    // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                        case 3: break;                                  // TEXT: No parameters
-                        case 4: break;                                  // RAW: No parameters
-                        default: break;
-                    }
-					*/
-                    // Jump DATA to read next infoHeader
-                    fseek(rresFile, infoHeader.size, SEEK_CUR);
-                }
-            }
-        }
-
-        fclose(rresFile);
-    }
-
-    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
 
     return image;
 }
@@ -374,18 +260,6 @@ Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat)
     texture.format = textureFormat;
 
     texture.id = rlglLoadTexture(data, width, height, textureFormat, 1);
-
-    return texture;
-}
-
-// Load an image as texture from rRES file (raylib Resource)
-Texture2D LoadTextureFromRES(const char *rresName, int resId)
-{
-    Texture2D texture;
-
-    Image image = LoadImageFromRES(rresName, resId);
-    texture = LoadTextureFromImage(image);
-    UnloadImage(image);
 
     return texture;
 }

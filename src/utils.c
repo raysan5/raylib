@@ -49,9 +49,6 @@
     #include "external/stb_image_write.h"    // Required for: stbi_write_png()
 #endif
 
-#include "external/tinfl.c"         // Required for: tinfl_decompress_mem_to_mem()
-                                    // NOTE: DEFLATE algorythm data decompression
-
 #define DO_NOT_TRACE_DEBUG_MSGS     // Avoid DEBUG messages tracing
 
 //----------------------------------------------------------------------------------
@@ -74,45 +71,6 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
-
-// Data decompression function
-// NOTE: Allocated data MUST be freed!
-unsigned char *DecompressData(const unsigned char *data, unsigned long compSize, int uncompSize)
-{
-    int tempUncompSize;
-    unsigned char *pUncomp;
-
-    // Allocate buffer to hold decompressed data
-    pUncomp = (mz_uint8 *)malloc((size_t)uncompSize);
-
-    // Check correct memory allocation
-    if (pUncomp == NULL)
-    {
-        TraceLog(WARNING, "Out of memory while decompressing data");
-    }
-    else
-    {
-        // Decompress data
-        tempUncompSize = tinfl_decompress_mem_to_mem(pUncomp, (size_t)uncompSize, data, compSize, 1);
-
-        if (tempUncompSize == -1)
-        {
-            TraceLog(WARNING, "Data decompression failed");
-            free(pUncomp);
-        }
-
-        if (uncompSize != (int)tempUncompSize)
-        {
-            TraceLog(WARNING, "Expected uncompressed size do not match, data may be corrupted");
-            TraceLog(WARNING, " -- Expected uncompressed size: %i", uncompSize);
-            TraceLog(WARNING, " -- Returned uncompressed size: %i", tempUncompSize);
-        }
-
-        TraceLog(INFO, "Data decompressed successfully from %u bytes to %u bytes", (mz_uint32)compSize, (mz_uint32)tempUncompSize);
-    }
-
-    return pUncomp;
-}
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 // Creates a bitmap (BMP) file from an array of pixel data

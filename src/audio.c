@@ -52,8 +52,7 @@
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"
-    #include "utils.h"          // Required for: DecompressData()
-                                // NOTE: Includes Android fopen() function map
+    #include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
 #endif
 
 #include "AL/al.h"              // OpenAL basic header
@@ -321,119 +320,6 @@ Sound LoadSoundFromWave(Wave wave)
         sound.format = format;
     }
 
-    return sound;
-}
-
-// Load sound to memory from rRES file (raylib Resource)
-// TODO: Maybe rresName could be directly a char array with all the data?
-Sound LoadSoundFromRES(const char *rresName, int resId)
-{
-    Sound sound = { 0 };
-
-#if defined(AUDIO_STANDALONE)
-    TraceLog(WARNING, "Sound loading from rRES resource file not supported on standalone mode");
-#else
-
-    bool found = false;
-
-    char id[4];             // rRES file identifier
-    unsigned char version;  // rRES file version and subversion
-    char useless;           // rRES header reserved data
-    short numRes;
-
-    ResInfoHeader infoHeader;
-
-    FILE *rresFile = fopen(rresName, "rb");
-
-    if (rresFile == NULL) TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
-    else
-    {
-        // Read rres file (basic file check - id)
-        fread(&id[0], sizeof(char), 1, rresFile);
-        fread(&id[1], sizeof(char), 1, rresFile);
-        fread(&id[2], sizeof(char), 1, rresFile);
-        fread(&id[3], sizeof(char), 1, rresFile);
-        fread(&version, sizeof(char), 1, rresFile);
-        fread(&useless, sizeof(char), 1, rresFile);
-
-        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
-        {
-            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
-        }
-        else
-        {
-            // Read number of resources embedded
-            fread(&numRes, sizeof(short), 1, rresFile);
-
-            for (int i = 0; i < numRes; i++)
-            {
-                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
-
-                if (infoHeader.id == resId)
-                {
-                    found = true;
-
-                    // Check data is of valid SOUND type
-                    if (infoHeader.type == 1)   // SOUND data type
-                    {
-                        // TODO: Check data compression type
-                        // NOTE: We suppose compression type 2 (DEFLATE - default)
-
-                        // Reading SOUND parameters
-                        Wave wave;
-                        short sampleRate, bps;
-                        char channels, reserved;
-
-                        fread(&sampleRate, sizeof(short), 1, rresFile); // Sample rate (frequency)
-                        fread(&bps, sizeof(short), 1, rresFile);        // Bits per sample
-                        fread(&channels, 1, 1, rresFile);               // Channels (1 - mono, 2 - stereo)
-                        fread(&reserved, 1, 1, rresFile);               // <reserved>
-
-                        wave.sampleRate = sampleRate;
-                        wave.sampleSize = bps;
-                        wave.channels = (short)channels;
-
-                        unsigned char *data = malloc(infoHeader.size);
-
-                        fread(data, infoHeader.size, 1, rresFile);
-
-                        wave.data = DecompressData(data, infoHeader.size, infoHeader.srcSize);
-
-                        free(data);
-
-                        sound = LoadSoundFromWave(wave);
-
-                        // Sound is loaded, we can unload wave data
-                        UnloadWave(wave);
-                    }
-                    else TraceLog(WARNING, "[%s] Required resource do not seem to be a valid SOUND resource", rresName);
-                }
-                else
-                {
-                    // Depending on type, skip the right amount of parameters
-					/* TODO: Review
-                    switch (infoHeader.type)
-                    {
-                        case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
-                        case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
-                        case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                        case 3: break;   // TEXT: No parameters
-                        case 4: break;   // RAW: No parameters
-                        default: break;
-                    }
-					*/
-
-                    // Jump DATA to read next infoHeader
-                    fseek(rresFile, infoHeader.size, SEEK_CUR);
-                }
-            }
-        }
-
-        fclose(rresFile);
-    }
-
-    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
-#endif
     return sound;
 }
 

@@ -42,13 +42,14 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"         // raylib main header
+#include "raylib.h"
+
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"          // Includes Android fopen map, InitAssetManager(), TraceLog()
+#include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
 
 #define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
 #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
-#include "raymath.h"            // Required for Vector3 and Matrix functions
+#include "raymath.h"            // Required for: Vector3 and Matrix functions
 
 #define GESTURES_IMPLEMENTATION
 #include "gestures.h"       // Gestures detection functionality
