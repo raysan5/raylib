@@ -1083,11 +1083,13 @@ static Wave LoadWAV(const char *fileName)
                     // Read in the sound data into the soundData variable
                     fread(wave.data, waveData.subChunkSize, 1, wavFile);
 
-                    // Now we set the variables that we need later
-                    wave.sampleCount = waveData.subChunkSize;
+                    // Store wave parameters
                     wave.sampleRate = waveFormat.sampleRate;
                     wave.sampleSize = waveFormat.bitsPerSample;
                     wave.channels = waveFormat.numChannels;
+                    
+                    // NOTE: subChunkSize comes in bytes, we need to translate it to number of samples
+                    wave.sampleCount = waveData.subChunkSize/(waveFormat.bitsPerSample/8);
 
                     TraceLog(INFO, "[%s] WAV file loaded successfully (SampleRate: %i, SampleSize: %i, Channels: %i)", fileName, wave.sampleRate, wave.sampleSize, wave.channels);
                 }
