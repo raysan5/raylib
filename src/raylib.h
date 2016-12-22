@@ -549,7 +549,7 @@ typedef enum {
 // Texture parameters: filter mode
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
-typedef enum { 
+typedef enum {
     FILTER_POINT = 0,               // No filter, just pixel aproximation
     FILTER_BILINEAR,                // Linear filtering
     FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
@@ -581,12 +581,12 @@ typedef enum {
 } Gestures;
 
 // Camera system modes
-typedef enum { 
-    CAMERA_CUSTOM = 0, 
-    CAMERA_FREE, 
-    CAMERA_ORBITAL, 
-    CAMERA_FIRST_PERSON, 
-    CAMERA_THIRD_PERSON 
+typedef enum {
+    CAMERA_CUSTOM = 0,
+    CAMERA_FREE,
+    CAMERA_ORBITAL,
+    CAMERA_FIRST_PERSON,
+    CAMERA_THIRD_PERSON
 } CameraMode;
 
 // Head Mounted Display devices
@@ -930,7 +930,8 @@ RLAPI Wave LoadWave(const char *fileName);                            // Load wa
 RLAPI Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from float array data (32bit)
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound to memory
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
-RLAPI void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
+RLAPI void UpdateSound(Sound sound, const void *data, int numSamples);// Update sound buffer with new data
+RLAPI Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void PlaySound(Sound sound);                                    // Play a sound

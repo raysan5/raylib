@@ -342,7 +342,7 @@ void UnloadSound(Sound sound)
 
 // Update sound buffer with new data
 // NOTE: data must match sound.format
-void UpdateSound(Sound sound, void *data, int numSamples)
+void UpdateSound(Sound sound, const void *data, int numSamples)
 {
     ALint sampleRate, sampleSize, channels;
     alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
