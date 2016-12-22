@@ -648,89 +648,6 @@ Model LoadModelEx(Mesh data, bool dynamic)
     return model;
 }
 
-// Load a 3d model from rRES file (raylib Resource)
-Model LoadModelFromRES(const char *rresName, int resId)
-{
-    Model model = { 0 };
-    bool found = false;
-
-    char id[4];             // rRES file identifier
-    unsigned char version;  // rRES file version and subversion
-    char useless;           // rRES header reserved data
-    short numRes;
-
-    ResInfoHeader infoHeader;
-
-    FILE *rresFile = fopen(rresName, "rb");
-
-    if (rresFile == NULL)
-    {
-        TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
-    }
-    else
-    {
-        // Read rres file (basic file check - id)
-        fread(&id[0], sizeof(char), 1, rresFile);
-        fread(&id[1], sizeof(char), 1, rresFile);
-        fread(&id[2], sizeof(char), 1, rresFile);
-        fread(&id[3], sizeof(char), 1, rresFile);
-        fread(&version, sizeof(char), 1, rresFile);
-        fread(&useless, sizeof(char), 1, rresFile);
-
-        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
-        {
-            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
-        }
-        else
-        {
-            // Read number of resources embedded
-            fread(&numRes, sizeof(short), 1, rresFile);
-
-            for (int i = 0; i < numRes; i++)
-            {
-                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
-
-                if (infoHeader.id == resId)
-                {
-                    found = true;
-
-                    // Check data is of valid MODEL type
-                    if (infoHeader.type == 8)
-                    {
-                        // TODO: Load model data
-                    }
-                    else
-                    {
-                        TraceLog(WARNING, "[%s] Required resource do not seem to be a valid MODEL resource", rresName);
-                    }
-                }
-                else
-                {
-                    // Depending on type, skip the right amount of parameters
-                    switch (infoHeader.type)
-                    {
-                        case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
-                        case 1: fseek(rresFile, 6, SEEK_CUR); break;    // SOUND: Jump 6 bytes of parameters
-                        case 2: fseek(rresFile, 5, SEEK_CUR); break;    // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                        case 3: break;                                  // TEXT: No parameters
-                        case 4: break;                                  // RAW: No parameters
-                        default: break;
-                    }
-
-                    // Jump DATA to read next infoHeader
-                    fseek(rresFile, infoHeader.size, SEEK_CUR);
-                }
-            }
-        }
-
-        fclose(rresFile);
-    }
-
-    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
-
-    return model;
-}
-
 // Load a heightmap image as a 3d model
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
@@ -1517,8 +1434,8 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     t[3] = (box.max.y - ray.position.y)/ray.direction.y;
     t[4] = (box.min.z - ray.position.z)/ray.direction.z;
     t[5] = (box.max.z - ray.position.z)/ray.direction.z;
-    t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
-    t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
+    t[6] = (float)fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
+    t[7] = (float)fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
 
     collision = !(t[7] < 0 || t[6] > t[7]);
 

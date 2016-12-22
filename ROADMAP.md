@@ -17,7 +17,7 @@ raylib 1.x
     
 raylib 1.6
 
-    [DONE] LUA scripting support (raylib lua wrapper)
+    [DONE] Lua scripting support (raylib Lua wrapper)
     [DONE] Redesigned audio module
 
 raylib 1.5

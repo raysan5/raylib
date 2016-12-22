@@ -42,13 +42,14 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"         // raylib main header
+#include "raylib.h"
+
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"          // Includes Android fopen map, InitAssetManager(), TraceLog()
+#include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
 
 #define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
 #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
-#include "raymath.h"            // Required for Vector3 and Matrix functions
+#include "raymath.h"            // Required for: Vector3 and Matrix functions
 
 #define GESTURES_IMPLEMENTATION
 #include "gestures.h"       // Gestures detection functionality
@@ -264,6 +265,7 @@ static void SwapBuffers(void);                          // Copy back buffer to f
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 static void TakeScreenshot(void);                       // Takes a screenshot and saves it in the same folder as executable
+static void SetupViewport(void);
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -744,8 +746,7 @@ void EndTextureMode(void)
     rlDisableRenderTexture();           // Disable render target
 
     // Set viewport to default framebuffer size (screen size)
-    // TODO: consider possible viewport offsets
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    SetupViewport();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
@@ -779,7 +780,7 @@ float GetFrameTime(void)
     // As we are operate quite a lot with frameTime,
     // it could be no stable, so we round it before passing it around
     // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime =  round(frameTime*10000)/10000.0;
+    double roundedFrameTime = round(frameTime*10000)/10000.0;
 
     return (float)roundedFrameTime;    // Time in seconds to run a frame
 }
@@ -1089,7 +1090,7 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     QuaternionTransform(&worldPos, matProj);
 
     // Calculate normalized device coordinates (inverted y)
-    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.z };
+    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
 
     // Calculate 2d screen position vector
     Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)GetScreenWidth(), (ndcPos.y + 1.0f)/2.0f*(float)GetScreenHeight() };
@@ -1776,19 +1777,8 @@ static void InitGraphicsDevice(int width, int height)
     // NOTE: screenWidth and screenHeight not used, just stored as globals
     rlglInit(screenWidth, screenHeight);
 
-#ifdef __APPLE__
-    // Get framebuffer size of current window
-    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
-    // is automatically reasized to adapt to new DPI.
-    // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-    rlViewport(renderOffsetX/2, renderOffsetY/2, fbWidth - renderOffsetX, fbHeight - renderOffsetY);
-#else
-    // Initialize screen viewport (area of the screen that you will actually draw to)
-    // NOTE: Viewport must be recalculated if screen is resized
-    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
-#endif
+    // Setup default viewport
+    SetupViewport();
 
     // Initialize internal projection and modelview matrices
     // NOTE: Default to orthographic projection mode with top-left corner at (0,0)
@@ -1802,6 +1792,23 @@ static void InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_ANDROID)
     windowReady = true;             // IMPORTANT!
+#endif
+}
+
+static void SetupViewport(void)
+{
+#ifdef __APPLE__
+    // Get framebuffer size of current window
+    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
+    // is automatically reasized to adapt to new DPI.
+    // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    rlViewport(renderOffsetX/2, renderOffsetY/2,  fbWidth - renderOffsetX, fbHeight - renderOffsetY);
+#else
+    // Initialize screen viewport (area of the screen that you will actually draw to)
+    // NOTE: Viewport must be recalculated if screen is resized
+    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
 #endif
 }
 

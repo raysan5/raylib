@@ -19,7 +19,7 @@
 *     Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
 *     Custom color palette for fancy visuals on raywhite background
 *     Minimal external dependencies (GLFW3, OpenGL, OpenAL)
-*     Complete binding for LUA [rlua]
+*     Complete binding for Lua [rlua]
 *
 *   External libs:
 *     GLFW3 (www.glfw.org) for window/context management and input [core]
@@ -549,7 +549,7 @@ typedef enum {
 // Texture parameters: filter mode
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
-typedef enum { 
+typedef enum {
     FILTER_POINT = 0,               // No filter, just pixel aproximation
     FILTER_BILINEAR,                // Linear filtering
     FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
@@ -581,12 +581,12 @@ typedef enum {
 } Gestures;
 
 // Camera system modes
-typedef enum { 
-    CAMERA_CUSTOM = 0, 
-    CAMERA_FREE, 
-    CAMERA_ORBITAL, 
-    CAMERA_FIRST_PERSON, 
-    CAMERA_THIRD_PERSON 
+typedef enum {
+    CAMERA_CUSTOM = 0,
+    CAMERA_FREE,
+    CAMERA_ORBITAL,
+    CAMERA_FIRST_PERSON,
+    CAMERA_THIRD_PERSON
 } CameraMode;
 
 // Head Mounted Display devices
@@ -770,10 +770,8 @@ RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Ve
 RLAPI Image LoadImage(const char *fileName);                                                             // Load an image into CPU memory (RAM)
 RLAPI Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image data from Color array data (RGBA - 32bit)
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image data from RAW file
-RLAPI Image LoadImageFromRES(const char *rresName, int resId);                                           // Load an image from rRES file (raylib Resource)
 RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load an image as texture into GPU memory
 RLAPI Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat);                     // Load a texture from raw data into GPU memory
-RLAPI Texture2D LoadTextureFromRES(const char *rresName, int resId);                                     // Load an image as texture from rRES file (raylib Resource)
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load a texture from image data
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load a texture to be used for rendering
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
@@ -857,7 +855,6 @@ RLAPI void DrawLight(Light light);                                              
 //------------------------------------------------------------------------------------
 RLAPI Model LoadModel(const char *fileName);                          // Load a 3d model (.OBJ)
 RLAPI Model LoadModelEx(Mesh data, bool dynamic);                     // Load a 3d model (from mesh data)
-RLAPI Model LoadModelFromRES(const char *rresName, int resId);        // Load a 3d model from rRES file (raylib Resource)
 RLAPI Model LoadHeightmap(Image heightmap, Vector3 size);             // Load a heightmap image as a 3d model
 RLAPI Model LoadCubicmap(Image cubicmap);                             // Load a map image as a 3d model (cubes based)
 RLAPI void UnloadModel(Model model);                                  // Unload 3d model from memory
@@ -933,8 +930,8 @@ RLAPI Wave LoadWave(const char *fileName);                            // Load wa
 RLAPI Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from float array data (32bit)
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound to memory
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
+RLAPI void UpdateSound(Sound sound, const void *data, int numSamples);// Update sound buffer with new data
 RLAPI Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
-RLAPI void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void PlaySound(Sound sound);                                    // Play a sound

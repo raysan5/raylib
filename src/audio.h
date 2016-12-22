@@ -115,7 +115,7 @@ Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, in
 Sound LoadSound(const char *fileName);                          // Load sound to memory
 Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
 Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
-void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
+void UpdateSound(Sound sound, const void *data, int numSamples);      // Update sound buffer with new data
 void UnloadWave(Wave wave);                                     // Unload wave data
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound

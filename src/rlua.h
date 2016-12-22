@@ -133,6 +133,7 @@ RLUADEF void CloseLuaDevice(void);                  // De-initialize Lua system
 #define LuaPush_AudioStream(L, aud) LuaPushOpaqueType(L, aud)
 
 #define LuaGetArgument_string luaL_checkstring
+#define LuaGetArgument_ptr (void *)luaL_checkinteger
 #define LuaGetArgument_int (int)luaL_checkinteger
 #define LuaGetArgument_unsigned (unsigned)luaL_checkinteger
 #define LuaGetArgument_char (char)luaL_checkinteger
@@ -1198,7 +1199,7 @@ int lua_GetGamepadName(lua_State* L)
     // TODO: Return gamepad name id
     
     int arg1 = LuaGetArgument_int(L, 1);
-    char * result = GetGamepadName(arg1);
+    const char * result = GetGamepadName(arg1);
     //lua_pushboolean(L, result);
     return 1;
 }
@@ -2863,7 +2864,7 @@ int lua_LoadWaveEx(lua_State* L)
 {
     // TODO: Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels);
     
-    int arg1 = 0;
+    float * arg1 = 0;
     int arg2 = LuaGetArgument_int(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
     int arg4 = LuaGetArgument_int(L, 4);
@@ -2904,7 +2905,7 @@ int lua_UpdateSound(lua_State* L)
     
     Sound arg1 = LuaGetArgument_Sound(L, 1);
     const char * arg2 = LuaGetArgument_string(L, 2);
-    int * arg3 = LuaGetArgument_int(L, 3);
+    int arg3 = LuaGetArgument_int(L, 3);
     UpdateSound(arg1, arg2, arg3);
     return 0;
 }

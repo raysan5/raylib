@@ -318,6 +318,7 @@ static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
+#endif
 
 // Extension supported flag: Anisotropic filtering
 static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
@@ -325,7 +326,6 @@ static float maxAnisotropicLevel = 0.0f;        // Maximum anisotropy level supp
 
 // Extension supported flag: Clamp mirror wrap mode
 static bool texClampMirrorSupported = false;    // Clamp mirror wrap mode supported
-#endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
 // OVR device variables
@@ -902,6 +902,10 @@ void rlDisableTexture(void)
 #if defined(GRAPHICS_API_OPENGL_11)
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
+#else
+    // NOTE: If quads batch limit is reached, 
+    // we force a draw call and next batch starts
+    if (quads.vCounter/4 >= MAX_QUADS_BATCH) rlglDraw();
 #endif
 }
 
@@ -922,11 +926,11 @@ void rlTextureParameters(unsigned int id, int param, int value)
         case RL_TEXTURE_MIN_FILTER: glTexParameteri(GL_TEXTURE_2D, param, value); break;
         case RL_TEXTURE_ANISOTROPIC_FILTER:
         {
-            if (value <= maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+            if (value <= maxAnisotropicLevel) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             else if (maxAnisotropicLevel > 0.0f)
             {
                 TraceLog(WARNING, "[TEX ID %i] Maximum anisotropic filter level supported is %iX", id, maxAnisotropicLevel);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (float)value);
             }
             else TraceLog(WARNING, "Anisotropic filtering not supported");
         } break;
@@ -1733,7 +1737,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
-        void *data = rlglReadTexturePixels(texture);
+        void *data = rlglReadTexturePixels(*texture);
         
         // NOTE: data size is reallocated to fit mipmaps data
         // NOTE: CPU mipmap generation only supports RGBA 32bit data
@@ -1776,7 +1780,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
         #define MIN(a,b) (((a)<(b))?(a):(b))
         #define MAX(a,b) (((a)>(b))?(a):(b))
         
-        texture->mipmaps =  1 + floor(log2(MAX(texture->width, texture->height)));
+        texture->mipmaps =  1 + (int)floor(log(MAX(texture->width, texture->height))/log(2));
 #endif
     }
     else TraceLog(WARNING, "[TEX ID %i] Mipmaps can not be generated", texture->id);
