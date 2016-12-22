@@ -239,9 +239,10 @@ PHYSACDEF void ClosePhysics(void);                                              
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-#elif defined(__linux)
+#elif defined(__linux) || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec
     #include <time.h>               // Required for: clock_gettime()
+    #include <stdint.h>
 #endif
 
 //----------------------------------------------------------------------------------
@@ -266,7 +267,7 @@ PHYSACDEF void ClosePhysics(void);                                              
 static unsigned int usedMemory = 0;                         // Total allocated dynamic memory
 static bool physicsThreadEnabled = false;                   // Physics thread enabled state
 static double currentTime = 0;                              // Current time in milliseconds
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(__linux) || defined(PLATFORM_WEB)
     static double baseTime = 0;                             // Android and RPI platforms base time
 #endif
 static double startTime = 0;                                // Start time in milliseconds
@@ -1942,7 +1943,7 @@ static double GetCurrentTime(void)
 {
     double time = 0;
 
-    #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    #if defined(_WIN32)
         unsigned long long int clockFrequency, currentTime;
 
         QueryPerformanceFrequency(&clockFrequency);
@@ -1951,7 +1952,7 @@ static double GetCurrentTime(void)
         time = (double)((double)currentTime/clockFrequency)*1000;
     #endif
 
-    #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(__linux) || defined(PLATFORM_WEB)
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
         uint64_t temp = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
