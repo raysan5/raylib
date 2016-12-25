@@ -225,14 +225,22 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             default: TraceLog(WARNING, "Image format not suported"); break;
         }
 
-        fread(image.data, size, 1, rawFile);
+        int bytes = fread(image.data, size, 1, rawFile);
 
-        // TODO: Check if data has been read
-
-        image.width = width;
-        image.height = height;
-        image.mipmaps = 0;
-        image.format = format;
+        // Check if data has been read successfully
+        if (bytes < size)
+        {
+            TraceLog(WARNING, "[%s] RAW image data can not be read, wrong requested format or size", fileName);
+            
+            if (image.data != NULL) free(image.data);
+        }
+        else
+        {
+            image.width = width;
+            image.height = height;
+            image.mipmaps = 0;
+            image.format = format;
+        }
 
         fclose(rawFile);
     }
@@ -983,7 +991,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
     Color srcCol, dstCol;
 
     // Blit pixels, copy source image into destination
-    // TODO: Probably out-of-bounds blitting could be considering here instead of so much cropping...
+    // TODO: Probably out-of-bounds blitting could be considered here instead of so much cropping...
     for (int j = dstRec.y; j < (dstRec.y + dstRec.height); j++)
     {
         for (int i = dstRec.x; i < (dstRec.x + dstRec.width); i++)
