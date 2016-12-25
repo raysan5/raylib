@@ -611,30 +611,57 @@ void DrawLight(Light light)
     }
 }
 
-// Load a 3d model (from file)
+// Load mesh from file
+Mesh LoadMesh(const char *fileName)
+{
+    Mesh mesh = { 0 };
+
+    if (strcmp(GetExtension(fileName), "obj") == 0) mesh = LoadOBJ(fileName);
+    else TraceLog(WARNING, "[%s] Mesh extension not recognized, it can't be loaded", fileName);
+
+    if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
+    else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
+    
+    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
+
+    return mesh;
+}
+
+// Load mesh from vertex data
+// NOTE: All vertex data arrays must be same size: numVertex
+Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData)
+{
+    Mesh mesh = { 0 };
+
+    mesh.vertexCount = numVertex;
+    mesh.triangleCount = numVertex/3;
+    mesh.vertices = vData;
+    mesh.texcoords = vtData;
+    mesh.texcoords2 = NULL;
+    mesh.normals = vnData;
+    mesh.tangents = NULL;
+    mesh.colors = (unsigned char *)cData;
+    mesh.indices = NULL;
+
+    rlglLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
+    
+    return mesh;
+}
+
+// Load model from file
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
 
-    // TODO: Initialize default data for model in case loading fails, maybe a cube?
-
-    if (strcmp(GetExtension(fileName), "obj") == 0) model.mesh = LoadOBJ(fileName);
-    else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
-
-    if (model.mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
-    else
-    {
-        rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-        model.transform = MatrixIdentity();
-        model.material = LoadDefaultMaterial();
-    }
+    model.mesh = LoadMesh(fileName);
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
 
     return model;
 }
 
-// Load a 3d model (from vertex data)
-Model LoadModelEx(Mesh data, bool dynamic)
+// Load model from mesh data
+Model LoadModelFromMesh(Mesh data, bool dynamic)
 {
     Model model = { 0 };
 
@@ -648,7 +675,7 @@ Model LoadModelEx(Mesh data, bool dynamic)
     return model;
 }
 
-// Load a heightmap image as a 3d model
+// Load heightmap model from image data
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
 {
@@ -664,7 +691,7 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
     return model;
 }
 
-// Load a map image as a 3d model (cubes based)
+// Load cubes-based map model from image data
 Model LoadCubicmap(Image cubicmap)
 {
     Model model = { 0 };
@@ -678,15 +705,20 @@ Model LoadCubicmap(Image cubicmap)
 
     return model;
 }
+                                                                   
+// Unload mesh from memory (RAM and/or VRAM)
+void UnloadMesh(Mesh *mesh)
+{
+    rlglUnloadMesh(mesh);
+}
 
-// Unload 3d model from memory (mesh and material)
+// Unload model from memory (RAM and/or VRAM)
 void UnloadModel(Model model)
 {
-    rlglUnloadMesh(&model.mesh);
-
+    UnloadMesh(&model.mesh);
     UnloadMaterial(model.material);
 
-    TraceLog(INFO, "Unloaded model data from RAM and VRAM");
+    TraceLog(INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
 }
 
 // Load material data (from file)
