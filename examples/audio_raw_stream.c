@@ -16,7 +16,7 @@
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <math.h>           // Required for: sinf()
 
-#define MAX_SAMPLES      20000
+#define MAX_SAMPLES      22050
 
 int main()
 {
@@ -29,15 +29,15 @@ int main()
 
     InitAudioDevice();              // Initialize audio device
 
-    // Init raw audio stream (sample rate: 22050, sample size: 32bit-float, channels: 1-mono)
-    AudioStream stream = InitAudioStream(22050, 32, 1);
+    // Init raw audio stream (sample rate: 22050, sample size: 16bit-short, channels: 1-mono)
+    AudioStream stream = InitAudioStream(22050, 16, 1);
     
     // Fill audio stream with some samples (sine wave)
-    float *data = (float *)malloc(sizeof(float)*MAX_SAMPLES);
+    short *data = (short *)malloc(sizeof(short)*MAX_SAMPLES);
     
     for (int i = 0; i < MAX_SAMPLES; i++)
     {
-        data[i] = sinf(((2*PI*(float)i)/2)*DEG2RAD);
+        data[i] = (short)(sinf(((2*PI*(float)i)/2)*DEG2RAD)*32000);
     }
     
     // NOTE: The generated MAX_SAMPLES do not fit to close a perfect loop
@@ -87,7 +87,7 @@ int main()
             for (int i = 0; i < GetScreenWidth(); i++)
             {
                 position.x = i;
-                position.y = 250 + 50*data[i];
+                position.y = 250 + 50*data[i]/32000;
                 
                 DrawPixelV(position, RED);
             }

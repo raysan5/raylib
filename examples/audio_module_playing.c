@@ -86,7 +86,7 @@ int main()
         }
         
         // Get timePlayed scaled to bar dimensions
-        timePlayed = (GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40))*2;
+        timePlayed = GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40);
         
         // Color circles animation
         for (int i = MAX_CIRCLES - 1; (i >= 0) && !pause; i--)
