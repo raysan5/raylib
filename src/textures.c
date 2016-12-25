@@ -93,7 +93,7 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
-// Load an image into CPU memory (RAM)
+// Load image from file into CPU memory (RAM)
 Image LoadImage(const char *fileName)
 {
     Image image;
@@ -142,16 +142,13 @@ Image LoadImage(const char *fileName)
     else if (strcmp(GetExtension(fileName),"pvr") == 0) image = LoadPVR(fileName);
     else if (strcmp(GetExtension(fileName),"astc") == 0) image = LoadASTC(fileName);
 
-    if (image.data != NULL)
-    {
-        TraceLog(INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
-    }
-    else TraceLog(WARNING, "[%s] Image could not be loaded, file not recognized", fileName);
+    if (image.data != NULL) TraceLog(INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
+    else TraceLog(WARNING, "[%s] Image could not be loaded", fileName);
 
     return image;
 }
 
-// Load image data from Color array data (RGBA - 32bit)
+// Load image from Color array data (RGBA - 32bit)
 // NOTE: Creates a copy of pixels data array
 Image LoadImageEx(Color *pixels, int width, int height)
 {
@@ -178,7 +175,22 @@ Image LoadImageEx(Color *pixels, int width, int height)
     return image;
 }
 
-// Load an image from RAW file
+// Load image from raw data with parameters
+// NOTE: This functions does not make a copy of data
+Image LoadImagePro(void *data, int width, int height, int format)
+{
+    Image image;
+    
+    image.data = data;
+    image.width = width;
+    image.height = height;
+    image.mipmaps = 1;
+    image.format = format;
+    
+    return image;
+}
+
+// Load an image from RAW file data
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
     Image image;
@@ -228,7 +240,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     return image;
 }
 
-// Load an image as texture into GPU memory
+// Load texture from file into GPU memory (VRAM)
 Texture2D LoadTexture(const char *fileName)
 {
     Texture2D texture;
@@ -245,21 +257,6 @@ Texture2D LoadTexture(const char *fileName)
         TraceLog(WARNING, "Texture could not be created");
         texture.id = 0;
     }
-
-    return texture;
-}
-
-// Load a texture from raw data into GPU memory
-Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat)
-{
-    Texture2D texture;
-
-    texture.width = width;
-    texture.height = height;
-    texture.mipmaps = 1;
-    texture.format = textureFormat;
-
-    texture.id = rlglLoadTexture(data, width, height, textureFormat, 1);
 
     return texture;
 }
@@ -287,7 +284,7 @@ Texture2D LoadTextureFromImage(Image image)
     return texture;
 }
 
-// Load a texture to be used for rendering
+// Load texture for rendering (framebuffer)
 RenderTexture2D LoadRenderTexture(int width, int height)
 {
     RenderTexture2D target = rlglLoadRenderTexture(width, height);
@@ -304,7 +301,7 @@ void UnloadImage(Image image)
     //TraceLog(INFO, "Unloaded image data");
 }
 
-// Unload texture from GPU memory
+// Unload texture from GPU memory (VRAM)
 void UnloadTexture(Texture2D texture)
 {
     if (texture.id != 0)
@@ -315,100 +312,10 @@ void UnloadTexture(Texture2D texture)
     }
 }
 
-// Unload render texture from GPU memory
+// Unload render texture from GPU memory (VRAM)
 void UnloadRenderTexture(RenderTexture2D target)
 {
     if (target.id != 0) rlDeleteRenderTextures(target);
-}
-
-// Set texture scaling filter mode
-void SetTextureFilter(Texture2D texture, int filterMode)
-{
-    switch (filterMode)
-    {
-        case FILTER_POINT:
-        {
-            if (texture.mipmaps > 1)
-            {
-                // RL_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_NEAREST);
-                
-                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
-            }
-            else
-            {
-                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_NEAREST);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
-            }
-        } break;
-        case FILTER_BILINEAR:
-        {
-            if (texture.mipmaps > 1)
-            {
-                // RL_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
-                // Alternative: RL_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR_MIP_NEAREST);
-                
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
-            }
-            else
-            {
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
-            }
-        } break;
-        case FILTER_TRILINEAR:
-        {
-            if (texture.mipmaps > 1)
-            {
-                // RL_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
-                
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
-            }
-            else
-            {
-                TraceLog(WARNING, "[TEX ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
-                
-                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
-            }
-        } break;
-        case FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 4); break;
-        case FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 8); break;
-        case FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 16); break;
-        default: break;
-    }
-}
-
-// Set texture wrapping mode
-void SetTextureWrap(Texture2D texture, int wrapMode)
-{
-    switch (wrapMode)
-    {
-        case WRAP_REPEAT:
-        {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_REPEAT);
-        } break;
-        case WRAP_CLAMP:
-        {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP);
-        } break;
-        case WRAP_MIRROR:
-        {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP_MIRROR);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP_MIRROR);
-        } break;
-        default: break;
-    }
 }
 
 // Get pixel data from image in the form of Color struct array
@@ -527,6 +434,13 @@ Image GetTextureData(Texture2D texture)
     else TraceLog(WARNING, "Compressed texture data could not be obtained");
 
     return image;
+}
+
+// Update GPU texture with new data
+// NOTE: pixels data must match texture.format
+void UpdateTexture(Texture2D texture, const void *pixels)
+{
+    rlglUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
 // Convert image data to desired format
@@ -1408,11 +1322,94 @@ void GenTextureMipmaps(Texture2D *texture)
 #endif
 }
 
-// Update GPU texture with new data
-// NOTE: pixels data must match texture.format
-void UpdateTexture(Texture2D texture, void *pixels)
+// Set texture scaling filter mode
+void SetTextureFilter(Texture2D texture, int filterMode)
 {
-    rlglUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
+    switch (filterMode)
+    {
+        case FILTER_POINT:
+        {
+            if (texture.mipmaps > 1)
+            {
+                // RL_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_NEAREST);
+                
+                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+            }
+            else
+            {
+                // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_NEAREST);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
+            }
+        } break;
+        case FILTER_BILINEAR:
+        {
+            if (texture.mipmaps > 1)
+            {
+                // RL_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
+                // Alternative: RL_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR_MIP_NEAREST);
+                
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+            else
+            {
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+        } break;
+        case FILTER_TRILINEAR:
+        {
+            if (texture.mipmaps > 1)
+            {
+                // RL_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
+                
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+            else
+            {
+                TraceLog(WARNING, "[TEX ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
+                
+                // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
+                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
+                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
+            }
+        } break;
+        case FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 4); break;
+        case FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 8); break;
+        case FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_ANISOTROPIC_FILTER, 16); break;
+        default: break;
+    }
+}
+
+// Set texture wrapping mode
+void SetTextureWrap(Texture2D texture, int wrapMode)
+{
+    switch (wrapMode)
+    {
+        case WRAP_REPEAT:
+        {
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_REPEAT);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_REPEAT);
+        } break;
+        case WRAP_CLAMP:
+        {
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP);
+        } break;
+        case WRAP_MIRROR:
+        {
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_WRAP_CLAMP_MIRROR);
+            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_WRAP_CLAMP_MIRROR);
+        } break;
+        default: break;
+    }
 }
 
 // Draw a Texture2D
