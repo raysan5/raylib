@@ -249,7 +249,7 @@ SpriteFont GetDefaultFont()
     return defaultFont;
 }
 
-// Load a SpriteFont image into GPU memory
+// Load SpriteFont from file into GPU memory (VRAM)
 SpriteFont LoadSpriteFont(const char *fileName)
 {
     // Default hardcoded values for ttf file loading
@@ -280,7 +280,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
     return spriteFont;
 }
 
-// Load SpriteFont from TTF file with custom parameters
+// Load SpriteFont from TTF font file with generation parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
 SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars)
@@ -311,7 +311,7 @@ SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, i
     return spriteFont;
 }
 
-// Unload SpriteFont from GPU memory
+// Unload SpriteFont from GPU memory (VRAM)
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
     // NOTE: Make sure spriteFont is not default font (fallback)
@@ -460,13 +460,13 @@ int MeasureText(const char *text, int fontSize)
 Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing)
 {
     int len = strlen(text);
-    int tempLen = 0;				// Used to count longer text line num chars
+    int tempLen = 0;                // Used to count longer text line num chars
     int lenCounter = 0;
 
     float textWidth = 0;
-	float tempTextWidth = 0;		// Used to count longer text line width
+    float tempTextWidth = 0;        // Used to count longer text line width
 
-	float textHeight = (float)spriteFont.size;
+    float textHeight = (float)spriteFont.size;
     float scaleFactor = fontSize/(float)spriteFont.size;
 
     for (int i = 0; i < len; i++)

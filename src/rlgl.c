@@ -1690,7 +1690,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
 }
 
 // Update already loaded texture in GPU with new data
-void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data)
+void rlglUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
 {
     glBindTexture(GL_TEXTURE_2D, id);
 
@@ -2423,7 +2423,7 @@ Texture2D GetDefaultTexture(void)
     return texture;
 }
 
-// Load a custom shader and bind default locations
+// Load shader from files and bind default locations
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
     Shader shader = { 0 };
@@ -2455,7 +2455,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     return shader;
 }
 
-// Unload a custom shader from memory
+// Unload shader from GPU memory (VRAM)
 void UnloadShader(Shader shader)
 {
     if (shader.id != 0)

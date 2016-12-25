@@ -1194,7 +1194,7 @@ const char *GetGamepadName(int gamepad)
     if (gamepadReady[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
 #elif defined(PLATFORM_RPI)
-	if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGNAME(64), &gamepadName);
+    if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGNAME(64), &gamepadName);
 
     return gamepadName;
 #else
