@@ -263,9 +263,9 @@ static bool GetMouseButtonStatus(int button);           // Returns if a mouse bu
 static void PollInputEvents(void);                      // Register user events
 static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
+static void SetupViewport(void);                        // Set viewport parameters
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 static void TakeScreenshot(void);                       // Takes a screenshot and saves it in the same folder as executable
-static void SetupViewport(void);
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -292,6 +292,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
+static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 #endif
 
 #if defined(PLATFORM_RPI)
@@ -346,9 +347,9 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
 
-    // TODO: Add gamepad support (not provided by GLFW3 on emscripten)
-    //emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenInputCallback);
-    //emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenInputCallback);
+    // Support gamepad (not provided by GLFW3 on emscripten)
+    emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 #endif
 
     mousePosition.x = (float)screenWidth/2.0f;
@@ -1795,6 +1796,7 @@ static void InitGraphicsDevice(int width, int height)
 #endif
 }
 
+// Set viewport parameters
 static void SetupViewport(void)
 {
 #ifdef __APPLE__
@@ -1941,7 +1943,7 @@ static bool GetMouseButtonStatus(int button)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetMouseButton(window, button);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual mouse
+    // TODO: Check for virtual mouse?
     return false;
 #elif defined(PLATFORM_RPI)
     // NOTE: Mouse buttons states are filled in PollInputEvents()
@@ -1987,8 +1989,6 @@ static void PollInputEvents(void)
     currentMouseWheelY = 0;
 #endif
 
-// NOTE: GLFW3 joystick functionality not available in web
-// TODO: Support joysticks using emscripten API
 #if defined(PLATFORM_DESKTOP)
     // Check if gamepads are ready
     // NOTE: We do it here in case of disconection
@@ -2039,6 +2039,47 @@ static void PollInputEvents(void)
     }
 
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
+#endif
+
+// Gamepad support using emscripten API
+// NOTE: GLFW3 joystick functionality not available in web
+#if defined(PLATFORM_WEB)
+    // Get number of gamepads connected
+    int numGamepads = emscripten_get_num_gamepads();
+  
+    for (int i = 0; (i < numGamepads) && (i < MAX_GAMEPADS); i++)
+    {
+        // Register previous gamepad button states
+        for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
+        
+        EmscriptenGamepadEvent gamepadState;
+        
+        int result = emscripten_get_gamepad_status(i, &gamepadState);
+        
+        if (result == EMSCRIPTEN_RESULT_SUCCESS)
+        {
+            // Register buttons data for every connected gamepad
+            for (int j = 0; (j < gamepadState.numButtons) && (j < MAX_GAMEPAD_BUTTONS); j++)
+            {
+                if (gamepadState.digitalButton[j] == 1)
+                {
+                    currentGamepadState[i][j] = 1;
+                    lastGamepadButtonPressed = j;
+                }
+                else currentGamepadState[i][j] = 0;
+                
+                //printf("Gamepad %d, button %d: Digital: %d, Analog: %g\n", gamepadState.index, j, gamepadState.digitalButton[j], gamepadState.analogButton[j]);
+            }
+            
+            // Register axis data for every connected gamepad
+            for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
+            {
+                gamepadAxisState[i][j] = gamepadState.axis[j];
+            }
+            
+            gamepadAxisCount = gamepadState.numAxes;
+        }
+    }
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -2487,6 +2528,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
+
+// Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
 {
     //isFullscreen: int e->isFullscreen
@@ -2510,7 +2553,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     return 0;
 }
 
-// Web: Get input events
+// Register touch input events
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
     /*
@@ -2573,6 +2616,26 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     ProcessGestureEvent(gestureEvent);
 
     return 1;
+}
+
+// Register connected/disconnected gamepads events
+static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
+{
+    /*
+    printf("%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"\n",
+           eventType != 0 ? emscripten_event_type_to_string(eventType) : "Gamepad state", 
+           gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
+           
+    for(int i = 0; i < gamepadEvent->numAxes; ++i) printf("Axis %d: %g\n", i, gamepadEvent->axis[i]);
+    for(int i = 0; i < gamepadEvent->numButtons; ++i) printf("Button %d: Digital: %d, Analog: %g\n", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    */
+    
+    if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) gamepadReady[gamepadEvent->index] = true;
+    else gamepadReady[gamepadEvent->index] = false;
+    
+    // TODO: Test gamepadEvent->index
+
+    return 0;
 }
 #endif
 
