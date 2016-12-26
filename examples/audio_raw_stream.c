@@ -16,7 +16,8 @@
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <math.h>           // Required for: sinf()
 
-#define MAX_SAMPLES      22050
+#define MAX_SAMPLES             22050
+#define MAX_SAMPLES_PER_UPDATE   4096
 
 int main()
 {
@@ -32,18 +33,17 @@ int main()
     // Init raw audio stream (sample rate: 22050, sample size: 16bit-short, channels: 1-mono)
     AudioStream stream = InitAudioStream(22050, 16, 1);
     
-    // Fill audio stream with some samples (sine wave)
+    // Generate samples data from sine wave
     short *data = (short *)malloc(sizeof(short)*MAX_SAMPLES);
     
+    // TODO: Review data generation, it seems data is discontinued for loop,
+    // for that reason, there is a clip everytime audio stream is looped...
     for (int i = 0; i < MAX_SAMPLES; i++)
     {
         data[i] = (short)(sinf(((2*PI*(float)i)/2)*DEG2RAD)*32000);
     }
     
-    // NOTE: The generated MAX_SAMPLES do not fit to close a perfect loop
-    // for that reason, there is a clip everytime audio stream is looped
-    
-    PlayAudioStream(stream);
+    PlayAudioStream(stream);        // Start processing stream buffer (no data loaded currently)
     
     int totalSamples = MAX_SAMPLES;
     int samplesLeft = totalSamples;
@@ -60,10 +60,13 @@ int main()
         //----------------------------------------------------------------------------------
         
         // Refill audio stream if required
+        // NOTE: Every update we check if stream data has been already consumed and we update
+        // buffer with new data from the generated samples, we upload data at a rate (MAX_SAMPLES_PER_UPDATE),
+        // but notice that at some point we update < MAX_SAMPLES_PER_UPDATE data...
         if (IsAudioBufferProcessed(stream)) 
         {
             int numSamples = 0;
-            if (samplesLeft >= 4096) numSamples = 4096;
+            if (samplesLeft >= MAX_SAMPLES_PER_UPDATE) numSamples = MAX_SAMPLES_PER_UPDATE;
             else numSamples = samplesLeft;
 
             UpdateAudioStream(stream, data + (totalSamples - samplesLeft), numSamples);
@@ -83,7 +86,7 @@ int main()
 
             DrawText("SINE WAVE SHOULD BE PLAYING!", 240, 140, 20, LIGHTGRAY);
             
-            // NOTE: Draw a part of the sine wave (only screen width)
+            // NOTE: Draw a part of the sine wave (only screen width, proportional values)
             for (int i = 0; i < GetScreenWidth(); i++)
             {
                 position.x = i;
