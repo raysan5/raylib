@@ -593,6 +593,7 @@ Music LoadMusicStream(const char *fileName)
             music->ctxType = MUSIC_AUDIO_OGG;
             music->loop = true;                  // We loop by default
 
+            TraceLog(DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
             TraceLog(DEBUG, "[%s] OGG channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
@@ -606,11 +607,12 @@ Music LoadMusicStream(const char *fileName)
         else
         {
             music->stream = InitAudioStream(music->ctxFlac->sampleRate, music->ctxFlac->bitsPerSample, music->ctxFlac->channels);
-            music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount;
+            music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount/music->ctxFlac->channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_FLAC;
             music->loop = true;                  // We loop by default
             
+            TraceLog(DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] FLAC sample rate: %i", fileName, music->ctxFlac->sampleRate);
             TraceLog(DEBUG, "[%s] FLAC bits per sample: %i", fileName, music->ctxFlac->bitsPerSample);
             TraceLog(DEBUG, "[%s] FLAC channels: %i", fileName, music->ctxFlac->channels);
@@ -745,9 +747,7 @@ void UpdateMusicStream(Music music)
                 case MUSIC_AUDIO_FLAC:
                 {
                     // NOTE: Returns the number of samples to process
-                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s32(music->ctxFlac, numSamples/2, (int *)pcm);
-
-                    // TODO: Samples should be provided as 16 bit instead of 32 bit!
+                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, numSamples*music->stream.channels, (short *)pcm);
 
                 } break;
                 case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, numSamples); break;
@@ -1145,21 +1145,14 @@ static Wave LoadFLAC(const char *fileName)
 
     // Decode an entire FLAC file in one go
     uint64_t totalSampleCount;
-    wave.data = drflac_open_and_decode_file_s32(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
+    wave.data = drflac_open_and_decode_file_s16(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
     
-    wave.sampleCount = (int)totalSampleCount;
-    wave.sampleSize = 32;       // 32 bit per sample (float)
-    
-    // NOTE: By default, dr_flac returns 32bit float samples, needs to be converted to 16bit
-    WaveFormat(&wave, wave.sampleRate, 16, wave.channels);
+    wave.sampleCount = (int)totalSampleCount/wave.channels;
+    wave.sampleSize = 16;
     
     // NOTE: Only support up to 2 channels (mono, stereo)
-    if (wave.channels > 2) 
-    {
-        WaveFormat(&wave, wave.sampleRate, wave.sampleSize, 2);
-        TraceLog(WARNING, "[%s] FLAC channels number (%i) not supported, converted to 2 channels", fileName, wave.channels);
-    }
-    
+    if (wave.channels > 2) TraceLog(WARNING, "[%s] FLAC channels number (%i) not supported", fileName, wave.channels);
+
     if (wave.data == NULL) TraceLog(WARNING, "[%s] FLAC data could not be loaded", fileName);
     else TraceLog(INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
     
