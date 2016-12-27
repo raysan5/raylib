@@ -602,6 +602,26 @@ typedef enum {
     HMD_FOVE_VR,
 } VrDevice;
 
+// rRES data returned when reading a resource, it contains all required data for user (24 byte)
+typedef struct {
+    unsigned int type;          // Resource type (4 byte)
+    
+    unsigned int param1;        // Resouce parameter 1 (4 byte)
+    unsigned int param2;        // Resouce parameter 2 (4 byte)
+    unsigned int param3;        // Resouce parameter 3 (4 byte)
+    unsigned int param4;        // Resouce parameter 4 (4 byte)
+    
+    void *data;                 // Resource data pointer (4 byte)
+} RRESData;
+
+typedef enum { 
+    RRES_RAW = 0, 
+    RRES_IMAGE, 
+    RRES_WAVE, 
+    RRES_VERTEX, 
+    RRES_TEXT 
+} RRESDataType;
+
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
