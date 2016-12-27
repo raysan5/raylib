@@ -985,7 +985,7 @@ static Wave LoadWAV(const char *fileName)
         char chunkID[4];
         int chunkSize;
         char format[4];
-    } WavRiffHeader;
+    } WAVRiffHeader;
 
     typedef struct {
         char subChunkID[4];
@@ -996,16 +996,16 @@ static Wave LoadWAV(const char *fileName)
         int byteRate;
         short blockAlign;
         short bitsPerSample;
-    } WavFormat;
+    } WAVFormat;
 
     typedef struct {
         char subChunkID[4];
         int subChunkSize;
-    } WavData;
+    } WAVData;
 
-    WavRiffHeader wavRiffHeader;
-    WavFormat wavFormat;
-    WavData wavData;
+    WAVRiffHeader wavRiffHeader;
+    WAVFormat wavFormat;
+    WAVData wavData;
 
     Wave wave = { 0 };
     FILE *wavFile;
@@ -1020,7 +1020,7 @@ static Wave LoadWAV(const char *fileName)
     else
     {
         // Read in the first chunk into the struct
-        fread(&wavRiffHeader, sizeof(WavRiffHeader), 1, wavFile);
+        fread(&wavRiffHeader, sizeof(WAVRiffHeader), 1, wavFile);
 
         // Check for RIFF and WAVE tags
         if (strncmp(wavRiffHeader.chunkID, "RIFF", 4) ||
@@ -1031,7 +1031,7 @@ static Wave LoadWAV(const char *fileName)
         else
         {
             // Read in the 2nd chunk for the wave info
-            fread(&wavFormat, sizeof(WavFormat), 1, wavFile);
+            fread(&wavFormat, sizeof(WAVFormat), 1, wavFile);
 
             // Check for fmt tag
             if ((wavFormat.subChunkID[0] != 'f') || (wavFormat.subChunkID[1] != 'm') ||
@@ -1045,7 +1045,7 @@ static Wave LoadWAV(const char *fileName)
                 if (wavFormat.subChunkSize > 16) fseek(wavFile, sizeof(short), SEEK_CUR);
 
                 // Read in the the last byte of data before the sound file
-                fread(&wavData, sizeof(WavData), 1, wavFile);
+                fread(&wavData, sizeof(WAVData), 1, wavFile);
 
                 // Check for data tag
                 if ((wavData.subChunkID[0] != 'd') || (wavData.subChunkID[1] != 'a') ||

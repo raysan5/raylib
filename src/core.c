@@ -2139,7 +2139,7 @@ static void TakeScreenshot(void)
     sprintf(buffer, "screenshot%03i.png", shotNum);
 
     // Save image as PNG
-    WritePNG(buffer, imgData, renderWidth, renderHeight, 4);
+    SavePNG(buffer, imgData, renderWidth, renderHeight, 4);
 
     free(imgData);
 
@@ -2818,7 +2818,8 @@ static void InitMouse(void)
 // if too much time passes between reads, queue gets full and new events override older ones...
 static void *MouseThread(void *arg)
 {
-    const unsigned char XSIGN = 1<<4, YSIGN = 1<<5;
+    const unsigned char XSIGN = (1 << 4);
+    const unsigned char YSIGN = (1 << 5);
 
     typedef struct {
         char buttons;

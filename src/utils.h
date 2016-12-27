@@ -31,6 +31,8 @@
     #include <android/asset_manager.h>      // Required for: AAssetManager
 #endif
 
+#include "rres.h"
+
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
@@ -66,11 +68,9 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-unsigned char *DecompressData(const unsigned char *data, unsigned long compSize, int uncompSize);
-
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height);
-void WritePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
+void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
+void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
 #endif
 
 void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message

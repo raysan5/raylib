@@ -192,7 +192,7 @@
 //----------------------------------------------------------------------------------
 
 // Dynamic vertex buffers (position + texcoords + colors + indices arrays)
-typedef struct {
+typedef struct DynamicBuffer {
     int vCounter;               // vertex position counter to process (and draw) from full buffer
     int tcCounter;              // vertex texcoord counter to process (and draw) from full buffer
     int cCounter;               // vertex color counter to process (and draw) from full buffer
@@ -211,7 +211,7 @@ typedef struct {
 
 // Draw call type
 // NOTE: Used to track required draw-calls, organized by texture
-typedef struct {
+typedef struct DrawCall {
     int vertexCount;
     GLuint vaoId;
     GLuint textureId;
@@ -226,7 +226,7 @@ typedef struct {
 } DrawCall;
 
 // Head-Mounted-Display device parameters
-typedef struct {
+typedef struct VrDeviceInfo {
     int hResolution;                // HMD horizontal resolution in pixels
     int vResolution;                // HMD vertical resolution in pixels
     float hScreenSize;              // HMD horizontal size in meters
@@ -240,7 +240,7 @@ typedef struct {
 } VrDeviceInfo;
 
 // VR Stereo rendering configuration for simulator
-typedef struct {
+typedef struct VrStereoConfig {
     RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
     Shader distortionShader;        // VR stereo rendering distortion shader
     //Rectangle eyesViewport[2];      // VR stereo rendering eyes viewports

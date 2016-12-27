@@ -42,12 +42,15 @@
 #include <stdlib.h>                 // Required for: malloc(), free()
 #include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
 #include <stdarg.h>                 // Required for: va_list, va_start(), vfprintf(), va_end()
-//#include <string.h>               // Required for: strlen(), strrchr(), strcmp()
+#include <string.h>                 // Required for: strlen(), strrchr(), strcmp()
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     #define STB_IMAGE_WRITE_IMPLEMENTATION
-    #include "external/stb_image_write.h"    // Required for: stbi_write_png()
+    #include "external/stb_image_write.h"    // Required for: stbi_write_bmp(), stbi_write_png()
 #endif
+
+#define RRES_IMPLEMENTATION
+#include "rres.h"
 
 #define DO_NOT_TRACE_DEBUG_MSGS     // Avoid DEBUG messages tracing
 
@@ -73,59 +76,14 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-// Creates a bitmap (BMP) file from an array of pixel data
-// NOTE: This function is not explicitly available to raylib users
-void WriteBitmap(const char *fileName, unsigned char *imgData, int width, int height)
+// Creates a BMP image file from an array of pixel data
+void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
-    int filesize = 54 + 3*width*height;
-
-    unsigned char bmpFileHeader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};    // Standard BMP file header
-    unsigned char bmpInfoHeader[40] = {40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};   // Standard BMP info header
-
-    bmpFileHeader[2] = (unsigned char)(filesize);
-    bmpFileHeader[3] = (unsigned char)(filesize>>8);
-    bmpFileHeader[4] = (unsigned char)(filesize>>16);
-    bmpFileHeader[5] = (unsigned char)(filesize>>24);
-
-    bmpInfoHeader[4] = (unsigned char)(width);
-    bmpInfoHeader[5] = (unsigned char)(width>>8);
-    bmpInfoHeader[6] = (unsigned char)(width>>16);
-    bmpInfoHeader[7] = (unsigned char)(width>>24);
-    bmpInfoHeader[8] = (unsigned char)(height);
-    bmpInfoHeader[9] = (unsigned char)(height>>8);
-    bmpInfoHeader[10] = (unsigned char)(height>>16);
-    bmpInfoHeader[11] = (unsigned char)(height>>24);
-
-    FILE *bmpFile = fopen(fileName, "wb");    // Define a pointer to bitmap file and open it in write-binary mode
-
-    if (bmpFile == NULL)
-    {
-        TraceLog(WARNING, "[%s] BMP file could not be created", fileName);
-    }
-    else
-    {
-        // NOTE: fwrite parameters are: data pointer, size in bytes of each element to be written, number of elements, file-to-write pointer
-        fwrite(bmpFileHeader, sizeof(unsigned char), 14, bmpFile);    // Write BMP file header data
-        fwrite(bmpInfoHeader, sizeof(unsigned char), 40, bmpFile);    // Write BMP info header data
-
-        // Write pixel data to file
-        for (int y = 0; y < height ; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                fputc(imgData[(x*4)+2 + (y*width*4)], bmpFile);
-                fputc(imgData[(x*4)+1 + (y*width*4)], bmpFile);
-                fputc(imgData[(x*4) + (y*width*4)], bmpFile);
-            }
-        }
-    }
-
-    fclose(bmpFile);        // Close bitmap file
+    stbi_write_bmp(fileName, width, height, compSize, imgData);
 }
 
 // Creates a PNG image file from an array of pixel data
-// NOTE: Uses stb_image_write
-void WritePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
+void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
     stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
 }

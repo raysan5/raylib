@@ -53,7 +53,7 @@
 #define MAX_FORMATTEXT_LENGTH   64
 #define MAX_SUBTEXT_LENGTH      64
 
-#define BIT_CHECK(a,b) ((a) & (1<<(b)))
+#define BIT_CHECK(a,b) ((a) & (1 << (b)))
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -948,7 +948,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int numChars, int 
         return font;
     }
 
-    fread(ttfBuffer, 1, 1<<25, ttfFile);
+    fread(ttfBuffer, 1, 1 << 25, ttfFile);
     
     if (fontChars[0] != 32) TraceLog(WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
@@ -983,7 +983,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int numChars, int 
     
     font.texture = LoadTextureFromImage(image);
     
-    //WritePNG("generated_ttf_image.png", (unsigned char *)image.data, image.width, image.height, 2);
+    //SavePNG("generated_ttf_image.png", (unsigned char *)image.data, image.width, image.height, 2);
     
     UnloadImage(image);     // Unloads dataGrayAlpha
 
