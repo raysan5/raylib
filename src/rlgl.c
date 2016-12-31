@@ -1950,27 +1950,27 @@ void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
         } break;
         case 2:     // Update normals (vertex normals)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
             if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.normals, GL_DYNAMIC_DRAW);
             else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.normals);
             
         } break;
         case 3:     // Update colors (vertex colors)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
             if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.colors, GL_DYNAMIC_DRAW);
             else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(unsigned char)*4*numVertex, mesh.colors);
             
         } break;
         case 4:     // Update tangents (vertex tangents)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
             if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.tangents, GL_DYNAMIC_DRAW);
             else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.tangents);
         } break;
         case 5:     // Update texcoords2 (vertex second texture coordinates)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
             if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numVertex, mesh.texcoords2, GL_DYNAMIC_DRAW);
             else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*2*numVertex, mesh.texcoords2);
         } break;
