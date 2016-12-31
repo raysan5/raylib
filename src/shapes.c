@@ -534,3 +534,23 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 
     return retRec;
 }
+
+
+RayHitInfo RaycastGroundPlane( Ray ray, float groundHeight )
+{
+    RayHitInfo result = {0};
+
+    if (fabs(ray.direction.y) > EPSILON)
+    {
+        float t = (ray.position.y - groundHeight) / -ray.direction.y;
+        if (t >= 0.0) {
+        Vector3 camDir = ray.direction;
+        VectorScale( &camDir, t );
+        result.hit = true;
+        result.hitNormal = (Vector3){ 0.0, 1.0, 0.0};
+        result.hitPosition = VectorAdd( ray.position, camDir );
+        }
+    }
+
+    return result;
+}
