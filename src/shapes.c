@@ -544,13 +544,74 @@ RayHitInfo RaycastGroundPlane( Ray ray, float groundHeight )
     {
         float t = (ray.position.y - groundHeight) / -ray.direction.y;
         if (t >= 0.0) {
-        Vector3 camDir = ray.direction;
-        VectorScale( &camDir, t );
-        result.hit = true;
-        result.hitNormal = (Vector3){ 0.0, 1.0, 0.0};
-        result.hitPosition = VectorAdd( ray.position, camDir );
+            Vector3 rayDir = ray.direction;
+            VectorScale( &rayDir, t );
+            result.hit = true;
+            result.distance = t;
+            result.hitNormal = (Vector3){ 0.0, 1.0, 0.0};
+            result.hitPosition = VectorAdd( ray.position, rayDir );
         }
     }
-
     return result;
 }
+// Adapted from: 
+// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+RayHitInfo RaycastTriangle( Ray ray, Vector3 a, Vector3 b, Vector3 c )
+{
+    Vector3 e1, e2;  //Edge1, Edge2
+    Vector3 p, q, tv;
+    float det, inv_det, u, v;
+    float t;
+    RayHitInfo result = {0};
+    
+    //Find vectors for two edges sharing V1
+    e1 = VectorSubtract( b, a);
+    e2 = VectorSubtract( c, a);
+    
+    //Begin calculating determinant - also used to calculate u parameter
+    p = VectorCrossProduct( ray.direction, e2);
+    
+    //if determinant is near zero, ray lies in plane of triangle or ray is parallel to plane of triangle
+    det = VectorDotProduct(e1, p);
+    
+    //NOT CULLING
+    if(det > -EPSILON && det < EPSILON) return result;
+    inv_det = 1.f / det;
+    
+    //calculate distance from V1 to ray origin
+    tv = VectorSubtract( ray.position, a );
+    
+    //Calculate u parameter and test bound
+    u = VectorDotProduct(tv, p) * inv_det;
+    
+    //The intersection lies outside of the triangle
+    if(u < 0.f || u > 1.f) return result;
+    
+    //Prepare to test v parameter
+    q = VectorCrossProduct( tv, e1 );
+    
+    //Calculate V parameter and test bound
+    v = VectorDotProduct( ray.direction, q) * inv_det;
+    
+    //The intersection lies outside of the triangle
+    if(v < 0.f || (u + v)  > 1.f) return result;
+    
+    t = VectorDotProduct(e2, q) * inv_det;
+    
+    
+    if(t > EPSILON) { 
+        // ray hit, get hit point and normal
+        result.hit = true;
+        result.distance = t;
+
+        result.hit = true;
+        result.hitNormal = VectorCrossProduct( e1, e2 );
+        VectorNormalize( &result.hitNormal );
+        Vector3 rayDir = ray.direction;
+        VectorScale( &rayDir, t );        
+        result.hitPosition = VectorAdd( ray.position, rayDir );
+    }
+    
+    return result;
+}
+

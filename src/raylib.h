@@ -497,6 +497,7 @@ typedef struct Ray {
 // Information returned from a raycast
 typedef struct RayHitInfo {
     bool hit;             // Did the ray hit something?
+    float distance;       // Distance to nearest hit
     Vector3 hitPosition;  // Position of nearest hit
     Vector3 hitNormal;    // Surface normal of hit
 } RayHitInfo;
@@ -924,6 +925,8 @@ RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                      
 // Ray Casts
 //------------------------------------------------------------------------------------
 RLAPI RayHitInfo RaycastGroundPlane( Ray ray, float groundHeight );
+RLAPI RayHitInfo RaycastTriangle( Ray ray, Vector3 a, Vector3 b, Vector3 c );
+RLAPI RayHitInfo RaycastMesh( Ray ray, Mesh *mesh );
 
 //------------------------------------------------------------------------------------
 // Shaders System Functions (Module: rlgl)

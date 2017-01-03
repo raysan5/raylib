@@ -1918,3 +1918,41 @@ static Material LoadMTL(const char *fileName)
 
     return material;
 }
+
+RayHitInfo RaycastMesh( Ray ray, Mesh *mesh )
+{
+    RayHitInfo result = {0};
+
+    // If mesh doesn't have vertex data on CPU, can't test it.
+    if (!mesh->vertices) {
+        return result;
+    }
+
+    // mesh->triangleCount may not be set, vertexCount is more reliable
+    int triangleCount = mesh->vertexCount / 3;
+
+    // Test against all triangles in mesh
+    for (int i=0; i < triangleCount; i++) {
+        Vector3 a, b, c;
+        Vector3 *vertdata = (Vector3*)mesh->vertices;
+        if (mesh->indices) {
+            a = vertdata[ mesh->indices[i*3+0] ];
+            b = vertdata[ mesh->indices[i*3+1] ];
+            c = vertdata[ mesh->indices[i*3+2] ];            
+        } else {            
+            a = vertdata[i*3+0];
+            b = vertdata[i*3+1];
+            c = vertdata[i*3+2];
+        }
+
+        RayHitInfo triHitInfo = RaycastTriangle( ray, a, b, c );
+        if (triHitInfo.hit) {
+            // Save the closest hit triangle
+            if ((!result.hit)||(result.distance > triHitInfo.distance)) {
+                result = triHitInfo;
+            }
+        }
+    }
+
+    return result; 
+}
