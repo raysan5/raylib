@@ -203,7 +203,6 @@ EXAMPLES = \
     core_gestures_detection \
     core_3d_mode \
     core_3d_picking \
-    core_3d_raypick \
     core_3d_camera_free \
     core_3d_camera_first_person \
     core_2d_camera \
@@ -237,6 +236,7 @@ EXAMPLES = \
     models_obj_loading \
     models_heightmap \
     models_cubicmap \
+    models_ray_picking \
     shaders_model_shader \
     shaders_shapes_textures \
     shaders_custom_uniform \
@@ -320,11 +320,6 @@ core_3d_mode: core_3d_mode.c
 # compile [core] example - 3d picking
 core_3d_picking: core_3d_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [core] example - 3d ray picking
-core_3d_raypick: core_3d_raypick.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
 
 # compile [core] example - 3d camera free
 core_3d_camera_free: core_3d_camera_free.c
@@ -460,6 +455,10 @@ models_heightmap: models_heightmap.c
 
 # compile [models] example - cubesmap loading
 models_cubicmap: models_cubicmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - model ray picking
+models_ray_picking: models_ray_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - model shader

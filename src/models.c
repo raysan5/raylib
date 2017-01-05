@@ -1474,6 +1474,135 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     return collision;
 }
 
+// Get collision info between ray and mesh
+RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh)
+{
+    RayHitInfo result = { 0 };
+
+    // If mesh doesn't have vertex data on CPU, can't test it.
+    if (!mesh->vertices) return result;
+
+    // mesh->triangleCount may not be set, vertexCount is more reliable
+    int triangleCount = mesh->vertexCount/3;
+
+    // Test against all triangles in mesh
+    for (int i = 0; i < triangleCount; i++) 
+    {
+        Vector3 a, b, c;
+        Vector3 *vertdata = (Vector3 *)mesh->vertices;
+        
+        if (mesh->indices) 
+        {
+            a = vertdata[mesh->indices[i*3 + 0]];
+            b = vertdata[mesh->indices[i*3 + 1]];
+            c = vertdata[mesh->indices[i*3 + 2]];            
+        } 
+        else 
+        {            
+            a = vertdata[i*3 + 0];
+            b = vertdata[i*3 + 1];
+            c = vertdata[i*3 + 2];
+        }
+
+        RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
+        
+        if (triHitInfo.hit) 
+        {
+            // Save the closest hit triangle
+            if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
+        }
+    }
+
+    return result; 
+}
+
+// Get collision info between ray and triangle
+// NOTE: Based on https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
+{
+    #define EPSILON 0.000001        // A small number
+
+    Vector3 edge1, edge2;
+    Vector3 p, q, tv;
+    float det, invDet, u, v, t;
+    RayHitInfo result = {0};
+    
+    // Find vectors for two edges sharing V1
+    edge1 = VectorSubtract(p2, p1);
+    edge2 = VectorSubtract(p3, p1);
+    
+    // Begin calculating determinant - also used to calculate u parameter
+    p = VectorCrossProduct(ray.direction, edge2);
+    
+    // If determinant is near zero, ray lies in plane of triangle or ray is parallel to plane of triangle
+    det = VectorDotProduct(edge1, p);
+    
+    // Avoid culling!
+    if ((det > -EPSILON) && (det < EPSILON)) return result;
+    
+    invDet = 1.0f/det;
+    
+    // Calculate distance from V1 to ray origin
+    tv = VectorSubtract(ray.position, p1);
+    
+    // Calculate u parameter and test bound
+    u = VectorDotProduct(tv, p)*invDet;
+    
+    // The intersection lies outside of the triangle
+    if ((u < 0.0f) || (u > 1.0f)) return result;
+    
+    // Prepare to test v parameter
+    q = VectorCrossProduct(tv, edge1);
+    
+    // Calculate V parameter and test bound
+    v = VectorDotProduct(ray.direction, q)*invDet;
+    
+    // The intersection lies outside of the triangle
+    if ((v < 0.0f) || ((u + v) > 1.0f)) return result;
+    
+    t = VectorDotProduct(edge2, q)*invDet;
+    
+    if (t > EPSILON) 
+    { 
+        // Ray hit, get hit point and normal
+        result.hit = true;
+        result.distance = t;
+        result.hit = true;
+        result.hitNormal = VectorCrossProduct(edge1, edge2);
+        VectorNormalize(&result.hitNormal);
+        Vector3 rayDir = ray.direction;
+        VectorScale(&rayDir, t);        
+        result.hitPosition = VectorAdd(ray.position, rayDir);
+    }
+    
+    return result;
+}
+
+// Get collision info between ray and ground plane (Y-normal plane)
+RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
+{
+    #define EPSILON 0.000001        // A small number
+
+    RayHitInfo result = { 0 };
+
+    if (fabsf(ray.direction.y) > EPSILON)
+    {
+        float t = (ray.position.y - groundHeight)/-ray.direction.y;
+        
+        if (t >= 0.0) 
+        {
+            Vector3 rayDir = ray.direction;
+            VectorScale(&rayDir, t);
+            result.hit = true;
+            result.distance = t;
+            result.hitNormal = (Vector3){ 0.0, 1.0, 0.0 };
+            result.hitPosition = VectorAdd(ray.position, rayDir);
+        }
+    }
+    
+    return result;
+}
+
 // Calculate mesh bounding box limits
 // NOTE: minVertex and maxVertex should be transformed by model transform matrix (position, scale, rotate)
 BoundingBox CalculateBoundingBox(Mesh mesh)
@@ -1917,42 +2046,4 @@ static Material LoadMTL(const char *fileName)
     TraceLog(INFO, "[%s] Material loaded successfully", fileName);
 
     return material;
-}
-
-RayHitInfo RaycastMesh( Ray ray, Mesh *mesh )
-{
-    RayHitInfo result = {0};
-
-    // If mesh doesn't have vertex data on CPU, can't test it.
-    if (!mesh->vertices) {
-        return result;
-    }
-
-    // mesh->triangleCount may not be set, vertexCount is more reliable
-    int triangleCount = mesh->vertexCount / 3;
-
-    // Test against all triangles in mesh
-    for (int i=0; i < triangleCount; i++) {
-        Vector3 a, b, c;
-        Vector3 *vertdata = (Vector3*)mesh->vertices;
-        if (mesh->indices) {
-            a = vertdata[ mesh->indices[i*3+0] ];
-            b = vertdata[ mesh->indices[i*3+1] ];
-            c = vertdata[ mesh->indices[i*3+2] ];            
-        } else {            
-            a = vertdata[i*3+0];
-            b = vertdata[i*3+1];
-            c = vertdata[i*3+2];
-        }
-
-        RayHitInfo triHitInfo = RaycastTriangle( ray, a, b, c );
-        if (triHitInfo.hit) {
-            // Save the closest hit triangle
-            if ((!result.hit)||(result.distance > triHitInfo.distance)) {
-                result = triHitInfo;
-            }
-        }
-    }
-
-    return result; 
 }
