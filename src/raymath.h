@@ -130,6 +130,7 @@ RMDEF void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Ve
 RMDEF Vector3 VectorZero(void);                               // Return a Vector3 init to zero
 RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);          // Return min value for each pair of components
 RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);          // Return max value for each pair of components
+RMDEF Vector3 Barycentric(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycentric coords for p in triangle abc
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
@@ -378,6 +379,31 @@ RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2)
     result.x = fmaxf(vec1.x, vec2.x);
     result.y = fmaxf(vec1.y, vec2.y);
     result.z = fmaxf(vec1.z, vec2.z);
+    
+    return result;
+}
+
+// Compute barycentric coordinates (u, v, w) for
+// point p with respect to triangle (a, b, c)
+// Assumes P is on the plane of the triangle
+RMDEF Vector3 Barycentric(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+{
+
+    //Vector v0 = b - a, v1 = c - a, v2 = p - a;
+    Vector3 v0 = VectorSubtract( b, a );
+    Vector3 v1 = VectorSubtract( c, a );
+    Vector3 v2 = VectorSubtract( p, a );
+    float d00 = VectorDotProduct(v0, v0);
+    float d01 = VectorDotProduct(v0, v1);
+    float d11 = VectorDotProduct(v1, v1);
+    float d20 = VectorDotProduct(v2, v0);
+    float d21 = VectorDotProduct(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+    
+    Vector3 result;
+    result.y = (d11 * d20 - d01 * d21) / denom;
+    result.z = (d00 * d21 - d01 * d20) / denom;
+    result.x = 1.0f - (result.z + result.y);
     
     return result;
 }

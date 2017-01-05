@@ -97,6 +97,9 @@
 #define DEG2RAD (PI/180.0f)
 #define RAD2DEG (180.0f/PI)
 
+// A small number
+#define EPSILON 0.000001
+
 // raylib Config Flags
 #define FLAG_FULLSCREEN_MODE    1
 #define FLAG_RESIZABLE_WINDOW   2
@@ -490,6 +493,14 @@ typedef struct Ray {
     Vector3 position;       // Ray position (origin)
     Vector3 direction;      // Ray direction
 } Ray;
+
+// Information returned from a raycast
+typedef struct RayHitInfo {
+    bool hit;             // Did the ray hit something?
+    float distance;       // Distance to nearest hit
+    Vector3 hitPosition;  // Position of nearest hit
+    Vector3 hitNormal;    // Surface normal of hit
+} RayHitInfo;
 
 // Wave type, defines audio wave data
 typedef struct Wave {
@@ -909,6 +920,13 @@ RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphere
 RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, 
                                      Vector3 *collisionPoint);                                          // Detect collision between ray and sphere, returns collision point
 RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                              // Detect collision between ray and box
+
+//------------------------------------------------------------------------------------
+// Ray Casts
+//------------------------------------------------------------------------------------
+RLAPI RayHitInfo RaycastGroundPlane( Ray ray, float groundHeight );
+RLAPI RayHitInfo RaycastTriangle( Ray ray, Vector3 a, Vector3 b, Vector3 c );
+RLAPI RayHitInfo RaycastMesh( Ray ray, Mesh *mesh );
 
 //------------------------------------------------------------------------------------
 // Shaders System Functions (Module: rlgl)
