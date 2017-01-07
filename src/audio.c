@@ -219,6 +219,17 @@ Wave LoadWave(const char *fileName)
     if (strcmp(GetExtension(fileName), "wav") == 0) wave = LoadWAV(fileName);
     else if (strcmp(GetExtension(fileName), "ogg") == 0) wave = LoadOGG(fileName);
     else if (strcmp(GetExtension(fileName), "flac") == 0) wave = LoadFLAC(fileName);
+    else if (strcmp(GetExtension(fileName),"rres") == 0)
+    {
+        RRESData rres = LoadResource(fileName);
+        
+        // NOTE: Parameters for RRES_WAVE type are: sampleCount, sampleRate, sampleSize, channels
+        
+        if (rres.type == RRES_WAVE) wave = LoadWaveEx(rres.data, rres.param1, rres.param2, rres.param3, rres.param4);
+        else TraceLog(WARNING, "[%s] Resource file does not contain wave data", fileName);
+
+        UnloadResource(rres);
+    }
     else TraceLog(WARNING, "[%s] File extension not recognized, it can't be loaded", fileName);
 
     return wave;
