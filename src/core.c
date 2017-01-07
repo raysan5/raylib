@@ -121,6 +121,7 @@
     // Old device inputs system
     #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
     #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"       // Mouse input
+    #define DEFAULT_TOUCH_DEV         "/dev/input/event4"       // Touch input virtual device (created by ts_uinput)
     #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
 
     // New device input events (evdev) (must be detected)
@@ -173,6 +174,11 @@ static int defaultKeyboardMode;                 // Used to store default keyboar
 static int mouseStream = -1;                    // Mouse device file descriptor
 static bool mouseReady = false;                 // Flag to know if mouse is ready
 static pthread_t mouseThreadId;                 // Mouse reading thread id
+
+// Touch input variables
+static int touchStream = -1;                    // Touch device file descriptor
+static bool touchReady = false;                 // Flag to know if touch interface is ready
+static pthread_t touchThreadId;                 // Touch reading thread id
 
 // Gamepad input variables
 static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descriptor
@@ -301,6 +307,8 @@ static void ProcessKeyboard(void);                      // Process keyboard even
 static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
 static void *MouseThread(void *arg);                    // Mouse reading thread
+static void InitTouch(void);                            // Touch device initialization (including touch thread)
+static void *TouchThread(void *arg);                    // Touch device reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
@@ -332,6 +340,7 @@ void InitWindow(int width, int height, const char *title)
 #if defined(PLATFORM_RPI)
     // Init raw input system
     InitMouse();        // Mouse init
+    InitTouch();        // Touch init
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
 #endif
@@ -473,6 +482,7 @@ void CloseWindow(void)
     windowShouldClose = true;   // Added to force threads to exit when the close window is called
     
     pthread_join(mouseThreadId, NULL);
+    pthread_join(touchThreadId, NULL);
     pthread_join(gamepadThreadId, NULL);
 #endif
 
@@ -2871,6 +2881,55 @@ static void *MouseThread(void *arg)
        //else read(mouseStream, &mouse, 1);   // Try to sync up again
     }
 
+    return NULL;
+}
+
+// Touch initialization (including touch thread)
+static void InitTouch(void)
+{
+    if ((touchStream = open(DEFAULT_TOUCH_DEV, O_RDONLY|O_NONBLOCK)) < 0)
+    {
+        TraceLog(WARNING, "Touch device could not be opened, no touchscreen available");
+    }
+    else
+    {
+        touchReady = true;
+
+        int error = pthread_create(&touchThreadId, NULL, &TouchThread, NULL);
+
+        if (error != 0) TraceLog(WARNING, "Error creating touch input event thread");
+        else TraceLog(INFO, "Touch device initialized successfully");
+    }
+}
+
+// Touch reading thread.
+// This reads from a Virtual Input Event /dev/input/event4 which is 
+// created by the ts_uinput daemon. This takes, filters and scales
+// raw input from the Touchscreen (which appears in /dev/input/event3)
+// based on the Calibration data referenced by tslib.
+static void *TouchThread(void *arg)
+{
+    struct input_event ev;
+
+    while (!windowShouldClose)
+    {
+        if (read(touchStream, &ev, sizeof(ev)) == (int)sizeof(ev))
+        {
+
+            // if pressure > 0 then simulate left mouse button click
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value == 0) currentMouseState[0] = 0; 
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value > 0) currentMouseState[0] = 1; 
+            // x & y values supplied by event4 have been scaled & de-jittered using tslib calibration data
+            if (ev.type == EV_ABS && ev.code == 0) mousePosition.x = ev.value;			
+            if (ev.type == EV_ABS && ev.code == 1) mousePosition.y = ev.value;			
+
+            if (mousePosition.x < 0) mousePosition.x = 0;
+            if (mousePosition.y < 0) mousePosition.y = 0;
+
+            if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
+            if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
+        }
+    }
     return NULL;
 }
 
