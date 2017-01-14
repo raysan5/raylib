@@ -2910,24 +2910,79 @@ static void InitTouch(void)
 static void *TouchThread(void *arg)
 {
     struct input_event ev;
+    GestureEvent gestureEvent;
 
     while (!windowShouldClose)
     {
         if (read(touchStream, &ev, sizeof(ev)) == (int)sizeof(ev))
         {
-
             // if pressure > 0 then simulate left mouse button click
-            if (ev.type == EV_ABS && ev.code == 24 && ev.value == 0) currentMouseState[0] = 0; 
-            if (ev.type == EV_ABS && ev.code == 24 && ev.value > 0) currentMouseState[0] = 1; 
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value == 0 && currentMouseState[0] == 1) 
+            {
+                currentMouseState[0] = 0;
+                gestureEvent.touchAction = TOUCH_UP;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            } 
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value > 0 && currentMouseState[0] == 0) 
+            {
+                currentMouseState[0] = 1;   
+                gestureEvent.touchAction = TOUCH_DOWN;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            } 
             // x & y values supplied by event4 have been scaled & de-jittered using tslib calibration data
-            if (ev.type == EV_ABS && ev.code == 0) mousePosition.x = ev.value;			
-            if (ev.type == EV_ABS && ev.code == 1) mousePosition.y = ev.value;			
-
-            if (mousePosition.x < 0) mousePosition.x = 0;
-            if (mousePosition.y < 0) mousePosition.y = 0;
-
-            if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
-            if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
+            if (ev.type == EV_ABS && ev.code == 0) 
+            {
+                mousePosition.x = ev.value;
+                if (mousePosition.x < 0) mousePosition.x = 0;
+                if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
+                gestureEvent.touchAction = TOUCH_MOVE;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            }
+            if (ev.type == EV_ABS && ev.code == 1) 
+            {
+                mousePosition.y = ev.value;
+                if (mousePosition.y < 0) mousePosition.y = 0;
+                if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
+                gestureEvent.touchAction = TOUCH_MOVE;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            }
+ 
         }
     }
     return NULL;
