@@ -21,7 +21,7 @@
 *
 *   Some design decisions:
 *       Support only up to two channels: MONO and STEREO (for additional channels, AL_EXT_MCFORMATS)
-*       Support only the following sample sizes: 8bit PCM and 16bit PCM (for additional size, AL_EXT_FLOAT32)
+*       Support only the following sample sizes: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
 *
 *   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
 *       XM audio module support (jar_xm)
@@ -97,6 +97,15 @@
 // and double-buffering system, I concluded that a 4096 samples buffer should be enough
 // In case of music-stalls, just increase this number
 #define AUDIO_BUFFER_SIZE        4096    // PCM data samples (i.e. 16bit, Mono: 8Kb)
+
+// Support uncompressed PCM data in 32-bit float IEEE format
+// NOTE: This definition is included in "AL/alext.h", but some OpenAL implementations
+// could not provide the extensions header (Android), so its defined here
+#if !defined(AL_EXT_float32)
+    #define AL_EXT_float32              1
+    #define AL_FORMAT_MONO_FLOAT32      0x10010
+    #define AL_FORMAT_STEREO_FLOAT32    0x10011
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -284,7 +293,7 @@ Sound LoadSoundFromWave(Wave wave)
             {
                 case 8: format = AL_FORMAT_MONO8; break;
                 case 16: format = AL_FORMAT_MONO16; break;
-                case 32: //format = AL_FORMAT_MONO_FLOAT32; break;  // Requires OpenAL extension: AL_EXT_FLOAT32
+                case 32: format = AL_FORMAT_MONO_FLOAT32; break;  // Requires OpenAL extension: AL_EXT_FLOAT32
                 default: TraceLog(WARNING, "Wave sample size not supported: %i", wave.sampleSize); break;
             }
         }
@@ -294,7 +303,7 @@ Sound LoadSoundFromWave(Wave wave)
             {
                 case 8: format = AL_FORMAT_STEREO8; break;
                 case 16: format = AL_FORMAT_STEREO16; break;
-                case 32: //format = AL_FORMAT_STEREO_FLOAT32; break;  // Requires OpenAL extension: AL_EXT_FLOAT32
+                case 32: format = AL_FORMAT_STEREO_FLOAT32; break;  // Requires OpenAL extension: AL_EXT_FLOAT32
                 default: TraceLog(WARNING, "Wave sample size not supported: %i", wave.sampleSize); break;
             }
         }
@@ -863,7 +872,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
         {
             case 8: stream.format = AL_FORMAT_MONO8; break;
             case 16: stream.format = AL_FORMAT_MONO16; break;
-            case 32: //stream.format = AL_FORMAT_MONO_FLOAT32; break; // Requires OpenAL extension: AL_EXT_FLOAT32
+            case 32: stream.format = AL_FORMAT_MONO_FLOAT32; break;     // Requires OpenAL extension: AL_EXT_FLOAT32
             default: TraceLog(WARNING, "Init audio stream: Sample size not supported: %i", sampleSize); break;
         }
     }
@@ -873,7 +882,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
         {
             case 8: stream.format = AL_FORMAT_STEREO8; break;
             case 16: stream.format = AL_FORMAT_STEREO16; break;
-            case 32: //stream.format = AL_FORMAT_STEREO_FLOAT32; break; // Requires OpenAL extension: AL_EXT_FLOAT32
+            case 32: stream.format = AL_FORMAT_STEREO_FLOAT32; break;   // Requires OpenAL extension: AL_EXT_FLOAT32
             default: TraceLog(WARNING, "Init audio stream: Sample size not supported: %i", sampleSize); break;
         }
     }
