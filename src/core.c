@@ -561,14 +561,14 @@ void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #ifdef __linux
-        XColor Col;
-        const char Nil[] = {0};
+        XColor col;
+        const char nil[] = {0};
 
-        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
-        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
+        Pixmap pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), nil, 1, 1);
+        Cursor cur = XCreatePixmapCursor(glfwGetX11Display(), pix, pix, &col, &col, 0, 0);
 
-        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
-        XFreeCursor(glfwGetX11Display(), Cur);
+        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), cur);
+        XFreeCursor(glfwGetX11Display(), cur);
     #else
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     #endif
