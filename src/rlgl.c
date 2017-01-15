@@ -48,7 +48,7 @@
 
 #include "rlgl.h"
 
-#include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on ReadTextFile()]
+#include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on LoadText()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
 #include <string.h>                 // Required for: strcmp(), strlen(), strtok()
 #include <math.h>                   // Required for: atan2()
@@ -400,8 +400,6 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
 
 static void GetShaderLightsLocations(Shader shader);    // Get shader locations for lights (up to MAX_LIGHTS)
 static void SetShaderLightsValues(Shader shader);       // Set shader uniform values for lights
-
-static char *ReadTextFile(const char *fileName);        // Read chars array from text file
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
@@ -2423,6 +2421,40 @@ Texture2D GetDefaultTexture(void)
     return texture;
 }
 
+// Load text data from file
+// NOTE: text chars array should be freed manually
+char *LoadText(const char *fileName)
+{
+    FILE *textFile;
+    char *text = NULL;
+
+    int count = 0;
+
+    if (fileName != NULL)
+    {
+        textFile = fopen(fileName,"rt");
+
+        if (textFile != NULL)
+        {
+            fseek(textFile, 0, SEEK_END);
+            count = ftell(textFile);
+            rewind(textFile);
+
+            if (count > 0)
+            {
+                text = (char *)malloc(sizeof(char)*(count + 1));
+                count = fread(text, sizeof(char), count, textFile);
+                text[count] = '\0';
+            }
+
+            fclose(textFile);
+        }
+        else TraceLog(WARNING, "[%s] Text file could not be opened", fileName);
+    }
+
+    return text;
+}
+
 // Load shader from files and bind default locations
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
@@ -2430,8 +2462,8 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
-    char *vShaderStr = ReadTextFile(vsFileName);
-    char *fShaderStr = ReadTextFile(fsFileName);
+    char *vShaderStr = LoadText(vsFileName);
+    char *fShaderStr = LoadText(fsFileName);
     
     if ((vShaderStr != NULL) && (fShaderStr != NULL))
     {
@@ -3827,40 +3859,6 @@ static void SetShaderLightsValues(Shader shader)
             glUniform1i(lightsLocs[i][0], 0);   // Light disabled
         }
     }
-}
-
-// Read text data from file
-// NOTE: text chars array should be freed manually
-static char *ReadTextFile(const char *fileName)
-{
-    FILE *textFile;
-    char *text = NULL;
-
-    int count = 0;
-
-    if (fileName != NULL)
-    {
-        textFile = fopen(fileName,"rt");
-
-        if (textFile != NULL)
-        {
-            fseek(textFile, 0, SEEK_END);
-            count = ftell(textFile);
-            rewind(textFile);
-
-            if (count > 0)
-            {
-                text = (char *)malloc(sizeof(char)*(count + 1));
-                count = fread(text, sizeof(char), count, textFile);
-                text[count] = '\0';
-            }
-
-            fclose(textFile);
-        }
-        else TraceLog(WARNING, "[%s] Text file could not be opened", fileName);
-    }
-
-    return text;
 }
 
 // Configure stereo rendering (including distortion shader) with HMD device parameters
