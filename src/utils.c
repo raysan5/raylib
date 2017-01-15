@@ -52,6 +52,7 @@
 #define RRES_IMPLEMENTATION
 #include "rres.h"
 
+//#define NO_TRACELOG                 // Avoid TraceLog() output (any type)
 #define DO_NOT_TRACE_DEBUG_MSGS     // Avoid DEBUG messages tracing
 
 //----------------------------------------------------------------------------------
@@ -74,59 +75,11 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-// Creates a BMP image file from an array of pixel data
-void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
-{
-    stbi_write_bmp(fileName, width, height, compSize, imgData);
-}
-
-// Creates a PNG image file from an array of pixel data
-void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
-{
-    stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
-}
-#endif
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-// Outputs a trace log message (INFO, ERROR, WARNING)
-// NOTE: If a file has been init, output log is written there
+// Outputs a trace log message
 void TraceLog(int msgType, const char *text, ...)
 {
-    va_list args;
-    int traceDebugMsgs = 1;
-
-#ifdef DO_NOT_TRACE_DEBUG_MSGS
-    traceDebugMsgs = 0;
-#endif
-
-    switch(msgType)
-    {
-        case INFO: fprintf(stdout, "INFO: "); break;
-        case ERROR: fprintf(stdout, "ERROR: "); break;
-        case WARNING: fprintf(stdout, "WARNING: "); break;
-        case DEBUG: if (traceDebugMsgs) fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    if ((msgType != DEBUG) || ((msgType == DEBUG) && (traceDebugMsgs)))
-    {
-        va_start(args, text);
-        vfprintf(stdout, text, args);
-        va_end(args);
-
-        fprintf(stdout, "\n");
-    }
-
-    if (msgType == ERROR) exit(1);      // If ERROR message, exit program
-}
-#endif
-
-#if defined(PLATFORM_ANDROID)
-void TraceLog(int msgType, const char *text, ...)
-{
-    static char buffer[100];
+#if !defined(NO_TRACELOG)
+    static char buffer[128];
     int traceDebugMsgs = 1;
     
 #ifdef DO_NOT_TRACE_DEBUG_MSGS
@@ -146,8 +99,9 @@ void TraceLog(int msgType, const char *text, ...)
     strcat(buffer, "\n");
 
     va_list args;
-    va_start(args, buffer);
+    va_start(args, text);
 
+#if defined(PLATFORM_ANDROID)
     switch(msgType)
     {
         case INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", buffer, args); break;
@@ -156,12 +110,32 @@ void TraceLog(int msgType, const char *text, ...)
         case DEBUG: if (traceDebugMsgs) __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", buffer, args); break;
         default: break;
     }
+#else
+    if ((msgType != DEBUG) || ((msgType == DEBUG) && (traceDebugMsgs))) vprintf(buffer, args);
+#endif
 
     va_end(args);
 
-    if (msgType == ERROR) exit(1);
+    if (msgType == ERROR) exit(1);  // If ERROR message, exit program
+    
+#endif  // NO_TRACELOG
 }
 
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+// Creates a BMP image file from an array of pixel data
+void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
+{
+    stbi_write_bmp(fileName, width, height, compSize, imgData);
+}
+
+// Creates a PNG image file from an array of pixel data
+void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
+{
+    stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
+}
+#endif
+
+#if defined(PLATFORM_ANDROID)
 // Initialize asset manager from android app
 void InitAssetManager(AAssetManager *manager)
 {
@@ -197,23 +171,6 @@ const char *GetExtension(const char *fileName)
     const char *dot = strrchr(fileName, '.');
     if (!dot || dot == fileName) return "";
     return (dot + 1);
-}
-
-// Calculate next power-of-two value for a given num
-int GetNextPOT(int num)
-{
-    if (num != 0)
-    {
-        num--;
-        num |= (num >> 1);     // Or first 2 bits
-        num |= (num >> 2);     // Or next 2 bits
-        num |= (num >> 4);     // Or next 4 bits
-        num |= (num >> 8);     // Or next 8 bits
-        num |= (num >> 16);    // Or next 16 bits
-        num++;
-    }
-
-    return num;
 }
 
 //----------------------------------------------------------------------------------

@@ -36,7 +36,7 @@
 #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 
-#include "utils.h"          // Required for: GetExtension(), GetNextPOT()
+#include "utils.h"          // Required for: GetExtension()
 
 // Following libs are used on LoadTTF()
 #define STBTT_STATIC        // Define stb_truetype functions static to this module
@@ -930,7 +930,10 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int numChars, int 
     // NOTE: Font texture size is predicted (being as much conservative as possible)
     // Predictive method consist of supposing same number of chars by line-column (sqrtf)
     // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
-    int textureSize = GetNextPOT(ceil((float)fontSize*3/4)*ceil(sqrtf((float)numChars)));
+    
+    // Calculate next power-of-two value
+    float guessSize = ceilf((float)fontSize*3/4)*ceilf(sqrtf((float)numChars));
+    int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));      // Calculate next POT
     
     TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
 

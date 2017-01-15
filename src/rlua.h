@@ -3232,14 +3232,6 @@ int lua_GetExtension(lua_State* L)
     return 1;
 }
 
-int lua_GetNextPOT(lua_State* L)
-{
-    int arg1 = LuaGetArgument_int(L, 1);
-    int result = GetNextPOT(arg1);
-    lua_pushinteger(L, result);
-    return 1;
-}
-
 //----------------------------------------------------------------------------------
 // raylib [raymath] module functions - Vector3 math
 //----------------------------------------------------------------------------------
@@ -3955,7 +3947,6 @@ static luaL_Reg raylib_functions[] = {
 #endif
     REG(TraceLog)
     REG(GetExtension)
-    REG(GetNextPOT)
     REG(VectorAdd)
     REG(VectorSubtract)
     REG(VectorCrossProduct)

@@ -758,9 +758,10 @@ void ImageToPOT(Image *image, Color fillColor)
 {
     Color *pixels = GetImageData(*image);   // Get pixels data
 
-    // Just add the required amount of pixels at the right and bottom sides of image...
-    int potWidth = GetNextPOT(image->width);
-    int potHeight = GetNextPOT(image->height);
+    // Calculate next power-of-two values
+    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
+    int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
+    int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
 
     // Check if POT texture generation is required (if texture is not already POT)
     if ((potWidth != image->width) || (potHeight != image->height))
@@ -1342,8 +1343,9 @@ void ImageColorBrightness(Image *image, int brightness)
 void GenTextureMipmaps(Texture2D *texture)
 {
 #if PLATFORM_WEB
-    int potWidth = GetNextPOT(texture->width);
-    int potHeight = GetNextPOT(texture->height);
+    // Calculate next power-of-two values
+    int potWidth = (int)powf(2, ceilf(logf((float)texture->width)/logf(2)));
+    int potHeight = (int)powf(2, ceilf(logf((float)texture->height)/logf(2)));
 
     // Check if texture is POT
     if ((potWidth != texture->width) || (potHeight != texture->height))
