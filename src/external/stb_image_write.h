@@ -1,4 +1,4 @@
-/* stb_image_write - v1.02 - public domain - http://nothings.org/stb/stb_image_write.h
+/* stb_image_write - v1.03 - public domain - http://nothings.org/stb/stb_image_write.h
    writes out PNG/BMP/TGA images to C stdio - Sean Barrett 2010-2015
                                      no warranty implied; use at your own risk
 
@@ -103,6 +103,7 @@ CREDITS:
       Jonas Karlsson
       Filip Wasil
       Thatcher Ulrich
+      github:poppolopoppo
       
 LICENSE
 
@@ -475,7 +476,6 @@ int stbi_write_tga(char const *filename, int x, int y, int comp, const void *dat
 // *************************************************************************************************
 // Radiance RGBE HDR writer
 // by Baldur Karlsson
-#ifndef STBI_WRITE_NO_STDIO
 
 #define stbiw__max(a, b)  ((a) > (b) ? (a) : (b))
 
@@ -630,6 +630,7 @@ int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x, int y, i
    return stbi_write_hdr_core(&s, x, y, comp, (float *) data);
 }
 
+#ifndef STBI_WRITE_NO_STDIO
 int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
 {
    stbi__write_context s;
