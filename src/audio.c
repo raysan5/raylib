@@ -324,7 +324,7 @@ Sound LoadSoundFromWave(Wave wave)
         ALuint buffer;
         alGenBuffers(1, &buffer);            // Generate pointer to buffer
 
-        unsigned int dataSize = wave.sampleCount*wave.sampleSize/8*wave.channels;    // Size in bytes
+        unsigned int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;    // Size in bytes
 
         // Upload sound data to buffer
         alBufferData(buffer, format, wave.data, dataSize, wave.sampleRate);
@@ -345,7 +345,7 @@ Sound LoadSoundFromWave(Wave wave)
 // Unload wave data
 void UnloadWave(Wave wave)
 {
-    free(wave.data);
+    if (wave.data != NULL) free(wave.data);
 
     TraceLog(INFO, "Unloaded wave data from RAM");
 }
@@ -374,7 +374,7 @@ void UpdateSound(Sound sound, const void *data, int numSamples)
     TraceLog(DEBUG, "UpdateSound() : AL_BITS: %i", sampleSize);
     TraceLog(DEBUG, "UpdateSound() : AL_CHANNELS: %i", channels);
 
-    unsigned int dataSize = numSamples*sampleSize/8*channels;   // Size of data in bytes
+    unsigned int dataSize = numSamples*channels*sampleSize/8;   // Size of data in bytes
     
     alSourceStop(sound.source);                 // Stop sound
     alSourcei(sound.source, AL_BUFFER, 0);      // Unbind buffer from sound to update
