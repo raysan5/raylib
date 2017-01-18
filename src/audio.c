@@ -608,7 +608,7 @@ Music LoadMusicStream(const char *fileName)
 
             // OGG bit rate defaults to 16 bit, it's enough for compressed format
             music->stream = InitAudioStream(info.sample_rate, 16, info.channels);
-            music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg);
+            music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg); // Independent by channel
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_OGG;
             music->loop = true;                  // We loop by default
@@ -1134,20 +1134,17 @@ static Wave LoadOGG(const char *fileName)
         wave.sampleRate = info.sample_rate;
         wave.sampleSize = 16;                   // 16 bit per sample (short)
         wave.channels = info.channels;
-
-        int totalSamplesLength = (stb_vorbis_stream_length_in_samples(oggFile)*info.channels);
+        wave.sampleCount = (int)stb_vorbis_stream_length_in_samples(oggFile);
+        
         float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
-
         if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio lenght is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
 
-        int totalSamples = (int)(totalSeconds*info.sample_rate*info.channels);
-        wave.sampleCount = totalSamples;
+        wave.data = (short *)malloc(wave.sampleCount*wave.channels*sizeof(short));
 
-        wave.data = (short *)malloc(totalSamplesLength*sizeof(short));
+        // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
+        int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
 
-        int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, totalSamplesLength);
-
-        TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, samplesObtained);
+        TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, numSamplesOgg);
 
         TraceLog(INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
 
