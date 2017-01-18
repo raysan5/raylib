@@ -353,6 +353,8 @@ void UnloadWave(Wave wave)
 // Unload sound
 void UnloadSound(Sound sound)
 {
+    alSourceStop(sound.source);
+    
     alDeleteSources(1, &sound.source);
     alDeleteBuffers(1, &sound.buffer);
 
