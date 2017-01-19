@@ -459,7 +459,15 @@ void SetSoundPitch(Sound sound, float pitch)
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
     // Format sample rate
-    if (wave->sampleRate != sampleRate) wave->sampleRate = sampleRate;
+    // NOTE: Only supported 22050 <--> 44100
+    if (wave->sampleRate != sampleRate)
+    {
+        // TODO: Resample wave data (upsampling or downsampling)
+        // NOTE 1: To downsample, you have to drop samples or average them. 
+        // NOTE 2: To upsample, you have to interpolate new samples.
+        
+        wave->sampleRate = sampleRate;
+    }
     
     // Format sample size
     // NOTE: Only supported 8 bit <--> 16 bit <--> 32 bit
@@ -1078,23 +1086,23 @@ static Wave LoadWAV(const char *fileName)
                 else
                 {
                     // Allocate memory for data
-                    wave.data = (unsigned char *)malloc(sizeof(unsigned char)*wavData.subChunkSize);
+                    wave.data = malloc(wavData.subChunkSize);
 
                     // Read in the sound data into the soundData variable
-                    fread(wave.data, wavData.subChunkSize, 1, wavFile);
+                    fread(wave.data, 1, wavData.subChunkSize, wavFile);
 
                     // Store wave parameters
                     wave.sampleRate = wavFormat.sampleRate;
                     wave.sampleSize = wavFormat.bitsPerSample;
                     wave.channels = wavFormat.numChannels;
                     
-                    // NOTE: Only support up to 16 bit sample sizes
-                    if (wave.sampleSize > 16)
+                    // NOTE: Only support 8 bit, 16 bit and 32 bit sample sizes
+                    if ((wave.sampleSize != 8) && (wave.sampleSize != 16) && (wave.sampleSize != 32))
                     {
-                        WaveFormat(&wave, wave.sampleRate, 16, wave.channels);
                         TraceLog(WARNING, "[%s] WAV sample size (%ibit) not supported, converted to 16bit", fileName, wave.sampleSize);
+                        WaveFormat(&wave, wave.sampleRate, 16, wave.channels);
                     }
-                    
+
                     // NOTE: Only support up to 2 channels (mono, stereo)
                     if (wave.channels > 2) 
                     {
