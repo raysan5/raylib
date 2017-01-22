@@ -839,7 +839,13 @@ void SetMusicPitch(Music music, float pitch)
 {
     alSourcef(music->stream.source, AL_PITCH, pitch);
 }
-
+/*
+// Set music speed
+void SetMusicSpeed(Music music, float pitch)
+{
+    alSourcef(music->stream.source, AL_PITCH, 0.5f);
+}
+*/
 // Get music time length (in seconds)
 float GetMusicTimeLength(Music music)
 {

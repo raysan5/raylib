@@ -35,7 +35,9 @@ int main()
     
     Model dwarf = LoadModel("resources/model/dwarf.obj");                     // Load OBJ model
 
-    Material material = LoadStandardMaterial();
+    Material material;// = LoadStandardMaterial();
+    
+    material.shader = LoadShader("resources/shaders/glsl330/standard.vs", "resources/shaders/glsl330/standard.fs");
     
     material.texDiffuse = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model diffuse texture
     material.texNormal = LoadTexture("resources/model/dwarf_normal.png");     // Load model normal texture
