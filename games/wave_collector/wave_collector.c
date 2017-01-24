@@ -173,13 +173,10 @@ void UpdateTransition(void)
     {
         transAlpha += 0.05f;
         
-        printf("transAlpha: %f\n", transAlpha);
-
-        // TODO: Investigate this! SO WEIRD! Comparing with 1.0f does not work! Compiler optimization???
-        if (transAlpha > 1.00001f)   // Make sure alpha is greater than 1.0, to avoid last frame loading stop
+        // NOTE: Due to float internal representation, condition jumps on 1.0f instead of 1.05f
+        // For that reason we compare against 1.01f, to avoid last frame loading stop
+        if (transAlpha > 1.01f)
         {
-            printf("alpha on change: %e\n", transAlpha);
-            
             transAlpha = 1.0f;
         
             // Unload current screen
@@ -272,7 +269,7 @@ void UpdateDrawFrame(void)
     }
     else UpdateTransition();    // Update transition (fade-in, fade-out)
     
-    // TODO: Review! It breaks the game sometimes!!!
+    // TODO: Review! It breaks the game... issues with audio buffering...
     if (currentScreen != ENDING) UpdateMusicStream(music);
     //----------------------------------------------------------------------------------
     
