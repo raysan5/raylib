@@ -494,7 +494,7 @@ bool WindowShouldClose(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // While window minimized, stop loop execution
-    while (windowMinimized) glfwPollEvents();
+    while (windowMinimized) glfwWaitEvents();
 
     return (glfwWindowShouldClose(window));
 #endif
