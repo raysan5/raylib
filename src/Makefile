@@ -83,6 +83,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ANDROID_TOOLCHAIN = $(CURDIR)/toolchain
 endif
 
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CROSS_COMPILE ?= NO
+endif
+
 # define raylib graphics api depending on selected platform
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
@@ -121,6 +125,13 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
         else
             CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-gcc
         endif
+    endif
+endif
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    ifeq ($(CROSS_COMPILE),YES)
+    	# rpi compiler
+        CC = armv6j-hardfloat-linux-gnueabi-gcc
     endif
 endif
 
@@ -170,11 +181,6 @@ endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -Iexternal -I/opt/vc/include \
-    -I/opt/vc/include/interface/vmcs_host/linux \
-    -I/opt/vc/include/interface/vcos/pthreads
-endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 # STB libraries and others
     INCLUDES = -I. -Iexternal
@@ -188,6 +194,16 @@ else
     INCLUDES = -I. -Iexternal
 # GLFW3 library
     INCLUDES += -Iexternal/glfw3/include
+# OpenAL Soft library
+    INCLUDES += -Iexternal/openal_soft/include
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+# STB libraries and others
+    INCLUDES = -I. -Iexternal
+# RPi libraries
+    INCLUDES += -I/opt/vc/include
+    INCLUDES += -I/opt/vc/include/interface/vmcs_host/linux
+    INCLUDES += -I/opt/vc/include/interface/vcos/pthreads
 # OpenAL Soft library
     INCLUDES += -Iexternal/openal_soft/include
 endif
