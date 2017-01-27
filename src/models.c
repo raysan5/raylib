@@ -574,43 +574,6 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
-
-// Draw light in 3D world
-void DrawLight(Light light)
-{
-    switch (light->type)
-    {
-        case LIGHT_POINT:
-        {
-            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
-            
-            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 0, 0 }, 0.0f, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, (Vector3){ 1, 0, 0 }, 90.0f, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 1, 0 },90.0f, (light->enabled ? light->diffuse : GRAY));
-        } break;
-        case LIGHT_DIRECTIONAL:
-        {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
-            
-            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
-        } break;
-        case LIGHT_SPOT:
-        {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
-            
-            Vector3 dir = VectorSubtract(light->target, light->position);
-            VectorNormalize(&dir);
-            
-            DrawCircle3D(light->position, 0.5f, dir, 0.0f, (light->enabled ? light->diffuse : GRAY));
-            
-            //DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : GRAY));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
-        } break;
-        default: break;
-    }
-}
-
 // Load mesh from file
 Mesh LoadMesh(const char *fileName)
 {
@@ -747,17 +710,6 @@ Material LoadDefaultMaterial(void)
     material.colSpecular = WHITE;   // Specular color
 
     material.glossiness = 100.0f;   // Glossiness level
-
-    return material;
-}
-
-// Load standard material (uses material attributes and lighting shader)
-// NOTE: Standard shader supports multiple maps and lights
-Material LoadStandardMaterial(void)
-{
-    Material material = LoadDefaultMaterial();
-
-    material.shader = GetStandardShader();
 
     return material;
 }

@@ -12,7 +12,6 @@
 *     Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
 *     Multiple textures support, including compressed formats and mipmaps generation
 *     Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
-*     Materials (diffuse, normal, specular) and Lighting (point, directional, spot) support
 *     Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
 *     Audio loading and playing with streaming support and mixing channels [audio]
 *     VR stereo rendering support with configurable HMD device parameters
@@ -466,25 +465,6 @@ typedef struct Model {
     Material material;      // Shader and textures data
 } Model;
 
-// Light type
-typedef struct LightData {
-    unsigned int id;        // Light unique id
-    bool enabled;           // Light enabled
-    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-
-    Vector3 position;       // Light position
-    Vector3 target;         // Light direction: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-    float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
-
-    Color diffuse;          // Light diffuse color
-    float intensity;        // Light intensity level
-
-    float coneAngle;        // Light cone max angle: LIGHT_SPOT
-} LightData, *Light;
-
-// Light types
-typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
-
 // Ray type (useful for raycast)
 typedef struct Ray {
     Vector3 position;       // Ray position (origin)
@@ -876,7 +856,6 @@ RLAPI void DrawPlane(Vector3 centerPos, Vector2 size, Color color);             
 RLAPI void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 RLAPI void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
-RLAPI void DrawLight(Light light);                                                                       // Draw light in 3D world
 //DrawTorus(), DrawTeapot() could be useful?
 
 //------------------------------------------------------------------------------------
@@ -894,7 +873,6 @@ RLAPI void UnloadModel(Model model);                                            
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
 RLAPI Material LoadMaterialEx(Shader shader, Texture2D diffuse, Color color);                           // Load material from basic shading data
 RLAPI Material LoadDefaultMaterial(void);                                                               // Load default material (uses default models shader)
-RLAPI Material LoadStandardMaterial(void);                                                              // Load standard material (uses material attributes and lighting shader)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
@@ -930,7 +908,6 @@ RLAPI Shader LoadShader(char *vsFileName, char *fsFileName);              // Loa
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
 RLAPI Shader GetDefaultShader(void);                                      // Get default shader
-RLAPI Shader GetStandardShader(void);                                     // Get standard shader
 RLAPI Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
@@ -945,9 +922,6 @@ RLAPI void BeginShaderMode(Shader shader);                                // Beg
 RLAPI void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
-
-RLAPI Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
-RLAPI void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 //------------------------------------------------------------------------------------
 // VR experience Functions (Module: rlgl)

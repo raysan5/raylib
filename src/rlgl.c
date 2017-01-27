@@ -22,7 +22,6 @@
 *       GRAPHICS_API_OPENGL_ES2 - Use OpenGL ES 2.0 backend
 *
 *       RLGL_STANDALONE             - Use rlgl as standalone library (no raylib dependency)
-*       RLGL_NO_STANDARD_SHADER     - Avoid standard shader (shader_standard.h) inclusion
 *       RLGL_NO_DISTORTION_SHADER   - Avoid stereo rendering distortion sahder (shader_distortion.h) inclusion
 *       RLGL_OCULUS_SUPPORT         - Enable Oculus Rift CV1 functionality
 *
@@ -92,10 +91,6 @@
     #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
 #endif
 
-#if !defined(GRAPHICS_API_OPENGL_11) && !defined(RLGL_NO_STANDARD_SHADER)
-    #include "shader_standard.h"    // Standard shader to be embedded
-#endif
-
 #if !defined(GRAPHICS_API_OPENGL_11) && !defined(RLGL_NO_DISTORTION_SHADER)
     #include "shader_distortion.h"  // Distortion shader to be embedded
 #endif
@@ -118,8 +113,6 @@
 #define MAX_DRAWS_BY_TEXTURE      256   // Draws are organized by texture changes
 #define TEMP_VERTEX_BUFFER_SIZE  4096   // Temporal Vertex Buffer (required for vertex-transformations)
                                         // NOTE: Every vertex are 3 floats (12 bytes)
-                                        
-#define MAX_LIGHTS                  8   // Max lights supported by standard shader
 
 #ifndef GL_SHADING_LANGUAGE_VERSION
     #define GL_SHADING_LANGUAGE_VERSION         0x8B8C
@@ -305,10 +298,7 @@ static bool useTempBuffer = false;
 
 // Shader Programs
 static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
-static Shader standardShader;               // Shader with support for lighting and materials
-                                            // NOTE: Lazy initialization when GetStandardShader()
 static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
-static bool standardShaderLoaded = false;   // Flag to track if standard shader has been loaded
 
 // Extension supported flag: VAO
 static bool vaoSupported = false;           // VAO support (OpenGL ES2 could not support VAO extension)
@@ -368,12 +358,6 @@ static unsigned int whiteTexture;
 static int screenWidth;     // Default framebuffer width
 static int screenHeight;    // Default framebuffer height
 
-// Lighting data
-static Light lights[MAX_LIGHTS];            // Lights pool
-static int lightsCount = 0;                 // Enabled lights counter
-static int lightsLocs[MAX_LIGHTS][8];       // Lights location points in shader: 8 possible points per light: 
-                                            // enabled, type, position, target, radius, diffuse, intensity, coneAngle
-
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
@@ -382,10 +366,8 @@ static void LoadCompressedTexture(unsigned char *data, int width, int height, in
 static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShaderStr);  // Load custom shader strings and return program id
 
 static Shader LoadDefaultShader(void);      // Load default shader (just vertex positioning and texture coloring)
-static Shader LoadStandardShader(void);     // Load standard shader (support materials and lighting)
 static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadDefaultShader(void);      // Unload default shader
-static void UnloadStandardShader(void);     // Unload standard shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
@@ -397,9 +379,6 @@ static void SetStereoConfig(VrDeviceInfo info);
 
 // Set internal projection and modelview matrix depending on eyes tracking data
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
-
-static void GetShaderLightsLocations(Shader shader);    // Get shader locations for lights (up to MAX_LIGHTS)
-static void SetShaderLightsValues(Shader shader);       // Set shader uniform values for lights
 #endif
 
 #if defined(RLGL_OCULUS_SUPPORT)
@@ -1328,19 +1307,11 @@ void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UnloadDefaultShader();
-    UnloadStandardShader();
     UnloadDefaultBuffers();
     
     // Delete default white texture
     glDeleteTextures(1, &whiteTexture);
     TraceLog(INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
-    
-    // Unload lights
-    if (lightsCount > 0)
-    {
-        for (int i = 0; i < lightsCount; i++) free(lights[i]);
-        lightsCount = 0;
-    }
 
     free(draws);
 #endif
@@ -2003,8 +1974,6 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     if (mesh.normals != NULL) glNormalPointer(GL_FLOAT, 0, mesh.normals);           // Pointer to normals array
     if (mesh.colors != NULL) glColorPointer(4, GL_UNSIGNED_BYTE, 0, mesh.colors);   // Pointer to colors array
     
-    // TODO: Support OpenGL 1.1 lighting system
-
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
         rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
@@ -2070,10 +2039,6 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         // Check if glossiness is located in shader and upload value
         int glossinessLoc = glGetUniformLocation(material.shader.id, "glossiness");
         if (glossinessLoc != -1) glUniform1f(glossinessLoc, material.glossiness);
-
-        // Set shader lights values for enabled lights
-        // NOTE: Lights array location points are obtained on shader loading (if available)
-        if (lightsCount > 0) SetShaderLightsValues(material.shader);
     }    
 
     // Set shader textures (diffuse, normal, specular)
@@ -2528,25 +2493,6 @@ Shader GetDefaultShader(void)
 #endif
 }
 
-// Get default shader
-// NOTE: Inits global variable standardShader
-Shader GetStandardShader(void)
-{
-    Shader shader = { 0 };
-
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (standardShaderLoaded) shader = standardShader;
-    else
-    {
-        // Lazy initialization of standard shader
-        standardShader = LoadStandardShader();
-        shader = standardShader;
-    }
-#endif
-
-    return shader;
-}
-
 // Get shader uniform location
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
@@ -2571,7 +2517,7 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
     else if (size == 4) glUniform4fv(uniformLoc, 1, value);     // Shader uniform type: vec4
     else TraceLog(WARNING, "Shader value float array size not supported");
     
-    glUseProgram(0);
+    //glUseProgram(0);      // Avoid reseting current shader program, in case other uniforms are set
 #endif
 }
 
@@ -2587,7 +2533,7 @@ void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size)
     else if (size == 4) glUniform4iv(uniformLoc, 1, value);     // Shader uniform type: ivec4
     else TraceLog(WARNING, "Shader value int array size not supported");
     
-    glUseProgram(0);
+    //glUseProgram(0);
 #endif
 }
 
@@ -2599,7 +2545,7 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat)
 
     glUniformMatrix4fv(uniformLoc, 1, false, MatrixToFloat(mat));
     
-    glUseProgram(0);
+    //glUseProgram(0);
 #endif
 }
 
@@ -2643,73 +2589,6 @@ void BeginBlendMode(int mode)
 void EndBlendMode(void)
 {
     BeginBlendMode(BLEND_ALPHA);
-}
-
-// Create a new light, initialize it and add to pool
-Light CreateLight(int type, Vector3 position, Color diffuse)
-{
-    Light light = NULL;
-    
-    if (lightsCount < MAX_LIGHTS)
-    {
-        // Allocate dynamic memory
-        light = (Light)malloc(sizeof(LightData));
-        
-        // Initialize light values with generic values
-        light->id = lightsCount;
-        light->type = type;
-        light->enabled = true;
-        
-        light->position = position;
-        light->target = (Vector3){ 0.0f, 0.0f, 0.0f };
-        light->intensity = 1.0f;
-        light->diffuse = diffuse;
-        
-        // Add new light to the array
-        lights[lightsCount] = light;
-        
-        // Increase enabled lights count
-        lightsCount++;
-    }
-    else
-    {
-        TraceLog(WARNING, "Too many lights, only supported up to %i lights", MAX_LIGHTS);
-        
-        // NOTE: Returning latest created light to avoid crashes
-        light = lights[lightsCount];
-    }
-
-#if defined(GRAPHICS_API_OPENGL_11)
-    TraceLog(WARNING, "Lighting currently not supported on OpenGL 1.1");
-#endif
-
-    return light;
-}
-
-// Destroy a light and take it out of the list
-void DestroyLight(Light light)
-{
-    if (light != NULL)
-    {
-        int lightId = light->id;
-
-        // Free dynamic memory allocation
-        free(lights[lightId]);
-
-        // Remove *obj from the pointers array
-        for (int i = lightId; i < lightsCount; i++)
-        {
-            // Resort all the following pointers of the array
-            if ((i + 1) < lightsCount)
-            {
-                lights[i] = lights[i + 1];
-                lights[i]->id = lights[i + 1]->id;
-            }
-        }
-        
-        // Decrease enabled physic objects count
-        lightsCount--;
-    }
 }
 
 // Init VR device (or simulator)
@@ -3209,39 +3088,6 @@ static Shader LoadDefaultShader(void)
     return shader;
 }
 
-// Load standard shader
-// NOTE: This shader supports: 
-//     - Up to 3 different maps: diffuse, normal, specular
-//     - Material properties: colAmbient, colDiffuse, colSpecular, glossiness
-//     - Up to 8 lights: Point, Directional or Spot
-static Shader LoadStandardShader(void)
-{
-    Shader shader;
-    
-#if !defined(RLGL_NO_STANDARD_SHADER)
-    // Load standard shader (embeded in standard_shader.h)
-    shader.id = LoadShaderProgram(vStandardShaderStr, fStandardShaderStr);
-
-    if (shader.id != 0)
-    {
-        LoadDefaultShaderLocations(&shader);
-        TraceLog(INFO, "[SHDR ID %i] Standard shader loaded successfully", shader.id);
-        
-        standardShaderLoaded = true;
-    }
-    else
-    {
-        TraceLog(WARNING, "[SHDR ID %i] Standard shader could not be loaded, using default shader", shader.id);
-        shader = GetDefaultShader();
-    }
-#else
-    shader = GetDefaultShader();
-    TraceLog(WARNING, "[SHDR ID %i] Standard shader not available, using default shader", shader.id);
-#endif
-
-    return shader;
-}
-
 // Get location handlers to for shader attributes and uniforms
 // NOTE: If any location is not found, loc point becomes -1
 static void LoadDefaultShaderLocations(Shader *shader)
@@ -3275,9 +3121,6 @@ static void LoadDefaultShaderLocations(Shader *shader)
     shader->mapTexture2Loc = glGetUniformLocation(shader->id, "texture2");
     
     // TODO: Try to find all expected/recognized shader locations (predefined names, must be documented)
-    
-    // Try to get lights location points (if available)
-    GetShaderLightsLocations(*shader);
 }
 
 // Unload default shader 
@@ -3291,20 +3134,6 @@ static void UnloadDefaultShader(void)
     //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
     glDeleteProgram(defaultShader.id);
 }
-
-// Unload standard shader 
-static void UnloadStandardShader(void)
-{
-    glUseProgram(0);
-#if !defined(RLGL_NO_STANDARD_SHADER)
-    //glDetachShader(defaultShader, vertexShader);
-    //glDetachShader(defaultShader, fragmentShader);
-    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
-    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
-    glDeleteProgram(standardShader.id);
-#endif
-}
-
 
 // Load default internal buffers (lines, triangles, quads)
 static void LoadDefaultBuffers(void)
@@ -3761,104 +3590,6 @@ static void UnloadDefaultBuffers(void)
     free(quads.texcoords);
     free(quads.colors);
     free(quads.indices);
-}
-
-// Get shader locations for lights (up to MAX_LIGHTS)
-static void GetShaderLightsLocations(Shader shader)
-{
-    char locName[32] = "lights[x].\0";
-    char locNameUpdated[64];
-    
-    for (int i = 0; i < MAX_LIGHTS; i++)
-    {
-        locName[7] = '0' + i;
-        
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "enabled\0");
-        lightsLocs[i][0] = glGetUniformLocation(shader.id, locNameUpdated);
-        
-        locNameUpdated[0] = '\0';
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "type\0");
-        lightsLocs[i][1] = glGetUniformLocation(shader.id, locNameUpdated);
-
-        locNameUpdated[0] = '\0';
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "position\0");
-        lightsLocs[i][2] = glGetUniformLocation(shader.id, locNameUpdated);
-        
-        locNameUpdated[0] = '\0';
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "direction\0");
-        lightsLocs[i][3] = glGetUniformLocation(shader.id, locNameUpdated);
-        
-        locNameUpdated[0] = '\0';
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "radius\0");
-        lightsLocs[i][4] = glGetUniformLocation(shader.id, locNameUpdated);
-        
-        locNameUpdated[0] = '\0';
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "diffuse\0");
-        lightsLocs[i][5] = glGetUniformLocation(shader.id, locNameUpdated);
-        
-        locNameUpdated[0] = '\0';
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "intensity\0");
-        lightsLocs[i][6] = glGetUniformLocation(shader.id, locNameUpdated);
-        
-        locNameUpdated[0] = '\0';
-        strcpy(locNameUpdated, locName);
-        strcat(locNameUpdated, "coneAngle\0");
-        lightsLocs[i][7] = glGetUniformLocation(shader.id, locNameUpdated);
-    }
-}
-
-// Set shader uniform values for lights
-// NOTE: It would be far easier with shader UBOs but are not supported on OpenGL ES 2.0
-static void SetShaderLightsValues(Shader shader)
-{
-    for (int i = 0; i < MAX_LIGHTS; i++)
-    {
-        if (i < lightsCount)
-        {
-            glUniform1i(lightsLocs[i][0], lights[i]->enabled);
-
-            glUniform1i(lightsLocs[i][1], lights[i]->type);
-            glUniform4f(lightsLocs[i][5], (float)lights[i]->diffuse.r/255, (float)lights[i]->diffuse.g/255, (float)lights[i]->diffuse.b/255, (float)lights[i]->diffuse.a/255);
-            glUniform1f(lightsLocs[i][6], lights[i]->intensity);
-            
-            switch (lights[i]->type)
-            {
-                case LIGHT_POINT:
-                {
-                    glUniform3f(lightsLocs[i][2], lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
-                    glUniform1f(lightsLocs[i][4], lights[i]->radius);
-                } break;
-                case LIGHT_DIRECTIONAL:
-                {
-                    Vector3 direction = VectorSubtract(lights[i]->target, lights[i]->position);
-                    VectorNormalize(&direction);
-                    glUniform3f(lightsLocs[i][3], direction.x, direction.y, direction.z);
-                } break;
-                case LIGHT_SPOT:
-                {
-                    glUniform3f(lightsLocs[i][2], lights[i]->position.x, lights[i]->position.y, lights[i]->position.z);
-                    
-                    Vector3 direction = VectorSubtract(lights[i]->target, lights[i]->position);
-                    VectorNormalize(&direction);
-                    glUniform3f(lightsLocs[i][3], direction.x, direction.y, direction.z);
-                    
-                    glUniform1f(lightsLocs[i][7], lights[i]->coneAngle);
-                } break;
-                default: break;
-            }
-        }
-        else
-        {
-            glUniform1i(lightsLocs[i][0], 0);   // Light disabled
-        }
-    }
 }
 
 // Configure stereo rendering (including distortion shader) with HMD device parameters
