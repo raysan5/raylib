@@ -67,9 +67,13 @@
 #include <string.h>         // Required for: strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
+#if defined __linux || defined(PLATFORM_WEB)
+    #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+#endif
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
-    #include <GLFW/glfw3.h>       // GLFW3 library: Windows, OpenGL context and Input management
+    //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
+    #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
 
     #ifdef __linux
         #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
@@ -243,7 +247,7 @@ static int dropFilesCount = 0;              // Count stored strings
 
 static double currentTime, previousTime;    // Used to track timmings
 static double updateTime, drawTime;         // Time measures for update and draw
-static double frameTime;                    // Time measure for one frame
+static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
 static char configFlags = 0;                // Configuration flags (bit based)
@@ -264,6 +268,7 @@ static void InitGraphicsDevice(int width, int height);  // Initialize graphics d
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
+static void Wait(int ms);                               // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
 static void PollInputEvents(void);                      // Register user events
@@ -311,6 +316,11 @@ static void InitTouch(void);                            // Touch device initiali
 static void *TouchThread(void *arg);                    // Touch device reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
+#endif
+
+#if defined(_WIN32)
+    // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
+    void __stdcall Sleep(unsigned long msTimeout);      // Required for Delay()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -638,15 +648,16 @@ void EndDrawing(void)
 
     frameTime = updateTime + drawTime;
 
-    double extraTime = 0.0;
-
-    while (frameTime < targetTime)
+    // Wait for some milliseconds...
+    if (frameTime < targetTime) 
     {
-        // Implement a delay
+        Wait((int)((targetTime - frameTime)*1000));
+    
         currentTime = GetTime();
-        extraTime = currentTime - previousTime;
+        double extraTime = currentTime - previousTime;
         previousTime = currentTime;
-        frameTime += extraTime;
+        
+        frameTime = updateTime + drawTime + extraTime;
     }
 }
 
@@ -780,20 +791,16 @@ void SetTargetFPS(int fps)
 }
 
 // Returns current FPS
-float GetFPS(void)
+int GetFPS(void)
 {
-    return (float)(1.0/frameTime);
+    return (int)floorf(1.0f/GetFrameTime());
 }
 
 // Returns time in seconds for one frame
 float GetFrameTime(void)
 {
-    // As we are operate quite a lot with frameTime,
-    // it could be no stable, so we round it before passing it around
-    // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime = round(frameTime*10000)/10000.0;
-
-    return (float)roundedFrameTime;    // Time in seconds to run a frame
+    // NOTE: We round value to milliseconds
+    return (roundf(frameTime*1000.0)/1000.0f);
 }
 
 // Converts Color to float array and normalizes
@@ -1928,6 +1935,31 @@ static double GetTime(void)
     uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
     return (double)(time - baseTime)*1e-9;
+#endif
+}
+
+// Wait for some milliseconds (stop program execution)
+static void Wait(int ms)
+{
+#if defined _WIN32    
+    Sleep(ms);
+#elif defined __linux || defined(PLATFORM_WEB)
+    struct timespec req = { 0 };
+    time_t sec = (int)(ms/1000);
+    ms -= (sec*1000);
+    req.tv_sec=sec;
+    req.tv_nsec=ms*1000000L;
+    
+    // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+    while (nanosleep(&req,&req) == -1) continue;
+//#elif defined __APPLE__
+    // TODO:
+#else
+    double prevTime = GetTime();
+    double nextTime = 0.0;
+
+    // Busy wait loop
+    while ((nextTime - prevTime) < (double)ms/1000.0) nextTime = GetTime();
 #endif
 }
 

@@ -504,25 +504,8 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, i
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    // NOTE: We are rendering fps every second for better viewing on high framerates
-    // TODO: Not working properly on ANDROID and RPI (for high framerates)
-
-    static float fps = 0.0f;
-    static int counter = 0;
-    static int refreshRate = 20;
-
-    if (counter < refreshRate)
-    {
-        counter++;
-    }
-    else
-    {
-        fps = GetFPS();
-        refreshRate = (int)fps;
-        counter = 0;
-    }
-    
-    DrawText(FormatText("%2.0f FPS", fps), posX, posY, 20, LIME);
+    // NOTE: We have rounding errors every frame, so it oscillates a lot
+    DrawText(FormatText("%2i FPS", GetFPS()), posX, posY, 20, LIME);
 }
 
 //----------------------------------------------------------------------------------

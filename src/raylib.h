@@ -659,8 +659,8 @@ RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
-RLAPI float GetFPS(void);                                         // Returns current FPS
-RLAPI float GetFrameTime(void);                                   // Returns time in seconds for one frame
+RLAPI int GetFPS(void);                                           // Returns current FPS (rounded value)
+RLAPI float GetFrameTime(void);                                   // Returns time in seconds for one frame (rounded value)
 
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
