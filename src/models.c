@@ -584,7 +584,7 @@ Mesh LoadMesh(const char *fileName)
 
     if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
     else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
-    
+
     // TODO: Initialize default mesh data in case loading fails, maybe a cube?
 
     return mesh;
@@ -607,7 +607,7 @@ Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color
     mesh.indices = NULL;
 
     rlglLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
-    
+
     return mesh;
 }
 
@@ -668,7 +668,7 @@ Model LoadCubicmap(Image cubicmap)
 
     return model;
 }
-                                                                   
+
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh *mesh)
 {
@@ -1438,34 +1438,34 @@ RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh)
     int triangleCount = mesh->vertexCount/3;
 
     // Test against all triangles in mesh
-    for (int i = 0; i < triangleCount; i++) 
+    for (int i = 0; i < triangleCount; i++)
     {
         Vector3 a, b, c;
         Vector3 *vertdata = (Vector3 *)mesh->vertices;
-        
-        if (mesh->indices) 
+
+        if (mesh->indices)
         {
             a = vertdata[mesh->indices[i*3 + 0]];
             b = vertdata[mesh->indices[i*3 + 1]];
-            c = vertdata[mesh->indices[i*3 + 2]];            
-        } 
-        else 
-        {            
+            c = vertdata[mesh->indices[i*3 + 2]];
+        }
+        else
+        {
             a = vertdata[i*3 + 0];
             b = vertdata[i*3 + 1];
             c = vertdata[i*3 + 2];
         }
 
         RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
-        
-        if (triHitInfo.hit) 
+
+        if (triHitInfo.hit)
         {
             // Save the closest hit triangle
             if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
         }
     }
 
-    return result; 
+    return result;
 }
 
 // Get collision info between ray and triangle
@@ -1478,44 +1478,44 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     Vector3 p, q, tv;
     float det, invDet, u, v, t;
     RayHitInfo result = {0};
-    
+
     // Find vectors for two edges sharing V1
     edge1 = VectorSubtract(p2, p1);
     edge2 = VectorSubtract(p3, p1);
-    
+
     // Begin calculating determinant - also used to calculate u parameter
     p = VectorCrossProduct(ray.direction, edge2);
-    
+
     // If determinant is near zero, ray lies in plane of triangle or ray is parallel to plane of triangle
     det = VectorDotProduct(edge1, p);
-    
+
     // Avoid culling!
     if ((det > -EPSILON) && (det < EPSILON)) return result;
-    
+
     invDet = 1.0f/det;
-    
+
     // Calculate distance from V1 to ray origin
     tv = VectorSubtract(ray.position, p1);
-    
+
     // Calculate u parameter and test bound
     u = VectorDotProduct(tv, p)*invDet;
-    
+
     // The intersection lies outside of the triangle
     if ((u < 0.0f) || (u > 1.0f)) return result;
-    
+
     // Prepare to test v parameter
     q = VectorCrossProduct(tv, edge1);
-    
+
     // Calculate V parameter and test bound
     v = VectorDotProduct(ray.direction, q)*invDet;
-    
+
     // The intersection lies outside of the triangle
     if ((v < 0.0f) || ((u + v) > 1.0f)) return result;
-    
+
     t = VectorDotProduct(edge2, q)*invDet;
-    
-    if (t > EPSILON) 
-    { 
+
+    if (t > EPSILON)
+    {
         // Ray hit, get hit point and normal
         result.hit = true;
         result.distance = t;
@@ -1523,10 +1523,10 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.hitNormal = VectorCrossProduct(edge1, edge2);
         VectorNormalize(&result.hitNormal);
         Vector3 rayDir = ray.direction;
-        VectorScale(&rayDir, t);        
+        VectorScale(&rayDir, t);
         result.hitPosition = VectorAdd(ray.position, rayDir);
     }
-    
+
     return result;
 }
 
@@ -1540,8 +1540,8 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
     if (fabsf(ray.direction.y) > EPSILON)
     {
         float t = (ray.position.y - groundHeight)/-ray.direction.y;
-        
-        if (t >= 0.0) 
+
+        if (t >= 0.0)
         {
             Vector3 rayDir = ray.direction;
             VectorScale(&rayDir, t);
@@ -1551,7 +1551,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
             result.hitPosition = VectorAdd(ray.position, rayDir);
         }
     }
-    
+
     return result;
 }
 

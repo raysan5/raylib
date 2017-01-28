@@ -286,17 +286,17 @@ SpriteFont LoadSpriteFont(const char *fileName)
 SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars)
 {
     SpriteFont spriteFont = { 0 };
-    
-    if (strcmp(GetExtension(fileName),"ttf") == 0) 
+
+    if (strcmp(GetExtension(fileName),"ttf") == 0)
     {
         if ((fontChars == NULL) || (numChars == 0))
         {
             int totalChars = 95;    // Default charset [32..126]
-            
+
             int *defaultFontChars = (int *)malloc(totalChars*sizeof(int));
-            
+
             for (int i = 0; i < totalChars; i++) defaultFontChars[i] = i + 32; // Default first character: SPACE[32]
-            
+
             spriteFont = LoadTTF(fileName, fontSize, totalChars, defaultFontChars);
         }
         else spriteFont = LoadTTF(fileName, fontSize, numChars, fontChars);
@@ -353,10 +353,10 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
     int textOffsetX = 0;        // Offset between characters
     int textOffsetY = 0;        // Required for line break!
     float scaleFactor;
-    
+
     unsigned char letter;       // Current character
     int index;                  // Index position in sprite font
-    
+
     scaleFactor = fontSize/spriteFont.size;
 
     // NOTE: Some ugly hacks are made to support Latin-1 Extended characters directly
@@ -388,10 +388,10 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
             }
             else index = GetCharIndex(spriteFont, (int)text[i]);
 
-            DrawTexturePro(spriteFont.texture, spriteFont.charRecs[index], 
+            DrawTexturePro(spriteFont.texture, spriteFont.charRecs[index],
                            (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[index].x*scaleFactor,
                                         position.y + textOffsetY + spriteFont.charOffsets[index].y*scaleFactor,
-                                        spriteFont.charRecs[index].width*scaleFactor, 
+                                        spriteFont.charRecs[index].width*scaleFactor,
                                         spriteFont.charRecs[index].height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
 
             if (spriteFont.charAdvanceX[index] == 0) textOffsetX += (int)(spriteFont.charRecs[index].width*scaleFactor + spacing);
@@ -476,7 +476,7 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, i
         if (text[i] != '\n')
         {
             int index = GetCharIndex(spriteFont, (int)text[i]);
-            
+
             if (spriteFont.charAdvanceX[index] != 0) textWidth += spriteFont.charAdvanceX[index];
             else textWidth += (spriteFont.charRecs[index].width + spriteFont.charOffsets[index].x);
         }
@@ -517,7 +517,7 @@ static int GetCharIndex(SpriteFont font, int letter)
 #define UNORDERED_CHARSET
 #if defined(UNORDERED_CHARSET)
     int index = 0;
-    
+
     for (int i = 0; i < font.numChars; i++)
     {
         if (font.charValues[i] == letter)
@@ -526,7 +526,7 @@ static int GetCharIndex(SpriteFont font, int letter)
             break;
         }
     }
-    
+
     return index;
 #else
     return (letter - 32);
@@ -607,14 +607,14 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     }
 
     TraceLog(DEBUG, "SpriteFont data parsed correctly from image");
-    
-    // NOTE: We need to remove key color borders from image to avoid weird 
+
+    // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
     for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
 
     // Create a new image with the processed color data (key color replaced by BLANK)
     Image fontClear = LoadImageEx(pixels, image.width, image.height);
-    
+
     free(pixels);    // Free pixels array memory
 
     // Create spritefont with all data parsed from image
@@ -622,7 +622,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 
     spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
     spriteFont.numChars = index;
-    
+
     UnloadImage(fontClear);     // Unload processed image once converted to texture
 
     // We got tempCharValues and tempCharsRecs populated with chars data
@@ -643,7 +643,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
     }
 
     spriteFont.size = spriteFont.charRecs[0].height;
-    
+
     TraceLog(INFO, "Image file loaded correctly as SpriteFont");
 
     return spriteFont;
@@ -853,13 +853,13 @@ static SpriteFont LoadBMFont(const char *fileName)
     strncat(texPath, texFileName, strlen(texFileName));
 
     TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
-    
+
     Image imFont = LoadImage(texPath);
-    
-    if (imFont.format == UNCOMPRESSED_GRAYSCALE) 
+
+    if (imFont.format == UNCOMPRESSED_GRAYSCALE)
     {
         Image imCopy = ImageCopy(imFont);
-        
+
         for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;  // WHITE pixel
 
         ImageAlphaMask(&imCopy, imFont);
@@ -867,7 +867,7 @@ static SpriteFont LoadBMFont(const char *fileName)
         UnloadImage(imCopy);
     }
     else font.texture = LoadTextureFromImage(imFont);
-    
+
     font.size = fontSize;
     font.numChars = numChars;
     font.charValues = (int *)malloc(numChars*sizeof(int));
@@ -876,7 +876,7 @@ static SpriteFont LoadBMFont(const char *fileName)
     font.charAdvanceX = (int *)malloc(numChars*sizeof(int));
 
     UnloadImage(imFont);
-    
+
     free(texPath);
 
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
@@ -913,11 +913,11 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int numChars, int 
     // NOTE: Font texture size is predicted (being as much conservative as possible)
     // Predictive method consist of supposing same number of chars by line-column (sqrtf)
     // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
-    
+
     // Calculate next power-of-two value
     float guessSize = ceilf((float)fontSize*3/4)*ceilf(sqrtf((float)numChars));
     int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));      // Calculate next POT
-    
+
     TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
 
     unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
@@ -935,7 +935,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int numChars, int 
     }
 
     fread(ttfBuffer, 1, 1 << 25, ttfFile);
-    
+
     if (fontChars[0] != 32) TraceLog(WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
     // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
@@ -945,7 +945,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int numChars, int 
 
     //if (result > 0) TraceLog(INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
     if (result < 0) TraceLog(WARNING, "TTF spritefont loading: Not all the characters fit in the font");
-    
+
     free(ttfBuffer);
 
     // Convert image data from grayscale to to UNCOMPRESSED_GRAY_ALPHA
@@ -966,11 +966,11 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int numChars, int 
     image.mipmaps = 1;
     image.format = UNCOMPRESSED_GRAY_ALPHA;
     image.data = dataGrayAlpha;
-    
+
     font.texture = LoadTextureFromImage(image);
-    
+
     //SavePNG("generated_ttf_image.png", (unsigned char *)image.data, image.width, image.height, 2);
-    
+
     UnloadImage(image);     // Unloads dataGrayAlpha
 
     font.size = fontSize;

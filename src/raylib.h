@@ -593,21 +593,21 @@ typedef enum {
 // rRES data returned when reading a resource, it contains all required data for user (24 byte)
 typedef struct {
     unsigned int type;          // Resource type (4 byte)
-    
+
     unsigned int param1;        // Resouce parameter 1 (4 byte)
     unsigned int param2;        // Resouce parameter 2 (4 byte)
     unsigned int param3;        // Resouce parameter 3 (4 byte)
     unsigned int param4;        // Resouce parameter 4 (4 byte)
-    
+
     void *data;                 // Resource data pointer (4 byte)
 } RRESData;
 
-typedef enum { 
-    RRES_RAW = 0, 
-    RRES_IMAGE, 
-    RRES_WAVE, 
-    RRES_VERTEX, 
-    RRES_TEXT 
+typedef enum {
+    RRES_RAW = 0,
+    RRES_IMAGE,
+    RRES_WAVE,
+    RRES_VERTEX,
+    RRES_TEXT
 } RRESDataType;
 
 #ifdef __cplusplus
@@ -800,7 +800,7 @@ RLAPI Image ImageText(const char *text, int fontSize, Color color);             
 RLAPI Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing, Color tint);     // Create an image from text (custom sprite font)
 RLAPI void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
 RLAPI void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
-RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, 
+RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text,
                            float fontSize, int spacing, Color color);                                    // Draw text (custom sprite font) within an image (destination)
 RLAPI void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 RLAPI void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
@@ -876,15 +876,15 @@ RLAPI Material LoadDefaultMaterial(void);                                       
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
-RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, 
+RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis,
                        float rotationAngle, Vector3 scale, Color tint);                                 // Draw a model with extended parameters
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);                      // Draw a model wires (with texture if set)
-RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, 
+RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis,
                             float rotationAngle, Vector3 scale, Color tint);                            // Draw a model wires (with texture if set) with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                               // Draw bounding box (wires)
 
 RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);     // Draw a billboard texture
-RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, 
+RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec,
                             Vector3 center, float size, Color tint);                                    // Draw a billboard texture defined by sourceRec
 
 RLAPI BoundingBox CalculateBoundingBox(Mesh mesh);                                                      // Calculate mesh bounding box limits
@@ -892,7 +892,7 @@ RLAPI bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB
 RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Detect collision between two bounding boxes
 RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere);          // Detect collision between box and sphere
 RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                // Detect collision between ray and sphere
-RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, 
+RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius,
                                      Vector3 *collisionPoint);                                          // Detect collision between ray and sphere, returns collision point
 RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                              // Detect collision between ray and box
 RLAPI RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh);                                              // Get collision info between ray and mesh

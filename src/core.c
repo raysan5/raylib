@@ -9,7 +9,7 @@
 *   External libs:
 *       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
 *       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
-*       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person) 
+*       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *   Module Configuration Flags:
@@ -103,7 +103,7 @@
     #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
     #include <linux/joystick.h> // Linux: Joystick support library
-    
+
     #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
 
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
@@ -488,9 +488,9 @@ void CloseWindow(void)
     // Wait for mouse and gamepad threads to finish before closing
     // NOTE: Those threads should already have finished at this point
     // because they are controlled by windowShouldClose variable
-    
+
     windowShouldClose = true;   // Added to force threads to exit when the close window is called
-    
+
     pthread_join(mouseThreadId, NULL);
     pthread_join(touchThreadId, NULL);
     pthread_join(gamepadThreadId, NULL);
@@ -649,14 +649,14 @@ void EndDrawing(void)
     frameTime = updateTime + drawTime;
 
     // Wait for some milliseconds...
-    if (frameTime < targetTime) 
+    if (frameTime < targetTime)
     {
         Wait((int)((targetTime - frameTime)*1000));
-    
+
         currentTime = GetTime();
         double extraTime = currentTime - previousTime;
         previousTime = currentTime;
-        
+
         frameTime = updateTime + drawTime + extraTime;
     }
 }
@@ -1147,7 +1147,7 @@ bool IsKeyDown(int key)
 bool IsKeyReleased(int key)
 {
     bool released = false;
-    
+
     if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
     else released = false;
 
@@ -1182,7 +1182,7 @@ void SetExitKey(int key)
 bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
-    
+
 #if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
 #endif
@@ -1196,7 +1196,7 @@ bool IsGamepadName(int gamepad, const char *name)
     bool result = false;
 
 #if !defined(PLATFORM_ANDROID)
-    const char *gamepadName = NULL; 
+    const char *gamepadName = NULL;
 
     if (gamepadReady[gamepad]) gamepadName = GetGamepadName(gamepad);
     if ((name != NULL) && (gamepadName != NULL)) result = (strcmp(name, gamepadName) == 0);
@@ -1235,7 +1235,7 @@ int GetGamepadAxisCount(int gamepad)
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
-    
+
 #if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (axis < MAX_GAMEPAD_AXIS)) value = gamepadAxisState[gamepad][axis];
 #endif
@@ -1249,8 +1249,8 @@ bool IsGamepadButtonPressed(int gamepad, int button)
     bool pressed = false;
 
 #if !defined(PLATFORM_ANDROID)
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
-        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
+        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) &&
         (currentGamepadState[gamepad][button] == 1)) pressed = true;
 #endif
 
@@ -1274,10 +1274,10 @@ bool IsGamepadButtonDown(int gamepad, int button)
 bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
-    
+
 #if !defined(PLATFORM_ANDROID)
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
-        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
+        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) &&
         (currentGamepadState[gamepad][button] == 0)) released = true;
 #endif
 
@@ -1290,7 +1290,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
     bool result = false;
 
 #if !defined(PLATFORM_ANDROID)
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (currentGamepadState[gamepad][button] == 0)) result = true;
 #endif
 
@@ -1503,7 +1503,7 @@ static void InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);    // Resizable window
     }
     else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
-    
+
     //glfwWindowHint(GLFW_DECORATED, GL_TRUE);      // Border and buttons on Window
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_DEPTH_BITS, 16);          // Depthbuffer bits (24 by default)
@@ -1941,7 +1941,7 @@ static double GetTime(void)
 // Wait for some milliseconds (stop program execution)
 static void Wait(int ms)
 {
-#if defined _WIN32    
+#if defined _WIN32
     Sleep(ms);
 #elif defined __linux || defined(PLATFORM_WEB)
     struct timespec req = { 0 };
@@ -1949,7 +1949,7 @@ static void Wait(int ms)
     ms -= (sec*1000);
     req.tv_sec=sec;
     req.tv_nsec=ms*1000000L;
-    
+
     // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
     while (nanosleep(&req,&req) == -1) continue;
 //#elif defined __APPLE__
@@ -1999,10 +1999,10 @@ static void PollInputEvents(void)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
-    
+
     // Reset last key pressed registered
     lastKeyPressed = -1;
-    
+
 #if !defined(PLATFORM_RPI)
     // Reset last gamepad button/axis registered state
     lastGamepadButtonPressed = -1;
@@ -2018,7 +2018,7 @@ static void PollInputEvents(void)
 
     mousePosition.x = (float)mouseX;
     mousePosition.y = (float)mouseY;
-    
+
     // Keyboard input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
@@ -2039,7 +2039,7 @@ static void PollInputEvents(void)
         if (glfwJoystickPresent(i)) gamepadReady[i] = true;
         else gamepadReady[i] = false;
     }
-    
+
     // Register gamepads buttons events
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
@@ -2047,14 +2047,14 @@ static void PollInputEvents(void)
         {
             // Register previous gamepad states
             for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
-    
+
             // Get current gamepad state
             // NOTE: There is no callback available, so we get it manually
             const unsigned char *buttons;
             int buttonsCount;
 
             buttons = glfwGetJoystickButtons(i, &buttonsCount);
-            
+
             for (int k = 0; (buttons != NULL) && (k < buttonsCount) && (buttonsCount < MAX_GAMEPAD_BUTTONS); k++)
             {
                 if (buttons[k] == GLFW_PRESS)
@@ -2064,18 +2064,18 @@ static void PollInputEvents(void)
                 }
                 else currentGamepadState[i][k] = 0;
             }
-            
+
             // Get current axis state
             const float *axes;
             int axisCount = 0;
 
             axes = glfwGetJoystickAxes(i, &axisCount);
-            
+
             for (int k = 0; (axes != NULL) && (k < axisCount) && (k < MAX_GAMEPAD_AXIS); k++)
             {
                 gamepadAxisState[i][k] = axes[k];
             }
-            
+
             gamepadAxisCount = axisCount;
         }
     }
@@ -2088,16 +2088,16 @@ static void PollInputEvents(void)
 #if defined(PLATFORM_WEB)
     // Get number of gamepads connected
     int numGamepads = emscripten_get_num_gamepads();
-  
+
     for (int i = 0; (i < numGamepads) && (i < MAX_GAMEPADS); i++)
     {
         // Register previous gamepad button states
         for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
-        
+
         EmscriptenGamepadEvent gamepadState;
-        
+
         int result = emscripten_get_gamepad_status(i, &gamepadState);
-        
+
         if (result == EMSCRIPTEN_RESULT_SUCCESS)
         {
             // Register buttons data for every connected gamepad
@@ -2109,16 +2109,16 @@ static void PollInputEvents(void)
                     lastGamepadButtonPressed = j;
                 }
                 else currentGamepadState[i][j] = 0;
-                
+
                 //printf("Gamepad %d, button %d: Digital: %d, Analog: %g\n", gamepadState.index, j, gamepadState.digitalButton[j], gamepadState.analogButton[j]);
             }
-            
+
             // Register axis data for every connected gamepad
             for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
             {
                 gamepadAxisState[i][j] = gamepadState.axis[j];
             }
-            
+
             gamepadAxisCount = gamepadState.numAxes;
         }
     }
@@ -2665,16 +2665,16 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 {
     /*
     printf("%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"\n",
-           eventType != 0 ? emscripten_event_type_to_string(eventType) : "Gamepad state", 
+           eventType != 0 ? emscripten_event_type_to_string(eventType) : "Gamepad state",
            gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
-           
+
     for(int i = 0; i < gamepadEvent->numAxes; ++i) printf("Axis %d: %g\n", i, gamepadEvent->axis[i]);
     for(int i = 0; i < gamepadEvent->numButtons; ++i) printf("Button %d: Digital: %d, Analog: %g\n", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
     */
-    
+
     if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) gamepadReady[gamepadEvent->index] = true;
     else gamepadReady[gamepadEvent->index] = false;
-    
+
     // TODO: Test gamepadEvent->index
 
     return 0;
@@ -2935,7 +2935,7 @@ static void InitTouch(void)
 }
 
 // Touch reading thread.
-// This reads from a Virtual Input Event /dev/input/event4 which is 
+// This reads from a Virtual Input Event /dev/input/event4 which is
 // created by the ts_uinput daemon. This takes, filters and scales
 // raw input from the Touchscreen (which appears in /dev/input/event3)
 // based on the Calibration data referenced by tslib.
@@ -2949,7 +2949,7 @@ static void *TouchThread(void *arg)
         if (read(touchStream, &ev, sizeof(ev)) == (int)sizeof(ev))
         {
             // if pressure > 0 then simulate left mouse button click
-            if (ev.type == EV_ABS && ev.code == 24 && ev.value == 0 && currentMouseState[0] == 1) 
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value == 0 && currentMouseState[0] == 1)
             {
                 currentMouseState[0] = 0;
                 gestureEvent.touchAction = TOUCH_UP;
@@ -2963,10 +2963,10 @@ static void *TouchThread(void *arg)
                 gestureEvent.position[1].x /= (float)GetScreenWidth();
                 gestureEvent.position[1].y /= (float)GetScreenHeight();
                 ProcessGestureEvent(gestureEvent);
-            } 
-            if (ev.type == EV_ABS && ev.code == 24 && ev.value > 0 && currentMouseState[0] == 0) 
+            }
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value > 0 && currentMouseState[0] == 0)
             {
-                currentMouseState[0] = 1;   
+                currentMouseState[0] = 1;
                 gestureEvent.touchAction = TOUCH_DOWN;
                 gestureEvent.pointCount = 1;
                 gestureEvent.pointerId[0] = 0;
@@ -2978,9 +2978,9 @@ static void *TouchThread(void *arg)
                 gestureEvent.position[1].x /= (float)GetScreenWidth();
                 gestureEvent.position[1].y /= (float)GetScreenHeight();
                 ProcessGestureEvent(gestureEvent);
-            } 
+            }
             // x & y values supplied by event4 have been scaled & de-jittered using tslib calibration data
-            if (ev.type == EV_ABS && ev.code == 0) 
+            if (ev.type == EV_ABS && ev.code == 0)
             {
                 mousePosition.x = ev.value;
                 if (mousePosition.x < 0) mousePosition.x = 0;
@@ -2997,7 +2997,7 @@ static void *TouchThread(void *arg)
                 gestureEvent.position[1].y /= (float)GetScreenHeight();
                 ProcessGestureEvent(gestureEvent);
             }
-            if (ev.type == EV_ABS && ev.code == 1) 
+            if (ev.type == EV_ABS && ev.code == 1)
             {
                 mousePosition.y = ev.value;
                 if (mousePosition.y < 0) mousePosition.y = 0;
@@ -3014,7 +3014,7 @@ static void *TouchThread(void *arg)
                 gestureEvent.position[1].y /= (float)GetScreenHeight();
                 ProcessGestureEvent(gestureEvent);
             }
- 
+
         }
     }
     return NULL;
@@ -3084,7 +3084,7 @@ static void *GamepadThread(void *arg)
                     {
                         // 1 - button pressed, 0 - button released
                         currentGamepadState[i][gamepadEvent.number] = (int)gamepadEvent.value;
-                        
+
                         if ((int)gamepadEvent.value == 1) lastGamepadButtonPressed = gamepadEvent.number;
                         else lastGamepadButtonPressed = -1;
                     }

@@ -144,9 +144,9 @@ Image LoadImage(const char *fileName)
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
         RRESData rres = LoadResource(fileName);
-        
+
         // NOTE: Parameters for RRES_IMAGE type are: width, height, format, mipmaps
-        
+
         if (rres.type == RRES_IMAGE) image = LoadImagePro(rres.data, rres.param1, rres.param2, rres.param3);
         else TraceLog(WARNING, "[%s] Resource file does not contain image data", fileName);
 
@@ -197,9 +197,9 @@ Image LoadImagePro(void *data, int width, int height, int format)
     srcImage.height = height;
     srcImage.mipmaps = 1;
     srcImage.format = format;
-    
+
     Image dstImage = ImageCopy(srcImage);
-    
+
     return dstImage;
 }
 
@@ -244,7 +244,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         if (bytes < size)
         {
             TraceLog(WARNING, "[%s] RAW image data can not be read, wrong requested format or size", fileName);
-            
+
             if (image.data != NULL) free(image.data);
         }
         else
@@ -615,12 +615,12 @@ void ImageAlphaMask(Image *image, Image alphaMask)
         // Force mask to be Grayscale
         Image mask = ImageCopy(alphaMask);
         if (mask.format != UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, UNCOMPRESSED_GRAYSCALE);
-        
+
         // In case image is only grayscale, we just add alpha channel
         if (image->format == UNCOMPRESSED_GRAYSCALE)
         {
             ImageFormat(image, UNCOMPRESSED_GRAY_ALPHA);
-            
+
             // Apply alpha mask to alpha channel
             for (int i = 0, k = 1; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
             {
@@ -955,7 +955,7 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
 {
     bool cropRequired = false;
-    
+
     // Security checks to avoid size and rectangle issues (out of bounds)
     // Check that srcRec is inside src image
     if (srcRec.x < 0) srcRec.x = 0;
@@ -973,15 +973,15 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
         TraceLog(WARNING, "Source rectangle height out of bounds, rescaled height: %i", srcRec.height);
         cropRequired = true;
     }
-    
+
     Image srcCopy = ImageCopy(src);     // Make a copy of source image to work with it
     ImageCrop(&srcCopy, srcRec);        // Crop source image to desired source rectangle
-    
+
     // Check that dstRec is inside dst image
     // TODO: Allow negative position within destination with cropping
     if (dstRec.x < 0) dstRec.x = 0;
     if (dstRec.y < 0) dstRec.y = 0;
-    
+
     // Scale source image in case destination rec size is different than source rec size
     if ((dstRec.width != srcRec.width) || (dstRec.height != srcRec.height))
     {
@@ -1001,20 +1001,20 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
         TraceLog(WARNING, "Destination rectangle height out of bounds, rescaled height: %i", dstRec.height);
         cropRequired = true;
     }
-    
+
     if (cropRequired)
     {
         // Crop destination rectangle if out of bounds
         Rectangle crop = { 0, 0, dstRec.width, dstRec.height };
         ImageCrop(&srcCopy, crop);
     }
-   
+
     // Get image data as Color pixels array to work with it
     Color *dstPixels = GetImageData(*dst);
     Color *srcPixels = GetImageData(srcCopy);
 
     UnloadImage(srcCopy);       // Source copy not required any more...
-    
+
     Color srcCol, dstCol;
 
     // Blit pixels, copy source image into destination
@@ -1026,13 +1026,13 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
             // Alpha blending implementation
             dstCol = dstPixels[j*dst->width + i];
             srcCol = srcPixels[(j - dstRec.y)*dstRec.width + (i - dstRec.x)];
-            
+
             dstCol.r = ((srcCol.a*(srcCol.r - dstCol.r)) >> 8) + dstCol.r;
             dstCol.g = ((srcCol.a*(srcCol.g - dstCol.g)) >> 8) + dstCol.g;
             dstCol.b = ((srcCol.a*(srcCol.b - dstCol.b)) >> 8) + dstCol.b;
-            
+
             dstPixels[j*dst->width + i] = dstCol;
-            
+
             // TODO: Support other blending options
         }
     }
@@ -1369,7 +1369,7 @@ void SetTextureFilter(Texture2D texture, int filterMode)
             {
                 // RL_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
                 rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_NEAREST);
-                
+
                 // RL_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
                 rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_NEAREST);
             }
@@ -1387,7 +1387,7 @@ void SetTextureFilter(Texture2D texture, int filterMode)
                 // RL_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
                 // Alternative: RL_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
                 rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR_MIP_NEAREST);
-                
+
                 // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
                 rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
             }
@@ -1404,14 +1404,14 @@ void SetTextureFilter(Texture2D texture, int filterMode)
             {
                 // RL_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
                 rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_MIP_LINEAR);
-                
+
                 // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
                 rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
             }
             else
             {
                 TraceLog(WARNING, "[TEX ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
-                
+
                 // RL_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
                 rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_FILTER_LINEAR);
                 rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_FILTER_LINEAR);
@@ -2007,19 +2007,19 @@ static Image LoadPVR(const char *fileName)
                 image.mipmaps = pvrHeader.numMipmaps;
 
                 // Check data format
-                if (((pvrHeader.channels[0] == 'l') && (pvrHeader.channels[1] == 0)) && (pvrHeader.channelDepth[0] == 8)) 
+                if (((pvrHeader.channels[0] == 'l') && (pvrHeader.channels[1] == 0)) && (pvrHeader.channelDepth[0] == 8))
                     image.format = UNCOMPRESSED_GRAYSCALE;
-                else if (((pvrHeader.channels[0] == 'l') && (pvrHeader.channels[1] == 'a')) && ((pvrHeader.channelDepth[0] == 8) && (pvrHeader.channelDepth[1] == 8))) 
+                else if (((pvrHeader.channels[0] == 'l') && (pvrHeader.channels[1] == 'a')) && ((pvrHeader.channelDepth[0] == 8) && (pvrHeader.channelDepth[1] == 8)))
                     image.format = UNCOMPRESSED_GRAY_ALPHA;
                 else if ((pvrHeader.channels[0] == 'r') && (pvrHeader.channels[1] == 'g') && (pvrHeader.channels[2] == 'b'))
                 {
                     if (pvrHeader.channels[3] == 'a')
                     {
-                        if ((pvrHeader.channelDepth[0] == 5) && (pvrHeader.channelDepth[1] == 5) && (pvrHeader.channelDepth[2] == 5) && (pvrHeader.channelDepth[3] == 1)) 
+                        if ((pvrHeader.channelDepth[0] == 5) && (pvrHeader.channelDepth[1] == 5) && (pvrHeader.channelDepth[2] == 5) && (pvrHeader.channelDepth[3] == 1))
                             image.format = UNCOMPRESSED_R5G5B5A1;
-                        else if ((pvrHeader.channelDepth[0] == 4) && (pvrHeader.channelDepth[1] == 4) && (pvrHeader.channelDepth[2] == 4) && (pvrHeader.channelDepth[3] == 4)) 
+                        else if ((pvrHeader.channelDepth[0] == 4) && (pvrHeader.channelDepth[1] == 4) && (pvrHeader.channelDepth[2] == 4) && (pvrHeader.channelDepth[3] == 4))
                             image.format = UNCOMPRESSED_R4G4B4A4;
-                        else if ((pvrHeader.channelDepth[0] == 8) && (pvrHeader.channelDepth[1] == 8) && (pvrHeader.channelDepth[2] == 8) && (pvrHeader.channelDepth[3] == 8)) 
+                        else if ((pvrHeader.channelDepth[0] == 8) && (pvrHeader.channelDepth[1] == 8) && (pvrHeader.channelDepth[2] == 8) && (pvrHeader.channelDepth[3] == 8))
                             image.format = UNCOMPRESSED_R8G8B8A8;
                     }
                     else if (pvrHeader.channels[3] == 0)
