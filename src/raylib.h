@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.6.0 (www.raylib.com)
+*   raylib 1.7.0 (www.raylib.com)
 *
 *   A simple and easy-to-use library to learn videogames programming
 *
