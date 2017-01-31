@@ -2198,7 +2198,7 @@ void rlglUnloadMesh(Mesh *mesh)
 // Read screen pixel data (color buffer)
 unsigned char *rlglReadScreenPixels(int width, int height)
 {
-    unsigned char *screenData = (unsigned char *)malloc(width*height*sizeof(unsigned char)*4);
+    unsigned char *screenData = (unsigned char *)calloc(width*height*4, sizeof(unsigned char));
 
     // NOTE: glReadPixels returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenData);
