@@ -947,6 +947,7 @@ RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experienc
 RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
 RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
+RLAPI void SetMasterVolume(float volume);                             // Set master volume (listener)
 
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file
 RLAPI Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from raw array data

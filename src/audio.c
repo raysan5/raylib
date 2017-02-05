@@ -177,9 +177,11 @@ void InitAudioDevice(void)
             TraceLog(INFO, "Audio device and context initialized successfully: %s", alcGetString(device, ALC_DEVICE_SPECIFIER));
 
             // Listener definition (just for 2D)
-            alListener3f(AL_POSITION, 0, 0, 0);
-            alListener3f(AL_VELOCITY, 0, 0, 0);
-            alListener3f(AL_ORIENTATION, 0, 0, -1);
+            alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
+            alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+            alListener3f(AL_ORIENTATION, 0.0f, 0.0f, -1.0f);
+            
+            alListenerf(AL_GAIN, 1.0f);
         }
     }
 }
@@ -214,6 +216,15 @@ bool IsAudioDeviceReady(void)
         if (device == NULL) return false;
         else return true;
     }
+}
+
+// Set master volume (listener)
+void SetMasterVolume(float volume)
+{
+    if (volume < 0.0f) volume = 0.0f;
+    else if (volume > 1.0f) volume = 1.0f;
+    
+    alListenerf(AL_GAIN, volume);
 }
 
 //----------------------------------------------------------------------------------
@@ -313,10 +324,10 @@ Sound LoadSoundFromWave(Wave wave)
         ALuint source;
         alGenSources(1, &source);            // Generate pointer to audio source
 
-        alSourcef(source, AL_PITCH, 1);
-        alSourcef(source, AL_GAIN, 1);
-        alSource3f(source, AL_POSITION, 0, 0, 0);
-        alSource3f(source, AL_VELOCITY, 0, 0, 0);
+        alSourcef(source, AL_PITCH, 1.0f);
+        alSourcef(source, AL_GAIN, 1.0f);
+        alSource3f(source, AL_POSITION, 0.0f, 0.0f, 0.0f);
+        alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
         alSourcei(source, AL_LOOPING, AL_FALSE);
 
         // Convert loaded data to OpenAL buffer
@@ -899,10 +910,10 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     // Create an audio source
     alGenSources(1, &stream.source);
-    alSourcef(stream.source, AL_PITCH, 1);
-    alSourcef(stream.source, AL_GAIN, 1);
-    alSource3f(stream.source, AL_POSITION, 0, 0, 0);
-    alSource3f(stream.source, AL_VELOCITY, 0, 0, 0);
+    alSourcef(stream.source, AL_PITCH, 1.0f);
+    alSourcef(stream.source, AL_GAIN, 1.0f);
+    alSource3f(stream.source, AL_POSITION, 0.0f, 0.0f, 0.0f);
+    alSource3f(stream.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
     // Create Buffers (double buffering)
     alGenBuffers(MAX_STREAM_BUFFERS, stream.buffers);
