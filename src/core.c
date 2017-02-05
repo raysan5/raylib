@@ -524,7 +524,7 @@ bool IsWindowMinimized(void)
 #endif
 }
 
-// Fullscreen toggle
+// Fullscreen toggle (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -537,6 +537,25 @@ void ToggleFullscreen(void)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     TraceLog(WARNING, "Could not toggle to windowed mode");
+#endif
+}
+
+// Set icon for window (only PLATFORM_DESKTOP)
+void SetWindowIcon(Image image)
+{
+#if defined(PLATFORM_DESKTOP)
+    ImageFormat(&image, UNCOMPRESSED_R8G8B8A8);
+
+    GLFWimage icon[1];
+    
+    icon[0].width = image.width;
+    icon[0].height = image.height;
+    icon[0].pixels = (unsigned char *)image.data;
+
+    // NOTE: We only support one image icon
+    glfwSetWindowIcon(window, 1, icon);
+
+    // TODO: Support multi-image icons --> image.mipmaps
 #endif
 }
 
