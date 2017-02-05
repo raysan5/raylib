@@ -41,7 +41,7 @@ int main()
 
     const char text[50] = "THIS is THE FONT you SELECTED!";     // Main text
 
-    Vector2 textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].size*3, 1);
+    Vector2 textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].baseSize*3, 1);
 
     Vector2 mousePoint;
 
@@ -118,7 +118,7 @@ int main()
         }
 
         // Text measurement for better positioning on screen
-        textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].size*3, 1);
+        textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].baseSize*3, 1);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -140,7 +140,7 @@ int main()
             DrawText("NEXT", 700, positionY + 13, 20, btnNextOutColor);
 
             DrawTextEx(fonts[currentFont], text, (Vector2){ screenWidth/2 - textSize.x/2,
-                       260 + (70 - textSize.y)/2 }, fonts[currentFont].size*3,
+                       260 + (70 - textSize.y)/2 }, fonts[currentFont].baseSize*3,
                        1, colors[currentFont]);
 
         EndDrawing();

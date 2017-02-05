@@ -16,7 +16,7 @@
 *
 *   The following types:
 *       Image, Texture2D, RenderTexture2D, SpriteFont
-*   are immutable, and you can only read their non-pointer arguments (e.g. sprfnt.size).
+*   are immutable, and you can only read their non-pointer arguments (e.g. sprfnt.baseSize).
 *
 *   All other object types are opaque, that is, you cannot access or
 *   change their fields directly.
@@ -293,8 +293,8 @@ static int LuaIndexSpriteFont(lua_State* L)
         lua_pushinteger(L, img.size);
     else if (!strcmp(key, "texture"))
         LuaPush_Texture2D(L, img.texture);
-    else if (!strcmp(key, "numChars"))
-        lua_pushinteger(L, img.numChars);
+    else if (!strcmp(key, "charsCount"))
+        lua_pushinteger(L, img.charsCount);
     else
         return 0;
     return 1;
@@ -2203,7 +2203,7 @@ int lua_LoadSpriteFontTTF(lua_State* L)
     int arg2 = LuaGetArgument_int(L, 2);
     int arg3 = LuaGetArgument_int(L, 3);
     int arg4 = LuaGetArgument_int(L, 4);
-    //LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars);
+    //LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount, int *fontChars);
     SpriteFont result = LoadSpriteFontTTF(arg1, arg2, arg3, &arg4);
     LuaPush_SpriteFont(L, result);
     return 1;

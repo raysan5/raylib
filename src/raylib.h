@@ -370,15 +370,21 @@ typedef struct RenderTexture2D {
     Texture2D depth;        // Depth buffer attachment texture
 } RenderTexture2D;
 
+// SpriteFont character info
+typedef struct CharInfo {
+    int value;              // Character value (Unicode)
+    Rectangle rec;          // Character rectangle in sprite font
+    int offsetX;            // Character offset X when drawing
+    int offsetY;            // Character offset Y when drawing
+    int advanceX;           // Character advance position X
+} CharInfo;
+
 // SpriteFont type, includes texture and charSet array data
 typedef struct SpriteFont {
     Texture2D texture;      // Font texture
-    int size;               // Base size (default chars height)
-    int numChars;           // Number of characters
-    int *charValues;        // Characters values array
-    Rectangle *charRecs;    // Characters rectangles within the texture
-    Vector2 *charOffsets;   // Characters offsets (on drawing)
-    int *charAdvanceX;      // Characters x advance (on drawing)
+    int baseSize;           // Base size (default chars height)
+    int charsCount;         // Number of characters
+    CharInfo *chars;        // Characters info data
 } SpriteFont;
 
 // Camera type, defines a camera position/orientation in 3d space
@@ -825,7 +831,7 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 //------------------------------------------------------------------------------------
 RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load SpriteFont from file into GPU memory (VRAM)
-RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars);    // Load SpriteFont from TTF font file with generation parameters
+RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load SpriteFont from TTF font file with generation parameters
 RLAPI void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory (VRAM)
 
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)

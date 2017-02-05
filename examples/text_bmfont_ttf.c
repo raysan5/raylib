@@ -29,8 +29,8 @@ int main()
 
     Vector2 fontPosition;
 
-    fontPosition.x = screenWidth/2 - MeasureTextEx(fontBm, msgBm, fontBm.size, 0).x/2;
-    fontPosition.y = screenHeight/2 - fontBm.size/2 - 80;
+    fontPosition.x = screenWidth/2 - MeasureTextEx(fontBm, msgBm, fontBm.baseSize, 0).x/2;
+    fontPosition.y = screenHeight/2 - fontBm.baseSize/2 - 80;
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -49,8 +49,8 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawTextEx(fontBm, msgBm, fontPosition, fontBm.size, 0, MAROON);
-            DrawTextEx(fontTtf, msgTtf, (Vector2){ 75.0f, 240.0f }, fontTtf.size*0.8f, 2, LIME);
+            DrawTextEx(fontBm, msgBm, fontPosition, fontBm.baseSize, 0, MAROON);
+            DrawTextEx(fontTtf, msgTtf, (Vector2){ 75.0f, 240.0f }, fontTtf.baseSize*0.8f, 2, LIME);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

@@ -31,7 +31,7 @@ int main()
     // NOTE: On 2D drawing it won't be noticeable, it looks like FILTER_BILINEAR
     GenTextureMipmaps(&font.texture);
 
-    float fontSize = font.size;
+    float fontSize = font.baseSize;
     Vector2 fontPosition = { 40, screenHeight/2 + 50 };
     Vector2 textSize;
 

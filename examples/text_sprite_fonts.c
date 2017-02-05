@@ -31,14 +31,14 @@ int main()
 
     Vector2 fontPosition1, fontPosition2, fontPosition3;
 
-    fontPosition1.x = screenWidth/2 - MeasureTextEx(font1, msg1, font1.size, -3).x/2;
-    fontPosition1.y = screenHeight/2 - font1.size/2 - 80;
+    fontPosition1.x = screenWidth/2 - MeasureTextEx(font1, msg1, font1.baseSize, -3).x/2;
+    fontPosition1.y = screenHeight/2 - font1.baseSize/2 - 80;
 
-    fontPosition2.x = screenWidth/2 - MeasureTextEx(font2, msg2, font2.size, -2).x/2;
-    fontPosition2.y = screenHeight/2 - font2.size/2 - 10;
+    fontPosition2.x = screenWidth/2 - MeasureTextEx(font2, msg2, font2.baseSize, -2).x/2;
+    fontPosition2.y = screenHeight/2 - font2.baseSize/2 - 10;
 
-    fontPosition3.x = screenWidth/2 - MeasureTextEx(font3, msg3, font3.size, 2).x/2;
-    fontPosition3.y = screenHeight/2 - font3.size/2 + 50;
+    fontPosition3.x = screenWidth/2 - MeasureTextEx(font3, msg3, font3.baseSize, 2).x/2;
+    fontPosition3.y = screenHeight/2 - font3.baseSize/2 + 50;
 
     //--------------------------------------------------------------------------------------
 
@@ -56,9 +56,9 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawTextEx(font1, msg1, fontPosition1, font1.size, -3, WHITE);
-            DrawTextEx(font2, msg2, fontPosition2, font2.size, -2, WHITE);
-            DrawTextEx(font3, msg3, fontPosition3, font3.size, 2, WHITE);
+            DrawTextEx(font1, msg1, fontPosition1, font1.baseSize, -3, WHITE);
+            DrawTextEx(font2, msg2, fontPosition2, font2.baseSize, -2, WHITE);
+            DrawTextEx(font3, msg3, fontPosition3, font3.baseSize, 2, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

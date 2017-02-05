@@ -1064,7 +1064,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     int length = strlen(text);
     int posX = 0;
 
-    Vector2 imSize = MeasureTextEx(font, text, font.size, spacing);
+    Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
 
     // NOTE: GetTextureData() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
@@ -1080,7 +1080,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 
     for (int i = 0; i < length; i++)
     {
-        Rectangle letterRec = font.charRecs[(int)text[i] - 32];
+        Rectangle letterRec = font.chars[(int)text[i] - 32].rec;
 
         for (int y = letterRec.y; y < (letterRec.y + letterRec.height); y++)
         {
