@@ -265,6 +265,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
         RRESData rres = LoadResource(fileName);
 
         // Load sprite font texture
+        /*
         if (rres.type == RRES_FONT_IMAGE) 
         {
             // NOTE: Parameters for RRES_FONT_IMAGE type are: width, height, format, mipmaps
@@ -281,6 +282,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
             spriteFont.charsCount = rres.param2;
             spriteFont.chars = rres.data;
         }
+        */
 
         // TODO: Do not free rres.data memory (chars info data!)
         UnloadResource(rres);
