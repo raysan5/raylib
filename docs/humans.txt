@@ -1,0 +1,14 @@
+# humanstxt.org/
+# The humans responsible & technology colophon
+
+# TEAM
+
+    RaySan -- Designer/Programmer -- @raysan5
+
+# THANKS
+
+    Elendow, Zopox
+
+# TECHNOLOGY COLOPHON
+
+    HTML5, CSS3, jQuery
