@@ -123,7 +123,7 @@ typedef struct MusicData {
 
     AudioStream stream;                 // Audio stream (double buffering)
 
-    bool loop;                          // Repeat music after finish (loop)
+    int loopCount;                      // Loops count (times music repeats), -1 means infinite loop
     unsigned int totalSamples;          // Total number of samples
     unsigned int samplesLeft;           // Number of samples left to end
 } MusicData;
@@ -632,7 +632,7 @@ Music LoadMusicStream(const char *fileName)
             music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg); // Independent by channel
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_OGG;
-            music->loop = true;                  // We loop by default
+            music->loopCount = -1;                       // Infinite loop by default
 
             TraceLog(DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
@@ -651,7 +651,7 @@ Music LoadMusicStream(const char *fileName)
             music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount/music->ctxFlac->channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_FLAC;
-            music->loop = true;                  // We loop by default
+            music->loopCount = -1;                       // Infinite loop by default
 
             TraceLog(DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] FLAC sample rate: %i", fileName, music->ctxFlac->sampleRate);
@@ -665,14 +665,14 @@ Music LoadMusicStream(const char *fileName)
 
         if (!result)    // XM context created successfully
         {
-            jar_xm_set_max_loop_count(music->ctxXm, 0);     // Set infinite number of loops
+            jar_xm_set_max_loop_count(music->ctxXm, 0); // Set infinite number of loops
 
             // NOTE: Only stereo is supported for XM
             music->stream = InitAudioStream(48000, 16, 2);
             music->totalSamples = (unsigned int)jar_xm_get_remaining_samples(music->ctxXm);
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_MODULE_XM;
-            music->loop = true;
+            music->loopCount = -1;                       // Infinite loop by default
 
             TraceLog(DEBUG, "[%s] XM number of samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] XM track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
@@ -689,7 +689,7 @@ Music LoadMusicStream(const char *fileName)
             music->totalSamples = (unsigned int)jar_mod_max_samples(&music->ctxMod);
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_MODULE_MOD;
-            music->loop = true;
+            music->loopCount = -1;                       // Infinite loop by default
 
             TraceLog(DEBUG, "[%s] MOD number of samples: %i", fileName, music->samplesLeft);
             TraceLog(DEBUG, "[%s] MOD track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
@@ -813,7 +813,13 @@ void UpdateMusicStream(Music music)
         if (!active)
         {
             StopMusicStream(music);        // Stop music (and reset)
-            if (music->loop) PlayMusicStream(music);    // Play again
+            
+            // Decrease loopCount to stop when required
+            if (music->loopCount > 0)
+            {
+                music->loopCount--;        // Decrease loop count
+                PlayMusicStream(music);    // Play again
+            }
         }
         else
         {
@@ -849,6 +855,13 @@ void SetMusicVolume(Music music, float volume)
 void SetMusicPitch(Music music, float pitch)
 {
     alSourcef(music->stream.source, AL_PITCH, pitch);
+}
+
+// Set music loop count (loop repeats)
+// NOTE: If set to -1, means infinite loop
+void SetMusicLoopCount(Music music, float count);
+{
+    music->loopCount = count;
 }
 
 // Get music time length (in seconds)
