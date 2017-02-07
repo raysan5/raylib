@@ -158,7 +158,7 @@ notes on raylib 1.6
 
 On November 2016, only 4 months after raylib 1.5, arrives raylib 1.6. This new version represents another big review of the library and includes some interesting additions. This version conmmemorates raylib 3rd anniversary (raylib 1.0 was published on November 2013) and it is a stepping stone for raylib future. raylib roadmap has been reviewed and redefined to focus on its primary objective: create a simple and easy-to-use library to learn videogames programming. Some of the new features:
 
-Complete raylib LUA binding. All raylib functions plus the +60 code examples have been ported to LUA, now LUA users can enjoy coding videogames in LUA while using all the internal power of raylib. This addition also open the doors to LUA scripting support for a future raylib-based engine, being able to move game logic (Init, Update, Draw, De-Init) to LUA scripts while keep using raylib functionality.
+Complete raylib Lua binding. All raylib functions plus the +60 code examples have been ported to Lua, now Lua users can enjoy coding videogames in Lua while using all the internal power of raylib. This addition also open the doors to Lua scripting support for a future raylib-based engine, being able to move game logic (Init, Update, Draw, De-Init) to Lua scripts while keep using raylib functionality.
 
 Completely redesigned audio module. Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added (+20 new functions) to allow raw audio processing and streaming. FLAC file format support has also been added. In the same line, OpenAL Soft backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
 
@@ -273,6 +273,9 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  - [Emanuele Petriglia](https://github.com/LelixSuper) for working on multiple GNU/Linux improvements and developing [TicTacToe](https://github.com/LelixSuper/TicTacToe) raylib game.
  - [Joshua Reisenauer](https://github.com/kd7tck) for adding audio modules support (XM, MOD) and reviewing audio system.
  - Marcelo Paez (paezao) for his help on OSX to solve High DPI display issue. Thanks Marcelo!
+ - [Ghassan Al-Mashareqa](https://github.com/ghassanpl) for his amazing contribution with raylib Lua module, I just work over his code to implement [rlua](https://github.com/raysan5/raylib/blob/master/src/rlua.h)
+ - [Teodor Stoenescu](https://github.com/teodor-stoenescu) for his improvements on OBJ object loading.
  
+Please, if I forget someone in this list, excuse me and write me an email to remind me to add you!
 	
 [raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"

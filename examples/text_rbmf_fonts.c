@@ -50,8 +50,8 @@ int main()
     
     for (int i = 0; i < 8; i++)
     {
-        positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], fonts[i].size*2, spacings[i]).x/2;
-        positions[i].y = 60 + fonts[i].size + 50*i;
+        positions[i].x = screenWidth/2 - MeasureTextEx(fonts[i], messages[i], fonts[i].baseSize*2, spacings[i]).x/2;
+        positions[i].y = 60 + fonts[i].baseSize + 50*i;
     }
     
     Color colors[8] = { MAROON, ORANGE, DARKGREEN, DARKBLUE, DARKPURPLE, LIME, GOLD };
@@ -76,7 +76,7 @@ int main()
             
             for (int i = 0; i < 8; i++)
             {
-                DrawTextEx(fonts[i], messages[i], positions[i], fonts[i].size*2, spacings[i], colors[i]);
+                DrawTextEx(fonts[i], messages[i], positions[i], fonts[i].baseSize*2, spacings[i], colors[i]);
             }
 
         EndDrawing();

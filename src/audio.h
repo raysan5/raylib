@@ -110,12 +110,11 @@ void InitAudioDevice(void);                                     // Initialize au
 void CloseAudioDevice(void);                                    // Close the audio device and context
 bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 
-Wave LoadWave(const char *fileName);                            // Load wave data from file into RAM
-Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from float array data (32bit)
-Sound LoadSound(const char *fileName);                          // Load sound to memory
-Sound LoadSoundFromWave(Wave wave);                             // Load sound to memory from wave data
-Sound LoadSoundFromRES(const char *rresName, int resId);        // Load sound to memory from rRES file (raylib Resource)
-void UpdateSound(Sound sound, void *data, int numSamples);      // Update sound buffer with new data
+Wave LoadWave(const char *fileName);                            // Load wave data from file
+Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from raw array data
+Sound LoadSound(const char *fileName);                          // Load sound from file
+Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
+void UpdateSound(Sound sound, const void *data, int numSamples);// Update sound buffer with new data
 void UnloadWave(Wave wave);                                     // Unload wave data
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound

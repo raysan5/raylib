@@ -453,16 +453,17 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     int recCenterX = rec.x + rec.width/2;
     int recCenterY = rec.y + rec.height/2;
     
-    float dx = fabs(center.x - recCenterX);
-    float dy = fabs(center.y - recCenterY);
+    float dx = fabsf(center.x - recCenterX);
+    float dy = fabsf(center.y - recCenterY);
 
-    if (dx > (rec.width/2 + radius)) { return false; }
-    if (dy > (rec.height/2 + radius)) { return false; }
+    if (dx > ((float)rec.width/2.0f + radius)) { return false; }
+    if (dy > ((float)rec.height/2.0f + radius)) { return false; }
 
-    if (dx <= (rec.width/2)) { return true; } 
-    if (dy <= (rec.height/2)) { return true; }
+    if (dx <= ((float)rec.width/2.0f)) { return true; }
+    if (dy <= ((float)rec.height/2.0f)) { return true; }
 
-    float cornerDistanceSq = (dx - rec.width/2)*(dx - rec.width/2) + (dy - rec.height/2)*(dy - rec.height/2);
+    float cornerDistanceSq = (dx - (float)rec.width/2.0f)*(dx - (float)rec.width/2.0f) + 
+						     (dy - (float)rec.height/2.0f)*(dy - (float)rec.height/2.0f);
 
     return (cornerDistanceSq <= (radius*radius));
 }

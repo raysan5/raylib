@@ -9,7 +9,7 @@
 *   External libs:
 *       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
 *       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
-*       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person) 
+*       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *   Module Configuration Flags:
@@ -42,13 +42,14 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"         // raylib main header
+#include "raylib.h"
+
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"          // Includes Android fopen map, InitAssetManager(), TraceLog()
+#include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
 
 #define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
 #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
-#include "raymath.h"            // Required for Vector3 and Matrix functions
+#include "raymath.h"            // Required for: Vector3 and Matrix functions
 
 #define GESTURES_IMPLEMENTATION
 #include "gestures.h"       // Gestures detection functionality
@@ -66,9 +67,13 @@
 #include <string.h>         // Required for: strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
+#if defined __linux || defined(PLATFORM_WEB)
+    #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+#endif
+
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    //#define GLFW_INCLUDE_NONE   // Disable the standard OpenGL header inclusion on GLFW3
-    #include <GLFW/glfw3.h>       // GLFW3 library: Windows, OpenGL context and Input management
+    //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
+    #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
 
     #ifdef __linux
         #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
@@ -98,7 +103,7 @@
     #include <linux/kd.h>       // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>    // Linux: Keycodes constants definition (KEY_A, ...)
     #include <linux/joystick.h> // Linux: Joystick support library
-    
+
     #include "bcm_host.h"       // Raspberry Pi VideoCore IV access functions
 
     #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
@@ -120,6 +125,7 @@
     // Old device inputs system
     #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
     #define DEFAULT_MOUSE_DEV         "/dev/input/mouse0"       // Mouse input
+    #define DEFAULT_TOUCH_DEV         "/dev/input/event4"       // Touch input virtual device (created by ts_uinput)
     #define DEFAULT_GAMEPAD_DEV       "/dev/input/js"           // Gamepad input (base dev for all gamepads: js0, js1, ...)
 
     // New device input events (evdev) (must be detected)
@@ -172,6 +178,11 @@ static int defaultKeyboardMode;                 // Used to store default keyboar
 static int mouseStream = -1;                    // Mouse device file descriptor
 static bool mouseReady = false;                 // Flag to know if mouse is ready
 static pthread_t mouseThreadId;                 // Mouse reading thread id
+
+// Touch input variables
+static int touchStream = -1;                    // Touch device file descriptor
+static bool touchReady = false;                 // Flag to know if touch interface is ready
+static pthread_t touchThreadId;                 // Touch reading thread id
 
 // Gamepad input variables
 static int gamepadStream[MAX_GAMEPADS] = { -1 };// Gamepad device file descriptor
@@ -236,7 +247,7 @@ static int dropFilesCount = 0;              // Count stored strings
 
 static double currentTime, previousTime;    // Used to track timmings
 static double updateTime, drawTime;         // Time measures for update and draw
-static double frameTime;                    // Time measure for one frame
+static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
 static char configFlags = 0;                // Configuration flags (bit based)
@@ -257,11 +268,13 @@ static void InitGraphicsDevice(int width, int height);  // Initialize graphics d
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
+static void Wait(int ms);                               // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
 static void PollInputEvents(void);                      // Register user events
 static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
+static void SetupViewport(void);                        // Set viewport parameters
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 static void TakeScreenshot(void);                       // Takes a screenshot and saves it in the same folder as executable
 #endif
@@ -290,6 +303,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
+static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 #endif
 
 #if defined(PLATFORM_RPI)
@@ -298,8 +312,15 @@ static void ProcessKeyboard(void);                      // Process keyboard even
 static void RestoreKeyboard(void);                      // Restore keyboard system
 static void InitMouse(void);                            // Mouse initialization (including mouse thread)
 static void *MouseThread(void *arg);                    // Mouse reading thread
+static void InitTouch(void);                            // Touch device initialization (including touch thread)
+static void *TouchThread(void *arg);                    // Touch device reading thread
 static void InitGamepad(void);                          // Init raw gamepad input
 static void *GamepadThread(void *arg);                  // Mouse reading thread
+#endif
+
+#if defined(_WIN32)
+    // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
+    void __stdcall Sleep(unsigned long msTimeout);      // Required for Delay()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -309,7 +330,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 // Initialize Window and Graphics Context (OpenGL)
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(INFO, "Initializing raylib (v1.6.0)");
+    TraceLog(INFO, "Initializing raylib (v1.7.0)");
 
     // Store window title (could be useful...)
     windowTitle = title;
@@ -329,6 +350,7 @@ void InitWindow(int width, int height, const char *title)
 #if defined(PLATFORM_RPI)
     // Init raw input system
     InitMouse();        // Mouse init
+    InitTouch();        // Touch init
     InitKeyboard();     // Keyboard init
     InitGamepad();      // Gamepad init
 #endif
@@ -344,9 +366,9 @@ void InitWindow(int width, int height, const char *title)
     emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
     emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
 
-    // TODO: Add gamepad support (not provided by GLFW3 on emscripten)
-    //emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenInputCallback);
-    //emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenInputCallback);
+    // Support gamepad (not provided by GLFW3 on emscripten)
+    emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 #endif
 
     mousePosition.x = (float)screenWidth/2.0f;
@@ -365,7 +387,7 @@ void InitWindow(int width, int height, const char *title)
 // Android activity initialization
 void InitWindow(int width, int height, void *state)
 {
-    TraceLog(INFO, "Initializing raylib (v1.6.0)");
+    TraceLog(INFO, "Initializing raylib (v1.7.0)");
 
     app_dummy();
 
@@ -466,10 +488,11 @@ void CloseWindow(void)
     // Wait for mouse and gamepad threads to finish before closing
     // NOTE: Those threads should already have finished at this point
     // because they are controlled by windowShouldClose variable
-    
+
     windowShouldClose = true;   // Added to force threads to exit when the close window is called
-    
+
     pthread_join(mouseThreadId, NULL);
+    pthread_join(touchThreadId, NULL);
     pthread_join(gamepadThreadId, NULL);
 #endif
 
@@ -481,7 +504,7 @@ bool WindowShouldClose(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     // While window minimized, stop loop execution
-    while (windowMinimized) glfwPollEvents();
+    while (windowMinimized) glfwWaitEvents();
 
     return (glfwWindowShouldClose(window));
 #endif
@@ -501,7 +524,7 @@ bool IsWindowMinimized(void)
 #endif
 }
 
-// Fullscreen toggle
+// Fullscreen toggle (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -514,6 +537,25 @@ void ToggleFullscreen(void)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     TraceLog(WARNING, "Could not toggle to windowed mode");
+#endif
+}
+
+// Set icon for window (only PLATFORM_DESKTOP)
+void SetWindowIcon(Image image)
+{
+#if defined(PLATFORM_DESKTOP)
+    ImageFormat(&image, UNCOMPRESSED_R8G8B8A8);
+
+    GLFWimage icon[1];
+    
+    icon[0].width = image.width;
+    icon[0].height = image.height;
+    icon[0].pixels = (unsigned char *)image.data;
+
+    // NOTE: We only support one image icon
+    glfwSetWindowIcon(window, 1, icon);
+
+    // TODO: Support multi-image icons --> image.mipmaps
 #endif
 }
 
@@ -548,14 +590,14 @@ void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #ifdef __linux
-        XColor Col;
-        const char Nil[] = {0};
+        XColor col;
+        const char nil[] = {0};
 
-        Pixmap Pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), Nil, 1, 1);
-        Cursor Cur = XCreatePixmapCursor(glfwGetX11Display(), Pix, Pix, &Col, &Col, 0, 0);
+        Pixmap pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), nil, 1, 1);
+        Cursor cur = XCreatePixmapCursor(glfwGetX11Display(), pix, pix, &col, &col, 0, 0);
 
-        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), Cur);
-        XFreeCursor(glfwGetX11Display(), Cur);
+        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), cur);
+        XFreeCursor(glfwGetX11Display(), cur);
     #else
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     #endif
@@ -625,15 +667,16 @@ void EndDrawing(void)
 
     frameTime = updateTime + drawTime;
 
-    double extraTime = 0.0;
-
-    while (frameTime < targetTime)
+    // Wait for some milliseconds...
+    if (frameTime < targetTime)
     {
-        // Implement a delay
+        Wait((int)((targetTime - frameTime)*1000));
+
         currentTime = GetTime();
-        extraTime = currentTime - previousTime;
+        double extraTime = currentTime - previousTime;
         previousTime = currentTime;
-        frameTime += extraTime;
+
+        frameTime = updateTime + drawTime + extraTime;
     }
 }
 
@@ -744,8 +787,7 @@ void EndTextureMode(void)
     rlDisableRenderTexture();           // Disable render target
 
     // Set viewport to default framebuffer size (screen size)
-    // TODO: consider possible viewport offsets
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    SetupViewport();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to PROJECTION matrix
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
@@ -768,20 +810,16 @@ void SetTargetFPS(int fps)
 }
 
 // Returns current FPS
-float GetFPS(void)
+int GetFPS(void)
 {
-    return (float)(1.0/frameTime);
+    return (int)floorf(1.0f/GetFrameTime());
 }
 
 // Returns time in seconds for one frame
 float GetFrameTime(void)
 {
-    // As we are operate quite a lot with frameTime,
-    // it could be no stable, so we round it before passing it around
-    // NOTE: There are still problems with high framerates (>500fps)
-    double roundedFrameTime =  round(frameTime*10000)/10000.0;
-
-    return (float)roundedFrameTime;    // Time in seconds to run a frame
+    // NOTE: We round value to milliseconds
+    return (roundf(frameTime*1000.0)/1000.0f);
 }
 
 // Converts Color to float array and normalizes
@@ -1089,7 +1127,7 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     QuaternionTransform(&worldPos, matProj);
 
     // Calculate normalized device coordinates (inverted y)
-    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.z };
+    Vector3 ndcPos = { worldPos.x/worldPos.w, -worldPos.y/worldPos.w, worldPos.z/worldPos.w };
 
     // Calculate 2d screen position vector
     Vector2 screenPosition = { (ndcPos.x + 1.0f)/2.0f*(float)GetScreenWidth(), (ndcPos.y + 1.0f)/2.0f*(float)GetScreenHeight() };
@@ -1128,7 +1166,7 @@ bool IsKeyDown(int key)
 bool IsKeyReleased(int key)
 {
     bool released = false;
-    
+
     if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
     else released = false;
 
@@ -1163,7 +1201,7 @@ void SetExitKey(int key)
 bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
-    
+
 #if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad]) result = true;
 #endif
@@ -1177,7 +1215,7 @@ bool IsGamepadName(int gamepad, const char *name)
     bool result = false;
 
 #if !defined(PLATFORM_ANDROID)
-    const char *gamepadName = NULL; 
+    const char *gamepadName = NULL;
 
     if (gamepadReady[gamepad]) gamepadName = GetGamepadName(gamepad);
     if ((name != NULL) && (gamepadName != NULL)) result = (strcmp(name, gamepadName) == 0);
@@ -1193,7 +1231,7 @@ const char *GetGamepadName(int gamepad)
     if (gamepadReady[gamepad]) return glfwGetJoystickName(gamepad);
     else return NULL;
 #elif defined(PLATFORM_RPI)
-	if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGNAME(64), &gamepadName);
+    if (gamepadReady[gamepad]) ioctl(gamepadStream[gamepad], JSIOCGNAME(64), &gamepadName);
 
     return gamepadName;
 #else
@@ -1216,7 +1254,7 @@ int GetGamepadAxisCount(int gamepad)
 float GetGamepadAxisMovement(int gamepad, int axis)
 {
     float value = 0;
-    
+
 #if !defined(PLATFORM_ANDROID)
     if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (axis < MAX_GAMEPAD_AXIS)) value = gamepadAxisState[gamepad][axis];
 #endif
@@ -1230,8 +1268,8 @@ bool IsGamepadButtonPressed(int gamepad, int button)
     bool pressed = false;
 
 #if !defined(PLATFORM_ANDROID)
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
-        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
+        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) &&
         (currentGamepadState[gamepad][button] == 1)) pressed = true;
 #endif
 
@@ -1255,10 +1293,10 @@ bool IsGamepadButtonDown(int gamepad, int button)
 bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
-    
+
 #if !defined(PLATFORM_ANDROID)
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
-        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
+        (currentGamepadState[gamepad][button] != previousGamepadState[gamepad][button]) &&
         (currentGamepadState[gamepad][button] == 0)) released = true;
 #endif
 
@@ -1271,7 +1309,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
     bool result = false;
 
 #if !defined(PLATFORM_ANDROID)
-    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) && 
+    if ((gamepad < MAX_GAMEPADS) && gamepadReady[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
         (currentGamepadState[gamepad][button] == 0)) result = true;
 #endif
 
@@ -1484,7 +1522,7 @@ static void InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);    // Resizable window
     }
     else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
-    
+
     //glfwWindowHint(GLFW_DECORATED, GL_TRUE);      // Border and buttons on Window
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_DEPTH_BITS, 16);          // Depthbuffer bits (24 by default)
@@ -1776,19 +1814,8 @@ static void InitGraphicsDevice(int width, int height)
     // NOTE: screenWidth and screenHeight not used, just stored as globals
     rlglInit(screenWidth, screenHeight);
 
-#ifdef __APPLE__
-    // Get framebuffer size of current window
-    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
-    // is automatically reasized to adapt to new DPI.
-    // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-    rlViewport(renderOffsetX/2, renderOffsetY/2, fbWidth - renderOffsetX, fbHeight - renderOffsetY);
-#else
-    // Initialize screen viewport (area of the screen that you will actually draw to)
-    // NOTE: Viewport must be recalculated if screen is resized
-    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
-#endif
+    // Setup default viewport
+    SetupViewport();
 
     // Initialize internal projection and modelview matrices
     // NOTE: Default to orthographic projection mode with top-left corner at (0,0)
@@ -1802,6 +1829,24 @@ static void InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_ANDROID)
     windowReady = true;             // IMPORTANT!
+#endif
+}
+
+// Set viewport parameters
+static void SetupViewport(void)
+{
+#ifdef __APPLE__
+    // Get framebuffer size of current window
+    // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
+    // is automatically reasized to adapt to new DPI.
+    // When OS does that, it can be detected using GLFW3 callback: glfwSetFramebufferSizeCallback()
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    rlViewport(renderOffsetX/2, renderOffsetY/2,  fbWidth - renderOffsetX, fbHeight - renderOffsetY);
+#else
+    // Initialize screen viewport (area of the screen that you will actually draw to)
+    // NOTE: Viewport must be recalculated if screen is resized
+    rlViewport(renderOffsetX/2, renderOffsetY/2, renderWidth - renderOffsetX, renderHeight - renderOffsetY);
 #endif
 }
 
@@ -1912,6 +1957,31 @@ static double GetTime(void)
 #endif
 }
 
+// Wait for some milliseconds (stop program execution)
+static void Wait(int ms)
+{
+#if defined _WIN32
+    Sleep(ms);
+#elif defined __linux || defined(PLATFORM_WEB)
+    struct timespec req = { 0 };
+    time_t sec = (int)(ms/1000);
+    ms -= (sec*1000);
+    req.tv_sec=sec;
+    req.tv_nsec=ms*1000000L;
+
+    // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+    while (nanosleep(&req,&req) == -1) continue;
+//#elif defined __APPLE__
+    // TODO:
+#else
+    double prevTime = GetTime();
+    double nextTime = 0.0;
+
+    // Busy wait loop
+    while ((nextTime - prevTime) < (double)ms/1000.0) nextTime = GetTime();
+#endif
+}
+
 // Get one key state
 static bool GetKeyStatus(int key)
 {
@@ -1934,7 +2004,7 @@ static bool GetMouseButtonStatus(int button)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetMouseButton(window, button);
 #elif defined(PLATFORM_ANDROID)
-    // TODO: Check for virtual mouse
+    // TODO: Check for virtual mouse?
     return false;
 #elif defined(PLATFORM_RPI)
     // NOTE: Mouse buttons states are filled in PollInputEvents()
@@ -1948,10 +2018,10 @@ static void PollInputEvents(void)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
-    
+
     // Reset last key pressed registered
     lastKeyPressed = -1;
-    
+
 #if !defined(PLATFORM_RPI)
     // Reset last gamepad button/axis registered state
     lastGamepadButtonPressed = -1;
@@ -1967,7 +2037,7 @@ static void PollInputEvents(void)
 
     mousePosition.x = (float)mouseX;
     mousePosition.y = (float)mouseY;
-    
+
     // Keyboard input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
@@ -1980,8 +2050,6 @@ static void PollInputEvents(void)
     currentMouseWheelY = 0;
 #endif
 
-// NOTE: GLFW3 joystick functionality not available in web
-// TODO: Support joysticks using emscripten API
 #if defined(PLATFORM_DESKTOP)
     // Check if gamepads are ready
     // NOTE: We do it here in case of disconection
@@ -1990,7 +2058,7 @@ static void PollInputEvents(void)
         if (glfwJoystickPresent(i)) gamepadReady[i] = true;
         else gamepadReady[i] = false;
     }
-    
+
     // Register gamepads buttons events
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
@@ -1998,14 +2066,14 @@ static void PollInputEvents(void)
         {
             // Register previous gamepad states
             for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
-    
+
             // Get current gamepad state
             // NOTE: There is no callback available, so we get it manually
             const unsigned char *buttons;
             int buttonsCount;
 
             buttons = glfwGetJoystickButtons(i, &buttonsCount);
-            
+
             for (int k = 0; (buttons != NULL) && (k < buttonsCount) && (buttonsCount < MAX_GAMEPAD_BUTTONS); k++)
             {
                 if (buttons[k] == GLFW_PRESS)
@@ -2015,23 +2083,64 @@ static void PollInputEvents(void)
                 }
                 else currentGamepadState[i][k] = 0;
             }
-            
+
             // Get current axis state
             const float *axes;
             int axisCount = 0;
 
             axes = glfwGetJoystickAxes(i, &axisCount);
-            
+
             for (int k = 0; (axes != NULL) && (k < axisCount) && (k < MAX_GAMEPAD_AXIS); k++)
             {
                 gamepadAxisState[i][k] = axes[k];
             }
-            
+
             gamepadAxisCount = axisCount;
         }
     }
 
     glfwPollEvents();       // Register keyboard/mouse events (callbacks)... and window events!
+#endif
+
+// Gamepad support using emscripten API
+// NOTE: GLFW3 joystick functionality not available in web
+#if defined(PLATFORM_WEB)
+    // Get number of gamepads connected
+    int numGamepads = emscripten_get_num_gamepads();
+
+    for (int i = 0; (i < numGamepads) && (i < MAX_GAMEPADS); i++)
+    {
+        // Register previous gamepad button states
+        for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) previousGamepadState[i][k] = currentGamepadState[i][k];
+
+        EmscriptenGamepadEvent gamepadState;
+
+        int result = emscripten_get_gamepad_status(i, &gamepadState);
+
+        if (result == EMSCRIPTEN_RESULT_SUCCESS)
+        {
+            // Register buttons data for every connected gamepad
+            for (int j = 0; (j < gamepadState.numButtons) && (j < MAX_GAMEPAD_BUTTONS); j++)
+            {
+                if (gamepadState.digitalButton[j] == 1)
+                {
+                    currentGamepadState[i][j] = 1;
+                    lastGamepadButtonPressed = j;
+                }
+                else currentGamepadState[i][j] = 0;
+
+                //printf("Gamepad %d, button %d: Digital: %d, Analog: %g\n", gamepadState.index, j, gamepadState.digitalButton[j], gamepadState.analogButton[j]);
+            }
+
+            // Register axis data for every connected gamepad
+            for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXIS); j++)
+            {
+                gamepadAxisState[i][j] = gamepadState.axis[j];
+            }
+
+            gamepadAxisCount = gamepadState.numAxes;
+        }
+    }
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -2091,7 +2200,7 @@ static void TakeScreenshot(void)
     sprintf(buffer, "screenshot%03i.png", shotNum);
 
     // Save image as PNG
-    WritePNG(buffer, imgData, renderWidth, renderHeight, 4);
+    SavePNG(buffer, imgData, renderWidth, renderHeight, 4);
 
     free(imgData);
 
@@ -2480,6 +2589,8 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 #endif
 
 #if defined(PLATFORM_WEB)
+
+// Register fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
 {
     //isFullscreen: int e->isFullscreen
@@ -2503,7 +2614,7 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     return 0;
 }
 
-// Web: Get input events
+// Register touch input events
 static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
     /*
@@ -2566,6 +2677,26 @@ static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent
     ProcessGestureEvent(gestureEvent);
 
     return 1;
+}
+
+// Register connected/disconnected gamepads events
+static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
+{
+    /*
+    printf("%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"\n",
+           eventType != 0 ? emscripten_event_type_to_string(eventType) : "Gamepad state",
+           gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
+
+    for(int i = 0; i < gamepadEvent->numAxes; ++i) printf("Axis %d: %g\n", i, gamepadEvent->axis[i]);
+    for(int i = 0; i < gamepadEvent->numButtons; ++i) printf("Button %d: Digital: %d, Analog: %g\n", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    */
+
+    if ((gamepadEvent->connected) && (gamepadEvent->index < MAX_GAMEPADS)) gamepadReady[gamepadEvent->index] = true;
+    else gamepadReady[gamepadEvent->index] = false;
+
+    // TODO: Test gamepadEvent->index
+
+    return 0;
 }
 #endif
 
@@ -2748,7 +2879,8 @@ static void InitMouse(void)
 // if too much time passes between reads, queue gets full and new events override older ones...
 static void *MouseThread(void *arg)
 {
-    const unsigned char XSIGN = 1<<4, YSIGN = 1<<5;
+    const unsigned char XSIGN = (1 << 4);
+    const unsigned char YSIGN = (1 << 5);
 
     typedef struct {
         char buttons;
@@ -2800,6 +2932,110 @@ static void *MouseThread(void *arg)
        //else read(mouseStream, &mouse, 1);   // Try to sync up again
     }
 
+    return NULL;
+}
+
+// Touch initialization (including touch thread)
+static void InitTouch(void)
+{
+    if ((touchStream = open(DEFAULT_TOUCH_DEV, O_RDONLY|O_NONBLOCK)) < 0)
+    {
+        TraceLog(WARNING, "Touch device could not be opened, no touchscreen available");
+    }
+    else
+    {
+        touchReady = true;
+
+        int error = pthread_create(&touchThreadId, NULL, &TouchThread, NULL);
+
+        if (error != 0) TraceLog(WARNING, "Error creating touch input event thread");
+        else TraceLog(INFO, "Touch device initialized successfully");
+    }
+}
+
+// Touch reading thread.
+// This reads from a Virtual Input Event /dev/input/event4 which is
+// created by the ts_uinput daemon. This takes, filters and scales
+// raw input from the Touchscreen (which appears in /dev/input/event3)
+// based on the Calibration data referenced by tslib.
+static void *TouchThread(void *arg)
+{
+    struct input_event ev;
+    GestureEvent gestureEvent;
+
+    while (!windowShouldClose)
+    {
+        if (read(touchStream, &ev, sizeof(ev)) == (int)sizeof(ev))
+        {
+            // if pressure > 0 then simulate left mouse button click
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value == 0 && currentMouseState[0] == 1)
+            {
+                currentMouseState[0] = 0;
+                gestureEvent.touchAction = TOUCH_UP;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            }
+            if (ev.type == EV_ABS && ev.code == 24 && ev.value > 0 && currentMouseState[0] == 0)
+            {
+                currentMouseState[0] = 1;
+                gestureEvent.touchAction = TOUCH_DOWN;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            }
+            // x & y values supplied by event4 have been scaled & de-jittered using tslib calibration data
+            if (ev.type == EV_ABS && ev.code == 0)
+            {
+                mousePosition.x = ev.value;
+                if (mousePosition.x < 0) mousePosition.x = 0;
+                if (mousePosition.x > screenWidth) mousePosition.x = screenWidth;
+                gestureEvent.touchAction = TOUCH_MOVE;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            }
+            if (ev.type == EV_ABS && ev.code == 1)
+            {
+                mousePosition.y = ev.value;
+                if (mousePosition.y < 0) mousePosition.y = 0;
+                if (mousePosition.y > screenHeight) mousePosition.y = screenHeight;
+                gestureEvent.touchAction = TOUCH_MOVE;
+                gestureEvent.pointCount = 1;
+                gestureEvent.pointerId[0] = 0;
+                gestureEvent.pointerId[1] = 1;
+                gestureEvent.position[0] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[1] = (Vector2){ mousePosition.x, mousePosition.y };
+                gestureEvent.position[0].x /= (float)GetScreenWidth();
+                gestureEvent.position[0].y /= (float)GetScreenHeight();
+                gestureEvent.position[1].x /= (float)GetScreenWidth();
+                gestureEvent.position[1].y /= (float)GetScreenHeight();
+                ProcessGestureEvent(gestureEvent);
+            }
+
+        }
+    }
     return NULL;
 }
 
@@ -2867,7 +3103,7 @@ static void *GamepadThread(void *arg)
                     {
                         // 1 - button pressed, 0 - button released
                         currentGamepadState[i][gamepadEvent.number] = (int)gamepadEvent.value;
-                        
+
                         if ((int)gamepadEvent.value == 1) lastGamepadButtonPressed = gamepadEvent.number;
                         else lastGamepadButtonPressed = -1;
                     }

@@ -11,7 +11,7 @@ NOTE:
   It includes some interesting new features and is a stepping stone towards raylib future.
 
 HUGE changes:
-[rlua] LUA BINDING: Complete raylib LUA binding, ALL raylib functions ported to LUA plus the +60 code examples.
+[rlua] Lua BINDING: Complete raylib Lua binding, ALL raylib functions ported to Lua plus the +60 code examples.
 [audio] COMPLETE REDESIGN: Improved music support and also raw audio data processing and playing, +20 new functions added.
 [physac] COMPLETE REWRITE: Improved performance, functionality and simplified usage, moved to own repository and added multiple examples!
 

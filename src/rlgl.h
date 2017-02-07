@@ -97,7 +97,7 @@
     // NOTE: This is the maximum amount of lines, triangles and quads per frame, be careful!
     #define MAX_LINES_BATCH         8192
     #define MAX_TRIANGLES_BATCH     4096
-    #define MAX_QUADS_BATCH         4096
+    #define MAX_QUADS_BATCH         8192
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: Reduce memory sizes for embedded systems (RPI and HTML5)
     // NOTE: On HTML5 (emscripten) this is allocated on heap, by default it's only 16MB!...just take care...
@@ -370,7 +370,7 @@ void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
-void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
+void rlglUpdateTexture(unsigned int id, int width, int height, int format, const void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
 
 void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids

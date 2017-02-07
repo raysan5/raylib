@@ -236,6 +236,7 @@ EXAMPLES = \
     models_obj_loading \
     models_heightmap \
     models_cubicmap \
+    models_ray_picking \
     shaders_model_shader \
     shaders_shapes_textures \
     shaders_custom_uniform \
@@ -454,6 +455,10 @@ models_heightmap: models_heightmap.c
 
 # compile [models] example - cubesmap loading
 models_cubicmap: models_cubicmap.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [models] example - model ray picking
+models_ray_picking: models_ray_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - model shader
