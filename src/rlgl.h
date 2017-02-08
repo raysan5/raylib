@@ -251,25 +251,6 @@ typedef unsigned char byte;
         float fovy;             // Camera field-of-view apperture in Y (degrees)
     } Camera;
 
-    // Light type
-    typedef struct LightData {
-        unsigned int id;        // Light unique id
-        bool enabled;           // Light enabled
-        int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-
-        Vector3 position;       // Light position
-        Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-        float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
-
-        Color diffuse;          // Light diffuse color
-        float intensity;        // Light intensity level
-
-        float coneAngle;        // Light cone max angle: LIGHT_SPOT
-    } LightData, *Light;
-
-    // Light types
-    typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
-    
     // Texture parameters: filter mode
     // NOTE 1: Filtering considers mipmaps if available in the texture
     // NOTE 2: Filter is accordingly set for minification and magnification
@@ -414,9 +395,6 @@ void BeginShaderMode(Shader shader);                                // Begin cus
 void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
-
-Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
-void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 void TraceLog(int msgType, const char *text, ...);
 float *MatrixToFloat(Matrix mat);

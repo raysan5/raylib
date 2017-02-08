@@ -859,7 +859,7 @@ void SetMusicPitch(Music music, float pitch)
 
 // Set music loop count (loop repeats)
 // NOTE: If set to -1, means infinite loop
-void SetMusicLoopCount(Music music, float count);
+void SetMusicLoopCount(Music music, float count)
 {
     music->loopCount = count;
 }
