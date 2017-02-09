@@ -61,8 +61,10 @@ p a:hover{text-decoration: none; color:gray;}
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f5f5f5', endColorstr='#e0e0e0',GradientType=0 );
 }
 	
-#social{ width:300px; height:50px; position:relative; float:right; margin-right:8px; margin-top:20px; margin-bottom:20px; }
+#social{ width:372px; height:50px; position:relative; float:right; margin-right:8px; margin-top:20px; margin-bottom:20px; }
 #social a:hover{ background-position: 0 -36px;}
+#youtube{ width:36px; height:36px; float:left; position:relative; background-image: url(../img/icon_youtube.png); cursor: pointer; background-repeat:no-repeat; background-position: 0 0;}
+#handmade{ width:36px; height:36px; float:left; position:relative; background-image: url(../img/icon_handmade.png); cursor: pointer; background-repeat:no-repeat; background-position: 0 0;}
 #twitch{ width:36px; height:36px; float:left; position:relative; background-image: url(../img/icon_twitch.png); cursor: pointer; background-repeat:no-repeat; background-position: 0 0;}
 #patreon{ width:36px; height:36px; float:left; position:relative; background-image: url(../img/icon_patreon.png); cursor: pointer; background-repeat:no-repeat; background-position: 0 0;}
 #itchio{ width:36px; height:36px; float:left; position:relative; background-image: url(../img/icon_itchio.png); cursor: pointer; background-repeat:no-repeat; background-position: 0 0;}
