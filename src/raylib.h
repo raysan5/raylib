@@ -953,7 +953,7 @@ RLAPI Wave LoadWave(const char *fileName);                            // Load wa
 RLAPI Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from raw array data
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound from file
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
-RLAPI void UpdateSound(Sound sound, const void *data, int numSamples);// Update sound buffer with new data
+RLAPI void UpdateSound(Sound sound, const void *data, int samplesCount);// Update sound buffer with new data
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
@@ -984,7 +984,7 @@ RLAPI float GetMusicTimePlayed(Music music);                          // Get cur
 RLAPI AudioStream InitAudioStream(unsigned int sampleRate,
                                   unsigned int sampleSize,
                                   unsigned int channels);             // Init audio stream (to stream raw audio pcm data)
-RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int numSamples); // Update audio stream buffers with data
+RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 RLAPI void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
 RLAPI bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
 RLAPI void PlayAudioStream(AudioStream stream);                       // Play audio stream

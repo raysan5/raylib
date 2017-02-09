@@ -374,7 +374,7 @@ void UnloadSound(Sound sound)
 
 // Update sound buffer with new data
 // NOTE: data must match sound.format
-void UpdateSound(Sound sound, const void *data, int numSamples)
+void UpdateSound(Sound sound, const void *data, int samplesCount)
 {
     ALint sampleRate, sampleSize, channels;
     alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
@@ -385,7 +385,7 @@ void UpdateSound(Sound sound, const void *data, int numSamples)
     TraceLog(DEBUG, "UpdateSound() : AL_BITS: %i", sampleSize);
     TraceLog(DEBUG, "UpdateSound() : AL_CHANNELS: %i", channels);
 
-    unsigned int dataSize = numSamples*channels*sampleSize/8;   // Size of data in bytes
+    unsigned int dataSize = samplesCount*channels*sampleSize/8;   // Size of data in bytes
 
     alSourceStop(sound.source);                 // Stop sound
     alSourcei(sound.source, AL_BUFFER, 0);      // Unbind buffer from sound to update
@@ -752,6 +752,7 @@ void StopMusicStream(Music music)
 }
 
 // Update (re-fill) music buffers if data already processed
+// TODO: Make sure buffers are ready for update... check music state
 void UpdateMusicStream(Music music)
 {
     ALenum state;
@@ -768,13 +769,13 @@ void UpdateMusicStream(Music music)
         void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.channels*music->stream.sampleSize/8, 1);
 
         int numBuffersToProcess = processed;
-        int numSamples = 0;     // Total size of data steamed in L+R samples for xm floats,
-                                // individual L or R for ogg shorts
+        int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, 
+                                 //individual L or R for ogg shorts
 
         for (int i = 0; i < numBuffersToProcess; i++)
         {
-            if (music->samplesLeft >= AUDIO_BUFFER_SIZE) numSamples = AUDIO_BUFFER_SIZE;
-            else numSamples = music->samplesLeft;
+            if (music->samplesLeft >= AUDIO_BUFFER_SIZE) samplesCount = AUDIO_BUFFER_SIZE;
+            else samplesCount = music->samplesLeft;
 
             // TODO: Really don't like ctxType thingy...
             switch (music->ctxType)
@@ -782,22 +783,22 @@ void UpdateMusicStream(Music music)
                 case MUSIC_AUDIO_OGG:
                 {
                     // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                    int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, numSamples*music->stream.channels);
+                    int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
 
                 } break;
                 case MUSIC_AUDIO_FLAC:
                 {
                     // NOTE: Returns the number of samples to process
-                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, numSamples*music->stream.channels, (short *)pcm);
+                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
 
                 } break;
-                case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, numSamples); break;
-                case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, numSamples, 0); break;
+                case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, samplesCount); break;
+                case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, samplesCount, 0); break;
                 default: break;
             }
 
-            UpdateAudioStream(music->stream, pcm, numSamples);
-            music->samplesLeft -= numSamples;
+            UpdateAudioStream(music->stream, pcm, samplesCount);
+            music->samplesLeft -= samplesCount;
 
             if (music->samplesLeft <= 0)
             {
@@ -976,7 +977,7 @@ void CloseAudioStream(AudioStream stream)
 
 // Update audio stream buffers with data
 // NOTE: Only updates one buffer per call
-void UpdateAudioStream(AudioStream stream, const void *data, int numSamples)
+void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
     ALuint buffer = 0;
     alSourceUnqueueBuffers(stream.source, 1, &buffer);
@@ -984,7 +985,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int numSamples)
     // Check if any buffer was available for unqueue
     if (alGetError() != AL_INVALID_VALUE)
     {
-        alBufferData(buffer, stream.format, data, numSamples*stream.channels*stream.sampleSize/8, stream.sampleRate);
+        alBufferData(buffer, stream.format, data, samplesCount*stream.channels*stream.sampleSize/8, stream.sampleRate);
         alSourceQueueBuffers(stream.source, 1, &buffer);
     }
 }
