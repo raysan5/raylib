@@ -59,9 +59,14 @@
     #include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
 #endif
 
-#include "AL/al.h"              // OpenAL basic header
-#include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
-//#include "AL/alext.h"         // OpenAL extensions header, required for AL_EXT_FLOAT32 and AL_EXT_MCFORMATS
+#ifdef __APPLE__
+    #include "OpenAL/al.h"          // OpenAL basic header
+    #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+#else
+    #include "AL/al.h"              // OpenAL basic header
+    #include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+    //#include "AL/alext.h"         // OpenAL extensions header, required for AL_EXT_FLOAT32 and AL_EXT_MCFORMATS
+#endif
 
 // OpenAL extension: AL_EXT_FLOAT32 - Support for 32bit float samples
 // OpenAL extension: AL_EXT_MCFORMATS - Support for multi-channel formats (Quad, 5.1, 6.1, 7.1)

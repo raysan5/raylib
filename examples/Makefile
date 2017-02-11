@@ -153,7 +153,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for OS X 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -framework OpenGL -framework OpenAl -framework Cocoa
+        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
