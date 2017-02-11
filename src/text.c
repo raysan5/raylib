@@ -928,6 +928,8 @@ static SpriteFont LoadBMFont(const char *fileName)
 // TODO: Review texture packing method and generation (use oversampling)
 static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
+    #define MAX_TTF_SIZE    16      // Maximum ttf file size in MB
+    
     // NOTE: Font texture size is predicted (being as much conservative as possible)
     // Predictive method consist of supposing same number of chars by line-column (sqrtf)
     // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
@@ -938,7 +940,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
 
     TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
 
-    unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
+    unsigned char *ttfBuffer = (unsigned char *)malloc(MAX_TTF_SIZE*1024*1024);
     unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
     stbtt_bakedchar *charData = (stbtt_bakedchar *)malloc(sizeof(stbtt_bakedchar)*charsCount);
 
@@ -952,7 +954,8 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
         return font;
     }
 
-    fread(ttfBuffer, 1, 1 << 25, ttfFile);
+    // NOTE: We try reading up to 16 MB of elements of 1 byte
+    fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
 
     if (fontChars[0] != 32) TraceLog(WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 

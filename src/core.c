@@ -1025,14 +1025,14 @@ int StorageLoadValue(int position)
     {
         // Get file size
         fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);  // Size in bytes
+        int fileSize = ftell(storageFile);      // Size in bytes
         rewind(storageFile);
 
         if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
         else
         {
             fseek(storageFile, (position*4), SEEK_SET);
-            fread(&value, 1, 4, storageFile);
+            fread(&value, 4, 1, storageFile);   // Read 1 element of 4 bytes size
         }
 
         fclose(storageFile);

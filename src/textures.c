@@ -238,7 +238,9 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             default: TraceLog(WARNING, "Image format not suported"); break;
         }
 
-        int bytes = fread(image.data, size, 1, rawFile);
+        // NOTE: fread() returns num read elements instead of bytes, 
+        // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
+        int bytes = fread(image.data, 1, size, rawFile);
 
         // Check if data has been read successfully
         if (bytes < size)
@@ -1591,7 +1593,7 @@ static Image LoadDDS(const char *fileName)
         // Verify the type of file
         char filecode[4];
 
-        fread(filecode, 1, 4, ddsFile);
+        fread(filecode, 4, 1, ddsFile);
 
         if (strncmp(filecode, "DDS ", 4) != 0)
         {
@@ -1690,17 +1692,17 @@ static Image LoadDDS(const char *fileName)
             }
             else if (((ddsHeader.ddspf.flags == 0x04) || (ddsHeader.ddspf.flags == 0x05)) && (ddsHeader.ddspf.fourCC > 0)) // Compressed
             {
-                int bufsize;
+                int size;       // DDS image data size
 
                 // Calculate data size, including all mipmaps
-                if (ddsHeader.mipmapCount > 1) bufsize = ddsHeader.pitchOrLinearSize*2;
-                else bufsize = ddsHeader.pitchOrLinearSize;
+                if (ddsHeader.mipmapCount > 1) size = ddsHeader.pitchOrLinearSize*2;
+                else size = ddsHeader.pitchOrLinearSize;
 
                 TraceLog(DEBUG, "Pitch or linear size: %i", ddsHeader.pitchOrLinearSize);
 
-                image.data = (unsigned char*)malloc(bufsize*sizeof(unsigned char));
+                image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
 
-                fread(image.data, 1, bufsize, ddsFile);
+                fread(image.data, size, 1, ddsFile);
 
                 image.mipmaps = ddsHeader.mipmapCount;
 
@@ -1803,7 +1805,7 @@ static Image LoadPKM(const char *fileName)
 
             image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
 
-            fread(image.data, 1, size, pkmFile);
+            fread(image.data, size, 1, pkmFile);
 
             if (pkmHeader.format == 0) image.format = COMPRESSED_ETC1_RGB;
             else if (pkmHeader.format == 1) image.format = COMPRESSED_ETC2_RGB;
@@ -1888,7 +1890,7 @@ static Image LoadKTX(const char *fileName)
 
             if (ktxHeader.keyValueDataSize > 0)
             {
-                for (int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, 1, 1, ktxFile);
+                for (int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, sizeof(unsigned char), 1, ktxFile);
             }
 
             int dataSize;
@@ -1896,7 +1898,7 @@ static Image LoadKTX(const char *fileName)
 
             image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
 
-            fread(image.data, 1, dataSize, ktxFile);
+            fread(image.data, dataSize, 1, ktxFile);
 
             if (ktxHeader.glInternalFormat == 0x8D64) image.format = COMPRESSED_ETC1_RGB;
             else if (ktxHeader.glInternalFormat == 0x9274) image.format = COMPRESSED_ETC2_RGB;

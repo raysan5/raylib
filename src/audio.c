@@ -1114,7 +1114,7 @@ static Wave LoadWAV(const char *fileName)
                     wave.data = malloc(wavData.subChunkSize);
 
                     // Read in the sound data into the soundData variable
-                    fread(wave.data, 1, wavData.subChunkSize, wavFile);
+                    fread(wave.data, wavData.subChunkSize, 1, wavFile);
 
                     // Store wave parameters
                     wave.sampleRate = wavFormat.sampleRate;
