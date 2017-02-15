@@ -83,6 +83,8 @@
         RRES_TYPE_FONT_DATA,        // Character { int value, recX, recY, recWidth, recHeight, offsetX, offsetY, xAdvance } 
         RRES_TYPE_DIRECTORY
     } RRESDataType;
+    
+    typedef struct RRESData *RRES;
 #endif
 
 //----------------------------------------------------------------------------------
@@ -93,9 +95,9 @@
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-RRESDEF RRESData LoadResource(const char *rresFileName);
-RRESDEF RRESData LoadResourceById(const char *rresFileName, int rresId);
-RRESDEF void UnloadResource(RRESData rres);
+//RRESDEF RRESData LoadResourceData(const char *rresFileName, int rresId, int part);
+RRESDEF RRES LoadResource(const char *rresFileName, int rresId);
+RRESDEF void UnloadResource(RRESData *rres);
 
 #endif // RRES_H
 
@@ -235,24 +237,12 @@ static void *DecompressData(const unsigned char *data, unsigned long compSize, i
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
-// Load resource from file (only one)
-// NOTE: Returns uncompressed data with parameters, only first resource found
-RRESDEF RRESData LoadResource(const char *fileName)
-{
-    // Force loading first resource available
-    RRESData rres = { 0 };
-    
-    rres = LoadResourceById(fileName, 0);
-   
-    return rres;
-}
-
-// Load resource from file by id
+// Load resource from file by id (could be multiple parts)
 // NOTE: Returns uncompressed data with parameters, search resource by id
-RRESDEF RRESData LoadResourceById(const char *fileName, int rresId)
+RRESDEF RRES LoadResource(const char *fileName, int rresId)
 {
-    RRESData rres = { 0 };
-    
+    RRES rres;
+       
     RRESFileHeader fileHeader;
     RRESInfoHeader infoHeader;
     
@@ -280,33 +270,42 @@ RRESDEF RRESData LoadResourceById(const char *fileName, int rresId)
             {
                 // Read resource info and parameters
                 fread(&infoHeader, sizeof(RRESInfoHeader), 1, rresFile);
-
+                
+                rres = (RRES)malloc(sizeof(RRESData)*infoHeader.partsCount)
+                
                 if (infoHeader.id == rresId)
                 {
-                    // Register data type and parameters
-                    rres.type = infoHeader.dataType;
-                    rres.param1 = infoHeader.param1;
-                    rres.param2 = infoHeader.param2;
-                    rres.param3 = infoHeader.param3;
-                    rres.param4 = infoHeader.param4;
-
-                    // Read resource data block
-                    void *data = RRES_MALLOC(infoHeader.dataSize);
-                    fread(data, infoHeader.dataSize, 1, rresFile);
-
-                    if (infoHeader.compType == RRES_COMP_DEFLATE)
+                    // Load all required resources parts
+                    for (int k = 0; k < infoHeader.partsCount; k++)
                     {
-                        void *uncompData = DecompressData(data, infoHeader.dataSize, infoHeader.uncompSize);
+                        // TODO: Verify again that rresId is the same in every part
                         
-                        rres.data = uncompData;
-                        
-                        RRES_FREE(data);
-                    }
-                    else rres.data = data;
+                        // Register data type and parameters
+                        rres[k].type = infoHeader.dataType;
+                        rres[k].param1 = infoHeader.param1;
+                        rres[k].param2 = infoHeader.param2;
+                        rres[k].param3 = infoHeader.param3;
+                        rres[k].param4 = infoHeader.param4;
 
-                    if (rres.data != NULL) TraceLog(INFO, "[%s][ID %i] Resource data loaded successfully", fileName, (int)infoHeader.id);
-                    
-                    if (rresId == 0) break;     // Break for loop, do not check next resource
+                        // Read resource data block
+                        void *data = RRES_MALLOC(infoHeader.dataSize);
+                        fread(data, infoHeader.dataSize, 1, rresFile);
+
+                        if (infoHeader.compType == RRES_COMP_DEFLATE)
+                        {
+                            void *uncompData = DecompressData(data, infoHeader.dataSize, infoHeader.uncompSize);
+                            
+                            rres[k].data = uncompData;
+                            
+                            RRES_FREE(data);
+                        }
+                        else rres[k].data = data;
+
+                        if (rres[k].data != NULL) TraceLog(INFO, "[%s][ID %i] Resource data loaded successfully", fileName, (int)infoHeader.id);
+                        
+                        // Read next part
+                        fread(&infoHeader, sizeof(RRESInfoHeader), 1, rresFile); 
+                    }
                 }
                 else
                 {
@@ -372,7 +371,6 @@ static void *DecompressData(const unsigned char *data, unsigned long compSize, i
     return uncompData;
 }
 
-
 // Some required functions for rres standalone module version
 #if defined(RRES_STANDALONE)
 // Outputs a trace log message (INFO, ERROR, WARNING)
@@ -417,22 +415,19 @@ Mesh LoadMeshEx(rres.param1, rres.data, rres.data + offset, rres.data + offset*2
 Shader LoadShader(const char *vsText, int vsLength);
 Shader LoadShaderV(rres.data, rres.param1);
 
-// Parameters information depending on resource type (IMAGE, WAVE, MESH, TEXT)
+// Parameters information depending on resource type
 
-// Image data params
-int imgWidth, imgHeight;
-char colorFormat, mipmaps;
+// RRES_TYPE_IMAGE params:      imgWidth, imgHeight, format, mipmaps;
+// RRES_TYPE_WAVE params:       sampleCount, sampleRate, sampleSize, channels;
+// RRES_TYPE_FONT_IMAGE params: imgWidth, imgHeight, format, mipmaps;
+// RRES_TYPE_FONT_DATA params:  charsCount, baseSize
+// RRES_TYPE_VERTEX params:     vertexCount, vertexType, vertexFormat        // Use masks instead?
+// RRES_TYPE_TEXT params:       charsCount, cultureCode
+// RRES_TYPE_DIRECTORY params:  fileCount, directoryCount
 
-// Wave data params
-int sampleCount,
-short sampleRate, bps;
-char channels, reserved;
+// SpriteFont = RRES_TYPE_FONT_IMAGE chunk + RRES_TYPE_FONT_DATA chunk
+// Mesh = multiple RRES_TYPE_VERTEX chunks
 
-// Mesh data params
-int vertexCount, reserved;
-short vertexTypesMask, vertexFormatsMask;
+Ref: RIFF file-format: http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html
 
-// Text data params
-int charsCount;
-int cultureCode;
 */
