@@ -62,7 +62,7 @@
 #if defined(RRES_STANDALONE)
     // rRES data returned when reading a resource, it contains all required data for user (24 byte)
     // NOTE: Using void *data pointer, so we can load to image.data, wave.data, mesh.*, (unsigned char *)
-    typedef struct {
+    typedef struct RRESData {
         unsigned int type;          // Resource type (4 byte)
         
         unsigned int param1;        // Resouce parameter 1 (4 byte)
@@ -73,6 +73,7 @@
         void *data;                 // Resource data pointer (4 byte)
     } RRESData;
     
+    // RRESData type
     typedef enum { 
         RRES_TYPE_RAW = 0, 
         RRES_TYPE_IMAGE, 
@@ -84,6 +85,7 @@
         RRES_TYPE_DIRECTORY
     } RRESDataType;
     
+    // RRES type (pointer to RRESData array)
     typedef struct RRESData *RRES;
 #endif
 
@@ -96,8 +98,8 @@
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 //RRESDEF RRESData LoadResourceData(const char *rresFileName, int rresId, int part);
-RRESDEF RRES LoadResource(const char *rresFileName, int rresId);
-RRESDEF void UnloadResource(RRESData *rres);
+RRESDEF RRES LoadResource(const char *fileName, int rresId);
+RRESDEF void UnloadResource(RRES rres);
 
 #endif // RRES_H
 
@@ -242,7 +244,7 @@ static void *DecompressData(const unsigned char *data, unsigned long compSize, i
 RRESDEF RRES LoadResource(const char *fileName, int rresId)
 {
     RRES rres;
-       
+
     RRESFileHeader fileHeader;
     RRESInfoHeader infoHeader;
     
@@ -271,7 +273,7 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
                 // Read resource info and parameters
                 fread(&infoHeader, sizeof(RRESInfoHeader), 1, rresFile);
                 
-                rres = (RRES)malloc(sizeof(RRESData)*infoHeader.partsCount)
+                rres = (RRES)malloc(sizeof(RRESData)*infoHeader.partsCount);
                 
                 if (infoHeader.id == rresId)
                 {
@@ -314,7 +316,7 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
                 }
             }
             
-            if (rres.data == NULL) TraceLog(WARNING, "[%s][ID %i] Requested resource could not be found", fileName, (int)rresId);
+            if (rres[0].data == NULL) TraceLog(WARNING, "[%s][ID %i] Requested resource could not be found", fileName, (int)rresId);
         }
 
         fclose(rresFile);
@@ -323,9 +325,9 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
     return rres;
 }
 
-RRESDEF void UnloadResource(RRESData rres)
+RRESDEF void UnloadResource(RRES rres)
 {
-    if (rres.data != NULL) free(rres.data);
+    if (rres[0].data != NULL) free(rres[0].data);
 }
 
 //----------------------------------------------------------------------------------
