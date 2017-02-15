@@ -1,16 +1,35 @@
 /**********************************************************************************************
 *
-*   raylib.textures
+*   raylib.textures - Basic functions to load and draw Textures (2d)
 *
-*   Basic functions to load and draw Textures (2d)
+*   CONFIGURATION:
 *
-*   External libs:
+*   #define SUPPORT_STB_IMAGE / INCLUDE_STB_IMAGE
+*
+*   #define SUPPORT_FILEFORMAT_BMP / SUPPORT_LOAD_BMP
+*   #define SUPPORT_FILEFORMAT_PNG / SUPPORT_LOAD_PNG
+*   #define SUPPORT_FILEFORMAT_TGA
+*   #define SUPPORT_FILEFORMAT_JPG / ENABLE_LOAD_JPG
+*   #define SUPPORT_FILEFORMAT_GIF
+*   #define SUPPORT_FILEFORMAT_HDR
+*   #define SUPPORT_FILEFORMAT_DDS / ENABLE_LOAD_DDS
+*   #define SUPPORT_FILEFORMAT_PKM
+*   #define SUPPORT_FILEFORMAT_KTX
+*   #define SUPPORT_FILEFORMAT_PVR
+*   #define SUPPORT_FILEFORMAT_ASTC
+*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       supported by default, to remove support, just comment unrequired #define in this module
+*
+*   #define SUPPORT_IMAGE_RESIZE / INCLUDE_STB_IMAGE_RESIZE
+*   #define SUPPORT_IMAGE_MANIPULATION
+*
+*   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                          NOTE: stb_image has been slightly modified to support Android platform.
 *       stb_image_resize - Multiple image resize algorythms
 *
-*   Module Configuration Flags:
-*       ...
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -143,11 +162,11 @@ Image LoadImage(const char *fileName)
     else if (strcmp(GetExtension(fileName),"astc") == 0) image = LoadASTC(fileName);
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
-        RRESData rres = LoadResource(fileName);
+        RRES rres = LoadResource(fileName, 0);
 
-        // NOTE: Parameters for RRES_IMAGE type are: width, height, format, mipmaps
+        // NOTE: Parameters for RRES_TYPE_IMAGE are: width, height, format, mipmaps
 
-        if (rres.type == RRES_IMAGE) image = LoadImagePro(rres.data, rres.param1, rres.param2, rres.param3);
+        if (rres[0].type == RRES_TYPE_IMAGE) image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
         else TraceLog(WARNING, "[%s] Resource file does not contain image data", fileName);
 
         UnloadResource(rres);

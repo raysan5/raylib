@@ -4,14 +4,18 @@
 *
 *   Basic functions to load/save rRES resource files
 *
-*   External libs:
+*   CONFIGURATION:
+*
+*   #define RREM_IMPLEMENTATION
+*       Generates the implementation of the library into the included file.
+*       If not defined, the library is in header only mode and can be included in other headers
+*       or source files without problems. But only ONE file should hold the implementation.
+*
+*   DEPENDENCIES:
 *       tinfl   -  DEFLATE decompression functions
 *
-*   Module Configuration Flags:
 *
-*       #define RREM_IMPLEMENTATION
-*           Generates the implementation of the library into the included file.
-*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2016-2017 Ramon Santamaria (@raysan5)
 *
@@ -81,7 +85,7 @@
         RRES_TYPE_VERTEX, 
         RRES_TYPE_TEXT,
         RRES_TYPE_FONT_IMAGE,
-        RRES_TYPE_FONT_DATA,        // Character { int value, recX, recY, recWidth, recHeight, offsetX, offsetY, xAdvance } 
+        RRES_TYPE_FONT_CHARDATA,        // Character { int value, recX, recY, recWidth, recHeight, offsetX, offsetY, xAdvance } 
         RRES_TYPE_DIRECTORY
     } RRESDataType;
     
@@ -243,7 +247,7 @@ static void *DecompressData(const unsigned char *data, unsigned long compSize, i
 // NOTE: Returns uncompressed data with parameters, search resource by id
 RRESDEF RRES LoadResource(const char *fileName, int rresId)
 {
-    RRES rres;
+    RRES rres = { 0 };
 
     RRESFileHeader fileHeader;
     RRESInfoHeader infoHeader;

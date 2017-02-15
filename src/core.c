@@ -1,27 +1,46 @@
 /**********************************************************************************************
 *
-*   raylib.core
-*
-*   Basic functions to manage windows, OpenGL context and input on multiple platforms
+*   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
 *   The following platforms are supported: Windows, Linux, Mac (OSX), Android, Raspberry Pi, HTML5, Oculus Rift CV1
 *
-*   External libs:
+*   CONFIGURATION:
+*
+*   #define PLATFORM_DESKTOP
+*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX (managed by GLFW3 library)
+*       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
+*
+*   #define PLATFORM_ANDROID
+*       Windowing and input system configured for Android device, app activity managed internally in this module.
+*       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
+*
+*   #define PLATFORM_RPI
+*       Windowing and input system configured for Raspberry Pi (tested on Raspbian), graphic device is managed by EGL 
+*       and inputs are processed is raw mode, reading from /dev/input/
+*
+*   #define PLATFORM_WEB
+*       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
+*       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
+*
+*   #define LOAD_DEFAULT_FONT (defined by default)
+*       Default font is loaded on window initialization to be available for the user to render simple text.
+*       NOTE: If enabled, uses external module functions to load default raylib font (module: text)
+*
+*   #define INCLUDE_CAMERA_SYSTEM / SUPPORT_CAMERA_SYSTEM
+*
+*   #define INCLUDE_GESTURES_SYSTEM / SUPPORT_GESTURES_SYSTEM
+*
+*   #define SUPPORT_MOUSE_GESTURES
+*       Mouse gestures are directly mapped like touches and processed by gestures system.
+*
+*   DEPENDENCIES:
 *       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
 *       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
-*   Module Configuration Flags:
-*       PLATFORM_DESKTOP     - Windows, Linux, Mac (OSX)
-*       PLATFORM_ANDROID     - Android (only OpenGL ES 2.0 devices), graphic device is managed by EGL and input system by Android activity.
-*       PLATFORM_RPI         - Rapsberry Pi (tested on Raspbian), graphic device is managed by EGL and input system is coded in raw mode.
-*       PLATFORM_WEB         - HTML5 (using emscripten compiler)
 *
-*       RL_LOAD_DEFAULT_FONT - Use external module functions to load default raylib font (module: text)
-*
-*   NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for render mirror - View [rlgl] module to enable it
-*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -140,7 +159,7 @@
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
-#define RL_LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
+#define LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -256,7 +275,7 @@ static bool showLogo = false;               // Track if showing logo at init is 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-#if defined(RL_LOAD_DEFAULT_FONT)
+#if defined(LOAD_DEFAULT_FONT)
 extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
 #endif
@@ -338,7 +357,7 @@ void InitWindow(int width, int height, const char *title)
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
 
-#if defined(RL_LOAD_DEFAULT_FONT)
+#if defined(LOAD_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
@@ -450,7 +469,7 @@ void InitWindow(int width, int height, void *state)
 // Close Window and Terminate Context
 void CloseWindow(void)
 {
-#if defined(RL_LOAD_DEFAULT_FONT)
+#if defined(LOAD_DEFAULT_FONT)
     UnloadDefaultFont();
 #endif
 
@@ -2410,7 +2429,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
 
-                    #if defined(RL_LOAD_DEFAULT_FONT)
+                    #if defined(LOAD_DEFAULT_FONT)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();

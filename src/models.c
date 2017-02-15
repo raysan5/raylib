@@ -1,14 +1,15 @@
 /**********************************************************************************************
 *
-*   raylib.models
+*   raylib.models - Basic functions to draw 3d shapes and 3d models
 *
-*   Basic functions to draw 3d shapes and load/draw 3d models (.OBJ)
+*   CONFIGURATION:
 *
-*   External libs:
-*       rlgl     - raylib OpenGL abstraction layer
+*   #define SUPPORT_FILEFORMAT_OBJ / SUPPORT_LOAD_OBJ
 *
-*   Module Configuration Flags:
-*       ...
+*   #define SUPPORT_FILEFORMAT_MTL
+*
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *

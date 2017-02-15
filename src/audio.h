@@ -9,7 +9,7 @@
 *       Manage mixing channels
 *       Manage raw audio context
 *
-*   External libs:
+*   DEPENDENCIES:
 *       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm      - XM module file loading
@@ -22,6 +22,8 @@
 *       Mixing channels support
 *       Raw audio context support
 *
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *

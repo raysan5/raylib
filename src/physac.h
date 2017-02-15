@@ -1,11 +1,13 @@
 /**********************************************************************************************
 *
-*   Physac - 2D Physics library for videogames
+*   Physac v1.0 - 2D Physics library for videogames
 *
-*   Description: Physac is a small 2D physics engine written in pure C. The engine uses a fixed time-step thread loop 
-*   to simluate physics. A physics step contains the following phases: get collision information, apply dynamics, 
-*   collision solving and position correction. It uses a very simple struct for physic bodies with a position vector 
-*   to be used in any 3D rendering API.
+*   DESCRIPTION: 
+*
+*   Physac is a small 2D physics engine written in pure C. The engine uses a fixed time-step thread loop 
+*   to simluate physics. A physics step contains the following phases: get collision information, 
+*   apply dynamics, collision solving and position correction. It uses a very simple struct for physic 
+*   bodies with a position vector to be used in any 3D rendering API.
 * 
 *   CONFIGURATION:
 *   
@@ -37,7 +39,8 @@
 *       Otherwise it will include stdlib.h and use the C standard library malloc()/free() function.
 *
 *   VERY THANKS TO:
-*       - Ramón Santamaria (@raysan5)
+*       Ramón Santamaria (@raysan5)
+*
 *
 *   LICENSE: zlib/libpng
 *

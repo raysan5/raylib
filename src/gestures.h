@@ -2,6 +2,10 @@
 *
 *   raylib Gestures System - Gestures Processing based on input gesture events (touch/mouse)
 *
+*   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
+*
+*   CONFIGURATION:
+*
 *   #define GESTURES_IMPLEMENTATION
 *       Generates the implementation of the library into the included file.
 *       If not defined, the library is in header only mode and can be included in other headers 
@@ -11,11 +15,16 @@
 *       If defined, the library can be used as standalone to process gesture events with
 *       no external dependencies.
 *
-*   NOTE: Memory footprint of this library is aproximately 128 bytes
+*   CONTRIBUTORS:
+*       Marc Palau:         Initial implementation (2014)
+*       Albert Martos:      Complete redesign and testing (2015)
+*       Ian Eito:           Complete redesign and testing (2015)
+*       Ramon Santamaria:   Supervision, review, update and maintenance
 *
-*   Initial design by Marc Palau (2014)
-*   Redesigned by Albert Martos and Ian Eito (2015)
-*   Reviewed by Ramon Santamaria (2015-2016)
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

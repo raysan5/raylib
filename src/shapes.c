@@ -1,17 +1,14 @@
 /**********************************************************************************************
 *
-*   raylib.shapes
-*
-*   Basic functions to draw 2d Shapes and check collisions
-*
-*   DEPENDENCIES:
-*       rlgl     - raylib OpenGL abstraction layer
+*   raylib.shapes - Basic functions to draw 2d Shapes and check collisions
 *
 *   CONFIGURATION:
 *
 *   #define SUPPORT_QUADS_ONLY
+*       Draw shapes using only QUADS, vertex are accumulated in QUADS arrays (like textures)
 *
-    #define SUPPORT_TRIANGLES_ONLY
+*   #define SUPPORT_TRIANGLES_ONLY
+*       Draw shapes using only TRIANGLES, vertex are accumulated in TRIANGLES arrays
 *
 *
 *   LICENSE: zlib/libpng

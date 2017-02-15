@@ -3,32 +3,50 @@
 *   raylib.audio
 *
 *   This module provides basic functionality to work with audio:
-*       Manage audio device (init/close)
-*       Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
-*       Play/Stop/Pause/Resume loaded audio
-*       Manage mixing channels
-*       Manage raw audio context
+*     Manage audio device (init/close)
+*     Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
+*     Play/Stop/Pause/Resume loaded audio
+*     Manage mixing channels
+*     Manage raw audio context
 *
-*   External libs:
+*   NOTES:
+*
+*   Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
+*   Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
+*
+*   CONFIGURATION:
+*   
+*   #define AUDIO_STANDALONE
+*       If defined, the module can be used as standalone library (independently of raylib).
+*       Required types and functions are defined in the same module.
+*
+*   #define SUPPORT_FILEFORMAT_WAV  / SUPPORT_LOAD_WAV / ENABLE_LOAD_WAV
+*   #define SUPPORT_FILEFORMAT_OGG
+*   #define SUPPORT_FILEFORMAT_XM
+*   #define SUPPORT_FILEFORMAT_MOD
+*   #define SUPPORT_FILEFORMAT_FLAC
+*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       supported by default, to remove support, just comment unrequired #define in this module
+*
+*   #define SUPPORT_RAW_AUDIO_BUFFERS
+*
+*   DEPENDENCIES:
 *       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm      - XM module file loading
 *       jar_mod     - MOD audio file loading
 *       dr_flac     - FLAC audio file loading
 *
-*   Module Configuration Flags:
-*       AUDIO_STANDALONE    - Use this module as standalone library (independently of raylib)
-*
-*   Some design decisions:
-*       Support only up to two channels: MONO and STEREO (for additional channels, AL_EXT_MCFORMATS)
-*       Support only the following sample sizes: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
+*   CONTRIBUTORS:
 *
 *   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
-*       XM audio module support (jar_xm)
-*       MOD audio module support (jar_mod)
-*       Mixing channels support
-*       Raw audio context support
+*     XM audio module support (jar_xm)
+*     MOD audio module support (jar_mod)
+*     Mixing channels support
+*     Raw audio context support
 *
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -246,11 +264,11 @@ Wave LoadWave(const char *fileName)
     else if (strcmp(GetExtension(fileName), "flac") == 0) wave = LoadFLAC(fileName);
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
-        RRESData rres = LoadResource(fileName);
+        RRES rres = LoadResource(fileName, 0);
 
-        // NOTE: Parameters for RRES_WAVE type are: sampleCount, sampleRate, sampleSize, channels
+        // NOTE: Parameters for RRES_TYPE_WAVE are: sampleCount, sampleRate, sampleSize, channels
 
-        if (rres.type == RRES_WAVE) wave = LoadWaveEx(rres.data, rres.param1, rres.param2, rres.param3, rres.param4);
+        if (rres[0].type == RRES_TYPE_WAVE) wave = LoadWaveEx(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3, rres[0].param4);
         else TraceLog(WARNING, "[%s] Resource file does not contain wave data", fileName);
 
         UnloadResource(rres);

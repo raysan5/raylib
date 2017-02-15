@@ -1,22 +1,23 @@
 /**********************************************************************************************
 *
-*   raymath (header only file)
+*   raymath v1.0 - Some useful functions to work with Vector3, Matrix and Quaternions
 *
-*   Some useful functions to work with Vector3, Matrix and Quaternions
+*   CONFIGURATION:
 *
-*   You must:
-*       #define RAYMATH_IMPLEMENTATION
-*   before you include this file in *only one* C or C++ file to create the implementation.
+*   #define RAYMATH_IMPLEMENTATION
+*       Generates the implementation of the library into the included file.
+*       If not defined, the library is in header only mode and can be included in other headers
+*       or source files without problems. But only ONE file should hold the implementation.
 *
-*   Example:
-*       #define RAYMATH_IMPLEMENTATION
-*       #include "raymath.h"
+*   #define RAYMATH_EXTERN_INLINE
+*       Inlines all functions code, so it runs faster. This requires lots of memory on system.
+*   
+*   #define RAYMATH_STANDALONE
+*       Avoid raylib.h header inclusion in this file. 
+*       Vector3 and Matrix data types are defined internally in raymath module.
 *
-*   You can also use:
-*       #define RAYMATH_EXTERN_INLINE       // Inlines all functions code, so it runs faster.
-*                                           // This requires lots of memory on system.
-*       #define RAYMATH_STANDALONE          // Not dependent on raylib.h structs: Vector3, Matrix.
 *
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *

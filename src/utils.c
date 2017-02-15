@@ -1,16 +1,23 @@
 /**********************************************************************************************
 *
-*   raylib.utils
+*   raylib.utils - Some common utility functions
 *
-*   Some utility functions
+*   CONFIGURATION:
 *
-*   External libs:
-*       tinfl           - zlib DEFLATE algorithm decompression
+*   #define SUPPORT_SAVE_PNG
+*       Enable saving PNG fileformat
+*       NOTE: Requires stb_image_write library
+*
+*   #define SUPPORT_SAVE_BMP
+*
+*   #define DO_NOT_TRACE_DEBUG_MSGS
+*       Avoid showing DEBUG TraceLog() messages
+*
+*   DEPENDENCIES:
 *       stb_image_write - PNG writting functions
 *
-*   Module Configuration Flags:
-*       DO_NOT_TRACE_DEBUG_MSGS - Avoid showing DEBUG TraceLog() messages
 *
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *

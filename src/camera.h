@@ -2,6 +2,10 @@
 *
 *   raylib Camera System - Camera Modes Setup and Control Functions
 *
+*   NOTE: Memory footprint of this library is aproximately 52 bytes (global variables)
+*
+*   CONFIGURATION:
+*
 *   #define CAMERA_IMPLEMENTATION
 *       Generates the implementation of the library into the included file.
 *       If not defined, the library is in header only mode and can be included in other headers 
@@ -11,10 +15,14 @@
 *       If defined, the library can be used as standalone as a camera system but some
 *       functions must be redefined to manage inputs accordingly.
 *
-*   NOTE: Memory footprint of this library is aproximately 52 bytes (global variables)
+*   CONTRIBUTORS:
+*       Marc Palau:         Initial implementation (2014)
+*       Ramon Santamaria:   Supervision, review, update and maintenance
 *
-*   Initial design by Marc Palau (2014)
-*   Reviewed by Ramon Santamaria (2015-2016)
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2015-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
