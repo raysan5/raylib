@@ -13,7 +13,7 @@ The following help is highly appreciated:
 	- Testers of current features and multiple systems - Can you find some bug on raylib?
 
 If you can not help on any of the above points but you still want to contribute in some way... please, consider helping 
-with a small [donation](http://www.raylib.com/helpme.htm) or contributing with [raylib patreon](https://www.patreon.com/raysan5). It will really motivate to continue improving this project (and pay some bills… or some coffee).
+with a small [donation](http://www.raylib.com/helpme.html) or contributing with [raylib patreon](https://www.patreon.com/raysan5). It will really motivate to continue improving this project (and pay some bills… or some coffee).
 
 raylib philosophy
 ------------------

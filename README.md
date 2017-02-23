@@ -247,7 +247,7 @@ contact
 
 If you are using raylib and you enjoy it, please, [let me know][raysan5].
 
-If you feel you can help, then, [helpme!](http://www.raylib.com/helpme.htm)
+If you feel you can help, then, [helpme!](http://www.raylib.com/helpme.html)
 
 acknowledgements
 ---------------
