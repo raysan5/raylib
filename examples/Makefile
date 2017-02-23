@@ -497,6 +497,13 @@ audio_module_playing: audio_module_playing.c
 audio_raw_stream: audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# Linux Fix to timespect from 
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),LINUX)
+        CFLAGS += -D_POSIX_C_SOURCE=199309L
+    endif
+endif
+
 # compile [physac] example - physics demo
 physics_demo: physics_demo.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
