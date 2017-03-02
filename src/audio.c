@@ -604,7 +604,7 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
 
         void *data = malloc(sampleCount*wave->channels*wave->sampleSize/8);
 
-        memcpy(data, wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
+        memcpy(data, (unsigned char*)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
 
         free(wave->data);
         wave->data = data;
