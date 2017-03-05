@@ -39,6 +39,11 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
+        float dx = 600 - 100;
+        float dy = 105 - 405;
+        
+        float d = sqrtf(dx*dx + dy*dy);
+        float angle = asinf(dy/d);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -47,7 +52,22 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+            //DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+            
+            DrawRectangle(100, 400, 1, 10, BLACK);
+            DrawRectangle(96, 404, 10, 1, BLACK);
+
+            DrawRectangle(600, 100, 1, 10, BLACK);
+            DrawRectangle(596, 104, 10, 1, BLACK);
+            
+            DrawLine(100, 405, 600, 105, RED);
+            
+            // Draw lines using textures
+            /*
+            DrawTexturePro(GetDefaultTexture(), (Rectangle){ 0, 0, GetDefaultTexture().width, GetDefaultTexture().height }, 
+                           (Rectangle){ 100, 405, (float)GetDefaultTexture().width*d, 1 },
+                           (Vector2){ 0, (float)GetDefaultTexture().height/2 }, -RAD2DEG*angle, BLUE);
+            */
 
         EndDrawing();
         //----------------------------------------------------------------------------------

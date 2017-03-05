@@ -103,6 +103,36 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
     rlEnd();
 }
 
+// Draw a line defining thickness
+void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
+{
+    float dx = endPos.x - startPos.x;
+    float dy = endPos.y - startPos.y;
+    
+    float d = sqrtf(dx*dx + dy*dy);
+    float angle = asinf(dy/d);
+    
+    rlEnableTexture(GetDefaultTexture().id);
+
+    rlPushMatrix();
+        rlTranslatef((float)startPos.x, (float)startPos.y, 0);
+        rlRotatef(-RAD2DEG*angle, 0, 0, 1);
+        rlTranslatef(0, -thick/2.0f, 0);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            rlVertex2f(0.0f, 0.0f);
+            rlVertex2f(0.0f, thick);
+            rlVertex2f(d, thick);
+            rlVertex2f(d, 0.0f);
+        rlEnd();
+    rlPopMatrix();
+
+    rlDisableTexture();
+}
+
 // Draw a color-filled circle
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {

@@ -98,13 +98,13 @@
 #define RAD2DEG (180.0f/PI)
 
 // raylib Config Flags
-#define FLAG_SHOW_LOGO              1       // Set this flag to show raylib logo at startup
-#define FLAG_FULLSCREEN_MODE        2       // Set this flag to run program in fullscreen
-#define FLAG_WINDOW_RESIZABLE       4       // Set this flag to allow resizable window
-#define FLAG_WINDOW_DECORATED       8       // Set this flag to show window decoration (frame and buttons)
-#define FLAG_WINDOW_TRANSPARENT    16       // Set this flag to allow transparent window
-#define FLAG_MSAA_4X_HINT          32       // Set this flag to try enabling MSAA 4X
-#define FLAG_VSYNC_HINT            64       // Set this flag to try enabling V-Sync on GPU
+#define FLAG_SHOW_LOGO              1       // Set to show raylib logo at startup
+#define FLAG_FULLSCREEN_MODE        2       // Set to run program in fullscreen
+#define FLAG_WINDOW_RESIZABLE       4       // Set to allow resizable window
+#define FLAG_WINDOW_DECORATED       8       // Set to show window decoration (frame and buttons)
+#define FLAG_WINDOW_TRANSPARENT    16       // Set to allow transparent window
+#define FLAG_MSAA_4X_HINT          32       // Set to try enabling MSAA 4X
+#define FLAG_VSYNC_HINT            64       // Set to try enabling V-Sync on GPU
 
 // Keyboard Function Keys
 #define KEY_SPACE            32
@@ -763,6 +763,7 @@ RLAPI void DrawPixel(int posX, int posY, Color color);                          
 RLAPI void DrawPixelV(Vector2 position, Color color);                                                    // Draw a pixel (Vector version)
 RLAPI void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color);                // Draw a line
 RLAPI void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);                                     // Draw a line (Vector version)
+RLAPI void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color);                       // Draw a line defining thickness
 RLAPI void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
 RLAPI void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2);       // Draw a gradient-filled circle
 RLAPI void DrawCircleV(Vector2 center, float radius, Color color);                                       // Draw a color-filled circle (Vector version)
