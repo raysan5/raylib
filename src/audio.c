@@ -3,32 +3,50 @@
 *   raylib.audio
 *
 *   This module provides basic functionality to work with audio:
-*       Manage audio device (init/close)
-*       Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
-*       Play/Stop/Pause/Resume loaded audio
-*       Manage mixing channels
-*       Manage raw audio context
+*     Manage audio device (init/close)
+*     Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
+*     Play/Stop/Pause/Resume loaded audio
+*     Manage mixing channels
+*     Manage raw audio context
 *
-*   External libs:
+*   NOTES:
+*
+*   Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
+*   Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
+*
+*   CONFIGURATION:
+*   
+*   #define AUDIO_STANDALONE
+*       If defined, the module can be used as standalone library (independently of raylib).
+*       Required types and functions are defined in the same module.
+*
+*   #define SUPPORT_FILEFORMAT_WAV  / SUPPORT_LOAD_WAV / ENABLE_LOAD_WAV
+*   #define SUPPORT_FILEFORMAT_OGG
+*   #define SUPPORT_FILEFORMAT_XM
+*   #define SUPPORT_FILEFORMAT_MOD
+*   #define SUPPORT_FILEFORMAT_FLAC
+*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       supported by default, to remove support, just comment unrequired #define in this module
+*
+*   #define SUPPORT_RAW_AUDIO_BUFFERS
+*
+*   DEPENDENCIES:
 *       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm      - XM module file loading
 *       jar_mod     - MOD audio file loading
 *       dr_flac     - FLAC audio file loading
 *
-*   Module Configuration Flags:
-*       AUDIO_STANDALONE    - Use this module as standalone library (independently of raylib)
-*
-*   Some design decisions:
-*       Support only up to two channels: MONO and STEREO (for additional channels, AL_EXT_MCFORMATS)
-*       Support only the following sample sizes: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
+*   CONTRIBUTORS:
 *
 *   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
-*       XM audio module support (jar_xm)
-*       MOD audio module support (jar_mod)
-*       Mixing channels support
-*       Raw audio context support
+*     XM audio module support (jar_xm)
+*     MOD audio module support (jar_mod)
+*     Mixing channels support
+*     Raw audio context support
 *
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -59,9 +77,14 @@
     #include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
 #endif
 
-#include "AL/al.h"              // OpenAL basic header
-#include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
-//#include "AL/alext.h"         // OpenAL extensions header, required for AL_EXT_FLOAT32 and AL_EXT_MCFORMATS
+#ifdef __APPLE__
+    #include "OpenAL/al.h"          // OpenAL basic header
+    #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+#else
+    #include "AL/al.h"              // OpenAL basic header
+    #include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+    //#include "AL/alext.h"         // OpenAL extensions header, required for AL_EXT_FLOAT32 and AL_EXT_MCFORMATS
+#endif
 
 // OpenAL extension: AL_EXT_FLOAT32 - Support for 32bit float samples
 // OpenAL extension: AL_EXT_MCFORMATS - Support for multi-channel formats (Quad, 5.1, 6.1, 7.1)
@@ -241,11 +264,11 @@ Wave LoadWave(const char *fileName)
     else if (strcmp(GetExtension(fileName), "flac") == 0) wave = LoadFLAC(fileName);
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
-        RRESData rres = LoadResource(fileName);
+        RRES rres = LoadResource(fileName, 0);
 
-        // NOTE: Parameters for RRES_WAVE type are: sampleCount, sampleRate, sampleSize, channels
+        // NOTE: Parameters for RRES_TYPE_WAVE are: sampleCount, sampleRate, sampleSize, channels
 
-        if (rres.type == RRES_WAVE) wave = LoadWaveEx(rres.data, rres.param1, rres.param2, rres.param3, rres.param4);
+        if (rres[0].type == RRES_TYPE_WAVE) wave = LoadWaveEx(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3, rres[0].param4);
         else TraceLog(WARNING, "[%s] Resource file does not contain wave data", fileName);
 
         UnloadResource(rres);
@@ -374,7 +397,7 @@ void UnloadSound(Sound sound)
 
 // Update sound buffer with new data
 // NOTE: data must match sound.format
-void UpdateSound(Sound sound, const void *data, int numSamples)
+void UpdateSound(Sound sound, const void *data, int samplesCount)
 {
     ALint sampleRate, sampleSize, channels;
     alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
@@ -385,7 +408,7 @@ void UpdateSound(Sound sound, const void *data, int numSamples)
     TraceLog(DEBUG, "UpdateSound() : AL_BITS: %i", sampleSize);
     TraceLog(DEBUG, "UpdateSound() : AL_CHANNELS: %i", channels);
 
-    unsigned int dataSize = numSamples*channels*sampleSize/8;   // Size of data in bytes
+    unsigned int dataSize = samplesCount*channels*sampleSize/8;   // Size of data in bytes
 
     alSourceStop(sound.source);                 // Stop sound
     alSourcei(sound.source, AL_BUFFER, 0);      // Unbind buffer from sound to update
@@ -581,7 +604,7 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
 
         void *data = malloc(sampleCount*wave->channels*wave->sampleSize/8);
 
-        memcpy(data, wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
+        memcpy(data, (unsigned char*)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
 
         free(wave->data);
         wave->data = data;
@@ -739,7 +762,18 @@ void ResumeMusicStream(Music music)
 void StopMusicStream(Music music)
 {
     alSourceStop(music->stream.source);
+    
+    // Clear stream buffers
+    void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
 
+    for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
+    {
+        alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
+    }
+
+    free(pcm);
+    
+    // Restart music context
     switch (music->ctxType)
     {
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
@@ -752,6 +786,7 @@ void StopMusicStream(Music music)
 }
 
 // Update (re-fill) music buffers if data already processed
+// TODO: Make sure buffers are ready for update... check music state
 void UpdateMusicStream(Music music)
 {
     ALenum state;
@@ -768,13 +803,13 @@ void UpdateMusicStream(Music music)
         void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.channels*music->stream.sampleSize/8, 1);
 
         int numBuffersToProcess = processed;
-        int numSamples = 0;     // Total size of data steamed in L+R samples for xm floats,
-                                // individual L or R for ogg shorts
+        int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, 
+                                 //individual L or R for ogg shorts
 
         for (int i = 0; i < numBuffersToProcess; i++)
         {
-            if (music->samplesLeft >= AUDIO_BUFFER_SIZE) numSamples = AUDIO_BUFFER_SIZE;
-            else numSamples = music->samplesLeft;
+            if (music->samplesLeft >= AUDIO_BUFFER_SIZE) samplesCount = AUDIO_BUFFER_SIZE;
+            else samplesCount = music->samplesLeft;
 
             // TODO: Really don't like ctxType thingy...
             switch (music->ctxType)
@@ -782,22 +817,22 @@ void UpdateMusicStream(Music music)
                 case MUSIC_AUDIO_OGG:
                 {
                     // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
-                    int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, numSamples*music->stream.channels);
+                    int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
 
                 } break;
                 case MUSIC_AUDIO_FLAC:
                 {
                     // NOTE: Returns the number of samples to process
-                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, numSamples*music->stream.channels, (short *)pcm);
+                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
 
                 } break;
-                case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, numSamples); break;
-                case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, numSamples, 0); break;
+                case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, samplesCount); break;
+                case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, samplesCount, 0); break;
                 default: break;
             }
 
-            UpdateAudioStream(music->stream, pcm, numSamples);
-            music->samplesLeft -= numSamples;
+            UpdateAudioStream(music->stream, pcm, samplesCount);
+            music->samplesLeft -= samplesCount;
 
             if (music->samplesLeft <= 0)
             {
@@ -976,7 +1011,7 @@ void CloseAudioStream(AudioStream stream)
 
 // Update audio stream buffers with data
 // NOTE: Only updates one buffer per call
-void UpdateAudioStream(AudioStream stream, const void *data, int numSamples)
+void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
     ALuint buffer = 0;
     alSourceUnqueueBuffers(stream.source, 1, &buffer);
@@ -984,7 +1019,7 @@ void UpdateAudioStream(AudioStream stream, const void *data, int numSamples)
     // Check if any buffer was available for unqueue
     if (alGetError() != AL_INVALID_VALUE)
     {
-        alBufferData(buffer, stream.format, data, numSamples*stream.channels*stream.sampleSize/8, stream.sampleRate);
+        alBufferData(buffer, stream.format, data, samplesCount*stream.channels*stream.sampleSize/8, stream.sampleRate);
         alSourceQueueBuffers(stream.source, 1, &buffer);
     }
 }
@@ -1113,7 +1148,7 @@ static Wave LoadWAV(const char *fileName)
                     wave.data = malloc(wavData.subChunkSize);
 
                     // Read in the sound data into the soundData variable
-                    fread(wave.data, 1, wavData.subChunkSize, wavFile);
+                    fread(wave.data, wavData.subChunkSize, 1, wavFile);
 
                     // Store wave parameters
                     wave.sampleRate = wavFormat.sampleRate;

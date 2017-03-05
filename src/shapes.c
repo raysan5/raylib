@@ -1,14 +1,17 @@
 /**********************************************************************************************
 *
-*   raylib.shapes
+*   raylib.shapes - Basic functions to draw 2d Shapes and check collisions
 *
-*   Basic functions to draw 2d Shapes and check collisions
+*   CONFIGURATION:
 *
-*   External libs:
-*       rlgl     - raylib OpenGL abstraction layer
+*   #define SUPPORT_QUADS_ONLY
+*       Draw shapes using only QUADS, vertex are accumulated in QUADS arrays (like textures)
 *
-*   Module Configuration Flags:
-*       ...
+*   #define SUPPORT_TRIANGLES_ONLY
+*       Draw shapes using only TRIANGLES, vertex are accumulated in TRIANGLES arrays
+*
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -188,6 +191,29 @@ void DrawRectangle(int posX, int posY, int width, int height, Color color)
 void DrawRectangleRec(Rectangle rec, Color color)
 {
     DrawRectangle(rec.x, rec.y, rec.width, rec.height, color);
+}
+
+void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
+{
+    rlEnableTexture(GetDefaultTexture().id);
+
+    rlPushMatrix();
+        rlTranslatef((float)rec.x, (float)rec.y, 0);
+        rlRotatef(rotation, 0, 0, 1);
+        rlTranslatef(-origin.x, -origin.y, 0);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+            rlVertex2f(0.0f, 0.0f);
+            rlVertex2f(0.0f, (float)rec.height);
+            rlVertex2f((float)rec.width, (float)rec.height);
+            rlVertex2f((float)rec.width, 0.0f);
+        rlEnd();
+    rlPopMatrix();
+
+    rlDisableTexture();
 }
 
 // Draw a gradient-filled rectangle

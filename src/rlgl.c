@@ -2,6 +2,8 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
+*   DESCRIPTION:
+*
 *   rlgl allows usage of OpenGL 1.1 style functions (rlVertex) that are internally mapped to
 *   selected OpenGL version (1.1, 2.1, 3.3 Core, ES 2.0).
 *
@@ -11,20 +13,44 @@
 *       rlglDraw()  - Process internal buffers and send required draw calls
 *       rlglClose() - De-initialize internal buffers data and other auxiliar resources
 *
-*   External libs:
+*   CONFIGURATION:
+*
+*   #define GRAPHICS_API_OPENGL_11
+*       Use OpenGL 1.1 backend
+*
+*   #define GRAPHICS_API_OPENGL_21
+*       Use OpenGL 2.1 backend
+*
+*   #define GRAPHICS_API_OPENGL_33
+*       Use OpenGL 3.3 Core profile backend
+*
+*   #define GRAPHICS_API_OPENGL_ES2
+*       Use OpenGL ES 2.0 backend
+*
+*   #define RLGL_STANDALONE
+*       Use rlgl as standalone library (no raylib dependency)
+*
+*   #define RLGL_NO_DISTORTION_SHADER
+*       Avoid stereo rendering distortion sahder (shader_distortion.h) inclusion
+*
+*   #define SUPPORT_SHADER_DEFAULT / ENABLE_SHADER_DEFAULT
+*
+*   #define SUPPORT_SHADER_DISTORTION
+*
+*
+*   #define SUPPORT_OCULUS_RIFT_CV1 / RLGL_OCULUS_SUPPORT
+*       Enable Oculus Rift CV1 functionality
+*
+*   #define SUPPORT_STEREO_RENDERING
+*
+*   #define RLGL_NO_DEFAULT_SHADER
+*
+*   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
 *       GLAD        - OpenGL extensions loading (OpenGL 3.3 Core only)
 *
-*   Module Configuration Flags:
-*       GRAPHICS_API_OPENGL_11  - Use OpenGL 1.1 backend
-*       GRAPHICS_API_OPENGL_21  - Use OpenGL 2.1 backend
-*       GRAPHICS_API_OPENGL_33  - Use OpenGL 3.3 Core profile backend
-*       GRAPHICS_API_OPENGL_ES2 - Use OpenGL ES 2.0 backend
 *
-*       RLGL_STANDALONE             - Use rlgl as standalone library (no raylib dependency)
-*       RLGL_NO_DISTORTION_SHADER   - Avoid stereo rendering distortion sahder (shader_distortion.h) inclusion
-*       RLGL_OCULUS_SUPPORT         - Enable Oculus Rift CV1 functionality
-*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *

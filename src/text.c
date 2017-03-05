@@ -1,14 +1,22 @@
 /**********************************************************************************************
 *
-*   raylib.text
+*   raylib.text - Basic functions to load SpriteFonts and draw Text
 *
-*   Basic functions to load SpriteFonts and draw Text
+*   CONFIGURATION:
 *
-*   External libs:
+*   #define SUPPORT_FILEFORMAT_FNT
+*   #define SUPPORT_FILEFORMAT_TTF / INCLUDE_STB_TRUETYPE
+*   #define SUPPORT_FILEFORMAT_IMAGE_FONT
+*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       supported by default, to remove support, just comment unrequired #define in this module
+*
+*   #define INCLUDE_DEFAULT_FONT / SUPPORT_DEFAULT_FONT
+*
+*   DEPENDENCIES:
 *       stb_truetype - Load TTF file and rasterize characters data
 *
-*   Module Configuration Flags:
-*       ...
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -262,30 +270,28 @@ SpriteFont LoadSpriteFont(const char *fileName)
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
         // TODO: Read multiple resource blocks from file (RRES_FONT_IMAGE, RRES_FONT_CHARDATA)
-        RRESData rres = LoadResource(fileName);
+        RRES rres = LoadResource(fileName, 0);
 
         // Load sprite font texture
-        /*
-        if (rres.type == RRES_FONT_IMAGE) 
+        if (rres[0].type == RRES_TYPE_FONT_IMAGE) 
         {
             // NOTE: Parameters for RRES_FONT_IMAGE type are: width, height, format, mipmaps
-            Image image = LoadImagePro(rres.data, rres.param1, rres.param2, rres.param3);
+            Image image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
             spriteFont.texture = LoadTextureFromImage(image);
             UnloadImage(image);
         }
         
         // Load sprite characters data
-        if (rres.type == RRES_FONT_CHARDATA) 
+        if (rres[1].type == RRES_TYPE_FONT_CHARDATA) 
         {
             // NOTE: Parameters for RRES_FONT_CHARDATA type are: fontSize, charsCount
-            spriteFont.baseSize = rres.param1;
-            spriteFont.charsCount = rres.param2;
-            spriteFont.chars = rres.data;
+            spriteFont.baseSize = rres[1].param1;
+            spriteFont.charsCount = rres[1].param2;
+            spriteFont.chars = rres[1].data;
         }
-        */
 
         // TODO: Do not free rres.data memory (chars info data!)
-        UnloadResource(rres);
+        //UnloadResource(rres[0]);
     }
     else
     {
@@ -928,6 +934,8 @@ static SpriteFont LoadBMFont(const char *fileName)
 // TODO: Review texture packing method and generation (use oversampling)
 static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
+    #define MAX_TTF_SIZE    16      // Maximum ttf file size in MB
+    
     // NOTE: Font texture size is predicted (being as much conservative as possible)
     // Predictive method consist of supposing same number of chars by line-column (sqrtf)
     // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
@@ -938,7 +946,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
 
     TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
 
-    unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
+    unsigned char *ttfBuffer = (unsigned char *)malloc(MAX_TTF_SIZE*1024*1024);
     unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
     stbtt_bakedchar *charData = (stbtt_bakedchar *)malloc(sizeof(stbtt_bakedchar)*charsCount);
 
@@ -952,7 +960,8 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
         return font;
     }
 
-    fread(ttfBuffer, 1, 1 << 25, ttfFile);
+    // NOTE: We try reading up to 16 MB of elements of 1 byte
+    fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
 
     if (fontChars[0] != 32) TraceLog(WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 

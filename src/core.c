@@ -1,27 +1,46 @@
 /**********************************************************************************************
 *
-*   raylib.core
-*
-*   Basic functions to manage windows, OpenGL context and input on multiple platforms
+*   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
 *   The following platforms are supported: Windows, Linux, Mac (OSX), Android, Raspberry Pi, HTML5, Oculus Rift CV1
 *
-*   External libs:
+*   CONFIGURATION:
+*
+*   #define PLATFORM_DESKTOP
+*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX (managed by GLFW3 library)
+*       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
+*
+*   #define PLATFORM_ANDROID
+*       Windowing and input system configured for Android device, app activity managed internally in this module.
+*       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
+*
+*   #define PLATFORM_RPI
+*       Windowing and input system configured for Raspberry Pi (tested on Raspbian), graphic device is managed by EGL 
+*       and inputs are processed is raw mode, reading from /dev/input/
+*
+*   #define PLATFORM_WEB
+*       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
+*       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
+*
+*   #define LOAD_DEFAULT_FONT (defined by default)
+*       Default font is loaded on window initialization to be available for the user to render simple text.
+*       NOTE: If enabled, uses external module functions to load default raylib font (module: text)
+*
+*   #define INCLUDE_CAMERA_SYSTEM / SUPPORT_CAMERA_SYSTEM
+*
+*   #define INCLUDE_GESTURES_SYSTEM / SUPPORT_GESTURES_SYSTEM
+*
+*   #define SUPPORT_MOUSE_GESTURES
+*       Mouse gestures are directly mapped like touches and processed by gestures system.
+*
+*   DEPENDENCIES:
 *       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
 *       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
-*   Module Configuration Flags:
-*       PLATFORM_DESKTOP     - Windows, Linux, Mac (OSX)
-*       PLATFORM_ANDROID     - Android (only OpenGL ES 2.0 devices), graphic device is managed by EGL and input system by Android activity.
-*       PLATFORM_RPI         - Rapsberry Pi (tested on Raspbian), graphic device is managed by EGL and input system is coded in raw mode.
-*       PLATFORM_WEB         - HTML5 (using emscripten compiler)
 *
-*       RL_LOAD_DEFAULT_FONT - Use external module functions to load default raylib font (module: text)
-*
-*   NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for render mirror - View [rlgl] module to enable it
-*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -140,7 +159,7 @@
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
-#define RL_LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
+#define LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -256,7 +275,7 @@ static bool showLogo = false;               // Track if showing logo at init is 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-#if defined(RL_LOAD_DEFAULT_FONT)
+#if defined(LOAD_DEFAULT_FONT)
 extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
 #endif
@@ -338,7 +357,7 @@ void InitWindow(int width, int height, const char *title)
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
 
-#if defined(RL_LOAD_DEFAULT_FONT)
+#if defined(LOAD_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
@@ -450,7 +469,7 @@ void InitWindow(int width, int height, void *state)
 // Close Window and Terminate Context
 void CloseWindow(void)
 {
-#if defined(RL_LOAD_DEFAULT_FONT)
+#if defined(LOAD_DEFAULT_FONT)
     UnloadDefaultFont();
 #endif
 
@@ -557,6 +576,26 @@ void SetWindowIcon(Image image)
 
     // TODO: Support multi-image icons --> image.mipmaps
 #endif
+}
+
+// Set window position on screen (windowed mode)
+void SetWindowPosition(int x, int y)
+{
+    glfwSetWindowPos(window, x, y);
+}
+
+// Set monitor for the current window (fullscreen mode)
+void SetWindowMonitor(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    
+    if ((monitor >= 0) && (monitor < monitorCount)) 
+    {
+        glfwSetWindowMonitor(window, monitors[monitor], 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
+        TraceLog(INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
+    }
+    else TraceLog(WARNING, "Selected monitor not found");
 }
 
 // Get current screen width
@@ -1025,14 +1064,14 @@ int StorageLoadValue(int position)
     {
         // Get file size
         fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);  // Size in bytes
+        int fileSize = ftell(storageFile);      // Size in bytes
         rewind(storageFile);
 
         if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
         else
         {
             fseek(storageFile, (position*4), SEEK_SET);
-            fread(&value, 1, 4, storageFile);
+            fread(&value, 4, 1, storageFile);   // Read 1 element of 4 bytes size
         }
 
         fclose(storageFile);
@@ -1517,13 +1556,23 @@ static void InitGraphicsDevice(int width, int height)
 
     glfwDefaultWindowHints();                       // Set default windows hints
 
-    if (configFlags & FLAG_RESIZABLE_WINDOW)
-    {
-        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);    // Resizable window
-    }
+    // Check some Window creation flags
+    if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);   // Resizable window
     else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
 
-    //glfwWindowHint(GLFW_DECORATED, GL_TRUE);      // Border and buttons on Window
+    if (configFlags & FLAG_WINDOW_DECORATED) glfwWindowHint(GLFW_DECORATED, GL_TRUE);   // Border and buttons on Window
+    
+    if (configFlags & FLAG_WINDOW_TRANSPARENT)
+    {
+        // TODO: Enable transparent window (not ready yet on GLFW 3.2)
+    }
+
+    if (configFlags & FLAG_MSAA_4X_HINT)
+    {
+        glfwWindowHint(GLFW_SAMPLES, 4);            // Enables multisampling x4 (MSAA), default is 0
+        TraceLog(INFO, "Trying to enable MSAA x4");
+    }
+    
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_DEPTH_BITS, 16);          // Depthbuffer bits (24 by default)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);         // Refresh rate for fullscreen window
@@ -1532,13 +1581,7 @@ static void InitGraphicsDevice(int width, int height)
 
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
-    // For example, if using OpenGL 1.1, driver can provide a 3.3 context fordward compatible.
-
-    if (configFlags & FLAG_MSAA_4X_HINT)
-    {
-        glfwWindowHint(GLFW_SAMPLES, 4);            // Enables multisampling x4 (MSAA), default is 0
-        TraceLog(INFO, "Trying to enable MSAA x4");
-    }
+    // For example, if using OpenGL 1.1, driver can provide a 4.3 context forward compatible.
 
     // Check selection OpenGL version
     if (rlGetVersion() == OPENGL_21)
@@ -2410,7 +2453,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
 
-                    #if defined(RL_LOAD_DEFAULT_FONT)
+                    #if defined(LOAD_DEFAULT_FONT)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();

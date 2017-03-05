@@ -147,13 +147,13 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
         # on XWindow could require also below libraries, just uncomment
-        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -framework OpenGL -framework OpenAl -framework Cocoa
+        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
@@ -496,6 +496,13 @@ audio_module_playing: audio_module_playing.c
 # compile [audio] example - raw audio streaming
 audio_raw_stream: audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# Linux Fix to timespect from 
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),LINUX)
+        CFLAGS += -D_POSIX_C_SOURCE=199309L
+    endif
+endif
 
 # compile [physac] example - physics demo
 physics_demo: physics_demo.c

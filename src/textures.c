@@ -1,16 +1,35 @@
 /**********************************************************************************************
 *
-*   raylib.textures
+*   raylib.textures - Basic functions to load and draw Textures (2d)
 *
-*   Basic functions to load and draw Textures (2d)
+*   CONFIGURATION:
 *
-*   External libs:
+*   #define SUPPORT_STB_IMAGE / INCLUDE_STB_IMAGE
+*
+*   #define SUPPORT_FILEFORMAT_BMP / SUPPORT_LOAD_BMP
+*   #define SUPPORT_FILEFORMAT_PNG / SUPPORT_LOAD_PNG
+*   #define SUPPORT_FILEFORMAT_TGA
+*   #define SUPPORT_FILEFORMAT_JPG / ENABLE_LOAD_JPG
+*   #define SUPPORT_FILEFORMAT_GIF
+*   #define SUPPORT_FILEFORMAT_HDR
+*   #define SUPPORT_FILEFORMAT_DDS / ENABLE_LOAD_DDS
+*   #define SUPPORT_FILEFORMAT_PKM
+*   #define SUPPORT_FILEFORMAT_KTX
+*   #define SUPPORT_FILEFORMAT_PVR
+*   #define SUPPORT_FILEFORMAT_ASTC
+*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       supported by default, to remove support, just comment unrequired #define in this module
+*
+*   #define SUPPORT_IMAGE_RESIZE / INCLUDE_STB_IMAGE_RESIZE
+*   #define SUPPORT_IMAGE_MANIPULATION
+*
+*   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                          NOTE: stb_image has been slightly modified to support Android platform.
 *       stb_image_resize - Multiple image resize algorythms
 *
-*   Module Configuration Flags:
-*       ...
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -143,11 +162,11 @@ Image LoadImage(const char *fileName)
     else if (strcmp(GetExtension(fileName),"astc") == 0) image = LoadASTC(fileName);
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
-        RRESData rres = LoadResource(fileName);
+        RRES rres = LoadResource(fileName, 0);
 
-        // NOTE: Parameters for RRES_IMAGE type are: width, height, format, mipmaps
+        // NOTE: Parameters for RRES_TYPE_IMAGE are: width, height, format, mipmaps
 
-        if (rres.type == RRES_IMAGE) image = LoadImagePro(rres.data, rres.param1, rres.param2, rres.param3);
+        if (rres[0].type == RRES_TYPE_IMAGE) image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
         else TraceLog(WARNING, "[%s] Resource file does not contain image data", fileName);
 
         UnloadResource(rres);
@@ -238,7 +257,9 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             default: TraceLog(WARNING, "Image format not suported"); break;
         }
 
-        int bytes = fread(image.data, size, 1, rawFile);
+        // NOTE: fread() returns num read elements instead of bytes, 
+        // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
+        int bytes = fread(image.data, 1, size, rawFile);
 
         // Check if data has been read successfully
         if (bytes < size)
@@ -1591,7 +1612,7 @@ static Image LoadDDS(const char *fileName)
         // Verify the type of file
         char filecode[4];
 
-        fread(filecode, 1, 4, ddsFile);
+        fread(filecode, 4, 1, ddsFile);
 
         if (strncmp(filecode, "DDS ", 4) != 0)
         {
@@ -1690,17 +1711,17 @@ static Image LoadDDS(const char *fileName)
             }
             else if (((ddsHeader.ddspf.flags == 0x04) || (ddsHeader.ddspf.flags == 0x05)) && (ddsHeader.ddspf.fourCC > 0)) // Compressed
             {
-                int bufsize;
+                int size;       // DDS image data size
 
                 // Calculate data size, including all mipmaps
-                if (ddsHeader.mipmapCount > 1) bufsize = ddsHeader.pitchOrLinearSize*2;
-                else bufsize = ddsHeader.pitchOrLinearSize;
+                if (ddsHeader.mipmapCount > 1) size = ddsHeader.pitchOrLinearSize*2;
+                else size = ddsHeader.pitchOrLinearSize;
 
                 TraceLog(DEBUG, "Pitch or linear size: %i", ddsHeader.pitchOrLinearSize);
 
-                image.data = (unsigned char*)malloc(bufsize*sizeof(unsigned char));
+                image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
 
-                fread(image.data, 1, bufsize, ddsFile);
+                fread(image.data, size, 1, ddsFile);
 
                 image.mipmaps = ddsHeader.mipmapCount;
 
@@ -1803,7 +1824,7 @@ static Image LoadPKM(const char *fileName)
 
             image.data = (unsigned char*)malloc(size*sizeof(unsigned char));
 
-            fread(image.data, 1, size, pkmFile);
+            fread(image.data, size, 1, pkmFile);
 
             if (pkmHeader.format == 0) image.format = COMPRESSED_ETC1_RGB;
             else if (pkmHeader.format == 1) image.format = COMPRESSED_ETC2_RGB;
@@ -1888,7 +1909,7 @@ static Image LoadKTX(const char *fileName)
 
             if (ktxHeader.keyValueDataSize > 0)
             {
-                for (int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, 1, 1, ktxFile);
+                for (int i = 0; i < ktxHeader.keyValueDataSize; i++) fread(&unused, sizeof(unsigned char), 1, ktxFile);
             }
 
             int dataSize;
@@ -1896,7 +1917,7 @@ static Image LoadKTX(const char *fileName)
 
             image.data = (unsigned char*)malloc(dataSize*sizeof(unsigned char));
 
-            fread(image.data, 1, dataSize, ktxFile);
+            fread(image.data, dataSize, 1, ktxFile);
 
             if (ktxHeader.glInternalFormat == 0x8D64) image.format = COMPRESSED_ETC1_RGB;
             else if (ktxHeader.glInternalFormat == 0x9274) image.format = COMPRESSED_ETC2_RGB;
