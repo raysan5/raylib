@@ -762,7 +762,18 @@ void ResumeMusicStream(Music music)
 void StopMusicStream(Music music)
 {
     alSourceStop(music->stream.source);
+    
+    // Clear stream buffers
+    void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
 
+    for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
+    {
+        alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
+    }
+
+    free(pcm);
+    
+    // Restart music context
     switch (music->ctxType)
     {
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
