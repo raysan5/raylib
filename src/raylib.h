@@ -98,14 +98,13 @@
 #define RAD2DEG (180.0f/PI)
 
 // raylib Config Flags
-#define FLAG_SHOW_LOGO              1
-#define FLAG_SHOW_MOUSE_CURSOR      2
-#define FLAG_FULLSCREEN_MODE        4
-#define FLAG_WINDOW_RESIZABLE       8
-#define FLAG_WINDOW_DECORATED      16
-#define FLAG_WINDOW_TRANSPARENT    32
-#define FLAG_MSAA_4X_HINT          64
-#define FLAG_VSYNC_HINT           128
+#define FLAG_SHOW_LOGO              1       // Set this flag to show raylib logo at startup
+#define FLAG_FULLSCREEN_MODE        2       // Set this flag to run program in fullscreen
+#define FLAG_WINDOW_RESIZABLE       4       // Set this flag to allow resizable window
+#define FLAG_WINDOW_DECORATED       8       // Set this flag to show window decoration (frame and buttons)
+#define FLAG_WINDOW_TRANSPARENT    16       // Set this flag to allow transparent window
+#define FLAG_MSAA_4X_HINT          32       // Set this flag to try enabling MSAA 4X
+#define FLAG_VSYNC_HINT            64       // Set this flag to try enabling V-Sync on GPU
 
 // Keyboard Function Keys
 #define KEY_SPACE            32
@@ -674,8 +673,8 @@ RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
-RLAPI int GetFPS(void);                                           // Returns current FPS (rounded value)
-RLAPI float GetFrameTime(void);                                   // Returns time in seconds for one frame (rounded value)
+RLAPI int GetFPS(void);                                           // Returns current FPS
+RLAPI float GetFrameTime(void);                                   // Returns time in seconds for one frame
 
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI int GetHexValue(Color color);                               // Returns hexadecimal value for a Color

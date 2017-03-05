@@ -88,6 +88,8 @@
 
 #if defined __linux || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
+#elif defined __APPLE__
+    #include <unistd.h>             // Required for: usleep()
 #endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -287,7 +289,7 @@ static void InitGraphicsDevice(int width, int height);  // Initialize graphics d
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
-static void Wait(int ms);                               // Wait for some milliseconds (stop program execution)
+static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
 static void PollInputEvents(void);                      // Register user events
@@ -339,7 +341,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
-    void __stdcall Sleep(unsigned long msTimeout);      // Required for Delay()
+    void __stdcall Sleep(unsigned long msTimeout);      // Required for Wait()
 #endif
 
 //----------------------------------------------------------------------------------
@@ -703,19 +705,19 @@ void EndDrawing(void)
     currentTime = GetTime();
     drawTime = currentTime - previousTime;
     previousTime = currentTime;
-
+    
     frameTime = updateTime + drawTime;
 
     // Wait for some milliseconds...
     if (frameTime < targetTime)
     {
-        Wait((int)((targetTime - frameTime)*1000));
+        Wait((targetTime - frameTime)*1000.0f);
 
         currentTime = GetTime();
         double extraTime = currentTime - previousTime;
         previousTime = currentTime;
 
-        frameTime = updateTime + drawTime + extraTime;
+        frameTime += extraTime;
     }
 }
 
@@ -851,14 +853,14 @@ void SetTargetFPS(int fps)
 // Returns current FPS
 int GetFPS(void)
 {
-    return (int)floorf(1.0f/GetFrameTime());
+    return (int)(1.0f/GetFrameTime());
 }
 
 // Returns time in seconds for one frame
 float GetFrameTime(void)
 {
     // NOTE: We round value to milliseconds
-    return (roundf(frameTime*1000.0)/1000.0f);
+    return (float)frameTime;
 }
 
 // Converts Color to float array and normalizes
@@ -1688,7 +1690,10 @@ static void InitGraphicsDevice(int width, int height)
 #endif
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);                // Disable VSync by default
+    
+    // Try to disable GPU V-Sync by default, set framerate using SetTargetFPS()
+    // NOTE: V-Sync can be enabled by graphic driver configuration
+    glfwSwapInterval(0);                
 
 #if defined(PLATFORM_DESKTOP)
     // Load OpenGL 3.3 extensions
@@ -1696,9 +1701,8 @@ static void InitGraphicsDevice(int width, int height)
     rlglLoadExtensions(glfwGetProcAddress);
 #endif
 
-    // Enables GPU v-sync, so frames are not limited to screen refresh rate (60Hz -> 60 FPS)
-    // If not set, swap interval uses GPU v-sync configuration
-    // Framerate can be setup using SetTargetFPS()
+    // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
+    // NOTE: V-Sync can be enabled by graphic driver configuration
     if (configFlags & FLAG_VSYNC_HINT)
     {
         glfwSwapInterval(1);
@@ -2001,27 +2005,30 @@ static double GetTime(void)
 }
 
 // Wait for some milliseconds (stop program execution)
-static void Wait(int ms)
+static void Wait(float ms)
 {
-#if defined _WIN32
-    Sleep(ms);
-#elif defined __linux || defined(PLATFORM_WEB)
-    struct timespec req = { 0 };
-    time_t sec = (int)(ms/1000);
-    ms -= (sec*1000);
-    req.tv_sec=sec;
-    req.tv_nsec=ms*1000000L;
-
-    // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
-    while (nanosleep(&req,&req) == -1) continue;
-//#elif defined __APPLE__
-    // TODO:
-#else
+#define SUPPORT_BUSY_WAIT_LOOP
+#if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
 
     // Busy wait loop
-    while ((nextTime - prevTime) < (double)ms/1000.0) nextTime = GetTime();
+    while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
+#else
+    #if defined _WIN32
+        Sleep(ms);
+    #elif defined __linux || defined(PLATFORM_WEB)
+        struct timespec req = { 0 };
+        time_t sec = (int)(ms/1000.0f);
+        ms -= (sec*1000);
+        req.tv_sec = sec;
+        req.tv_nsec = ms*1000000L;
+
+        // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
+        while (nanosleep(&req, &req) == -1) continue;
+    #elif defined __APPLE__
+        usleep(ms*1000.0f);
+    #endif
 #endif
 }
 
