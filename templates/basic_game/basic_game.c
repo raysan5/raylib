@@ -8,7 +8,7 @@
 *   This game has been created using raylib v1.2 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -28,17 +28,17 @@ int main()
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-	const char windowTitle[30] = "<game name goes here>";
-    
-    GameScreen currentScreen = LOGO;
+    const char windowTitle[30] = "<game name goes here>";
     
     InitWindow(screenWidth, screenHeight, windowTitle);
-    
+
+    GameScreen currentScreen = LOGO;
+
     // TODO: Initialize all required variables and load all required data here!
 
-    int framesCounter = 0;          // Used to count frames
-    
-    SetTargetFPS(60);
+    int framesCounter = 0;          // Useful to count frames
+
+    SetTargetFPS(60);               // Set desired framerate (frames-per-second)
     //--------------------------------------------------------------------------------------
     
     // Main game loop
