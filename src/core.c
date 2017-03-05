@@ -578,6 +578,26 @@ void SetWindowIcon(Image image)
 #endif
 }
 
+// Set window position on screen (windowed mode)
+void SetWindowPosition(int x, int y)
+{
+    glfwSetWindowPos(window, x, y);
+}
+
+// Set monitor for the current window (fullscreen mode)
+void SetWindowMonitor(int monitor)
+{
+    int monitorCount;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+    
+    if ((monitor >= 0) && (monitor < monitorCount)) 
+    {
+        glfwSetWindowMonitor(window, monitors[monitor], 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
+        TraceLog(INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
+    }
+    else TraceLog(WARNING, "Selected monitor not found");
+}
+
 // Get current screen width
 int GetScreenWidth(void)
 {
@@ -1536,13 +1556,23 @@ static void InitGraphicsDevice(int width, int height)
 
     glfwDefaultWindowHints();                       // Set default windows hints
 
-    if (configFlags & FLAG_RESIZABLE_WINDOW)
-    {
-        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);    // Resizable window
-    }
+    // Check some Window creation flags
+    if (configFlags & FLAG_WINDOW_RESIZABLE) glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);   // Resizable window
     else glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);  // Avoid window being resizable
 
-    //glfwWindowHint(GLFW_DECORATED, GL_TRUE);      // Border and buttons on Window
+    if (configFlags & FLAG_WINDOW_DECORATED) glfwWindowHint(GLFW_DECORATED, GL_TRUE);   // Border and buttons on Window
+    
+    if (configFlags & FLAG_WINDOW_TRANSPARENT)
+    {
+        // TODO: Enable transparent window (not ready yet on GLFW 3.2)
+    }
+
+    if (configFlags & FLAG_MSAA_4X_HINT)
+    {
+        glfwWindowHint(GLFW_SAMPLES, 4);            // Enables multisampling x4 (MSAA), default is 0
+        TraceLog(INFO, "Trying to enable MSAA x4");
+    }
+    
     //glfwWindowHint(GLFW_RED_BITS, 8);             // Framebuffer red color component bits
     //glfwWindowHint(GLFW_DEPTH_BITS, 16);          // Depthbuffer bits (24 by default)
     //glfwWindowHint(GLFW_REFRESH_RATE, 0);         // Refresh rate for fullscreen window
@@ -1551,13 +1581,7 @@ static void InitGraphicsDevice(int width, int height)
 
     // NOTE: When asking for an OpenGL context version, most drivers provide highest supported version
     // with forward compatibility to older OpenGL versions.
-    // For example, if using OpenGL 1.1, driver can provide a 3.3 context fordward compatible.
-
-    if (configFlags & FLAG_MSAA_4X_HINT)
-    {
-        glfwWindowHint(GLFW_SAMPLES, 4);            // Enables multisampling x4 (MSAA), default is 0
-        TraceLog(INFO, "Trying to enable MSAA x4");
-    }
+    // For example, if using OpenGL 1.1, driver can provide a 4.3 context forward compatible.
 
     // Check selection OpenGL version
     if (rlGetVersion() == OPENGL_21)

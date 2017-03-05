@@ -98,13 +98,14 @@
 #define RAD2DEG (180.0f/PI)
 
 // raylib Config Flags
-#define FLAG_FULLSCREEN_MODE    1
-#define FLAG_RESIZABLE_WINDOW   2
-#define FLAG_SHOW_LOGO          4
-#define FLAG_SHOW_MOUSE_CURSOR  8
-#define FLAG_CENTERED_MODE     16
-#define FLAG_MSAA_4X_HINT      32
-#define FLAG_VSYNC_HINT        64
+#define FLAG_SHOW_LOGO              1
+#define FLAG_SHOW_MOUSE_CURSOR      2
+#define FLAG_FULLSCREEN_MODE        4
+#define FLAG_WINDOW_RESIZABLE       8
+#define FLAG_WINDOW_DECORATED      16
+#define FLAG_WINDOW_TRANSPARENT    32
+#define FLAG_MSAA_4X_HINT          64
+#define FLAG_VSYNC_HINT           128
 
 // Keyboard Function Keys
 #define KEY_SPACE            32
@@ -644,6 +645,8 @@ RLAPI bool WindowShouldClose(void);                               // Detect if K
 RLAPI bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)
 RLAPI void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
+RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
+RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
