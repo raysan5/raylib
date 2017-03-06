@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        
+        <title>raylib</title>
+        
+        <meta name="title" content="raylib">
+        <meta name="description" content="raylib is a simple and easy-to-use library to learn videogames programming.">
+        <meta name="keywords" content="raylib, videogames, programming, C, C++, library, learn, study, simple, easy, free, open source, raysan">
+        <meta name="viewport" content="width=device-width">
+        
+        <!-- Facebook metatags for sharing -->
+        <meta property="og:title" content="raylib"/>
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image" content="http://www.raylib.com/common/img/ln_raylib_logo.png"/>
+        <meta property="og:image" content="http://www.raylib.com/common/img/fb_raylib_logo.png"/>
+        <meta property="og:url" content="http://www.raylib.com" />
+        <meta property="og:site_name" content="raylib"/>
+        <meta property="og:description" content="raylib is a simple and easy-to-use library to learn videogames programming."/>
+
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:site" content="@raysan5" />
+        <meta name="twitter:title" content="raylib" />
+        <meta name="twitter:description" content="raylib is a simple and easy-to-use library to learn videogames programming." />
+        <meta name="twitter:image" content="http://www.raylib.com/common/img/ln_raylib_logo.png" />
+        <meta name="twitter:url" content="http://www.raylib.com" />
+        
+        <link rel="stylesheet" href="common/css/main.css">
+        <link rel="shortcut icon" href="favicon.ico" />
+        
+        <!-- Facebook Conversion Code for visitas_raylib -->
+        <script>
+            (function() {
+              var _fbq = window._fbq || (window._fbq = []);
+              if (!_fbq.loaded) {
+                var fbds = document.createElement('script');
+                fbds.async = true;
+                fbds.src = '//connect.facebook.net/en_US/fbds.js';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(fbds, s);
+                _fbq.loaded = true;
+              }
+            })();
+            window._fbq = window._fbq || [];
+            window._fbq.push(['track', '6023277399201', {'value':'0.00','currency':'EUR'}]);
+        </script>
+        <noscript><img height="1" width="1" alt="" style="display:none" src="https://www.facebook.com/tr?ev=6023277399201&amp;cd[value]=0.00&amp;cd[currency]=EUR&amp;noscript=1" /></noscript>
+    </head>
+    
+    <body>
+        <div class="page">
+            <!--[if lt IE 7]>
+                <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+            <![endif]-->
+
+            <div class="header">
+                <a id="logo" href="index.html"></a>
+                <div id="social">
+                    <a id="itchio" href="https://raysan5.itch.io" target="_blank"></a>
+                    <a id="handmade" href="https://raylib.handmade.network/" target="_blank"></a>
+                    <a id="patreon" href="https://www.patreon.com/raysan5" target="_blank"></a>
+                    <a id="twitch" href="http://www.twitch.tv/raysan5" target="_blank"></a>
+                    <a id="reddit" href="https://www.reddit.com/r/raylib/" target="_blank"></a>
+                    <a id="freenode" href="http://webchat.freenode.net/?channels=#raylib" target="_blank"></a>
+                    <a id="facebook" href="http://www.facebook.com/raylibgames" target="_blank"></a>
+                    <a id="twitter" href="http://www.twitter.com/raysan5" target="_blank"></a>
+                    <a id="github" href="http://github.com/raysan5/raylib" target="_blank"></a>
+                    <a id="youtube" href="https://www.youtube.com/channel/UC8WIBkhYb5sBNqXO1mZ7WSQ" target="_blank"></a>
+                </div>
+                <div class="menu">
+                    <div id="active">about</div>
+                    <a href="examples.html">examples</a>
+                    <a href="games.html">games</a>
+                    <a href="helpme.html">helpme!</a>
+                    <a id="forum" href="http://forum.raylib.com">forum</a>
+                </div>
+            </div>
+
+            <div class="content">
+                <strong>raylib is a simple and easy-to-use library to learn videogames programming.</strong>
+                <br>
+                <br>
+                <!--<a href="https://github.com/raysan5/raylib/releases/download/1.5.0/raylib_installer_v1.5.exe"><div class="downloadButtonInstaller" id="btnlib">Download raylib Windows Installer (v1.5.0)</div></a>-->
+                <div id="itchioframe"><iframe frameborder="0" src="https://itch.io/embed/85331?bg_color=f5f5f5" width="640" height="170"></iframe></div>
+                <br>
+                <p>raylib is highly inspired by Borland BGI graphics lib and by XNA framework. Allegro and SDL have also been analyzed for reference.</p>
+                <br>
+                <p><strong>NOTE for ADVENTURERS:</strong> raylib is a programming library to learn videogames programming; no fancy interface, no visual helpers, no auto-debugging... just coding in the most pure spartan-programmers way. Are you ready to learn? <a class="simplelink" href="examples.html" target="_self">Jump to code examples!</a>.</p>
+                <br>
+                <strong>some raylib features</strong>
+                <br>
+                <div class="list">
+                    - Written in plain C code (C99)<br>
+                    - Uses PascalCase/camelCase notation<br>
+                    - Hardware accelerated with OpenGL (<strong>1.1, 2.1, 3.3 or ES 2.0</strong>)<br>
+                    - Unique OpenGL abstraction layer (usable as standalone module): [<a class="simplelink" href="https://github.com/raysan5/raylib/blob/master/src/rlgl.h" target="_blank">rlgl</a>]<br>
+                    - Powerful fonts module with SpriteFonts support (XNA fonts, AngelCode fonts, TTF)<br>
+                    - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)<br>
+                    - Basic 3d support for Geometrics, Models, Heightmaps and Billboards<br>
+                    - Materials (diffuse, normal, specular) and Lighting (point, directional, spot)<br>
+                    - Shaders support, including Model shaders and Postprocessing shaders<br>
+                    - Powerful math module for Vector and Matrix operations: [<a class="simplelink" href="https://github.com/raysan5/raylib/blob/master/src/raymath.h" target="_blank">raymath</a>]<br>
+                    - Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)<br>
+                    - VR stereo rendering support with configurable HMD device parameters<br>
+                    - Multiplatform support: Android, Raspberry Pi, HTML5, Oculus Rift CV1<br>
+                    - Custom color palette for fancy visuals on raywhite background<br>
+                    - Minimal external dependencies (GLFW3, OpenGL, OpenAL)<br>
+                    - Complete binding to Lua: [<a class="simplelink" href="https://github.com/raysan5/raylib/blob/master/src/rlua.h" target="_blank">rlua</a>]<br>
+                </div>
+                <br>
+                <a href="images/raylib_architecture.png"><img src="images/raylib_architecture.png" alt="raylib architechture" width="800" height="450"/></a>
+                <br>
+                <br>
+                <p>Wanna see all functions available in raylib? <a class="simplelink" href="cheatsheet/cheatsheet.html">CHECK CHEATSHEET</a></p>
+                <p>raylib is open-source and free to use. <a class="simplelink" href="license.html" target="_self">View license</a>.</p>
+                <br>
+                <strong>raylib supporters on patreon</strong>
+                <p>The following people is supporting raylib project on <a class="simplelink" href="https://www.patreon.com/raysan5" target="_blank">patreon</a>. Many thanks to all of them for believing in the project and contributing to it.</p>
+                <br>
+                <p> - Pau Fernandez (<a class="simplelink" href="https://twitter.com/pauek" target="_blank">@pauek</a>)</p>
+                <p> - Marcelo Paez (<a class="simplelink" href="https://twitter.com/paezao" target="_blank">@paezao</a>)</p>
+                <p> - Rajasekaran Senthil (<a class="simplelink" href="https://twitter.com/rskgames" target="_blank">@rskgames</a>)</p>
+                <p> - Adrian Guerrero</p>
+                <p> - Dani Gómez</p>
+                <p> - Marc Agüera</p>
+                <p> - Sergio Martínez</p>
+                <p> - Evan</p>
+                <br>
+                <p>And a very special thanks to <strong>Ilya Zarembsky</strong> for his generous contribution. Many thanks Ilya! Hope your students enjoy raylib! :D</p>
+            </div>
+
+            <div class="footer">
+                <p>Web developed by <a href="http://www.raysanweb.com" target="_blank">RaySan</a> and <a href="http://www.elendow.com" target="_blank">Elendow</a></p>
+            </div>
+
+        </div>
+
+        <!-- Google Analytics tracking code -->
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','http://www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-45733555-1', 'raylib.com');
+            ga('require', 'linkid', 'linkid.js');
+            ga('send', 'pageview');
+        </script>
+    </body>
+</html>

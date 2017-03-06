@@ -1,10 +1,19 @@
 /**********************************************************************************************
 *
-*   raylib.shapes
+*   raylib.shapes - Basic functions to draw 2d Shapes and check collisions
 *
-*   Basic functions to draw 2d Shapes and check collisions
+*   CONFIGURATION:
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   #define SUPPORT_QUADS_ONLY
+*       Draw shapes using only QUADS, vertex are accumulated in QUADS arrays (like textures)
+*
+*   #define SUPPORT_TRIANGLES_ONLY
+*       Draw shapes using only TRIANGLES, vertex are accumulated in TRIANGLES arrays
+*
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -25,11 +34,10 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>     // Required for abs() function
-#include <math.h>       // Math related functions, sin() and cos() used on DrawCircle*
-                        // sqrt() and pow() and abs() used on CheckCollision*
+#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
-#include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
+#include <stdlib.h>     // Required for: abs()
+#include <math.h>       // Required for: sinf(), cosf(), sqrtf()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -44,7 +52,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-extern unsigned int whiteTexture;
+// ...
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
@@ -71,7 +79,7 @@ void DrawPixelV(Vector2 position, Color color)
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         rlVertex2f(position.x, position.y);
-        rlVertex2i(position.x + 1, position.y + 1);
+        rlVertex2f(position.x + 1.0f, position.y + 1.0f);
     rlEnd();
 }
 
@@ -98,7 +106,7 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw a color-filled circle
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
-    DrawPoly((Vector2){ centerX, centerY }, 36, radius, 0, color);
+    DrawCircleV((Vector2){ (float)centerX, (float)centerY }, radius, color);
 }
 
 // Draw a gradient-filled circle
@@ -111,25 +119,48 @@ void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Co
             rlColor4ub(color1.r, color1.g, color1.b, color1.a);
             rlVertex2i(centerX, centerY);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
             rlColor4ub(color2.r, color2.g, color2.b, color2.a);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10)) * radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
     rlEnd();
 }
 
 // Draw a color-filled circle (Vector version)
+// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
 void DrawCircleV(Vector2 center, float radius, Color color)
 {
-    rlBegin(RL_TRIANGLES);
-        for (int i = 0; i < 360; i += 10)
-        {
-            rlColor4ub(color.r, color.g, color.b, color.a);
-            rlVertex2i(center.x, center.y);
-            rlVertex2f(center.x + sin(DEG2RAD*i)*radius, center.y + cos(DEG2RAD*i)*radius);
-            rlVertex2f(center.x + sin(DEG2RAD*(i + 10)) * radius, center.y + cos(DEG2RAD*(i + 10)) * radius);
-        }
-    rlEnd();
+    if (rlGetVersion() == OPENGL_11)
+    {
+        rlBegin(RL_TRIANGLES);
+            for (int i = 0; i < 360; i += 10)
+            {
+                rlColor4ub(color.r, color.g, color.b, color.a);
+                
+                rlVertex2f(center.x, center.y);
+                rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
+            }
+        rlEnd();
+    }
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        rlEnableTexture(GetDefaultTexture().id); // Default white texture
+
+        rlBegin(RL_QUADS);
+            for (int i = 0; i < 360; i += 20)
+            {
+                rlColor4ub(color.r, color.g, color.b, color.a);
+                
+                rlVertex2f(center.x, center.y);
+                rlVertex2f(center.x + sinf(DEG2RAD*i)*radius, center.y + cosf(DEG2RAD*i)*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 10))*radius, center.y + cosf(DEG2RAD*(i + 10))*radius);
+                rlVertex2f(center.x + sinf(DEG2RAD*(i + 20))*radius, center.y + cosf(DEG2RAD*(i + 20))*radius);
+            }
+        rlEnd();
+        
+        rlDisableTexture();
+    }
 }
 
 // Draw circle outline
@@ -141,8 +172,8 @@ void DrawCircleLines(int centerX, int centerY, float radius, Color color)
         // NOTE: Circle outline is drawn pixel by pixel every degree (0 to 360)
         for (int i = 0; i < 360; i += 10)
         {
-            rlVertex2f(centerX + sin(DEG2RAD*i)*radius, centerY + cos(DEG2RAD*i)*radius);
-            rlVertex2f(centerX + sin(DEG2RAD*(i + 10)) * radius, centerY + cos(DEG2RAD*(i + 10))*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*i)*radius, centerY + cosf(DEG2RAD*i)*radius);
+            rlVertex2f(centerX + sinf(DEG2RAD*(i + 10))*radius, centerY + cosf(DEG2RAD*(i + 10))*radius);
         }
    rlEnd();
 }
@@ -162,6 +193,29 @@ void DrawRectangleRec(Rectangle rec, Color color)
     DrawRectangle(rec.x, rec.y, rec.width, rec.height, color);
 }
 
+void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
+{
+    rlEnableTexture(GetDefaultTexture().id);
+
+    rlPushMatrix();
+        rlTranslatef((float)rec.x, (float)rec.y, 0);
+        rlRotatef(rotation, 0, 0, 1);
+        rlTranslatef(-origin.x, -origin.y, 0);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+            rlVertex2f(0.0f, 0.0f);
+            rlVertex2f(0.0f, (float)rec.height);
+            rlVertex2f((float)rec.width, (float)rec.height);
+            rlVertex2f((float)rec.width, 0.0f);
+        rlEnd();
+    rlPopMatrix();
+
+    rlDisableTexture();
+}
+
 // Draw a gradient-filled rectangle
 // NOTE: Gradient goes from bottom (color1) to top (color2)
 void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2)
@@ -178,6 +232,7 @@ void DrawRectangleGradient(int posX, int posY, int width, int height, Color colo
 }
 
 // Draw a color-filled rectangle (Vector version)
+// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
     if (rlGetVersion() == OPENGL_11)
@@ -194,10 +249,9 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
             rlVertex2i(position.x + size.x, position.y);
         rlEnd();
     }
-    else if ((rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
-        // NOTE: This shape uses QUADS to avoid drawing order issues (view rlglDraw)
-        rlEnableTexture(whiteTexture); // Default white texture
+        rlEnableTexture(GetDefaultTexture().id); // Default white texture
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -221,33 +275,61 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 }
 
 // Draw rectangle outline
+// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
-{
-    rlBegin(RL_LINES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2i(posX + 1, posY + 1);
-        rlVertex2i(posX + width, posY + 1);
+{   
+    if (rlGetVersion() == OPENGL_11)
+    {
+        rlBegin(RL_LINES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2i(posX + 1, posY + 1);
+            rlVertex2i(posX + width, posY + 1);
 
-        rlVertex2i(posX + width, posY + 1);
-        rlVertex2i(posX + width, posY + height);
+            rlVertex2i(posX + width, posY + 1);
+            rlVertex2i(posX + width, posY + height);
 
-        rlVertex2i(posX + width, posY + height);
-        rlVertex2i(posX + 1, posY + height);
+            rlVertex2i(posX + width, posY + height);
+            rlVertex2i(posX + 1, posY + height);
 
-        rlVertex2i(posX + 1, posY + height);
-        rlVertex2i(posX + 1, posY + 1);
-    rlEnd();
+            rlVertex2i(posX + 1, posY + height);
+            rlVertex2i(posX + 1, posY + 1);
+        rlEnd();
+    }
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        DrawRectangle(posX, posY, width, 1, color);
+        DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);
+        DrawRectangle(posX, posY + height - 1, width, 1, color);
+        DrawRectangle(posX, posY + 1, 1, height - 2, color);
+    }
 }
 
 // Draw a triangle
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
-    rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
-        rlVertex2f(v1.x, v1.y);
-        rlVertex2f(v2.x, v2.y);
-        rlVertex2f(v3.x, v3.y);
-    rlEnd();
+    if (rlGetVersion() == OPENGL_11)
+    {
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(v1.x, v1.y);
+            rlVertex2f(v2.x, v2.y);
+            rlVertex2f(v3.x, v3.y);
+        rlEnd();
+    }
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+        rlEnableTexture(GetDefaultTexture().id); // Default white texture
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(v1.x, v1.y);
+            rlVertex2f(v2.x, v2.y);
+            rlVertex2f(v2.x, v2.y);
+            rlVertex2f(v3.x, v3.y);
+        rlEnd();
+        
+        rlDisableTexture();
+    }
 }
 
 void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
@@ -279,9 +361,9 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
 
-                rlVertex2i(0, 0);
-                rlVertex2f(sin(DEG2RAD*i)*radius, cos(DEG2RAD*i)*radius);
-                rlVertex2f(sin(DEG2RAD*(i + 360/sides))*radius, cos(DEG2RAD*(i + 360/sides))*radius);
+                rlVertex2f(0, 0);
+                rlVertex2f(sinf(DEG2RAD*i)*radius, cosf(DEG2RAD*i)*radius);
+                rlVertex2f(sinf(DEG2RAD*(i + 360/sides))*radius, cosf(DEG2RAD*(i + 360/sides))*radius);
             }
         rlEnd();
     rlPopMatrix();
@@ -296,11 +378,11 @@ void DrawPolyEx(Vector2 *points, int numPoints, Color color)
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 0; i < numPoints - 2; i++)
+            for (int i = 1; i < numPoints - 1; i++)
             {
+                rlVertex2f(points[0].x, points[0].y);
                 rlVertex2f(points[i].x, points[i].y);
                 rlVertex2f(points[i + 1].x, points[i + 1].y);
-                rlVertex2f(points[i + 2].x, points[i + 2].y);
             }
         rlEnd();
     }
@@ -383,7 +465,7 @@ bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, floa
     float dx = center2.x - center1.x;      // X distance between centers
     float dy = center2.y - center1.y;      // Y distance between centers
 
-    float distance = sqrt(dx*dx + dy*dy);  // Distance between centers
+    float distance = sqrtf(dx*dx + dy*dy); // Distance between centers
 
     if (distance <= (radius1 + radius2)) collision = true;
 
@@ -397,22 +479,22 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     int recCenterX = rec.x + rec.width/2;
     int recCenterY = rec.y + rec.height/2;
     
-    float dx = fabs(center.x - recCenterX);
-    float dy = fabs(center.y - recCenterY);
+    float dx = fabsf(center.x - recCenterX);
+    float dy = fabsf(center.y - recCenterY);
 
-    if (dx > (rec.width/2 + radius)) { return false; }
-    if (dy > (rec.height/2 + radius)) { return false; }
+    if (dx > ((float)rec.width/2.0f + radius)) { return false; }
+    if (dy > ((float)rec.height/2.0f + radius)) { return false; }
 
-    if (dx <= (rec.width/2)) { return true; } 
-    if (dy <= (rec.height/2)) { return true; }
+    if (dx <= ((float)rec.width/2.0f)) { return true; }
+    if (dy <= ((float)rec.height/2.0f)) { return true; }
 
-    float cornerDistanceSq = pow(dx - rec.width/2, 2) + pow(dy - rec.height/2, 2);
+    float cornerDistanceSq = (dx - (float)rec.width/2.0f)*(dx - (float)rec.width/2.0f) + 
+						     (dy - (float)rec.height/2.0f)*(dy - (float)rec.height/2.0f);
 
     return (cornerDistanceSq <= (radius*radius));
 }
 
 // Get collision rectangle for two rectangles collision
-// TODO: Depending on rec1 and rec2 order, it fails -> Review!
 Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 {
     Rectangle retRec = { 0, 0, 0, 0 };
@@ -457,8 +539,23 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
             }
         }
 
-        if (retRec.width >= rec2.width) retRec.width = rec2.width;
-        if (retRec.height >= rec2.height) retRec.height = rec2.height;
+        if (rec1.width > rec2.width)
+        {
+            if (retRec.width >= rec2.width) retRec.width = rec2.width;
+        }
+        else
+        {
+            if (retRec.width >= rec1.width) retRec.width = rec1.width;
+        }
+        
+        if (rec1.height > rec2.height)
+        {
+            if (retRec.height >= rec2.height) retRec.height = rec2.height;
+        }
+        else
+        {
+           if (retRec.height >= rec1.height) retRec.height = rec1.height;
+        }
     }
 
     return retRec;

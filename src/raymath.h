@@ -1,22 +1,23 @@
 /**********************************************************************************************
 *
-*   raymath (header only file)
+*   raymath v1.0 - Some useful functions to work with Vector3, Matrix and Quaternions
 *
-*   Some useful functions to work with Vector3, Matrix and Quaternions
+*   CONFIGURATION:
 *
-*   You must:
-*       #define RAYMATH_IMPLEMENTATION
-*   before you include this file in *only one* C or C++ file to create the implementation.
+*   #define RAYMATH_IMPLEMENTATION
+*       Generates the implementation of the library into the included file.
+*       If not defined, the library is in header only mode and can be included in other headers
+*       or source files without problems. But only ONE file should hold the implementation.
 *
-*   Example:
-*       #define RAYMATH_IMPLEMENTATION
-*       #include "raymath.h"
+*   #define RAYMATH_EXTERN_INLINE
+*       Inlines all functions code, so it runs faster. This requires lots of memory on system.
+*   
+*   #define RAYMATH_STANDALONE
+*       Avoid raylib.h header inclusion in this file. 
+*       Vector3 and Matrix data types are defined internally in raymath module.
 *
-*   You can also use:
-*       #define RAYMATH_EXTERN_INLINE       // Inlines all functions code, so it runs faster.
-*                                           // This requires lots of memory on system.
-*       #define RAYMATH_STANDALONE          // Not dependent on raylib.h structs: Vector3, Matrix.
 *
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
@@ -47,10 +48,16 @@
     #include "raylib.h"             // Required for structs: Vector3, Matrix
 #endif
 
-#if defined(RAYMATH_EXTERN_INLINE)
-    #define RMDEF extern inline
+#ifdef __cplusplus
+    #define RMEXTERN extern "C"     // Functions visible from other files (no name mangling of functions in C++)
 #else
-    #define RMDEF extern
+    #define RMEXTERN extern         // Functions visible from other files
+#endif
+
+#if defined(RAYMATH_EXTERN_INLINE)
+    #define RMDEF RMEXTERN inline   // Functions are embeded inline (compiler generated code)
+#else
+    #define RMDEF RMEXTERN
 #endif
 
 //----------------------------------------------------------------------------------
@@ -73,7 +80,7 @@
 //----------------------------------------------------------------------------------
 
 #if defined(RAYMATH_STANDALONE)
-	// Vector2 type
+    // Vector2 type
     typedef struct Vector2 {
         float x;
         float y;
@@ -105,10 +112,6 @@ typedef struct Quaternion {
 
 #ifndef RAYMATH_EXTERN_INLINE
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Vector3
 //------------------------------------------------------------------------------------
@@ -128,6 +131,7 @@ RMDEF void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Ve
 RMDEF Vector3 VectorZero(void);                               // Return a Vector3 init to zero
 RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);          // Return min value for each pair of components
 RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);          // Return max value for each pair of components
+RMDEF Vector3 Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
@@ -151,13 +155,13 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);    // Returns orthographic projection matrix
 RMDEF Matrix MatrixLookAt(Vector3 position, Vector3 target, Vector3 up);  // Returns camera look-at matrix (view matrix)
-RMDEF void PrintMatrix(Matrix m);                             // Print matrix utility
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
 //------------------------------------------------------------------------------------
 RMDEF float QuaternionLength(Quaternion quat);                // Compute the length of a quaternion
 RMDEF void QuaternionNormalize(Quaternion *q);                // Normalize provided quaternion
+RMDEF void QuaternionInvert(Quaternion *quat);                // Invert provided quaternion
 RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
@@ -166,10 +170,6 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns
 RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle); // Returns the rotation angle and axis for a given quaternion
 RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transform a quaternion given a transformation matrix
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif  // notdef RAYMATH_EXTERN_INLINE
 
 #endif  // RAYMATH_H
@@ -177,9 +177,7 @@ RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transfo
 
 #if defined(RAYMATH_IMPLEMENTATION) || defined(RAYMATH_EXTERN_INLINE)
 
-#include <stdio.h>      // Used only on PrintMatrix()
-#include <math.h>       // Standard math libary: sin(), cos(), tan()...
-#include <stdlib.h>     // Used for abs()
+#include <math.h>       // Required for: sinf(), cosf(), tan(), fabs()
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector3 math
@@ -226,16 +224,16 @@ RMDEF Vector3 VectorPerpendicular(Vector3 v)
 {
     Vector3 result;
 
-    float min = fabs(v.x);
+    float min = fabsf(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
-    if (fabs(v.y) < min)
+    if (fabsf(v.y) < min)
     {
-        min = fabs(v.y);
+        min = fabsf(v.y);
         cardinalAxis = (Vector3){0.0f, 1.0f, 0.0f};
     }
 
-    if(fabs(v.z) < min)
+    if(fabsf(v.z) < min)
     {
         cardinalAxis = (Vector3){0.0f, 0.0f, 1.0f};
     }
@@ -260,7 +258,7 @@ RMDEF float VectorLength(const Vector3 v)
 {
     float length;
 
-    length = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 
     return length;
 }
@@ -288,7 +286,7 @@ RMDEF void VectorNormalize(Vector3 *v)
 
     length = VectorLength(*v);
 
-    if (length == 0) length = 1.0f;
+    if (length == 0.0f) length = 1.0f;
 
     ilength = 1.0f/length;
 
@@ -306,7 +304,7 @@ RMDEF float VectorDistance(Vector3 v1, Vector3 v2)
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
 
-    result = sqrt(dx*dx + dy*dy + dz*dz);
+    result = sqrtf(dx*dx + dy*dy + dz*dz);
 
     return result;
 }
@@ -341,14 +339,13 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
     return result;
 }
 
-// Transforms a Vector3 with a given Matrix
+// Transforms a Vector3 by a given Matrix
+// TODO: Review math (matrix transpose required?)
 RMDEF void VectorTransform(Vector3 *v, Matrix mat)
 {
     float x = v->x;
     float y = v->y;
     float z = v->z;
-
-    //MatrixTranspose(&mat);
 
     v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
@@ -383,6 +380,32 @@ RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2)
     result.x = fmaxf(vec1.x, vec2.x);
     result.y = fmaxf(vec1.y, vec2.y);
     result.z = fmaxf(vec1.z, vec2.z);
+    
+    return result;
+}
+
+// Compute barycenter coordinates (u, v, w) for point p with respect to triangle (a, b, c)
+// NOTE: Assumes P is on the plane of the triangle
+RMDEF Vector3 Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+{
+    //Vector v0 = b - a, v1 = c - a, v2 = p - a;
+    
+    Vector3 v0 = VectorSubtract(b, a);
+    Vector3 v1 = VectorSubtract(c, a);
+    Vector3 v2 = VectorSubtract(p, a);
+    float d00 = VectorDotProduct(v0, v0);
+    float d01 = VectorDotProduct(v0, v1);
+    float d11 = VectorDotProduct(v1, v1);
+    float d20 = VectorDotProduct(v2, v0);
+    float d21 = VectorDotProduct(v2, v1);
+    
+    float denom = d00*d11 - d01*d01;
+    
+    Vector3 result;
+    
+    result.y = (d11*d20 - d01*d21)/denom;
+    result.z = (d00*d21 - d01*d20)/denom;
+    result.x = 1.0f - (result.z + result.y);
     
     return result;
 }
@@ -595,7 +618,7 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 
     float x = axis.x, y = axis.y, z = axis.z;
 
-    float length = sqrt(x*x + y*y + z*z);
+    float length = sqrtf(x*x + y*y + z*z);
 
     if ((length != 1.0f) && (length != 0.0f))
     {
@@ -803,7 +826,7 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 // Returns perspective projection matrix
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
-    double top = near*tanf(fovy*PI/360.0f);
+    double top = near*tan(fovy*PI/360.0);
     double right = top*aspect;
 
     return MatrixFrustum(-right, right, -top, top, near, far);
@@ -870,17 +893,6 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     return result;
 }
 
-// Print matrix utility (for debug)
-RMDEF void PrintMatrix(Matrix m)
-{
-    printf("----------------------\n");
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m0, m.m4, m.m8, m.m12);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m1, m.m5, m.m9, m.m13);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m2, m.m6, m.m10, m.m14);
-    printf("%2.2f %2.2f %2.2f %2.2f\n", m.m3, m.m7, m.m11, m.m15);
-    printf("----------------------\n");
-}
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Quaternion math
 //----------------------------------------------------------------------------------
@@ -906,6 +918,23 @@ RMDEF void QuaternionNormalize(Quaternion *q)
     q->y *= ilength;
     q->z *= ilength;
     q->w *= ilength;
+}
+
+// Invert provided quaternion
+RMDEF void QuaternionInvert(Quaternion *quat)
+{
+    float length = QuaternionLength(*quat);
+    float lengthSq = length*length;
+    
+    if (lengthSq != 0.0)
+    {
+        float i = 1.0f/lengthSq;
+        
+        quat->x *= -i;
+        quat->y *= -i;
+        quat->z *= -i;
+        quat->w *= i;
+    }
 }
 
 // Calculate two quaternion multiplication

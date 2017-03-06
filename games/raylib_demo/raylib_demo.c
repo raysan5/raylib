@@ -123,6 +123,8 @@ Model cat;
 Sound fxWav;
 Sound fxOgg;
 
+Music music;
+
 Vector2 soundBallsPosition[MAX_BALLS];
 Color soundBallsColor[MAX_BALLS];
 bool soundBallsActive[MAX_BALLS];
@@ -202,11 +204,13 @@ int main()
     camera = (Camera){{ 0.0, 12.0, 15.0 }, { 0.0, 3.0, 0.0 }, { 0.0, 1.0, 0.0 }};
 
     catTexture = LoadTexture("resources/catsham.png");   // Load model texture
-    cat = LoadModel("resources/cat.obj");                 // Load OBJ model
-    SetModelTexture(&cat, catTexture);
+    cat = LoadModel("resources/cat.obj");                // Load OBJ model
+    cat.material.texDiffuse = catTexture;                // Set cat model diffuse texture
     
     fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
     fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
+    
+    music = LoadMusicStream("resources/audio/guitar_noodling.ogg");     // Load music
     
     for (int i = 0; i < MAX_BALLS; i++)
     {
@@ -267,6 +271,8 @@ int main()
 
     UnloadSound(fxWav);
     UnloadSound(fxOgg);
+    
+    UnloadMusicStream(music);
 
     CloseAudioDevice();
     
@@ -464,11 +470,11 @@ void UpdateDrawOneFrame(void)
 
                 if (selectedModule == AUDIO)
                 {
-                    if (IsKeyPressed(KEY_SPACE) && !MusicIsPlaying()) PlayMusicStream("resources/audio/guitar_noodling.ogg");         // Play music stream
+                    if (IsKeyPressed(KEY_SPACE) && !IsMusicPlaying(music)) PlayMusicStream(music);         // Play music stream
 
                     if (IsKeyPressed('S'))
                     {
-                        StopMusicStream();
+                        StopMusicStream(music);
                         timePlayed = 0.0f;
 
                         for (int i = 0; i < MAX_BALLS; i++)
@@ -482,9 +488,11 @@ void UpdateDrawOneFrame(void)
                         }
                     }
 
-                    if (MusicIsPlaying())
+                    if (IsMusicPlaying(music))
                     {
-                        timePlayed = GetMusicTimePlayed() / GetMusicTimeLength() * 100 * 4;
+                        UpdateMusicStream(music);
+                        
+                        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*100*4;
 
                         if ((framesCounter%10) == 0)
                         {
@@ -842,7 +850,7 @@ void UpdateDrawOneFrame(void)
                         DrawRectangle(150, 390, 400, 12, LIGHTGRAY);
                         DrawRectangle(150, 390, (int)timePlayed, 12, MAROON);
 
-                        if (MusicIsPlaying())
+                        if (IsMusicPlaying(music))
                         {
                             DrawText("PRESS 'S' to STOP PLAYING MUSIC", 165, 425, 20, GRAY);
 

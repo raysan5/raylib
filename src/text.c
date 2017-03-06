@@ -1,10 +1,24 @@
 /**********************************************************************************************
 *
-*   raylib.text
+*   raylib.text - Basic functions to load SpriteFonts and draw Text
 *
-*   Basic functions to load SpriteFonts and draw Text
+*   CONFIGURATION:
 *
-*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   #define SUPPORT_FILEFORMAT_FNT
+*   #define SUPPORT_FILEFORMAT_TTF / INCLUDE_STB_TRUETYPE
+*   #define SUPPORT_FILEFORMAT_IMAGE_FONT
+*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       supported by default, to remove support, just comment unrequired #define in this module
+*
+*   #define INCLUDE_DEFAULT_FONT / SUPPORT_DEFAULT_FONT
+*
+*   DEPENDENCIES:
+*       stb_truetype - Load TTF file and rasterize characters data
+*
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -25,16 +39,17 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>       // Declares malloc() and free() for memory management
-#include <string.h>       // String management functions (just strlen() is used)
-#include <stdarg.h>       // Used for functions with variable number of parameters (FormatText())
-#include <stdio.h>        // Standard input / output lib
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <string.h>         // Required for: strlen()
+#include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
+#include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 
-#include "utils.h"        // Required for function GetExtension()
+#include "utils.h"          // Required for: GetExtension()
 
 // Following libs are used on LoadTTF()
+#define STBTT_STATIC        // Define stb_truetype functions static to this module
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
+#include "external/stb_truetype.h"      // Required for: stbtt_BakeFontBitmap()
 
 // Rectangle packing functions (not used at the moment)
 //#define STB_RECT_PACK_IMPLEMENTATION
@@ -43,12 +58,10 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define FONT_FIRST_CHAR         32
-#define MAX_FONTCHARS          128
 #define MAX_FORMATTEXT_LENGTH   64
 #define MAX_SUBTEXT_LENGTH      64
 
-#define BIT_CHECK(a,b) ((a) & (1<<(b)))
+#define BIT_CHECK(a,b) ((a) & (1 << (b)))
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -69,11 +82,12 @@ static SpriteFont defaultFont;        // Default font provided by raylib
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static bool PixelIsMagenta(Color p);                // Check if a pixel is magenta
-static int ParseImageData(Image image, int **charValues, Rectangle **charSet);    // Parse image pixel data to obtain characters data
+static int GetCharIndex(SpriteFont font, int letter);
+
+static SpriteFont LoadImageFont(Image image, Color key, int firstChar); // Load a Image font file (XNA style)
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
 static SpriteFont LoadBMFont(const char *fileName); // Load a BMFont file (AngelCode font file)
-static SpriteFont LoadTTF(const char *fileName, int fontSize); // Generate a sprite font image from TTF data (font size required)
+static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
 
 extern void LoadDefaultFont(void);
 extern void UnloadDefaultFont(void);
@@ -86,7 +100,7 @@ extern void LoadDefaultFont(void)
     // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // http://www.utf8-chartable.de/unicode-utf8-table.pl
 
-    defaultFont.numChars = 224;             // Number of chars included in our default font
+    defaultFont.charsCount = 224;             // Number of chars included in our default font
 
     // Default font is directly defined here (data generated from a sprite font image)
     // This way, we reconstruct SpriteFont without creating large global variables
@@ -151,7 +165,7 @@ extern void LoadDefaultFont(void)
     //----------------------------------------------------------------------
     int imWidth = 128;
     int imHeight = 128;
-    
+
     Color *imagePixels = (Color *)malloc(imWidth*imHeight*sizeof(Color));
 
     for (int i = 0; i < imWidth*imHeight; i++) imagePixels[i] = BLANK;        // Initialize array
@@ -174,7 +188,7 @@ extern void LoadDefaultFont(void)
     //FILE *myimage = fopen("default_font.raw", "wb");
     //fwrite(image.pixels, 1, 128*128*4, myimage);
     //fclose(myimage);
-    
+
     Image image = LoadImageEx(imagePixels, imWidth, imHeight);
     ImageFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
 
@@ -183,47 +197,46 @@ extern void LoadDefaultFont(void)
     defaultFont.texture = LoadTextureFromImage(image);
     UnloadImage(image);
 
-    // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, numChars
+    // Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, charsCount
     //------------------------------------------------------------------------------
-    defaultFont.charValues = (int *)malloc(defaultFont.numChars*sizeof(int)); 
-    defaultFont.charRecs = (Rectangle *)malloc(defaultFont.numChars*sizeof(Rectangle));   // Allocate space for our character rectangle data
-                                                                                          // This memory should be freed at end! --> Done on CloseWindow()
     
-    defaultFont.charOffsets = (Vector2 *)malloc(defaultFont.numChars*sizeof(Vector2));
-    defaultFont.charAdvanceX = (int *)malloc(defaultFont.numChars*sizeof(int));
-    
+    // Allocate space for our characters info data
+    // NOTE: This memory should be freed at end! --> CloseWindow()
+    defaultFont.chars = (CharInfo *)malloc(defaultFont.charsCount*sizeof(CharInfo));    
+
     int currentLine = 0;
     int currentPosX = charsDivisor;
     int testPosX = charsDivisor;
 
-    for (int i = 0; i < defaultFont.numChars; i++)
+    for (int i = 0; i < defaultFont.charsCount; i++)
     {
-        defaultFont.charValues[i] = FONT_FIRST_CHAR + i;  // First char is 32
-        
-        defaultFont.charRecs[i].x = currentPosX;
-        defaultFont.charRecs[i].y = charsDivisor + currentLine * (charsHeight + charsDivisor);
-        defaultFont.charRecs[i].width = charsWidth[i];
-        defaultFont.charRecs[i].height = charsHeight;
+        defaultFont.chars[i].value = 32 + i;  // First char is 32
 
-        testPosX += (defaultFont.charRecs[i].width + charsDivisor);
+        defaultFont.chars[i].rec.x = currentPosX;
+        defaultFont.chars[i].rec.y = charsDivisor + currentLine*(charsHeight + charsDivisor);
+        defaultFont.chars[i].rec.width = charsWidth[i];
+        defaultFont.chars[i].rec.height = charsHeight;
+
+        testPosX += (defaultFont.chars[i].rec.width + charsDivisor);
 
         if (testPosX >= defaultFont.texture.width)
         {
             currentLine++;
-            currentPosX = 2 * charsDivisor + charsWidth[i];
+            currentPosX = 2*charsDivisor + charsWidth[i];
             testPosX = currentPosX;
 
-            defaultFont.charRecs[i].x = charsDivisor;
-            defaultFont.charRecs[i].y = charsDivisor + currentLine*(charsHeight + charsDivisor);
+            defaultFont.chars[i].rec.x = charsDivisor;
+            defaultFont.chars[i].rec.y = charsDivisor + currentLine*(charsHeight + charsDivisor);
         }
         else currentPosX = testPosX;
-        
+
         // NOTE: On default font character offsets and xAdvance are not required
-        defaultFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
-        defaultFont.charAdvanceX[i] = 0;
+        defaultFont.chars[i].offsetX = 0;
+        defaultFont.chars[i].offsetY = 0;
+        defaultFont.chars[i].advanceX = 0;
     }
-    
-    defaultFont.size = defaultFont.charRecs[0].height;
+
+    defaultFont.baseSize = defaultFont.chars[0].rec.height;
 
     TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
@@ -231,10 +244,7 @@ extern void LoadDefaultFont(void)
 extern void UnloadDefaultFont(void)
 {
     UnloadTexture(defaultFont.texture);
-    free(defaultFont.charValues);
-    free(defaultFont.charRecs);
-    free(defaultFont.charOffsets);
-    free(defaultFont.charAdvanceX);
+    free(defaultFont.chars);
 }
 
 // Get the default font, useful to be used with extended parameters
@@ -243,73 +253,104 @@ SpriteFont GetDefaultFont()
     return defaultFont;
 }
 
-// Load a SpriteFont image into GPU memory
+// Load SpriteFont from file into GPU memory (VRAM)
 SpriteFont LoadSpriteFont(const char *fileName)
 {
-    SpriteFont spriteFont;
+    // Default hardcoded values for ttf file loading
+    #define DEFAULT_TTF_FONTSIZE    32      // Font first character (32 - space)
+    #define DEFAULT_TTF_NUMCHARS    95      // ASCII 32..126 is 95 glyphs
+    #define DEFAULT_FIRST_CHAR      32      // Expected first char for image spritefont
+
+    SpriteFont spriteFont = { 0 };
 
     // Check file extension
-    if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);
-    else if (strcmp(GetExtension(fileName),"ttf") == 0) spriteFont = LoadTTF(fileName, 32);
+    if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);    // TODO: DELETE... SOON...
+    else if (strcmp(GetExtension(fileName),"ttf") == 0) spriteFont = LoadSpriteFontTTF(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
     else if (strcmp(GetExtension(fileName),"fnt") == 0) spriteFont = LoadBMFont(fileName);
+    else if (strcmp(GetExtension(fileName),"rres") == 0)
+    {
+        // TODO: Read multiple resource blocks from file (RRES_FONT_IMAGE, RRES_FONT_CHARDATA)
+        RRES rres = LoadResource(fileName, 0);
+
+        // Load sprite font texture
+        if (rres[0].type == RRES_TYPE_FONT_IMAGE) 
+        {
+            // NOTE: Parameters for RRES_FONT_IMAGE type are: width, height, format, mipmaps
+            Image image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
+            spriteFont.texture = LoadTextureFromImage(image);
+            UnloadImage(image);
+        }
+        
+        // Load sprite characters data
+        if (rres[1].type == RRES_TYPE_FONT_CHARDATA) 
+        {
+            // NOTE: Parameters for RRES_FONT_CHARDATA type are: fontSize, charsCount
+            spriteFont.baseSize = rres[1].param1;
+            spriteFont.charsCount = rres[1].param2;
+            spriteFont.chars = rres[1].data;
+        }
+
+        // TODO: Do not free rres.data memory (chars info data!)
+        //UnloadResource(rres[0]);
+    }
     else
     {
         Image image = LoadImage(fileName);
-        
-        if (image.data != NULL)
-        {     
-            // Process bitmap font pixel data to get characters measures
-            // spriteFont chars data is filled inside the function and memory is allocated!
-            int numChars = ParseImageData(image, &spriteFont.charValues, &spriteFont.charRecs);
-
-            TraceLog(DEBUG, "[%s] SpriteFont data parsed correctly", fileName);
-            TraceLog(DEBUG, "[%s] SpriteFont num chars detected: %i", fileName, numChars);
-
-            spriteFont.numChars = numChars;
-            spriteFont.texture = LoadTextureFromImage(image); // Convert loaded image to OpenGL texture
-            spriteFont.size = spriteFont.charRecs[0].height;
-            
-            spriteFont.charOffsets = (Vector2 *)malloc(spriteFont.numChars*sizeof(Vector2));
-            spriteFont.charAdvanceX = (int *)malloc(spriteFont.numChars*sizeof(int));
-            
-            for (int i = 0; i < spriteFont.numChars; i++)
-            {
-                // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
-                spriteFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
-                spriteFont.charAdvanceX[i] = 0;
-            }
-        }
-        else
-        {
-            TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
-            spriteFont = GetDefaultFont();
-        }
-
+        if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);
         UnloadImage(image);
     }
-    
+
     if (spriteFont.texture.id == 0)
     {
         TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
+        spriteFont = GetDefaultFont();
+    }
+    else SetTextureFilter(spriteFont.texture, FILTER_POINT);    // By default we set point filter (best performance)
+
+    return spriteFont;
+}
+
+// Load SpriteFont from TTF font file with generation parameters
+// NOTE: You can pass an array with desired characters, those characters should be available in the font
+// if array is NULL, default char set is selected 32..126
+SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
+{
+    SpriteFont spriteFont = { 0 };
+
+    if (strcmp(GetExtension(fileName),"ttf") == 0)
+    {
+        if ((fontChars == NULL) || (charsCount == 0))
+        {
+            int totalChars = 95;    // Default charset [32..126]
+
+            int *defaultFontChars = (int *)malloc(totalChars*sizeof(int));
+
+            for (int i = 0; i < totalChars; i++) defaultFontChars[i] = i + 32; // Default first character: SPACE[32]
+
+            spriteFont = LoadTTF(fileName, fontSize, totalChars, defaultFontChars);
+        }
+        else spriteFont = LoadTTF(fileName, fontSize, charsCount, fontChars);
+    }
+
+    if (spriteFont.texture.id == 0)
+    {
+        TraceLog(WARNING, "[%s] SpriteFont could not be generated, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
 
     return spriteFont;
 }
 
-// Unload SpriteFont from GPU memory
+// Unload SpriteFont from GPU memory (VRAM)
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
     // NOTE: Make sure spriteFont is not default font (fallback)
     if (spriteFont.texture.id != defaultFont.texture.id)
     {
         UnloadTexture(spriteFont.texture);
-        free(spriteFont.charValues);
-        free(spriteFont.charRecs);
-        free(spriteFont.charOffsets);
-        free(spriteFont.charAdvanceX);
+        free(spriteFont.chars);
 
-        TraceLog(INFO, "Unloaded sprite font data");
+        TraceLog(DEBUG, "Unloaded sprite font data");
     }
 }
 
@@ -318,72 +359,70 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 // NOTE: chars spacing is proportional to fontSize
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 {
-    Vector2 position = { (float)posX, (float)posY };
+    // Check if default font has been loaded
+    if (defaultFont.texture.id != 0)
+    {
+        Vector2 position = { (float)posX, (float)posY };
 
-    int defaultFontSize = 10;   // Default Font chars height in pixel
-    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize / defaultFontSize;
+        int defaultFontSize = 10;   // Default Font chars height in pixel
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
 
-    DrawTextEx(defaultFont, text, position, fontSize, spacing, color);
+        DrawTextEx(GetDefaultFont(), text, position, (float)fontSize, spacing, color);
+    }
 }
 
 // Draw text using SpriteFont
 // NOTE: chars spacing is NOT proportional to fontSize
-void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, int fontSize, int spacing, Color tint)
+void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float fontSize, int spacing, Color tint)
 {
     int length = strlen(text);
-    int textOffsetX = 0;
-    int textOffsetY = 0;    // Line break!
+    int textOffsetX = 0;        // Offset between characters
+    int textOffsetY = 0;        // Required for line break!
     float scaleFactor;
-    unsigned char letter;
 
-    Rectangle rec;
+    unsigned char letter;       // Current character
+    int index;                  // Index position in sprite font
 
-    scaleFactor = (float)fontSize/spriteFont.size;
+    scaleFactor = fontSize/spriteFont.baseSize;
 
-    // NOTE: Some ugly hacks are made to support Latin-1 Extended characters directly 
+    // NOTE: Some ugly hacks are made to support Latin-1 Extended characters directly
     // written in C code files (codified by default as UTF-8)
-    
-    for(int i = 0; i < length; i++)
+
+    for (int i = 0; i < length; i++)
     {
-        // TODO: Right now we are supposing characters that follow a continous order and start at FONT_FIRST_CHAR,
-        // this sytem can be improved to support any characters order and init value...
-        // An intermediate table could be created to link char values with predefined char position index in chars rectangle array
-        
-        if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
+        if ((unsigned char)text[i] == '\n')
         {
-            // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
-            letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR];
-            i++;
-        }
-        else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
-        {
-            // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
-            letter = (unsigned char)text[i + 1];
-            rec = spriteFont.charRecs[letter - FONT_FIRST_CHAR + 64];
-            i++;
+            // NOTE: Fixed line spacing of 1.5 lines
+            textOffsetY += (int)((spriteFont.baseSize + spriteFont.baseSize/2)*scaleFactor);
+            textOffsetX = 0;
         }
         else
         {
-            if ((unsigned char)text[i] == '\n')
+            if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
             {
-                // NOTE: Fixed line spacing of 1.5 lines
-                textOffsetY += ((spriteFont.size + spriteFont.size/2)*scaleFactor);
-                textOffsetX = 0;
-                rec.x = -1;
+                // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
+                letter = (unsigned char)text[i + 1];
+                index = GetCharIndex(spriteFont, (int)letter);
+                i++;
             }
-            else rec = spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR];
-        }
+            else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
+            {
+                // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
+                letter = (unsigned char)text[i + 1];
+                index = GetCharIndex(spriteFont, (int)letter + 64);
+                i++;
+            }
+            else index = GetCharIndex(spriteFont, (int)text[i]);
 
-        if (rec.x > 0)
-        {
-            DrawTexturePro(spriteFont.texture, rec, (Rectangle){ position.x + textOffsetX + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].x*scaleFactor, 
-                                                                 position.y + textOffsetY + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].y*scaleFactor, 
-                                                                 rec.width*scaleFactor, rec.height*scaleFactor} , (Vector2){ 0, 0 }, 0.0f, tint);
+            DrawTexturePro(spriteFont.texture, spriteFont.chars[index].rec,
+                           (Rectangle){ position.x + textOffsetX + spriteFont.chars[index].offsetX*scaleFactor,
+                                        position.y + textOffsetY + spriteFont.chars[index].offsetY*scaleFactor,
+                                        spriteFont.chars[index].rec.width*scaleFactor,
+                                        spriteFont.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
 
-            if (spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR] == 0) textOffsetX += (rec.width*scaleFactor + spacing);
-            else textOffsetX += (spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR]*scaleFactor + spacing);
+            if (spriteFont.chars[index].advanceX == 0) textOffsetX += (int)(spriteFont.chars[index].rec.width*scaleFactor + spacing);
+            else textOffsetX += (int)(spriteFont.chars[index].advanceX*scaleFactor + spacing);
         }
     }
 }
@@ -406,15 +445,15 @@ const char *SubText(const char *text, int position, int length)
 {
     static char buffer[MAX_SUBTEXT_LENGTH];
     int textLength = strlen(text);
-    
+
     if (position >= textLength)
     {
         position = textLength - 1;
         length = 0;
     }
-    
+
     if (length >= textLength) length = textLength;
- 
+
     for (int c = 0 ; c < length ; c++)
     {
         *(buffer+c) = *(text+position);
@@ -429,58 +468,61 @@ const char *SubText(const char *text, int position, int length)
 // Measure string width for default font
 int MeasureText(const char *text, int fontSize)
 {
-    Vector2 vec;
+    Vector2 vec = { 0.0f, 0.0f };
 
-    int defaultFontSize = 10;   // Default Font chars height in pixel
-    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize / defaultFontSize;
+    // Check if default font has been loaded
+    if (defaultFont.texture.id != 0)
+    {
+        int defaultFontSize = 10;   // Default Font chars height in pixel
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
 
-    vec = MeasureTextEx(defaultFont, text, fontSize, spacing);
+        vec = MeasureTextEx(GetDefaultFont(), text, (float)fontSize, spacing);
+    }
 
     return (int)vec.x;
 }
 
 // Measure string size for SpriteFont
-Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int spacing)
+Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing)
 {
     int len = strlen(text);
-    int tempLen = 0;            // Used to count longer text line num chars
+    int tempLen = 0;                // Used to count longer text line num chars
     int lenCounter = 0;
-    
-    int textWidth = 0;
-    int tempTextWidth = 0;      // Used to count longer text line width
-    
-    int textHeight = spriteFont.size;
-    float scaleFactor;
+
+    float textWidth = 0;
+    float tempTextWidth = 0;        // Used to count longer text line width
+
+    float textHeight = (float)spriteFont.baseSize;
+    float scaleFactor = fontSize/(float)spriteFont.baseSize;
 
     for (int i = 0; i < len; i++)
     {
         lenCounter++;
-        
+
         if (text[i] != '\n')
         {
-            if (spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR] != 0) textWidth += spriteFont.charAdvanceX[(int)text[i] - FONT_FIRST_CHAR];
-            else textWidth += (spriteFont.charRecs[(int)text[i] - FONT_FIRST_CHAR].width + spriteFont.charOffsets[(int)text[i] - FONT_FIRST_CHAR].x);
+            int index = GetCharIndex(spriteFont, (int)text[i]);
+
+            if (spriteFont.chars[index].advanceX != 0) textWidth += spriteFont.chars[index].advanceX;
+            else textWidth += (spriteFont.chars[index].rec.width + spriteFont.chars[index].offsetX);
         }
         else
         {
             if (tempTextWidth < textWidth) tempTextWidth = textWidth;
             lenCounter = 0;
             textWidth = 0;
-            textHeight += (spriteFont.size + spriteFont.size/2); // NOTE: Fixed line spacing of 1.5 lines
+            textHeight += ((float)spriteFont.baseSize*1.5f); // NOTE: Fixed line spacing of 1.5 lines
         }
-        
+
         if (tempLen < lenCounter) tempLen = lenCounter;
     }
-    
+
     if (tempTextWidth < textWidth) tempTextWidth = textWidth;
 
-    if (fontSize <= spriteFont.size) scaleFactor = 1.0f;
-    else scaleFactor = (float)fontSize/spriteFont.size;
-
     Vector2 vec;
-    vec.x = (float)tempTextWidth*scaleFactor + (tempLen - 1)*spacing; // Adds chars spacing to measure
-    vec.y = (float)textHeight*scaleFactor;
+    vec.x = tempTextWidth*scaleFactor + (float)((tempLen - 1)*spacing); // Adds chars spacing to measure
+    vec.y = textHeight*scaleFactor;
 
     return vec;
 }
@@ -489,63 +531,78 @@ Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, int fontSize, int
 // NOTE: Uses default font
 void DrawFPS(int posX, int posY)
 {
-    char buffer[20];
-
     // NOTE: We are rendering fps every second for better viewing on high framerates
-    // TODO: Not working properly on ANDROID and RPI
 
-    static float fps = 0.0f;
+    static int fps = 0;
     static int counter = 0;
     static int refreshRate = 20;
 
-    if (counter < refreshRate)
-    {
-        counter++;
-    }
+    if (counter < refreshRate) counter++;
     else
     {
         fps = GetFPS();
         refreshRate = fps;
         counter = 0;
     }
-
-    sprintf(buffer, "%2.0f FPS", fps);
-    DrawText(buffer, posX, posY, 20, LIME);
+    
+    // NOTE: We have rounding errors every frame, so it oscillates a lot
+    DrawText(FormatText("%2i FPS", fps), posX, posY, 20, LIME);
 }
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-// Check if a pixel is magenta
-static bool PixelIsMagenta(Color p)
+static int GetCharIndex(SpriteFont font, int letter)
 {
-    return ((p.r == 255) && (p.g == 0) && (p.b == 255) && (p.a == 255));
+#define UNORDERED_CHARSET
+#if defined(UNORDERED_CHARSET)
+    int index = 0;
+
+    for (int i = 0; i < font.charsCount; i++)
+    {
+        if (font.chars[i].value == letter)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    return index;
+#else
+    return (letter - 32);
+#endif
 }
 
-// Parse image pixel data to obtain characters data (measures)
-static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
+// Load an Image font file (XNA style)
+static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 {
+    #define COLOR_EQUAL(col1, col2) ((col1.r == col2.r)&&(col1.g == col2.g)&&(col1.b == col2.b)&&(col1.a == col2.a))
+
     int charSpacing = 0;
     int lineSpacing = 0;
 
     int x = 0;
     int y = 0;
 
-    // We allocate a temporal arrays for chars data measures, 
+    // Default number of characters supported
+    #define MAX_FONTCHARS          256
+
+    // We allocate a temporal arrays for chars data measures,
     // once we get the actual number of chars, we copy data to a sized arrays
     int tempCharValues[MAX_FONTCHARS];
     Rectangle tempCharRecs[MAX_FONTCHARS];
-    
+
     Color *pixels = GetImageData(image);
 
-    for(y = 0; y < image.height; y++)
+    // Parse image data to get charSpacing and lineSpacing
+    for (y = 0; y < image.height; y++)
     {
-        for(x = 0; x < image.width; x++)
+        for (x = 0; x < image.width; x++)
         {
-            if (!PixelIsMagenta(pixels[y*image.width + x])) break;
+            if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
         }
-        if (!PixelIsMagenta(pixels[y*image.width + x])) break;
+        if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
     }
 
     charSpacing = x;
@@ -554,7 +611,7 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
     int charHeight = 0;
     int j = 0;
 
-    while(!PixelIsMagenta(pixels[(lineSpacing + j)*image.width + charSpacing])) j++;
+    while (!COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
 
     charHeight = j;
 
@@ -563,20 +620,21 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
     int lineToRead = 0;
     int xPosToRead = charSpacing;
 
-    while((lineSpacing + lineToRead * (charHeight + lineSpacing)) < image.height)
+    // Parse image data to get rectangle sizes
+    while ((lineSpacing + lineToRead*(charHeight + lineSpacing)) < image.height)
     {
-        while((xPosToRead < image.width) &&
-              !PixelIsMagenta((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead])))
+        while ((xPosToRead < image.width) &&
+              !COLOR_EQUAL((pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead]), key))
         {
-            tempCharValues[index] = FONT_FIRST_CHAR + index;
-            
+            tempCharValues[index] = firstChar + index;
+
             tempCharRecs[index].x = xPosToRead;
-            tempCharRecs[index].y = lineSpacing + lineToRead * (charHeight + lineSpacing);
+            tempCharRecs[index].y = lineSpacing + lineToRead*(charHeight + lineSpacing);
             tempCharRecs[index].height = charHeight;
 
             int charWidth = 0;
 
-            while(!PixelIsMagenta(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth])) charWidth++;
+            while (!COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
 
             tempCharRecs[index].width = charWidth;
 
@@ -588,22 +646,46 @@ static int ParseImageData(Image image, int **charValues, Rectangle **charRecs)
         lineToRead++;
         xPosToRead = charSpacing;
     }
-    
-    free(pixels);
+
+    TraceLog(DEBUG, "SpriteFont data parsed correctly from image");
+
+    // NOTE: We need to remove key color borders from image to avoid weird
+    // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
+    for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
+
+    // Create a new image with the processed color data (key color replaced by BLANK)
+    Image fontClear = LoadImageEx(pixels, image.width, image.height);
+
+    free(pixels);    // Free pixels array memory
+
+    // Create spritefont with all data parsed from image
+    SpriteFont spriteFont = { 0 };
+
+    spriteFont.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
+    spriteFont.charsCount = index;
+
+    UnloadImage(fontClear);     // Unload processed image once converted to texture
 
     // We got tempCharValues and tempCharsRecs populated with chars data
-    // Now we move temp data to sized charValues and charRecs arrays (passed as parameter to the function)
-    // NOTE: This memory should be freed!
-    (*charRecs) = (Rectangle *)malloc(index*sizeof(Rectangle));
-    (*charValues) = (int *)malloc(index*sizeof(int));
+    // Now we move temp data to sized charValues and charRecs arrays
+    spriteFont.chars = (CharInfo *)malloc(spriteFont.charsCount*sizeof(CharInfo));
 
-    for (int i = 0; i < index; i++)
+    for (int i = 0; i < spriteFont.charsCount; i++)
     {
-        (*charValues)[i] = tempCharValues[i];
-        (*charRecs)[i] = tempCharRecs[i];
+        spriteFont.chars[i].value = tempCharValues[i];
+        spriteFont.chars[i].rec = tempCharRecs[i];
+
+        // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
+        spriteFont.chars[i].offsetX = 0;
+        spriteFont.chars[i].offsetY = 0;
+        spriteFont.chars[i].advanceX = 0;
     }
 
-    return index;
+    spriteFont.baseSize = spriteFont.chars[0].rec.height;
+
+    TraceLog(INFO, "Image file loaded correctly as SpriteFont");
+
+    return spriteFont;
 }
 
 // Load a rBMF font file (raylib BitMap Font)
@@ -629,6 +711,8 @@ static SpriteFont LoadRBMF(const char *fileName)
 
     SpriteFont spriteFont = { 0 };
 
+    // REMOVE SOON!!!  
+/*
     rbmfInfoHeader rbmfHeader;
     unsigned int *rbmfFileData = NULL;
     unsigned char *rbmfCharWidthData = NULL;
@@ -640,7 +724,7 @@ static SpriteFont LoadRBMF(const char *fileName)
     if (rbmfFile == NULL)
     {
         TraceLog(WARNING, "[%s] rBMF font file could not be opened, using default font", fileName);
-        
+
         spriteFont = GetDefaultFont();
     }
     else
@@ -651,15 +735,15 @@ static SpriteFont LoadRBMF(const char *fileName)
 
         spriteFont.numChars = (int)rbmfHeader.numChars;
 
-        int numPixelBits = rbmfHeader.imgWidth * rbmfHeader.imgHeight / 32;
+        int numPixelBits = rbmfHeader.imgWidth*rbmfHeader.imgHeight/32;
 
-        rbmfFileData = (unsigned int *)malloc(numPixelBits * sizeof(unsigned int));
+        rbmfFileData = (unsigned int *)malloc(numPixelBits*sizeof(unsigned int));
 
-        for(int i = 0; i < numPixelBits; i++) fread(&rbmfFileData[i], sizeof(unsigned int), 1, rbmfFile);
+        for (int i = 0; i < numPixelBits; i++) fread(&rbmfFileData[i], sizeof(unsigned int), 1, rbmfFile);
 
-        rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars * sizeof(unsigned char));
+        rbmfCharWidthData = (unsigned char *)malloc(spriteFont.numChars*sizeof(unsigned char));
 
-        for(int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
+        for (int i = 0; i < spriteFont.numChars; i++) fread(&rbmfCharWidthData[i], sizeof(unsigned char), 1, rbmfFile);
 
         // Re-construct image from rbmfFileData
         //-----------------------------------------
@@ -679,57 +763,56 @@ static SpriteFont LoadRBMF(const char *fileName)
 
             counter++;
         }
-        
+
         Image image = LoadImageEx(imagePixels, rbmfHeader.imgWidth, rbmfHeader.imgHeight);
         ImageFormat(&image, UNCOMPRESSED_GRAY_ALPHA);
-        
+
         free(imagePixels);
 
         TraceLog(DEBUG, "[%s] Image reconstructed correctly, now converting it to texture", fileName);
 
+        // Create spritefont with all data read from rbmf file
         spriteFont.texture = LoadTextureFromImage(image);
         UnloadImage(image);     // Unload image data
 
         //TraceLog(INFO, "[%s] Starting chars set reconstruction", fileName);
 
         // Get characters data using rbmfCharWidthData, rbmfHeader.charHeight, charsDivisor, rbmfHeader.numChars
-        spriteFont.charValues = (int *)malloc(spriteFont.numChars*sizeof(int)); 
-        spriteFont.charRecs = (Rectangle *)malloc(spriteFont.numChars*sizeof(Rectangle));
-        spriteFont.charOffsets = (Vector2 *)malloc(spriteFont.numChars*sizeof(Vector2));
-        spriteFont.charAdvanceX = (int *)malloc(spriteFont.numChars*sizeof(int));
+        spriteFont.chars = (CharInfo *)malloc(spriteFont.charsCount*sizeof(CharInfo));
 
         int currentLine = 0;
         int currentPosX = charsDivisor;
         int testPosX = charsDivisor;
 
-        for (int i = 0; i < spriteFont.numChars; i++)
+        for (int i = 0; i < spriteFont.charsCount; i++)
         {
-            spriteFont.charValues[i] = (int)rbmfHeader.firstChar + i;
-            
-            spriteFont.charRecs[i].x = currentPosX;
-            spriteFont.charRecs[i].y = charsDivisor + currentLine * ((int)rbmfHeader.charHeight + charsDivisor);
-            spriteFont.charRecs[i].width = (int)rbmfCharWidthData[i];
-            spriteFont.charRecs[i].height = (int)rbmfHeader.charHeight;
-            
-            // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
-            spriteFont.charOffsets[i] = (Vector2){ 0.0f, 0.0f };
-            spriteFont.charAdvanceX[i] = 0;
+            spriteFont.chars[i].value = (int)rbmfHeader.firstChar + i;
 
-            testPosX += (spriteFont.charRecs[i].width + charsDivisor);
+            spriteFont.chars[i].rec.x = currentPosX;
+            spriteFont.chars[i].rec.y = charsDivisor + currentLine*((int)rbmfHeader.charHeight + charsDivisor);
+            spriteFont.chars[i].rec.width = (int)rbmfCharWidthData[i];
+            spriteFont.chars[i].rec.height = (int)rbmfHeader.charHeight;
+
+            // NOTE: On image based fonts (XNA style), character offsets and xAdvance are not required (set to 0)
+            spriteFont.chars[i].offsetX = 0;
+            spriteFont.chars[i].offsetY = 0;
+            spriteFont.chars[i].advanceX = 0;
+
+            testPosX += (spriteFont.chars[i].rec.width + charsDivisor);
 
             if (testPosX > spriteFont.texture.width)
             {
                 currentLine++;
-                currentPosX = 2 * charsDivisor + (int)rbmfCharWidthData[i];
+                currentPosX = 2*charsDivisor + (int)rbmfCharWidthData[i];
                 testPosX = currentPosX;
 
-                spriteFont.charRecs[i].x = charsDivisor;
-                spriteFont.charRecs[i].y = charsDivisor + currentLine * (rbmfHeader.charHeight + charsDivisor);
+                spriteFont.chars[i].rec.x = charsDivisor;
+                spriteFont.chars[i].rec.y = charsDivisor + currentLine*(rbmfHeader.charHeight + charsDivisor);
             }
             else currentPosX = testPosX;
         }
-        
-        spriteFont.size = spriteFont.charRecs[0].height;
+
+        spriteFont.baseSize = spriteFont.charRecs[0].height;
 
         TraceLog(INFO, "[%s] rBMF file loaded correctly as SpriteFont", fileName);
     }
@@ -738,6 +821,7 @@ static SpriteFont LoadRBMF(const char *fileName)
 
     free(rbmfFileData);                // Now we can free loaded data from RAM memory
     free(rbmfCharWidthData);
+*/
 
     return spriteFont;
 }
@@ -746,20 +830,20 @@ static SpriteFont LoadRBMF(const char *fileName)
 static SpriteFont LoadBMFont(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     256
-    
+
     SpriteFont font = { 0 };
     font.texture.id = 0;
-    
+
     char buffer[MAX_BUFFER_SIZE];
     char *searchPoint = NULL;
-    
+
     int fontSize = 0;
     int texWidth, texHeight;
     char texFileName[128];
-    int numChars = 0;
+    int charsCount = 0;
 
     int base;   // Useless data
-    
+
     FILE *fntFile;
 
     fntFile = fopen(fileName, "rt");
@@ -774,149 +858,181 @@ static SpriteFont LoadBMFont(const char *fileName)
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     //searchPoint = strstr(buffer, "size");
     //sscanf(searchPoint, "size=%i", &fontSize);
-    
+
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "lineHeight");
     sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &texWidth, &texHeight);
-    
+
     TraceLog(DEBUG, "[%s] Font size: %i", fileName, fontSize);
     TraceLog(DEBUG, "[%s] Font texture scale: %ix%i", fileName, texWidth, texHeight);
-    
+
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "file");
     sscanf(searchPoint, "file=\"%128[^\"]\"", texFileName);
-    
+
     TraceLog(DEBUG, "[%s] Font texture filename: %s", fileName, texFileName);
-    
+
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "count");
-    sscanf(searchPoint, "count=%i", &numChars);
-    
-    TraceLog(DEBUG, "[%s] Font num chars: %i", fileName, numChars);
-    
+    sscanf(searchPoint, "count=%i", &charsCount);
+
+    TraceLog(DEBUG, "[%s] Font num chars: %i", fileName, charsCount);
+
     // Compose correct path using route of .fnt file (fileName) and texFileName
     char *texPath = NULL;
     char *lastSlash = NULL;
 
-    lastSlash = strrchr(fileName, '/'); // you need escape character
-    texPath = malloc(strlen(fileName) - strlen(lastSlash) + 1 + strlen(texFileName) + 1);
-    memcpy(texPath, fileName, strlen(fileName) - strlen(lastSlash));
-    strcat(texPath, "/");
-    strcat(texPath, texFileName);
-    strcat(texPath, "\0");
+    lastSlash = strrchr(fileName, '/');
+
+    // NOTE: We need some extra space to avoid memory corruption on next allocations!
+    texPath = malloc(strlen(fileName) - strlen(lastSlash) + strlen(texFileName) + 4);
+
+    // NOTE: strcat() and strncat() required a '\0' terminated string to work!
+    *texPath = '\0';
+    strncat(texPath, fileName, strlen(fileName) - strlen(lastSlash) + 1);
+    strncat(texPath, texFileName, strlen(texFileName));
 
     TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
-    
-    font.texture = LoadTexture(texPath);
-    font.size = fontSize;
-    font.numChars = numChars;
-    font.charValues = (int *)malloc(numChars*sizeof(int));
-    font.charRecs = (Rectangle *)malloc(numChars*sizeof(Rectangle));
-    font.charOffsets = (Vector2 *)malloc(numChars*sizeof(Vector2));
-    font.charAdvanceX = (int *)malloc(numChars*sizeof(int));
-    
+
+    Image imFont = LoadImage(texPath);
+
+    if (imFont.format == UNCOMPRESSED_GRAYSCALE)
+    {
+        Image imCopy = ImageCopy(imFont);
+
+        for (int i = 0; i < imCopy.width*imCopy.height; i++) ((unsigned char *)imCopy.data)[i] = 0xff;  // WHITE pixel
+
+        ImageAlphaMask(&imCopy, imFont);
+        font.texture = LoadTextureFromImage(imCopy);
+        UnloadImage(imCopy);
+    }
+    else font.texture = LoadTextureFromImage(imFont);
+
+    font.baseSize = fontSize;
+    font.charsCount = charsCount;
+    font.chars = (CharInfo *)malloc(charsCount*sizeof(CharInfo));
+
+    UnloadImage(imFont);
+
     free(texPath);
-    
+
     int charId, charX, charY, charWidth, charHeight, charOffsetX, charOffsetY, charAdvanceX;
-    
-    for (int i = 0; i < numChars; i++)
+
+    for (int i = 0; i < charsCount; i++)
     {
         fgets(buffer, MAX_BUFFER_SIZE, fntFile);
-        sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i", 
+        sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX);
-        
+
         // Save data properly in sprite font
-        font.charValues[i] = charId;
-        font.charRecs[i] = (Rectangle){ charX, charY, charWidth, charHeight };
-        font.charOffsets[i] = (Vector2){ (float)charOffsetX, (float)charOffsetY };
-        font.charAdvanceX[i] = charAdvanceX;
+        font.chars[i].value = charId;
+        font.chars[i].rec = (Rectangle){ charX, charY, charWidth, charHeight };
+        font.chars[i].offsetX = charOffsetX;
+        font.chars[i].offsetY = charOffsetY;
+        font.chars[i].advanceX = charAdvanceX;
     }
-    
-    // TODO: Font data could be not ordered by charId: 32,33,34,35... review charValues and charRecs order
-    
+
     fclose(fntFile);
 
-    TraceLog(INFO, "[%s] SpriteFont loaded successfully", fileName);
+    if (font.texture.id == 0)
+    {
+        UnloadSpriteFont(font);
+        font = GetDefaultFont();
+    }
+    else TraceLog(INFO, "[%s] SpriteFont loaded successfully", fileName);
 
     return font;
-    
 }
 
 // Generate a sprite font from TTF file data (font size required)
 // TODO: Review texture packing method and generation (use oversampling)
-static SpriteFont LoadTTF(const char *fileName, int fontSize)
+static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
-    // NOTE: Generated font uses some hardcoded values
-    #define FONT_TEXTURE_WIDTH      512     // Font texture width
-    #define FONT_TEXTURE_HEIGHT     512     // Font texture height
-    #define FONT_FIRST_CHAR          32     // Font first character (32 - space)
-    #define FONT_NUM_CHARS           95     // ASCII 32..126 is 95 glyphs
+    #define MAX_TTF_SIZE    16      // Maximum ttf file size in MB
+    
+    // NOTE: Font texture size is predicted (being as much conservative as possible)
+    // Predictive method consist of supposing same number of chars by line-column (sqrtf)
+    // and a maximum character width of 3/4 of fontSize... it worked ok with all my tests...
 
-    unsigned char *ttfBuffer = (unsigned char *)malloc(1 << 25);
-    unsigned char *dataBitmap = (unsigned char *)malloc(FONT_TEXTURE_WIDTH*FONT_TEXTURE_HEIGHT*sizeof(unsigned char));   // One channel bitmap returned!
-    stbtt_bakedchar charData[FONT_NUM_CHARS];  // ASCII 32..126 is 95 glyphs
+    // Calculate next power-of-two value
+    float guessSize = ceilf((float)fontSize*3/4)*ceilf(sqrtf((float)charsCount));
+    int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));      // Calculate next POT
+
+    TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
+
+    unsigned char *ttfBuffer = (unsigned char *)malloc(MAX_TTF_SIZE*1024*1024);
+    unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
+    stbtt_bakedchar *charData = (stbtt_bakedchar *)malloc(sizeof(stbtt_bakedchar)*charsCount);
 
     SpriteFont font = { 0 };
-    
+
     FILE *ttfFile = fopen(fileName, "rb");
-    
+
     if (ttfFile == NULL)
     {
-        TraceLog(WARNING, "[%s] FNT file could not be opened", fileName);
+        TraceLog(WARNING, "[%s] TTF file could not be opened", fileName);
         return font;
     }
 
-    fread(ttfBuffer, 1, 1<<25, ttfFile);
+    // NOTE: We try reading up to 16 MB of elements of 1 byte
+    fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
+
+    if (fontChars[0] != 32) TraceLog(WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
     // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
-    stbtt_BakeFontBitmap(ttfBuffer,0, fontSize, dataBitmap, FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, FONT_FIRST_CHAR, FONT_NUM_CHARS, charData);
+    // TODO: Replace this function by a proper packing method and support random chars order,
+    // we already receive a list (fontChars) with the ordered expected characters
+    int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, fontChars[0], charsCount, charData);
+
+    //if (result > 0) TraceLog(INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
+    if (result < 0) TraceLog(WARNING, "TTF spritefont loading: Not all the characters fit in the font");
 
     free(ttfBuffer);
-    
+
     // Convert image data from grayscale to to UNCOMPRESSED_GRAY_ALPHA
-    unsigned char *dataGrayAlpha = (unsigned char *)malloc(FONT_TEXTURE_WIDTH*FONT_TEXTURE_HEIGHT*sizeof(unsigned char)*2); // Two channels
-    int k = 0;
-    
-    for (int i = 0; i < FONT_TEXTURE_WIDTH*FONT_TEXTURE_HEIGHT; i++)
+    unsigned char *dataGrayAlpha = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char)*2); // Two channels
+
+    for (int i = 0, k = 0; i < textureSize*textureSize; i++, k += 2)
     {
         dataGrayAlpha[k] = 255;
         dataGrayAlpha[k + 1] = dataBitmap[i];
-
-        k += 2;
     }
-    
+
     free(dataBitmap);
-    
+
     // Sprite font generation from TTF extracted data
     Image image;
-    image.width = FONT_TEXTURE_WIDTH;
-    image.height = FONT_TEXTURE_HEIGHT;
+    image.width = textureSize;
+    image.height = textureSize;
     image.mipmaps = 1;
     image.format = UNCOMPRESSED_GRAY_ALPHA;
     image.data = dataGrayAlpha;
 
     font.texture = LoadTextureFromImage(image);
+
+    //SavePNG("generated_ttf_image.png", (unsigned char *)image.data, image.width, image.height, 2);
+
     UnloadImage(image);     // Unloads dataGrayAlpha
 
-    font.size = fontSize;
-    font.numChars = FONT_NUM_CHARS;
-    font.charValues = (int *)malloc(font.numChars*sizeof(int));
-    font.charRecs = (Rectangle *)malloc(font.numChars*sizeof(Rectangle));
-    font.charOffsets = (Vector2 *)malloc(font.numChars*sizeof(Vector2));
-    font.charAdvanceX = (int *)malloc(font.numChars*sizeof(int));
-    
-    for (int i = 0; i < font.numChars; i++)
-    {
-        font.charValues[i] = i + FONT_FIRST_CHAR;
+    font.baseSize = fontSize;
+    font.charsCount = charsCount;
+    font.chars = (CharInfo *)malloc(font.charsCount*sizeof(CharInfo));
 
-        font.charRecs[i].x = (int)charData[i].x0;
-        font.charRecs[i].y = (int)charData[i].y0;
-        font.charRecs[i].width = (int)charData[i].x1 - (int)charData[i].x0;
-        font.charRecs[i].height = (int)charData[i].y1 - (int)charData[i].y0;
-        
-        font.charOffsets[i] = (Vector2){ charData[i].xoff, charData[i].yoff };
-        font.charAdvanceX[i] = (int)charData[i].xadvance;
+    for (int i = 0; i < font.charsCount; i++)
+    {
+        font.chars[i].value = fontChars[i];
+
+        font.chars[i].rec.x = (int)charData[i].x0;
+        font.chars[i].rec.y = (int)charData[i].y0;
+        font.chars[i].rec.width = (int)charData[i].x1 - (int)charData[i].x0;
+        font.chars[i].rec.height = (int)charData[i].y1 - (int)charData[i].y0;
+
+        font.chars[i].offsetX = charData[i].xoff;
+        font.chars[i].offsetY = charData[i].yoff;
+        font.chars[i].advanceX = (int)charData[i].xadvance;
     }
+
+    free(charData);
 
     return font;
 }

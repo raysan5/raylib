@@ -24,7 +24,7 @@ int main()
 
     InitAudioDevice();      // Initialize audio device
 
-    Sound fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
+    Sound fxWav = LoadSound("resources/audio/sound.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
     
     SetTargetFPS(60);
@@ -36,7 +36,6 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE)) PlaySound(fxWav);      // Play WAV sound
-
         if (IsKeyPressed(KEY_ENTER)) PlaySound(fxOgg);      // Play OGG sound
         //----------------------------------------------------------------------------------
 

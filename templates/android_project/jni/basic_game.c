@@ -37,13 +37,13 @@ void android_main(struct android_app *app)
 
     InitAudioDevice();                  // Initialize audio device
     
-    Sound fx = LoadSound("coin.wav");   // Load WAV audio file (placed on assets folder)
-    
     Texture2D texture = LoadTexture("raylib_logo.png");     // Load texture (placed on assets folder)
 
+    Sound fx = LoadSound("coin.wav");   // Load WAV audio file (placed on assets folder)
+    Music ambient = LoadMusicStream("ambient.ogg");
+    PlayMusicStream(ambient);
+
     int framesCounter = 0;          // Used to count frames
-    
-    PlayMusicStream("ambient.ogg");
     
     SetTargetFPS(60);               // Not required on Android, already locked to 60 fps
     //--------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ void android_main(struct android_app *app)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateMusicStream();
+        UpdateMusicStream(ambient);
         
         switch(currentScreen) 
         {
@@ -74,7 +74,7 @@ void android_main(struct android_app *app)
                 // TODO: Update TITLE screen variables here!
 
                 // Press enter to change to GAMEPLAY screen
-                if (GetGestureType() == GESTURE_TAP)
+                if (IsGestureDetected(GESTURE_TAP))
                 {
                     PlaySound(fx);
                     currentScreen = GAMEPLAY;
@@ -85,7 +85,7 @@ void android_main(struct android_app *app)
                 // TODO: Update GAMEPLAY screen variables here!
 
                 // Press enter to change to ENDING screen
-                if (GetGestureType() == GESTURE_TAP)
+                if (IsGestureDetected(GESTURE_TAP))
                 {  
                     PlaySound(fx);
                     currentScreen = ENDING;
@@ -96,7 +96,7 @@ void android_main(struct android_app *app)
                 // TODO: Update ENDING screen variables here!
 
                 // Press enter to return to TITLE screen
-                if (GetGestureType() == GESTURE_TAP)
+                if (IsGestureDetected(GESTURE_TAP))
                 {
                     PlaySound(fx);
                     currentScreen = TITLE;
@@ -158,7 +158,8 @@ void android_main(struct android_app *app)
     
     // TODO: Unload all loaded data (textures, fonts, audio) here!
 
-    UnloadSound(fx);        // Unload sound data
+    UnloadSound(fx);            // Unload sound data
+    UnloadMusicStream(ambient); // Unload music stream data
     
     CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
     
