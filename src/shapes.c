@@ -1,14 +1,17 @@
 /**********************************************************************************************
 *
-*   raylib.shapes
+*   raylib.shapes - Basic functions to draw 2d Shapes and check collisions
 *
-*   Basic functions to draw 2d Shapes and check collisions
+*   CONFIGURATION:
 *
-*   External libs:
-*       rlgl     - raylib OpenGL abstraction layer
+*   #define SUPPORT_QUADS_ONLY
+*       Draw shapes using only QUADS, vertex are accumulated in QUADS arrays (like textures)
 *
-*   Module Configuration Flags:
-*       ...
+*   #define SUPPORT_TRIANGLES_ONLY
+*       Draw shapes using only TRIANGLES, vertex are accumulated in TRIANGLES arrays
+*
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -100,6 +103,36 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
     rlEnd();
 }
 
+// Draw a line defining thickness
+void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
+{
+    float dx = endPos.x - startPos.x;
+    float dy = endPos.y - startPos.y;
+    
+    float d = sqrtf(dx*dx + dy*dy);
+    float angle = asinf(dy/d);
+    
+    rlEnableTexture(GetDefaultTexture().id);
+
+    rlPushMatrix();
+        rlTranslatef((float)startPos.x, (float)startPos.y, 0);
+        rlRotatef(-RAD2DEG*angle, 0, 0, 1);
+        rlTranslatef(0, -thick/2.0f, 0);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            rlVertex2f(0.0f, 0.0f);
+            rlVertex2f(0.0f, thick);
+            rlVertex2f(d, thick);
+            rlVertex2f(d, 0.0f);
+        rlEnd();
+    rlPopMatrix();
+
+    rlDisableTexture();
+}
+
 // Draw a color-filled circle
 void DrawCircle(int centerX, int centerY, float radius, Color color)
 {
@@ -188,6 +221,29 @@ void DrawRectangle(int posX, int posY, int width, int height, Color color)
 void DrawRectangleRec(Rectangle rec, Color color)
 {
     DrawRectangle(rec.x, rec.y, rec.width, rec.height, color);
+}
+
+void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
+{
+    rlEnableTexture(GetDefaultTexture().id);
+
+    rlPushMatrix();
+        rlTranslatef((float)rec.x, (float)rec.y, 0);
+        rlRotatef(rotation, 0, 0, 1);
+        rlTranslatef(-origin.x, -origin.y, 0);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
+
+            rlVertex2f(0.0f, 0.0f);
+            rlVertex2f(0.0f, (float)rec.height);
+            rlVertex2f((float)rec.width, (float)rec.height);
+            rlVertex2f((float)rec.width, 0.0f);
+        rlEnd();
+    rlPopMatrix();
+
+    rlDisableTexture();
 }
 
 // Draw a gradient-filled rectangle
@@ -453,16 +509,17 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
     int recCenterX = rec.x + rec.width/2;
     int recCenterY = rec.y + rec.height/2;
     
-    float dx = fabs(center.x - recCenterX);
-    float dy = fabs(center.y - recCenterY);
+    float dx = fabsf(center.x - recCenterX);
+    float dy = fabsf(center.y - recCenterY);
 
-    if (dx > (rec.width/2 + radius)) { return false; }
-    if (dy > (rec.height/2 + radius)) { return false; }
+    if (dx > ((float)rec.width/2.0f + radius)) { return false; }
+    if (dy > ((float)rec.height/2.0f + radius)) { return false; }
 
-    if (dx <= (rec.width/2)) { return true; } 
-    if (dy <= (rec.height/2)) { return true; }
+    if (dx <= ((float)rec.width/2.0f)) { return true; }
+    if (dy <= ((float)rec.height/2.0f)) { return true; }
 
-    float cornerDistanceSq = (dx - rec.width/2)*(dx - rec.width/2) + (dy - rec.height/2)*(dy - rec.height/2);
+    float cornerDistanceSq = (dx - (float)rec.width/2.0f)*(dx - (float)rec.width/2.0f) + 
+						     (dy - (float)rec.height/2.0f)*(dy - (float)rec.height/2.0f);
 
     return (cornerDistanceSq <= (radius*radius));
 }

@@ -32,7 +32,7 @@
 .PHONY: all clean install unistall
 
 # define raylib platform to compile for
-# possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
+# possible platforms: PLATFORM_DESKTOP PLATFORM_ANDROID PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
 
 # define YES if you want shared/dynamic version of library instead of static (default)
@@ -69,7 +69,28 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    # path to Android NDK
+    ANDROID_NDK = $(ANDROID_NDK_HOME)
+
+    # possible Android architectures: ARM ARM64
+    ANDROID_ARCH ?= ARM
+
+    # define YES to use clang instead of gcc
+    ANDROID_LLVM ?= NO
+
+    # standalone Android toolchain install dir
+    ANDROID_TOOLCHAIN = $(CURDIR)/toolchain
+endif
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CROSS_COMPILE ?= NO
+endif
+
 # define raylib graphics api depending on selected platform
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # define raylib graphics api to use (on RPI, OpenGL ES 2.0 must be used)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
@@ -86,12 +107,48 @@ endif
 # NOTE: makefiles targets require tab indentation
 
 # define compiler: gcc for C program, define as g++ for C++
+
+# default gcc compiler
+CC = gcc
+
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    ifeq ($(ANDROID_ARCH),ARM)
+        ifeq ($(ANDROID_LLVM),YES)
+            CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
+        else
+            CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
+        endif
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+        ifeq ($(ANDROID_LLVM),YES)
+            CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
+        else
+            CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-gcc
+        endif
+    endif
+endif
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    ifeq ($(CROSS_COMPILE),YES)
+    	# rpi compiler
+        CC = armv6j-hardfloat-linux-gnueabi-gcc
+    endif
+endif
+
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # emscripten compiler
     CC = emcc
-else
-    # default gcc compiler
-    CC = gcc
+endif
+
+AR = ar
+
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    ifeq ($(ANDROID_ARCH),ARM)
+        AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+        AR = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-ar
+    endif
 endif
 
 # define compiler flags:
@@ -124,15 +181,29 @@ endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define any directories containing required header files
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -Iexternal -I/opt/vc/include \
-    -I/opt/vc/include/interface/vmcs_host/linux \
-    -I/opt/vc/include/interface/vcos/pthreads
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+# STB libraries and others
+    INCLUDES = -I. -Iexternal
+# OpenAL Soft library
+    INCLUDES += -Iexternal/openal_soft/include
+# Android includes
+    INCLUDES += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
+    INCLUDES += -I$(ANDROID_NDK)/sources/android/native_app_glue
 else
 # STB libraries and others
     INCLUDES = -I. -Iexternal
 # GLFW3 library
     INCLUDES += -Iexternal/glfw3/include
+# OpenAL Soft library
+    INCLUDES += -Iexternal/openal_soft/include
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+# STB libraries and others
+    INCLUDES = -I. -Iexternal
+# RPi libraries
+    INCLUDES += -I/opt/vc/include
+    INCLUDES += -I/opt/vc/include/interface/vmcs_host/linux
+    INCLUDES += -I/opt/vc/include/interface/vcos/pthreads
 # OpenAL Soft library
     INCLUDES += -Iexternal/openal_soft/include
 endif
@@ -147,6 +218,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
     ifeq ($(PLATFORM_OS),OSX)
         OUTPUT_PATH = ../release/osx
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    ifeq ($(ANDROID_ARCH),ARM)
+        OUTPUT_PATH = ../release/android/armeabi-v7a
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+        OUTPUT_PATH = ../release/android/arm64-v8a
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -164,7 +243,18 @@ OBJS += external/stb_vorbis.o
 
 # typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is raylib
-all: raylib
+all: toolchain raylib 
+
+# make standalone Android toolchain
+toolchain:
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    ifeq ($(ANDROID_ARCH),ARM)
+		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-9 --toolchain=arm-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
+    endif
+    ifeq ($(ANDROID_ARCH),ARM64)
+		$(ANDROID_NDK)/build/tools/make-standalone-toolchain.sh --platform=android-21 --toolchain=aarch64-linux-androideabi-4.9 --use-llvm --install-dir=$(ANDROID_TOOLCHAIN)
+    endif
+endif
 
 # compile raylib library
 raylib: $(OBJS)
@@ -184,9 +274,13 @@ else
 			$(CC) -shared -o $(OUTPUT_PATH)/raylib.dll $(OBJS) $(SHAREDLIBS) -Wl,--out-implib,$(OUTPUT_PATH)/libraylibdll.a
 			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
         endif
+        ifeq ($(PLATFORM),PLATFORM_ANDROID)
+			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
+			@echo "raylib shared library (libraylib.so) generated!"
+        endif
     else
-        # compile raylib static library for desktop platforms.
-		ar rcs $(OUTPUT_PATH)/libraylib.a $(OBJS)
+		# compile raylib static library.
+		$(AR) rcs $(OUTPUT_PATH)/libraylib.a $(OBJS)
 		@echo "libraylib.a generated (static library)!"
         ifeq ($(SHARED_OPENAL),NO)
 			@echo "expected OpenAL Soft static library linking"
@@ -283,5 +377,8 @@ ifeq ($(PLATFORM_OS),WINDOWS)
 	del *.o $(OUTPUT_PATH)/libraylib.a $(OUTPUT_PATH)/libraylib.bc $(OUTPUT_PATH)/libraylib.so external/stb_vorbis.o
 else
 	rm -f *.o $(OUTPUT_PATH)/libraylib.a $(OUTPUT_PATH)/libraylib.bc $(OUTPUT_PATH)/libraylib.so external/stb_vorbis.o
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+	rm -rf $(ANDROID_TOOLCHAIN)
 endif
 	@echo "removed all generated files!"

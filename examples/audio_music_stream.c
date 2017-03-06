@@ -58,7 +58,7 @@ int main()
         }
         
         // Get timePlayed scaled to bar dimensions (400 pixels)
-        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*100*4;
+        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
         //----------------------------------------------------------------------------------
 
         // Draw

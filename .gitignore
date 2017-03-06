@@ -51,6 +51,17 @@ ipch/
 *.exe
 !tools/rREM/rrem.exe
 
+# Ignore all examples files
+examples/*
+# Unignore all examples dirs
+!examples/*/
+# Unignore all examples files with extension
+!examples/*.c
+!examples/*.lua
+!examples/*.png
+# Unignore examples Makefile
+!examples/Makefile
+
 # Ignore files build by xcode
 *.mode*v*
 *.pbxuser
@@ -67,9 +78,6 @@ DerivedData/
 *.dll
 src/libraylib.a
 src/libraylib.bc
-
-# oculus example
-!examples/oculus_glfw_sample/
 
 # external libraries DLLs
 !src/external/glfw3/lib/win32/glfw3.dll

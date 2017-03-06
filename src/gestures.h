@@ -2,6 +2,10 @@
 *
 *   raylib Gestures System - Gestures Processing based on input gesture events (touch/mouse)
 *
+*   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
+*
+*   CONFIGURATION:
+*
 *   #define GESTURES_IMPLEMENTATION
 *       Generates the implementation of the library into the included file.
 *       If not defined, the library is in header only mode and can be included in other headers 
@@ -11,11 +15,16 @@
 *       If defined, the library can be used as standalone to process gesture events with
 *       no external dependencies.
 *
-*   NOTE: Memory footprint of this library is aproximately 128 bytes
+*   CONTRIBUTORS:
+*       Marc Palau:         Initial implementation (2014)
+*       Albert Martos:      Complete redesign and testing (2015)
+*       Ian Eito:           Complete redesign and testing (2015)
+*       Ramon Santamaria:   Supervision, review, update and maintenance
 *
-*   Initial design by Marc Palau (2014)
-*   Redesigned by Albert Martos and Ian Eito (2015)
-*   Reviewed by Ramon Santamaria (2015-2016)
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -65,17 +74,17 @@
     // Gestures type
     // NOTE: It could be used as flags to enable only some gestures
     typedef enum {
-        GESTURE_NONE        = 1,
-        GESTURE_TAP         = 2,
-        GESTURE_DOUBLETAP   = 4,
-        GESTURE_HOLD        = 8,
-        GESTURE_DRAG        = 16,
-        GESTURE_SWIPE_RIGHT = 32,
-        GESTURE_SWIPE_LEFT  = 64,
-        GESTURE_SWIPE_UP    = 128,
-        GESTURE_SWIPE_DOWN  = 256,
-        GESTURE_PINCH_IN    = 512,
-        GESTURE_PINCH_OUT   = 1024
+        GESTURE_NONE        = 0,
+        GESTURE_TAP         = 1,
+        GESTURE_DOUBLETAP   = 2,
+        GESTURE_HOLD        = 4,
+        GESTURE_DRAG        = 8,
+        GESTURE_SWIPE_RIGHT = 16,
+        GESTURE_SWIPE_LEFT  = 32,
+        GESTURE_SWIPE_UP    = 64,
+        GESTURE_SWIPE_DOWN  = 128,
+        GESTURE_PINCH_IN    = 256,
+        GESTURE_PINCH_OUT   = 512
     } Gestures;
 #endif
 
@@ -179,7 +188,7 @@ static int tapCounter = 0;                      // TAP counter (one tap implies 
 
 // Hold gesture variables
 static bool resetHold = false;                  // HOLD reset to get first touch point again
-static float timeHold = 0.0f;                   // HOLD duration in milliseconds
+static double timeHold = 0.0f;                  // HOLD duration in milliseconds
 
 // Drag gesture variables
 static Vector2 dragVector = { 0.0f , 0.0f };    // DRAG vector (between initial and current position)
@@ -423,11 +432,11 @@ float GetGestureHoldDuration(void)
 {
     // NOTE: time is calculated on current gesture HOLD
     
-    float time = 0.0f;
+    double time = 0.0;
     
-    if (currentGesture == GESTURE_HOLD) time = (float)GetCurrentTime() - timeHold;
+    if (currentGesture == GESTURE_HOLD) time = GetCurrentTime() - timeHold;
     
-    return time;
+    return (float)time;
 }
 
 // Get drag vector (between initial touch point to current)
@@ -474,7 +483,7 @@ static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition)
 {
     float angle;
 
-    angle = atan2(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x)*(180.0f/PI);
+    angle = atan2f(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x)*(180.0f/PI);
     
     if (angle < 0) angle += 360.0f;
 
@@ -489,7 +498,7 @@ static float Vector2Distance(Vector2 v1, Vector2 v2)
     float dx = v2.x - v1.x;
     float dy = v2.y - v1.y;
 
-    result = sqrt(dx*dx + dy*dy);
+    result = (float)sqrt(dx*dx + dy*dy);
 
     return result;
 }

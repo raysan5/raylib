@@ -147,13 +147,13 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
         # on XWindow could require also below libraries, just uncomment
-        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -framework OpenGL -framework OpenAl -framework Cocoa
+        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
@@ -236,6 +236,7 @@ EXAMPLES = \
     models_obj_loading \
     models_heightmap \
     models_cubicmap \
+    models_ray_picking \
     shaders_model_shader \
     shaders_shapes_textures \
     shaders_custom_uniform \
@@ -245,6 +246,11 @@ EXAMPLES = \
     audio_music_stream \
     audio_module_playing \
     audio_raw_stream \
+    physics_demo \
+    physics_friction \
+    physics_movement \
+    physics_restitution \
+    physics_shatter \
     fix_dylib \
 
 
@@ -451,6 +457,10 @@ models_heightmap: models_heightmap.c
 models_cubicmap: models_cubicmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [models] example - model ray picking
+models_ray_picking: models_ray_picking.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
 # compile [shaders] example - model shader
 shaders_model_shader: shaders_model_shader.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -487,6 +497,33 @@ audio_module_playing: audio_module_playing.c
 audio_raw_stream: audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# Linux Fix to timespect from 
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),LINUX)
+        CFLAGS += -D_POSIX_C_SOURCE=199309L
+    endif
+endif
+
+# compile [physac] example - physics demo
+physics_demo: physics_demo.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics friction
+physics_friction: physics_friction.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics movement
+physics_movement: physics_movement.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics restitution
+physics_restitution: physics_restitution.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+
+# compile [physac] example - physics shatter
+physics_shatter: physics_shatter.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+    
 # fix dylib install path name for each executable (MAC)
 fix_dylib:
 ifeq ($(PLATFORM_OS),OSX)

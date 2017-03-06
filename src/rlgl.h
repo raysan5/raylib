@@ -97,7 +97,7 @@
     // NOTE: This is the maximum amount of lines, triangles and quads per frame, be careful!
     #define MAX_LINES_BATCH         8192
     #define MAX_TRIANGLES_BATCH     4096
-    #define MAX_QUADS_BATCH         4096
+    #define MAX_QUADS_BATCH         8192
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: Reduce memory sizes for embedded systems (RPI and HTML5)
     // NOTE: On HTML5 (emscripten) this is allocated on heap, by default it's only 16MB!...just take care...
@@ -251,25 +251,6 @@ typedef unsigned char byte;
         float fovy;             // Camera field-of-view apperture in Y (degrees)
     } Camera;
 
-    // Light type
-    typedef struct LightData {
-        unsigned int id;        // Light unique id
-        bool enabled;           // Light enabled
-        int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-
-        Vector3 position;       // Light position
-        Vector3 target;         // Light target: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-        float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
-
-        Color diffuse;          // Light diffuse color
-        float intensity;        // Light intensity level
-
-        float coneAngle;        // Light cone max angle: LIGHT_SPOT
-    } LightData, *Light;
-
-    // Light types
-    typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
-    
     // Texture parameters: filter mode
     // NOTE 1: Filtering considers mipmaps if available in the texture
     // NOTE 2: Filter is accordingly set for minification and magnification
@@ -370,8 +351,8 @@ void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
 unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
-void rlglUpdateTexture(unsigned int id, int width, int height, int format, void *data);         // Update GPU texture with new data
-void rlglGenerateMipmaps(Texture2D texture);                             // Generate mipmap data for selected texture
+void rlglUpdateTexture(unsigned int id, int width, int height, int format, const void *data);         // Update GPU texture with new data
+void rlglGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
 
 void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
 void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
@@ -414,9 +395,6 @@ void BeginShaderMode(Shader shader);                                // Begin cus
 void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
 void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
-
-Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
-void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
 
 void TraceLog(int msgType, const char *text, ...);
 float *MatrixToFloat(Matrix mat);

@@ -2,6 +2,10 @@
 *
 *   raylib Camera System - Camera Modes Setup and Control Functions
 *
+*   NOTE: Memory footprint of this library is aproximately 52 bytes (global variables)
+*
+*   CONFIGURATION:
+*
 *   #define CAMERA_IMPLEMENTATION
 *       Generates the implementation of the library into the included file.
 *       If not defined, the library is in header only mode and can be included in other headers 
@@ -11,10 +15,14 @@
 *       If defined, the library can be used as standalone as a camera system but some
 *       functions must be redefined to manage inputs accordingly.
 *
-*   NOTE: Memory footprint of this library is aproximately 52 bytes (global variables)
+*   CONTRIBUTORS:
+*       Marc Palau:         Initial implementation (2014)
+*       Ramon Santamaria:   Supervision, review, update and maintenance
 *
-*   Initial design by Marc Palau (2014)
-*   Reviewed by Ramon Santamaria (2015-2016)
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2015-2016 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -223,15 +231,15 @@ void SetCameraMode(Camera camera, int mode)
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
     
-    cameraTargetDistance = sqrt(dx*dx + dy*dy + dz*dz);
+    cameraTargetDistance = sqrtf(dx*dx + dy*dy + dz*dz);
     
     Vector2 distance = { 0.0f, 0.0f };
-    distance.x = sqrt(dx*dx + dz*dz);
-    distance.y = sqrt(dx*dx + dy*dy);
+    distance.x = sqrtf(dx*dx + dz*dz);
+    distance.y = sqrtf(dx*dx + dy*dy);
     
     // Camera angle calculation
-    cameraAngle.x = asin(fabs(dx)/distance.x);  // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
-    cameraAngle.y = -asin(fabs(dy)/distance.y); // Camera angle in plane XY (0 aligned with X, move positive CW)
+    cameraAngle.x = asinf(fabsf(dx)/distance.x);  // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
+    cameraAngle.y = -asinf(fabsf(dy)/distance.y); // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     // NOTE: Just testing what cameraAngle means
     //cameraAngle.x = 0.0f*DEG2RAD;      // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
@@ -285,10 +293,10 @@ void UpdateCamera(Camera *camera)
         {
             HideCursor();
 
-            if (mousePosition.x < screenHeight/3) SetMousePosition((Vector2){ screenWidth - screenHeight/3, mousePosition.y });
-            else if (mousePosition.y < screenHeight/3) SetMousePosition((Vector2){ mousePosition.x, screenHeight - screenHeight/3 });
-            else if (mousePosition.x > (screenWidth - screenHeight/3)) SetMousePosition((Vector2){ screenHeight/3, mousePosition.y });
-            else if (mousePosition.y > (screenHeight - screenHeight/3)) SetMousePosition((Vector2){ mousePosition.x, screenHeight/3 });
+            if (mousePosition.x < (float)screenHeight/3.0f) SetMousePosition((Vector2){ screenWidth - screenHeight/3, mousePosition.y });
+            else if (mousePosition.y < (float)screenHeight/3.0f) SetMousePosition((Vector2){ mousePosition.x, screenHeight - screenHeight/3 });
+            else if (mousePosition.x > (screenWidth - (float)screenHeight/3.0f)) SetMousePosition((Vector2){ screenHeight/3, mousePosition.y });
+            else if (mousePosition.y > (screenHeight - (float)screenHeight/3.0f)) SetMousePosition((Vector2){ mousePosition.x, screenHeight/3 });
             else
             {
                 mousePositionDelta.x = mousePosition.x - previousMousePosition.x;
@@ -321,6 +329,7 @@ void UpdateCamera(Camera *camera)
                 if (cameraTargetDistance > CAMERA_FREE_DISTANCE_MAX_CLAMP) cameraTargetDistance = CAMERA_FREE_DISTANCE_MAX_CLAMP;
             }
             // Camera looking down
+			// TODO: Review, weird comparisson of cameraTargetDistance == 120.0f?
             else if ((camera->position.y > camera->target.y) && (cameraTargetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
                 camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/cameraTargetDistance;
@@ -341,6 +350,7 @@ void UpdateCamera(Camera *camera)
                 if (cameraTargetDistance < CAMERA_FREE_DISTANCE_MIN_CLAMP) cameraTargetDistance = CAMERA_FREE_DISTANCE_MIN_CLAMP;
             }
             // Camera looking up
+			// TODO: Review, weird comparisson of cameraTargetDistance == 120.0f?
             else if ((camera->position.y < camera->target.y) && (cameraTargetDistance == CAMERA_FREE_DISTANCE_MAX_CLAMP) && (mouseWheelMove < 0))
             {
                 camera->target.x += mouseWheelMove*(camera->target.x - camera->position.x)*CAMERA_MOUSE_SCROLL_SENSITIVITY/cameraTargetDistance;
@@ -385,9 +395,9 @@ void UpdateCamera(Camera *camera)
                 else
                 {
                     // Camera panning
-                    camera->target.x += ((mousePositionDelta.x*-CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*sin(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
-                    camera->target.y += ((mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
-                    camera->target.z += ((mousePositionDelta.x*CAMERA_FREE_MOUSE_SENSITIVITY)*sin(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cos(cameraAngle.x)*sin(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                    camera->target.x += ((mousePositionDelta.x*-CAMERA_FREE_MOUSE_SENSITIVITY)*cosf(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*sinf(cameraAngle.x)*sinf(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                    camera->target.y += ((mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cosf(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
+                    camera->target.z += ((mousePositionDelta.x*CAMERA_FREE_MOUSE_SENSITIVITY)*sinf(cameraAngle.x) + (mousePositionDelta.y*CAMERA_FREE_MOUSE_SENSITIVITY)*cosf(cameraAngle.x)*sinf(cameraAngle.y))*(cameraTargetDistance/CAMERA_FREE_PANNING_DIVIDER);
                 }
             }
 
@@ -404,19 +414,19 @@ void UpdateCamera(Camera *camera)
         case CAMERA_FIRST_PERSON:
         case CAMERA_THIRD_PERSON:
         {
-            camera->position.x += (sin(cameraAngle.x)*direction[MOVE_BACK] -
-                                   sin(cameraAngle.x)*direction[MOVE_FRONT] -
-                                   cos(cameraAngle.x)*direction[MOVE_LEFT] +
-                                   cos(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
+            camera->position.x += (sinf(cameraAngle.x)*direction[MOVE_BACK] -
+                                   sinf(cameraAngle.x)*direction[MOVE_FRONT] -
+                                   cosf(cameraAngle.x)*direction[MOVE_LEFT] +
+                                   cosf(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
                                    
-            camera->position.y += (sin(cameraAngle.y)*direction[MOVE_FRONT] -
-                                   sin(cameraAngle.y)*direction[MOVE_BACK] +
+            camera->position.y += (sinf(cameraAngle.y)*direction[MOVE_FRONT] -
+                                   sinf(cameraAngle.y)*direction[MOVE_BACK] +
                                    1.0f*direction[MOVE_UP] - 1.0f*direction[MOVE_DOWN])/PLAYER_MOVEMENT_SENSITIVITY;
                                    
-            camera->position.z += (cos(cameraAngle.x)*direction[MOVE_BACK] -
-                                   cos(cameraAngle.x)*direction[MOVE_FRONT] +
-                                   sin(cameraAngle.x)*direction[MOVE_LEFT] -
-                                   sin(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
+            camera->position.z += (cosf(cameraAngle.x)*direction[MOVE_BACK] -
+                                   cosf(cameraAngle.x)*direction[MOVE_FRONT] +
+                                   sinf(cameraAngle.x)*direction[MOVE_LEFT] -
+                                   sinf(cameraAngle.x)*direction[MOVE_RIGHT])/PLAYER_MOVEMENT_SENSITIVITY;
 
             bool isMoving = false;  // Required for swinging
 
@@ -439,9 +449,9 @@ void UpdateCamera(Camera *camera)
                 if (cameraTargetDistance < CAMERA_THIRD_PERSON_DISTANCE_CLAMP) cameraTargetDistance = CAMERA_THIRD_PERSON_DISTANCE_CLAMP;
 
                 // Camera is always looking at player
-                camera->target.x = camera->position.x + CAMERA_THIRD_PERSON_OFFSET.x*cos(cameraAngle.x) + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x);
+                camera->target.x = camera->position.x + CAMERA_THIRD_PERSON_OFFSET.x*cosf(cameraAngle.x) + CAMERA_THIRD_PERSON_OFFSET.z*sinf(cameraAngle.x);
                 camera->target.y = camera->position.y + CAMERA_THIRD_PERSON_OFFSET.y;
-                camera->target.z = camera->position.z + CAMERA_THIRD_PERSON_OFFSET.z*sin(cameraAngle.x) - CAMERA_THIRD_PERSON_OFFSET.x*sin(cameraAngle.x);
+                camera->target.z = camera->position.z + CAMERA_THIRD_PERSON_OFFSET.z*sinf(cameraAngle.x) - CAMERA_THIRD_PERSON_OFFSET.x*sinf(cameraAngle.x);
             }
             else    // CAMERA_FIRST_PERSON
             {
@@ -450,18 +460,18 @@ void UpdateCamera(Camera *camera)
                 else if (cameraAngle.y < CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD) cameraAngle.y = CAMERA_FIRST_PERSON_MAX_CLAMP*DEG2RAD;
 
                 // Camera is always looking at player
-                camera->target.x = camera->position.x - sin(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-                camera->target.y = camera->position.y + sin(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
-                camera->target.z = camera->position.z - cos(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+                camera->target.x = camera->position.x - sinf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+                camera->target.y = camera->position.y + sinf(cameraAngle.y)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
+                camera->target.z = camera->position.z - cosf(cameraAngle.x)*CAMERA_FIRST_PERSON_FOCUS_DISTANCE;
                 
                 if (isMoving) swingCounter++;
 
                 // Camera position update
                 // NOTE: On CAMERA_FIRST_PERSON player Y-movement is limited to player 'eyes position'
-                camera->position.y = playerEyesPosition - sin(swingCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
+                camera->position.y = playerEyesPosition - sinf(swingCounter/CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER)/CAMERA_FIRST_PERSON_STEP_DIVIDER;
 
-                camera->up.x = sin(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
-                camera->up.z = -sin(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
+                camera->up.x = sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
+                camera->up.z = -sinf(swingCounter/(CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER*2))/CAMERA_FIRST_PERSON_WAVING_DIVIDER;
             }
         } break;
         default: break;
@@ -473,10 +483,10 @@ void UpdateCamera(Camera *camera)
         (cameraMode == CAMERA_THIRD_PERSON))
     {
         // TODO: It seems camera->position is not correctly updated or some rounding issue makes the camera move straight to camera->target...
-        camera->position.x = sin(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.x;
-        if (cameraAngle.y <= 0.0f) camera->position.y = sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
-        else camera->position.y = -sin(cameraAngle.y)*cameraTargetDistance*sin(cameraAngle.y) + camera->target.y;
-        camera->position.z = cos(cameraAngle.x)*cameraTargetDistance*cos(cameraAngle.y) + camera->target.z;
+        camera->position.x = sinf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.x;
+        if (cameraAngle.y <= 0.0f) camera->position.y = sinf(cameraAngle.y)*cameraTargetDistance*sinf(cameraAngle.y) + camera->target.y;
+        else camera->position.y = -sinf(cameraAngle.y)*cameraTargetDistance*sinf(cameraAngle.y) + camera->target.y;
+        camera->position.z = cosf(cameraAngle.x)*cameraTargetDistance*cosf(cameraAngle.y) + camera->target.z;
     }
 }
 

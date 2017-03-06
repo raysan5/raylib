@@ -1,22 +1,23 @@
 /**********************************************************************************************
 *
-*   raymath (header only file)
+*   raymath v1.0 - Some useful functions to work with Vector3, Matrix and Quaternions
 *
-*   Some useful functions to work with Vector3, Matrix and Quaternions
+*   CONFIGURATION:
 *
-*   You must:
-*       #define RAYMATH_IMPLEMENTATION
-*   before you include this file in *only one* C or C++ file to create the implementation.
+*   #define RAYMATH_IMPLEMENTATION
+*       Generates the implementation of the library into the included file.
+*       If not defined, the library is in header only mode and can be included in other headers
+*       or source files without problems. But only ONE file should hold the implementation.
 *
-*   Example:
-*       #define RAYMATH_IMPLEMENTATION
-*       #include "raymath.h"
+*   #define RAYMATH_EXTERN_INLINE
+*       Inlines all functions code, so it runs faster. This requires lots of memory on system.
+*   
+*   #define RAYMATH_STANDALONE
+*       Avoid raylib.h header inclusion in this file. 
+*       Vector3 and Matrix data types are defined internally in raymath module.
 *
-*   You can also use:
-*       #define RAYMATH_EXTERN_INLINE       // Inlines all functions code, so it runs faster.
-*                                           // This requires lots of memory on system.
-*       #define RAYMATH_STANDALONE          // Not dependent on raylib.h structs: Vector3, Matrix.
 *
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2015 Ramon Santamaria (@raysan5)
 *
@@ -130,6 +131,7 @@ RMDEF void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Ve
 RMDEF Vector3 VectorZero(void);                               // Return a Vector3 init to zero
 RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);          // Return min value for each pair of components
 RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);          // Return max value for each pair of components
+RMDEF Vector3 Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
@@ -222,16 +224,16 @@ RMDEF Vector3 VectorPerpendicular(Vector3 v)
 {
     Vector3 result;
 
-    float min = fabs(v.x);
+    float min = fabsf(v.x);
     Vector3 cardinalAxis = {1.0f, 0.0f, 0.0f};
 
-    if (fabs(v.y) < min)
+    if (fabsf(v.y) < min)
     {
-        min = fabs(v.y);
+        min = fabsf(v.y);
         cardinalAxis = (Vector3){0.0f, 1.0f, 0.0f};
     }
 
-    if(fabs(v.z) < min)
+    if(fabsf(v.z) < min)
     {
         cardinalAxis = (Vector3){0.0f, 0.0f, 1.0f};
     }
@@ -256,7 +258,7 @@ RMDEF float VectorLength(const Vector3 v)
 {
     float length;
 
-    length = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 
     return length;
 }
@@ -284,7 +286,7 @@ RMDEF void VectorNormalize(Vector3 *v)
 
     length = VectorLength(*v);
 
-    if (length == 0) length = 1.0f;
+    if (length == 0.0f) length = 1.0f;
 
     ilength = 1.0f/length;
 
@@ -302,7 +304,7 @@ RMDEF float VectorDistance(Vector3 v1, Vector3 v2)
     float dy = v2.y - v1.y;
     float dz = v2.z - v1.z;
 
-    result = sqrt(dx*dx + dy*dy + dz*dz);
+    result = sqrtf(dx*dx + dy*dy + dz*dz);
 
     return result;
 }
@@ -378,6 +380,32 @@ RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2)
     result.x = fmaxf(vec1.x, vec2.x);
     result.y = fmaxf(vec1.y, vec2.y);
     result.z = fmaxf(vec1.z, vec2.z);
+    
+    return result;
+}
+
+// Compute barycenter coordinates (u, v, w) for point p with respect to triangle (a, b, c)
+// NOTE: Assumes P is on the plane of the triangle
+RMDEF Vector3 Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+{
+    //Vector v0 = b - a, v1 = c - a, v2 = p - a;
+    
+    Vector3 v0 = VectorSubtract(b, a);
+    Vector3 v1 = VectorSubtract(c, a);
+    Vector3 v2 = VectorSubtract(p, a);
+    float d00 = VectorDotProduct(v0, v0);
+    float d01 = VectorDotProduct(v0, v1);
+    float d11 = VectorDotProduct(v1, v1);
+    float d20 = VectorDotProduct(v2, v0);
+    float d21 = VectorDotProduct(v2, v1);
+    
+    float denom = d00*d11 - d01*d01;
+    
+    Vector3 result;
+    
+    result.y = (d11*d20 - d01*d21)/denom;
+    result.z = (d00*d21 - d01*d20)/denom;
+    result.x = 1.0f - (result.z + result.y);
     
     return result;
 }
@@ -590,7 +618,7 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 
     float x = axis.x, y = axis.y, z = axis.z;
 
-    float length = sqrt(x*x + y*y + z*z);
+    float length = sqrtf(x*x + y*y + z*z);
 
     if ((length != 1.0f) && (length != 0.0f))
     {

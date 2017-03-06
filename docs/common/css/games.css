@@ -1,0 +1,35 @@
+#container .mix{ position: relative;  display: none; }
+#container .extext { top: 160px!important; width: 400px!important; }
+
+#filter_menu { width: 820px; height: 80px; margin-left: 18px; }
+
+.legendButton { padding:5px 15px; float:left; margin-left:10px; margin-right:10px; margin-bottom: 20px; }
+#sample { cursor:pointer; background-color:#e1e1e1; color:#5c5a5a; border:3px solid #898888; }
+#game { cursor:pointer; background-color:#f0d6d6; color:#c55757; border:3px solid #e66666; }
+#user { cursor:pointer; background-color:#bedce8; color:#417794; border:3px solid #5d9cbd; }
+
+.sample:hover { background-color:#e1e1e1; color:#5c5a5a; border:4px solid #898888; }
+.game:hover { background-color:#f0d6d6; color:#c55757; border:4px solid #e66666; }
+.user:hover { background-color:#bedce8; color:#417794; border:4px solid #5d9cbd; }
+
+.fsample { border: 1px solid #898888; margin-left: 12px; }
+.fgame { border: 1px solid #e66666; margin-left: 12px; }
+.fuser { border: 1px solid #5d9cbd; margin-left: 12px; }
+
+.fsample p { color:#5c5a5a!important; }
+.fgame p { color:#c55757!important; }
+.fuser p { color:#417794!important; }
+
+#container .fsample a img, #container .fsample a { border: none; overflow: hidden; float: left; background-color: #e1e1e1; opacity: 1; }
+#container .fsample a:hover { border: 10px solid #898888; }
+#container .fsample a:hover img { margin: -10px; opacity: 0.4; }
+
+#container .fgame a img, #container .fgame a { border: none; overflow: hidden; float: left; background-color: #f0d6d6; opacity: 1; }
+#container .fgame a:hover { border: 10px solid #e66666; }
+#container .fgame a:hover img { margin: -10px; opacity: 0.3; }
+
+#container .fuser a img, #container .fuser a { border: none; overflow: hidden; float: left; background-color: #bedce8; opacity: 1; }
+#container .fuser a:hover { border: 10px solid #5d9cbd; }
+#container .fuser a:hover img { margin: -10px; opacity: 0.3; }
+
+#container .extext { position:absolute; top:140px; width:320px; text-align: center; display: none; }

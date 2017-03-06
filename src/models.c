@@ -1,14 +1,15 @@
 /**********************************************************************************************
 *
-*   raylib.models
+*   raylib.models - Basic functions to draw 3d shapes and 3d models
 *
-*   Basic functions to draw 3d shapes and load/draw 3d models (.OBJ)
+*   CONFIGURATION:
 *
-*   External libs:
-*       rlgl     - raylib OpenGL abstraction layer
+*   #define SUPPORT_FILEFORMAT_OBJ / SUPPORT_LOAD_OBJ
 *
-*   Module Configuration Flags:
-*       ...
+*   #define SUPPORT_FILEFORMAT_MTL
+*
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -574,67 +575,57 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
-
-// Draw light in 3D world
-void DrawLight(Light light)
+// Load mesh from file
+Mesh LoadMesh(const char *fileName)
 {
-    switch (light->type)
-    {
-        case LIGHT_POINT:
-        {
-            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
-            
-            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 0, 0 }, 0.0f, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, (Vector3){ 1, 0, 0 }, 90.0f, (light->enabled ? light->diffuse : GRAY));
-            DrawCircle3D(light->position, light->radius, (Vector3){ 0, 1, 0 },90.0f, (light->enabled ? light->diffuse : GRAY));
-        } break;
-        case LIGHT_DIRECTIONAL:
-        {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
-            
-            DrawSphereWires(light->position, 0.3f*light->intensity, 8, 8, (light->enabled ? light->diffuse : GRAY));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
-        } break;
-        case LIGHT_SPOT:
-        {
-            DrawLine3D(light->position, light->target, (light->enabled ? light->diffuse : GRAY));
-            
-            Vector3 dir = VectorSubtract(light->target, light->position);
-            VectorNormalize(&dir);
-            
-            DrawCircle3D(light->position, 0.5f, dir, 0.0f, (light->enabled ? light->diffuse : GRAY));
-            
-            //DrawCylinderWires(light->position, 0.0f, 0.3f*light->coneAngle/50, 0.6f, 5, (light->enabled ? light->diffuse : GRAY));
-            DrawCubeWires(light->target, 0.3f, 0.3f, 0.3f, (light->enabled ? light->diffuse : GRAY));
-        } break;
-        default: break;
-    }
+    Mesh mesh = { 0 };
+
+    if (strcmp(GetExtension(fileName), "obj") == 0) mesh = LoadOBJ(fileName);
+    else TraceLog(WARNING, "[%s] Mesh extension not recognized, it can't be loaded", fileName);
+
+    if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
+    else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
+
+    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
+
+    return mesh;
 }
 
-// Load a 3d model (from file)
+// Load mesh from vertex data
+// NOTE: All vertex data arrays must be same size: numVertex
+Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData)
+{
+    Mesh mesh = { 0 };
+
+    mesh.vertexCount = numVertex;
+    mesh.triangleCount = numVertex/3;
+    mesh.vertices = vData;
+    mesh.texcoords = vtData;
+    mesh.texcoords2 = NULL;
+    mesh.normals = vnData;
+    mesh.tangents = NULL;
+    mesh.colors = (unsigned char *)cData;
+    mesh.indices = NULL;
+
+    rlglLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
+
+    return mesh;
+}
+
+// Load model from file
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
 
-    // TODO: Initialize default data for model in case loading fails, maybe a cube?
-
-    if (strcmp(GetExtension(fileName), "obj") == 0) model.mesh = LoadOBJ(fileName);
-    else TraceLog(WARNING, "[%s] Model extension not recognized, it can't be loaded", fileName);
-
-    if (model.mesh.vertexCount == 0) TraceLog(WARNING, "Model could not be loaded");
-    else
-    {
-        rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-        model.transform = MatrixIdentity();
-        model.material = LoadDefaultMaterial();
-    }
+    model.mesh = LoadMesh(fileName);
+    model.transform = MatrixIdentity();
+    model.material = LoadDefaultMaterial();
 
     return model;
 }
 
-// Load a 3d model (from vertex data)
-Model LoadModelEx(Mesh data, bool dynamic)
+// Load model from mesh data
+Model LoadModelFromMesh(Mesh data, bool dynamic)
 {
     Model model = { 0 };
 
@@ -648,90 +639,7 @@ Model LoadModelEx(Mesh data, bool dynamic)
     return model;
 }
 
-// Load a 3d model from rRES file (raylib Resource)
-Model LoadModelFromRES(const char *rresName, int resId)
-{
-    Model model = { 0 };
-    bool found = false;
-
-    char id[4];             // rRES file identifier
-    unsigned char version;  // rRES file version and subversion
-    char useless;           // rRES header reserved data
-    short numRes;
-
-    ResInfoHeader infoHeader;
-
-    FILE *rresFile = fopen(rresName, "rb");
-
-    if (rresFile == NULL)
-    {
-        TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
-    }
-    else
-    {
-        // Read rres file (basic file check - id)
-        fread(&id[0], sizeof(char), 1, rresFile);
-        fread(&id[1], sizeof(char), 1, rresFile);
-        fread(&id[2], sizeof(char), 1, rresFile);
-        fread(&id[3], sizeof(char), 1, rresFile);
-        fread(&version, sizeof(char), 1, rresFile);
-        fread(&useless, sizeof(char), 1, rresFile);
-
-        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
-        {
-            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
-        }
-        else
-        {
-            // Read number of resources embedded
-            fread(&numRes, sizeof(short), 1, rresFile);
-
-            for (int i = 0; i < numRes; i++)
-            {
-                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
-
-                if (infoHeader.id == resId)
-                {
-                    found = true;
-
-                    // Check data is of valid MODEL type
-                    if (infoHeader.type == 8)
-                    {
-                        // TODO: Load model data
-                    }
-                    else
-                    {
-                        TraceLog(WARNING, "[%s] Required resource do not seem to be a valid MODEL resource", rresName);
-                    }
-                }
-                else
-                {
-                    // Depending on type, skip the right amount of parameters
-                    switch (infoHeader.type)
-                    {
-                        case 0: fseek(rresFile, 6, SEEK_CUR); break;    // IMAGE: Jump 6 bytes of parameters
-                        case 1: fseek(rresFile, 6, SEEK_CUR); break;    // SOUND: Jump 6 bytes of parameters
-                        case 2: fseek(rresFile, 5, SEEK_CUR); break;    // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                        case 3: break;                                  // TEXT: No parameters
-                        case 4: break;                                  // RAW: No parameters
-                        default: break;
-                    }
-
-                    // Jump DATA to read next infoHeader
-                    fseek(rresFile, infoHeader.size, SEEK_CUR);
-                }
-            }
-        }
-
-        fclose(rresFile);
-    }
-
-    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
-
-    return model;
-}
-
-// Load a heightmap image as a 3d model
+// Load heightmap model from image data
 // NOTE: model map size is defined in generic units
 Model LoadHeightmap(Image heightmap, Vector3 size)
 {
@@ -747,7 +655,7 @@ Model LoadHeightmap(Image heightmap, Vector3 size)
     return model;
 }
 
-// Load a map image as a 3d model (cubes based)
+// Load cubes-based map model from image data
 Model LoadCubicmap(Image cubicmap)
 {
     Model model = { 0 };
@@ -762,14 +670,19 @@ Model LoadCubicmap(Image cubicmap)
     return model;
 }
 
-// Unload 3d model from memory (mesh and material)
+// Unload mesh from memory (RAM and/or VRAM)
+void UnloadMesh(Mesh *mesh)
+{
+    rlglUnloadMesh(mesh);
+}
+
+// Unload model from memory (RAM and/or VRAM)
 void UnloadModel(Model model)
 {
-    rlglUnloadMesh(&model.mesh);
-
+    UnloadMesh(&model.mesh);
     UnloadMaterial(model.material);
 
-    TraceLog(INFO, "Unloaded model data from RAM and VRAM");
+    TraceLog(INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
 }
 
 // Load material data (from file)
@@ -798,17 +711,6 @@ Material LoadDefaultMaterial(void)
     material.colSpecular = WHITE;   // Specular color
 
     material.glossiness = 100.0f;   // Glossiness level
-
-    return material;
-}
-
-// Load standard material (uses material attributes and lighting shader)
-// NOTE: Standard shader supports multiple maps and lights
-Material LoadStandardMaterial(void)
-{
-    Material material = LoadDefaultMaterial();
-
-    material.shader = GetStandardShader();
 
     return material;
 }
@@ -1517,12 +1419,141 @@ bool CheckCollisionRayBox(Ray ray, BoundingBox box)
     t[3] = (box.max.y - ray.position.y)/ray.direction.y;
     t[4] = (box.min.z - ray.position.z)/ray.direction.z;
     t[5] = (box.max.z - ray.position.z)/ray.direction.z;
-    t[6] = fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
-    t[7] = fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
+    t[6] = (float)fmax(fmax(fmin(t[0], t[1]), fmin(t[2], t[3])), fmin(t[4], t[5]));
+    t[7] = (float)fmin(fmin(fmax(t[0], t[1]), fmax(t[2], t[3])), fmax(t[4], t[5]));
 
     collision = !(t[7] < 0 || t[6] > t[7]);
 
     return collision;
+}
+
+// Get collision info between ray and mesh
+RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh)
+{
+    RayHitInfo result = { 0 };
+
+    // If mesh doesn't have vertex data on CPU, can't test it.
+    if (!mesh->vertices) return result;
+
+    // mesh->triangleCount may not be set, vertexCount is more reliable
+    int triangleCount = mesh->vertexCount/3;
+
+    // Test against all triangles in mesh
+    for (int i = 0; i < triangleCount; i++)
+    {
+        Vector3 a, b, c;
+        Vector3 *vertdata = (Vector3 *)mesh->vertices;
+
+        if (mesh->indices)
+        {
+            a = vertdata[mesh->indices[i*3 + 0]];
+            b = vertdata[mesh->indices[i*3 + 1]];
+            c = vertdata[mesh->indices[i*3 + 2]];
+        }
+        else
+        {
+            a = vertdata[i*3 + 0];
+            b = vertdata[i*3 + 1];
+            c = vertdata[i*3 + 2];
+        }
+
+        RayHitInfo triHitInfo = GetCollisionRayTriangle(ray, a, b, c);
+
+        if (triHitInfo.hit)
+        {
+            // Save the closest hit triangle
+            if ((!result.hit) || (result.distance > triHitInfo.distance)) result = triHitInfo;
+        }
+    }
+
+    return result;
+}
+
+// Get collision info between ray and triangle
+// NOTE: Based on https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
+{
+    #define EPSILON 0.000001        // A small number
+
+    Vector3 edge1, edge2;
+    Vector3 p, q, tv;
+    float det, invDet, u, v, t;
+    RayHitInfo result = {0};
+
+    // Find vectors for two edges sharing V1
+    edge1 = VectorSubtract(p2, p1);
+    edge2 = VectorSubtract(p3, p1);
+
+    // Begin calculating determinant - also used to calculate u parameter
+    p = VectorCrossProduct(ray.direction, edge2);
+
+    // If determinant is near zero, ray lies in plane of triangle or ray is parallel to plane of triangle
+    det = VectorDotProduct(edge1, p);
+
+    // Avoid culling!
+    if ((det > -EPSILON) && (det < EPSILON)) return result;
+
+    invDet = 1.0f/det;
+
+    // Calculate distance from V1 to ray origin
+    tv = VectorSubtract(ray.position, p1);
+
+    // Calculate u parameter and test bound
+    u = VectorDotProduct(tv, p)*invDet;
+
+    // The intersection lies outside of the triangle
+    if ((u < 0.0f) || (u > 1.0f)) return result;
+
+    // Prepare to test v parameter
+    q = VectorCrossProduct(tv, edge1);
+
+    // Calculate V parameter and test bound
+    v = VectorDotProduct(ray.direction, q)*invDet;
+
+    // The intersection lies outside of the triangle
+    if ((v < 0.0f) || ((u + v) > 1.0f)) return result;
+
+    t = VectorDotProduct(edge2, q)*invDet;
+
+    if (t > EPSILON)
+    {
+        // Ray hit, get hit point and normal
+        result.hit = true;
+        result.distance = t;
+        result.hit = true;
+        result.hitNormal = VectorCrossProduct(edge1, edge2);
+        VectorNormalize(&result.hitNormal);
+        Vector3 rayDir = ray.direction;
+        VectorScale(&rayDir, t);
+        result.hitPosition = VectorAdd(ray.position, rayDir);
+    }
+
+    return result;
+}
+
+// Get collision info between ray and ground plane (Y-normal plane)
+RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
+{
+    #define EPSILON 0.000001        // A small number
+
+    RayHitInfo result = { 0 };
+
+    if (fabsf(ray.direction.y) > EPSILON)
+    {
+        float t = (ray.position.y - groundHeight)/-ray.direction.y;
+
+        if (t >= 0.0)
+        {
+            Vector3 rayDir = ray.direction;
+            VectorScale(&rayDir, t);
+            result.hit = true;
+            result.distance = t;
+            result.hitNormal = (Vector3){ 0.0, 1.0, 0.0 };
+            result.hitPosition = VectorAdd(ray.position, rayDir);
+        }
+    }
+
+    return result;
 }
 
 // Calculate mesh bounding box limits

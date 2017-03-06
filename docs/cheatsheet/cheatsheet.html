@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+	<head>
+    	<meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+		<title>raylib - cheatsheet</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		
+		<meta name="title" content="raylib - cheatsheet">
+		<meta name="description" content="raylib is a simple and easy-to-use library to learn videogames programming. Don't miss latest functions added to raylib... check raylib cheatsheet">
+		<meta name="keywords" content="raylib, videogames, programming, C, C++, library, learn, study, simple, easy, free, open source, raysan">
+		<meta name="viewport" content="width=device-width">
+        
+        <!-- Facebook metatags for sharing -->
+        <meta property="og:title" content="raylib - cheatsheet"/>
+        <meta property="og:image" content="http://www.raylib.com/common/img/fb_raylib_logo.png"/>
+        <meta property="og:url" content="http://www.raylib.com" />
+        <meta property="og:site_name" content="raylib"/>
+        <meta property="og:description" content="don't miss latest functions added to raylib... check raylib cheatsheet"/>
+		
+		<!-- Add jQuery library -->
+		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+		
+		<!-- hightlight.js - Syntax highlighting for the Web -->
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/styles/docco.min.css">
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/highlight.min.js"></script>
+		
+		<style type="text/css">
+			@font-face {
+				font-family: 'grixel_acme_7_wide_xtnd';
+				src: url('../common/font/acme_7_wide_xtnd.eot');
+				src: url('../common/font/acme_7_wide_xtnd.eot?#iefix') format('embedded-opentype'),
+					 url('../common/font/acme_7_wide_xtnd.woff') format('woff'),
+					 url('../common/font/acme_7_wide_xtnd.ttf') format('truetype');
+				font-weight: normal;
+				font-style: normal;
+				font-size-adjust:0.49;
+			}
+            body{background-color:#f5f5f5;}
+            #fulldata{width: 1315px!important;}
+			.eximage img{ margin: 0 auto; border: 1px solid; border-color: black; width:770px; height:auto;}
+			pre code{ width: auto!important; border: 1px solid; border-color:#b0b0b0; width:758px; height:auto; }
+			.exdownbtn{width:250px; height:30px; float:left; position: relative; cursor:pointer; font-weight:bold; font-size:10px; 
+						line-height:30px; text-align: center; border-width:5px;	background-color:#e1e1e1; color:#5c5a5a; 
+						border:4px solid #898888; font-family: grixel_acme_7_wide_xtnd, Courier New, Verdana, Arial;}
+			.exdownbtn:hover{background-color:#f0d6d6; color:#c55757; border:4px solid #e66666;}
+            #core pre code{border:10px solid; border-color:#888888; background-color:#dbdbe1; }
+            #shapes pre code{border:10px solid; border-color:#e66666; background-color:#e9d0d6; }
+            #textures pre code{border:10px solid; border-color:#75a06d; background-color:#c3e4bf; }
+            #text pre code{border:10px solid; border-color:#52b296; background-color:#b9e9dd; }
+            #models pre code{border:10px solid; border-color:#5d9cbd; background-color:#b9d6e8; }
+            #shaders pre code{border:10px solid; border-color:#a864d2; background-color:#e0c6f1; }
+            #audio pre code{border:10px solid; border-color:#d3b157; background-color:#e5d7ae; }
+            #structs pre code{border:10px solid; border-color:#d2c9c6; background-color:#f8f8ff; height: 440px!important}
+            #colors pre code{border:10px solid; border-color:#c6d2c6; background-color:#e9f1f2; width:600px!important; }
+            #logo{width:128px; height:128px; float:left; position:relative; background-image:url(../common/img/raylib_logo.png);}
+            p{font-family: grixel_acme_7_wide_xtnd, Courier New, Verdana, Arial; font-size:13px; line-height:24px;}
+            #header{position:relative; height:110px; width: 1000px;}
+            #title, #plinks, #version{position:relative; float:left; margin:0px; margin-left:10px; margin-top:10px;}
+            #plinks{color: gray;}
+            #plinks a, #copyright a{color: gray; text-decoration:none;}
+            #plinks a:hover{color: black;}
+            #version {margin-top: 23px;}
+            #pcore{margin-bottom:-12px; margin-left:12px; color:#5c5a5a;}
+            #pshapes{margin-bottom:-12px; margin-left:12px; color:#c55757;}
+            #ptextures{margin-bottom:-12px; margin-left:12px; color:#60815a;}
+            #ptext{margin-bottom:-12px; margin-left:12px; color:#377764;}
+            #pmodels{margin-bottom:-12px; margin-left:12px; color:#417794;}
+            #pshaders{margin-bottom:-12px; margin-left:12px; color:#a864d2;}
+            #paudio{margin-bottom:-12px; margin-left:12px; color:#8c7539;}
+            #pstructs{margin-bottom:-12px; margin-left:12px; color:#bcbccd;}
+            #pcolors{margin-bottom:-12px; margin-left:12px; color:#bcbccd;}
+            
+            #leftgroup{position:relative; float:left; width:680px; }
+            #structs{width:660px!important;}
+            #colors{position:relative; float:left; width: auto; }
+
+            #copyright{color:#8b8b8b; font-size:10px; margin-left:590px; display:inline; }
+            #copyright a:hover{color:black;}
+        </style>
+		
+		<script type="text/javascript">
+			$(document).ready(function() {
+				$.get('raylib_core.c', function(data) { 
+					$('#core pre code').text(data);
+					$('#core pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                $.get('raylib_shapes.c', function(data) { 
+					$('#shapes pre code').text(data);
+					$('#shapes pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                $.get('raylib_textures.c', function(data) { 
+					$('#textures pre code').text(data);
+					$('#textures pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                $.get('raylib_text.c', function(data) { 
+					$('#text pre code').text(data);
+					$('#text pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                $.get('raylib_models.c', function(data) { 
+					$('#models pre code').text(data);
+					$('#models pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                $.get('raylib_shaders.c', function(data) { 
+					$('#shaders pre code').text(data);
+					$('#shaders pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                $.get('raylib_audio.c', function(data) { 
+					$('#audio pre code').text(data);
+					$('#audio pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                $.get('raylib_colors.c', function(data) { 
+					$('#colors pre code').text(data);
+					$('#colors pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+                 $.get('raylib_structs.c', function(data) { 
+					$('#structs pre code').text(data);
+					$('#structs pre code').each(function(i, e) {hljs.highlightBlock(e)});
+				}, 'text');
+			});
+		</script>
+	</head>
+	
+	<body>
+        <div id="header">
+            <a id="logo" href="http://www.raylib.com/index.html"></a>
+            <p id="title">[simple and easy-to-use library to learn videogames programming]</p>
+            <p id="plinks">[<a href="http://www.facebook.com/raylibgames" target="_blank">www.facebook.com/raylibgames</a>][<a href="https://github.com/raysan5/raylib">github.com/raysan5/raylib</a>]</p>
+            <p id="version">v1.6.0 quick reference card</p>
+        </div>
+        <br>
+        <div id="fulldata">
+            <p id="pcore">module: core</p>
+            <div id="core"><pre><code class="cpp"></code></pre></div>
+            <p id="pshapes">module: shapes</p>
+            <div id="shapes"><pre><code class="cpp"></code></pre></div>
+            <p id="ptextures">module: textures</p>
+            <div id="textures"><pre><code class="cpp"></code></pre></div>
+            <p id="ptext">module: text</p>
+            <div id="text"><pre><code class="cpp"></code></pre></div>
+            <p id="pmodels">module: models</p>
+            <div id="models"><pre><code class="cpp"></code></pre></div>
+            <p id="pshaders">module: shaders (rlgl)</p>
+            <div id="shaders"><pre><code class="cpp"></code></pre></div>
+            <p id="paudio">module: audio</p>
+            <div id="audio"><pre><code class="cpp"></code></pre></div>
+                    
+            <div id="fullgroup">
+                <div id="leftgroup">
+                    <p id="pstructs">structs</p>
+                    <div id="structs"><pre><code class="cpp"></code></pre></div>
+                </div>
+                <p id="pcolors">colors</p>
+                <div id="colors"><pre><code class="cpp"></code></pre></div>
+            </div>
+            <p id="copyright">raylib quick reference card - Copyright (c) 2013-2016 Ramon Santamaria (<a href="http://www.twitter.com/raysan5">@raysan5</a>)</p>
+        </div>
+        
+
+		<!-- Google Analytics tracking code -->
+		<script>
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','http://www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-45733555-1', 'raylib.com');
+            ga('require', 'linkid', 'linkid.js');
+			ga('send', 'pageview');
+		</script>
+	</body>
+</html>

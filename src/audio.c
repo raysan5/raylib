@@ -3,28 +3,50 @@
 *   raylib.audio
 *
 *   This module provides basic functionality to work with audio:
-*       Manage audio device (init/close)
-*       Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
-*       Play/Stop/Pause/Resume loaded audio
-*       Manage mixing channels
-*       Manage raw audio context
+*     Manage audio device (init/close)
+*     Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
+*     Play/Stop/Pause/Resume loaded audio
+*     Manage mixing channels
+*     Manage raw audio context
 *
-*   External libs:
+*   NOTES:
+*
+*   Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
+*   Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
+*
+*   CONFIGURATION:
+*   
+*   #define AUDIO_STANDALONE
+*       If defined, the module can be used as standalone library (independently of raylib).
+*       Required types and functions are defined in the same module.
+*
+*   #define SUPPORT_FILEFORMAT_WAV  / SUPPORT_LOAD_WAV / ENABLE_LOAD_WAV
+*   #define SUPPORT_FILEFORMAT_OGG
+*   #define SUPPORT_FILEFORMAT_XM
+*   #define SUPPORT_FILEFORMAT_MOD
+*   #define SUPPORT_FILEFORMAT_FLAC
+*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       supported by default, to remove support, just comment unrequired #define in this module
+*
+*   #define SUPPORT_RAW_AUDIO_BUFFERS
+*
+*   DEPENDENCIES:
 *       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm      - XM module file loading
 *       jar_mod     - MOD audio file loading
 *       dr_flac     - FLAC audio file loading
 *
-*   Module Configuration Flags:
-*       AUDIO_STANDALONE    - Use this module as standalone library (independently of raylib)
+*   CONTRIBUTORS:
 *
 *   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
-*       XM audio module support (jar_xm)
-*       MOD audio module support (jar_mod)
-*       Mixing channels support
-*       Raw audio context support
+*     XM audio module support (jar_xm)
+*     MOD audio module support (jar_mod)
+*     Mixing channels support
+*     Raw audio context support
 *
+*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -52,24 +74,24 @@
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"
-    #include "utils.h"          // Required for: DecompressData()
-                                // NOTE: Includes Android fopen() function map
+    #include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
 #endif
 
-#include "AL/al.h"              // OpenAL basic header
-#include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+#ifdef __APPLE__
+    #include "OpenAL/al.h"          // OpenAL basic header
+    #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+#else
+    #include "AL/al.h"              // OpenAL basic header
+    #include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+    //#include "AL/alext.h"         // OpenAL extensions header, required for AL_EXT_FLOAT32 and AL_EXT_MCFORMATS
+#endif
+
+// OpenAL extension: AL_EXT_FLOAT32 - Support for 32bit float samples
+// OpenAL extension: AL_EXT_MCFORMATS - Support for multi-channel formats (Quad, 5.1, 6.1, 7.1)
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strcmp(), strncmp()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
-
-// Tokens defined by OpenAL extension: AL_EXT_float32
-#ifndef AL_FORMAT_MONO_FLOAT32
-    #define AL_FORMAT_MONO_FLOAT32 0x10010
-#endif
-#ifndef AL_FORMAT_STEREO_FLOAT32
-    #define AL_FORMAT_STEREO_FLOAT32 0x10011
-#endif
 
 //#define STB_VORBIS_HEADER_ONLY
 #include "external/stb_vorbis.h"    // OGG loading functions
@@ -93,11 +115,20 @@
 //----------------------------------------------------------------------------------
 #define MAX_STREAM_BUFFERS          2    // Number of buffers for each audio stream
 
-// NOTE: Music buffer size is defined by number of samples, independent of sample size
+// NOTE: Music buffer size is defined by number of samples, independent of sample size and channels number
 // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds
 // and double-buffering system, I concluded that a 4096 samples buffer should be enough
 // In case of music-stalls, just increase this number
-#define AUDIO_BUFFER_SIZE        4096    // PCM data samples (i.e. short: 32Kb)
+#define AUDIO_BUFFER_SIZE        4096    // PCM data samples (i.e. 16bit, Mono: 8Kb)
+
+// Support uncompressed PCM data in 32-bit float IEEE format
+// NOTE: This definition is included in "AL/alext.h", but some OpenAL implementations
+// could not provide the extensions header (Android), so its defined here
+#if !defined(AL_EXT_float32)
+    #define AL_EXT_float32              1
+    #define AL_FORMAT_MONO_FLOAT32      0x10010
+    #define AL_FORMAT_STEREO_FLOAT32    0x10011
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -115,7 +146,7 @@ typedef struct MusicData {
 
     AudioStream stream;                 // Audio stream (double buffering)
 
-    bool loop;                          // Repeat music after finish (loop)
+    int loopCount;                      // Loops count (times music repeats), -1 means infinite loop
     unsigned int totalSamples;          // Total number of samples
     unsigned int samplesLeft;           // Number of samples left to end
 } MusicData;
@@ -169,9 +200,11 @@ void InitAudioDevice(void)
             TraceLog(INFO, "Audio device and context initialized successfully: %s", alcGetString(device, ALC_DEVICE_SPECIFIER));
 
             // Listener definition (just for 2D)
-            alListener3f(AL_POSITION, 0, 0, 0);
-            alListener3f(AL_VELOCITY, 0, 0, 0);
-            alListener3f(AL_ORIENTATION, 0, 0, -1);
+            alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
+            alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+            alListener3f(AL_ORIENTATION, 0.0f, 0.0f, -1.0f);
+            
+            alListenerf(AL_GAIN, 1.0f);
         }
     }
 }
@@ -208,11 +241,20 @@ bool IsAudioDeviceReady(void)
     }
 }
 
+// Set master volume (listener)
+void SetMasterVolume(float volume)
+{
+    if (volume < 0.0f) volume = 0.0f;
+    else if (volume > 1.0f) volume = 1.0f;
+    
+    alListenerf(AL_GAIN, volume);
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Sounds loading and playing (.WAV)
 //----------------------------------------------------------------------------------
 
-// Load wave data from file into RAM
+// Load wave data from file
 Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
@@ -220,39 +262,49 @@ Wave LoadWave(const char *fileName)
     if (strcmp(GetExtension(fileName), "wav") == 0) wave = LoadWAV(fileName);
     else if (strcmp(GetExtension(fileName), "ogg") == 0) wave = LoadOGG(fileName);
     else if (strcmp(GetExtension(fileName), "flac") == 0) wave = LoadFLAC(fileName);
+    else if (strcmp(GetExtension(fileName),"rres") == 0)
+    {
+        RRES rres = LoadResource(fileName, 0);
+
+        // NOTE: Parameters for RRES_TYPE_WAVE are: sampleCount, sampleRate, sampleSize, channels
+
+        if (rres[0].type == RRES_TYPE_WAVE) wave = LoadWaveEx(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3, rres[0].param4);
+        else TraceLog(WARNING, "[%s] Resource file does not contain wave data", fileName);
+
+        UnloadResource(rres);
+    }
     else TraceLog(WARNING, "[%s] File extension not recognized, it can't be loaded", fileName);
 
     return wave;
 }
 
-// Load wave data from float array data (32bit)
-Wave LoadWaveEx(float *data, int sampleCount, int sampleRate, int sampleSize, int channels)
+// Load wave data from raw array data
+Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels)
 {
     Wave wave;
-    
+
     wave.data = data;
     wave.sampleCount = sampleCount;
     wave.sampleRate = sampleRate;
-    wave.sampleSize = 32;
+    wave.sampleSize = sampleSize;
     wave.channels = channels;
-    
-    // NOTE: Copy wave data to work with, 
-    // user is responsible of input data to free
+
+    // NOTE: Copy wave data to work with, user is responsible of input data to free
     Wave cwave = WaveCopy(wave);
-    
+
     WaveFormat(&cwave, sampleRate, sampleSize, channels);
-    
+
     return cwave;
 }
 
-// Load sound to memory
+// Load sound from file
 // NOTE: The entire file is loaded to memory to be played (no-streaming)
 Sound LoadSound(const char *fileName)
 {
     Wave wave = LoadWave(fileName);
-    
+
     Sound sound = LoadSoundFromWave(wave);
-    
+
     UnloadWave(wave);       // Sound is loaded, we can unload wave
 
     return sound;
@@ -275,7 +327,7 @@ Sound LoadSoundFromWave(Wave wave)
             {
                 case 8: format = AL_FORMAT_MONO8; break;
                 case 16: format = AL_FORMAT_MONO16; break;
-                case 32: format = AL_FORMAT_MONO_FLOAT32; break;
+                case 32: format = AL_FORMAT_MONO_FLOAT32; break;  // Requires OpenAL extension: AL_EXT_FLOAT32
                 default: TraceLog(WARNING, "Wave sample size not supported: %i", wave.sampleSize); break;
             }
         }
@@ -285,7 +337,7 @@ Sound LoadSoundFromWave(Wave wave)
             {
                 case 8: format = AL_FORMAT_STEREO8; break;
                 case 16: format = AL_FORMAT_STEREO16; break;
-                case 32: format = AL_FORMAT_STEREO_FLOAT32; break;
+                case 32: format = AL_FORMAT_STEREO_FLOAT32; break;  // Requires OpenAL extension: AL_EXT_FLOAT32
                 default: TraceLog(WARNING, "Wave sample size not supported: %i", wave.sampleSize); break;
             }
         }
@@ -295,10 +347,10 @@ Sound LoadSoundFromWave(Wave wave)
         ALuint source;
         alGenSources(1, &source);            // Generate pointer to audio source
 
-        alSourcef(source, AL_PITCH, 1);
-        alSourcef(source, AL_GAIN, 1);
-        alSource3f(source, AL_POSITION, 0, 0, 0);
-        alSource3f(source, AL_VELOCITY, 0, 0, 0);
+        alSourcef(source, AL_PITCH, 1.0f);
+        alSourcef(source, AL_GAIN, 1.0f);
+        alSource3f(source, AL_POSITION, 0.0f, 0.0f, 0.0f);
+        alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
         alSourcei(source, AL_LOOPING, AL_FALSE);
 
         // Convert loaded data to OpenAL buffer
@@ -306,7 +358,7 @@ Sound LoadSoundFromWave(Wave wave)
         ALuint buffer;
         alGenBuffers(1, &buffer);            // Generate pointer to buffer
 
-        unsigned int dataSize = wave.sampleCount*wave.sampleSize/8;    // Size in bytes
+        unsigned int dataSize = wave.sampleCount*wave.channels*wave.sampleSize/8;    // Size in bytes
 
         // Upload sound data to buffer
         alBufferData(buffer, format, wave.data, dataSize, wave.sampleRate);
@@ -314,7 +366,7 @@ Sound LoadSoundFromWave(Wave wave)
         // Attach sound buffer to source
         alSourcei(source, AL_BUFFER, buffer);
 
-        TraceLog(INFO, "[SND ID %i][BUFR ID %i] Sound data loaded successfully (SampleRate: %i, SampleSize: %i, Channels: %i)", source, buffer, wave.sampleRate, wave.sampleSize, wave.channels);
+        TraceLog(INFO, "[SND ID %i][BUFR ID %i] Sound data loaded successfully (%i Hz, %i bit, %s)", source, buffer, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
 
         sound.source = source;
         sound.buffer = buffer;
@@ -324,121 +376,10 @@ Sound LoadSoundFromWave(Wave wave)
     return sound;
 }
 
-// Load sound to memory from rRES file (raylib Resource)
-// TODO: Maybe rresName could be directly a char array with all the data?
-Sound LoadSoundFromRES(const char *rresName, int resId)
-{
-    Sound sound = { 0 };
-
-#if defined(AUDIO_STANDALONE)
-    TraceLog(WARNING, "Sound loading from rRES resource file not supported on standalone mode");
-#else
-
-    bool found = false;
-
-    char id[4];             // rRES file identifier
-    unsigned char version;  // rRES file version and subversion
-    char useless;           // rRES header reserved data
-    short numRes;
-
-    ResInfoHeader infoHeader;
-
-    FILE *rresFile = fopen(rresName, "rb");
-
-    if (rresFile == NULL) TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", rresName);
-    else
-    {
-        // Read rres file (basic file check - id)
-        fread(&id[0], sizeof(char), 1, rresFile);
-        fread(&id[1], sizeof(char), 1, rresFile);
-        fread(&id[2], sizeof(char), 1, rresFile);
-        fread(&id[3], sizeof(char), 1, rresFile);
-        fread(&version, sizeof(char), 1, rresFile);
-        fread(&useless, sizeof(char), 1, rresFile);
-
-        if ((id[0] != 'r') && (id[1] != 'R') && (id[2] != 'E') &&(id[3] != 'S'))
-        {
-            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", rresName);
-        }
-        else
-        {
-            // Read number of resources embedded
-            fread(&numRes, sizeof(short), 1, rresFile);
-
-            for (int i = 0; i < numRes; i++)
-            {
-                fread(&infoHeader, sizeof(ResInfoHeader), 1, rresFile);
-
-                if (infoHeader.id == resId)
-                {
-                    found = true;
-
-                    // Check data is of valid SOUND type
-                    if (infoHeader.type == 1)   // SOUND data type
-                    {
-                        // TODO: Check data compression type
-                        // NOTE: We suppose compression type 2 (DEFLATE - default)
-
-                        // Reading SOUND parameters
-                        Wave wave;
-                        short sampleRate, bps;
-                        char channels, reserved;
-
-                        fread(&sampleRate, sizeof(short), 1, rresFile); // Sample rate (frequency)
-                        fread(&bps, sizeof(short), 1, rresFile);        // Bits per sample
-                        fread(&channels, 1, 1, rresFile);               // Channels (1 - mono, 2 - stereo)
-                        fread(&reserved, 1, 1, rresFile);               // <reserved>
-
-                        wave.sampleRate = sampleRate;
-                        wave.sampleSize = bps;
-                        wave.channels = (short)channels;
-
-                        unsigned char *data = malloc(infoHeader.size);
-
-                        fread(data, infoHeader.size, 1, rresFile);
-
-                        wave.data = DecompressData(data, infoHeader.size, infoHeader.srcSize);
-
-                        free(data);
-
-                        sound = LoadSoundFromWave(wave);
-
-                        // Sound is loaded, we can unload wave data
-                        UnloadWave(wave);
-                    }
-                    else TraceLog(WARNING, "[%s] Required resource do not seem to be a valid SOUND resource", rresName);
-                }
-                else
-                {
-                    // Depending on type, skip the right amount of parameters
-                    switch (infoHeader.type)
-                    {
-                        case 0: fseek(rresFile, 6, SEEK_CUR); break;   // IMAGE: Jump 6 bytes of parameters
-                        case 1: fseek(rresFile, 6, SEEK_CUR); break;   // SOUND: Jump 6 bytes of parameters
-                        case 2: fseek(rresFile, 5, SEEK_CUR); break;   // MODEL: Jump 5 bytes of parameters (TODO: Review)
-                        case 3: break;   // TEXT: No parameters
-                        case 4: break;   // RAW: No parameters
-                        default: break;
-                    }
-
-                    // Jump DATA to read next infoHeader
-                    fseek(rresFile, infoHeader.size, SEEK_CUR);
-                }
-            }
-        }
-
-        fclose(rresFile);
-    }
-
-    if (!found) TraceLog(WARNING, "[%s] Required resource id [%i] could not be found in the raylib resource file", rresName, resId);
-#endif
-    return sound;
-}
-
-// Unload Wave data
+// Unload wave data
 void UnloadWave(Wave wave)
 {
-    free(wave.data);
+    if (wave.data != NULL) free(wave.data);
 
     TraceLog(INFO, "Unloaded wave data from RAM");
 }
@@ -446,6 +387,8 @@ void UnloadWave(Wave wave)
 // Unload sound
 void UnloadSound(Sound sound)
 {
+    alSourceStop(sound.source);
+
     alDeleteSources(1, &sound.source);
     alDeleteBuffers(1, &sound.buffer);
 
@@ -454,19 +397,19 @@ void UnloadSound(Sound sound)
 
 // Update sound buffer with new data
 // NOTE: data must match sound.format
-void UpdateSound(Sound sound, void *data, int numSamples)
+void UpdateSound(Sound sound, const void *data, int samplesCount)
 {
     ALint sampleRate, sampleSize, channels;
     alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
-    alGetBufferi(sound.buffer, AL_BITS, &sampleSize);       // It could also be retrieved from sound.format
-    alGetBufferi(sound.buffer, AL_CHANNELS, &channels);     // It could also be retrieved from sound.format
-    
+    alGetBufferi(sound.buffer, AL_BITS, &sampleSize);           // It could also be retrieved from sound.format
+    alGetBufferi(sound.buffer, AL_CHANNELS, &channels);         // It could also be retrieved from sound.format
+
     TraceLog(DEBUG, "UpdateSound() : AL_FREQUENCY: %i", sampleRate);
     TraceLog(DEBUG, "UpdateSound() : AL_BITS: %i", sampleSize);
     TraceLog(DEBUG, "UpdateSound() : AL_CHANNELS: %i", channels);
 
-    unsigned int dataSize = numSamples*sampleSize/8;        // Size of data in bytes
-    
+    unsigned int dataSize = samplesCount*channels*sampleSize/8;   // Size of data in bytes
+
     alSourceStop(sound.source);                 // Stop sound
     alSourcei(sound.source, AL_BUFFER, 0);      // Unbind buffer from sound to update
     //alDeleteBuffers(1, &sound.buffer);          // Delete current buffer data
@@ -547,69 +490,94 @@ void SetSoundPitch(Sound sound, float pitch)
 }
 
 // Convert wave data to desired format
-// TODO: Consider channels (mono - stereo)
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
+    // Format sample rate
+    // NOTE: Only supported 22050 <--> 44100
+    if (wave->sampleRate != sampleRate)
+    {
+        // TODO: Resample wave data (upsampling or downsampling)
+        // NOTE 1: To downsample, you have to drop samples or average them.
+        // NOTE 2: To upsample, you have to interpolate new samples.
+
+        wave->sampleRate = sampleRate;
+    }
+
+    // Format sample size
+    // NOTE: Only supported 8 bit <--> 16 bit <--> 32 bit
     if (wave->sampleSize != sampleSize)
     {
-        float *samples = GetWaveData(*wave);   //Color *pixels = GetImageData(*image);
+        void *data = malloc(wave->sampleCount*wave->channels*sampleSize/8);
 
-        free(wave->data);
-        
+        for (int i = 0; i < wave->sampleCount; i++)
+        {
+            for (int j = 0; j < wave->channels; j++)
+            {
+                if (sampleSize == 8)
+                {
+                    if (wave->sampleSize == 16) ((unsigned char *)data)[wave->channels*i + j] = (unsigned char)(((float)(((short *)wave->data)[wave->channels*i + j])/32767.0f)*256);
+                    else if (wave->sampleSize == 32) ((unsigned char *)data)[wave->channels*i + j] = (unsigned char)(((float *)wave->data)[wave->channels*i + j]*127.0f + 127);
+                }
+                else if (sampleSize == 16)
+                {
+                    if (wave->sampleSize == 8) ((short *)data)[wave->channels*i + j] = (short)(((float)(((unsigned char *)wave->data)[wave->channels*i + j] - 127)/256.0f)*32767);
+                    else if (wave->sampleSize == 32) ((short *)data)[wave->channels*i + j] = (short)((((float *)wave->data)[wave->channels*i + j])*32767);
+                }
+                else if (sampleSize == 32)
+                {
+                    if (wave->sampleSize == 8) ((float *)data)[wave->channels*i + j] = (float)(((unsigned char *)wave->data)[wave->channels*i + j] - 127)/256.0f;
+                    else if (wave->sampleSize == 16) ((float *)data)[wave->channels*i + j] = (float)(((short *)wave->data)[wave->channels*i + j])/32767.0f;
+                }
+            }
+        }
+
         wave->sampleSize = sampleSize;
-
-        //sample *= 4.0f;    // Arbitrary gain to get reasonable output volume...
-        //if (sample > 1.0f) sample = 1.0f;
-        //if (sample < -1.0f) sample = -1.0f;
-
-        if (sampleSize == 8)
-        {
-            wave->data = (unsigned char *)malloc(wave->sampleCount*sizeof(unsigned char));
-
-            for (int i = 0; i < wave->sampleCount; i++)
-            {
-                ((unsigned char *)wave->data)[i] = (unsigned char)((float)samples[i]*127 + 128);
-            }
-        }
-        else if (sampleSize == 16)
-        {
-            wave->data = (short *)malloc(wave->sampleCount*sizeof(short));
-            
-            for (int i = 0; i < wave->sampleCount; i++)
-            {
-                ((short *)wave->data)[i] = (short)((float)samples[i]*32000);  // SHRT_MAX = 32767
-            }
-        }
-        else if (sampleSize == 32)
-        {
-            wave->data = (float *)malloc(wave->sampleCount*sizeof(float));
-            
-            for (int i = 0; i < wave->sampleCount; i++)
-            {
-                ((float *)wave->data)[i] = (float)samples[i];
-            }
-        }
-        else TraceLog(WARNING, "Wave formatting: Sample size not supported");
-        
-        free(samples);
+        free(wave->data);
+        wave->data = data;
     }
-    
-    // NOTE: Only supported 1 or 2 channels (mono or stereo)
-    if ((channels > 0) && (channels < 3) && (wave->channels != channels))
+
+    // Format channels (interlaced mode)
+    // NOTE: Only supported mono <--> stereo
+    if (wave->channels != channels)
     {
-        // TODO: Add/remove channels interlaced data if required...
+        void *data = malloc(wave->sampleCount*channels*wave->sampleSize/8);
+
+        if ((wave->channels == 1) && (channels == 2))       // mono ---> stereo (duplicate mono information)
+        {
+            for (int i = 0; i < wave->sampleCount; i++)
+            {
+                for (int j = 0; j < channels; j++)
+                {
+                    if (wave->sampleSize == 8) ((unsigned char *)data)[channels*i + j] = ((unsigned char *)wave->data)[i];
+                    else if (wave->sampleSize == 16) ((short *)data)[channels*i + j] = ((short *)wave->data)[i];
+                    else if (wave->sampleSize == 32) ((float *)data)[channels*i + j] = ((float *)wave->data)[i];
+                }
+            }
+        }
+        else if ((wave->channels == 2) && (channels == 1))  // stereo ---> mono (mix stereo channels)
+        {
+            for (int i = 0, j = 0; i < wave->sampleCount; i++, j += 2)
+            {
+                if (wave->sampleSize == 8) ((unsigned char *)data)[i] = (((unsigned char *)wave->data)[j] + ((unsigned char *)wave->data)[j + 1])/2;
+                else if (wave->sampleSize == 16) ((short *)data)[i] = (((short *)wave->data)[j] + ((short *)wave->data)[j + 1])/2;
+                else if (wave->sampleSize == 32) ((float *)data)[i] = (((float *)wave->data)[j] + ((float *)wave->data)[j + 1])/2.0f;
+            }
+        }
+
+        // TODO: Add/remove additional interlaced channels
+
+        wave->channels = channels;
+        free(wave->data);
+        wave->data = data;
     }
 }
 
 // Copy a wave to a new wave
 Wave WaveCopy(Wave wave)
 {
-    Wave newWave;
+    Wave newWave = { 0 };
 
-    if (wave.sampleSize == 8) newWave.data = (unsigned char *)malloc(wave.sampleCount*wave.channels*sizeof(unsigned char));
-    else if (wave.sampleSize == 16) newWave.data = (short *)malloc(wave.sampleCount*wave.channels*sizeof(short));
-    else if (wave.sampleSize == 32) newWave.data = (float *)malloc(wave.sampleCount*wave.channels*sizeof(float));
-    else TraceLog(WARNING, "Wave sample size not supported for copy");
+    newWave.data = malloc(wave.sampleCount*wave.channels*wave.sampleSize/8);
 
     if (newWave.data != NULL)
     {
@@ -629,40 +597,37 @@ Wave WaveCopy(Wave wave)
 // NOTE: Security check in case of out-of-range
 void WaveCrop(Wave *wave, int initSample, int finalSample)
 {
-    if ((initSample >= 0) && (initSample < finalSample) && 
+    if ((initSample >= 0) && (initSample < finalSample) &&
         (finalSample > 0) && (finalSample < wave->sampleCount))
     {
-        // TODO: Review cropping (it could be simplified...)
-        
-        float *samples = GetWaveData(*wave);
-        float *cropSamples = (float *)malloc((finalSample - initSample)*sizeof(float));
-        
-        for (int i = initSample; i < finalSample; i++) cropSamples[i] = samples[i];
+        int sampleCount = finalSample - initSample;
+
+        void *data = malloc(sampleCount*wave->channels*wave->sampleSize/8);
+
+        memcpy(data, (unsigned char*)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
 
         free(wave->data);
-        wave->data = cropSamples;
-        int sampleSize = wave->sampleSize;
-        wave->sampleSize = 32;
-
-        WaveFormat(wave, wave->sampleRate, sampleSize, wave->channels);
+        wave->data = data;
     }
     else TraceLog(WARNING, "Wave crop range out of bounds");
 }
 
 // Get samples data from wave as a floats array
 // NOTE: Returned sample values are normalized to range [-1..1]
-// TODO: Consider multiple channels (mono - stereo)
 float *GetWaveData(Wave wave)
 {
-    float *samples = (float *)malloc(wave.sampleCount*sizeof(float));
-    
+    float *samples = (float *)malloc(wave.sampleCount*wave.channels*sizeof(float));
+
     for (int i = 0; i < wave.sampleCount; i++)
     {
-        if (wave.sampleSize == 8) samples[i] = (float)(((unsigned char *)wave.data)[i] - 127)/256.0f;
-        else if (wave.sampleSize == 16) samples[i] = (float)((short *)wave.data)[i]/32767.0f;
-        else if (wave.sampleSize == 32) samples[i] = ((float *)wave.data)[i];
+        for (int j = 0; j < wave.channels; j++)
+        {
+            if (wave.sampleSize == 8) samples[wave.channels*i + j] = (float)(((unsigned char *)wave.data)[wave.channels*i + j] - 127)/256.0f;
+            else if (wave.sampleSize == 16) samples[wave.channels*i + j] = (float)((short *)wave.data)[wave.channels*i + j]/32767.0f;
+            else if (wave.sampleSize == 32) samples[wave.channels*i + j] = ((float *)wave.data)[wave.channels*i + j];
+        }
     }
-    
+
     return samples;
 }
 
@@ -684,34 +649,34 @@ Music LoadMusicStream(const char *fileName)
         else
         {
             stb_vorbis_info info = stb_vorbis_get_info(music->ctxOgg);  // Get Ogg file info
-            //float totalLengthSeconds = stb_vorbis_stream_length_in_seconds(music->ctxOgg);
 
-            // TODO: Support 32-bit sampleSize OGGs
+            // OGG bit rate defaults to 16 bit, it's enough for compressed format
             music->stream = InitAudioStream(info.sample_rate, 16, info.channels);
-            music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg)*info.channels;
+            music->totalSamples = (unsigned int)stb_vorbis_stream_length_in_samples(music->ctxOgg); // Independent by channel
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_OGG;
-            music->loop = true;                  // We loop by default
+            music->loopCount = -1;                       // Infinite loop by default
 
+            TraceLog(DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] OGG sample rate: %i", fileName, info.sample_rate);
             TraceLog(DEBUG, "[%s] OGG channels: %i", fileName, info.channels);
             TraceLog(DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
-
         }
     }
     else if (strcmp(GetExtension(fileName), "flac") == 0)
     {
         music->ctxFlac = drflac_open_file(fileName);
-        
+
         if (music->ctxFlac == NULL) TraceLog(WARNING, "[%s] FLAC audio file could not be opened", fileName);
         else
         {
             music->stream = InitAudioStream(music->ctxFlac->sampleRate, music->ctxFlac->bitsPerSample, music->ctxFlac->channels);
-            music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount;
+            music->totalSamples = (unsigned int)music->ctxFlac->totalSampleCount/music->ctxFlac->channels;
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_AUDIO_FLAC;
-            music->loop = true;                  // We loop by default
-            
+            music->loopCount = -1;                       // Infinite loop by default
+
+            TraceLog(DEBUG, "[%s] FLAC total samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] FLAC sample rate: %i", fileName, music->ctxFlac->sampleRate);
             TraceLog(DEBUG, "[%s] FLAC bits per sample: %i", fileName, music->ctxFlac->bitsPerSample);
             TraceLog(DEBUG, "[%s] FLAC channels: %i", fileName, music->ctxFlac->channels);
@@ -723,14 +688,14 @@ Music LoadMusicStream(const char *fileName)
 
         if (!result)    // XM context created successfully
         {
-            jar_xm_set_max_loop_count(music->ctxXm, 0);     // Set infinite number of loops
+            jar_xm_set_max_loop_count(music->ctxXm, 0); // Set infinite number of loops
 
             // NOTE: Only stereo is supported for XM
-            music->stream = InitAudioStream(48000, 32, 2);
+            music->stream = InitAudioStream(48000, 16, 2);
             music->totalSamples = (unsigned int)jar_xm_get_remaining_samples(music->ctxXm);
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_MODULE_XM;
-            music->loop = true;
+            music->loopCount = -1;                       // Infinite loop by default
 
             TraceLog(DEBUG, "[%s] XM number of samples: %i", fileName, music->totalSamples);
             TraceLog(DEBUG, "[%s] XM track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
@@ -747,10 +712,10 @@ Music LoadMusicStream(const char *fileName)
             music->totalSamples = (unsigned int)jar_mod_max_samples(&music->ctxMod);
             music->samplesLeft = music->totalSamples;
             music->ctxType = MUSIC_MODULE_MOD;
-            music->loop = true;
+            music->loopCount = -1;                       // Infinite loop by default
 
-            TraceLog(INFO, "[%s] MOD number of samples: %i", fileName, music->samplesLeft);
-            TraceLog(INFO, "[%s] MOD track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
+            TraceLog(DEBUG, "[%s] MOD number of samples: %i", fileName, music->samplesLeft);
+            TraceLog(DEBUG, "[%s] MOD track length: %11.6f sec", fileName, (float)music->totalSamples/48000.0f);
         }
         else TraceLog(WARNING, "[%s] MOD file could not be opened", fileName);
     }
@@ -794,98 +759,80 @@ void ResumeMusicStream(Music music)
 }
 
 // Stop music playing (close stream)
-// TODO: Restart XM context
 void StopMusicStream(Music music)
 {
     alSourceStop(music->stream.source);
     
+    // Clear stream buffers
+    void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
+
+    for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
+    {
+        alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
+    }
+
+    free(pcm);
+    
+    // Restart music context
     switch (music->ctxType)
     {
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
-        case MUSIC_MODULE_XM: break;
+        case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
         case MUSIC_MODULE_MOD: jar_mod_seek_start(&music->ctxMod); break;
         default: break;
     }
-    
+
     music->samplesLeft = music->totalSamples;
 }
 
 // Update (re-fill) music buffers if data already processed
+// TODO: Make sure buffers are ready for update... check music state
 void UpdateMusicStream(Music music)
 {
     ALenum state;
     ALint processed = 0;
-    
+
     alGetSourcei(music->stream.source, AL_SOURCE_STATE, &state);          // Get music stream state
     alGetSourcei(music->stream.source, AL_BUFFERS_PROCESSED, &processed); // Get processed buffers
 
     if (processed > 0)
     {
         bool active = true;
-        short pcm[AUDIO_BUFFER_SIZE];
-        float pcmf[AUDIO_BUFFER_SIZE];
-        int numBuffersToProcess = processed;
 
-        int numSamples = 0;     // Total size of data steamed in L+R samples for xm floats,
-                                // individual L or R for ogg shorts
+        // NOTE: Using dynamic allocation because it could require more than 16KB
+        void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.channels*music->stream.sampleSize/8, 1);
+
+        int numBuffersToProcess = processed;
+        int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, 
+                                 //individual L or R for ogg shorts
 
         for (int i = 0; i < numBuffersToProcess; i++)
         {
+            if (music->samplesLeft >= AUDIO_BUFFER_SIZE) samplesCount = AUDIO_BUFFER_SIZE;
+            else samplesCount = music->samplesLeft;
+
+            // TODO: Really don't like ctxType thingy...
             switch (music->ctxType)
             {
                 case MUSIC_AUDIO_OGG:
                 {
-                    if (music->samplesLeft >= AUDIO_BUFFER_SIZE) numSamples = AUDIO_BUFFER_SIZE;
-                    else numSamples = music->samplesLeft;
-
-                    // NOTE: Returns the number of samples to process (should be the same as numSamples -> it is)
-                    int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, pcm, numSamples);
-
-                    // TODO: Review stereo channels Ogg, not enough samples served!
-                    UpdateAudioStream(music->stream, pcm, numSamplesOgg*music->stream.channels);
-                    music->samplesLeft -= (numSamplesOgg*music->stream.channels);
+                    // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
+                    int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
 
                 } break;
                 case MUSIC_AUDIO_FLAC:
                 {
-                    if (music->samplesLeft >= AUDIO_BUFFER_SIZE) numSamples = AUDIO_BUFFER_SIZE;
-                    else numSamples = music->samplesLeft;
-                    
-                    int pcmi[AUDIO_BUFFER_SIZE];
-                    
-                    // NOTE: Returns the number of samples to process (should be the same as numSamples)
-                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s32(music->ctxFlac, numSamples, pcmi);
-
-                    UpdateAudioStream(music->stream, pcmi, numSamplesFlac*music->stream.channels);
-                    music->samplesLeft -= (numSamples*music->stream.channels);
+                    // NOTE: Returns the number of samples to process
+                    unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
 
                 } break;
-                case MUSIC_MODULE_XM:
-                {
-                    if (music->samplesLeft >= AUDIO_BUFFER_SIZE/2) numSamples = AUDIO_BUFFER_SIZE/2;
-                    else numSamples = music->samplesLeft;
-
-                    // NOTE: Output buffer is 2*numsamples elements (left and right value for each sample)
-                    jar_xm_generate_samples(music->ctxXm, pcmf, numSamples);
-                    UpdateAudioStream(music->stream, pcmf, numSamples*2);           // Using 32bit PCM data
-                    music->samplesLeft -= numSamples;
-
-                    //TraceLog(INFO, "Samples left: %i", music->samplesLeft);
-
-                } break;
-                case MUSIC_MODULE_MOD:
-                {
-                    if (music->samplesLeft >= AUDIO_BUFFER_SIZE/2) numSamples = AUDIO_BUFFER_SIZE/2;
-                    else numSamples = music->samplesLeft;
-
-                    // NOTE: Output buffer size is nbsample*channels (default: 48000Hz, 16bit, Stereo)
-                    jar_mod_fillbuffer(&music->ctxMod, pcm, numSamples, 0);
-                    UpdateAudioStream(music->stream, pcm, numSamples*2);
-                    music->samplesLeft -= numSamples;
-
-                } break;
+                case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, samplesCount); break;
+                case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, samplesCount, 0); break;
                 default: break;
             }
+
+            UpdateAudioStream(music->stream, pcm, samplesCount);
+            music->samplesLeft -= samplesCount;
 
             if (music->samplesLeft <= 0)
             {
@@ -893,16 +840,21 @@ void UpdateMusicStream(Music music)
                 break;
             }
         }
-        
+
         // This error is registered when UpdateAudioStream() fails
         if (alGetError() == AL_INVALID_VALUE) TraceLog(WARNING, "OpenAL: Error buffering data...");
 
         // Reset audio stream for looping
-        if (!active) 
+        if (!active)
         {
             StopMusicStream(music);        // Stop music (and reset)
             
-            if (music->loop) PlayMusicStream(music);    // Play again
+            // Decrease loopCount to stop when required
+            if (music->loopCount > 0)
+            {
+                music->loopCount--;        // Decrease loop count
+                PlayMusicStream(music);    // Play again
+            }
         }
         else
         {
@@ -910,6 +862,8 @@ void UpdateMusicStream(Music music)
             // just make sure to play again on window restore
             if (state != AL_PLAYING) PlayMusicStream(music);
         }
+
+        free(pcm);
     }
 }
 
@@ -938,6 +892,13 @@ void SetMusicPitch(Music music, float pitch)
     alSourcef(music->stream.source, AL_PITCH, pitch);
 }
 
+// Set music loop count (loop repeats)
+// NOTE: If set to -1, means infinite loop
+void SetMusicLoopCount(Music music, float count)
+{
+    music->loopCount = count;
+}
+
 // Get music time length (in seconds)
 float GetMusicTimeLength(Music music)
 {
@@ -952,7 +913,7 @@ float GetMusicTimePlayed(Music music)
     float secondsPlayed = 0.0f;
 
     unsigned int samplesPlayed = music->totalSamples - music->samplesLeft;
-    secondsPlayed = (float)samplesPlayed/(music->stream.sampleRate*music->stream.channels);
+    secondsPlayed = (float)samplesPlayed/music->stream.sampleRate;
 
     return secondsPlayed;
 }
@@ -964,64 +925,61 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 
     stream.sampleRate = sampleRate;
     stream.sampleSize = sampleSize;
-    stream.channels = channels;
+
+    // Only mono and stereo channels are supported, more channels require AL_EXT_MCFORMATS extension
+    if ((channels > 0) && (channels < 3)) stream.channels = channels;
+    else
+    {
+        TraceLog(WARNING, "Init audio stream: Number of channels not supported: %i", channels);
+        stream.channels = 1;  // Fallback to mono channel
+    }
 
     // Setup OpenAL format
-    if (channels == 1)
+    if (stream.channels == 1)
     {
         switch (sampleSize)
         {
             case 8: stream.format = AL_FORMAT_MONO8; break;
             case 16: stream.format = AL_FORMAT_MONO16; break;
-            case 32: stream.format = AL_FORMAT_MONO_FLOAT32; break;
+            case 32: stream.format = AL_FORMAT_MONO_FLOAT32; break;     // Requires OpenAL extension: AL_EXT_FLOAT32
             default: TraceLog(WARNING, "Init audio stream: Sample size not supported: %i", sampleSize); break;
         }
     }
-    else if (channels == 2)
+    else if (stream.channels == 2)
     {
         switch (sampleSize)
         {
             case 8: stream.format = AL_FORMAT_STEREO8; break;
             case 16: stream.format = AL_FORMAT_STEREO16; break;
-            case 32: stream.format = AL_FORMAT_STEREO_FLOAT32; break;
+            case 32: stream.format = AL_FORMAT_STEREO_FLOAT32; break;   // Requires OpenAL extension: AL_EXT_FLOAT32
             default: TraceLog(WARNING, "Init audio stream: Sample size not supported: %i", sampleSize); break;
         }
     }
-    else TraceLog(WARNING, "Init audio stream: Number of channels not supported: %i", channels);
 
     // Create an audio source
     alGenSources(1, &stream.source);
-    alSourcef(stream.source, AL_PITCH, 1);
-    alSourcef(stream.source, AL_GAIN, 1);
-    alSource3f(stream.source, AL_POSITION, 0, 0, 0);
-    alSource3f(stream.source, AL_VELOCITY, 0, 0, 0);
+    alSourcef(stream.source, AL_PITCH, 1.0f);
+    alSourcef(stream.source, AL_GAIN, 1.0f);
+    alSource3f(stream.source, AL_POSITION, 0.0f, 0.0f, 0.0f);
+    alSource3f(stream.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
     // Create Buffers (double buffering)
     alGenBuffers(MAX_STREAM_BUFFERS, stream.buffers);
 
     // Initialize buffer with zeros by default
+    // NOTE: Using dynamic allocation because it requires more than 16KB
+    void *pcm = calloc(AUDIO_BUFFER_SIZE*stream.sampleSize/8*stream.channels, 1);
+
     for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
     {
-        if (stream.sampleSize == 8)
-        {
-            unsigned char pcm[AUDIO_BUFFER_SIZE] = { 0 };
-            alBufferData(stream.buffers[i], stream.format, pcm, AUDIO_BUFFER_SIZE*sizeof(unsigned char), stream.sampleRate);
-        }
-        else if (stream.sampleSize == 16)
-        {
-            short pcm[AUDIO_BUFFER_SIZE] = { 0 };
-            alBufferData(stream.buffers[i], stream.format, pcm, AUDIO_BUFFER_SIZE*sizeof(short), stream.sampleRate);
-        }
-        else if (stream.sampleSize == 32)
-        {
-            float pcm[AUDIO_BUFFER_SIZE] = { 0.0f };
-            alBufferData(stream.buffers[i], stream.format, pcm, AUDIO_BUFFER_SIZE*sizeof(float), stream.sampleRate);
-        }
+        alBufferData(stream.buffers[i], stream.format, pcm, AUDIO_BUFFER_SIZE*stream.sampleSize/8*stream.channels, stream.sampleRate);
     }
+
+    free(pcm);
 
     alSourceQueueBuffers(stream.source, MAX_STREAM_BUFFERS, stream.buffers);
 
-    TraceLog(INFO, "[AUD ID %i] Audio stream loaded successfully", stream.source);
+    TraceLog(INFO, "[AUD ID %i] Audio stream loaded successfully (%i Hz, %i bit, %s)", stream.source, stream.sampleRate, stream.sampleSize, (stream.channels == 1) ? "Mono" : "Stereo");
 
     return stream;
 }
@@ -1052,8 +1010,8 @@ void CloseAudioStream(AudioStream stream)
 }
 
 // Update audio stream buffers with data
-// NOTE: Only one buffer per call
-void UpdateAudioStream(AudioStream stream, void *data, int numSamples)
+// NOTE: Only updates one buffer per call
+void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
     ALuint buffer = 0;
     alSourceUnqueueBuffers(stream.source, 1, &buffer);
@@ -1061,10 +1019,7 @@ void UpdateAudioStream(AudioStream stream, void *data, int numSamples)
     // Check if any buffer was available for unqueue
     if (alGetError() != AL_INVALID_VALUE)
     {
-        if (stream.sampleSize == 8) alBufferData(buffer, stream.format, (unsigned char *)data, numSamples*sizeof(unsigned char), stream.sampleRate);
-        else if (stream.sampleSize == 16) alBufferData(buffer, stream.format, (short *)data, numSamples*sizeof(short), stream.sampleRate);
-        else if (stream.sampleSize == 32) alBufferData(buffer, stream.format, (float *)data, numSamples*sizeof(float), stream.sampleRate);
-
+        alBufferData(buffer, stream.format, data, samplesCount*stream.channels*stream.sampleSize/8, stream.sampleRate);
         alSourceQueueBuffers(stream.source, 1, &buffer);
     }
 }
@@ -1119,7 +1074,7 @@ static Wave LoadWAV(const char *fileName)
         char chunkID[4];
         int chunkSize;
         char format[4];
-    } RiffHeader;
+    } WAVRiffHeader;
 
     typedef struct {
         char subChunkID[4];
@@ -1130,16 +1085,16 @@ static Wave LoadWAV(const char *fileName)
         int byteRate;
         short blockAlign;
         short bitsPerSample;
-    } WaveFormat;
+    } WAVFormat;
 
     typedef struct {
         char subChunkID[4];
         int subChunkSize;
-    } WaveData;
+    } WAVData;
 
-    RiffHeader riffHeader;
-    WaveFormat waveFormat;
-    WaveData waveData;
+    WAVRiffHeader wavRiffHeader;
+    WAVFormat wavFormat;
+    WAVData wavData;
 
     Wave wave = { 0 };
     FILE *wavFile;
@@ -1154,54 +1109,70 @@ static Wave LoadWAV(const char *fileName)
     else
     {
         // Read in the first chunk into the struct
-        fread(&riffHeader, sizeof(RiffHeader), 1, wavFile);
+        fread(&wavRiffHeader, sizeof(WAVRiffHeader), 1, wavFile);
 
         // Check for RIFF and WAVE tags
-        if (strncmp(riffHeader.chunkID, "RIFF", 4) ||
-            strncmp(riffHeader.format, "WAVE", 4))
+        if (strncmp(wavRiffHeader.chunkID, "RIFF", 4) ||
+            strncmp(wavRiffHeader.format, "WAVE", 4))
         {
                 TraceLog(WARNING, "[%s] Invalid RIFF or WAVE Header", fileName);
         }
         else
         {
             // Read in the 2nd chunk for the wave info
-            fread(&waveFormat, sizeof(WaveFormat), 1, wavFile);
+            fread(&wavFormat, sizeof(WAVFormat), 1, wavFile);
 
             // Check for fmt tag
-            if ((waveFormat.subChunkID[0] != 'f') || (waveFormat.subChunkID[1] != 'm') ||
-                (waveFormat.subChunkID[2] != 't') || (waveFormat.subChunkID[3] != ' '))
+            if ((wavFormat.subChunkID[0] != 'f') || (wavFormat.subChunkID[1] != 'm') ||
+                (wavFormat.subChunkID[2] != 't') || (wavFormat.subChunkID[3] != ' '))
             {
                 TraceLog(WARNING, "[%s] Invalid Wave format", fileName);
             }
             else
             {
                 // Check for extra parameters;
-                if (waveFormat.subChunkSize > 16) fseek(wavFile, sizeof(short), SEEK_CUR);
+                if (wavFormat.subChunkSize > 16) fseek(wavFile, sizeof(short), SEEK_CUR);
 
                 // Read in the the last byte of data before the sound file
-                fread(&waveData, sizeof(WaveData), 1, wavFile);
+                fread(&wavData, sizeof(WAVData), 1, wavFile);
 
                 // Check for data tag
-                if ((waveData.subChunkID[0] != 'd') || (waveData.subChunkID[1] != 'a') ||
-                    (waveData.subChunkID[2] != 't') || (waveData.subChunkID[3] != 'a'))
+                if ((wavData.subChunkID[0] != 'd') || (wavData.subChunkID[1] != 'a') ||
+                    (wavData.subChunkID[2] != 't') || (wavData.subChunkID[3] != 'a'))
                 {
                     TraceLog(WARNING, "[%s] Invalid data header", fileName);
                 }
                 else
                 {
                     // Allocate memory for data
-                    wave.data = (unsigned char *)malloc(sizeof(unsigned char)*waveData.subChunkSize);
+                    wave.data = malloc(wavData.subChunkSize);
 
                     // Read in the sound data into the soundData variable
-                    fread(wave.data, waveData.subChunkSize, 1, wavFile);
+                    fread(wave.data, wavData.subChunkSize, 1, wavFile);
 
-                    // Now we set the variables that we need later
-                    wave.sampleCount = waveData.subChunkSize;
-                    wave.sampleRate = waveFormat.sampleRate;
-                    wave.sampleSize = waveFormat.bitsPerSample;
-                    wave.channels = waveFormat.numChannels;
+                    // Store wave parameters
+                    wave.sampleRate = wavFormat.sampleRate;
+                    wave.sampleSize = wavFormat.bitsPerSample;
+                    wave.channels = wavFormat.numChannels;
 
-                    TraceLog(INFO, "[%s] WAV file loaded successfully (SampleRate: %i, SampleSize: %i, Channels: %i)", fileName, wave.sampleRate, wave.sampleSize, wave.channels);
+                    // NOTE: Only support 8 bit, 16 bit and 32 bit sample sizes
+                    if ((wave.sampleSize != 8) && (wave.sampleSize != 16) && (wave.sampleSize != 32))
+                    {
+                        TraceLog(WARNING, "[%s] WAV sample size (%ibit) not supported, converted to 16bit", fileName, wave.sampleSize);
+                        WaveFormat(&wave, wave.sampleRate, 16, wave.channels);
+                    }
+
+                    // NOTE: Only support up to 2 channels (mono, stereo)
+                    if (wave.channels > 2)
+                    {
+                        WaveFormat(&wave, wave.sampleRate, wave.sampleSize, 2);
+                        TraceLog(WARNING, "[%s] WAV channels number (%i) not supported, converted to 2 channels", fileName, wave.channels);
+                    }
+
+                    // NOTE: subChunkSize comes in bytes, we need to translate it to number of samples
+                    wave.sampleCount = (wavData.subChunkSize/(wave.sampleSize/8))/wave.channels;
+
+                    TraceLog(INFO, "[%s] WAV file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
                 }
             }
         }
@@ -1232,22 +1203,19 @@ static Wave LoadOGG(const char *fileName)
         wave.sampleRate = info.sample_rate;
         wave.sampleSize = 16;                   // 16 bit per sample (short)
         wave.channels = info.channels;
+        wave.sampleCount = (int)stb_vorbis_stream_length_in_samples(oggFile);
 
-        int totalSamplesLength = (stb_vorbis_stream_length_in_samples(oggFile)*info.channels);
         float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
-
         if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio lenght is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
 
-        int totalSamples = (int)(totalSeconds*info.sample_rate*info.channels);
-        wave.sampleCount = totalSamples;
+        wave.data = (short *)malloc(wave.sampleCount*wave.channels*sizeof(short));
 
-        wave.data = (short *)malloc(totalSamplesLength*sizeof(short));
+        // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
+        int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, wave.sampleCount*wave.channels);
 
-        int samplesObtained = stb_vorbis_get_samples_short_interleaved(oggFile, info.channels, (short *)wave.data, totalSamplesLength);
+        TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, numSamplesOgg);
 
-        TraceLog(DEBUG, "[%s] Samples obtained: %i", fileName, samplesObtained);
-
-        TraceLog(INFO, "[%s] OGG file loaded successfully (SampleRate: %i, SampleSize: %i, Channels: %i)", fileName, wave.sampleRate, wave.sampleSize, wave.channels);
+        TraceLog(INFO, "[%s] OGG file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
 
         stb_vorbis_close(oggFile);
     }
@@ -1263,13 +1231,17 @@ static Wave LoadFLAC(const char *fileName)
 
     // Decode an entire FLAC file in one go
     uint64_t totalSampleCount;
-    wave.data = drflac_open_and_decode_file_s32(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
-    
-    wave.sampleCount = (int)totalSampleCount;
-    wave.sampleSize = 32;
-    
+    wave.data = drflac_open_and_decode_file_s16(fileName, &wave.channels, &wave.sampleRate, &totalSampleCount);
+
+    wave.sampleCount = (int)totalSampleCount/wave.channels;
+    wave.sampleSize = 16;
+
+    // NOTE: Only support up to 2 channels (mono, stereo)
+    if (wave.channels > 2) TraceLog(WARNING, "[%s] FLAC channels number (%i) not supported", fileName, wave.channels);
+
     if (wave.data == NULL) TraceLog(WARNING, "[%s] FLAC data could not be loaded", fileName);
-    
+    else TraceLog(INFO, "[%s] FLAC file loaded successfully (%i Hz, %i bit, %s)", fileName, wave.sampleRate, wave.sampleSize, (wave.channels == 1) ? "Mono" : "Stereo");
+
     return wave;
 }
 
