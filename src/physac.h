@@ -38,13 +38,20 @@
 *       You can define your own malloc/free implementation replacing stdlib.h malloc()/free() functions.
 *       Otherwise it will include stdlib.h and use the C standard library malloc()/free() function.
 *
+*
+*   NOTE: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
+*
+*   Use the following code to compile (-static -lpthread):
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s $(RAYLIB_DIR)\raylib\raylib_icon -static -lraylib -lpthread 
+*   -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
+*
 *   VERY THANKS TO:
 *       Ramón Santamaria (@raysan5)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2016 Victor Fisac
+*   Copyright (c) 2017 Victor Fisac
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -361,70 +368,6 @@ PHYSACDEF PhysicsBody CreatePhysicsBodyCircle(Vector2 pos, float radius, float d
 {
     PhysicsBody newBody = CreatePhysicsBodyPolygon(pos, radius, PHYSAC_CIRCLE_VERTICES, density);
     return newBody;
-
-    /*PhysicsBody newBody = (PhysicsBody)PHYSAC_MALLOC(sizeof(PhysicsBodyData));
-    usedMemory += sizeof(PhysicsBodyData);
-
-    int newId = -1;
-    for (int i = 0; i < PHYSAC_MAX_BODIES; i++)
-    {
-        int currentId = i;
-
-        // Check if current id already exist in other physics body
-        for (int k = 0; k < physicsBodiesCount; k++)
-        {
-            if (bodies[k]->id == currentId)
-            {
-                currentId++;
-                break;
-            }
-        }
-
-        // If it is not used, use it as new physics body id
-        if (currentId == i)
-        {
-            newId = i;
-            break;
-        }
-    }
-
-    if (newId != -1)
-    {
-        // Initialize new body with generic values
-        newBody->id = newId;
-        newBody->enabled = true;
-        newBody->position = pos;    
-        newBody->velocity = (Vector2){ 0 };
-        newBody->force = (Vector2){ 0 };
-        newBody->angularVelocity = 0;
-        newBody->torque = 0;
-        newBody->orient = 0;
-        newBody->mass = PHYSAC_PI*radius*radius*density;
-        newBody->inverseMass = ((newBody->mass != 0.0f) ? 1.0f/newBody->mass : 0.0f);
-        newBody->inertia = newBody->mass*radius*radius;
-        newBody->inverseInertia = ((newBody->inertia != 0.0f) ? 1.0f/newBody->inertia : 0.0f);
-        newBody->staticFriction = 0;
-        newBody->dynamicFriction = 0;
-        newBody->restitution = 0;
-        newBody->useGravity = true;
-        newBody->freezeOrient = false;
-        newBody->shape.type = PHYSICS_CIRCLE;
-        newBody->shape.body = newBody;
-        newBody->shape.radius = radius;
-
-        // Add new body to bodies pointers array and update bodies count
-        bodies[physicsBodiesCount] = newBody;
-        physicsBodiesCount++;
-
-        #if defined(PHYSAC_DEBUG)
-            printf("[PHYSAC] created circle physics body id %i\n", newBody->id);
-        #endif
-    }
-    #if defined(PHYSAC_DEBUG)
-        else printf("[PHYSAC] new physics body creation failed because there is any available id to use\n");
-    #endif
-
-    return newBody;*/
 }
 
 // Creates a new rectangle physics body with generic parameters
@@ -1130,6 +1073,7 @@ static void *PhysicsLoop(void *arg)
 // Physics steps calculations (dynamics, collisions and position corrections)
 static void PhysicsStep(void)
 {
+    // Update current steps count
     stepsCount++;
 
     // Clear previous generated collisions information
@@ -1137,6 +1081,13 @@ static void PhysicsStep(void)
     {
         PhysicsManifold manifold = contacts[i];
         if (manifold != NULL) DestroyPhysicsManifold(manifold);
+    }
+    
+    // Reset physics bodies grounded state
+    for (int i = 0; i < physicsBodiesCount; i++)
+    {
+        PhysicsBody body = bodies[i];
+        body->isGrounded = false;
     }
 
     // Generate new collision information
@@ -1347,9 +1298,9 @@ static void SolvePhysicsManifold(PhysicsManifold manifold)
         } break;
         default: break;
     }
-
-    // Update physics body grounded state if normal direction is downside
-    manifold->bodyB->isGrounded = (manifold->normal.y < 0);
+    
+    // Update physics body grounded state if normal direction is down and grounded state is not set yet in previous manifolds
+    if (!manifold->bodyB->isGrounded) manifold->bodyB->isGrounded = (manifold->normal.y < 0);
 }
 
 // Solves collision between two circle shape physics bodies
@@ -1388,7 +1339,7 @@ static void SolveCircleToCircle(PhysicsManifold manifold)
     }
 
     // Update physics body grounded state if normal direction is down
-    if (manifold->normal.y < 0) bodyA->isGrounded = true;
+    if (!bodyA->isGrounded) bodyA->isGrounded = (manifold->normal.y < 0);
 }
 
 // Solves collision between a circle to a polygon shape physics bodies

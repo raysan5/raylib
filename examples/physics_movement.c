@@ -3,9 +3,12 @@
 *   Physac - Physics movement
 *
 *   NOTE: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
-*   The file pthreadGC2.dll is required to run the program; you can find it in 'src\external'
 *
-*   Copyright (c) 2016 Victor Fisac
+*   Use the following code to compile (-static -lpthread):
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s $(RAYLIB_DIR)\raylib\raylib_icon -static -lraylib -lpthread 
+*   -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
+*   
+*   Copyright (c) 2017 Victor Fisac
 *
 ********************************************************************************************/
 
