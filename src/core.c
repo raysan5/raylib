@@ -583,12 +583,15 @@ void SetWindowIcon(Image image)
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
+#if defined(PLATFORM_DESKTOP)
     glfwSetWindowPos(window, x, y);
+#endif
 }
 
 // Set monitor for the current window (fullscreen mode)
 void SetWindowMonitor(int monitor)
 {
+#if defined(PLATFORM_DESKTOP)
     int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
     
@@ -598,6 +601,7 @@ void SetWindowMonitor(int monitor)
         TraceLog(INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
     }
     else TraceLog(WARNING, "Selected monitor not found");
+#endif
 }
 
 // Get current screen width
