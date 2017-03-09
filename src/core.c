@@ -1129,16 +1129,16 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     MatrixInvert(&matProjView);
 
     // Calculate far and near points
-    Quaternion nearPoint = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
-    Quaternion farPoint = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
+    Quaternion qNear = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
+    Quaternion qFar = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
 
     // Multiply points by unproject matrix
-    QuaternionTransform(&nearPoint, matProjView);
-    QuaternionTransform(&farPoint, matProjView);
+    QuaternionTransform(&qNear, matProjView);
+    QuaternionTransform(&qFar, matProjView);
 
     // Calculate normalized world points in vectors
-    Vector3 nearPoint = { nearPoint.x/nearPoint.w, nearPoint.y/nearPoint.w, nearPoint.z/nearPoint.w};
-    Vector3 farPoint = { farPoint.x/farPoint.w, farPoint.y/farPoint.w, farPoint.z/farPoint.w};
+    Vector3 nearPoint = { qNear.x/qNear.w, qNear.y/qNear.w, qNear.z/qNear.w};
+    Vector3 farPoint = { qFar.x/qFar.w, qFar.y/qFar.w, qFar.z/qFar.w};
 #endif
 
     // Calculate normalized direction vector
