@@ -291,7 +291,7 @@ static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
-static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
+static bool ButtonStatus(int button);           // Returns if a mouse button has been pressed
 static void PollInputEvents(void);                      // Register user events
 static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
@@ -1129,16 +1129,16 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     MatrixInvert(&matProjView);
 
     // Calculate far and near points
-    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
-    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
+    Quaternion nearPoint = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
+    Quaternion farPoint = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
 
     // Multiply points by unproject matrix
-    QuaternionTransform(&near, matProjView);
-    QuaternionTransform(&far, matProjView);
+    QuaternionTransform(&nearPoint, matProjView);
+    QuaternionTransform(&farPoint, matProjView);
 
     // Calculate normalized world points in vectors
-    Vector3 nearPoint = { near.x/near.w, near.y/near.w, near.z/near.w};
-    Vector3 farPoint = { far.x/far.w, far.y/far.w, far.z/far.w};
+    Vector3 nearPoint = { nearPoint.x/nearPoint.w, nearPoint.y/nearPoint.w, nearPoint.z/nearPoint.w};
+    Vector3 farPoint = { farPoint.x/farPoint.w, farPoint.y/farPoint.w, farPoint.z/farPoint.w};
 #endif
 
     // Calculate normalized direction vector
