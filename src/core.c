@@ -291,7 +291,7 @@ static void InitTimer(void);                            // Initialize timer
 static double GetTime(void);                            // Returns time since InitTimer() was run
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
-static bool ButtonStatus(int button);           // Returns if a mouse button has been pressed
+static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
 static void PollInputEvents(void);                      // Register user events
 static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
