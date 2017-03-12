@@ -91,7 +91,7 @@ void DrawTitleScreen(void)
     DrawText("powered by", GetScreenWidth() - 162, GetScreenHeight() - 190, 20, DARKGRAY);
     DrawTexture(texLogo, GetScreenWidth() - 128 - 34, GetScreenHeight() - 128 - 36, WHITE);
     
-    if ((framesCounter > 160) && ((framesCounter/40)%2)) DrawTextEx(font, "mouse click to start", (Vector2){ 325, 500 }, font.size, 0, SKYBLUE);
+    if ((framesCounter > 160) && ((framesCounter/40)%2)) DrawTextEx(font, "mouse click to start", (Vector2){ 325, 500 }, font.baseSize, 0, SKYBLUE);
 }
 
 // Title Screen Unload logic
