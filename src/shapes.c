@@ -57,7 +57,7 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-// No private (static) functions in this module (.c file)
+static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic easing
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -106,6 +106,13 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
 // Draw a line defining thickness
 void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
 {
+    if (startPos.x > endPos.x)
+    {
+        Vector2 tempPos = startPos;
+        startPos = endPos;
+        endPos = tempPos;
+    }
+    
     float dx = endPos.x - startPos.x;
     float dy = endPos.y - startPos.y;
     
@@ -131,6 +138,27 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     rlPopMatrix();
 
     rlDisableTexture();
+}
+
+// Draw line using cubic-bezier curves in-out
+void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
+{
+    #define LINE_DIVISIONS         24   // Bezier line divisions
+
+    Vector2 previous = startPos;
+    Vector2 current;
+
+    for (int i = 1; i <= LINE_DIVISIONS; i++)
+    {
+        // Cubic easing in-out
+        // NOTE: Easing is calcutated only for y position value 
+        current.y = EaseCubicInOut(i, startPos.y, endPos.y - startPos.y, LINE_DIVISIONS);
+        current.x = previous.x + (endPos.x - startPos.x)/LINE_DIVISIONS;
+        
+        DrawLineEx(previous, current, thick, color);
+        
+        previous = current;
+    }
 }
 
 // Draw a color-filled circle
@@ -589,4 +617,16 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
     }
 
     return retRec;
+}
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------
+
+// Cubic easing in-out 
+// NOTE: Required for DrawLineBezier()
+static float EaseCubicInOut(float t, float b, float c, float d) 
+{ 
+    if ((t/=d/2) < 1) return (c/2*t*t*t + b);
+    return (c/2*((t-=2)*t*t + 2) + b);
 }
