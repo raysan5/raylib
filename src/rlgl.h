@@ -399,19 +399,12 @@ void EndBlendMode(void);                                            // End blend
 void TraceLog(int msgType, const char *text, ...);
 float *MatrixToFloat(Matrix mat);
 
-void InitVrDevice(int vrDevice);            // Init VR device
-void CloseVrDevice(void);                   // Close VR device
-bool IsVrDeviceReady(void);                 // Detect if VR device is ready
-bool IsVrSimulator(void);                   // Detect if VR simulator is running
+void InitVrSimulator(int vrDevice);         // Init VR simulator for selected device
+void CloseVrSimulator(void);                // Close VR simulator for current device
 void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
-
-// Oculus Rift API for direct access the device (no simulator)
-bool InitOculusDevice(void);                // Initialize Oculus device (returns true if success)
-void CloseOculusDevice(void);               // Close Oculus device
-void UpdateOculusTracking(Camera *camera);  // Update Oculus head position-orientation tracking (and camera)
-void BeginOculusDrawing(void);              // Setup Oculus buffers for drawing
-void EndOculusDrawing(void);                // Finish Oculus drawing and blit framebuffer to mirror
+void BeginVrDrawing(void);                  // Begin VR stereo rendering
+void EndVrDrawing(void);                    // End VR stereo rendering
 #endif
 
 #ifdef __cplusplus

@@ -687,6 +687,7 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 
 RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
+//RLAPI void TraceLog(int logType, const char *text, ...);          // Trace log messages showing (INFO, WARNING, ERROR, DEBUG)
 
 RLAPI bool IsFileDropped(void);                                   // Check if a file have been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
@@ -944,12 +945,13 @@ RLAPI void EndBlendMode(void);                                            // End
 // VR experience Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-RLAPI void InitVrDevice(int vdDevice);            // Init VR device
-RLAPI void CloseVrDevice(void);                   // Close VR device
-RLAPI bool IsVrDeviceReady(void);                 // Detect if VR device is ready
-RLAPI bool IsVrSimulator(void);                   // Detect if VR simulator is running
-RLAPI void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
-RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
+RLAPI void InitVrSimulator(int vrDevice);           // Init VR simulator for selected device
+RLAPI void CloseVrSimulator(void);                  // Close VR simulator for current device
+RLAPI bool IsVrSimulatorReady(void);                // Detect if VR device is ready
+RLAPI void UpdateVrTracking(Camera *camera);        // Update VR tracking (position and orientation) and camera
+RLAPI void ToggleVrMode(void);                      // Enable/Disable VR experience (device or simulator)
+RLAPI void BeginVrDrawing(void);                    // Begin VR simulator stereo rendering
+RLAPI void EndVrDrawing(void);                      // End VR simulator stereo rendering
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
