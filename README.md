@@ -278,4 +278,4 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  
 Please, if I forget someone in this list, excuse me and write me an email to remind me to add you!
 	
-[raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"
+[raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"

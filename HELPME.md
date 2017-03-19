@@ -34,4 +34,4 @@ contact
    * Twitch: [http://www.twitch.tv/raysan5](http://www.twitch.tv/raysan5)
    * Patreon: [https://www.patreon.com/raysan5](https://www.patreon.com/raysan5)
    
-[raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"
+[raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"
