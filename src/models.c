@@ -1,12 +1,14 @@
 /**********************************************************************************************
 *
-*   raylib.models - Basic functions to draw 3d shapes and 3d models
+*   raylib.models - Basic functions to deal with 3d shapes and 3d models
 *
 *   CONFIGURATION:
 *
 *   #define SUPPORT_FILEFORMAT_OBJ / SUPPORT_LOAD_OBJ
+*       Selected desired fileformats to be supported for loading.
 *
 *   #define SUPPORT_FILEFORMAT_MTL
+*       Selected desired fileformats to be supported for loading.
 *
 *
 *   LICENSE: zlib/libpng

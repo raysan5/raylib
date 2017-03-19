@@ -33,6 +33,8 @@
 
 #include "rres.h"
 
+#define SUPPORT_SAVE_PNG
+
 //----------------------------------------------------------------------------------
 // Some basic Defines
 //----------------------------------------------------------------------------------
@@ -61,8 +63,12 @@ void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log messa
 const char *GetExtension(const char *fileName);     // Returns extension of a filename
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(SUPPORT_SAVE_BMP)
 void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
+#endif
+#if defined(SUPPORT_SAVE_PNG)
 void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
+#endif
 #endif
 
 #if defined(PLATFORM_ANDROID)

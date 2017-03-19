@@ -2,7 +2,14 @@
 *
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
-*   The following platforms are supported: Windows, Linux, Mac (OSX), Android, Raspberry Pi, HTML5, Oculus Rift CV1
+*   The following platforms are supported: 
+*       Windows (win32/Win64)
+*       Linux (tested on Ubuntu)
+*       Mac (OSX)
+*       Android (API Level 9 or greater) 
+*       Raspberry Pi (Raspbian)
+*       HTML5 (Chrome, Firefox)
+*       Oculus Rift CV1
 *
 *   CONFIGURATION:
 *
@@ -2006,7 +2013,7 @@ static double GetTime(void)
 // Wait for some milliseconds (stop program execution)
 static void Wait(float ms)
 {
-#define SUPPORT_BUSY_WAIT_LOOP
+//#define SUPPORT_BUSY_WAIT_LOOP
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;

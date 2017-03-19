@@ -4,14 +4,20 @@
 *
 *   CONFIGURATION:
 *
-*   #define SUPPORT_SAVE_PNG
-*       Enable saving PNG fileformat
+*   #define SUPPORT_SAVE_PNG (defined by default)
+*       Support saving image data as PNG fileformat
 *       NOTE: Requires stb_image_write library
 *
 *   #define SUPPORT_SAVE_BMP
+*       Support saving image data as BMP fileformat
+*       NOTE: Requires stb_image_write library
 *
-*   #define DO_NOT_TRACE_DEBUG_MSGS
-*       Avoid showing DEBUG TraceLog() messages
+*   #define SUPPORT_TRACELOG
+*       Show TraceLog() output messages
+*       NOTE: By default DEBUG traces not shown
+*
+*   #define SUPPORT_TRACELOG_DEBUG
+*       Show TraceLog() DEBUG messages
 *
 *   DEPENDENCIES:
 *       stb_image_write - PNG writting functions
@@ -129,17 +135,22 @@ void TraceLog(int msgType, const char *text, ...)
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+
+#if defined(SUPPORT_SAVE_BMP)
 // Creates a BMP image file from an array of pixel data
 void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
     stbi_write_bmp(fileName, width, height, compSize, imgData);
 }
+#endif
 
+#if defined(SUPPORT_SAVE_PNG)
 // Creates a PNG image file from an array of pixel data
 void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
     stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
 }
+#endif
 #endif
 
 #if defined(PLATFORM_ANDROID)

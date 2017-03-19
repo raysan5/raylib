@@ -1,26 +1,24 @@
 /**********************************************************************************************
 *
-*   raylib.audio
+*   raylib.audio - Basic funtionality to work with audio
 *
-*   This module provides basic functionality to work with audio:
-*     Manage audio device (init/close)
-*     Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
-*     Play/Stop/Pause/Resume loaded audio
-*     Manage mixing channels
-*     Manage raw audio context
+*   DESCRIPTION:
 *
-*   NOTES:
-*
-*   Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
-*   Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
+*   This module provides basic functionality to:
+*     - Manage audio device (init/close)
+*     - Load and unload audio files
+*     - Format wave data (sample rate, size, channels)
+*     - Play/Stop/Pause/Resume loaded audio
+*     - Manage mixing channels
+*     - Manage raw audio context
 *
 *   CONFIGURATION:
 *   
 *   #define AUDIO_STANDALONE
-*       If defined, the module can be used as standalone library (independently of raylib).
+*       Define to use the module as standalone library (independently of raylib).
 *       Required types and functions are defined in the same module.
 *
-*   #define SUPPORT_FILEFORMAT_WAV  / SUPPORT_LOAD_WAV / ENABLE_LOAD_WAV
+*   #define SUPPORT_FILEFORMAT_WAV  / SUPPORT_LOAD_WAV
 *   #define SUPPORT_FILEFORMAT_OGG
 *   #define SUPPORT_FILEFORMAT_XM
 *   #define SUPPORT_FILEFORMAT_MOD
@@ -29,6 +27,12 @@
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
 *   #define SUPPORT_RAW_AUDIO_BUFFERS
+*       Support creating raw audio buffers to send raw data. Buffers must be managed by the user,
+*       it means initialization, refilling and cleaning.
+*
+*   LIMITATIONS:
+*       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
+*       Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
 *
 *   DEPENDENCIES:
 *       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
@@ -38,12 +42,11 @@
 *       dr_flac     - FLAC audio file loading
 *
 *   CONTRIBUTORS:
-*
-*   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
-*     XM audio module support (jar_xm)
-*     MOD audio module support (jar_mod)
-*     Mixing channels support
-*     Raw audio context support
+*       Joshua Reisenauer (github: @kd7tck):
+*           - XM audio module support (jar_xm)
+*           - MOD audio module support (jar_mod)
+*           - Mixing channels support
+*           - Raw audio context support
 *
 *
 *   LICENSE: zlib/libpng
