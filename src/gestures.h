@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib Gestures System - Gestures Processing based on input gesture events (touch/mouse)
+*   raylib.gestures - Gestures system, gestures processing based on input events (touch/mouse)
 *
 *   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
 *
@@ -24,7 +24,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

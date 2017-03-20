@@ -2,8 +2,8 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   rlgl allows usage of OpenGL 1.1 style functions (rlVertex) that are internally mapped to 
-*   selected OpenGL version (1.1, 2.1, 3.3 Core, ES 2.0). 
+*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to 
+*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...). 
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal 
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
@@ -11,18 +11,29 @@
 *       rlglDraw()  - Process internal buffers and send required draw calls
 *       rlglClose() - De-initialize internal buffers data and other auxiliar resources
 *
-*   External libs:
+*   CONFIGURATION:
+*
+*   #define GRAPHICS_API_OPENGL_11
+*   #define GRAPHICS_API_OPENGL_21
+*   #define GRAPHICS_API_OPENGL_33
+*   #define GRAPHICS_API_OPENGL_ES2
+*       Use selected OpenGL backend
+*
+*   #define RLGL_STANDALONE
+*       Use rlgl as standalone library (no raylib dependency)
+*
+*   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
+*       Support VR simulation functionality (stereo rendering)
+*
+*   #define SUPPORT_SHADER_DISTORTION
+*       Include stereo rendering distortion shader (shader_distortion.h)
+*
+*   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
 *       GLAD        - OpenGL extensions loading (OpenGL 3.3 Core only)
 *
-*   Module Configuration Flags:
-*       GRAPHICS_API_OPENGL_11  - Use OpenGL 1.1 backend
-*       GRAPHICS_API_OPENGL_21  - Use OpenGL 2.1 backend
-*       GRAPHICS_API_OPENGL_33  - Use OpenGL 3.3 Core profile backend
-*       GRAPHICS_API_OPENGL_ES2 - Use OpenGL ES 2.0 backend
 *
-*       RLGL_STANDALONE             - Use rlgl as standalone library (no raylib dependency)
-*
+*   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
 *
@@ -124,14 +135,20 @@
 #define RL_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
 #define RL_WRAP_CLAMP_MIRROR            0x8742      // GL_MIRROR_CLAMP_EXT
 
+// Matrix modes (equivalent to OpenGL)
+#define RL_MODELVIEW                    0x1700      // GL_MODELVIEW 
+#define RL_PROJECTION                   0x1701      // GL_PROJECTION
+#define RL_TEXTURE                      0x1702      // GL_TEXTURE
+
+// Primitive assembly draw modes
+#define RL_LINES                        0x0001      // GL_LINES
+#define RL_TRIANGLES                    0x0004      // GL_TRIANGLES
+#define RL_QUADS                        0x0007      // GL_QUADS
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
-
-typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
-
-typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
 typedef unsigned char byte;
 
