@@ -50,8 +50,6 @@ ipch/
 
 # Ignore compiled binaries
 *.o
-*.a
-*.so
 *.exe
 !tools/rREM/rrem.exe
 
