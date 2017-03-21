@@ -1,8 +1,6 @@
 /**********************************************************************************************
 *
-*   rres - raylib Resource custom format management functions
-*
-*   Basic functions to load/save rRES resource files
+*   rres v1.0 - raylib resource (rRES) custom fileformat management functions
 *
 *   CONFIGURATION:
 *

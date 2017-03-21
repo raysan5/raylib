@@ -2,10 +2,8 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   DESCRIPTION:
-*
-*   rlgl allows usage of OpenGL 1.1 style functions (rlVertex) that are internally mapped to
-*   selected OpenGL version (1.1, 2.1, 3.3 Core, ES 2.0).
+*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to 
+*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...). 
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
@@ -16,32 +14,19 @@
 *   CONFIGURATION:
 *
 *   #define GRAPHICS_API_OPENGL_11
-*       Use OpenGL 1.1 backend
-*
 *   #define GRAPHICS_API_OPENGL_21
-*       Use OpenGL 2.1 backend
-*
 *   #define GRAPHICS_API_OPENGL_33
-*       Use OpenGL 3.3 Core profile backend
-*
 *   #define GRAPHICS_API_OPENGL_ES2
-*       Use OpenGL ES 2.0 backend
+*       Use selected OpenGL backend
 *
 *   #define RLGL_STANDALONE
 *       Use rlgl as standalone library (no raylib dependency)
 *
-*   #define RLGL_NO_DISTORTION_SHADER
-*       Avoid stereo rendering distortion sahder (shader_distortion.h) inclusion
-*
-*   #define SUPPORT_SHADER_DEFAULT / ENABLE_SHADER_DEFAULT
+*   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
+*       Support VR simulation functionality (stereo rendering)
 *
 *   #define SUPPORT_SHADER_DISTORTION
-*
-*   #define SUPPORT_VR_SIMULATION
-*
-*   #define SUPPORT_STEREO_RENDERING
-*
-*   #define RLGL_NO_DEFAULT_SHADER
+*       Include stereo rendering distortion shader (shader_distortion.h)
 *
 *   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
@@ -50,7 +35,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -295,6 +280,13 @@ static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
+
+// VR global variables
+static VrDeviceInfo hmd;                // Current VR device info
+static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
+static bool vrSimulatorReady = false;   // VR simulator ready flag
+static bool vrStereoRender = false;     // VR stereo rendering enabled/disabled flag
+                                        // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
 #endif
 
 // Extension supported flag: Anisotropic filtering
@@ -303,13 +295,6 @@ static float maxAnisotropicLevel = 0.0f;        // Maximum anisotropy level supp
 
 // Extension supported flag: Clamp mirror wrap mode
 static bool texClampMirrorSupported = false;    // Clamp mirror wrap mode supported
-
-// VR global variables
-static VrDeviceInfo hmd;                // Current VR device info
-static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
-static bool vrSimulatorReady = false;   // VR simulator ready flag
-static bool vrStereoRender = false;     // VR stereo rendering enabled/disabled flag
-                                        // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -2636,7 +2621,11 @@ void CloseVrSimulator(void)
 // Detect if VR simulator is running
 bool IsVrSimulatorReady(void)
 {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     return vrSimulatorReady;
+#else
+    return false;
+#endif
 }
 
 // Enable/Disable VR experience (device or simulator)

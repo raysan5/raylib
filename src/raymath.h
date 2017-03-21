@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v1.0 - Some useful functions to work with Vector3, Matrix and Quaternions
+*   raymath v1.0 - Math functions to work with Vector3, Matrix and Quaternions
 *
 *   CONFIGURATION:
 *

@@ -2,14 +2,14 @@
 *
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
-*   The following platforms are supported: 
-*       Windows (win32/Win64)
-*       Linux (tested on Ubuntu)
-*       Mac (OSX)
-*       Android (API Level 9 or greater) 
-*       Raspberry Pi (Raspbian)
-*       HTML5 (Chrome, Firefox)
-*       Oculus Rift CV1
+*   PLATFORMS SUPPORTED: 
+*       - Windows (win32/Win64)
+*       - Linux (tested on Ubuntu)
+*       - Mac (OSX)
+*       - Android (API Level 9 or greater) 
+*       - Raspberry Pi (Raspbian)
+*       - HTML5 (Chrome, Firefox)
+*       - Oculus Rift CV1
 *
 *   CONFIGURATION:
 *
@@ -49,7 +49,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

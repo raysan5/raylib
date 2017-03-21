@@ -2,15 +2,13 @@
 *
 *   raylib.audio - Basic funtionality to work with audio
 *
-*   DESCRIPTION:
-*
-*   This module provides basic functionality to:
-*     - Manage audio device (init/close)
-*     - Load and unload audio files
-*     - Format wave data (sample rate, size, channels)
-*     - Play/Stop/Pause/Resume loaded audio
-*     - Manage mixing channels
-*     - Manage raw audio context
+*   FEATURES:
+*       - Manage audio device (init/close)
+*       - Load and unload audio files
+*       - Format wave data (sample rate, size, channels)
+*       - Play/Stop/Pause/Resume loaded audio
+*       - Manage mixing channels
+*       - Manage raw audio context
 *
 *   CONFIGURATION:
 *   
@@ -51,7 +49,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
