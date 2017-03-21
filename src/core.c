@@ -29,13 +29,15 @@
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
 *       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
 *
-*   #define LOAD_DEFAULT_FONT (defined by default)
+*   #define SUPPORT_DEFAULT_FONT (default)
 *       Default font is loaded on window initialization to be available for the user to render simple text.
 *       NOTE: If enabled, uses external module functions to load default raylib font (module: text)
 *
-*   #define INCLUDE_CAMERA_SYSTEM / SUPPORT_CAMERA_SYSTEM
+*   #define SUPPORT_CAMERA_SYSTEM
+*       Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 *
-*   #define INCLUDE_GESTURES_SYSTEM / SUPPORT_GESTURES_SYSTEM
+*   #define SUPPORT_GESTURES_SYSTEM
+*       Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag
 *
 *   #define SUPPORT_MOUSE_GESTURES
 *       Mouse gestures are directly mapped like touches and processed by gestures system.
@@ -68,6 +70,14 @@
 *
 **********************************************************************************************/
 
+// Default supported features
+//-------------------------------------
+#define SUPPORT_DEFAULT_FONT
+#define SUPPORT_MOUSE_GESTURES
+#define SUPPORT_CAMERA_SYSTEM
+#define SUPPORT_GESTURES_SYSTEM
+//-------------------------------------
+
 #include "raylib.h"
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
@@ -77,10 +87,12 @@
 #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
 #include "raymath.h"            // Required for: Vector3 and Matrix functions
 
-#define GESTURES_IMPLEMENTATION
-#include "gestures.h"       // Gestures detection functionality
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    #define GESTURES_IMPLEMENTATION
+    #include "gestures.h"       // Gestures detection functionality
+#endif
 
-#if !defined(PLATFORM_ANDROID)
+#if defined(SUPPORT_CAMERA_SYSTEM) && !defined(PLATFORM_ANDROID)
     #define CAMERA_IMPLEMENTATION
     #include "camera.h"     // Camera system functionality
 #endif
@@ -147,8 +159,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define STORAGE_FILENAME     "storage.data"
-
 #if defined(PLATFORM_RPI)
     // Old device inputs system
     #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
@@ -168,7 +178,7 @@
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
-#define LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
+#define STORAGE_FILENAME        "storage.data"
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -266,7 +276,10 @@ static int lastGamepadButtonPressed = -1;   // Register last gamepad button pres
 static int gamepadAxisCount = 0;            // Register number of available gamepad axis
 
 static Vector2 mousePosition;               // Mouse position on screen
+
+#if defined(SUPPORT_GESTURES_SYSTEM)
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
+#endif
 
 #if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -284,7 +297,7 @@ static bool showLogo = false;               // Track if showing logo at init is 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-#if defined(LOAD_DEFAULT_FONT)
+#if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
 #endif
@@ -366,7 +379,7 @@ void InitWindow(int width, int height, const char *title)
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
 
-#if defined(LOAD_DEFAULT_FONT)
+#if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
@@ -478,7 +491,7 @@ void InitWindow(int width, int height, void *state)
 // Close Window and Terminate Context
 void CloseWindow(void)
 {
-#if defined(LOAD_DEFAULT_FONT)
+#if defined(SUPPORT_DEFAULT_FONT)
     UnloadDefaultFont();
 #endif
 
@@ -2071,9 +2084,11 @@ static bool GetMouseButtonStatus(int button)
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
+#if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
+#endif
 
     // Reset last key pressed registered
     lastKeyPressed = -1;
@@ -2303,8 +2318,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 {
     currentMouseState[button] = action;
 
-#define ENABLE_MOUSE_GESTURES
-#if defined(ENABLE_MOUSE_GESTURES)
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent;
 
@@ -2335,8 +2349,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
-#define ENABLE_MOUSE_GESTURES
-#if defined(ENABLE_MOUSE_GESTURES)
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent;
 
@@ -2466,7 +2479,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
 
-                    #if defined(LOAD_DEFAULT_FONT)
+                    #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();

@@ -10,7 +10,7 @@
 *       Selected desired fileformats to be supported for loading. Some of those formats are 
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
-*   #define INCLUDE_DEFAULT_FONT / SUPPORT_DEFAULT_FONT
+*   #define SUPPORT_DEFAULT_FONT
 *
 *   DEPENDENCIES:
 *       stb_truetype - Load TTF file and rasterize characters data
@@ -37,6 +37,11 @@
 *
 **********************************************************************************************/
 
+// Default supported features
+//-------------------------------------
+#define SUPPORT_DEFAULT_FONT
+//-------------------------------------
+
 #include "raylib.h"
 
 #include <stdlib.h>         // Required for: malloc(), free()
@@ -61,8 +66,6 @@
 #define MAX_FORMATTEXT_LENGTH   64
 #define MAX_SUBTEXT_LENGTH      64
 
-#define BIT_CHECK(a,b) ((a) & (1 << (b)))
-
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -71,8 +74,10 @@
 //----------------------------------------------------------------------------------
 // Global variables
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_DEFAULT_FONT)
 static SpriteFont defaultFont;        // Default font provided by raylib
 // NOTE: defaultFont is loaded on InitWindow and disposed on CloseWindow [module: core]
+#endif
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -89,14 +94,21 @@ static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (ra
 static SpriteFont LoadBMFont(const char *fileName); // Load a BMFont file (AngelCode font file)
 static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
 
+#if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadDefaultFont(void);
 extern void UnloadDefaultFont(void);
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_DEFAULT_FONT)
+
+// Load raylib default font
 extern void LoadDefaultFont(void)
 {
+    #define BIT_CHECK(a,b) ((a) & (1 << (b)))
+
     // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // http://www.utf8-chartable.de/unicode-utf8-table.pl
 
@@ -241,16 +253,23 @@ extern void LoadDefaultFont(void)
     TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
 
+// Unload raylib default font
 extern void UnloadDefaultFont(void)
 {
     UnloadTexture(defaultFont.texture);
     free(defaultFont.chars);
 }
+#endif      // SUPPORT_DEFAULT_FONT
 
 // Get the default font, useful to be used with extended parameters
 SpriteFont GetDefaultFont()
 {
+#if defined(SUPPORT_DEFAULT_FONT)
     return defaultFont;
+#else
+    SpriteFont font = { 0 };
+    return font;
+#endif   
 }
 
 // Load SpriteFont from file into GPU memory (VRAM)
@@ -345,7 +364,7 @@ SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount,
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
     // NOTE: Make sure spriteFont is not default font (fallback)
-    if (spriteFont.texture.id != defaultFont.texture.id)
+    if (spriteFont.texture.id != GetDefaultFont().texture.id)
     {
         UnloadTexture(spriteFont.texture);
         free(spriteFont.chars);
@@ -360,7 +379,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 {
     // Check if default font has been loaded
-    if (defaultFont.texture.id != 0)
+    if (GetDefaultFont().texture.id != 0)
     {
         Vector2 position = { (float)posX, (float)posY };
 
@@ -471,7 +490,7 @@ int MeasureText(const char *text, int fontSize)
     Vector2 vec = { 0.0f, 0.0f };
 
     // Check if default font has been loaded
-    if (defaultFont.texture.id != 0)
+    if (GetDefaultFont().texture.id != 0)
     {
         int defaultFontSize = 10;   // Default Font chars height in pixel
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;

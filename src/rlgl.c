@@ -251,7 +251,7 @@ static Matrix projection;
 static Matrix *currentMatrix;
 static int currentMatrixMode;
 
-static DrawMode currentDrawMode;
+static int currentDrawMode;
 
 static float currentDepth = -1.0f;
 
