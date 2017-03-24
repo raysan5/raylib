@@ -179,10 +179,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
 endif
+
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
-
-###########
-
 
 # if shared library required, make sure code is compiled as position independent
 ifeq ($(SHARED),YES)
