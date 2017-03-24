@@ -105,7 +105,7 @@
 #include <string.h>         // Required for: strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#if defined __linux || defined(PLATFORM_WEB)
+#if defined __linux__ || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
 #elif defined __APPLE__
     #include <unistd.h>             // Required for: usleep()
@@ -115,7 +115,7 @@
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
 
-    #ifdef __linux
+    #ifdef __linux__
         #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
         #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
@@ -641,7 +641,7 @@ int GetScreenHeight(void)
 void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
+    #ifdef __linux__
         XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
     #else
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -654,7 +654,7 @@ void ShowCursor()
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
+    #ifdef __linux__
         XColor col;
         const char nil[] = {0};
 
@@ -2036,7 +2036,7 @@ static void Wait(float ms)
 #else
     #if defined _WIN32
         Sleep(ms);
-    #elif defined __linux || defined(PLATFORM_WEB)
+    #elif defined __linux__ || defined(PLATFORM_WEB)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);

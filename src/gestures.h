@@ -147,7 +147,7 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-#elif defined(__linux)
+#elif defined(__linux__)
     #include <sys/time.h>       // Required for: timespec
     #include <time.h>           // Required for: clock_gettime()
 #endif
@@ -517,7 +517,7 @@ static double GetCurrentTime(void)
     time = (double)currentTime/clockFrequency*1000.0f;  // Time in miliseconds
 #endif
 
-#if defined(__linux)
+#if defined(__linux__)
     // NOTE: Only for Linux-based systems
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);

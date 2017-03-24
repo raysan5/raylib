@@ -60,7 +60,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         UNAMEOS:=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS=LINUX
+            PLATFORM_OS=linux
         else
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS=OSX
@@ -153,12 +153,16 @@ endif
 
 # define compiler flags:
 #  -O1                  defines optimization level
+#  -Og                  enable debugging
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux to enable timespec and audio
+#CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE
+
 
 # if shared library required, make sure code is compiled as position independent
 ifeq ($(SHARED),YES)
@@ -213,7 +217,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         OUTPUT_PATH = ../release/win32/mingw32
     endif
-    ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(PLATFORM_OS),linux)
         OUTPUT_PATH = ../release/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
@@ -264,7 +268,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "libraylib.bc generated (web version)!"
 else
     ifeq ($(SHARED),YES)
-        ifeq ($(PLATFORM_OS),LINUX)
+        ifeq ($(PLATFORM_OS),linux)
             # compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target 
 			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
@@ -333,7 +337,7 @@ utils.o : utils.c utils.h
 # TODO: add other platforms.
 install :
 ifeq ($(ROOT),root)
-    ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(PLATFORM_OS),linux)
         # On GNU/Linux there are some standard directories that contain
         # libraries and header files. These directory (/usr/local/lib and
         # /usr/local/include/) are for libraries that are installed
@@ -356,7 +360,7 @@ endif
 # TODO: see 'install' target.
 unistall :
 ifeq ($(ROOT),root)
-    ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(PLATFORM_OS),linux)
 			rm --force /usr/local/include/raylib.h
         ifeq ($(SHARED),YES)
 			rm --force /usr/local/lib/libraylib.so

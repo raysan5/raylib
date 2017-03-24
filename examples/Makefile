@@ -40,7 +40,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         UNAMEOS:=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS=LINUX
+            PLATFORM_OS=linux
             LIBPATH=linux
         else
         ifeq ($(UNAMEOS),Darwin)
@@ -73,7 +73,9 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O2 -s -Wall -std=c99
+    ifeq ($(PLATFORM_OS),LINUX)
+    CFLAGS = -O2 -s -Wall -std=c99 --D_DEFAULT_SOURCE
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
@@ -88,7 +90,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         RAYLIB_PATH = ../release/win32/mingw32
     endif
-    ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(PLATFORM_OS),linux)
         RAYLIB_PATH = ../release/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
@@ -110,7 +112,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(PLATFORM_OS),linux)
         INCLUDES += -I/usr/local/include/raylib/
     else ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries headers
@@ -141,7 +143,7 @@ endif
 # define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(PLATFORM_OS),linux)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
@@ -185,6 +187,11 @@ ifeq ($(PLATFORM_OS),WINDOWS)
     WINFLAGS = ../src/resources -Wl,--subsystem,windows
 endif
 
+# Linux Fix to timespect from 
+ifeq ($(PLATFORM_OS),linux)
+        CFLAGS += -D_DEFAULT_SOURCE
+    endif
+
 ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
 endif
@@ -207,7 +214,6 @@ EXAMPLES = \
     core_3d_camera_first_person \
     core_2d_camera \
     core_world_screen \
-    core_oculus_rift \
     shapes_logo_raylib \
     shapes_basic_shapes \
     shapes_colors_palette \
@@ -338,8 +344,8 @@ core_world_screen: core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - oculus rift
-core_oculus_rift: core_oculus_rift.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+#core_oculus_rift: core_oculus_rift.c
+#	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo (with basic shapes)
 shapes_logo_raylib: shapes_logo_raylib.c
@@ -497,13 +503,6 @@ audio_module_playing: audio_module_playing.c
 audio_raw_stream: audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# Linux Fix to timespect from 
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),LINUX)
-        CFLAGS += -D_POSIX_C_SOURCE=199309L
-    endif
-endif
-
 # compile [physac] example - physics demo
 physics_demo: physics_demo.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
@@ -537,7 +536,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     else
-    ifeq ($(PLATFORM_OS),LINUX)
+    ifeq ($(PLATFORM_OS),linux)
 		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     else
 		del *.o *.exe
