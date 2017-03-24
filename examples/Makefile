@@ -5,15 +5,15 @@
 #   NOTE: By default examples are compiled using raylib static library and OpenAL Soft shared library
 #
 #   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
-#    
-#   This software is provided "as-is", without any express or implied warranty. In no event 
+#
+#   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
 #
-#   Permission is granted to anyone to use this software for any purpose, including commercial 
+#   Permission is granted to anyone to use this software for any purpose, including commercial
 #   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 #
-#     1. The origin of this software must not be misrepresented; you must not claim that you 
-#     wrote the original software. If you use this software in a product, an acknowledgment 
+#     1. The origin of this software must not be misrepresented; you must not claim that you
+#     wrote the original software. If you use this software in a product, an acknowledgment
 #     in the product documentation would be appreciated but is not required.
 #
 #     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -92,7 +92,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline 
+    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
 endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
@@ -337,12 +337,12 @@ core_3d_camera_free: core_3d_camera_free.c
 
 # compile [core] example - 3d camera first person
 core_3d_camera_first_person: core_3d_camera_first_person.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)    
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 2d camera
 core_2d_camera: core_2d_camera.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [core] example - world screen
 core_world_screen: core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -386,31 +386,31 @@ textures_srcrec_dstrec: textures_srcrec_dstrec.c
 # compile [textures] example - texture to image
 textures_to_image: textures_to_image.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [textures] example - texture raw data
 textures_raw_data: textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [textures] example - texture formats loading
 textures_formats_loading: textures_formats_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [textures] example - texture particles trail blending
 textures_particles_trail_blending: textures_particles_trail_blending.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [textures] example - texture image processing
 textures_image_processing: textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [textures] example - texture image drawing
 textures_image_drawing: textures_image_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [text] example - sprite fonts loading
 text_sprite_fonts: text_sprite_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [text] example - bmfonts and ttf loading
 text_bmfont_ttf: text_bmfont_ttf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -446,7 +446,7 @@ models_geometric_shapes: models_geometric_shapes.c
 # compile [models] example - box collisions
 models_box_collisions: models_box_collisions.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [models] example - basic window
 models_planes: models_planes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -474,15 +474,15 @@ models_ray_picking: models_ray_picking.c
 # compile [shaders] example - model shader
 shaders_model_shader: shaders_model_shader.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [shaders] example - shapes texture shader
 shaders_shapes_textures: shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [shaders] example - custom uniform in shader
 shaders_custom_uniform: shaders_custom_uniform.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
 # compile [shaders] example - postprocessing shader
 shaders_postprocessing: shaders_postprocessing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -526,7 +526,7 @@ physics_restitution: physics_restitution.c
 # compile [physac] example - physics shatter
 physics_shatter: physics_shatter.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
-    
+
 # fix dylib install path name for each executable (MAC)
 fix_dylib:
 ifeq ($(PLATFORM_OS),OSX)
