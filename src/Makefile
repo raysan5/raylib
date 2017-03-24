@@ -152,7 +152,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 endif
 
 # define compiler flags:
-#  -O2                  defines optimization level
+#  -O1                  defines optimization level
 #  -Og                  enable debugging
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
