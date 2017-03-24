@@ -40,7 +40,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     else
         UNAMEOS:=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS=linux
+            PLATFORM_OS=LINUX
             LIBPATH=linux
         else
         ifeq ($(UNAMEOS),Darwin)
@@ -66,15 +66,24 @@ endif
 endif
 
 # define compiler flags:
-#  -O2         defines optimization level
-#  -s          strip unnecessary data from build
-#  -Wall       turns on most, but not all, compiler warnings
-#  -std=c99    use standard C from 1999 revision
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
-else
+#  -O2                  defines optimization level
+#  -Og                  enable debugging
+#  -s                   strip unnecessary data from build
+#  -Wall                turns on most, but not all, compiler warnings
+#  -std=c99             defines C language mode (standard C from 1999 revision)
+#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline       declaring inline functions support (GCC optimized)
+#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux to enable timespec and drflac
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        CFLAGS = -O2 -s -Wall -std=c99
+    endif
     ifeq ($(PLATFORM_OS),LINUX)
-    CFLAGS = -O2 -s -Wall -std=c99 --D_DEFAULT_SOURCE
+        CFLAGS = -O2 -s -Wall -std=c99 -D_DEFAULT_SOURCE
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        CFLAGS = -O2 -s -Wall -std=c99
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -82,7 +91,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
-
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline 
+endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # define raylib release directory for compiled library
@@ -90,7 +101,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         RAYLIB_PATH = ../release/win32/mingw32
     endif
-    ifeq ($(PLATFORM_OS),linux)
+    ifeq ($(PLATFORM_OS),LINUX)
         RAYLIB_PATH = ../release/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
@@ -112,9 +123,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),linux)
-        INCLUDES += -I/usr/local/include/raylib/
-    else ifeq ($(PLATFORM_OS),WINDOWS)
+    ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries headers
         # GLFW3
             INCLUDES += -I../src/external/glfw3/include
@@ -143,7 +152,7 @@ endif
 # define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),linux)
+    ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
@@ -186,11 +195,6 @@ ifeq ($(PLATFORM_OS),WINDOWS)
     # -Wl,--subsystem,windows hides the console window
     WINFLAGS = ../src/resources -Wl,--subsystem,windows
 endif
-
-# Linux Fix to timespect from 
-ifeq ($(PLATFORM_OS),linux)
-        CFLAGS += -D_DEFAULT_SOURCE
-    endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
@@ -536,7 +540,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     else
-    ifeq ($(PLATFORM_OS),linux)
+    ifeq ($(PLATFORM_OS),LINUX)
 		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     else
 		del *.o *.exe
