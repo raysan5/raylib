@@ -1,7 +1,7 @@
 #******************************************************************************
 #
 #  raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
-#  
+#
 #  Many Thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
 #  Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
@@ -153,12 +153,34 @@ endif
 
 # define compiler flags:
 #  -O1                  defines optimization level
+#  -Og                  enable debugging
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux to enable timespec and drflac
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
+    #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
+    #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+endif
+
+#CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # if shared library required, make sure code is compiled as position independent
 ifeq ($(SHARED),YES)
@@ -243,7 +265,7 @@ OBJS += external/stb_vorbis.o
 
 # typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is raylib
-all: toolchain raylib 
+all: toolchain raylib
 
 # make standalone Android toolchain
 toolchain:
@@ -266,7 +288,7 @@ else
     ifeq ($(SHARED),YES)
         ifeq ($(PLATFORM_OS),LINUX)
             # compile raylib to shared library version for GNU/Linux.
-            # WARNING: you should type "make clean" before doing this target 
+            # WARNING: you should type "make clean" before doing this target
 			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
 			@echo "raylib shared library (libraylib.so) generated!"
         endif
@@ -299,11 +321,11 @@ core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
 # compile rlgl module
 rlgl.o : rlgl.c rlgl.h raymath.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(GRAPHICS)
-    
+
 # compile shapes module
 shapes.o : shapes.c raylib.h rlgl.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(SHAREDFLAG)
-    
+
 # compile textures module
 textures.o : textures.c rlgl.h utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(GRAPHICS) -D$(SHAREDFLAG)
@@ -319,7 +341,7 @@ models.o : models.c raylib.h rlgl.h raymath.h
 # compile audio module
 audio.o : audio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG) -D$(SHAREDOPENALFLAG)
-    
+
 # compile stb_vorbis library
 external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 	$(CC) -c -o $@ $< -O1 $(CFLAGS) $(INCLUDES) -D$(PLATFORM)

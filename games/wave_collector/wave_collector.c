@@ -7,7 +7,7 @@
 *   The level is actually the wave and the wave is the level!
 *   Be fast! Be smart! Be the best wave collector!
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib v1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2017 Ramon Santamaria (@raysan5)

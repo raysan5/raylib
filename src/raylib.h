@@ -1,43 +1,45 @@
 ﻿/**********************************************************************************************
 *
-*   raylib v1.7.0 (www.raylib.com)
+*   raylib v1.7.0 
 *
-*   A simple and easy-to-use library to learn videogames programming
+*   A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *
 *   FEATURES:
-*     Library written in plain C code (C99)
-*     Uses PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
-*     Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
-*     Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
-*     Multiple textures support, including compressed formats and mipmaps generation
-*     Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
-*     Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
-*     Audio loading and playing with streaming support and mixing channels [audio]
-*     VR stereo rendering support with configurable HMD device parameters
-*     Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
-*     Custom color palette for fancy visuals on raywhite background
-*     Minimal external dependencies (GLFW3, OpenGL, OpenAL)
-*     Complete binding for Lua [rlua]
+*       - Library written in plain C code (C99)
+*       - Uses PascalCase/camelCase notation
+*       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
+*       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
+*       - Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
+*       - Multiple textures support, including compressed formats and mipmaps generation
+*       - Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
+*       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
+*       - Audio loading and playing with streaming support and mixing channels [audio]
+*       - VR stereo rendering support with configurable HMD device parameters
+*       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
+*       - Custom color palette for fancy visuals on raywhite background
+*       - Minimal external dependencies (GLFW3, OpenGL, OpenAL)
+*       - Complete bindings for Lua, Go and Pascal
 *
 *   NOTES:
-*     32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
-*     One custom default font could be loaded automatically when InitWindow() [core]
-*     If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
-*     If using OpenGL 3.3 or ES2, two default shaders could be loaded automatically (internally defined)
+*       32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
+*       One custom default font could be loaded automatically when InitWindow() [core]
+*       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
+*       If using OpenGL 3.3 or ES2, two default shaders could be loaded automatically (internally defined)
 *
 *   DEPENDENCIES:
-*     GLFW3 (www.glfw.org) for window/context management and input [core]
-*     GLAD for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP) [rlgl]
-*     stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA) [textures]
-*     stb_image_write (Sean Barret) for image writting (PNG) [utils]
-*     stb_truetype (Sean Barret) for ttf fonts loading [text]
-*     stb_vorbis (Sean Barret) for ogg audio loading [audio]
-*     jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
-*     jar_mod (Joshua Reisenauer) for MOD audio module loading [audio]
-*     dr_flac (David Reid) for FLAC audio file loading [audio]
-*     OpenAL Soft for audio device/context management [audio]
-*     tinfl for data decompression (DEFLATE algorithm) [utils]
+*       GLFW3 (www.glfw.org) for window/context management and input [core]
+*       GLAD for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP) [rlgl]
+*       OpenAL Soft for audio device/context management [audio]
+*
+*   OPTIONAL DEPENDENCIES:
+*       stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA) [textures]
+*       stb_image_write (Sean Barret) for image writting (PNG) [utils]
+*       stb_truetype (Sean Barret) for ttf fonts loading [text]
+*       stb_vorbis (Sean Barret) for ogg audio loading [audio]
+*       jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
+*       jar_mod (Joshua Reisenauer) for MOD audio module loading [audio]
+*       dr_flac (David Reid) for FLAC audio file loading [audio]
+*       tinfl for data decompression (DEFLATE algorithm) [rres]
 *
 *
 *   LICENSE: zlib/libpng
@@ -45,7 +47,7 @@
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -687,6 +689,7 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 
 RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
+//RLAPI void TraceLog(int logType, const char *text, ...);          // Trace log messages showing (INFO, WARNING, ERROR, DEBUG)
 
 RLAPI bool IsFileDropped(void);                                   // Check if a file have been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
@@ -764,6 +767,7 @@ RLAPI void DrawPixelV(Vector2 position, Color color);                           
 RLAPI void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color);                // Draw a line
 RLAPI void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);                                     // Draw a line (Vector version)
 RLAPI void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color);                       // Draw a line defining thickness
+RLAPI void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                   // Draw a line using cubic-bezier curves in-out
 RLAPI void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
 RLAPI void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2);       // Draw a gradient-filled circle
 RLAPI void DrawCircleV(Vector2 center, float radius, Color color);                                       // Draw a color-filled circle (Vector version)
@@ -943,12 +947,13 @@ RLAPI void EndBlendMode(void);                                            // End
 // VR experience Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-RLAPI void InitVrDevice(int vdDevice);            // Init VR device
-RLAPI void CloseVrDevice(void);                   // Close VR device
-RLAPI bool IsVrDeviceReady(void);                 // Detect if VR device is ready
-RLAPI bool IsVrSimulator(void);                   // Detect if VR simulator is running
-RLAPI void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
-RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
+RLAPI void InitVrSimulator(int vrDevice);           // Init VR simulator for selected device
+RLAPI void CloseVrSimulator(void);                  // Close VR simulator for current device
+RLAPI bool IsVrSimulatorReady(void);                // Detect if VR device is ready
+RLAPI void UpdateVrTracking(Camera *camera);        // Update VR tracking (position and orientation) and camera
+RLAPI void ToggleVrMode(void);                      // Enable/Disable VR experience (device or simulator)
+RLAPI void BeginVrDrawing(void);                    // Begin VR simulator stereo rendering
+RLAPI void EndVrDrawing(void);                      // End VR simulator stereo rendering
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

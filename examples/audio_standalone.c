@@ -29,7 +29,7 @@
 #endif
 #include "audio.h"
 
-#if defined(__linux)
+#if defined(__linux__)
 
 #include <stdio.h>
 #include <termios.h>

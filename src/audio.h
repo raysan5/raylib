@@ -1,13 +1,16 @@
 /**********************************************************************************************
 *
-*   raylib.audio
+*   raylib.audio - Basic funtionality to work with audio
 *
-*   This module provides basic functionality to work with audio:
-*       Manage audio device (init/close)
-*       Load and Unload audio files (WAV, OGG, FLAC, XM, MOD)
-*       Play/Stop/Pause/Resume loaded audio
-*       Manage mixing channels
-*       Manage raw audio context
+*   DESCRIPTION:
+*
+*   This module provides basic functionality to:
+*     - Manage audio device (init/close)
+*     - Load and unload audio files
+*     - Format wave data (sample rate, size, channels)
+*     - Play/Stop/Pause/Resume loaded audio
+*     - Manage mixing channels
+*     - Manage raw audio context
 *
 *   DEPENDENCIES:
 *       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
@@ -16,16 +19,17 @@
 *       jar_mod     - MOD audio file loading
 *       dr_flac     - FLAC audio file loading
 *
-*   Many thanks to Joshua Reisenauer (github: @kd7tck) for the following additions:
-*       XM audio module support (jar_xm)
-*       MOD audio module support (jar_mod)
-*       Mixing channels support
-*       Raw audio context support
+*   CONTRIBUTORS:
+*       Joshua Reisenauer (github: @kd7tck):
+*           - XM audio module support (jar_xm)
+*           - MOD audio module support (jar_mod)
+*           - Mixing channels support
+*           - Raw audio context support
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

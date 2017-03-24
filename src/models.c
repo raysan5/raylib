@@ -1,17 +1,19 @@
 /**********************************************************************************************
 *
-*   raylib.models - Basic functions to draw 3d shapes and 3d models
+*   raylib.models - Basic functions to deal with 3d shapes and 3d models
 *
 *   CONFIGURATION:
 *
 *   #define SUPPORT_FILEFORMAT_OBJ / SUPPORT_LOAD_OBJ
+*       Selected desired fileformats to be supported for loading.
 *
 *   #define SUPPORT_FILEFORMAT_MTL
+*       Selected desired fileformats to be supported for loading.
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

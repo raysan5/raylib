@@ -3,6 +3,8 @@
 
 # Ignore VIM's backup generated files
 *.swp
+*.swo
+*~
 
 # Ignore Android generated files and folders
 src_android/obj/
@@ -61,6 +63,17 @@ examples/*
 !examples/*.png
 # Unignore examples Makefile
 !examples/Makefile
+
+# Ignore all games files
+games/*
+# Unignore all games dirs
+!games/*/
+# Unignore all games files with extension
+!games/*.c
+!games/*.lua
+!games/*.png
+# Unignore games makefile
+!games/makefile
 
 # Ignore files build by xcode
 *.mode*v*

@@ -2,7 +2,14 @@
 *
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
-*   The following platforms are supported: Windows, Linux, Mac (OSX), Android, Raspberry Pi, HTML5, Oculus Rift CV1
+*   PLATFORMS SUPPORTED: 
+*       - Windows (win32/Win64)
+*       - Linux (tested on Ubuntu)
+*       - Mac (OSX)
+*       - Android (API Level 9 or greater) 
+*       - Raspberry Pi (Raspbian)
+*       - HTML5 (Chrome, Firefox)
+*       - Oculus Rift CV1
 *
 *   CONFIGURATION:
 *
@@ -22,13 +29,15 @@
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
 *       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
 *
-*   #define LOAD_DEFAULT_FONT (defined by default)
+*   #define SUPPORT_DEFAULT_FONT (default)
 *       Default font is loaded on window initialization to be available for the user to render simple text.
 *       NOTE: If enabled, uses external module functions to load default raylib font (module: text)
 *
-*   #define INCLUDE_CAMERA_SYSTEM / SUPPORT_CAMERA_SYSTEM
+*   #define SUPPORT_CAMERA_SYSTEM
+*       Camera module is included (camera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 *
-*   #define INCLUDE_GESTURES_SYSTEM / SUPPORT_GESTURES_SYSTEM
+*   #define SUPPORT_GESTURES_SYSTEM
+*       Gestures module is included (gestures.h) to support gestures detection: tap, hold, swipe, drag
 *
 *   #define SUPPORT_MOUSE_GESTURES
 *       Mouse gestures are directly mapped like touches and processed by gestures system.
@@ -42,7 +51,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -61,6 +70,14 @@
 *
 **********************************************************************************************/
 
+// Default supported features
+//-------------------------------------
+#define SUPPORT_DEFAULT_FONT
+#define SUPPORT_MOUSE_GESTURES
+#define SUPPORT_CAMERA_SYSTEM
+#define SUPPORT_GESTURES_SYSTEM
+//-------------------------------------
+
 #include "raylib.h"
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
@@ -70,10 +87,12 @@
 #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
 #include "raymath.h"            // Required for: Vector3 and Matrix functions
 
-#define GESTURES_IMPLEMENTATION
-#include "gestures.h"       // Gestures detection functionality
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    #define GESTURES_IMPLEMENTATION
+    #include "gestures.h"       // Gestures detection functionality
+#endif
 
-#if !defined(PLATFORM_ANDROID)
+#if defined(SUPPORT_CAMERA_SYSTEM) && !defined(PLATFORM_ANDROID)
     #define CAMERA_IMPLEMENTATION
     #include "camera.h"     // Camera system functionality
 #endif
@@ -86,7 +105,7 @@
 #include <string.h>         // Required for: strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#if defined __linux || defined(PLATFORM_WEB)
+#if defined __linux__ || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
 #elif defined __APPLE__
     #include <unistd.h>             // Required for: usleep()
@@ -96,7 +115,7 @@
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
 
-    #ifdef __linux
+    #ifdef __linux__
         #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
         #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
@@ -140,8 +159,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define STORAGE_FILENAME     "storage.data"
-
 #if defined(PLATFORM_RPI)
     // Old device inputs system
     #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
@@ -161,7 +178,7 @@
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
 
-#define LOAD_DEFAULT_FONT        // Load default font on window initialization (module: text)
+#define STORAGE_FILENAME        "storage.data"
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -259,7 +276,10 @@ static int lastGamepadButtonPressed = -1;   // Register last gamepad button pres
 static int gamepadAxisCount = 0;            // Register number of available gamepad axis
 
 static Vector2 mousePosition;               // Mouse position on screen
+
+#if defined(SUPPORT_GESTURES_SYSTEM)
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
+#endif
 
 #if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -277,7 +297,7 @@ static bool showLogo = false;               // Track if showing logo at init is 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
-#if defined(LOAD_DEFAULT_FONT)
+#if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadDefaultFont(void);          // [Module: text] Loads default font on InitWindow()
 extern void UnloadDefaultFont(void);        // [Module: text] Unloads default font from GPU memory
 #endif
@@ -359,7 +379,7 @@ void InitWindow(int width, int height, const char *title)
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
 
-#if defined(LOAD_DEFAULT_FONT)
+#if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
@@ -471,7 +491,7 @@ void InitWindow(int width, int height, void *state)
 // Close Window and Terminate Context
 void CloseWindow(void)
 {
-#if defined(LOAD_DEFAULT_FONT)
+#if defined(SUPPORT_DEFAULT_FONT)
     UnloadDefaultFont();
 #endif
 
@@ -583,12 +603,15 @@ void SetWindowIcon(Image image)
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
+#if defined(PLATFORM_DESKTOP)
     glfwSetWindowPos(window, x, y);
+#endif
 }
 
 // Set monitor for the current window (fullscreen mode)
 void SetWindowMonitor(int monitor)
 {
+#if defined(PLATFORM_DESKTOP)
     int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
     
@@ -598,6 +621,7 @@ void SetWindowMonitor(int monitor)
         TraceLog(INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
     }
     else TraceLog(WARNING, "Selected monitor not found");
+#endif
 }
 
 // Get current screen width
@@ -617,7 +641,7 @@ int GetScreenHeight(void)
 void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
+    #ifdef __linux__
         XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
     #else
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -630,7 +654,7 @@ void ShowCursor()
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux
+    #ifdef __linux__
         XColor col;
         const char nil[] = {0};
 
@@ -751,11 +775,8 @@ void End2dMode(void)
 void Begin3dMode(Camera camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
-
-    if (IsVrDeviceReady() || IsVrSimulator()) BeginVrDrawing();
-
+    
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
-
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (PROJECTION)
 
@@ -781,8 +802,6 @@ void Begin3dMode(Camera camera)
 void End3dMode(void)
 {
     rlglDraw();                         // Process internal buffers (update + draw)
-
-    if (IsVrDeviceReady() || IsVrSimulator()) EndVrDrawing();
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPopMatrix();                      // Restore previous matrix (PROJECTION) from matrix stack
@@ -1125,16 +1144,16 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     MatrixInvert(&matProjView);
 
     // Calculate far and near points
-    Quaternion near = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
-    Quaternion far = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
+    Quaternion qNear = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
+    Quaternion qFar = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
 
     // Multiply points by unproject matrix
-    QuaternionTransform(&near, matProjView);
-    QuaternionTransform(&far, matProjView);
+    QuaternionTransform(&qNear, matProjView);
+    QuaternionTransform(&qFar, matProjView);
 
     // Calculate normalized world points in vectors
-    Vector3 nearPoint = { near.x/near.w, near.y/near.w, near.z/near.w};
-    Vector3 farPoint = { far.x/far.w, far.y/far.w, far.z/far.w};
+    Vector3 nearPoint = { qNear.x/qNear.w, qNear.y/qNear.w, qNear.z/qNear.w};
+    Vector3 farPoint = { qFar.x/qFar.w, qFar.y/qFar.w, qFar.z/qFar.w};
 #endif
 
     // Calculate normalized direction vector
@@ -2007,7 +2026,7 @@ static double GetTime(void)
 // Wait for some milliseconds (stop program execution)
 static void Wait(float ms)
 {
-#define SUPPORT_BUSY_WAIT_LOOP
+//#define SUPPORT_BUSY_WAIT_LOOP
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
@@ -2017,7 +2036,7 @@ static void Wait(float ms)
 #else
     #if defined _WIN32
         Sleep(ms);
-    #elif defined __linux || defined(PLATFORM_WEB)
+    #elif defined __linux__ || defined(PLATFORM_WEB)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);
@@ -2065,9 +2084,11 @@ static bool GetMouseButtonStatus(int button)
 // Poll (store) all input events
 static void PollInputEvents(void)
 {
+#if defined(SUPPORT_GESTURES_SYSTEM)
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
+#endif
 
     // Reset last key pressed registered
     lastKeyPressed = -1;
@@ -2297,8 +2318,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 {
     currentMouseState[button] = action;
 
-#define ENABLE_MOUSE_GESTURES
-#if defined(ENABLE_MOUSE_GESTURES)
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent;
 
@@ -2329,8 +2349,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
 // GLFW3 Cursor Position Callback, runs on mouse move
 static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
-#define ENABLE_MOUSE_GESTURES
-#if defined(ENABLE_MOUSE_GESTURES)
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent;
 
@@ -2460,7 +2479,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
 
-                    #if defined(LOAD_DEFAULT_FONT)
+                    #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
                     // NOTE: External function (defined in module: text)
                     LoadDefaultFont();
