@@ -20,7 +20,7 @@
 *       Show TraceLog() DEBUG messages
 *
 *   DEPENDENCIES:
-*       stb_image_write - PNG writting functions
+*       stb_image_write - BMP/PNG writting functions
 *
 *
 *   LICENSE: zlib/libpng

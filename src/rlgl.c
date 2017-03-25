@@ -25,7 +25,7 @@
 *   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
 *       Support VR simulation functionality (stereo rendering)
 *
-*   #define SUPPORT_SHADER_DISTORTION
+*   #define SUPPORT_DISTORTION_SHADER
 *       Include stereo rendering distortion shader (shader_distortion.h)
 *
 *   DEPENDENCIES:
@@ -53,6 +53,11 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
+
+// Default configuration flags (supported features)
+//-------------------------------------------------
+#define SUPPORT_VR_SIMULATION
+//-------------------------------------------------
 
 #include "rlgl.h"
 
@@ -100,7 +105,7 @@
     #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
 #endif
 
-#if !defined(GRAPHICS_API_OPENGL_11) && !defined(RLGL_NO_DISTORTION_SHADER)
+#if !defined(GRAPHICS_API_OPENGL_11) && defined(SUPPORT_DISTORTION_SHADER)
     #include "shader_distortion.h"  // Distortion shader to be embedded
 #endif
 
@@ -2591,10 +2596,12 @@ void InitVrSimulator(int vrDevice)
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: screen size should match HMD aspect ratio
     vrConfig.stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
-
+    
+#if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
     vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
     if (vrConfig.distortionShader.id != 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
+#endif
 
     SetStereoConfig(hmd);
 
@@ -2613,7 +2620,9 @@ void CloseVrSimulator(void)
     if (vrSimulatorReady)
     {
         rlDeleteRenderTextures(vrConfig.stereoFbo); // Unload stereo framebuffer and texture
+        #if defined(SUPPORT_DISTORTION_SHADER)
         UnloadShader(vrConfig.distortionShader);    // Unload distortion shader
+        #endif
     }
 #endif
 }
@@ -2700,8 +2709,12 @@ void EndVrDrawing(void)
         rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
+#if defined(SUPPORT_DISTORTION_SHADER)
         // Draw RenderTexture (stereoFbo) using distortion shader
         currentShader = vrConfig.distortionShader;
+#else
+        currentShader = GetDefaultShader();
+#endif
 
         rlEnableTexture(vrConfig.stereoFbo.texture.id);
 
@@ -3536,6 +3549,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     TraceLog(DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
     TraceLog(DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
 
+#if defined(SUPPORT_DISTORTION_SHADER)
     // Update distortion shader with lens and distortion-scale parameters
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
@@ -3546,6 +3560,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+#endif
 
     // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
     // ...but with lens distortion it is increased (see Oculus SDK Documentation)

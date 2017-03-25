@@ -13,7 +13,7 @@
 *       - Multiple textures support, including compressed formats and mipmaps generation
 *       - Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
 *       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
-*       - Audio loading and playing with streaming support and mixing channels [audio]
+*       - Audio loading and playing with streaming support and mixing channels: [audio]
 *       - VR stereo rendering support with configurable HMD device parameters
 *       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
 *       - Custom color palette for fancy visuals on raywhite background
