@@ -70,13 +70,13 @@
 *
 **********************************************************************************************/
 
-// Default supported features
-//-------------------------------------
+// Default configuration flags (supported features)
+//-------------------------------------------------
 #define SUPPORT_DEFAULT_FONT
 #define SUPPORT_MOUSE_GESTURES
 #define SUPPORT_CAMERA_SYSTEM
 #define SUPPORT_GESTURES_SYSTEM
-//-------------------------------------
+//-------------------------------------------------
 
 #include "raylib.h"
 
