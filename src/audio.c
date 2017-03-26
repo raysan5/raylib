@@ -1266,7 +1266,7 @@ static Wave LoadOGG(const char *fileName)
         wave.sampleCount = (int)stb_vorbis_stream_length_in_samples(oggFile);
 
         float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
-        if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio lenght is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
+        if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio length is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
 
         wave.data = (short *)malloc(wave.sampleCount*wave.channels*sizeof(short));
 
