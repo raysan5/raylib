@@ -16,7 +16,7 @@
 *       Define to use the module as standalone library (independently of raylib).
 *       Required types and functions are defined in the same module.
 *
-*   #define SUPPORT_FILEFORMAT_WAV  / SUPPORT_LOAD_WAV
+*   #define SUPPORT_FILEFORMAT_WAV
 *   #define SUPPORT_FILEFORMAT_OGG
 *   #define SUPPORT_FILEFORMAT_XM
 *   #define SUPPORT_FILEFORMAT_MOD
@@ -24,9 +24,6 @@
 *       Selected desired fileformats to be supported for loading. Some of those formats are 
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
-*   #define SUPPORT_RAW_AUDIO_BUFFERS
-*       Support creating raw audio buffers to send raw data. Buffers must be managed by the user,
-*       it means initialization, refilling and cleaning.
 *
 *   LIMITATIONS:
 *       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
@@ -70,6 +67,12 @@
 
 //#define AUDIO_STANDALONE     // NOTE: To use the audio module as standalone lib, just uncomment this line
 
+// Default configuration flags (supported features)
+//-------------------------------------------------
+#define SUPPORT_FILEFORMAT_WAV
+#define SUPPORT_FILEFORMAT_OGG
+//-------------------------------------------------
+
 #if defined(AUDIO_STANDALONE)
     #include "audio.h"
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
@@ -94,18 +97,26 @@
 #include <string.h>             // Required for: strcmp(), strncmp()
 #include <stdio.h>              // Required for: FILE, fopen(), fclose(), fread()
 
-//#define STB_VORBIS_HEADER_ONLY
-#include "external/stb_vorbis.h"    // OGG loading functions
+#if defined(SUPPORT_FILEFORMAT_OGG)
+    //#define STB_VORBIS_HEADER_ONLY
+    #include "external/stb_vorbis.h"    // OGG loading functions
+#endif
 
-#define JAR_XM_IMPLEMENTATION
-#include "external/jar_xm.h"        // XM loading functions
+#if defined(SUPPORT_FILEFORMAT_XM)
+    #define JAR_XM_IMPLEMENTATION
+    #include "external/jar_xm.h"        // XM loading functions
+#endif
 
-#define JAR_MOD_IMPLEMENTATION
-#include "external/jar_mod.h"       // MOD loading functions
+#if defined(SUPPORT_FILEFORMAT_MOD)
+    #define JAR_MOD_IMPLEMENTATION
+    #include "external/jar_mod.h"       // MOD loading functions
+#endif
 
-#define DR_FLAC_IMPLEMENTATION
-#define DR_FLAC_NO_WIN32_IO
-#include "external/dr_flac.h"       // FLAC loading functions
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    #define DR_FLAC_IMPLEMENTATION
+    #define DR_FLAC_NO_WIN32_IO
+    #include "external/dr_flac.h"       // FLAC loading functions
+#endif
 
 #ifdef _MSC_VER
     #undef bool
@@ -140,10 +151,18 @@ typedef enum { MUSIC_AUDIO_OGG = 0, MUSIC_AUDIO_FLAC, MUSIC_MODULE_XM, MUSIC_MOD
 // Music type (file streaming from memory)
 typedef struct MusicData {
     MusicContextType ctxType;           // Type of music context (OGG, XM, MOD)
+#if defined(SUPPORT_FILEFORMAT_OGG)
     stb_vorbis *ctxOgg;                 // OGG audio context
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
     drflac *ctxFlac;                    // FLAC audio context
+#endif
+#if defined(SUPPORT_FILEFORMAT_XM)
     jar_xm_context_t *ctxXm;            // XM chiptune context
+#endif
+#if defined(SUPPORT_FILEFORMAT_MOD)
     jar_mod_context_t ctxMod;           // MOD chiptune context
+#endif
 
     AudioStream stream;                 // Audio stream (double buffering)
 
@@ -164,9 +183,15 @@ typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_FILEFORMAT_WAV)
 static Wave LoadWAV(const char *fileName);          // Load WAV file
+#endif
+#if defined(SUPPORT_FILEFORMAT_OGG)
 static Wave LoadOGG(const char *fileName);          // Load OGG file
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
 static Wave LoadFLAC(const char *fileName);         // Load FLAC file
+#endif
 
 #if defined(AUDIO_STANDALONE)
 const char *GetExtension(const char *fileName);     // Get the extension for a filename
@@ -261,8 +286,13 @@ Wave LoadWave(const char *fileName)
     Wave wave = { 0 };
 
     if (strcmp(GetExtension(fileName), "wav") == 0) wave = LoadWAV(fileName);
+#if defined(SUPPORT_FILEFORMAT_OGG)
     else if (strcmp(GetExtension(fileName), "ogg") == 0) wave = LoadOGG(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (strcmp(GetExtension(fileName), "flac") == 0) wave = LoadFLAC(fileName);
+#endif
+#if !defined(AUDIO_STANDALONE)
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
         RRES rres = LoadResource(fileName, 0);
@@ -274,7 +304,8 @@ Wave LoadWave(const char *fileName)
 
         UnloadResource(rres);
     }
-    else TraceLog(WARNING, "[%s] File extension not recognized, it can't be loaded", fileName);
+#endif
+    else TraceLog(WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
 
     return wave;
 }
@@ -664,6 +695,7 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(DEBUG, "[%s] OGG memory required: %i", fileName, info.temp_memory_required);
         }
     }
+#if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (strcmp(GetExtension(fileName), "flac") == 0)
     {
         music->ctxFlac = drflac_open_file(fileName);
@@ -683,6 +715,8 @@ Music LoadMusicStream(const char *fileName)
             TraceLog(DEBUG, "[%s] FLAC channels: %i", fileName, music->ctxFlac->channels);
         }
     }
+#endif
+#if defined(SUPPORT_FILEFORMAT_XM)
     else if (strcmp(GetExtension(fileName), "xm") == 0)
     {
         int result = jar_xm_create_context_from_file(&music->ctxXm, 48000, fileName);
@@ -703,6 +737,8 @@ Music LoadMusicStream(const char *fileName)
         }
         else TraceLog(WARNING, "[%s] XM file could not be opened", fileName);
     }
+#endif
+#if defined(SUPPORT_FILEFORMAT_MOD)
     else if (strcmp(GetExtension(fileName), "mod") == 0)
     {
         jar_mod_init(&music->ctxMod);
@@ -720,7 +756,8 @@ Music LoadMusicStream(const char *fileName)
         }
         else TraceLog(WARNING, "[%s] MOD file could not be opened", fileName);
     }
-    else TraceLog(WARNING, "[%s] Music extension not recognized, it can't be loaded", fileName);
+#endif
+    else TraceLog(WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
 
     return music;
 }
@@ -731,9 +768,15 @@ void UnloadMusicStream(Music music)
     CloseAudioStream(music->stream);
 
     if (music->ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close(music->ctxOgg);
+#if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (music->ctxType == MUSIC_AUDIO_FLAC) drflac_free(music->ctxFlac);
+#endif
+#if defined(SUPPORT_FILEFORMAT_XM)
     else if (music->ctxType == MUSIC_MODULE_XM) jar_xm_free_context(music->ctxXm);
+#endif
+#if defined(SUPPORT_FILEFORMAT_MOD)
     else if (music->ctxType == MUSIC_MODULE_MOD) jar_mod_unload(&music->ctxMod);
+#endif
 
     free(music);
 }
@@ -778,8 +821,15 @@ void StopMusicStream(Music music)
     switch (music->ctxType)
     {
         case MUSIC_AUDIO_OGG: stb_vorbis_seek_start(music->ctxOgg); break;
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+        case MUSIC_MODULE_FLAC: /* TODO: Restart FLAC context */ break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_XM)
         case MUSIC_MODULE_XM: /* TODO: Restart XM context */ break;
+#endif
+#if defined(SUPPORT_FILEFORMAT_MOD)
         case MUSIC_MODULE_MOD: jar_mod_seek_start(&music->ctxMod); break;
+#endif
         default: break;
     }
 
@@ -821,14 +871,20 @@ void UpdateMusicStream(Music music)
                     int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
 
                 } break;
+            #if defined(SUPPORT_FILEFORMAT_FLAC)
                 case MUSIC_AUDIO_FLAC:
                 {
                     // NOTE: Returns the number of samples to process
                     unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
 
                 } break;
+            #endif
+            #if defined(SUPPORT_FILEFORMAT_XM)
                 case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, samplesCount); break;
+            #endif
+            #if defined(SUPPORT_FILEFORMAT_MOD)
                 case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, samplesCount, 0); break;
+            #endif
                 default: break;
             }
 
@@ -1067,6 +1123,7 @@ void StopAudioStream(AudioStream stream)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
+#if defined(SUPPORT_FILEFORMAT_WAV)
 // Load WAV file into Wave structure
 static Wave LoadWAV(const char *fileName)
 {
@@ -1183,7 +1240,9 @@ static Wave LoadWAV(const char *fileName)
 
     return wave;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_OGG)
 // Load OGG file into Wave structure
 // NOTE: Using stb_vorbis library
 static Wave LoadOGG(const char *fileName)
@@ -1223,7 +1282,9 @@ static Wave LoadOGG(const char *fileName)
 
     return wave;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_FLAC)
 // Load FLAC file into Wave structure
 // NOTE: Using dr_flac library
 static Wave LoadFLAC(const char *fileName)
@@ -1245,6 +1306,7 @@ static Wave LoadFLAC(const char *fileName)
 
     return wave;
 }
+#endif
 
 // Some required functions for audio standalone module version
 #if defined(AUDIO_STANDALONE)

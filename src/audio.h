@@ -2,22 +2,24 @@
 *
 *   raylib.audio - Basic funtionality to work with audio
 *
-*   DESCRIPTION:
+*   FEATURES:
+*       - Manage audio device (init/close)
+*       - Load and unload audio files
+*       - Format wave data (sample rate, size, channels)
+*       - Play/Stop/Pause/Resume loaded audio
+*       - Manage mixing channels
+*       - Manage raw audio context
 *
-*   This module provides basic functionality to:
-*     - Manage audio device (init/close)
-*     - Load and unload audio files
-*     - Format wave data (sample rate, size, channels)
-*     - Play/Stop/Pause/Resume loaded audio
-*     - Manage mixing channels
-*     - Manage raw audio context
+*   LIMITATIONS:
+*       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
+*       Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
 *
 *   DEPENDENCIES:
 *       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
-*       jar_xm      - XM module file loading
-*       jar_mod     - MOD audio file loading
-*       dr_flac     - FLAC audio file loading
+*       jar_xm      - XM module file loading (#define SUPPORT_FILEFORMAT_XM)
+*       jar_mod     - MOD audio file loading (#define SUPPORT_FILEFORMAT_MOD)
+*       dr_flac     - FLAC audio file loading (#define SUPPORT_FILEFORMAT_FLAC)
 *
 *   CONTRIBUTORS:
 *       Joshua Reisenauer (github: @kd7tck):
@@ -152,7 +154,7 @@ float GetMusicTimePlayed(Music music);                          // Get current m
 AudioStream InitAudioStream(unsigned int sampleRate,
                                   unsigned int sampleSize,
                                   unsigned int channels);       // Init audio stream (to stream raw audio pcm data)
-void UpdateAudioStream(AudioStream stream, void *data, int samplesCount); // Update audio stream buffers with data
+void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
 bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
 void PlayAudioStream(AudioStream stream);                       // Play audio stream

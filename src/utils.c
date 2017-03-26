@@ -153,6 +153,29 @@ void SavePNG(const char *fileName, unsigned char *imgData, int width, int height
 #endif
 #endif
 
+// Keep track of memory allocated
+// NOTE: mallocType defines the type of data allocated
+/*
+void RecordMalloc(int mallocType, int mallocSize, const char *msg)
+{
+    // TODO: Investigate how to record memory allocation data...
+    // Maybe creating my own malloc function...
+}
+*/
+
+bool IsFileExtension(const char *fileName, const char *ext)
+{
+    return (strcmp(GetExtension(fileName), ext) == 0);
+}
+
+// Get the extension for a filename
+const char *GetExtension(const char *fileName)
+{
+    const char *dot = strrchr(fileName, '.');
+    if (!dot || dot == fileName) return "";
+    return (dot + 1);
+}
+
 #if defined(PLATFORM_ANDROID)
 // Initialize asset manager from android app
 void InitAssetManager(AAssetManager *manager)
@@ -172,24 +195,6 @@ FILE *android_fopen(const char *fileName, const char *mode)
     return funopen(asset, android_read, android_write, android_seek, android_close);
 }
 #endif
-
-// Keep track of memory allocated
-// NOTE: mallocType defines the type of data allocated
-/*
-void RecordMalloc(int mallocType, int mallocSize, const char *msg)
-{
-    // TODO: Investigate how to record memory allocation data...
-    // Maybe creating my own malloc function...
-}
-*/
-
-// Get the extension for a filename
-const char *GetExtension(const char *fileName)
-{
-    const char *dot = strrchr(fileName, '.');
-    if (!dot || dot == fileName) return "";
-    return (dot + 1);
-}
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
