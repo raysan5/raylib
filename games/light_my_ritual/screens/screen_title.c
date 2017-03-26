@@ -85,7 +85,7 @@ void DrawTitleScreen(void)
     
     DrawText("(c) Developed by Ramon Santamaria (@raysan5)", 20, GetScreenHeight() - 40, 20, LIGHTGRAY); 
     
-    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawTextEx(font, "PRESS ENTER to START LIGHTING", (Vector2){ 230, 450 }, font.size, -2, WHITE);
+    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawTextEx(font, "PRESS ENTER to START LIGHTING", (Vector2){ 230, 450 }, 24, -2, WHITE);
 }
 
 // Title Screen Unload logic
