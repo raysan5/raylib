@@ -1,17 +1,19 @@
 /**********************************************************************************************
 *
-*   raylib.models - Basic functions to draw 3d shapes and 3d models
+*   raylib.models - Basic functions to deal with 3d shapes and 3d models
 *
 *   CONFIGURATION:
 *
-*   #define SUPPORT_FILEFORMAT_OBJ / SUPPORT_LOAD_OBJ
+*   #define SUPPORT_FILEFORMAT_OBJ
+*       Selected desired fileformats to be supported for loading.
 *
 *   #define SUPPORT_FILEFORMAT_MTL
+*       Selected desired fileformats to be supported for loading.
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -29,6 +31,12 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
+
+// Default configuration flags (supported features)
+//-------------------------------------------------
+#define SUPPORT_FILEFORMAT_OBJ
+#define SUPPORT_FILEFORMAT_MTL
+//-------------------------------------------------
 
 #include "raylib.h"
 
@@ -61,8 +69,12 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_FILEFORMAT_OBJ)
 static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
+#endif
+#if defined(SUPPORT_FILEFORMAT_MTL)
 static Material LoadMTL(const char *fileName);  // Load MTL material data
+#endif
 
 static Mesh GenMeshHeightmap(Image image, Vector3 size);
 static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
@@ -580,8 +592,11 @@ Mesh LoadMesh(const char *fileName)
 {
     Mesh mesh = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_OBJ)
     if (strcmp(GetExtension(fileName), "obj") == 0) mesh = LoadOBJ(fileName);
-    else TraceLog(WARNING, "[%s] Mesh extension not recognized, it can't be loaded", fileName);
+#else
+    TraceLog(WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
+#endif
 
     if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
     else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
@@ -690,8 +705,11 @@ Material LoadMaterial(const char *fileName)
 {
     Material material = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_MTL)
     if (strcmp(GetExtension(fileName), "mtl") == 0) material = LoadMTL(fileName);
-    else TraceLog(WARNING, "[%s] Material extension not recognized, it can't be loaded", fileName);
+#else
+    TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+#endif
 
     return material;
 }
@@ -1588,6 +1606,7 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
+#if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
 static Mesh LoadOBJ(const char *fileName)
 {
@@ -1836,7 +1855,9 @@ static Mesh LoadOBJ(const char *fileName)
 
     return mesh;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_MTL)
 // Load MTL material data (specs: http://paulbourke.net/dataformats/mtl/)
 // NOTE: Texture map parameters are not supported
 static Material LoadMTL(const char *fileName)
@@ -2000,3 +2021,4 @@ static Material LoadMTL(const char *fileName)
 
     return material;
 }
+#endif

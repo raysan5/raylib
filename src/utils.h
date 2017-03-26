@@ -1,10 +1,11 @@
 /**********************************************************************************************
 *
-*   raylib.utils
+*   raylib.utils - Some common utility functions
 *
-*   Some utility functions
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -32,6 +33,8 @@
 #endif
 
 #include "rres.h"
+
+#define SUPPORT_SAVE_PNG
 
 //----------------------------------------------------------------------------------
 // Some basic Defines
@@ -61,8 +64,12 @@ void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log messa
 const char *GetExtension(const char *fileName);     // Returns extension of a filename
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if defined(SUPPORT_SAVE_BMP)
 void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
+#endif
+#if defined(SUPPORT_SAVE_PNG)
 void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize);
+#endif
 #endif
 
 #if defined(PLATFORM_ANDROID)

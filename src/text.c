@@ -5,12 +5,11 @@
 *   CONFIGURATION:
 *
 *   #define SUPPORT_FILEFORMAT_FNT
-*   #define SUPPORT_FILEFORMAT_TTF / INCLUDE_STB_TRUETYPE
-*   #define SUPPORT_FILEFORMAT_IMAGE_FONT
+*   #define SUPPORT_FILEFORMAT_TTF
 *       Selected desired fileformats to be supported for loading. Some of those formats are 
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
-*   #define INCLUDE_DEFAULT_FONT / SUPPORT_DEFAULT_FONT
+*   #define SUPPORT_DEFAULT_FONT
 *
 *   DEPENDENCIES:
 *       stb_truetype - Load TTF file and rasterize characters data
@@ -18,7 +17,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -37,6 +36,11 @@
 *
 **********************************************************************************************/
 
+// Default supported features
+//-------------------------------------
+#define SUPPORT_DEFAULT_FONT
+//-------------------------------------
+
 #include "raylib.h"
 
 #include <stdlib.h>         // Required for: malloc(), free()
@@ -46,10 +50,12 @@
 
 #include "utils.h"          // Required for: GetExtension()
 
-// Following libs are used on LoadTTF()
-#define STBTT_STATIC        // Define stb_truetype functions static to this module
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "external/stb_truetype.h"      // Required for: stbtt_BakeFontBitmap()
+#if defined(SUPPORT_FILEFORMAT_TTF)
+    // Following libs are used on LoadTTF()
+    #define STBTT_STATIC        // Define stb_truetype functions static to this module
+    #define STB_TRUETYPE_IMPLEMENTATION
+    #include "external/stb_truetype.h"      // Required for: stbtt_BakeFontBitmap()
+#endif
 
 // Rectangle packing functions (not used at the moment)
 //#define STB_RECT_PACK_IMPLEMENTATION
@@ -61,8 +67,6 @@
 #define MAX_FORMATTEXT_LENGTH   64
 #define MAX_SUBTEXT_LENGTH      64
 
-#define BIT_CHECK(a,b) ((a) & (1 << (b)))
-
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -71,8 +75,10 @@
 //----------------------------------------------------------------------------------
 // Global variables
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_DEFAULT_FONT)
 static SpriteFont defaultFont;        // Default font provided by raylib
 // NOTE: defaultFont is loaded on InitWindow and disposed on CloseWindow [module: core]
+#endif
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -86,17 +92,28 @@ static int GetCharIndex(SpriteFont font, int letter);
 
 static SpriteFont LoadImageFont(Image image, Color key, int firstChar); // Load a Image font file (XNA style)
 static SpriteFont LoadRBMF(const char *fileName);   // Load a rBMF font file (raylib BitMap Font)
+#if defined(SUPPORT_FILEFORMAT_FNT)
 static SpriteFont LoadBMFont(const char *fileName); // Load a BMFont file (AngelCode font file)
+#endif
+#if defined(SUPPORT_FILEFORMAT_TTF)
 static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars); // Load spritefont from TTF data
+#endif
 
+#if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadDefaultFont(void);
 extern void UnloadDefaultFont(void);
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_DEFAULT_FONT)
+
+// Load raylib default font
 extern void LoadDefaultFont(void)
 {
+    #define BIT_CHECK(a,b) ((a) & (1 << (b)))
+
     // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // http://www.utf8-chartable.de/unicode-utf8-table.pl
 
@@ -241,16 +258,23 @@ extern void LoadDefaultFont(void)
     TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
 
+// Unload raylib default font
 extern void UnloadDefaultFont(void)
 {
     UnloadTexture(defaultFont.texture);
     free(defaultFont.chars);
 }
+#endif      // SUPPORT_DEFAULT_FONT
 
 // Get the default font, useful to be used with extended parameters
 SpriteFont GetDefaultFont()
 {
+#if defined(SUPPORT_DEFAULT_FONT)
     return defaultFont;
+#else
+    SpriteFont font = { 0 };
+    return font;
+#endif   
 }
 
 // Load SpriteFont from file into GPU memory (VRAM)
@@ -265,8 +289,12 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     // Check file extension
     if (strcmp(GetExtension(fileName),"rbmf") == 0) spriteFont = LoadRBMF(fileName);    // TODO: DELETE... SOON...
+#if defined(SUPPORT_FILEFORMAT_TTF)
     else if (strcmp(GetExtension(fileName),"ttf") == 0) spriteFont = LoadSpriteFontTTF(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+#endif
+#if defined(SUPPORT_FILEFORMAT_FNT)
     else if (strcmp(GetExtension(fileName),"fnt") == 0) spriteFont = LoadBMFont(fileName);
+#endif
     else if (strcmp(GetExtension(fileName),"rres") == 0)
     {
         // TODO: Read multiple resource blocks from file (RRES_FONT_IMAGE, RRES_FONT_CHARDATA)
@@ -317,6 +345,7 @@ SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount,
 {
     SpriteFont spriteFont = { 0 };
 
+#if defined(SUPPORT_FILEFORMAT_TTF)
     if (strcmp(GetExtension(fileName),"ttf") == 0)
     {
         if ((fontChars == NULL) || (charsCount == 0))
@@ -331,6 +360,7 @@ SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount,
         }
         else spriteFont = LoadTTF(fileName, fontSize, charsCount, fontChars);
     }
+#endif
 
     if (spriteFont.texture.id == 0)
     {
@@ -345,7 +375,7 @@ SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount,
 void UnloadSpriteFont(SpriteFont spriteFont)
 {
     // NOTE: Make sure spriteFont is not default font (fallback)
-    if (spriteFont.texture.id != defaultFont.texture.id)
+    if (spriteFont.texture.id != GetDefaultFont().texture.id)
     {
         UnloadTexture(spriteFont.texture);
         free(spriteFont.chars);
@@ -360,7 +390,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 {
     // Check if default font has been loaded
-    if (defaultFont.texture.id != 0)
+    if (GetDefaultFont().texture.id != 0)
     {
         Vector2 position = { (float)posX, (float)posY };
 
@@ -471,7 +501,7 @@ int MeasureText(const char *text, int fontSize)
     Vector2 vec = { 0.0f, 0.0f };
 
     // Check if default font has been loaded
-    if (defaultFont.texture.id != 0)
+    if (GetDefaultFont().texture.id != 0)
     {
         int defaultFontSize = 10;   // Default Font chars height in pixel
         if (fontSize < defaultFontSize) fontSize = defaultFontSize;
@@ -826,6 +856,7 @@ static SpriteFont LoadRBMF(const char *fileName)
     return spriteFont;
 }
 
+#if defined(SUPPORT_FILEFORMAT_FNT)
 // Load a BMFont file (AngelCode font file)
 static SpriteFont LoadBMFont(const char *fileName)
 {
@@ -943,7 +974,9 @@ static SpriteFont LoadBMFont(const char *fileName)
 
     return font;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_TTF)
 // Generate a sprite font from TTF file data (font size required)
 // TODO: Review texture packing method and generation (use oversampling)
 static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
@@ -1036,3 +1069,4 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
 
     return font;
 }
+#endif

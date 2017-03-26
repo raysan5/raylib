@@ -5,7 +5,7 @@
 *   This show has been created using raylib v1.4 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -709,11 +709,11 @@ void UpdateDrawOneFrame(void)
                     {
                         DrawText("This module give you functions to:", 48, 200, 10, GetColor(0x5c5a5aff));
                     
-                        DrawTextEx(fontRomulus, "Open-Close Window", (Vector2){ 48, 230 }, fontRomulus.size*2, 4, GetColor(0x5c5a5aff));
-                        DrawTextEx(fontRomulus, "Manage Drawing Area", (Vector2){ 48, 260 }, fontRomulus.size*2, 4, GetColor(0x5c5a5aff));
-                        DrawTextEx(fontRomulus, "Manage Inputs", (Vector2){ 48, 290 }, fontRomulus.size*2, 4, GetColor(0x5c5a5aff));
-                        DrawTextEx(fontRomulus, "Manage Timming", (Vector2){ 48, 320 }, fontRomulus.size*2, 4, GetColor(0x5c5a5aff));
-                        DrawTextEx(fontRomulus, "Auxiliar Functions", (Vector2){ 48, 350 }, fontRomulus.size*2, 4, GetColor(0x5c5a5aff));
+                        DrawTextEx(fontRomulus, "Open-Close Window", (Vector2){ 48, 230 }, fontRomulus.baseSize*2, 4, GetColor(0x5c5a5aff));
+                        DrawTextEx(fontRomulus, "Manage Drawing Area", (Vector2){ 48, 260 }, fontRomulus.baseSize*2, 4, GetColor(0x5c5a5aff));
+                        DrawTextEx(fontRomulus, "Manage Inputs", (Vector2){ 48, 290 }, fontRomulus.baseSize*2, 4, GetColor(0x5c5a5aff));
+                        DrawTextEx(fontRomulus, "Manage Timming", (Vector2){ 48, 320 }, fontRomulus.baseSize*2, 4, GetColor(0x5c5a5aff));
+                        DrawTextEx(fontRomulus, "Auxiliar Functions", (Vector2){ 48, 350 }, fontRomulus.baseSize*2, 4, GetColor(0x5c5a5aff));
 
                         switch (coreWindow)
                         {
@@ -739,16 +739,16 @@ void UpdateDrawOneFrame(void)
                         
                         if (framesCounter > 140)
                         {
-                            DrawTextEx(fontMecha, "MOVE ME", (Vector2){ ballPosition.x - 26, ballPosition.y - 20 }, fontMecha.size, 2, BLACK);
-                            DrawTextEx(fontMecha, "[ W A S D ]", (Vector2){ ballPosition.x - 36, ballPosition.y }, fontMecha.size, 2, BLACK);
+                            DrawTextEx(fontMecha, "MOVE ME", (Vector2){ ballPosition.x - 26, ballPosition.y - 20 }, fontMecha.baseSize, 2, BLACK);
+                            DrawTextEx(fontMecha, "[ W A S D ]", (Vector2){ ballPosition.x - 36, ballPosition.y }, fontMecha.baseSize, 2, BLACK);
                         }
                     } break;
                     case SHAPES:
                     {
                         DrawText("This module give you functions to:", 48, 200, 10, GetColor(0xcd5757ff));
                     
-                        DrawTextEx(fontRomulus, "Draw Basic Shapes", (Vector2){ 48, 230 }, fontRomulus.size*2, 4, GetColor(0xcd5757ff));
-                        DrawTextEx(fontRomulus, "Basic Collision Detection", (Vector2){ 48, 260 }, fontRomulus.size*2, 4, GetColor(0xcd5757ff));
+                        DrawTextEx(fontRomulus, "Draw Basic Shapes", (Vector2){ 48, 230 }, fontRomulus.baseSize*2, 4, GetColor(0xcd5757ff));
+                        DrawTextEx(fontRomulus, "Basic Collision Detection", (Vector2){ 48, 260 }, fontRomulus.baseSize*2, 4, GetColor(0xcd5757ff));
 
                         DrawCircle(screenWidth/4, 120 + 240, 35, DARKBLUE);
                         DrawCircleGradient(screenWidth/4, 220 + 240, 60, GREEN, SKYBLUE);
@@ -769,8 +769,8 @@ void UpdateDrawOneFrame(void)
                     {
                         DrawText("This module give you functions to:", 48, 200, 10, GetColor(0x60815aff));
                     
-                        DrawTextEx(fontRomulus, "Load Images and Textures", (Vector2){ 48, 230 }, fontRomulus.size*2, 4, GetColor(0x60815aff));
-                        DrawTextEx(fontRomulus, "Draw Textures", (Vector2){ 48, 260 }, fontRomulus.size*2, 4, GetColor(0x60815aff));
+                        DrawTextEx(fontRomulus, "Load Images and Textures", (Vector2){ 48, 230 }, fontRomulus.baseSize*2, 4, GetColor(0x60815aff));
+                        DrawTextEx(fontRomulus, "Draw Textures", (Vector2){ 48, 260 }, fontRomulus.baseSize*2, 4, GetColor(0x60815aff));
 
                         DrawRectangle(138, 348, 260, 260, GRAY);
                         DrawTexturePro(lena, (Rectangle){ 0, 0, lena.width, lena.height }, (Rectangle){ 140 + 128, 350 + 128, lena.width/2*scaleFactor, lena.height/2*scaleFactor }, (Vector2){ lena.width/4*scaleFactor, lena.height/4*scaleFactor }, 0.0f, WHITE);
@@ -786,21 +786,21 @@ void UpdateDrawOneFrame(void)
                     {
                         DrawText("This module give you functions to:", 48, 200, 10, GetColor(0x377764ff));
                     
-                        DrawTextEx(fontRomulus, "Load SpriteFonts", (Vector2){ 48, 230 }, fontRomulus.size*2, 4, GetColor(0x377764ff));
-                        DrawTextEx(fontRomulus, "Draw Text", (Vector2){ 48, 260 }, fontRomulus.size*2, 4, GetColor(0x377764ff));
-                        DrawTextEx(fontRomulus, "Text Formatting", (Vector2){ 48, 290 }, fontRomulus.size*2, 4, GetColor(0x377764ff));
+                        DrawTextEx(fontRomulus, "Load SpriteFonts", (Vector2){ 48, 230 }, fontRomulus.baseSize*2, 4, GetColor(0x377764ff));
+                        DrawTextEx(fontRomulus, "Draw Text", (Vector2){ 48, 260 }, fontRomulus.baseSize*2, 4, GetColor(0x377764ff));
+                        DrawTextEx(fontRomulus, "Text Formatting", (Vector2){ 48, 290 }, fontRomulus.baseSize*2, 4, GetColor(0x377764ff));
 
                         DrawTexture(texAlagard, 60, 360, WHITE);
 
-                        DrawTextEx(fontMechaC, msg1, (Vector2){ 540 + 168, 210 }, fontMechaC.size, -3, WHITE);
-                        DrawTextEx(fontAlagardC, msg2, (Vector2){ 460 + 140, 260 }, fontAlagardC.size, -2, WHITE);
-                        DrawTextEx(fontJupiterC, msg3, (Vector2){ 640 + 70, 300 }, fontJupiterC.size, 2, WHITE);
+                        DrawTextEx(fontMechaC, msg1, (Vector2){ 540 + 168, 210 }, fontMechaC.baseSize, -3, WHITE);
+                        DrawTextEx(fontAlagardC, msg2, (Vector2){ 460 + 140, 260 }, fontAlagardC.baseSize, -2, WHITE);
+                        DrawTextEx(fontJupiterC, msg3, (Vector2){ 640 + 70, 300 }, fontJupiterC.baseSize, 2, WHITE);
 
-                        DrawTextEx(fontAlagard, "It also includes some...", (Vector2){ 650 + 70, 400 }, fontAlagard.size*2, 2, MAROON);
-                        DrawTextEx(fontPixelplay, "...free fonts in rBMF format...", (Vector2){ 705 - 26, 450 }, fontPixelplay.size*2, 4, ORANGE);
-                        DrawTextEx(fontMecha, "...to be used even in...", (Vector2){ 700 + 40, 500 }, fontMecha.size*2, 4, DARKGREEN);
-                        DrawTextEx(fontSetback, "...comercial projects...", (Vector2){ 710, 550 }, fontSetback.size*2, 4, DARKBLUE);
-                        DrawTextEx(fontRomulus, "...completely for free!", (Vector2){ 710 + 17, 600 }, fontRomulus.size*2, 3, DARKPURPLE);
+                        DrawTextEx(fontAlagard, "It also includes some...", (Vector2){ 650 + 70, 400 }, fontAlagard.baseSize*2, 2, MAROON);
+                        DrawTextEx(fontPixelplay, "...free fonts in rBMF format...", (Vector2){ 705 - 26, 450 }, fontPixelplay.baseSize*2, 4, ORANGE);
+                        DrawTextEx(fontMecha, "...to be used even in...", (Vector2){ 700 + 40, 500 }, fontMecha.baseSize*2, 4, DARKGREEN);
+                        DrawTextEx(fontSetback, "...commercial projects...", (Vector2){ 710, 550 }, fontSetback.baseSize*2, 4, DARKBLUE);
+                        DrawTextEx(fontRomulus, "...completely for free!", (Vector2){ 710 + 17, 600 }, fontRomulus.baseSize*2, 3, DARKPURPLE);
                         
                         DrawText("This is a custom font spritesheet, raylib can load it automatically!", 228, 360 + 295, 10, GRAY);
 
@@ -809,9 +809,9 @@ void UpdateDrawOneFrame(void)
                     {
                         DrawText("This module give you functions to:", 48, 200, 10, GetColor(0x417794ff));
                         
-                        DrawTextEx(fontRomulus, "Draw Geometric Models", (Vector2){ 48, 230 }, fontRomulus.size*2, 4, GetColor(0x417794ff));
-                        DrawTextEx(fontRomulus, "Load 3D Models", (Vector2){ 48, 260 }, fontRomulus.size*2, 4, GetColor(0x417794ff));
-                        DrawTextEx(fontRomulus, "Draw 3D Models", (Vector2){ 48, 290 }, fontRomulus.size*2, 4, GetColor(0x417794ff));
+                        DrawTextEx(fontRomulus, "Draw Geometric Models", (Vector2){ 48, 230 }, fontRomulus.baseSize*2, 4, GetColor(0x417794ff));
+                        DrawTextEx(fontRomulus, "Load 3D Models", (Vector2){ 48, 260 }, fontRomulus.baseSize*2, 4, GetColor(0x417794ff));
+                        DrawTextEx(fontRomulus, "Draw 3D Models", (Vector2){ 48, 290 }, fontRomulus.baseSize*2, 4, GetColor(0x417794ff));
 
                         Begin3dMode(camera);
 
@@ -843,8 +843,8 @@ void UpdateDrawOneFrame(void)
                     {
                         DrawText("This module give you functions to:", 48, 200, 10, GetColor(0x8c7539ff));
                         
-                        DrawTextEx(fontRomulus, "Load and Play Sounds", (Vector2){ 48, 230 }, fontRomulus.size*2, 4, GetColor(0x8c7539ff));
-                        DrawTextEx(fontRomulus, "Play Music (streaming)", (Vector2){ 48, 260 }, fontRomulus.size*2, 4, GetColor(0x8c7539ff));
+                        DrawTextEx(fontRomulus, "Load and Play Sounds", (Vector2){ 48, 230 }, fontRomulus.baseSize*2, 4, GetColor(0x8c7539ff));
+                        DrawTextEx(fontRomulus, "Play Music (streaming)", (Vector2){ 48, 260 }, fontRomulus.baseSize*2, 4, GetColor(0x8c7539ff));
 
                         DrawText("PRESS SPACE to START PLAYING MUSIC", 135, 350, 20, GRAY);
                         DrawRectangle(150, 390, 400, 12, LIGHTGRAY);
@@ -897,7 +897,7 @@ void UpdateDrawOneFrame(void)
             case ENDING:
             {
                 // Draw ENDING screen
-                DrawTextEx(fontAlagard, "LEARN VIDEOGAMES PROGRAMMING", (Vector2){ screenWidth/2 - MeasureTextEx(fontAlagard, "LEARN VIDEOGAMES PROGRAMMING", fontAlagard.size*4, 4).x/2, 80 }, fontAlagard.size*4, 4, MAROON);
+                DrawTextEx(fontAlagard, "LEARN VIDEOGAMES PROGRAMMING", (Vector2){ screenWidth/2 - MeasureTextEx(fontAlagard, "LEARN VIDEOGAMES PROGRAMMING", fontAlagard.baseSize*4, 4).x/2, 80 }, fontAlagard.baseSize*4, 4, MAROON);
 
                 DrawTexture(raylibLogoA, logoPositionX, logoPositionY - 40, WHITE);
 

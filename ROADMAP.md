@@ -44,5 +44,5 @@ raylib 1.4
 
 Any feature missing? Do you have a request? [Let me know!][raysan5]
 
-[raysan5]: mailto:raysan5@gmail.com "Ramon Santamaria - Ray San"
+[raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"
 [isssues]: https://github.com/raysan5/raylib/issues
