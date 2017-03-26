@@ -114,14 +114,17 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw -lGLEW -lGL -lopenal
+        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -lpthread -ldl
+        # on XWindow could require also below libraries, just uncomment
+        LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
     ifeq ($(PLATFORM_OS),OSX)
     	# libraries for OS X 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
-    else
+    endif
+    ifeq ($(PLATFORM_OS),WINDOWS)
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
         LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32

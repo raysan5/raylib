@@ -116,7 +116,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -pthread -ldl
         # on XWindow could require also below libraries, just uncomment
-        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
     	# libraries for OS X 10.9 desktop compiling
