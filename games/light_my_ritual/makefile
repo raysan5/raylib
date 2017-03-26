@@ -68,7 +68,7 @@ endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
 else
-    CFLAGS = -O2 -Wall -std=c99 -D_DEFAULT_SOURCE
+    CFLAGS = -O2 -Wall -std=c99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources -s ALLOW_MEMORY_GROWTH=1 --shell-file ../../templates/web_shell/shell.html

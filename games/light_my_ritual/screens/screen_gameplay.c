@@ -703,7 +703,7 @@ void DrawGameplayScreen(void)
         // Show message: "You run out of light!!!" if player.lightEnergy <= 0
         if (player.lightEnergy < 2)
         {
-            if ((framesCounter/20)%2) DrawTextEx(font, "YOU'RE RUNNING OUT OF LIGHT!", (Vector2){ 20, 60 }, 24/2, 0, WHITE);
+            if ((framesCounter/20)%2) DrawTextEx(font, "YOU'RE RUNNING OUT OF LIGHT!", (Vector2){ 20, 60 }, font.baseSize/2, 0, WHITE);
         }
     }
     else if (!timeOver)   // LEVEL_FINISHED
