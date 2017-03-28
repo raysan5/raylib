@@ -88,14 +88,15 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
-// Outputs a trace log message
+
+// Output trace log messages
 void TraceLog(int msgType, const char *text, ...)
 {
-#if !defined(NO_TRACELOG)
+#if defined(SUPPORT_TRACELOG)
     static char buffer[128];
     int traceDebugMsgs = 1;
     
-#ifdef DO_NOT_TRACE_DEBUG_MSGS
+#if defined(SUPPORT_TRACELOG_DEBUG)
     traceDebugMsgs = 0;
 #endif
 
@@ -131,7 +132,7 @@ void TraceLog(int msgType, const char *text, ...)
 
     if (msgType == ERROR) exit(1);  // If ERROR message, exit program
     
-#endif  // NO_TRACELOG
+#endif  // SUPPORT_TRACELOG
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
@@ -162,19 +163,6 @@ void RecordMalloc(int mallocType, int mallocSize, const char *msg)
     // Maybe creating my own malloc function...
 }
 */
-
-bool IsFileExtension(const char *fileName, const char *ext)
-{
-    return (strcmp(GetExtension(fileName), ext) == 0);
-}
-
-// Get the extension for a filename
-const char *GetExtension(const char *fileName)
-{
-    const char *dot = strrchr(fileName, '.');
-    if (!dot || dot == fileName) return "";
-    return (dot + 1);
-}
 
 #if defined(PLATFORM_ANDROID)
 // Initialize asset manager from android app

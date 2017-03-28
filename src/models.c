@@ -593,7 +593,7 @@ Mesh LoadMesh(const char *fileName)
     Mesh mesh = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_OBJ)
-    if (strcmp(GetExtension(fileName), "obj") == 0) mesh = LoadOBJ(fileName);
+    if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
 #else
     TraceLog(WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
@@ -706,7 +706,7 @@ Material LoadMaterial(const char *fileName)
     Material material = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_MTL)
-    if (strcmp(GetExtension(fileName), "mtl") == 0) material = LoadMTL(fileName);
+    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
 #else
     TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
 #endif

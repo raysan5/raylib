@@ -102,7 +102,7 @@
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
 #include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
 #include <math.h>           // Required for: tan() [Used in Begin3dMode() to set perspective]
-#include <string.h>         // Required for: strcmp()
+#include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined __linux__ || defined(PLATFORM_WEB)
@@ -978,6 +978,12 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, (unsigned char)colorAlpha};
 }
 
+// Activates raylib logo at startup
+void ShowLogo(void)
+{
+    showLogo = true;
+}
+
 // Enable some window/system configurations
 void SetConfigFlags(char flags)
 {
@@ -987,10 +993,18 @@ void SetConfigFlags(char flags)
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
 }
 
-// Activates raylib logo at startup
-void ShowLogo(void)
+// Check file extension
+bool IsFileExtension(const char *fileName, const char *ext)
 {
-    showLogo = true;
+    bool result = false;
+    const char *fileExt;
+    
+    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    {
+        if (strcmp(fileExt, ext) == 0) result = true;
+    }
+
+    return result;
 }
 
 #if defined(PLATFORM_DESKTOP)

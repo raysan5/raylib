@@ -24,7 +24,6 @@
 *       Selected desired fileformats to be supported for loading. Some of those formats are 
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
-*
 *   LIMITATIONS:
 *       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
 *       Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
@@ -64,8 +63,6 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-
-//#define AUDIO_STANDALONE     // NOTE: To use the audio module as standalone lib, just uncomment this line
 
 // Default configuration flags (supported features)
 //-------------------------------------------------
@@ -194,8 +191,8 @@ static Wave LoadFLAC(const char *fileName);         // Load FLAC file
 #endif
 
 #if defined(AUDIO_STANDALONE)
-const char *GetExtension(const char *fileName);     // Get the extension for a filename
-void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message (INFO, ERROR, WARNING)
+bool IsFileExtension(const char *fileName, const char *ext);    // Check file extension
+void TraceLog(int msgType, const char *text, ...);              // Outputs trace log message (INFO, ERROR, WARNING)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -285,15 +282,15 @@ Wave LoadWave(const char *fileName)
 {
     Wave wave = { 0 };
 
-    if (strcmp(GetExtension(fileName), "wav") == 0) wave = LoadWAV(fileName);
+    if (IsFileExtension(fileName, ".wav")) wave = LoadWAV(fileName);
 #if defined(SUPPORT_FILEFORMAT_OGG)
-    else if (strcmp(GetExtension(fileName), "ogg") == 0) wave = LoadOGG(fileName);
+    else if (IsFileExtension(fileName, ".ogg")) wave = LoadOGG(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (strcmp(GetExtension(fileName), "flac") == 0) wave = LoadFLAC(fileName);
+    else if (IsFileExtension(fileName, ".flac")) wave = LoadFLAC(fileName);
 #endif
 #if !defined(AUDIO_STANDALONE)
-    else if (strcmp(GetExtension(fileName),"rres") == 0)
+    else if (IsFileExtension(fileName, ".rres"))
     {
         RRES rres = LoadResource(fileName, 0);
 
@@ -672,7 +669,7 @@ Music LoadMusicStream(const char *fileName)
 {
     Music music = (MusicData *)malloc(sizeof(MusicData));
 
-    if (strcmp(GetExtension(fileName), "ogg") == 0)
+    if (IsFileExtension(fileName, ".ogg"))
     {
         // Open ogg audio stream
         music->ctxOgg = stb_vorbis_open_filename(fileName, NULL, NULL);
@@ -696,7 +693,7 @@ Music LoadMusicStream(const char *fileName)
         }
     }
 #if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if (strcmp(GetExtension(fileName), "flac") == 0)
+    else if (IsFileExtension(fileName, ".flac"))
     {
         music->ctxFlac = drflac_open_file(fileName);
 
@@ -717,7 +714,7 @@ Music LoadMusicStream(const char *fileName)
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_XM)
-    else if (strcmp(GetExtension(fileName), "xm") == 0)
+    else if (IsFileExtension(fileName, ".xm"))
     {
         int result = jar_xm_create_context_from_file(&music->ctxXm, 48000, fileName);
 
@@ -739,7 +736,7 @@ Music LoadMusicStream(const char *fileName)
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_MOD)
-    else if (strcmp(GetExtension(fileName), "mod") == 0)
+    else if (IsFileExtension(fileName, ".mod"))
     {
         jar_mod_init(&music->ctxMod);
 
@@ -1310,12 +1307,18 @@ static Wave LoadFLAC(const char *fileName)
 
 // Some required functions for audio standalone module version
 #if defined(AUDIO_STANDALONE)
-// Get the extension for a filename
-const char *GetExtension(const char *fileName)
+// Check file extension
+bool IsFileExtension(const char *fileName, const char *ext)
 {
-    const char *dot = strrchr(fileName, '.');
-    if (!dot || dot == fileName) return "";
-    return (dot + 1);
+    bool result = false;
+    const char *fileExt;
+    
+    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    {
+        if (strcmp(fileExt, ext) == 0) result = true;
+    }
+
+    return result;
 }
 
 // Outputs a trace log message (INFO, ERROR, WARNING)

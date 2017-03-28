@@ -48,7 +48,7 @@
 #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 
-#include "utils.h"          // Required for: GetExtension()
+#include "utils.h"          // Required for: IsFileExtension()
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     // Following libs are used on LoadTTF()
@@ -287,7 +287,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
     SpriteFont spriteFont = { 0 };
 
     // Check file extension
-    if (strcmp(GetExtension(fileName),"rres") == 0)
+    if (IsFileExtension(fileName, ".rres"))
     {
         // TODO: Read multiple resource blocks from file (RRES_FONT_IMAGE, RRES_FONT_CHARDATA)
         RRES rres = LoadResource(fileName, 0);
@@ -314,10 +314,10 @@ SpriteFont LoadSpriteFont(const char *fileName)
         //UnloadResource(rres[0]);
     }
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    else if (strcmp(GetExtension(fileName),"ttf") == 0) spriteFont = LoadSpriteFontTTF(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    else if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontTTF(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
-    else if (strcmp(GetExtension(fileName),"fnt") == 0) spriteFont = LoadBMFont(fileName);
+    else if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
 #endif
     else
     {
@@ -344,7 +344,7 @@ SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount,
     SpriteFont spriteFont = { 0 };
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    if (strcmp(GetExtension(fileName),"ttf") == 0)
+    if (IsFileExtension(fileName, ".ttf"))
     {
         if ((fontChars == NULL) || (charsCount == 0))
         {
