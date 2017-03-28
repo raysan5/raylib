@@ -2024,9 +2024,12 @@ static double GetTime(void)
 }
 
 // Wait for some milliseconds (stop program execution)
+// NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
+// take longer than expected... for that reason we use the busy wait loop
+// http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 static void Wait(float ms)
 {
-//#define SUPPORT_BUSY_WAIT_LOOP
+#define SUPPORT_BUSY_WAIT_LOOP
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
@@ -2035,7 +2038,7 @@ static void Wait(float ms)
     while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
 #else
     #if defined _WIN32
-        Sleep(ms);
+        Sleep((unsigned int)ms);
     #elif defined __linux__ || defined(PLATFORM_WEB)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
