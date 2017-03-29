@@ -87,7 +87,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources
+    CFLAGS = -O2 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --preload-file resources --profiling
     #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
 endif
@@ -122,13 +122,20 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # add standard directories for GNU/Linux
     ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries headers
         # GLFW3
             INCLUDES += -I../src/external/glfw3/include
         # OpenAL Soft
             INCLUDES += -I../src/external/openal_soft/include
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # you may optionally create this directory and install raylib 
+        # and related headers there. Edit ../src/Makefile appropriately.
+            INCLUDES += -I/usr/local/include/raylib
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        # additional directories for MacOS
     endif
 endif
 
