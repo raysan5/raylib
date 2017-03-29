@@ -87,9 +87,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O2 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
-    #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
-    #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
+    # -O2                        # if used, also set --memory-init-file 0
+    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
+    #-s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
+    #-s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
