@@ -362,11 +362,11 @@ void DrawAisle01Screen(void)
 
     if (msgState == 0) 
     {
-        DrawTextEx(font, msgBuffer, (Vector2){ msgPosX, 80 }, font.size, 2, WHITE);
+        DrawTextEx(font, msgBuffer, (Vector2){ msgPosX, 80 }, font.baseSize, 2, WHITE);
     }
     else if (msgState == 1)
     {
-        DrawTextEx(font, message, (Vector2){ msgPosX, 80 }, font.size, 2, WHITE);
+        DrawTextEx(font, message, (Vector2){ msgPosX, 80 }, font.baseSize, 2, WHITE);
         
         if ((msgCounter/30)%2) DrawText("PRESS ENTER or CLICK", GetScreenWidth() - 280, 200, 20, BLACK);
     }
@@ -374,7 +374,7 @@ void DrawAisle01Screen(void)
     {
         if ((msgCounter/30)%2)
         {
-            DrawTextEx(font, "CHOOSE WISELY!", (Vector2){ 300, 95 }, font.size*2, 2, WHITE);
+            DrawTextEx(font, "CHOOSE WISELY!", (Vector2){ 300, 95 }, font.baseSize*2, 2, WHITE);
             
             DrawRectangleRec(lamp.bounds, Fade(RED, 0.6f));
             DrawRectangleRec(picture.bounds, Fade(RED, 0.6f));

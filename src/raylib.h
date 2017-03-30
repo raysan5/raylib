@@ -13,7 +13,7 @@
 *       - Multiple textures support, including compressed formats and mipmaps generation
 *       - Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
 *       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
-*       - Audio loading and playing with streaming support and mixing channels [audio]
+*       - Audio loading and playing with streaming support and mixing channels: [audio]
 *       - VR stereo rendering support with configurable HMD device parameters
 *       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
 *       - Custom color palette for fancy visuals on raywhite background
@@ -687,9 +687,10 @@ RLAPI float *MatrixToFloat(Matrix mat);                           // Converts Ma
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
-//RLAPI void TraceLog(int logType, const char *text, ...);          // Trace log messages showing (INFO, WARNING, ERROR, DEBUG)
+RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
+//RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 
 RLAPI bool IsFileDropped(void);                                   // Check if a file have been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window

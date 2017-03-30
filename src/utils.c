@@ -20,7 +20,7 @@
 *       Show TraceLog() DEBUG messages
 *
 *   DEPENDENCIES:
-*       stb_image_write - PNG writting functions
+*       stb_image_write - BMP/PNG writting functions
 *
 *
 *   LICENSE: zlib/libpng
@@ -88,14 +88,15 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
-// Outputs a trace log message
+
+// Output trace log messages
 void TraceLog(int msgType, const char *text, ...)
 {
-#if !defined(NO_TRACELOG)
+#if defined(SUPPORT_TRACELOG)
     static char buffer[128];
     int traceDebugMsgs = 1;
     
-#ifdef DO_NOT_TRACE_DEBUG_MSGS
+#if defined(SUPPORT_TRACELOG_DEBUG)
     traceDebugMsgs = 0;
 #endif
 
@@ -131,7 +132,7 @@ void TraceLog(int msgType, const char *text, ...)
 
     if (msgType == ERROR) exit(1);  // If ERROR message, exit program
     
-#endif  // NO_TRACELOG
+#endif  // SUPPORT_TRACELOG
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
@@ -153,6 +154,16 @@ void SavePNG(const char *fileName, unsigned char *imgData, int width, int height
 #endif
 #endif
 
+// Keep track of memory allocated
+// NOTE: mallocType defines the type of data allocated
+/*
+void RecordMalloc(int mallocType, int mallocSize, const char *msg)
+{
+    // TODO: Investigate how to record memory allocation data...
+    // Maybe creating my own malloc function...
+}
+*/
+
 #if defined(PLATFORM_ANDROID)
 // Initialize asset manager from android app
 void InitAssetManager(AAssetManager *manager)
@@ -172,24 +183,6 @@ FILE *android_fopen(const char *fileName, const char *mode)
     return funopen(asset, android_read, android_write, android_seek, android_close);
 }
 #endif
-
-// Keep track of memory allocated
-// NOTE: mallocType defines the type of data allocated
-/*
-void RecordMalloc(int mallocType, int mallocSize, const char *msg)
-{
-    // TODO: Investigate how to record memory allocation data...
-    // Maybe creating my own malloc function...
-}
-*/
-
-// Get the extension for a filename
-const char *GetExtension(const char *fileName)
-{
-    const char *dot = strrchr(fileName, '.');
-    if (!dot || dot == fileName) return "";
-    return (dot + 1);
-}
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition

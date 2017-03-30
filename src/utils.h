@@ -60,8 +60,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-void TraceLog(int msgType, const char *text, ...);  // Outputs a trace log message
-const char *GetExtension(const char *fileName);     // Returns extension of a filename
+void TraceLog(int msgType, const char *text, ...);              // Outputs a trace log message
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 #if defined(SUPPORT_SAVE_BMP)
@@ -74,7 +73,7 @@ void SavePNG(const char *fileName, unsigned char *imgData, int width, int height
 
 #if defined(PLATFORM_ANDROID)
 void InitAssetManager(AAssetManager *manager);  // Initialize asset manager from android app
-FILE *android_fopen(const char *fileName, const char *mode);   // Replacement for fopen()
+FILE *android_fopen(const char *fileName, const char *mode);    // Replacement for fopen()
 #endif
 
 #ifdef __cplusplus
