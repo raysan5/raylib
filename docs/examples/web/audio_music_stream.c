@@ -25,6 +25,9 @@ int screenHeight = 450;
 
 int framesCounter = 0;
 float timePlayed = 0.0f;
+static bool pause = false;
+
+Music music;
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -42,7 +45,9 @@ int main()
     
     InitAudioDevice();              // Initialize audio device
 
-    PlayMusicStream(0, "resources/audio/guitar_noodling.ogg");         // Play music stream
+    music = LoadMusicStream("resources/audio/guitar_noodling.ogg");
+    
+    PlayMusicStream(music);
     
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
@@ -59,6 +64,8 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadMusicStream(music);   // Unload music stream buffers from RAM
+
     CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -73,33 +80,26 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    framesCounter++;
+    UpdateMusicStream(music);        // Update music buffer with new stream data
     
-    // Testing music fading from one file to another
-/*
-        if (framesCounter > 600)    // Wait for 10 seconds (600 frames)
-        {
-            volume -= 0.01;         // Decrement music volume level
-
-            // When music volume level equal or lower than 0,
-            // restore volume level and init another music file
-            if (volume <= 0)
-            {
-                volume = 1.0;
-                framesCounter = 0;
-                PlayMusicStream(1, "resources/audio/another_file.ogg");
-            }
-
-            SetMusicVolume(volume);
-        }
-*/
+    // Restart music playing (stop and play)
+    if (IsKeyPressed(KEY_SPACE)) 
+    {
+        StopMusicStream(music);
+        PlayMusicStream(music);
+    }
     
-    if (IsWindowMinimized()) PauseMusicStream(0);
-    else ResumeMusicStream(0);
-
-    timePlayed = GetMusicTimePlayed(0)/GetMusicTimeLength(0)*100*4; // We scale by 4 to fit 400 pixels
+    // Pause/Resume music playing 
+    if (IsKeyPressed(KEY_P))
+    {
+        pause = !pause;
+        
+        if (pause) PauseMusicStream(music);
+        else ResumeMusicStream(music);
+    }
     
-    UpdateMusicStream(0);        // Update music buffer with new stream data
+    // Get timePlayed scaled to bar dimensions (400 pixels)
+    timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
     //----------------------------------------------------------------------------------
 
     // Draw
@@ -108,11 +108,14 @@ void UpdateDrawFrame(void)
 
         ClearBackground(RAYWHITE);
 
-        DrawText("MUSIC SHOULD BE PLAYING!", 255, 200, 20, LIGHTGRAY);
+        DrawText("MUSIC SHOULD BE PLAYING!", 255, 150, 20, LIGHTGRAY);
 
-        DrawRectangle(200, 250, 400, 12, LIGHTGRAY);
-        DrawRectangle(200, 250, (int)timePlayed, 12, MAROON); 
+        DrawRectangle(200, 200, 400, 12, LIGHTGRAY);
+        DrawRectangle(200, 200, (int)timePlayed, 12, MAROON);
+        DrawRectangleLines(200, 200, 400, 12, GRAY);
         
+        DrawText("PRESS SPACE TO RESTART MUSIC", 215, 250, 20, LIGHTGRAY);
+        DrawText("PRESS P TO PAUSE/RESUME MUSIC", 208, 280, 20, LIGHTGRAY);
         
     EndDrawing();
     //----------------------------------------------------------------------------------

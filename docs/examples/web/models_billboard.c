@@ -41,11 +41,9 @@ int main()
     //--------------------------------------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "raylib [models] example - drawing billboards");
 
-    bill = LoadTexture("resources/billboard.png");     // Our texture billboard
+    bill = LoadTexture("resources/billboard.png");  // Our texture billboard
     
-    SetCameraMode(CAMERA_ORBITAL);      // Set an orbital camera mode
-    SetCameraPosition(camera.position); // Set internal camera position to match our camera position
-    SetCameraTarget(camera.target);     // Set internal camera target to match our camera target
+    SetCameraMode(camera, CAMERA_ORBITAL);          // Set an orbital camera mode
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);

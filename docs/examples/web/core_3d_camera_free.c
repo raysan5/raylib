@@ -47,10 +47,7 @@ int main()
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     
-    SetCameraMode(CAMERA_FREE);         // Set a free camera mode
-    SetCameraPosition(camera.position); // Set internal camera position to match our camera position
-    SetCameraTarget(camera.target);     // Set internal camera target to match our camera target
-    SetCameraFovy(camera.fovy);         // Set internal camera field-of-view Y
+    SetCameraMode(camera, CAMERA_FREE);                 // Set a free camera mode
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
