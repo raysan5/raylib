@@ -892,7 +892,6 @@ RLAPI void UnloadMesh(Mesh *mesh);                                              
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
-RLAPI Material LoadMaterialEx(Shader shader, Texture2D diffuse, Color color);                           // Load material from basic shading data
 RLAPI Material LoadDefaultMaterial(void);                                                               // Load default material (uses default models shader)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 
