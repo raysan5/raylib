@@ -48,10 +48,9 @@ int main()
     map = LoadHeightmap(image, (Vector3){ 16, 8, 16 });     // Load heightmap model with defined size
     map.material.texDiffuse = texture;                      // Set map diffuse texture
 
-    UnloadImage(image);                 // Unload heightmap image from RAM, already uploaded to VRAM
+    UnloadImage(image);                         // Unload heightmap image from RAM, already uploaded to VRAM
     
-    SetCameraMode(CAMERA_ORBITAL);      // Set an orbital camera mode
-    SetCameraPosition(camera.position); // Set internal camera position to match our custom camera position
+    SetCameraMode(camera, CAMERA_ORBITAL);      // Set an orbital camera mode
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);

@@ -2,16 +2,18 @@
 #
 #   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
-#   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+#   NOTE: By default examples are compiled using raylib static library and OpenAL Soft shared library
 #
-#   This software is provided "as-is", without any express or implied warranty. In no event 
+#   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
+#
+#   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
 #
-#   Permission is granted to anyone to use this software for any purpose, including commercial 
+#   Permission is granted to anyone to use this software for any purpose, including commercial
 #   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 #
-#     1. The origin of this software must not be misrepresented; you must not claim that you 
-#     wrote the original software. If you use this software in a product, an acknowledgment 
+#     1. The origin of this software must not be misrepresented; you must not claim that you
+#     wrote the original software. If you use this software in a product, an acknowledgment
 #     in the product documentation would be appreciated but is not required.
 #
 #     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -25,6 +27,9 @@
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
+
+# define NO to use OpenAL Soft as static library (shared by default)
+SHARED_OPENAL ?= NO
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -61,50 +66,95 @@ endif
 endif
 
 # define compiler flags:
-#  -O2         defines optimization level
-#  -Wall       turns on most, but not all, compiler warnings
-#  -std=c99    use standard C from 1999 revision
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
-else
-    CFLAGS = -O2 -Wall -std=c99
+#  -O2                  defines optimization level
+#  -Og                  enable debugging
+#  -s                   strip unnecessary data from build
+#  -Wall                turns on most, but not all, compiler warnings
+#  -std=c99             defines C language mode (standard C from 1999 revision)
+#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline       declaring inline functions support (GCC optimized)
+#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux to enable timespec and drflac
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        CFLAGS = -O2 -s -Wall -std=c99
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        CFLAGS = -O2 -s -Wall -std=c99 -D_DEFAULT_SOURCE
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        CFLAGS = -O2 -s -Wall -std=c99
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3
-    #-s ASSERTIONS=1            # to check for memory allocation errors (-O1 disables it)
-    #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
-    #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
+    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
+    # -O2                        # if used, also set --memory-init-file 0
+    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
+    #-s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
+    #-s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
 endif
-
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
+endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
-# define any directories containing required header files
+# define raylib release directory for compiled library
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        RAYLIB_PATH = ../release/win32/mingw32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_PATH = ../release/linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        RAYLIB_PATH = ../release/osx
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    RAYLIB_PATH = ../release/html5
+endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
-else
-    INCLUDES = -I. -I../src -I../github/raylib/src
-# external libraries headers
-# GLFW3
-    INCLUDES += -I../external/glfw3/include
-# GLEW: Not required any more, replaced by GLAD
-    #INCLUDES += -I../external/glew/include
-# OpenAL Soft
-    INCLUDES += -I../external/openal_soft/include
+    RAYLIB_PATH = ../release/rpi
+endif
+
+# define any directories containing required header files
+INCLUDES = -I. -I../../../src -I../src/external -I$(RAYLIB_PATH)
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # external libraries headers
+        # GLFW3
+            INCLUDES += -I../src/external/glfw3/include
+        # OpenAL Soft
+            INCLUDES += -I../src/external/openal_soft/include
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # you may optionally create this directory and install raylib 
+        # and related headers there. Edit ../src/Makefile appropriately.
+            INCLUDES += -I/usr/local/include/raylib
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        # additional directories for MacOS
+    endif
 endif
 
 # define library paths containing required libs
+LFLAGS = -L. -L../src -L$(RAYLIB_PATH)
+
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    LFLAGS = -L. -L../src -L/opt/vc/lib
-else
-    LFLAGS = -L. -L../src
-# external libraries to link with
-# GLFW3
-    LFLAGS += -L../external/glfw3/lib/$(LIBPATH)
-    ifneq ($(PLATFORM_OS),OSX)
-    # OpenAL Soft
-        LFLAGS += -L../external/openal_soft/lib/$(LIBPATH)
-    # GLEW: Not required any more, replaced by GLAD
-        #LFLAGS += -L../external/glew/lib/$(LIBPATH)
+    LFLAGS += -L/opt/vc/lib
+endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # add standard directories for GNU/Linux
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        # external libraries to link with
+        # GLFW3
+            LFLAGS += -L../src/external/glfw3/lib/$(LIBPATH)
+        # OpenAL Soft
+            LFLAGS += -L../src/external/openal_soft/lib/$(LIBPATH)
     endif
 endif
 
@@ -114,20 +164,27 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
-        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGLEW -lGL -lopenal -lm -pthread
+        # libglfw3-dev libopenal-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
         # on XWindow could require also below libraries, just uncomment
-        #LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
         # libraries for OS X 10.9 desktop compiling
         # requires the following packages:
-        # libglfw3-dev libopenal-dev libglew-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAl -framework Cocoa
+        # libglfw3-dev libopenal-dev libegl1-mesa-dev
+        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lopengl32 -lopenal32 -lgdi32
+        LIBS = -lraylib -lglfw3 -lopengl32 -lgdi32
+        # if static OpenAL Soft required, define the corresponding libs
+        ifeq ($(SHARED_OPENAL),NO)
+            LIBS += -lopenal32 -lwinmm
+            CFLAGS += -Wl,-allow-multiple-definition
+        else
+            LIBS += -lopenal32dll
+        endif
     endif
     endif
 endif
@@ -138,7 +195,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # just adjust the correct path to libraylib.bc
-    LIBS = ../github/raylib/src/libraylib.bc
+    LIBS = ../../../release/html5/libraylib.bc
 endif
 
 # define additional parameters and flags for windows
@@ -168,6 +225,8 @@ EXAMPLES = \
     core_3d_picking \
     core_3d_camera_free \
     core_3d_camera_first_person \
+    core_2d_camera \
+    core_world_screen \
     shapes_logo_raylib \
     shapes_basic_shapes \
     shapes_colors_palette \
@@ -188,25 +247,28 @@ EXAMPLES = \
     text_format_text \
     text_font_select \
     text_writing_anim \
+    text_ttf_loading \
+    text_bmfont_unordered \
     models_geometric_shapes \
     models_box_collisions \
     models_billboard \
     models_obj_loading \
     models_heightmap \
     models_cubicmap \
+    models_ray_picking \
     shaders_model_shader \
     shaders_shapes_textures \
     shaders_custom_uniform \
     shaders_postprocessing \
-    shaders_basic_lighting \
     audio_sound_loading \
     audio_music_stream \
-    fix_dylib \
+    audio_module_playing \
+    audio_raw_stream \
 
 
-# typing 'make' will invoke the first target entry in the file,
+# typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is raylib
-default: examples
+all: examples
 
 # compile all examples
 examples: $(EXAMPLES)
@@ -229,10 +291,10 @@ core_mouse_wheel: core_mouse_wheel.c
 
 # compile [core] example - gamepad input
 core_input_gamepad: core_input_gamepad.c
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
-	@echo core_input_gamepad: Only supported on desktop platform
+	@echo core_input_gamepad: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
 endif
 
 # compile [core] example - generate random values
@@ -248,15 +310,15 @@ core_drop_files: core_drop_files.c
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
-	@echo core_drop_files: Only supported on desktop platform
+	@echo core_drop_files: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB or PLATFORM_RPI
 endif
 
 # compile [core] example - storage values
 core_storage_values: core_storage_values.c
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
-	@echo core_storage_values: Only supported on desktop platform
+	@echo core_storage_values: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
 endif
 
 # compile [core] example - gestures detection
@@ -278,7 +340,19 @@ core_3d_camera_free: core_3d_camera_free.c
 # compile [core] example - 3d camera first person
 core_3d_camera_first_person: core_3d_camera_first_person.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-    
+
+# compile [core] example - 2d camera
+core_2d_camera: core_2d_camera.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [core] example - world screen
+core_world_screen: core_world_screen.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [core] example - oculus rift
+#core_oculus_rift: core_oculus_rift.c
+#	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
 # compile [shapes] example - raylib logo (with basic shapes)
 shapes_logo_raylib: shapes_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -359,6 +433,14 @@ text_font_select: text_font_select.c
 text_writing_anim: text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
+# compile [text] example - text ttf loading
+text_ttf_loading: text_ttf_loading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
+# compile [text] example - text bmfont unordered
+text_bmfont_unordered: text_bmfont_unordered.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
 # compile [models] example - basic geometric 3d shapes
 models_geometric_shapes: models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -387,21 +469,25 @@ models_heightmap: models_heightmap.c
 models_cubicmap: models_cubicmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/cubicmap.png --preload-file resources/cubicmap_atlas.png
 
+# compile [models] example - model ray picking
+models_ray_picking: models_ray_picking.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
 # compile [shaders] example - model shader
 shaders_model_shader: shaders_model_shader.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) -s TOTAL_MEMORY=67108864 --preload-file resources/model/dwarf.obj --preload-file resources/model/dwarf_diffuse.png --preload-file resources/shaders/base.vs --preload-file resources/shaders/grayscale.fs
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) -s TOTAL_MEMORY=67108864 --preload-file resources/model/dwarf.obj --preload-file resources/model/dwarf_diffuse.png --preload-file resources/shaders/glsl100/base.vs --preload-file resources/shaders/glsl100/grayscale.fs
     
 # compile [shaders] example - shapes texture shader
 shaders_shapes_textures: shaders_shapes_textures.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/texture_formats/sonic.png --preload-file resources/shaders/shapes_base.vs --preload-file resources/shaders/shapes_grayscale.fs
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/texture_formats/sonic.png --preload-file resources/shaders/glsl100/shapes_base.vs --preload-file resources/shaders/glsl100/shapes_grayscale.fs
     
 # compile [shaders] example - custom uniform in shader
 shaders_custom_uniform: shaders_custom_uniform.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) -s TOTAL_MEMORY=67108864 --preload-file resources/model/dwarf.obj --preload-file resources/model/dwarf_diffuse.png --preload-file resources/shaders/base.vs --preload-file resources/shaders/swirl.fs
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) -s TOTAL_MEMORY=67108864 --preload-file resources/model/dwarf.obj --preload-file resources/model/dwarf_diffuse.png --preload-file resources/shaders/glsl100/base.vs --preload-file resources/shaders/glsl100/swirl.fs
     
 # compile [shaders] example - postprocessing shader
 shaders_postprocessing: shaders_postprocessing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) -s TOTAL_MEMORY=67108864 --preload-file resources/model/dwarf.obj --preload-file resources/model/dwarf_diffuse.png --preload-file resources/shaders/base.vs --preload-file resources/shaders/bloom.fs
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) -s TOTAL_MEMORY=67108864 --preload-file resources/model/dwarf.obj --preload-file resources/model/dwarf_diffuse.png --preload-file resources/shaders/glsl100/base.vs --preload-file resources/shaders/glsl100/bloom.fs
 
 # compile [shaders] example - shaders_basic_lighting
 shaders_basic_lighting: shaders_basic_lighting.c

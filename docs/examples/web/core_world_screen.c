@@ -42,9 +42,7 @@ int main()
     //--------------------------------------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
     
-    SetCameraMode(CAMERA_FREE);         // Set a free camera mode
-    SetCameraPosition(camera.position); // Set internal camera position to match our camera position
-    SetCameraTarget(camera.target);     // Set internal camera target to match our camera target
+    SetCameraMode(camera, CAMERA_FREE);         // Set a free camera mode
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);

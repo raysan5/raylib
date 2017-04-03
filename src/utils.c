@@ -44,6 +44,9 @@
 *
 **********************************************************************************************/
 
+#define SUPPORT_TRACELOG            // Output tracelog messages
+//#define SUPPORT_TRACELOG_DEBUG     // Avoid DEBUG messages tracing
+
 #include "utils.h"
 
 #if defined(PLATFORM_ANDROID)
@@ -64,9 +67,6 @@
 
 #define RRES_IMPLEMENTATION
 #include "rres.h"
-
-//#define NO_TRACELOG                 // Avoid TraceLog() output (any type)
-#define DO_NOT_TRACE_DEBUG_MSGS     // Avoid DEBUG messages tracing
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -94,10 +94,10 @@ void TraceLog(int msgType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
     static char buffer[128];
-    int traceDebugMsgs = 1;
+    int traceDebugMsgs = 0;
     
 #if defined(SUPPORT_TRACELOG_DEBUG)
-    traceDebugMsgs = 0;
+    traceDebugMsgs = 1;
 #endif
 
     switch(msgType)

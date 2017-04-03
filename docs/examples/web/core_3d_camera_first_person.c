@@ -56,9 +56,8 @@ int main()
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
     
-    SetCameraMode(CAMERA_FIRST_PERSON);         // Set a first person camera mode
-    SetCameraFovy(camera.fovy);                 // Set internal camera field-of-view Y
-	
+    SetCameraMode(camera, CAMERA_FIRST_PERSON);         // Set a first person camera mode
+
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
@@ -88,7 +87,7 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    UpdateCameraPlayer(&camera, &playerPosition); // Update camera and player position
+    UpdateCamera(&camera);          // Update camera and player position
     //----------------------------------------------------------------------------------
 
     // Draw
