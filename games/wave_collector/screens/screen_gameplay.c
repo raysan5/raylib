@@ -210,6 +210,7 @@ void InitGameplayScreen(void)
     
     // Load and start playing music
     // NOTE: Music is loaded in main code base
+    StopMusicStream(music);
     PlayMusicStream(music);
 }
 

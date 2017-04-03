@@ -94,9 +94,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
         # external libraries headers
         # GLFW3
-            INCLUDES += -I../../external/glfw3/include
+        INCLUDES += -I../../external/glfw3/include
         # OpenAL Soft
-            INCLUDES += -I../../external/openal_soft/include
+        INCLUDES += -I../../external/openal_soft/include
     endif
 endif
 
@@ -115,9 +115,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
         # external libraries to link with
         # GLFW3
-            LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
+        LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
         ifneq ($(PLATFORM_OS),OSX)
-        # OpenAL Soft
+            # OpenAL Soft
             LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
         endif
     endif
