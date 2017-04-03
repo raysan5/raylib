@@ -211,65 +211,66 @@ endif
 
 # define all object files required
 EXAMPLES = \
-    core_basic_window \
-    core_input_keys \
-    core_input_mouse \
-    core_mouse_wheel \
-    core_input_gamepad \
-    core_random_values \
-    core_color_select \
-    core_drop_files \
-    core_storage_values \
-    core_gestures_detection \
-    core_3d_mode \
-    core_3d_picking \
-    core_3d_camera_free \
-    core_3d_camera_first_person \
-    core_2d_camera \
-    core_world_screen \
-    shapes_logo_raylib \
-    shapes_basic_shapes \
-    shapes_colors_palette \
-    shapes_logo_raylib_anim \
-    textures_logo_raylib \
-    textures_image_loading \
-    textures_rectangle \
-    textures_srcrec_dstrec \
-    textures_to_image \
-    textures_raw_data \
-    textures_formats_loading \
-    textures_particles_trail_blending \
-    textures_image_processing \
-    textures_image_drawing \
-    text_sprite_fonts \
-    text_bmfont_ttf \
-    text_rbmf_fonts \
-    text_format_text \
-    text_font_select \
-    text_writing_anim \
-    text_ttf_loading \
-    text_bmfont_unordered \
-    models_geometric_shapes \
-    models_box_collisions \
-    models_billboard \
-    models_obj_loading \
-    models_heightmap \
-    models_cubicmap \
-    models_ray_picking \
-    shaders_model_shader \
-    shaders_shapes_textures \
-    shaders_custom_uniform \
-    shaders_postprocessing \
-    shaders_standard_lighting \
-    audio_sound_loading \
-    audio_music_stream \
-    audio_module_playing \
-    audio_raw_stream \
-    physics_demo \
-    physics_friction \
-    physics_movement \
-    physics_restitution \
-    physics_shatter \
+    core/core_basic_window \
+    core/core_input_keys \
+    core/core_input_mouse \
+    core/core_mouse_wheel \
+    core/core_input_gamepad \
+    core/core_random_values \
+    core/core_color_select \
+    core/core_drop_files \
+    core/core_storage_values \
+    core/core_gestures_detection \
+    core/core_3d_mode \
+    core/core_3d_picking \
+    core/core_3d_camera_free \
+    core/core_3d_camera_first_person \
+    core/core_2d_camera \
+    core/core_world_screen \
+    core/core_vr_simulator \
+    shapes/shapes_logo_raylib \
+    shapes/shapes_basic_shapes \
+    shapes/shapes_colors_palette \
+    shapes/shapes_logo_raylib_anim \
+    textures/textures_logo_raylib \
+    textures/textures_image_loading \
+    textures/textures_rectangle \
+    textures/textures_srcrec_dstrec \
+    textures/textures_to_image \
+    textures/textures_raw_data \
+    textures/textures_formats_loading \
+    textures/textures_particles_trail_blending \
+    textures/textures_image_processing \
+    textures/textures_image_drawing \
+    text/text_sprite_fonts \
+    text/text_bmfont_ttf \
+    text/text_rbmf_fonts \
+    text/text_format_text \
+    text/text_font_select \
+    text/text_writing_anim \
+    text/text_ttf_loading \
+    text/text_bmfont_unordered \
+    models/models_geometric_shapes \
+    models/models_box_collisions \
+    models/models_billboard \
+    models/models_obj_loading \
+    models/models_heightmap \
+    models/models_cubicmap \
+    models/models_ray_picking \
+    shaders/shaders_model_shader \
+    shaders/shaders_shapes_textures \
+    shaders/shaders_custom_uniform \
+    shaders/shaders_postprocessing \
+    shaders/shaders_standard_lighting \
+    audio/audio_sound_loading \
+    audio/audio_music_stream \
+    audio/audio_module_playing \
+    audio/audio_raw_stream \
+    physac/physics_demo \
+    physac/physics_friction \
+    physac/physics_movement \
+    physac/physics_restitution \
+    physac/physics_shatter \
     fix_dylib \
 
 
@@ -281,23 +282,23 @@ all: examples
 examples: $(EXAMPLES)
 
 # compile [core] example - basic window
-core_basic_window: core_basic_window.c
+core/core_basic_window: core/core_basic_window.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - keyboard input
-core_input_keys: core_input_keys.c
+core/core_input_keys: core/core_input_keys.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - mouse input
-core_input_mouse: core_input_mouse.c
+core/core_input_mouse: core/core_input_mouse.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - mouse wheel
-core_mouse_wheel: core_mouse_wheel.c
+core/core_mouse_wheel: core/core_mouse_wheel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - gamepad input
-core_input_gamepad: core_input_gamepad.c
+core/core_input_gamepad: core/core_input_gamepad.c
 ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
@@ -305,15 +306,15 @@ else
 endif
 
 # compile [core] example - generate random values
-core_random_values: core_random_values.c
+core/core_random_values: core/core_random_values.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - color selection (collision detection)
-core_color_select: core_color_select.c
+core/core_color_select: core/core_color_select.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - drop files
-core_drop_files: core_drop_files.c
+core/core_drop_files: core/core_drop_files.c
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
@@ -321,7 +322,7 @@ else
 endif
 
 # compile [core] example - storage values
-core_storage_values: core_storage_values.c
+core/core_storage_values: core/core_storage_values.c
 ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 else
@@ -329,211 +330,211 @@ else
 endif
 
 # compile [core] example - gestures detection
-core_gestures_detection: core_gestures_detection.c
+core/core_gestures_detection: core/core_gestures_detection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 3d mode
-core_3d_mode: core_3d_mode.c
+core/core_3d_mode: core/core_3d_mode.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 3d picking
-core_3d_picking: core_3d_picking.c
+core/core_3d_picking: core/core_3d_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 3d camera free
-core_3d_camera_free: core_3d_camera_free.c
+core/core_3d_camera_free: core/core_3d_camera_free.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 3d camera first person
-core_3d_camera_first_person: core_3d_camera_first_person.c
+core/core_3d_camera_first_person: core/core_3d_camera_first_person.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - 2d camera
-core_2d_camera: core_2d_camera.c
+core/core_2d_camera: core/core_2d_camera.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - world screen
-core_world_screen: core_world_screen.c
+core/core_world_screen: core/core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [core] example - oculus rift
-#core_oculus_rift: core_oculus_rift.c
-#	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+# compile [core] example - vr simulator
+core/core_vr_simulator: core/core_vr_simulator.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo (with basic shapes)
-shapes_logo_raylib: shapes_logo_raylib.c
+shapes/shapes_logo_raylib: shapes/shapes_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - basic shapes usage (rectangle, circle, ...)
-shapes_basic_shapes: shapes_basic_shapes.c
+shapes/shapes_basic_shapes: shapes/shapes_basic_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib color palette
-shapes_colors_palette: shapes_colors_palette.c
+shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo animation
-shapes_logo_raylib_anim: shapes_logo_raylib_anim.c
+shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - raylib logo texture loading
-textures_logo_raylib: textures_logo_raylib.c
+textures/textures_logo_raylib: textures/textures_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - image loading and conversion to texture
-textures_image_loading: textures_image_loading.c
+textures/textures_image_loading: textures/textures_image_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture rectangle drawing
-textures_rectangle: textures_rectangle.c
+textures/textures_rectangle: textures/textures_rectangle.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture source and destination rectangles
-textures_srcrec_dstrec: textures_srcrec_dstrec.c
+textures/textures_srcrec_dstrec: textures/textures_srcrec_dstrec.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture to image
-textures_to_image: textures_to_image.c
+textures/textures_to_image: textures/textures_to_image.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture raw data
-textures_raw_data: textures_raw_data.c
+textures/textures_raw_data: textures/textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture formats loading
-textures_formats_loading: textures_formats_loading.c
+textures/textures_formats_loading: textures/textures_formats_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture particles trail blending
-textures_particles_trail_blending: textures_particles_trail_blending.c
+textures/textures_particles_trail_blending: textures/textures_particles_trail_blending.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture image processing
-textures_image_processing: textures_image_processing.c
+textures/textures_image_processing: textures/textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture image drawing
-textures_image_drawing: textures_image_drawing.c
+textures/textures_image_drawing: textures/textures_image_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - sprite fonts loading
-text_sprite_fonts: text_sprite_fonts.c
+text/text_sprite_fonts: text/text_sprite_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - bmfonts and ttf loading
-text_bmfont_ttf: text_bmfont_ttf.c
+text/text_bmfont_ttf: text/text_bmfont_ttf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - raylib bitmap fonts (rBMF)
-text_rbmf_fonts: text_rbmf_fonts.c
+text/text_rbmf_fonts: text/text_rbmf_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text formatting
-text_format_text: text_format_text.c
+text/text_format_text: text/text_format_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - font selection program
-text_font_select: text_font_select.c
+text/text_font_select: text/text_font_select.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text writing animation
-text_writing_anim: text_writing_anim.c
+text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text ttf loading
-text_ttf_loading: text_ttf_loading.c
+text/text_ttf_loading: text/text_ttf_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text bmfont unordered
-text_bmfont_unordered: text_bmfont_unordered.c
+text/text_bmfont_unordered: text/text_bmfont_unordered.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic geometric 3d shapes
-models_geometric_shapes: models_geometric_shapes.c
+models/models_geometric_shapes: models/models_geometric_shapes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - box collisions
-models_box_collisions: models_box_collisions.c
+models/models_box_collisions: models/models_box_collisions.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic window
-models_planes: models_planes.c
+models/models_planes: models/models_planes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - billboard usage
-models_billboard: models_billboard.c
+models/models_billboard: models/models_billboard.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - OBJ model loading
-models_obj_loading: models_obj_loading.c
+models/models_obj_loading: models/models_obj_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - heightmap loading
-models_heightmap: models_heightmap.c
+models/models_heightmap: models/models_heightmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - cubesmap loading
-models_cubicmap: models_cubicmap.c
+models/models_cubicmap: models/models_cubicmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - model ray picking
-models_ray_picking: models_ray_picking.c
+models/models_ray_picking: models/models_ray_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - model shader
-shaders_model_shader: shaders_model_shader.c
+shaders/shaders_model_shader: shaders/shaders_model_shader.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - shapes texture shader
-shaders_shapes_textures: shaders_shapes_textures.c
+shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - custom uniform in shader
-shaders_custom_uniform: shaders_custom_uniform.c
+shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - postprocessing shader
-shaders_postprocessing: shaders_postprocessing.c
+shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - standard lighting
-shaders_standard_lighting: shaders_standard_lighting.c
+shaders/shaders_standard_lighting: shaders/shaders_standard_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - sound loading and playing (WAV and OGG)
-audio_sound_loading: audio_sound_loading.c
+audio/audio_sound_loading: audio/audio_sound_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - music stream playing (OGG)
-audio_music_stream: audio_music_stream.c
+audio/audio_music_stream: audio/audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - module playing (XM)
-audio_module_playing: audio_module_playing.c
+audio/audio_module_playing: audio/audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - raw audio streaming
-audio_raw_stream: audio_raw_stream.c
+audio/audio_raw_stream: audio/audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics demo
-physics_demo: physics_demo.c
+physac/physics_demo: physac/physics_demo.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics friction
-physics_friction: physics_friction.c
+physac/physics_friction: physac/physics_friction.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics movement
-physics_movement: physics_movement.c
+physac/physics_movement: physac/physics_movement.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics restitution
-physics_restitution: physics_restitution.c
+physac/physics_restitution: physac/physics_restitution.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics shatter
-physics_shatter: physics_shatter.c
+physac/physics_shatter: physac/physics_shatter.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # fix dylib install path name for each executable (MAC)
