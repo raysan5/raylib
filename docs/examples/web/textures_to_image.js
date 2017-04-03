@@ -182,7 +182,7 @@ Module['FS_createPath']('/', 'resources', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 3760, "filename": "/resources/raylib_logo.png"}], "remote_package_size": 3760, "package_uuid": "d58fbf9b-0e8b-4d53-8235-977e6e66f280"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 3760, "filename": "/resources/raylib_logo.png"}], "remote_package_size": 3760, "package_uuid": "1abd60d9-f55f-4eac-95a6-a940d84ea4d2"});
 
 })();
 
@@ -16365,10 +16365,10 @@ function _rlglReadTexturePixels($0) {
  _glFramebufferTexture2D(36160,36064,3553,($7|0),0);
  $8 = HEAP32[$2>>2]|0;
  $9 = HEAP32[$4>>2]|0;
- $10 = $8 << 2;
+ $10 = ($8*3)|0;
  $11 = Math_imul($10, $9)|0;
  $12 = (_malloc($11)|0);
- _glReadPixels(0,0,($8|0),($9|0),6408,5121,($12|0));
+ _glReadPixels(0,0,($8|0),($9|0),6407,5121,($12|0));
  $13 = ((($1)) + 4|0);
  $14 = HEAP32[$13>>2]|0;
  _glFramebufferTexture2D(36160,36064,3553,($14|0),0);

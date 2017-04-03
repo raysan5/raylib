@@ -182,7 +182,7 @@ Module['FS_createPath']('/', 'resources', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 10920, "filename": "/resources/heightmap.png"}], "remote_package_size": 10920, "package_uuid": "4847ebfd-14d6-4446-ab51-5549afa93bef"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 10920, "filename": "/resources/heightmap.png"}], "remote_package_size": 10920, "package_uuid": "d598b0f0-29de-4f06-992c-f1458b1a4812"});
 
 })();
 

@@ -415,7 +415,7 @@ text_sprite_fonts: text_sprite_fonts.c
 
 # compile [text] example - bmfonts and ttf loading
 text_bmfont_ttf: text_bmfont_ttf.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/bmfont.fnt --preload-file resources/fonts/pixantiqua.ttf
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/bmfont.fnt --preload-file resources/fonts/bmfont.png --preload-file resources/fonts/pixantiqua.ttf -s ALLOW_MEMORY_GROWTH=1
 
 # compile [text] example - raylib bitmap fonts (rBMF)
 text_rbmf_fonts: text_rbmf_fonts.c
@@ -435,11 +435,11 @@ text_writing_anim: text_writing_anim.c
 
 # compile [text] example - text ttf loading
 text_ttf_loading: text_ttf_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/KAISG.ttf -s ALLOW_MEMORY_GROWTH=1
 
 # compile [text] example - text bmfont unordered
 text_bmfont_unordered: text_bmfont_unordered.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/pixantiqua.fnt --preload-file resources/fonts/pixantiqua_0.png
 
 # compile [models] example - basic geometric 3d shapes
 models_geometric_shapes: models_geometric_shapes.c
@@ -471,7 +471,7 @@ models_cubicmap: models_cubicmap.c
 
 # compile [models] example - model ray picking
 models_ray_picking: models_ray_picking.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/model/lowpoly-tower.obj --preload-file resources/model/lowpoly-tower.png
 
 # compile [shaders] example - model shader
 shaders_model_shader: shaders_model_shader.c
@@ -479,7 +479,7 @@ shaders_model_shader: shaders_model_shader.c
     
 # compile [shaders] example - shapes texture shader
 shaders_shapes_textures: shaders_shapes_textures.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/texture_formats/sonic.png --preload-file resources/shaders/glsl100/shapes_base.vs --preload-file resources/shaders/glsl100/shapes_grayscale.fs
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/texture_formats/sonic.png --preload-file resources/shaders/glsl100/base.vs --preload-file resources/shaders/glsl100/grayscale.fs
     
 # compile [shaders] example - custom uniform in shader
 shaders_custom_uniform: shaders_custom_uniform.c

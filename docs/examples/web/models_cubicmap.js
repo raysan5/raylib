@@ -182,7 +182,7 @@ Module['FS_createPath']('/', 'resources', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 201, "filename": "/resources/cubicmap.png"}, {"audio": 0, "start": 201, "crunched": 0, "end": 37426, "filename": "/resources/cubicmap_atlas.png"}], "remote_package_size": 37426, "package_uuid": "4432e3b6-4d0c-4577-a5e5-91a7d40b7f85"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 201, "filename": "/resources/cubicmap.png"}, {"audio": 0, "start": 201, "crunched": 0, "end": 37426, "filename": "/resources/cubicmap_atlas.png"}], "remote_package_size": 37426, "package_uuid": "ba274e07-1f63-462e-ad99-f84535450721"});
 
 })();
 

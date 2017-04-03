@@ -183,7 +183,7 @@ Module['FS_createPath']('/resources', 'fonts', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 26597, "filename": "/resources/fonts/custom_mecha.png"}, {"audio": 0, "start": 26597, "crunched": 0, "end": 64532, "filename": "/resources/fonts/custom_alagard.png"}, {"audio": 0, "start": 64532, "crunched": 0, "end": 88128, "filename": "/resources/fonts/custom_jupiter_crash.png"}], "remote_package_size": 88128, "package_uuid": "128b1ddd-b8bf-4bd6-a915-f86578bb01df"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 26597, "filename": "/resources/fonts/custom_mecha.png"}, {"audio": 0, "start": 26597, "crunched": 0, "end": 64532, "filename": "/resources/fonts/custom_alagard.png"}, {"audio": 0, "start": 64532, "crunched": 0, "end": 88128, "filename": "/resources/fonts/custom_jupiter_crash.png"}], "remote_package_size": 88128, "package_uuid": "ba5b2d4c-8fe3-45e6-843e-f81fe6609614"});
 
 })();
 

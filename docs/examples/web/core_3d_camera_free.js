@@ -7103,29 +7103,22 @@ function getTempRet0() {
 }
 
 function _main() {
- var $$byval_copy = 0, $$sroa$03$0$$sroa_idx = 0, $$sroa$2$0$$sroa_idx1 = 0, $$sroa$29$0$$sroa_idx10 = 0, $$sroa$3$0$$sroa_idx2 = 0, $$sroa$311$0$$sroa_idx12 = 0, $0 = 0, $1 = 0, $2 = 0, $3 = 0, dest = 0, label = 0, sp = 0, src = 0, stop = 0;
+ var $0 = 0, $1 = 0, $camera$byval_copy = 0, dest = 0, label = 0, sp = 0, src = 0, stop = 0;
  sp = STACKTOP;
- STACKTOP = STACKTOP + 80|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(80|0);
- $$byval_copy = sp + 40|0;
- $0 = sp;
- $1 = HEAP32[2]|0;
- $2 = HEAP32[3]|0;
- _InitWindow($1,$2,3396);
- HEAPF32[$0>>2] = 0.0;
- $$sroa$29$0$$sroa_idx10 = ((($0)) + 4|0);
- HEAPF32[$$sroa$29$0$$sroa_idx10>>2] = 10.0;
- $$sroa$311$0$$sroa_idx12 = ((($0)) + 8|0);
- HEAPF32[$$sroa$311$0$$sroa_idx12>>2] = 10.0;
- $$sroa$03$0$$sroa_idx = ((($0)) + 12|0);
- $$sroa$2$0$$sroa_idx1 = ((($0)) + 28|0);
- ;HEAP32[$$sroa$03$0$$sroa_idx>>2]=0|0;HEAP32[$$sroa$03$0$$sroa_idx+4>>2]=0|0;HEAP32[$$sroa$03$0$$sroa_idx+8>>2]=0|0;HEAP32[$$sroa$03$0$$sroa_idx+12>>2]=0|0;
- HEAPF32[$$sroa$2$0$$sroa_idx1>>2] = 1.0;
- $$sroa$3$0$$sroa_idx2 = ((($0)) + 32|0);
- HEAPF32[$$sroa$3$0$$sroa_idx2>>2] = 0.0;
- $3 = ((($0)) + 36|0);
- HEAPF32[$3>>2] = 45.0;
- dest=$$byval_copy; src=$0; stop=dest+40|0; do { HEAP32[dest>>2]=HEAP32[src>>2]|0; dest=dest+4|0; src=src+4|0; } while ((dest|0) < (stop|0));
- _SetCameraMode($$byval_copy,1);
+ STACKTOP = STACKTOP + 48|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(48|0);
+ $camera$byval_copy = sp;
+ $0 = HEAP32[2]|0;
+ $1 = HEAP32[3]|0;
+ _InitWindow($0,$1,3396);
+ HEAPF32[3535] = 10.0;
+ HEAPF32[(14144)>>2] = 10.0;
+ HEAPF32[(14148)>>2] = 10.0;
+ ;HEAP32[(14152)>>2]=0|0;HEAP32[(14152)+4>>2]=0|0;HEAP32[(14152)+8>>2]=0|0;HEAP32[(14152)+12>>2]=0|0;
+ HEAPF32[(14168)>>2] = 1.0;
+ HEAPF32[(14172)>>2] = 0.0;
+ HEAPF32[(14176)>>2] = 45.0;
+ dest=$camera$byval_copy; src=14140; stop=dest+40|0; do { HEAP32[dest>>2]=HEAP32[src>>2]|0; dest=dest+4|0; src=src+4|0; } while ((dest|0) < (stop|0));
+ _SetCameraMode($camera$byval_copy,1);
  _emscripten_set_main_loop((1|0),0,1);
  _CloseWindow();
  STACKTOP = sp;return 0;

@@ -183,7 +183,7 @@ Module['FS_createPath']('/resources', 'texture_formats', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 1048576, "filename": "/resources/texture_formats/sonic_R8G8B8A8.raw"}], "remote_package_size": 1048576, "package_uuid": "7bfbf262-7504-4c83-a6cc-bf2d26e775fe"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 1048576, "filename": "/resources/texture_formats/sonic_R8G8B8A8.raw"}], "remote_package_size": 1048576, "package_uuid": "3737e5a7-8382-4bd7-805a-49ca01d81651"});
 
 })();
 

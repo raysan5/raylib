@@ -96,7 +96,6 @@ void UpdateDrawFrame(void)
 
         DrawText("this IS a texture loaded from an image!", 300, 370, 10, GRAY);
 
-
     EndDrawing();
     //----------------------------------------------------------------------------------
 }

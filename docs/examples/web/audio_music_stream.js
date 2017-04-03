@@ -183,7 +183,7 @@ Module['FS_createPath']('/resources', 'audio', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 1, "start": 0, "crunched": 0, "end": 506938, "filename": "/resources/audio/guitar_noodling.ogg"}], "remote_package_size": 506938, "package_uuid": "7234e469-90de-4413-8a21-6025f306c05f"});
+ loadPackage({"files": [{"audio": 1, "start": 0, "crunched": 0, "end": 506938, "filename": "/resources/audio/guitar_noodling.ogg"}], "remote_package_size": 506938, "package_uuid": "9de29365-b1e1-4689-9d31-b95e29ce0312"});
 
 })();
 
