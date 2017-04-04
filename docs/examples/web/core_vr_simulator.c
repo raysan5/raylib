@@ -1,11 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Oculus Rift CV1
+*   raylib [core] example - VR Simulator (Oculus Rift CV1 parameters)
 *
-*   Compile example using:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -L. -L..\src\external\OculusSDK\LibOVR -lLibOVRRT32_1 -lraylib -lglfw3 -lopengl32 -lgdi32 -std=c99
-*
-*   This example has been created using raylib 1.5 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2016 Ramon Santamaria (@raysan5)
@@ -45,14 +42,16 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - oculus rift");
     
     // NOTE: If device is not available, it fallbacks to default device (simulator)
-    InitVrDevice(HMD_OCULUS_RIFT_CV1);                  // Init VR device (Oculus Rift CV1)
+    InitVrSimulator(HMD_OCULUS_RIFT_CV1);               // Init VR simulator (Oculus Rift CV1 parameters)
     
     // Define the camera to look into our 3d world
     camera.position = (Vector3){ 5.0f, 5.0f, 5.0f };    // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 60.0f;                                // Camera field-of-view Y
-
+    
+    SetCameraMode(camera, CAMERA_FIRST_PERSON);         // Set first person camera mode
+    
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
@@ -68,7 +67,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseVrDevice();        // Close VR device
+    CloseVrSimulator();     // Close VR simulator
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -83,9 +82,9 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    UpdateVrTracking();
-    
-    if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();
+    UpdateCamera(&camera);          // Update camera (simulator mode)
+
+    if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();    // Toggle VR mode
     //----------------------------------------------------------------------------------
 
     // Draw
@@ -94,14 +93,18 @@ void UpdateDrawFrame(void)
 
         ClearBackground(RAYWHITE);
 
-        Begin3dMode(camera);
+        BeginVrDrawing();
 
-            DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-            DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+            Begin3dMode(camera);
 
-            DrawGrid(10, 1.0f);
+                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
-        End3dMode();
+                DrawGrid(40, 1.0f);
+
+            End3dMode();
+        
+        EndVrDrawing();
 
         DrawFPS(10, 10);
 

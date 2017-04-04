@@ -227,6 +227,7 @@ EXAMPLES = \
     core_3d_camera_first_person \
     core_2d_camera \
     core_world_screen \
+    core_vr_simulator \
     shapes_logo_raylib \
     shapes_basic_shapes \
     shapes_colors_palette \
@@ -291,11 +292,7 @@ core_mouse_wheel: core_mouse_wheel.c
 
 # compile [core] example - gamepad input
 core_input_gamepad: core_input_gamepad.c
-ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-else
-	@echo core_input_gamepad: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
-endif
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/ps3.png --preload-file resources/xbox.png
 
 # compile [core] example - generate random values
 core_random_values: core_random_values.c
@@ -350,8 +347,8 @@ core_world_screen: core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - oculus rift
-#core_oculus_rift: core_oculus_rift.c
-#	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+core_vr_simulator: core_vr_simulator.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo (with basic shapes)
 shapes_logo_raylib: shapes_logo_raylib.c

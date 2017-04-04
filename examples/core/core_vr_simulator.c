@@ -5,7 +5,7 @@
 *   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -75,7 +75,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseVrSimulator();
+    CloseVrSimulator();     // Close VR simulator
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
