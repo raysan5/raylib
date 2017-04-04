@@ -123,7 +123,7 @@ Wave LoadWave(const char *fileName);                            // Load wave dat
 Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from raw array data
 Sound LoadSound(const char *fileName);                          // Load sound from file
 Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
-void UpdateSound(Sound sound, const void *data, int samplesCount); // Update sound buffer with new data
+void UpdateSound(Sound sound, const void *data, int samplesCount);// Update sound buffer with new data
 void UnloadWave(Wave wave);                                     // Unload wave data
 void UnloadSound(Sound sound);                                  // Unload sound
 void PlaySound(Sound sound);                                    // Play a sound
@@ -151,9 +151,10 @@ void SetMusicLoopCount(Music music, float count);               // Set music loo
 float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
+// Raw audio stream functions
 AudioStream InitAudioStream(unsigned int sampleRate,
-                                  unsigned int sampleSize,
-                                  unsigned int channels);       // Init audio stream (to stream raw audio pcm data)
+                            unsigned int sampleSize,
+                            unsigned int channels);             // Init audio stream (to stream raw audio pcm data)
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
 bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill

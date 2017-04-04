@@ -77,7 +77,7 @@ int main()
                          
     fontNames = tempFontNames;
     
-    textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].size*3, 1);
+    textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].baseSize*3, 1);
     
     btnNextRec = (Rectangle){ 673, positionY, 109, 44 };    // Button rectangle (useful for collision)
     
@@ -166,7 +166,7 @@ void UpdateDrawFrame(void)
     }
 
     // Text measurement for better positioning on screen
-    textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].size*3, 1);
+    textSize = MeasureTextEx(fonts[currentFont], text, fonts[currentFont].baseSize*3, 1);
     //----------------------------------------------------------------------------------
 
     // Draw
@@ -188,7 +188,7 @@ void UpdateDrawFrame(void)
         DrawText("NEXT", 700, positionY + 13, 20, btnNextOutColor);
 
         DrawTextEx(fonts[currentFont], text, (Vector2){ screenWidth/2 - textSize.x/2,
-                   260 + (70 - textSize.y)/2 }, fonts[currentFont].size*3,
+                   260 + (70 - textSize.y)/2 }, fonts[currentFont].baseSize*3,
                    1, colors[currentFont]);
 
     EndDrawing();

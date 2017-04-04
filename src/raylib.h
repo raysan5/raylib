@@ -687,9 +687,10 @@ RLAPI float *MatrixToFloat(Matrix mat);                           // Converts Ma
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
-//RLAPI void TraceLog(int logType, const char *text, ...);          // Trace log messages showing (INFO, WARNING, ERROR, DEBUG)
+RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
+//RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 
 RLAPI bool IsFileDropped(void);                                   // Check if a file have been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
@@ -891,7 +892,6 @@ RLAPI void UnloadMesh(Mesh *mesh);                                              
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
-RLAPI Material LoadMaterialEx(Shader shader, Texture2D diffuse, Color color);                           // Load material from basic shading data
 RLAPI Material LoadDefaultMaterial(void);                                                               // Load default material (uses default models shader)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 

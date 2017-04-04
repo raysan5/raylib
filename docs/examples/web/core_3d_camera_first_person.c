@@ -24,7 +24,7 @@ int screenWidth = 800;
 int screenHeight = 450;
 
 // Define the camera to look into our 3d world (position, target, up vector)
-Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 60.0f };
+Camera camera = {{ 4.0f, 2.0f, 4.0f }, { 0.0f, 1.8f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 60.0f };
 
 // Generates some random columns
 float heights[MAX_COLUMNS];
@@ -56,9 +56,8 @@ int main()
         colors[i] = (Color){ GetRandomValue(20, 255), GetRandomValue(10, 55), 30, 255 };
     }
     
-    SetCameraMode(CAMERA_FIRST_PERSON);         // Set a first person camera mode
-    SetCameraFovy(camera.fovy);                 // Set internal camera field-of-view Y
-	
+    SetCameraMode(camera, CAMERA_FIRST_PERSON);         // Set a first person camera mode
+
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
@@ -88,7 +87,7 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    UpdateCameraPlayer(&camera, &playerPosition); // Update camera and player position
+    UpdateCamera(&camera);          // Update camera and player position
     //----------------------------------------------------------------------------------
 
     // Draw

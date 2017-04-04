@@ -163,21 +163,32 @@ Image LoadImage(const char *fileName)
     image.mipmaps = 0;
     image.format = 0;
 
-    if ((strcmp(GetExtension(fileName),"png") == 0)
+    if (IsFileExtension(fileName, ".rres"))
+    {
+        RRES rres = LoadResource(fileName, 0);
+
+        // NOTE: Parameters for RRES_TYPE_IMAGE are: width, height, format, mipmaps
+
+        if (rres[0].type == RRES_TYPE_IMAGE) image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
+        else TraceLog(WARNING, "[%s] Resource file does not contain image data", fileName);
+
+        UnloadResource(rres);
+    }
+    else if ((IsFileExtension(fileName, ".png"))
 #if defined(SUPPORT_FILEFORMAT_BMP)
-        || (strcmp(GetExtension(fileName),"bmp") == 0)
+        || (IsFileExtension(fileName, ".bmp"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_TGA)
-        || (strcmp(GetExtension(fileName),"tga") == 0)
+        || (IsFileExtension(fileName, ".tga"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_JPG)
-        || (strcmp(GetExtension(fileName),"jpg") == 0)
+        || (IsFileExtension(fileName, ".jpg"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
-        || (strcmp(GetExtension(fileName),"gif") == 0)
+        || (IsFileExtension(fileName, ".gif"))
 #endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
-        || (strcmp(GetExtension(fileName),"psd") == 0)
+        || (IsFileExtension(fileName, ".psd"))
 #endif
        )
     {
@@ -198,32 +209,21 @@ Image LoadImage(const char *fileName)
         else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
     }
 #if defined(SUPPORT_FILEFORMAT_DDS)
-    else if (strcmp(GetExtension(fileName),"dds") == 0) image = LoadDDS(fileName);
+    else if (IsFileExtension(fileName, ".dds")) image = LoadDDS(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_PKM)
-    else if (strcmp(GetExtension(fileName),"pkm") == 0) image = LoadPKM(fileName);
+    else if (IsFileExtension(fileName, ".pkm")) image = LoadPKM(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_KTX)
-    else if (strcmp(GetExtension(fileName),"ktx") == 0) image = LoadKTX(fileName);
+    else if (IsFileExtension(fileName, ".ktx")) image = LoadKTX(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_PVR)
-    else if (strcmp(GetExtension(fileName),"pvr") == 0) image = LoadPVR(fileName);
+    else if (IsFileExtension(fileName, ".pvr")) image = LoadPVR(fileName);
 #endif
 #if defined(SUPPORT_FILEFORMAT_ASTC)
-    else if (strcmp(GetExtension(fileName),"astc") == 0) image = LoadASTC(fileName);
+    else if (IsFileExtension(fileName, ".astc")) image = LoadASTC(fileName);
 #endif
-    else if (strcmp(GetExtension(fileName),"rres") == 0)
-    {
-        RRES rres = LoadResource(fileName, 0);
-
-        // NOTE: Parameters for RRES_TYPE_IMAGE are: width, height, format, mipmaps
-
-        if (rres[0].type == RRES_TYPE_IMAGE) image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
-        else TraceLog(WARNING, "[%s] Resource file does not contain image data", fileName);
-
-        UnloadResource(rres);
-    }
-    else TraceLog("[%s] Image fileformat not supported", fileName);
+    else TraceLog(WARNING, "[%s] Image fileformat not supported", fileName);
 
     if (image.data != NULL) TraceLog(INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
     else TraceLog(WARNING, "[%s] Image could not be loaded", fileName);

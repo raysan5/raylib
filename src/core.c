@@ -102,7 +102,7 @@
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
 #include <time.h>           // Required for: time() - Android/RPI hi-res timer (NOTE: Linux only!)
 #include <math.h>           // Required for: tan() [Used in Begin3dMode() to set perspective]
-#include <string.h>         // Required for: strcmp()
+#include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
 #if defined __linux__ || defined(PLATFORM_WEB)
@@ -978,6 +978,12 @@ Color Fade(Color color, float alpha)
     return (Color){color.r, color.g, color.b, (unsigned char)colorAlpha};
 }
 
+// Activates raylib logo at startup
+void ShowLogo(void)
+{
+    showLogo = true;
+}
+
 // Enable some window/system configurations
 void SetConfigFlags(char flags)
 {
@@ -987,10 +993,18 @@ void SetConfigFlags(char flags)
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
 }
 
-// Activates raylib logo at startup
-void ShowLogo(void)
+// Check file extension
+bool IsFileExtension(const char *fileName, const char *ext)
 {
-    showLogo = true;
+    bool result = false;
+    const char *fileExt;
+    
+    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    {
+        if (strcmp(fileExt, ext) == 0) result = true;
+    }
+
+    return result;
 }
 
 #if defined(PLATFORM_DESKTOP)
@@ -2024,9 +2038,12 @@ static double GetTime(void)
 }
 
 // Wait for some milliseconds (stop program execution)
+// NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
+// take longer than expected... for that reason we use the busy wait loop
+// http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 static void Wait(float ms)
 {
-//#define SUPPORT_BUSY_WAIT_LOOP
+#define SUPPORT_BUSY_WAIT_LOOP
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
@@ -2035,7 +2052,7 @@ static void Wait(float ms)
     while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
 #else
     #if defined _WIN32
-        Sleep(ms);
+        Sleep((unsigned int)ms);
     #elif defined __linux__ || defined(PLATFORM_WEB)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
