@@ -57,6 +57,7 @@
 // Default configuration flags (supported features)
 //-------------------------------------------------
 #define SUPPORT_VR_SIMULATION
+#define SUPPORT_DISTORTION_SHADER
 //-------------------------------------------------
 
 #include "rlgl.h"
@@ -2240,7 +2241,7 @@ void *rlglReadTexturePixels(Texture2D texture)
 
     pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
 
-    // NOTE: Despite FBO color texture is RGB, we read data as RGBA... reading as RGB doesn't work... o__O
+    // NOTE: We read data as RGBA because FBO texture is configured as RGBA, despite binding a RGB texture...
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Re-attach internal FBO color texture before deleting it
@@ -2558,7 +2559,7 @@ void InitVrSimulator(int vrDevice)
         hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
         hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
         
-        TraceLog(WARNING, "Initializing VR Simulator (Oculus Rift DK2)");
+        TraceLog(INFO, "Initializing VR Simulator (Oculus Rift DK2)");
     }
     else if ((vrDevice == HMD_DEFAULT_DEVICE) || (vrDevice == HMD_OCULUS_RIFT_CV1))
     {
@@ -2585,11 +2586,11 @@ void InitVrSimulator(int vrDevice)
         hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
         hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
         
-        TraceLog(WARNING, "Initializing VR Simulator (Oculus Rift CV1)");
+        TraceLog(INFO, "Initializing VR Simulator (Oculus Rift CV1)");
     }
     else 
     {
-        TraceLog(WARNING, "VR Simulator doesn't support current device yet,");
+        TraceLog(WARNING, "VR Simulator doesn't support selected device parameters,");
         TraceLog(WARNING, "using default VR Simulator parameters");
     }
 

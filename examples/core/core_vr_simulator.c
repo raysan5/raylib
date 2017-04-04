@@ -1,16 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Oculus Rift CV1
+*   raylib [core] example - VR Simulator (Oculus Rift CV1 parameters)
 *
-*   Compile example using:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -I..\src\external -I..\src\external\OculusSDK\LibOVR\Include /
-*       -L. -L..\src\external\OculusSDK\LibOVR -lLibOVRRT32_1 -lraylib -lglfw3 -lopengl32 -lgdi32 -std=c99 /
-*       -Wl,-allow-multiple-definition
-*
-*   #define SUPPORT_OCULUS_RIFT_CV1 / RLGL_OCULUS_SUPPORT
-*       Enable Oculus Rift CV1 functionality
-*
-*   This example has been created using raylib 1.5 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2016 Ramon Santamaria (@raysan5)
@@ -28,7 +20,7 @@ int main()
     
     // NOTE: screenWidth/screenHeight should match VR device aspect ratio
     
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - oculus rift");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - vr simulator");
 
     InitVrSimulator(HMD_OCULUS_RIFT_CV1);               // Init VR simulator (Oculus Rift CV1 parameters)
     
