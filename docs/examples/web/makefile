@@ -498,6 +498,15 @@ audio_sound_loading: audio_sound_loading.c
 audio_music_stream: audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/audio/guitar_noodling.ogg
 
+# compile [audio] example - music stream playing (OGG)
+audio_module_playing: audio_module_playing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/audio/mini1111.xm
+
+# compile [audio] example - music stream playing (OGG)
+audio_raw_stream: audio_raw_stream.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) -s ALLOW_MEMORY_GROWTH=1
+
+    
 # fix dylib install path name for each executable (MAC)
 fix_dylib:
 ifeq ($(PLATFORM_OS),OSX)

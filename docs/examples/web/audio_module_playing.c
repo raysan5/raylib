@@ -36,16 +36,16 @@ typedef struct {
 int screenWidth = 800;
 int screenHeight = 450;
 
-float timePlayed = 0.0f;
-
 Color colors[14] = { ORANGE, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK,
                      YELLOW, GREEN, SKYBLUE, PURPLE, BEIGE };
 
 // Creates ome circles for visual effect
 CircleWave circles[MAX_CIRCLES];
 
-Shader shader;
-RenderTexture2D target;
+Music xm;
+
+float timePlayed = 0.0f;
+static bool pause = false;
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -72,20 +72,15 @@ int main()
         circles[i].speed = (float)GetRandomValue(1, 100)/20000.0f;
         circles[i].color = colors[GetRandomValue(0, 13)];
     }
+
+    xm = LoadMusicStream("resources/audio/mini1111.xm");
     
-    // Load postprocessing bloom shader
-    shader = LoadShader("resources/shaders/glsl100/base.vs", 
-                        "resources/shaders/glsl100/bloom.fs");
-
-    // Create a RenderTexture2D to be used for render to texture
-    target = LoadRenderTexture(screenWidth, screenHeight);
-
-    PlayMusicStream(0, "resources/audio/2t2m_spa.xm");         // Play module stream
+    PlayMusicStream(xm);            // Play module stream
     
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
     
     // Main game loop
@@ -97,12 +92,11 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);           // Unload shader
-    UnloadRenderTexture(target);    // Unload render texture
+    UnloadMusicStream(xm);          // Unload music stream buffers from RAM
     
-    CloseAudioDevice();     // Close audio device (music streaming is automatically stopped)
+    CloseAudioDevice();             // Close audio device (music streaming is automatically stopped)
 
-    CloseWindow();          // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
@@ -115,6 +109,27 @@ void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
+    UpdateMusicStream(xm);        // Update music buffer with new stream data
+    
+    // Restart music playing (stop and play)
+    if (IsKeyPressed(KEY_SPACE)) 
+    {
+        StopMusicStream(xm);
+        PlayMusicStream(xm);
+    }
+    
+    // Pause/Resume music playing 
+    if (IsKeyPressed(KEY_P))
+    {
+        pause = !pause;
+        
+        if (pause) PauseMusicStream(xm);
+        else ResumeMusicStream(xm);
+    }
+    
+    // Get timePlayed scaled to bar dimensions
+    timePlayed = GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40);
+        
     for (int i = MAX_CIRCLES - 1; i >= 0; i--)
     {
         circles[i].alpha += circles[i].speed;
@@ -132,39 +147,23 @@ void UpdateDrawFrame(void)
             circles[i].speed = (float)GetRandomValue(1, 100)/20000.0f;
         }
     }
-
-    // Get timePlayed scaled to bar dimensions
-    timePlayed = (GetMusicTimePlayed(0)/GetMusicTimeLength(0)*(screenWidth - 40))*2;
-    
-    UpdateMusicStream(0);        // Update music buffer with new stream data
     //----------------------------------------------------------------------------------
 
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
 
-        ClearBackground(BLACK);
+        ClearBackground(RAYWHITE);
         
-        BeginTextureMode(target);   // Enable drawing to texture
-
-            for (int i = MAX_CIRCLES - 1; i >= 0; i--)
-            {
-                DrawCircleV(circles[i].position, circles[i].radius, Fade(circles[i].color, circles[i].alpha));
-            }
-            
-        EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
+        for (int i = MAX_CIRCLES - 1; i >= 0; i--)
+        {
+            DrawCircleV(circles[i].position, circles[i].radius, Fade(circles[i].color, circles[i].alpha));
+        }
         
-        BeginShaderMode(shader);
-
-            // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-            
-        EndShaderMode();
-
         // Draw time bar
         DrawRectangle(20, screenHeight - 20 - 12, screenWidth - 40, 12, LIGHTGRAY);
         DrawRectangle(20, screenHeight - 20 - 12, (int)timePlayed, 12, MAROON);
-        DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, WHITE);
+        DrawRectangleLines(20, screenHeight - 20 - 12, screenWidth - 40, 12, GRAY);
 
     EndDrawing();
     //----------------------------------------------------------------------------------
