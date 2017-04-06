@@ -1875,8 +1875,8 @@ static Mesh LoadOBJ(const char *fileName)
             float r = 1.0f/(deltaUV1.x*deltaUV2.y - deltaUV1.y*deltaUV2.x);
             Vector3 t1 = { deltaPos1.x*deltaUV2.y, deltaPos1.y*deltaUV2.y, deltaPos1.z*deltaUV2.y };
             Vector3 t2 = { deltaPos2.x*deltaUV1.y, deltaPos2.y*deltaUV1.y, deltaPos2.z*deltaUV1.y };
-            Vector3 b1 = { deltaPos2.x*deltaUV1.x, deltaPos2.y*deltaUV1.x, deltaPos2.z*deltaUV1.x };
-            Vector3 b2 = { deltaPos1.x*deltaUV2.x, deltaPos1.y*deltaUV2.x, deltaPos1.z*deltaUV2.x };
+            // Vector3 b1 = { deltaPos2.x*deltaUV1.x, deltaPos2.y*deltaUV1.x, deltaPos2.z*deltaUV1.x };
+            // Vector3 b2 = { deltaPos1.x*deltaUV2.x, deltaPos1.y*deltaUV2.x, deltaPos1.z*deltaUV2.x };
 
             // Calculate vertex tangent
             Vector3 tangent = VectorSubtract(t1, t2);
