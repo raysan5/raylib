@@ -39,6 +39,8 @@
 // Default supported features
 //-------------------------------------
 #define SUPPORT_DEFAULT_FONT
+#define SUPPORT_FILEFORMAT_FNT
+#define SUPPORT_FILEFORMAT_TTF
 //-------------------------------------
 
 #include "raylib.h"

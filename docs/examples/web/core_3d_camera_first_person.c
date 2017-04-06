@@ -24,7 +24,7 @@ int screenWidth = 800;
 int screenHeight = 450;
 
 // Define the camera to look into our 3d world (position, target, up vector)
-Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 60.0f };
+Camera camera = {{ 4.0f, 2.0f, 4.0f }, { 0.0f, 1.8f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 60.0f };
 
 // Generates some random columns
 float heights[MAX_COLUMNS];

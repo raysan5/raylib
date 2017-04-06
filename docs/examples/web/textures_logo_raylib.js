@@ -182,7 +182,7 @@ Module['FS_createPath']('/', 'resources', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 3760, "filename": "/resources/raylib_logo.png"}], "remote_package_size": 3760, "package_uuid": "38be83d9-edac-417b-9c60-b5da0fbcff06"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 3760, "filename": "/resources/raylib_logo.png"}], "remote_package_size": 3760, "package_uuid": "71c74538-6d2f-419f-99e0-d310208f954c"});
 
 })();
 

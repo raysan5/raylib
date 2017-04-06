@@ -2,7 +2,7 @@
 *
 *   raylib [core] example - Initialize 3d camera free (adapted for HTML5 platform)
 *
-*   This example has been created using raylib 1.3 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2015 Ramon Santamaria (@raysan5)
@@ -41,8 +41,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
 
     // Define the camera to look into our 3d world
-    Camera camera;
-    camera.position = (Vector3){ 0.0f, 10.0f, 10.0f };  // Camera position
+    camera.position = (Vector3){ 10.0f, 10.0f, 10.0f }; // Camera position
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y

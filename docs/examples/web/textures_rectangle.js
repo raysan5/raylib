@@ -182,7 +182,7 @@ Module['FS_createPath']('/', 'resources', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 85247, "filename": "/resources/guybrush.png"}], "remote_package_size": 85247, "package_uuid": "d7c2ab68-a8da-4273-a50f-ba2c6e8860b8"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 85247, "filename": "/resources/guybrush.png"}], "remote_package_size": 85247, "package_uuid": "2a974ffe-7b38-475a-aaaa-6209cb11351e"});
 
 })();
 

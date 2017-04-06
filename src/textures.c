@@ -516,12 +516,14 @@ Image GetTextureData(Texture2D texture)
             image.width = texture.width;
             image.height = texture.height;
             image.mipmaps = 1;
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGB (from framebuffer)
-            image.format = UNCOMPRESSED_R8G8B8A8;
-#else
-            image.format = texture.format;
-#endif
+            
+            if (rlGetVersion() == OPENGL_ES_20)
+            {
+                // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGBA (from framebuffer)
+                image.format = UNCOMPRESSED_R8G8B8A8;
+            }
+            else image.format = texture.format;
+
             TraceLog(INFO, "Texture pixel data obtained successfully");
         }
         else TraceLog(WARNING, "Texture pixel data could not be obtained");

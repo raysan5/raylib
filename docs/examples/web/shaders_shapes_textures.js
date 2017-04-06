@@ -104,6 +104,8 @@ Module.expectedDataFileDownloads++;
     }
 Module['FS_createPath']('/', 'resources', true, true);
 Module['FS_createPath']('/resources', 'texture_formats', true, true);
+Module['FS_createPath']('/resources', 'shaders', true, true);
+Module['FS_createPath']('/resources/shaders', 'glsl100', true, true);
 
     function DataRequest(start, end, crunched, audio) {
       this.start = start;
@@ -183,7 +185,7 @@ Module['FS_createPath']('/resources', 'texture_formats', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 116512, "filename": "/resources/texture_formats/sonic.png"}], "remote_package_size": 116512, "package_uuid": "d1fc9f95-b3a7-4538-9e6f-b593f6d6be0b"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 116512, "filename": "/resources/texture_formats/sonic.png"}, {"audio": 0, "start": 116512, "crunched": 0, "end": 117117, "filename": "/resources/shaders/glsl100/base.vs"}, {"audio": 0, "start": 117117, "crunched": 0, "end": 117782, "filename": "/resources/shaders/glsl100/grayscale.fs"}], "remote_package_size": 117782, "package_uuid": "d42d3374-bb59-4789-9c86-3d81cea4c708"});
 
 })();
 

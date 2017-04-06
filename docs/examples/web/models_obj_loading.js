@@ -183,7 +183,7 @@ Module['FS_createPath']('/resources', 'model', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 2748249, "filename": "/resources/model/dwarf.obj"}, {"audio": 0, "start": 2748249, "crunched": 0, "end": 4022872, "filename": "/resources/model/dwarf_diffuse.png"}], "remote_package_size": 4022872, "package_uuid": "750abc5f-af45-4d90-afe8-fd10ed333f43"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 2748249, "filename": "/resources/model/dwarf.obj"}, {"audio": 0, "start": 2748249, "crunched": 0, "end": 4022872, "filename": "/resources/model/dwarf_diffuse.png"}], "remote_package_size": 4022872, "package_uuid": "6faeef29-8bb8-4e0d-91a9-30ecf3f9b645"});
 
 })();
 

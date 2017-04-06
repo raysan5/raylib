@@ -227,6 +227,7 @@ EXAMPLES = \
     core_3d_camera_first_person \
     core_2d_camera \
     core_world_screen \
+    core_vr_simulator \
     shapes_logo_raylib \
     shapes_basic_shapes \
     shapes_colors_palette \
@@ -291,11 +292,7 @@ core_mouse_wheel: core_mouse_wheel.c
 
 # compile [core] example - gamepad input
 core_input_gamepad: core_input_gamepad.c
-ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-else
-	@echo core_input_gamepad: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
-endif
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/ps3.png --preload-file resources/xbox.png
 
 # compile [core] example - generate random values
 core_random_values: core_random_values.c
@@ -350,8 +347,8 @@ core_world_screen: core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [core] example - oculus rift
-#core_oculus_rift: core_oculus_rift.c
-#	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+core_vr_simulator: core_vr_simulator.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shapes] example - raylib logo (with basic shapes)
 shapes_logo_raylib: shapes_logo_raylib.c
@@ -415,7 +412,7 @@ text_sprite_fonts: text_sprite_fonts.c
 
 # compile [text] example - bmfonts and ttf loading
 text_bmfont_ttf: text_bmfont_ttf.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/bmfont.fnt --preload-file resources/fonts/pixantiqua.ttf
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/bmfont.fnt --preload-file resources/fonts/bmfont.png --preload-file resources/fonts/pixantiqua.ttf -s ALLOW_MEMORY_GROWTH=1
 
 # compile [text] example - raylib bitmap fonts (rBMF)
 text_rbmf_fonts: text_rbmf_fonts.c
@@ -435,11 +432,11 @@ text_writing_anim: text_writing_anim.c
 
 # compile [text] example - text ttf loading
 text_ttf_loading: text_ttf_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/KAISG.ttf -s ALLOW_MEMORY_GROWTH=1
 
 # compile [text] example - text bmfont unordered
 text_bmfont_unordered: text_bmfont_unordered.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/fonts/pixantiqua.fnt --preload-file resources/fonts/pixantiqua_0.png
 
 # compile [models] example - basic geometric 3d shapes
 models_geometric_shapes: models_geometric_shapes.c
@@ -471,7 +468,7 @@ models_cubicmap: models_cubicmap.c
 
 # compile [models] example - model ray picking
 models_ray_picking: models_ray_picking.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/model/lowpoly-tower.obj --preload-file resources/model/lowpoly-tower.png
 
 # compile [shaders] example - model shader
 shaders_model_shader: shaders_model_shader.c
@@ -479,7 +476,7 @@ shaders_model_shader: shaders_model_shader.c
     
 # compile [shaders] example - shapes texture shader
 shaders_shapes_textures: shaders_shapes_textures.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/texture_formats/sonic.png --preload-file resources/shaders/glsl100/shapes_base.vs --preload-file resources/shaders/glsl100/shapes_grayscale.fs
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) --preload-file resources/texture_formats/sonic.png --preload-file resources/shaders/glsl100/base.vs --preload-file resources/shaders/glsl100/grayscale.fs
     
 # compile [shaders] example - custom uniform in shader
 shaders_custom_uniform: shaders_custom_uniform.c

@@ -183,7 +183,7 @@ Module['FS_createPath']('/resources', 'audio', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 1, "start": 0, "crunched": 0, "end": 6246, "filename": "/resources/audio/weird.wav"}, {"audio": 1, "start": 6246, "crunched": 0, "end": 63574, "filename": "/resources/audio/tanatana.ogg"}], "remote_package_size": 63574, "package_uuid": "ac0b8b01-6644-4217-8a43-cdb652585250"});
+ loadPackage({"files": [{"audio": 1, "start": 0, "crunched": 0, "end": 6246, "filename": "/resources/audio/weird.wav"}, {"audio": 1, "start": 6246, "crunched": 0, "end": 63574, "filename": "/resources/audio/tanatana.ogg"}], "remote_package_size": 63574, "package_uuid": "504f90a1-2c55-47ff-9400-0508e5042415"});
 
 })();
 

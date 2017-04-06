@@ -182,7 +182,7 @@ Module['FS_createPath']('/', 'resources', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 295054, "filename": "/resources/parrots.png"}, {"audio": 0, "start": 295054, "crunched": 0, "end": 683586, "filename": "/resources/cat.png"}], "remote_package_size": 683586, "package_uuid": "0b55a7d8-679a-472e-b929-8b4a827cc116"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 295054, "filename": "/resources/parrots.png"}, {"audio": 0, "start": 295054, "crunched": 0, "end": 683586, "filename": "/resources/cat.png"}], "remote_package_size": 683586, "package_uuid": "3d0998d2-5991-41c5-abff-c7fce726b395"});
 
 })();
 

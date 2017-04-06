@@ -22,7 +22,7 @@ int screenWidth = 800;
 int screenHeight = 450;
 
 // Define the camera to look into our 3d world
-Camera camera = {{ 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }};
+Camera camera = {{ 8.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 
 Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
