@@ -1844,6 +1844,76 @@ static Mesh LoadOBJ(const char *fileName)
 
     // Security check, just in case no normals or no texcoords defined in OBJ
     if (numTexCoords == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
+    else
+    {
+        // Attempt to calculate mesh tangents and binormals using positions and texture coordinates
+        mesh.tangents = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+        mesh.binormals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+
+        int vCount = 0;
+        int uvCount = 0;
+        while (vCount < mesh.vertexCount*3)
+        {
+            // Calculate mesh vertex positions as Vector3
+            Vector3 v0 = { mesh.vertices[vCount], mesh.vertices[vCount + 1], mesh.vertices[vCount + 2] };
+            Vector3 v1 = { mesh.vertices[vCount + 3], mesh.vertices[vCount + 4], mesh.vertices[vCount + 5] };
+            Vector3 v2 = { mesh.vertices[vCount + 6], mesh.vertices[vCount + 7], mesh.vertices[vCount + 8] };
+
+            // Calculate mesh texture coordinates as Vector2
+            Vector2 uv0 = { mesh.texcoords[uvCount + 0], mesh.texcoords[uvCount + 1] };
+            Vector2 uv1 = { mesh.texcoords[uvCount + 2], mesh.texcoords[uvCount + 3] };
+            Vector2 uv2 = { mesh.texcoords[uvCount + 4], mesh.texcoords[uvCount + 5] };
+
+            // Calculate edges of the triangle (position delta)
+            Vector3 deltaPos1 = VectorSubtract(v1, v0);
+            Vector3 deltaPos2 = VectorSubtract(v2, v0);
+
+            // UV delta
+            Vector2 deltaUV1 = { uv1.x - uv0.x, uv1.y - uv0.y };
+            Vector2 deltaUV2 = { uv2.x - uv0.x, uv2.y - uv0.y };
+
+            float r = 1.0f/(deltaUV1.x*deltaUV2.y - deltaUV1.y*deltaUV2.x);
+            Vector3 t1 = { deltaPos1.x*deltaUV2.y, deltaPos1.y*deltaUV2.y, deltaPos1.z*deltaUV2.y };
+            Vector3 t2 = { deltaPos2.x*deltaUV1.y, deltaPos2.y*deltaUV1.y, deltaPos2.z*deltaUV1.y };
+            Vector3 b1 = { deltaPos2.x*deltaUV1.x, deltaPos2.y*deltaUV1.x, deltaPos2.z*deltaUV1.x };
+            Vector3 b2 = { deltaPos1.x*deltaUV2.x, deltaPos1.y*deltaUV2.x, deltaPos1.z*deltaUV2.x };
+
+            // Calculate vertex tangent
+            Vector3 tangent = VectorSubtract(t1, t2);
+            VectorScale(&tangent, r);
+
+            // Apply calculated tangents data to mesh struct
+            mesh.tangents[vCount + 0] = tangent.x;
+            mesh.tangents[vCount + 1] = tangent.y;
+            mesh.tangents[vCount + 2] = tangent.z;
+            mesh.tangents[vCount + 3] = tangent.x;
+            mesh.tangents[vCount + 4] = tangent.y;
+            mesh.tangents[vCount + 5] = tangent.z;
+            mesh.tangents[vCount + 6] = tangent.x;
+            mesh.tangents[vCount + 7] = tangent.y;
+            mesh.tangents[vCount + 8] = tangent.z;
+
+            // TODO: add binormals to mesh struct and assign buffers id and locations properly
+            /* // Calculate vertex binormal
+            Vector3 binormal = VectorSubtract(b1, b2);
+            VectorScale(&binormal, r);
+
+            // Apply calculated binormals data to mesh struct
+            mesh.binormals[vCount + 0] = binormal.x;
+            mesh.binormals[vCount + 1] = binormal.y;
+            mesh.binormals[vCount + 2] = binormal.z;
+            mesh.binormals[vCount + 3] = binormal.x;
+            mesh.binormals[vCount + 4] = binormal.y;
+            mesh.binormals[vCount + 5] = binormal.z;
+            mesh.binormals[vCount + 6] = binormal.x;
+            mesh.binormals[vCount + 7] = binormal.y;
+            mesh.binormals[vCount + 8] = binormal.z; */
+
+            // Update vertex position and texture coordinates counters
+            vCount += 9;
+            uvCount += 6;
+        }
+    }
 
     // Now we can free temp mid* arrays
     free(midVertices);
