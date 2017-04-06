@@ -1848,7 +1848,7 @@ static Mesh LoadOBJ(const char *fileName)
     {
         // Attempt to calculate mesh tangents and binormals using positions and texture coordinates
         mesh.tangents = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-        mesh.binormals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+        // mesh.binormals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
 
         int vCount = 0;
         int uvCount = 0;
