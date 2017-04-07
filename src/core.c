@@ -343,7 +343,9 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
 #if defined(PLATFORM_WEB)
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData);
-static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData);
+static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 #endif
 
@@ -398,16 +400,22 @@ void InitWindow(int width, int height, const char *title)
 
 #if defined(PLATFORM_WEB)
     emscripten_set_fullscreenchange_callback(0, 0, 1, EmscriptenFullscreenChangeCallback);
+    
+    // Support keyboard events
+    emscripten_set_keypress_callback("#canvas", NULL, 1, EmscriptenKeyboardCallback);
+    
+    // Support mouse events
+    emscripten_set_click_callback("#canvas", NULL, 1, EmscriptenMouseCallback);
 
-    // NOTE: Some code examples
+    // Support touch events
+    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenTouchCallback);
     //emscripten_set_touchstart_callback(0, NULL, 1, Emscripten_HandleTouch);
     //emscripten_set_touchend_callback("#canvas", data, 0, Emscripten_HandleTouch);
-    emscripten_set_touchstart_callback("#canvas", NULL, 1, EmscriptenInputCallback);
-    emscripten_set_touchend_callback("#canvas", NULL, 1, EmscriptenInputCallback);
-    emscripten_set_touchmove_callback("#canvas", NULL, 1, EmscriptenInputCallback);
-    emscripten_set_touchcancel_callback("#canvas", NULL, 1, EmscriptenInputCallback);
 
-    // Support gamepad (not provided by GLFW3 on emscripten)
+    // Support gamepad events (not provided by GLFW3 on emscripten)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 #endif
@@ -2700,8 +2708,39 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     return 0;
 }
 
+// Register keyboard input events
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyEvent, void *userData)
+{
+    if ((eventType == EMSCRIPTEN_EVENT_KEYPRESS) && (strcmp(keyEvent->code, "Escape") == 0))
+    {
+        emscripten_exit_pointerlock();
+    }
+
+    return 0;
+}
+
+// Register mouse input events
+static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+{
+    if (eventType == EMSCRIPTEN_EVENT_CLICK)
+    {
+        EmscriptenPointerlockChangeEvent plce;
+        emscripten_get_pointerlock_status(&plce);
+
+        if (!plce.isActive) emscripten_request_pointerlock(0, 1);
+        else
+        {
+            emscripten_exit_pointerlock();
+            emscripten_get_pointerlock_status(&plce);
+            //if (plce.isActive) TraceLog(WARNING, "Pointer lock exit did not work!");
+        }
+    }
+    
+    return 0;
+}
+
 // Register touch input events
-static EM_BOOL EmscriptenInputCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
+static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
 {
     /*
     for (int i = 0; i < touchEvent->numTouches; i++)
