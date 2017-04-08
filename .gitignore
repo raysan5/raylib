@@ -109,3 +109,6 @@ project/vs2015/*.opendb
 !project/vs2015/external/openal_soft/lib/win64/OpenAL32.dll
 !project/vs2015/external/lua/lib/win32/lua53.dll
 
+docs/examples/web/*.html
+!docs/examples/web/loader.html
+
