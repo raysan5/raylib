@@ -101,7 +101,8 @@ int main()
 
     Material material;// = LoadStandardMaterial();
     
-    material.shader = LoadShader("resources/shaders/glsl330/standard.vs", "resources/shaders/glsl330/standard.fs");
+    material.shader = LoadShader("resources/shaders/glsl330/standard.vs", 
+                                 "resources/shaders/glsl330/standard.fs");
     
     // Try to get lights location points (if available)
     GetShaderLightsLocations(material.shader);

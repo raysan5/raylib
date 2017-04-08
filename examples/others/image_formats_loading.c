@@ -84,43 +84,43 @@ int main()
     
     Texture2D sonic[NUM_TEXTURES];
 
-    sonic[PNG_R8G8B8A8] = LoadTexture("resources/texture_formats/sonic.png");
-    
+    sonic[PNG_R8G8B8A8] = LoadTexture("resources/formats/sonic.png");
+
     // Load UNCOMPRESSED PVR texture data
-    sonic[PVR_GRAYSCALE] = LoadTexture("resources/texture_formats/sonic_GRAYSCALE.pvr");
-    sonic[PVR_GRAY_ALPHA] = LoadTexture("resources/texture_formats/sonic_L8A8.pvr");
-    sonic[PVR_R5G6B5] = LoadTexture("resources/texture_formats/sonic_R5G6B5.pvr");
-    sonic[PVR_R5G5B5A1] = LoadTexture("resources/texture_formats/sonic_R5G5B5A1.pvr");
-    sonic[PVR_R4G4B4A4] = LoadTexture("resources/texture_formats/sonic_R4G4B4A4.pvr");
+    sonic[PVR_GRAYSCALE] = LoadTexture("resources/formats/sonic_GRAYSCALE.pvr");
+    sonic[PVR_GRAY_ALPHA] = LoadTexture("resources/formats/sonic_L8A8.pvr");
+    sonic[PVR_R5G6B5] = LoadTexture("resources/formats/sonic_R5G6B5.pvr");
+    sonic[PVR_R5G5B5A1] = LoadTexture("resources/formats/sonic_R5G5B5A1.pvr");
+    sonic[PVR_R4G4B4A4] = LoadTexture("resources/formats/sonic_R4G4B4A4.pvr");
     
     // Load UNCOMPRESSED DDS texture data
-    sonic[DDS_R5G6B5] = LoadTexture("resources/texture_formats/sonic_R5G6B5.dds");
-    sonic[DDS_R5G5B5A1] = LoadTexture("resources/texture_formats/sonic_A1R5G5B5.dds");
-    sonic[DDS_R4G4B4A4] = LoadTexture("resources/texture_formats/sonic_A4R4G4B4.dds");
-    sonic[DDS_R8G8B8A8] = LoadTexture("resources/texture_formats/sonic_A8R8G8B8.dds");
+    sonic[DDS_R5G6B5] = LoadTexture("resources/formats/sonic_R5G6B5.dds");
+    sonic[DDS_R5G5B5A1] = LoadTexture("resources/formats/sonic_A1R5G5B5.dds");
+    sonic[DDS_R4G4B4A4] = LoadTexture("resources/formats/sonic_A4R4G4B4.dds");
+    sonic[DDS_R8G8B8A8] = LoadTexture("resources/formats/sonic_A8R8G8B8.dds");
    
     // Load COMPRESSED DXT DDS texture data (if supported)
-    sonic[DDS_DXT1_RGB] = LoadTexture("resources/texture_formats/sonic_DXT1_RGB.dds");
-    sonic[DDS_DXT1_RGBA] = LoadTexture("resources/texture_formats/sonic_DXT1_RGBA.dds");
-    sonic[DDS_DXT3_RGBA] = LoadTexture("resources/texture_formats/sonic_DXT3_RGBA.dds");
-    sonic[DDS_DXT5_RGBA] = LoadTexture("resources/texture_formats/sonic_DXT5_RGBA.dds");
+    sonic[DDS_DXT1_RGB] = LoadTexture("resources/formats/sonic_DXT1_RGB.dds");
+    sonic[DDS_DXT1_RGBA] = LoadTexture("resources/formats/sonic_DXT1_RGBA.dds");
+    sonic[DDS_DXT3_RGBA] = LoadTexture("resources/formats/sonic_DXT3_RGBA.dds");
+    sonic[DDS_DXT5_RGBA] = LoadTexture("resources/formats/sonic_DXT5_RGBA.dds");
     
     // Load COMPRESSED ETC texture data (if supported)
-    sonic[PKM_ETC1_RGB] = LoadTexture("resources/texture_formats/sonic_ETC1_RGB.pkm");
-    sonic[PKM_ETC2_RGB] = LoadTexture("resources/texture_formats/sonic_ETC2_RGB.pkm");
-    sonic[PKM_ETC2_EAC_RGBA] = LoadTexture("resources/texture_formats/sonic_ETC2_EAC_RGBA.pkm");
+    sonic[PKM_ETC1_RGB] = LoadTexture("resources/formats/sonic_ETC1_RGB.pkm");
+    sonic[PKM_ETC2_RGB] = LoadTexture("resources/formats/sonic_ETC2_RGB.pkm");
+    sonic[PKM_ETC2_EAC_RGBA] = LoadTexture("resources/formats/sonic_ETC2_EAC_RGBA.pkm");
     
-    sonic[KTX_ETC1_RGB] = LoadTexture("resources/texture_formats/sonic_ETC1_RGB.ktx");
-    sonic[KTX_ETC2_RGB] = LoadTexture("resources/texture_formats/sonic_ETC2_RGB.ktx");
-    sonic[KTX_ETC2_EAC_RGBA] = LoadTexture("resources/texture_formats/sonic_ETC2_EAC_RGBA.ktx");
+    sonic[KTX_ETC1_RGB] = LoadTexture("resources/formats/sonic_ETC1_RGB.ktx");
+    sonic[KTX_ETC2_RGB] = LoadTexture("resources/formats/sonic_ETC2_RGB.ktx");
+    sonic[KTX_ETC2_EAC_RGBA] = LoadTexture("resources/formats/sonic_ETC2_EAC_RGBA.ktx");
     
     // Load COMPRESSED ASTC texture data (if supported)
-    sonic[ASTC_4x4_LDR] = LoadTexture("resources/texture_formats/sonic_ASTC_4x4_ldr.astc");
-    sonic[ASTC_8x8_LDR] = LoadTexture("resources/texture_formats/sonic_ASTC_8x8_ldr.astc");
+    sonic[ASTC_4x4_LDR] = LoadTexture("resources/formats/sonic_ASTC_4x4_ldr.astc");
+    sonic[ASTC_8x8_LDR] = LoadTexture("resources/formats/sonic_ASTC_8x8_ldr.astc");
 
     // Load COMPRESSED PVR texture data (if supported)
-    sonic[PVR_PVRT_RGB] = LoadTexture("resources/texture_formats/sonic_PVRT_RGB.pvr");
-    sonic[PVR_PVRT_RGBA] = LoadTexture("resources/texture_formats/sonic_PVRT_RGBA.pvr");
+    sonic[PVR_PVRT_RGB] = LoadTexture("resources/formats/sonic_PVRT_RGB.pvr");
+    sonic[PVR_PVRT_RGBA] = LoadTexture("resources/formats/sonic_PVRT_RGBA.pvr");
     
     int selectedFormat = PNG_R8G8B8A8;
     

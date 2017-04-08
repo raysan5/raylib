@@ -238,15 +238,12 @@ EXAMPLES = \
     textures_srcrec_dstrec \
     textures_to_image \
     textures_raw_data \
-    textures_formats_loading \
-    textures_particles_trail_blending \
     textures_image_processing \
     textures_image_drawing \
     text_sprite_fonts \
     text_bmfont_ttf \
     text_rbmf_fonts \
     text_format_text \
-    text_font_select \
     text_writing_anim \
     text_ttf_loading \
     text_bmfont_unordered \

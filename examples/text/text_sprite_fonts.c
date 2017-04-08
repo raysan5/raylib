@@ -25,9 +25,9 @@ int main()
     const char msg3[50] = "...and a THIRD one! GREAT! :D";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
-    SpriteFont font1 = LoadSpriteFont("resources/fonts/custom_mecha.png");          // SpriteFont loading
-    SpriteFont font2 = LoadSpriteFont("resources/fonts/custom_alagard.png");        // SpriteFont loading
-    SpriteFont font3 = LoadSpriteFont("resources/fonts/custom_jupiter_crash.png");  // SpriteFont loading
+    SpriteFont font1 = LoadSpriteFont("resources/custom_mecha.png");          // SpriteFont loading
+    SpriteFont font2 = LoadSpriteFont("resources/custom_alagard.png");        // SpriteFont loading
+    SpriteFont font3 = LoadSpriteFont("resources/custom_jupiter_crash.png");  // SpriteFont loading
 
     Vector2 fontPosition1, fontPosition2, fontPosition3;
 

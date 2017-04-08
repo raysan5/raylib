@@ -238,15 +238,12 @@ EXAMPLES = \
     textures/textures_srcrec_dstrec \
     textures/textures_to_image \
     textures/textures_raw_data \
-    textures/textures_formats_loading \
-    textures/textures_particles_trail_blending \
     textures/textures_image_processing \
     textures/textures_image_drawing \
     text/text_sprite_fonts \
     text/text_bmfont_ttf \
     text/text_rbmf_fonts \
     text/text_format_text \
-    text/text_font_select \
     text/text_writing_anim \
     text/text_ttf_loading \
     text/text_bmfont_unordered \
@@ -261,7 +258,6 @@ EXAMPLES = \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
     shaders/shaders_postprocessing \
-    shaders/shaders_standard_lighting \
     audio/audio_sound_loading \
     audio/audio_music_stream \
     audio/audio_module_playing \
@@ -303,11 +299,7 @@ core/core_mouse_wheel: core/core_mouse_wheel.c
 
 # compile [core] example - gamepad input
 core/core_input_gamepad: core/core_input_gamepad.c
-ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-else
-	@echo core_input_gamepad: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
-endif
 
 # compile [core] example - generate random values
 core/core_random_values: core/core_random_values.c
@@ -405,14 +397,6 @@ textures/textures_to_image: textures/textures_to_image.c
 textures/textures_raw_data: textures/textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [textures] example - texture formats loading
-textures/textures_formats_loading: textures/textures_formats_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [textures] example - texture particles trail blending
-textures/textures_particles_trail_blending: textures/textures_particles_trail_blending.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
 # compile [textures] example - texture image processing
 textures/textures_image_processing: textures/textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -435,10 +419,6 @@ text/text_rbmf_fonts: text/text_rbmf_fonts.c
 
 # compile [text] example - text formatting
 text/text_format_text: text/text_format_text.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [text] example - font selection program
-text/text_font_select: text/text_font_select.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text writing animation
@@ -499,10 +479,6 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 
 # compile [shaders] example - postprocessing shader
 shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [shaders] example - standard lighting
-shaders/shaders_standard_lighting: shaders/shaders_standard_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - sound loading and playing (WAV and OGG)
