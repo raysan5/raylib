@@ -271,6 +271,10 @@ EXAMPLES = \
 # in this case, the 'default' target entry is raylib
 all: examples
 
+# generic compilation pattern
+%: %.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+
 # compile all examples
 examples: $(EXAMPLES)
 
@@ -535,8 +539,3 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
-
-# instead of defining every module one by one, we can define a pattern
-# this pattern below will automatically compile every module defined on $(OBJS)
-#%.exe : %.c
-#	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM)
