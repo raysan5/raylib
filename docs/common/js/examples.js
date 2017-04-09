@@ -20,7 +20,7 @@ $(document).ready(function() {
         'core_3d_camera_first_person',
         'core_2d_camera',
         'core_world_screen',
-        'core_oculus_rift',
+        'core_vr_simulator',
         'shapes_logo_raylib',
         'shapes_basic_shapes',
         'shapes_colors_palette',
@@ -31,15 +31,12 @@ $(document).ready(function() {
         'textures_srcrec_dstrec',
         'textures_to_image',
         'textures_raw_data',
-        'textures_formats_loading',
-        'textures_particles_trail_blending',
         'textures_image_processing',
         'textures_image_drawing',
         'text_sprite_fonts',
         'text_bmfont_ttf',
         'text_rbmf_fonts',
         'text_format_text',
-        'text_font_select',
         'text_writing_anim',
         'text_ttf_loading',
         'text_bmfont_unordered',
@@ -49,11 +46,11 @@ $(document).ready(function() {
         'models_obj_loading',
         'models_heightmap',
         'models_cubicmap',
+        'models_ray_picking',
         'shaders_model_shader',
         'shaders_shapes_textures',
         'shaders_custom_uniform',
         'shaders_postprocessing',
-        'shaders_standard_lighting',
         'audio_sound_loading',
         'audio_music_stream',
         'audio_module_playing',
@@ -76,7 +73,7 @@ $(document).ready(function() {
         '3d camera first person',
         '2d camera',
         'world screen',
-        'oculus rift',
+        'vr simulator',
         'logo raylib shapes',
         'basic shapes',
         'colors palette',
@@ -87,15 +84,12 @@ $(document).ready(function() {
         'src-dest. rectangles',
         'texture to image',
         'raw data loading',
-        'textures formats loading',
-        'particles trail blending',
         'image processing',
         'image drawing',
         'sprite fonts',
         'bmfonts ttf',
         'rbmf fonts',
         'text formatting',
-        'font selection',
         'writing animation',
         'ttf loading',
         'bmfont unordered',
@@ -105,6 +99,7 @@ $(document).ready(function() {
         'obj loading',
         'heightmap loading',
         'cubesmap loading',
+        'mesh ray picking',
         'model shader',
         'shapes textures shader',
         'custom uniform in shaders',
@@ -121,8 +116,8 @@ $(document).ready(function() {
 
         $('#container').append(
             '<div class="mix f' + filterType + '">' +
-            '<a class="fancybox fancybox.iframe" href="examples/web/loader.html?name=' + exampleName[i] + '" title="' + exampleDesc[i] + '">' +
-            '<img width="400" height="225" src="../examples/img/' + exampleName[i] + '.png"><div class="extext"><p>' + exampleDesc[i] + '</p></div></a>' +
+            '<a class="fancybox fancybox.iframe" href="examples/web/loader.html?name=' + filterType + '/' + exampleName[i] + '" title="' + exampleDesc[i] + '">' +
+            '<img width="400" height="225" src="../examples/img/' + filterType + '/' + exampleName[i] + '.png"><div class="extext"><p>' + exampleDesc[i] + '</p></div></a>' +
             '</div>');
 
         $('#container a .extext').hide();

@@ -58,33 +58,28 @@
                 
                 document.title = "raylib - " + name.replace('_', ' ');
 
-                var rawgitUrl = '../src/' + name + '.c';
-                var gitUrl = '../img/' + name + '.png';
+                var srcUrl = '../src/' + name + '.c';
+                var imgUrl = '../img/' + name + '.png';
 
-                $('#eximage img').attr('src', gitUrl);
+                $('#eximage img').attr('src', imgUrl);
 
-				$.get(rawgitUrl, function(data) { 
+				$.get(srcUrl, function(data) { 
 					$('pre code').text(data);
 					$('pre code').each(function(i, e) {hljs.highlightBlock(e)});
 				}, 'text');
                 
                 // Quick hack for some examples not working on web
-                if ((name == "core_drop_files") || 
-                    (name == "core_input_gamepad") || 
-                    (name == "core_storage_values") ||
-                    (name == "text_ttf_loading") ||
-                    (name == "text_bmfont_unordered") ||
-                    (name == "audio_raw_stream") ||
-                    (name == "audio_module_playing"))
+                if ((name == "core/core_drop_files") || 
+                    (name == "core/core_storage_values"))
                 {
-                    $('#eximage').append('<img src="' + gitUrl + '" alt=" ">');
+                    $('#eximage').append('<img src="' + imgUrl + '" alt=" ">');
                 }
                 else
                 {
                     // #eximage filling code: canvas sample and image
                     $('#eximage').append(
                     '<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()">' + 
-                        '<img src="' + gitUrl + '" alt=" ">' +
+                        '<img src="' + imgUrl + '" alt=" ">' +
                     '</canvas>');
                     
                     Module.canvas = document.getElementById('canvas');
