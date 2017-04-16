@@ -195,9 +195,13 @@ Image LoadImage(const char *fileName)
         int imgWidth = 0;
         int imgHeight = 0;
         int imgBpp = 0;
+        
+        FILE *imFile = fopen(fileName, "rb");
 
         // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-        image.data = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 0);
+        image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
+        
+        fclose(imFile);
 
         image.width = imgWidth;
         image.height = imgHeight;
