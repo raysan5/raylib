@@ -85,10 +85,9 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < 8; i++)
-    {
-        UnloadSpriteFont(fonts[i]);       // SpriteFont unloading
-    }
+    
+    // SpriteFonts unloading
+    for (int i = 0; i < 8; i++) UnloadSpriteFont(fonts[i]);
 
     CloseWindow();                 // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

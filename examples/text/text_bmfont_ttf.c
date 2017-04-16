@@ -24,8 +24,8 @@ int main()
     const char msgTtf[64] = "THIS SPRITE FONT has been GENERATED from a TTF";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
-    SpriteFont fontBm = LoadSpriteFont("resources/fonts/bmfont.fnt");       // BMFont (AngelCode)
-    SpriteFont fontTtf = LoadSpriteFont("resources/fonts/pixantiqua.ttf");  // TTF font
+    SpriteFont fontBm = LoadSpriteFont("resources/bmfont.fnt");       // BMFont (AngelCode)
+    SpriteFont fontTtf = LoadSpriteFont("resources/pixantiqua.ttf");  // TTF font
 
     Vector2 fontPosition;
 

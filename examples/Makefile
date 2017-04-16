@@ -74,7 +74,7 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux to enable timespec and drflac
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         CFLAGS = -O2 -s -Wall -std=c99
@@ -87,7 +87,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
+    CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
     # -O2                        # if used, also set --memory-init-file 0
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     #-s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
@@ -238,15 +238,12 @@ EXAMPLES = \
     textures/textures_srcrec_dstrec \
     textures/textures_to_image \
     textures/textures_raw_data \
-    textures/textures_formats_loading \
-    textures/textures_particles_trail_blending \
     textures/textures_image_processing \
     textures/textures_image_drawing \
     text/text_sprite_fonts \
     text/text_bmfont_ttf \
     text/text_rbmf_fonts \
     text/text_format_text \
-    text/text_font_select \
     text/text_writing_anim \
     text/text_ttf_loading \
     text/text_bmfont_unordered \
@@ -261,7 +258,6 @@ EXAMPLES = \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
     shaders/shaders_postprocessing \
-    shaders/shaders_standard_lighting \
     audio/audio_sound_loading \
     audio/audio_music_stream \
     audio/audio_module_playing \
@@ -277,6 +273,10 @@ EXAMPLES = \
 # typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is raylib
 all: examples
+
+# generic compilation pattern
+%: %.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile all examples
 examples: $(EXAMPLES)
@@ -299,11 +299,7 @@ core/core_mouse_wheel: core/core_mouse_wheel.c
 
 # compile [core] example - gamepad input
 core/core_input_gamepad: core/core_input_gamepad.c
-ifeq ($(PLATFORM), $(filter $(PLATFORM),PLATFORM_DESKTOP PLATFORM_RPI))
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-else
-	@echo core_input_gamepad: Example not supported on PLATFORM_ANDROID or PLATFORM_WEB
-endif
 
 # compile [core] example - generate random values
 core/core_random_values: core/core_random_values.c
@@ -401,14 +397,6 @@ textures/textures_to_image: textures/textures_to_image.c
 textures/textures_raw_data: textures/textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [textures] example - texture formats loading
-textures/textures_formats_loading: textures/textures_formats_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [textures] example - texture particles trail blending
-textures/textures_particles_trail_blending: textures/textures_particles_trail_blending.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
 # compile [textures] example - texture image processing
 textures/textures_image_processing: textures/textures_image_processing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
@@ -431,10 +419,6 @@ text/text_rbmf_fonts: text/text_rbmf_fonts.c
 
 # compile [text] example - text formatting
 text/text_format_text: text/text_format_text.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [text] example - font selection program
-text/text_font_select: text/text_font_select.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text writing animation
@@ -495,10 +479,6 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
 
 # compile [shaders] example - postprocessing shader
 shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
-
-# compile [shaders] example - standard lighting
-shaders/shaders_standard_lighting: shaders/shaders_standard_lighting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [audio] example - sound loading and playing (WAV and OGG)
@@ -565,8 +545,3 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
-
-# instead of defining every module one by one, we can define a pattern
-# this pattern below will automatically compile every module defined on $(OBJS)
-#%.exe : %.c
-#	$(CC) -o $@ $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM)

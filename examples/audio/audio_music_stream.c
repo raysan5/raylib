@@ -24,7 +24,7 @@ int main()
 
     InitAudioDevice();              // Initialize audio device
 
-    Music music = LoadMusicStream("resources/audio/guitar_noodling.ogg");
+    Music music = LoadMusicStream("resources/guitar_noodling.ogg");
     
     PlayMusicStream(music);
 

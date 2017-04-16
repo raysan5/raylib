@@ -11,7 +11,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "../src/raymath.h"
+#include "raymath.h"
 
 #include <stdio.h>
 #include <float.h>
@@ -28,19 +28,19 @@ int main()
 
     // Define the camera to look into our 3d world
     Camera camera;
-    camera.position = (Vector3){ 10.0f, 8.0f, 10.0f }; // Camera position
+    camera.position = (Vector3){ 10.0f, 8.0f, 10.0f };  // Camera position
     camera.target = (Vector3){ 0.0f, 2.3f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.6f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
 
     Ray ray;        // Picking line ray
     
-    Model tower = LoadModel("resources/model/lowpoly-tower.obj");           // Load OBJ model
-    Texture2D texture = LoadTexture("resources/model/lowpoly-tower.png");   // Load model texture
-    tower.material.texDiffuse = texture;                                    // Set model diffuse texture
+    Model tower = LoadModel("resources/tower.obj");             // Load OBJ model
+    Texture2D texture = LoadTexture("resources/tower.png");     // Load model texture
+    tower.material.texDiffuse = texture;                        // Set model diffuse texture
     
-    Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                                // Set model position
-    BoundingBox towerBBox = CalculateBoundingBox( tower.mesh );    
+    Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
+    BoundingBox towerBBox = CalculateBoundingBox(tower.mesh);    
     bool hitMeshBBox = false;
     bool hitTriangle = false;
 
@@ -187,7 +187,10 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    UnloadModel(tower);         // Unload model
+    UnloadTexture(texture);     // Unload texture
+    
+    CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;

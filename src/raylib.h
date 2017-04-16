@@ -690,6 +690,7 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
 //RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI void TakeScreenshot(void);                                  // Takes a screenshot and saves it in the same folder as executable
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 
 RLAPI bool IsFileDropped(void);                                   // Check if a file have been dropped into window

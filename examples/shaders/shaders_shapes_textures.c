@@ -9,7 +9,7 @@
 *         on OpenGL ES 2.0 platforms (Android, Raspberry Pi, HTML5), use #version 100 shaders
 *         raylib comes with shaders ready for both versions, check raylib/shaders install folder
 *
-*   This example has been created using raylib 1.3 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2015 Ramon Santamaria (@raysan5)
@@ -17,9 +17,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-
-#include <stdio.h>
-#include <stdlib.h>
 
 int main()
 {
@@ -30,14 +27,12 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shapes and texture shaders");
     
-    Texture2D sonic = LoadTexture("resources/texture_formats/sonic.png");
+    Texture2D fudesumi = LoadTexture("resources/fudesumi.png");
 
     // NOTE: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version 
     Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
                                "resources/shaders/glsl330/grayscale.fs");
-                               
-    // Shader usage is also different than models/postprocessing, shader is just activated when required
-    
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -91,10 +86,12 @@ int main()
             // Activate our custom shader to be applied on next shapes/textures drawings
             BeginShaderMode(shader);
 
-                DrawTexture(sonic, 380, -10, WHITE);    // Using custom shader
+                DrawTexture(fudesumi, 500, -30, WHITE);    // Using custom shader
             
             // Activate our default shader for next drawings
             EndShaderMode();
+            
+            DrawText("(c) Fudesumi sprite by Eiden Marsal", 380, screenHeight - 20, 10, GRAY);
             
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -102,10 +99,10 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);   // Unload shader
-    UnloadTexture(sonic);   // Unload texture
+    UnloadShader(shader);       // Unload shader
+    UnloadTexture(fudesumi);    // Unload texture
     
-    CloseWindow();          // Close window and OpenGL context
+    CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
