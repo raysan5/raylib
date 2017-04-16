@@ -1,11 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib example - particles trail blending
+*   raylib example - particles blending
 *
-*   This example has been created using raylib 1.3 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -30,7 +30,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - particles trail blending");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - particles blending");
     
     // Particles pool, reuse them!
     Particle mouseTail[MAX_PARTICLES]; 

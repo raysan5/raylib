@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Ray picking in 3d mode, ground plane, triangle, mesh
+*   raylib [models] example - Mesh picking in 3d mode, ground plane, triangle, mesh
 *
 *   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -13,9 +13,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#include <stdio.h>
-#include <float.h>
-
+#define FLT_MAX     3.40282347E+38F     // Maximum value of a float, defined in <float.h>
 
 int main()
 {
@@ -24,7 +22,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - 3d ray picking");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - mesh picking");
 
     // Define the camera to look into our 3d world
     Camera camera;
@@ -33,7 +31,7 @@ int main()
     camera.up = (Vector3){ 0.0f, 1.6f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
 
-    Ray ray;        // Picking line ray
+    Ray ray;        // Picking ray
     
     Model tower = LoadModel("resources/tower.obj");             // Load OBJ model
     Texture2D texture = LoadTexture("resources/tower.png");     // Load model texture
@@ -91,7 +89,7 @@ int main()
             cursorColor = PURPLE;
             hitObjectName = "Triangle";
 
-            bary = Barycenter(nearestHit.hitPosition, ta, tb, tc);
+            bary = VectorBarycenter(nearestHit.hitPosition, ta, tb, tc);
             hitTriangle = true;
         } 
         else hitTriangle = false;
@@ -138,15 +136,15 @@ int main()
                 // If we hit something, draw the cursor at the hit point
                 if (nearestHit.hit) 
                 {
-                    DrawCube(nearestHit.hitPosition, 0.5, 0.5, 0.5, cursorColor);
-                    DrawCubeWires(nearestHit.hitPosition, 0.5, 0.5, 0.5, YELLOW);
+                    DrawCube(nearestHit.hitPosition, 0.3, 0.3, 0.3, cursorColor);
+                    DrawCubeWires(nearestHit.hitPosition, 0.3, 0.3, 0.3, RED);
 
                     Vector3 normalEnd;
                     normalEnd.x = nearestHit.hitPosition.x + nearestHit.hitNormal.x;
                     normalEnd.y = nearestHit.hitPosition.y + nearestHit.hitNormal.y;
                     normalEnd.z = nearestHit.hitPosition.z + nearestHit.hitNormal.z;
                     
-                    DrawLine3D(nearestHit.hitPosition, normalEnd, YELLOW);
+                    DrawLine3D(nearestHit.hitPosition, normalEnd, RED);
                 }
 
                 DrawRay(ray, MAROON);
