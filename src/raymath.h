@@ -113,44 +113,66 @@ typedef struct Quaternion {
 #ifndef RAYMATH_EXTERN_INLINE
 
 //------------------------------------------------------------------------------------
+// Functions Declaration - math utils
+//------------------------------------------------------------------------------------
+RMDEF float Clamp(float value, float min, float max);           // Clamp float value
+
+//------------------------------------------------------------------------------------
+// Functions Declaration to work with Vector2
+//------------------------------------------------------------------------------------
+RMDEF Vector2 Vector2Zero(void);                                // Vector with components value 0.0f
+RMDEF Vector2 Vector2One(void);                                 // Vector with components value 1.0f
+RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2);               // Add two vectors (v1 + v2)
+RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2);          // Subtract two vectors (v1 - v2)
+RMDEF float Vector2Lenght(Vector2 v);                           // Calculate vector lenght
+RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2);          // Calculate two vectors dot product
+RMDEF float Vector2Distance(Vector2 v1, Vector2 v2);            // Calculate distance between two vectors
+RMDEF float Vector2Angle(Vector2 v1, Vector2 v2);               // Calculate angle between two vectors in X-axis
+RMDEF void Vector2Scale(Vector2 *v, float scale);               // Scale vector (multiply by value)
+RMDEF void Vector2Negate(Vector2 *v);                           // Negate vector
+RMDEF void Vector2Divide(Vector2 *v, float div);                // Divide vector by a float value
+RMDEF void Vector2Normalize(Vector2 *v);                        // Normalize provided vector
+
+//------------------------------------------------------------------------------------
 // Functions Declaration to work with Vector3
 //------------------------------------------------------------------------------------
-RMDEF Vector3 VectorAdd(Vector3 v1, Vector3 v2);              // Add two vectors
-RMDEF Vector3 VectorSubtract(Vector3 v1, Vector3 v2);         // Substract two vectors
-RMDEF Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2);     // Calculate two vectors cross product
-RMDEF Vector3 VectorPerpendicular(Vector3 v);                 // Calculate one vector perpendicular vector
-RMDEF float VectorDotProduct(Vector3 v1, Vector3 v2);         // Calculate two vectors dot product
-RMDEF float VectorLength(const Vector3 v);                    // Calculate vector lenght
-RMDEF void VectorScale(Vector3 *v, float scale);              // Scale provided vector
-RMDEF void VectorNegate(Vector3 *v);                          // Negate provided vector (invert direction)
-RMDEF void VectorNormalize(Vector3 *v);                       // Normalize provided vector
-RMDEF float VectorDistance(Vector3 v1, Vector3 v2);           // Calculate distance between two points
+RMDEF Vector3 VectorZero(void);                                 // Vector with components value 0.0f
+RMDEF Vector3 VectorOne(void);                                  // Vector with components value 1.0f
+RMDEF Vector3 VectorAdd(Vector3 v1, Vector3 v2);                // Add two vectors
+RMDEF Vector3 VectorSubtract(Vector3 v1, Vector3 v2);           // Substract two vectors
+RMDEF Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2);       // Calculate two vectors cross product
+RMDEF Vector3 VectorPerpendicular(Vector3 v);                   // Calculate one vector perpendicular vector
+RMDEF float VectorLength(const Vector3 v);                      // Calculate vector lenght
+RMDEF float VectorDotProduct(Vector3 v1, Vector3 v2);           // Calculate two vectors dot product
+RMDEF float VectorDistance(Vector3 v1, Vector3 v2);             // Calculate distance between two points
+RMDEF void VectorScale(Vector3 *v, float scale);                // Scale provided vector
+RMDEF void VectorNegate(Vector3 *v);                            // Negate provided vector (invert direction)
+RMDEF void VectorNormalize(Vector3 *v);                         // Normalize provided vector
+RMDEF void VectorTransform(Vector3 *v, Matrix mat);             // Transforms a Vector3 by a given Matrix
 RMDEF Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount); // Calculate linear interpolation between two vectors
-RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal);  // Calculate reflected vector to normal
-RMDEF void VectorTransform(Vector3 *v, Matrix mat);           // Transforms a Vector3 by a given Matrix
-RMDEF Vector3 VectorZero(void);                               // Return a Vector3 init to zero
-RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);          // Return min value for each pair of components
-RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);          // Return max value for each pair of components
-RMDEF Vector3 Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
+RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal);    // Calculate reflected vector to normal
+RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);            // Return min value for each pair of components
+RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);            // Return max value for each pair of components
+RMDEF Vector3 VectorBarycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
 //------------------------------------------------------------------------------------
-RMDEF float MatrixDeterminant(Matrix mat);                    // Compute matrix determinant
-RMDEF float MatrixTrace(Matrix mat);                          // Returns the trace of the matrix (sum of the values along the diagonal)
-RMDEF void MatrixTranspose(Matrix *mat);                      // Transposes provided matrix
-RMDEF void MatrixInvert(Matrix *mat);                         // Invert provided matrix
-RMDEF void MatrixNormalize(Matrix *mat);                      // Normalize provided matrix
-RMDEF Matrix MatrixIdentity(void);                            // Returns identity matrix
-RMDEF Matrix MatrixAdd(Matrix left, Matrix right);            // Add two matrices
-RMDEF Matrix MatrixSubstract(Matrix left, Matrix right);      // Substract two matrices (left - right)
-RMDEF Matrix MatrixTranslate(float x, float y, float z);      // Returns translation matrix
-RMDEF Matrix MatrixRotate(Vector3 axis, float angle);         // Returns rotation matrix for an angle around an specified axis (angle in radians)
-RMDEF Matrix MatrixRotateX(float angle);                      // Returns x-rotation matrix (angle in radians)
-RMDEF Matrix MatrixRotateY(float angle);                      // Returns y-rotation matrix (angle in radians)
-RMDEF Matrix MatrixRotateZ(float angle);                      // Returns z-rotation matrix (angle in radians)
-RMDEF Matrix MatrixScale(float x, float y, float z);          // Returns scaling matrix
-RMDEF Matrix MatrixMultiply(Matrix left, Matrix right);       // Returns two matrix multiplication
+RMDEF float MatrixDeterminant(Matrix mat);                      // Compute matrix determinant
+RMDEF float MatrixTrace(Matrix mat);                            // Returns the trace of the matrix (sum of the values along the diagonal)
+RMDEF void MatrixTranspose(Matrix *mat);                        // Transposes provided matrix
+RMDEF void MatrixInvert(Matrix *mat);                           // Invert provided matrix
+RMDEF void MatrixNormalize(Matrix *mat);                        // Normalize provided matrix
+RMDEF Matrix MatrixIdentity(void);                              // Returns identity matrix
+RMDEF Matrix MatrixAdd(Matrix left, Matrix right);              // Add two matrices
+RMDEF Matrix MatrixSubstract(Matrix left, Matrix right);        // Substract two matrices (left - right)
+RMDEF Matrix MatrixTranslate(float x, float y, float z);        // Returns translation matrix
+RMDEF Matrix MatrixRotate(Vector3 axis, float angle);           // Returns rotation matrix for an angle around an specified axis (angle in radians)
+RMDEF Matrix MatrixRotateX(float angle);                        // Returns x-rotation matrix (angle in radians)
+RMDEF Matrix MatrixRotateY(float angle);                        // Returns y-rotation matrix (angle in radians)
+RMDEF Matrix MatrixRotateZ(float angle);                        // Returns z-rotation matrix (angle in radians)
+RMDEF Matrix MatrixScale(float x, float y, float z);            // Returns scaling matrix
+RMDEF Matrix MatrixMultiply(Matrix left, Matrix right);         // Returns two matrix multiplication
 RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far);  // Returns perspective projection matrix
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);    // Returns orthographic projection matrix
@@ -159,9 +181,9 @@ RMDEF Matrix MatrixLookAt(Vector3 position, Vector3 target, Vector3 up);  // Ret
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
 //------------------------------------------------------------------------------------
-RMDEF float QuaternionLength(Quaternion quat);                // Compute the length of a quaternion
-RMDEF void QuaternionNormalize(Quaternion *q);                // Normalize provided quaternion
-RMDEF void QuaternionInvert(Quaternion *quat);                // Invert provided quaternion
+RMDEF float QuaternionLength(Quaternion quat);                  // Compute the length of a quaternion
+RMDEF void QuaternionNormalize(Quaternion *q);                  // Normalize provided quaternion
+RMDEF void QuaternionInvert(Quaternion *quat);                  // Invert provided quaternion
 RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
@@ -180,31 +202,112 @@ RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transfo
 #include <math.h>       // Required for: sinf(), cosf(), tan(), fabs()
 
 //----------------------------------------------------------------------------------
+// Module Functions Definition - Utils math
+//----------------------------------------------------------------------------------
+
+// Clamp float value
+RMDEF float Clamp(float value, float min, float max) 
+{
+    const float res = value < min ? min : value;
+    return res > max ? max : res;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition - Vector2 math
+//----------------------------------------------------------------------------------
+
+// Vector with components value 0.0f
+RMDEF Vector2 Vector2Zero(void) { return (Vector2){ 0.0f, 0.0f }; }
+
+// Vector with components value 1.0f
+RMDEF Vector2 Vector2One(void) { return (Vector2){ 1.0f, 1.0f }; }
+
+// Add two vectors (v1 + v2)
+RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2)
+{
+    return (Vector2){ v1.x + v2.x, v1.y + v2.y };
+}
+
+// Subtract two vectors (v1 - v2)
+RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
+{
+    return (Vector2){ v1.x - v2.x, v1.y - v2.y };
+}
+
+// Calculate vector lenght
+RMDEF float Vector2Lenght(Vector2 v)
+{
+    return sqrtf((v.x*v.x) + (v.y*v.y));
+}
+
+// Calculate two vectors dot product
+RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2)
+{
+    return (v1.x*v2.x + v1.y*v2.y);
+}
+
+// Calculate distance between two vectors
+RMDEF float Vector2Distance(Vector2 v1, Vector2 v2)
+{
+    return sqrtf((v1.x - v2.x)*(v1.x - v2.x) + (v1.y - v2.y)*(v1.y - v2.y));
+}
+
+// Calculate angle from two vectors in X-axis
+RMDEF float Vector2Angle(Vector2 v1, Vector2 v2)
+{
+    float angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
+    
+    if (angle < 0) angle += 360.0f;
+
+    return angle;
+}
+
+// Scale vector (multiply by value)
+RMDEF void Vector2Scale(Vector2 *v, float scale)
+{
+    v->x *= scale;
+    v->y *= scale;
+}
+
+// Negate vector
+RMDEF void Vector2Negate(Vector2 *v)
+{
+    v->x = -v->x;
+    v->y = -v->y;
+}
+
+// Divide vector by a float value
+RMDEF void Vector2Divide(Vector2 *v, float div)
+{
+    *v = (Vector2){v->x/div, v->y/div};
+}
+
+// Normalize provided vector
+RMDEF void Vector2Normalize(Vector2 *v)
+{
+    Vector2Divide(v, Vector2Lenght(*v));
+}
+
+//----------------------------------------------------------------------------------
 // Module Functions Definition - Vector3 math
 //----------------------------------------------------------------------------------
+
+// Vector with components value 0.0f
+RMDEF Vector3 VectorZero(void) { return (Vector3){ 0.0f, 0.0f, 0.0f }; }
+
+// Vector with components value 1.0f
+RMDEF Vector3 VectorOne(void) { return (Vector3){ 1.0f, 1.0f, 1.0f }; }
 
 // Add two vectors
 RMDEF Vector3 VectorAdd(Vector3 v1, Vector3 v2)
 {
-    Vector3 result;
-
-    result.x = v1.x + v2.x;
-    result.y = v1.y + v2.y;
-    result.z = v1.z + v2.z;
-
-    return result;
+    return (Vector3){ v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
 }
 
 // Substract two vectors
 RMDEF Vector3 VectorSubtract(Vector3 v1, Vector3 v2)
 {
-    Vector3 result;
-
-    result.x = v1.x - v2.x;
-    result.y = v1.y - v2.y;
-    result.z = v1.z - v2.z;
-
-    return result;
+    return (Vector3){ v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
 }
 
 // Calculate two vectors cross product
@@ -233,7 +336,7 @@ RMDEF Vector3 VectorPerpendicular(Vector3 v)
         cardinalAxis = (Vector3){0.0f, 1.0f, 0.0f};
     }
 
-    if(fabsf(v.z) < min)
+    if (fabsf(v.z) < min)
     {
         cardinalAxis = (Vector3){0.0f, 0.0f, 1.0f};
     }
@@ -243,24 +346,26 @@ RMDEF Vector3 VectorPerpendicular(Vector3 v)
     return result;
 }
 
-// Calculate two vectors dot product
-RMDEF float VectorDotProduct(Vector3 v1, Vector3 v2)
-{
-    float result;
-
-    result = v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
-
-    return result;
-}
-
 // Calculate vector lenght
 RMDEF float VectorLength(const Vector3 v)
 {
-    float length;
+    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+}
 
-    length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+// Calculate two vectors dot product
+RMDEF float VectorDotProduct(Vector3 v1, Vector3 v2)
+{
+    return (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+}
 
-    return length;
+// Calculate distance between two vectors
+RMDEF float VectorDistance(Vector3 v1, Vector3 v2)
+{
+    float dx = v2.x - v1.x;
+    float dy = v2.y - v1.y;
+    float dz = v2.z - v1.z;
+
+    return sqrtf(dx*dx + dy*dy + dz*dz);
 }
 
 // Scale provided vector
@@ -295,19 +400,18 @@ RMDEF void VectorNormalize(Vector3 *v)
     v->z *= ilength;
 }
 
-// Calculate distance between two points
-RMDEF float VectorDistance(Vector3 v1, Vector3 v2)
+// Transforms a Vector3 by a given Matrix
+// TODO: Review math (matrix transpose required?)
+RMDEF void VectorTransform(Vector3 *v, Matrix mat)
 {
-    float result;
+    float x = v->x;
+    float y = v->y;
+    float z = v->z;
 
-    float dx = v2.x - v1.x;
-    float dy = v2.y - v1.y;
-    float dz = v2.z - v1.z;
-
-    result = sqrtf(dx*dx + dy*dy + dz*dz);
-
-    return result;
-}
+    v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
+    v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
+    v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
+};
 
 // Calculate linear interpolation between two vectors
 RMDEF Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount)
@@ -339,27 +443,6 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
     return result;
 }
 
-// Transforms a Vector3 by a given Matrix
-// TODO: Review math (matrix transpose required?)
-RMDEF void VectorTransform(Vector3 *v, Matrix mat)
-{
-    float x = v->x;
-    float y = v->y;
-    float z = v->z;
-
-    v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
-    v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
-    v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
-};
-
-// Return a Vector3 init to zero
-RMDEF Vector3 VectorZero(void)
-{
-    Vector3 zero = { 0.0f, 0.0f, 0.0f };
-
-    return zero;
-}
-
 // Return min value for each pair of components
 RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2)
 {
@@ -386,7 +469,7 @@ RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2)
 
 // Compute barycenter coordinates (u, v, w) for point p with respect to triangle (a, b, c)
 // NOTE: Assumes P is on the plane of the triangle
-RMDEF Vector3 Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+RMDEF Vector3 VectorBarycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 {
     //Vector v0 = b - a, v1 = c - a, v2 = p - a;
     
@@ -662,49 +745,6 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 
     return result;
 }
-
-/*
-// Another implementation for MatrixRotate...
-RMDEF Matrix MatrixRotate(float angle, float x, float y, float z)
-{
-    Matrix result = MatrixIdentity();
-
-    float c = cosf(angle);      // cosine
-    float s = sinf(angle);      // sine
-    float c1 = 1.0f - c;        // 1 - c
-
-    float m0 = result.m0, m4 = result.m4, m8 = result.m8, m12 = result.m12,
-          m1 = result.m1, m5 = result.m5, m9 = result.m9,  m13 = result.m13,
-          m2 = result.m2, m6 = result.m6, m10 = result.m10, m14 = result.m14;
-
-    // build rotation matrix
-    float r0 = x*x*c1 + c;
-    float r1 = x*y*c1 + z*s;
-    float r2 = x*z*c1 - y*s;
-    float r4 = x*y*c1 - z*s;
-    float r5 = y*y*c1 + c;
-    float r6 = y*z*c1 + x*s;
-    float r8 = x*z*c1 + y*s;
-    float r9 = y*z*c1 - x*s;
-    float r10= z*z*c1 + c;
-
-    // multiply rotation matrix
-    result.m0 = r0*m0 + r4*m1 + r8*m2;
-    result.m1 = r1*m0 + r5*m1 + r9*m2;
-    result.m2 = r2*m0 + r6*m1 + r10*m2;
-    result.m4 = r0*m4 + r4*m5 + r8*m6;
-    result.m5 = r1*m4 + r5*m5 + r9*m6;
-    result.m6 = r2*m4 + r6*m5 + r10*m6;
-    result.m8 = r0*m8 + r4*m9 + r8*m10;
-    result.m9 = r1*m8 + r5*m9 + r9*m10;
-    result.m10 = r2*m8 + r6*m9 + r10*m10;
-    result.m12 = r0*m12+ r4*m13 + r8*m14;
-    result.m13 = r1*m12+ r5*m13 + r9*m14;
-    result.m14 = r2*m12+ r6*m13 + r10*m14;
-
-    return result;
-}
-*/
 
 // Returns x-rotation matrix (angle in radians)
 RMDEF Matrix MatrixRotateX(float angle)
