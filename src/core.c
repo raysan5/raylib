@@ -316,9 +316,6 @@ static void PollInputEvents(void);                      // Register user events
 static void SwapBuffers(void);                          // Copy back buffer to front buffers
 static void LogoAnimation(void);                        // Plays raylib logo appearing animation
 static void SetupViewport(void);                        // Set viewport parameters
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-static void TakeScreenshot(void);                       // Takes a screenshot and saves it in the same folder as executable
-#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static void ErrorCallback(int error, const char *description);                             // GLFW3 Error Callback, runs on GLFW3 error
@@ -999,6 +996,28 @@ void SetConfigFlags(char flags)
 
     if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
     if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
+}
+
+// Takes a screenshot and saves it in the same folder as executable
+void TakeScreenshot(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
+    char buffer[20];            // Buffer to store file name
+
+    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
+
+    sprintf(buffer, "screenshot%03i.png", shotNum);
+
+    // Save image as PNG
+    SavePNG(buffer, imgData, renderWidth, renderHeight, 4);
+
+    free(imgData);
+
+    shotNum++;
+
+    TraceLog(INFO, "[%s] Screenshot taken #03i", buffer, shotNum);
+#endif
 }
 
 // Check file extension
@@ -2283,28 +2302,6 @@ static void SwapBuffers(void)
     eglSwapBuffers(display, surface);
 #endif
 }
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-// Takes a screenshot and saves it in the same folder as executable
-static void TakeScreenshot(void)
-{
-    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
-    char buffer[20];            // Buffer to store file name
-
-    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
-
-    sprintf(buffer, "screenshot%03i.png", shotNum);
-
-    // Save image as PNG
-    SavePNG(buffer, imgData, renderWidth, renderHeight, 4);
-
-    free(imgData);
-
-    shotNum++;
-
-    TraceLog(INFO, "[%s] Screenshot taken!", buffer);
-}
-#endif
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 // GLFW3 Error Callback, runs on GLFW3 error
