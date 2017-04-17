@@ -28,7 +28,6 @@ int main()
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Physac [raylib] - Body shatter");
-    SetTargetFPS(60);
 
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
@@ -40,6 +39,8 @@ int main()
 
     // Create random polygon physics body to shatter
     PhysicsBody body = CreatePhysicsBodyPolygon((Vector2){ screenWidth/2, screenHeight/2 }, GetRandomValue(80, 200), GetRandomValue(3, 8), 10);
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop

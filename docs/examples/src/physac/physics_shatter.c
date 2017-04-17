@@ -104,7 +104,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------   
-    ClosePhysics();       // Unitialize physics
+    ClosePhysics();       // Uninitialize physics
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

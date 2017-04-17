@@ -28,7 +28,6 @@ int main()
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Physac [raylib] - Physics demo");
-    SetTargetFPS(60);
 
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
@@ -44,6 +43,8 @@ int main()
     // Create obstacle circle physics body
     PhysicsBody circle = CreatePhysicsBodyCircle((Vector2){ screenWidth/2, screenHeight/2 }, 45, 10);
     circle->enabled = false; // Disable body state to convert it to static (no dynamics, but collisions)
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -120,6 +121,7 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------   
     ClosePhysics();       // Unitialize physics
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

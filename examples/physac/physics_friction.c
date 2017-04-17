@@ -28,7 +28,6 @@ int main()
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Physac [raylib] - Physics friction");
-    SetTargetFPS(60);
 
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
@@ -63,6 +62,8 @@ int main()
     bodyB->staticFriction = 1;
     bodyB->dynamicFriction = 1;
     SetPhysicsBodyRotation(bodyB, 330*DEG2RAD);
+
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop

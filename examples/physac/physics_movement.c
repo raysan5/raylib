@@ -30,7 +30,6 @@ int main()
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Physac [raylib] - Physics movement");
-    SetTargetFPS(60);
 
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
@@ -56,6 +55,8 @@ int main()
     // Create movement physics body
     PhysicsBody body = CreatePhysicsBodyRectangle((Vector2){ screenWidth/2, screenHeight/2 }, 50, 50, 1);
     body->freezeOrient = true;  // Constrain body rotation to avoid little collision torque amounts
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop

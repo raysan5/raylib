@@ -577,23 +577,23 @@ audio/audio_raw_stream: audio/audio_raw_stream.c
 
 # compile [physac] example - physics demo
 physac/physics_demo: physac/physics_demo.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
 
 # compile [physac] example - physics friction
 physac/physics_friction: physac/physics_friction.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
 
 # compile [physac] example - physics movement
 physac/physics_movement: physac/physics_movement.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
 
 # compile [physac] example - physics restitution
 physac/physics_restitution: physac/physics_restitution.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
 
 # compile [physac] example - physics shatter
 physac/physics_shatter: physac/physics_shatter.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
 
 # fix dylib install path name for each executable (MAC)
 fix_dylib:
