@@ -1,14 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Oculus Rift CV1
+*   raylib [core] example - VR Simulator (Oculus Rift CV1 parameters)
 *
-*   Compile example using:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) -L. -L..\src\external\OculusSDK\LibOVR -lLibOVRRT32_1 -lraylib -lglfw3 -lopengl32 -lgdi32 -std=c99
-*
-*   This example has been created using raylib 1.5 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -23,10 +20,9 @@ int main()
     
     // NOTE: screenWidth/screenHeight should match VR device aspect ratio
     
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - oculus rift");
-    
-    // NOTE: If device is not available, it fallbacks to default device (simulator)
-    InitVrDevice(HMD_OCULUS_RIFT_CV1);                  // Init VR device (Oculus Rift CV1)
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - vr simulator");
+
+    InitVrSimulator(HMD_OCULUS_RIFT_CV1);               // Init VR simulator (Oculus Rift CV1 parameters)
     
     // Define the camera to look into our 3d world
     Camera camera;
@@ -47,10 +43,9 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsVrSimulator()) UpdateCamera(&camera);             // Update camera (simulator mode)
-        else if (IsVrDeviceReady()) UpdateVrTracking(&camera);  // Update camera with device tracking data
-        
-        if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();            // Toggle VR mode
+        UpdateCamera(&camera);          // Update camera (simulator mode)
+
+        if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();    // Toggle VR mode
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -58,15 +53,19 @@ int main()
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+            
+            BeginVrDrawing();
 
-            Begin3dMode(camera);
+                Begin3dMode(camera);
 
-                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+                    DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+                    DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
 
-                DrawGrid(40, 1.0f);
+                    DrawGrid(40, 1.0f);
 
-            End3dMode();
+                End3dMode();
+            
+            EndVrDrawing();
 
             DrawFPS(10, 10);
 
@@ -76,7 +75,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseVrDevice();        // Close VR device
+    CloseVrSimulator();     // Close VR simulator
     
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

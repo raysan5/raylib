@@ -2,17 +2,22 @@
 *
 *   Physac - Physics friction
 *
-*   NOTE: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
-*   The file pthreadGC2.dll is required to run the program; you can find it in 'src\external'
+*   NOTE 1: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
+*   NOTE 2: Physac requires static C library linkage to avoid dependency on MinGW DLL (-static -lpthread)
 *
-*   Copyright (c) 2016 Victor Fisac
+*   Use the following line to compile:
+*
+*   gcc -o $(NAME_PART).exe $(FILE_NAME) -s $(RAYLIB_DIR)\raylib\raylib_icon -static -lraylib -lpthread 
+*   -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
+*   
+*   Copyright (c) 2017 Victor Fisac
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
-#include "..\src\physac.h"
+#include "physac.h"
 
 int main()
 {
@@ -129,8 +134,10 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------   
     ClosePhysics();       // Unitialize physics
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
 }
+

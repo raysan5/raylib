@@ -52,7 +52,7 @@ int main()
         circles[i].color = colors[GetRandomValue(0, 13)];
     }
 
-    Music xm = LoadMusicStream("resources/audio/mini1111.xm");
+    Music xm = LoadMusicStream("resources/mini1111.xm");
     
     PlayMusicStream(xm);
 
@@ -86,7 +86,7 @@ int main()
         }
         
         // Get timePlayed scaled to bar dimensions
-        timePlayed = (GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40))*2;
+        timePlayed = GetMusicTimePlayed(xm)/GetMusicTimeLength(xm)*(screenWidth - 40);
         
         // Color circles animation
         for (int i = MAX_CIRCLES - 1; (i >= 0) && !pause; i--)
@@ -112,7 +112,7 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(WHITE);
+            ClearBackground(RAYWHITE);
             
             for (int i = MAX_CIRCLES - 1; i >= 0; i--)
             {

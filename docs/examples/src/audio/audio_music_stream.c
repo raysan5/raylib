@@ -24,7 +24,7 @@ int main()
 
     InitAudioDevice();              // Initialize audio device
 
-    Music music = LoadMusicStream("resources/audio/guitar_noodling.ogg");
+    Music music = LoadMusicStream("resources/guitar_noodling.ogg");
     
     PlayMusicStream(music);
 
@@ -58,7 +58,7 @@ int main()
         }
         
         // Get timePlayed scaled to bar dimensions (400 pixels)
-        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*100*4;
+        timePlayed = GetMusicTimePlayed(music)/GetMusicTimeLength(music)*400;
         //----------------------------------------------------------------------------------
 
         // Draw

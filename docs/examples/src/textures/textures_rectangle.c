@@ -11,6 +11,9 @@
 
 #include "raylib.h"
 
+#define MAX_FRAME_SPEED     15
+#define MIN_FRAME_SPEED      1
+
 int main()
 {
     // Initialization
@@ -21,11 +24,16 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [texture] example - texture rectangle");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D guybrush = LoadTexture("resources/guybrush.png");        // Texture loading
+    Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
-    Vector2 position = { 350.0f, 240.0f };
-    Rectangle frameRec = { 0, 0, guybrush.width/7, guybrush.height };
+    Vector2 position = { 350.0f, 280.0f };
+    Rectangle frameRec = { 0, 0, scarfy.width/6, scarfy.height };
     int currentFrame = 0;
+    
+    int framesCounter = 0;
+    int framesSpeed = 8;           // Number of spritesheet frames shown by second
+    
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -33,14 +41,23 @@ int main()
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_RIGHT))
+        framesCounter++;
+        
+        if (framesCounter >= (60/framesSpeed))
         {
+            framesCounter = 0;
             currentFrame++;
             
-            if (currentFrame > 6) currentFrame = 0;
+            if (currentFrame > 5) currentFrame = 0;
             
-            frameRec.x = currentFrame*guybrush.width/7;
+            frameRec.x = currentFrame*scarfy.width/6;
         }
+        
+        if (IsKeyPressed(KEY_RIGHT)) framesSpeed++;
+        else if (IsKeyPressed(KEY_LEFT)) framesSpeed--;
+        
+        if (framesSpeed > MAX_FRAME_SPEED) framesSpeed = MAX_FRAME_SPEED;
+        else if (framesSpeed < MIN_FRAME_SPEED) framesSpeed = MIN_FRAME_SPEED;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -49,19 +66,23 @@ int main()
 
             ClearBackground(RAYWHITE);
 
-            DrawTexture(guybrush, 35, 40, WHITE);
-            DrawRectangleLines(35, 40, guybrush.width, guybrush.height, LIME);
+            DrawTexture(scarfy, 15, 40, WHITE);
+            DrawRectangleLines(15, 40, scarfy.width, scarfy.height, LIME);
+            DrawRectangleLines(15 + frameRec.x, 40 + frameRec.y, frameRec.width, frameRec.height, RED);
             
-            DrawTextureRec(guybrush, frameRec, position, WHITE);  // Draw part of the texture
+            DrawText("FRAME SPEED: ", 165, 210, 10, DARKGRAY);
+            DrawText(FormatText("%02i FPS", framesSpeed), 575, 210, 10, DARKGRAY);
+            DrawText("PRESS RIGHT/LEFT KEYS to CHANGE SPEED!", 290, 240, 10, DARKGRAY);
             
-            DrawRectangleLines(35 + frameRec.x, 40 + frameRec.y, frameRec.width, frameRec.height, RED);
+            for (int i = 0; i < MAX_FRAME_SPEED; i++)
+            {
+                if (i < framesSpeed) DrawRectangle(250 + 21*i, 205, 20, 20, RED);
+                DrawRectangleLines(250 + 21*i, 205, 20, 20, MAROON);
+            }
             
-            DrawText("PRESS RIGHT KEY to", 540, 310, 10, GRAY);
-            DrawText("CHANGE DRAWING RECTANGLE", 520, 330, 10, GRAY);
-            
-            DrawText("Guybrush Ulysses Threepwood,", 100, 300, 10, GRAY);
-            DrawText("main character of the Monkey Island series", 80, 320, 10, GRAY);
-            DrawText("of computer adventure games by LucasArts.", 80, 340, 10, GRAY);
+            DrawTextureRec(scarfy, frameRec, position, WHITE);  // Draw part of the texture
+
+            DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -69,7 +90,7 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(guybrush);       // Texture unloading
+    UnloadTexture(scarfy);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -4,8 +4,8 @@
 *
 *   NOTE: This example requires a Gamepad connected to the system
 *         raylib is configured to work with the following gamepads: 
-*                Xbox 360 Controller (Xbox 360, Xbox One)
-*                PLAYSTATION(R)3 Controller 
+*                - Xbox 360 Controller (Xbox 360, Xbox One)
+*                - PLAYSTATION(R)3 Controller 
 *         Check raylib.h for buttons configuration
 *
 *   This example has been created using raylib 1.6 (www.raylib.com)

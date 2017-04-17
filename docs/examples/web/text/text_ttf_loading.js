@@ -182,7 +182,7 @@ Module['FS_createPath']('/', 'resources', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 79912, "filename": "/resources/KAISG.ttf"}], "remote_package_size": 79912, "package_uuid": "682ee35e-826e-46f0-90c7-9663eb9cfd52"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 79912, "filename": "/resources/KAISG.ttf"}], "remote_package_size": 79912, "package_uuid": "b9afee42-f4f0-4282-8b28-a9dc9ff86e8a"});
 
 })();
 
@@ -10845,6 +10845,56 @@ function _UpdateDrawFrame() {
  }
  }
 }
+function _Vector2Distance($0,$1) {
+ $0 = $0|0;
+ $1 = $1|0;
+ var $10 = 0.0, $11 = 0.0, $12 = 0.0, $13 = 0.0, $2 = 0.0, $3 = 0.0, $4 = 0.0, $5 = 0.0, $6 = 0, $7 = 0.0, $8 = 0, $9 = 0.0, label = 0, sp = 0;
+ sp = STACKTOP;
+ $2 = +HEAPF32[$0>>2];
+ $3 = +HEAPF32[$1>>2];
+ $4 = $2 - $3;
+ $5 = $4 * $4;
+ $6 = ((($0)) + 4|0);
+ $7 = +HEAPF32[$6>>2];
+ $8 = ((($1)) + 4|0);
+ $9 = +HEAPF32[$8>>2];
+ $10 = $7 - $9;
+ $11 = $10 * $10;
+ $12 = $5 + $11;
+ $13 = (+Math_sqrt((+$12)));
+ return (+$13);
+}
+function _Vector2Angle($0,$1) {
+ $0 = $0|0;
+ $1 = $1|0;
+ var $$0 = 0.0, $10 = 0.0, $11 = 0.0, $12 = 0, $13 = 0.0, $2 = 0, $3 = 0.0, $4 = 0, $5 = 0.0, $6 = 0.0, $7 = 0.0, $8 = 0.0, $9 = 0.0, label = 0, sp = 0;
+ sp = STACKTOP;
+ $2 = ((($1)) + 4|0);
+ $3 = +HEAPF32[$2>>2];
+ $4 = ((($0)) + 4|0);
+ $5 = +HEAPF32[$4>>2];
+ $6 = $3 - $5;
+ $7 = +HEAPF32[$1>>2];
+ $8 = +HEAPF32[$0>>2];
+ $9 = $7 - $8;
+ $10 = (+Math_atan2((+$6),(+$9)));
+ $11 = $10 * 57.2957763671875;
+ $12 = $11 < 0.0;
+ $13 = $11 + 360.0;
+ $$0 = $12 ? $13 : $11;
+ return (+$$0);
+}
+function _VectorZero($0) {
+ $0 = $0|0;
+ var $1 = 0, $2 = 0, label = 0, sp = 0;
+ sp = STACKTOP;
+ HEAPF32[$0>>2] = 0.0;
+ $1 = ((($0)) + 4|0);
+ HEAPF32[$1>>2] = 0.0;
+ $2 = ((($0)) + 8|0);
+ HEAPF32[$2>>2] = 0.0;
+ return;
+}
 function _VectorLength($0) {
  $0 = $0|0;
  var $1 = 0.0, $10 = 0.0, $11 = 0.0, $2 = 0.0, $3 = 0, $4 = 0.0, $5 = 0.0, $6 = 0.0, $7 = 0, $8 = 0.0, $9 = 0.0, label = 0, sp = 0;
@@ -10942,13 +10992,6 @@ function _VectorTransform($0,$1) {
  $46 = +HEAPF32[$45>>2];
  $47 = $46 + $44;
  HEAPF32[$5>>2] = $47;
- return;
-}
-function _VectorZero($0) {
- $0 = $0|0;
- var label = 0, sp = 0;
- sp = STACKTOP;
- ;HEAP32[$0>>2]=0|0;HEAP32[$0+4>>2]=0|0;HEAP32[$0+8>>2]=0|0;
  return;
 }
 function _MatrixTranspose($0) {
@@ -11900,45 +11943,6 @@ function _ProcessGestureEvent($0) {
   STACKTOP = sp;return;
  }
  }
-}
-function _Vector2Distance($0,$1) {
- $0 = $0|0;
- $1 = $1|0;
- var $10 = 0.0, $11 = 0.0, $12 = 0.0, $2 = 0.0, $3 = 0.0, $4 = 0.0, $5 = 0, $6 = 0.0, $7 = 0, $8 = 0.0, $9 = 0.0, $sqrtf = 0.0, label = 0, sp = 0;
- sp = STACKTOP;
- $2 = +HEAPF32[$1>>2];
- $3 = +HEAPF32[$0>>2];
- $4 = $2 - $3;
- $5 = ((($1)) + 4|0);
- $6 = +HEAPF32[$5>>2];
- $7 = ((($0)) + 4|0);
- $8 = +HEAPF32[$7>>2];
- $9 = $6 - $8;
- $10 = $4 * $4;
- $11 = $9 * $9;
- $12 = $10 + $11;
- $sqrtf = (+Math_sqrt((+$12)));
- return (+$sqrtf);
-}
-function _Vector2Angle($0,$1) {
- $0 = $0|0;
- $1 = $1|0;
- var $$0 = 0.0, $10 = 0.0, $11 = 0.0, $12 = 0, $13 = 0.0, $2 = 0, $3 = 0.0, $4 = 0, $5 = 0.0, $6 = 0.0, $7 = 0.0, $8 = 0.0, $9 = 0.0, label = 0, sp = 0;
- sp = STACKTOP;
- $2 = ((($1)) + 4|0);
- $3 = +HEAPF32[$2>>2];
- $4 = ((($0)) + 4|0);
- $5 = +HEAPF32[$4>>2];
- $6 = $3 - $5;
- $7 = +HEAPF32[$1>>2];
- $8 = +HEAPF32[$0>>2];
- $9 = $7 - $8;
- $10 = (+Math_atan2((+$6),(+$9)));
- $11 = $10 * 57.2957763671875;
- $12 = $11 < 0.0;
- $13 = $11 + 360.0;
- $$0 = $12 ? $13 : $11;
- return (+$$0);
 }
 function _UpdateGestures() {
  var $$off = 0, $0 = 0, $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $or$cond3 = 0, label = 0, sp = 0;
@@ -17688,7 +17692,7 @@ function _stbtt_BakeFontBitmap_internal($0,$1,$2,$3,$4,$5,$6,$7) {
   }
  }
  if ((label|0) == 8) {
-  ___assert_fail((9328|0),(9338|0),3273,(9364|0));
+  ___assert_fail((9328|0),(9338|0),3274,(9364|0));
   // unreachable;
  }
  else if ((label|0) == 11) {
@@ -17791,7 +17795,7 @@ function _stbtt_FindGlyphIndex($0,$1) {
   break;
  }
  case 2:  {
-  ___assert_fail((9798|0),(9338|0),1346,(10140|0));
+  ___assert_fail((9798|0),(9338|0),1347,(10140|0));
   // unreachable;
   break;
  }
@@ -17857,7 +17861,7 @@ function _stbtt_FindGlyphIndex($0,$1) {
   $70 = $69&65535;
   $71 = ($70|0)<($1|0);
   if ($71) {
-   ___assert_fail((10161|0),(9338|0),1382,(10140|0));
+   ___assert_fail((10161|0),(9338|0),1383,(10140|0));
    // unreachable;
   }
   $72 = ((($6)) + 14|0);
@@ -17918,7 +17922,7 @@ function _stbtt_FindGlyphIndex($0,$1) {
   $108 = $7 & -2;
   $switch = ($108<<16>>16)==(12);
   if (!($switch)) {
-   ___assert_fail((9798|0),(9338|0),1417,(10140|0));
+   ___assert_fail((9798|0),(9338|0),1418,(10140|0));
    // unreachable;
   }
   $109 = ((($6)) + 12|0);
@@ -18798,11 +18802,11 @@ function _stbtt__rasterize_sorted_edges($0,$1,$2,$3,$4) {
     }
    }
    if ((label|0) == 11) {
-    ___assert_fail((9394|0),(9338|0),2774,(9407|0));
+    ___assert_fail((9394|0),(9338|0),2775,(9407|0));
     // unreachable;
    }
    else if ((label|0) == 17) {
-    ___assert_fail((9437|0),(9338|0),2787,(9407|0));
+    ___assert_fail((9437|0),(9338|0),2788,(9407|0));
     // unreachable;
    }
   }
@@ -18847,7 +18851,7 @@ function _stbtt__new_active($0,$1,$2,$3) {
  $14 = $8 / $13;
  $15 = ($4|0)==(0|0);
  if ($15) {
-  ___assert_fail((9727|0),(9338|0),2373,(9743|0));
+  ___assert_fail((9727|0),(9338|0),2374,(9743|0));
   // unreachable;
  } else {
   $16 = ((($4)) + 8|0);
@@ -19175,19 +19179,19 @@ function _stbtt__fill_active_edges_new($0,$1,$2,$3,$4) {
   }
  }
  if ((label|0) == 4) {
-  ___assert_fail((9457|0),(9338|0),2585,(9472|0));
+  ___assert_fail((9457|0),(9338|0),2586,(9472|0));
   // unreachable;
  }
  else if ((label|0) == 11) {
-  ___assert_fail((9501|0),(9338|0),2604,(9472|0));
+  ___assert_fail((9501|0),(9338|0),2605,(9472|0));
   // unreachable;
  }
  else if ((label|0) == 17) {
-  ___assert_fail((9537|0),(9338|0),2632,(9472|0));
+  ___assert_fail((9537|0),(9338|0),2633,(9472|0));
   // unreachable;
  }
  else if ((label|0) == 25) {
-  ___assert_fail((9555|0),(9338|0),2669,(9472|0));
+  ___assert_fail((9555|0),(9338|0),2670,(9472|0));
   // unreachable;
  }
  else if ((label|0) == 42) {
@@ -19236,7 +19240,7 @@ function _stbtt__handle_clipped_edge($0,$1,$2,$3,$4,$5,$6) {
  }
  $8 = $4 < $6;
  if (!($8)) {
-  ___assert_fail((9575|0),(9338|0),2543,(9583|0));
+  ___assert_fail((9575|0),(9338|0),2544,(9583|0));
   // unreachable;
  }
  $9 = ((($2)) + 20|0);
@@ -19245,7 +19249,7 @@ function _stbtt__handle_clipped_edge($0,$1,$2,$3,$4,$5,$6) {
  $12 = +HEAPF32[$11>>2];
  $13 = !($10 <= $12);
  if ($13) {
-  ___assert_fail((9610|0),(9338|0),2544,(9583|0));
+  ___assert_fail((9610|0),(9338|0),2545,(9583|0));
   // unreachable;
  }
  $14 = $12 < $4;
@@ -19287,7 +19291,7 @@ function _stbtt__handle_clipped_edge($0,$1,$2,$3,$4,$5,$6) {
   if ($32) {
    $35 = !($$077 <= $34);
    if ($35) {
-    ___assert_fail((9625|0),(9338|0),2557,(9583|0));
+    ___assert_fail((9625|0),(9338|0),2558,(9583|0));
     // unreachable;
    }
   } else {
@@ -19297,7 +19301,7 @@ function _stbtt__handle_clipped_edge($0,$1,$2,$3,$4,$5,$6) {
     if (!($37)) {
      break;
     }
-    ___assert_fail((9635|0),(9338|0),2559,(9583|0));
+    ___assert_fail((9635|0),(9338|0),2560,(9583|0));
     // unreachable;
    }
    $38 = !($$079 <= $31);
@@ -19306,7 +19310,7 @@ function _stbtt__handle_clipped_edge($0,$1,$2,$3,$4,$5,$6) {
     if (!($39)) {
      break;
     }
-    ___assert_fail((9643|0),(9338|0),2561,(9583|0));
+    ___assert_fail((9643|0),(9338|0),2562,(9583|0));
     // unreachable;
    }
    $40 = !($$079 >= $34);
@@ -19317,14 +19321,14 @@ function _stbtt__handle_clipped_edge($0,$1,$2,$3,$4,$5,$6) {
     if (!($or$cond80)) {
      break;
     }
-    ___assert_fail((9661|0),(9338|0),2565,(9583|0));
+    ___assert_fail((9661|0),(9338|0),2566,(9583|0));
     // unreachable;
    } else {
     $41 = !($$077 >= $34);
     if (!($41)) {
      break;
     }
-    ___assert_fail((9651|0),(9338|0),2563,(9583|0));
+    ___assert_fail((9651|0),(9338|0),2564,(9583|0));
     // unreachable;
    }
   }
@@ -19357,7 +19361,7 @@ function _stbtt__handle_clipped_edge($0,$1,$2,$3,$4,$5,$6) {
  $58 = !($$077 <= $34);
  $or$cond85 = $58 | $or$cond84;
  if ($or$cond85) {
-  ___assert_fail((9682|0),(9338|0),2572,(9583|0));
+  ___assert_fail((9682|0),(9338|0),2573,(9583|0));
   // unreachable;
  }
  $59 = ((($2)) + 16|0);
@@ -19893,7 +19897,7 @@ function _stbtt__GetGlyfOffset($0,$1) {
  $3 = HEAP32[$2>>2]|0;
  $4 = ($3|0)==(0);
  if (!($4)) {
-  ___assert_fail((9761|0),(9338|0),1439,(9777|0));
+  ___assert_fail((9761|0),(9338|0),1440,(9777|0));
   // unreachable;
  }
  $5 = ((($0)) + 12|0);
@@ -20840,7 +20844,7 @@ function _stbtt__cff_index_get($0,$1,$2) {
  $7 = ($3|0)>($2|0);
  $or$cond = $6 & $7;
  if (!($or$cond)) {
-  ___assert_fail((10003|0),(9338|0),1117,(10023|0));
+  ___assert_fail((10003|0),(9338|0),1118,(10023|0));
   // unreachable;
  }
  $$off = (($4) + -1)<<24>>24;
@@ -20858,7 +20862,7 @@ function _stbtt__cff_index_get($0,$1,$2) {
   _stbtt__buf_range($0,$1,$15,$16);
   return;
  } else {
-  ___assert_fail((9920|0),(9338|0),1118,(10023|0));
+  ___assert_fail((9920|0),(9338|0),1119,(10023|0));
   // unreachable;
  }
 }
@@ -21103,7 +21107,7 @@ function _stbtt__buf_get($0,$1) {
  if ($2) {
   $$01011 = 0;$$012 = 0;
  } else {
-  ___assert_fail((9815|0),(9338|0),1013,(9832|0));
+  ___assert_fail((9815|0),(9338|0),1014,(9832|0));
   // unreachable;
  }
  while(1) {
@@ -21174,7 +21178,7 @@ function _stbtt__cff_int($0) {
   break;
  }
  default: {
-  ___assert_fail((9798|0),(9338|0),1063,(9800|0));
+  ___assert_fail((9798|0),(9338|0),1064,(9800|0));
   // unreachable;
  }
  }
@@ -21345,7 +21349,7 @@ function _stbtt__new_buf($0,$1,$2) {
   HEAP32[$$sroa$5$0$$sroa_idx4>>2] = $2;
   return;
  } else {
-  ___assert_fail((9847|0),(9338|0),1022,(9865|0));
+  ___assert_fail((9847|0),(9338|0),1023,(9865|0));
   // unreachable;
  }
 }
@@ -21360,7 +21364,7 @@ function _stbtt__buf_seek($0,$1) {
  $5 = ($1|0)<(0);
  $or$cond = $5 | $4;
  if ($or$cond) {
-  ___assert_fail((9880|0),(9338|0),1000,(9904|0));
+  ___assert_fail((9880|0),(9338|0),1001,(9904|0));
   // unreachable;
  } else {
   $6 = ((($0)) + 4|0);
@@ -21505,7 +21509,7 @@ function _stbtt__cff_get_index($0,$1) {
  $$off = (($6) + -1)<<24>>24;
  $8 = ($$off&255)<(4);
  if (!($8)) {
-  ___assert_fail((9920|0),(9338|0),1048,(9949|0));
+  ___assert_fail((9920|0),(9338|0),1049,(9949|0));
   // unreachable;
  }
  $9 = Math_imul($7, $4)|0;
@@ -21602,7 +21606,7 @@ function _stbtt__cff_skip_operand($0) {
  $1 = (_stbtt__buf_peek8($0)|0);
  $2 = ($1&255)>(27);
  if (!($2)) {
-  ___assert_fail((9970|0),(9338|0),1069,(9979|0));
+  ___assert_fail((9970|0),(9338|0),1070,(9979|0));
   // unreachable;
  }
  $3 = ($1<<24>>24)==(30);
@@ -21929,7 +21933,7 @@ function _stbtt__GetGlyphShapeTT($0,$1,$2) {
      $$4352 = 0;$$9 = 0;
      break;
     }
-    ___assert_fail((9798|0),(9338|0),1723,(10117|0));
+    ___assert_fail((9798|0),(9338|0),1724,(10117|0));
     // unreachable;
    }
    $143 = ((($8)) + 10|0);
@@ -22113,7 +22117,7 @@ function _stbtt__GetGlyphShapeTT($0,$1,$2) {
     }
    }
    if ((label|0) == 42) {
-    ___assert_fail((9798|0),(9338|0),1670,(10117|0));
+    ___assert_fail((9798|0),(9338|0),1671,(10117|0));
     // unreachable;
    }
    $249 = ($$0348453|0)==(0|0);
@@ -22168,7 +22172,7 @@ function _stbtt__GetGlyphShapeT2($0,$1,$2) {
     $$0 = $16;
     STACKTOP = sp;return ($$0|0);
    } else {
-    ___assert_fail((10044|0),(9338|0),2113,(10094|0));
+    ___assert_fail((10044|0),(9338|0),2114,(10094|0));
     // unreachable;
    }
   }
