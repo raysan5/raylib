@@ -195,9 +195,13 @@ Image LoadImage(const char *fileName)
         int imgWidth = 0;
         int imgHeight = 0;
         int imgBpp = 0;
+        
+        FILE *imFile = fopen(fileName, "rb");
 
         // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-        image.data = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 0);
+        image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
+        
+        fclose(imFile);
 
         image.width = imgWidth;
         image.height = imgHeight;
@@ -516,12 +520,14 @@ Image GetTextureData(Texture2D texture)
             image.width = texture.width;
             image.height = texture.height;
             image.mipmaps = 1;
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGB (from framebuffer)
-            image.format = UNCOMPRESSED_R8G8B8A8;
-#else
-            image.format = texture.format;
-#endif
+            
+            if (rlGetVersion() == OPENGL_ES_20)
+            {
+                // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGBA (from framebuffer)
+                image.format = UNCOMPRESSED_R8G8B8A8;
+            }
+            else image.format = texture.format;
+
             TraceLog(INFO, "Texture pixel data obtained successfully");
         }
         else TraceLog(WARNING, "Texture pixel data could not be obtained");

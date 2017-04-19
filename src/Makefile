@@ -159,7 +159,7 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux to enable timespec and drflac
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
@@ -172,7 +172,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
+    CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
     # -O2                        # if used, also set --memory-init-file 0
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing

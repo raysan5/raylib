@@ -22,7 +22,7 @@
 *   #define RLGL_STANDALONE
 *       Use rlgl as standalone library (no raylib dependency)
 *
-*   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
+*   #define SUPPORT_VR_SIMULATOR
 *       Support VR simulation functionality (stereo rendering)
 *
 *   #define SUPPORT_DISTORTION_SHADER
@@ -56,7 +56,8 @@
 
 // Default configuration flags (supported features)
 //-------------------------------------------------
-#define SUPPORT_VR_SIMULATION
+#define SUPPORT_VR_SIMULATOR
+#define SUPPORT_DISTORTION_SHADER
 //-------------------------------------------------
 
 #include "rlgl.h"
@@ -221,6 +222,7 @@ typedef struct DrawCall {
     //Guint fboId;
 } DrawCall;
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
     int hResolution;                // HMD horizontal resolution in pixels
@@ -243,6 +245,7 @@ typedef struct VrStereoConfig {
     Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
     Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
 } VrStereoConfig;
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -286,13 +289,16 @@ static bool texCompETC2Supported = false;   // ETC2/EAC texture compression supp
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
 static VrDeviceInfo hmd;                // Current VR device info
 static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
 static bool vrSimulatorReady = false;   // VR simulator ready flag
 static bool vrStereoRender = false;     // VR stereo rendering enabled/disabled flag
                                         // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
-#endif
+#endif  // defined(SUPPORT_VR_SIMULATOR)
+
+#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 // Extension supported flag: Anisotropic filtering
 static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
@@ -338,12 +344,12 @@ static void UpdateDefaultBuffers(void);     // Update default internal buffers (
 static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
-// Configure stereo rendering (including distortion shader) with HMD device parameters
-static void SetStereoConfig(VrDeviceInfo info);
-
-// Set internal projection and modelview matrix depending on eyes tracking data
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
+#if defined(SUPPORT_VR_SIMULATOR)
+static void SetStereoConfig(VrDeviceInfo info); // Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView); // Set internal projection and modelview matrix depending on eye
 #endif
+
+#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
@@ -2067,12 +2073,16 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     int eyesCount = 1;
+#if defined(SUPPORT_VR_SIMULATOR)
     if (vrStereoRender) eyesCount = 2;
+#endif
     
     for (int eye = 0; eye < eyesCount; eye++)
     {
-        if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
-        else modelview = matModelView;
+        if (eyesCount == 1) modelview = matModelView;
+        #if defined(SUPPORT_VR_SIMULATOR)
+        else SetStereoView(eye, matProjection, matModelView);
+        #endif
 
         // Calculate model-view-projection matrix (MVP)
         Matrix matMVP = MatrixMultiply(modelview, projection);        // Transform to screen-space coordinates
@@ -2240,7 +2250,7 @@ void *rlglReadTexturePixels(Texture2D texture)
 
     pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
 
-    // NOTE: Despite FBO color texture is RGB, we read data as RGBA... reading as RGB doesn't work... o__O
+    // NOTE: We read data as RGBA because FBO texture is configured as RGBA, despite binding a RGB texture...
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Re-attach internal FBO color texture before deleting it
@@ -2533,6 +2543,7 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Init VR simulator for selected device
 // NOTE: It modifies the global variable: VrDeviceInfo hmd
 void InitVrSimulator(int vrDevice)
@@ -2558,7 +2569,7 @@ void InitVrSimulator(int vrDevice)
         hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
         hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
         
-        TraceLog(WARNING, "Initializing VR Simulator (Oculus Rift DK2)");
+        TraceLog(INFO, "Initializing VR Simulator (Oculus Rift DK2)");
     }
     else if ((vrDevice == HMD_DEFAULT_DEVICE) || (vrDevice == HMD_OCULUS_RIFT_CV1))
     {
@@ -2585,11 +2596,11 @@ void InitVrSimulator(int vrDevice)
         hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
         hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
         
-        TraceLog(WARNING, "Initializing VR Simulator (Oculus Rift CV1)");
+        TraceLog(INFO, "Initializing VR Simulator (Oculus Rift CV1)");
     }
     else 
     {
-        TraceLog(WARNING, "VR Simulator doesn't support current device yet,");
+        TraceLog(WARNING, "VR Simulator doesn't support selected device parameters,");
         TraceLog(WARNING, "using default VR Simulator parameters");
     }
 
@@ -2760,6 +2771,7 @@ void EndVrDrawing(void)
     }
 #endif
 }
+#endif          // SUPPORT_VR_SIMULATOR
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -3305,11 +3317,15 @@ static void DrawDefaultBuffers()
     Matrix matModelView = modelview;
     
     int eyesCount = 1;
+#if defined(SUPPORT_VR_SIMULATOR)
     if (vrStereoRender) eyesCount = 2;
+#endif
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
+        #if defined(SUPPORT_VR_SIMULATOR)
         if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
+        #endif
 
         // Set current shader and upload current MVP matrix
         if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
@@ -3515,6 +3531,7 @@ static void UnloadDefaultBuffers(void)
     free(quads.indices);
 }
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Configure stereo rendering (including distortion shader) with HMD device parameters
 static void SetStereoConfig(VrDeviceInfo hmd)
 {
@@ -3606,6 +3623,8 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
     SetMatrixModelview(eyeModelView);
     SetMatrixProjection(eyeProjection);
 }
+#endif      // defined(SUPPORT_VR_SIMULATOR)
+
 #endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 #if defined(GRAPHICS_API_OPENGL_11)

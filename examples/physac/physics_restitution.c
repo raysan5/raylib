@@ -2,9 +2,11 @@
 *
 *   Physac - Physics restitution
 *
-*   NOTE: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
+*   NOTE 1: Physac requires multi-threading, when InitPhysics() a second thread is created to manage physics calculations.
+*   NOTE 2: Physac requires static C library linkage to avoid dependency on MinGW DLL (-static -lpthread)
 *
-*   Use the following code to compile (-static -lpthread):
+*   Use the following line to compile:
+*
 *   gcc -o $(NAME_PART).exe $(FILE_NAME) -s $(RAYLIB_DIR)\raylib\raylib_icon -static -lraylib -lpthread 
 *   -lglfw3 -lopengl32 -lgdi32 -lopenal32 -lwinmm -std=c99 -Wl,--subsystem,windows -Wl,-allow-multiple-definition
 *   
@@ -15,7 +17,7 @@
 #include "raylib.h"
 
 #define PHYSAC_IMPLEMENTATION
-#include "../src/physac.h"
+#include "physac.h"
 
 int main()
 {
@@ -26,7 +28,6 @@ int main()
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Physac [raylib] - Physics restitution");
-    SetTargetFPS(60);
 
     // Physac logo drawing position
     int logoX = screenWidth - MeasureText("Physac", 30) - 10;
@@ -47,6 +48,8 @@ int main()
     circleB->restitution = 0.5f;
     PhysicsBody circleC = CreatePhysicsBodyCircle((Vector2){ screenWidth*0.75f, screenHeight/2 }, 30, 10);
     circleC->restitution = 1;
+    
+    SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -111,8 +114,10 @@ int main()
     // De-Initialization
     //--------------------------------------------------------------------------------------   
     ClosePhysics();       // Unitialize physics
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
 }
+

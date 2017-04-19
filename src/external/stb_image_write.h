@@ -1,4 +1,4 @@
-/* stb_image_write - v1.03 - public domain - http://nothings.org/stb/stb_image_write.h
+/* stb_image_write - v1.05 - public domain - http://nothings.org/stb/stb_image_write.h
    writes out PNG/BMP/TGA images to C stdio - Sean Barrett 2010-2015
                                      no warranty implied; use at your own risk
 
@@ -104,12 +104,11 @@ CREDITS:
       Filip Wasil
       Thatcher Ulrich
       github:poppolopoppo
+      Patrick Boettcher
       
 LICENSE
 
-This software is dual-licensed to the public domain and under the following
-license: you are granted a perpetual, irrevocable license to copy, modify,
-publish, and distribute this file as you see fit.
+  See end of file for license information.
 
 */
 
@@ -294,10 +293,8 @@ static void stbiw__write_pixel(stbi__write_context *s, int rgb_dir, int comp, in
       s->func(s->context, &d[comp - 1], 1);
 
    switch (comp) {
+      case 2: // 2 pixels = mono + alpha, alpha is written separately, so same as 1-channel case
       case 1:
-         s->func(s->context,d,1);
-         break;
-      case 2:
          if (expand_mono)
             stbiw__write3(s, d[0], d[0], d[0]); // monochrome bmp
          else
@@ -897,6 +894,7 @@ static unsigned char stbiw__paeth(int a, int b, int c)
    return STBIW_UCHAR(c);
 }
 
+// @OPTIMIZE: provide an option that always forces left-predict or paeth predict
 unsigned char *stbi_write_png_to_mem(unsigned char *pixels, int stride_bytes, int x, int y, int n, int *out_len)
 {
    int ctype[5] = { -1, 0, 4, 2, 6 };
@@ -913,10 +911,10 @@ unsigned char *stbi_write_png_to_mem(unsigned char *pixels, int stride_bytes, in
    for (j=0; j < y; ++j) {
       static int mapping[] = { 0,1,2,3,4 };
       static int firstmap[] = { 0,1,0,5,6 };
-      int *mymap = j ? mapping : firstmap;
+      int *mymap = (j != 0) ? mapping : firstmap;
       int best = 0, bestval = 0x7fffffff;
       for (p=0; p < 2; ++p) {
-         for (k= p?best:0; k < 5; ++k) {
+         for (k= p?best:0; k < 5; ++k) { // @TODO: clarity: rewrite this to go 0..5, and 'continue' the unwanted ones during 2nd pass
             int type = mymap[k],est=0;
             unsigned char *z = pixels + stride_bytes*j;
             for (i=0; i < n; ++i)
@@ -1018,6 +1016,9 @@ STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int x,
 #endif // STB_IMAGE_WRITE_IMPLEMENTATION
 
 /* Revision history
+      1.04 (2017-03-03)
+             monochrome BMP expansion
+      1.03   ???
       1.02 (2016-04-02)
              avoid allocating large structures on the stack
       1.01 (2016-01-16)
@@ -1046,4 +1047,46 @@ STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int x,
       0.91 (2010-07-17)
              first public release
       0.90   first internal release
+*/
+
+/*
+------------------------------------------------------------------------------
+This software is available under 2 licenses -- choose whichever you prefer.
+------------------------------------------------------------------------------
+ALTERNATIVE A - MIT License
+Copyright (c) 2017 Sean Barrett
+Permission is hereby granted, free of charge, to any person obtaining a copy of 
+this software and associated documentation files (the "Software"), to deal in 
+the Software without restriction, including without limitation the rights to 
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+of the Software, and to permit persons to whom the Software is furnished to do 
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all 
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+SOFTWARE.
+------------------------------------------------------------------------------
+ALTERNATIVE B - Public Domain (www.unlicense.org)
+This is free and unencumbered software released into the public domain.
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this 
+software, either in source code form or as a compiled binary, for any purpose, 
+commercial or non-commercial, and by any means.
+In jurisdictions that recognize copyright laws, the author or authors of this 
+software dedicate any and all copyright interest in the software to the public 
+domain. We make this dedication for the benefit of the public at large and to 
+the detriment of our heirs and successors. We intend this dedication to be an 
+overt act of relinquishment in perpetuity of all present and future rights to 
+this software under copyright law.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+------------------------------------------------------------------------------
 */
