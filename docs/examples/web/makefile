@@ -36,7 +36,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # define raylib directory for include and library
-RAYLIB_PATH = D:\GitHub\raylib
+RAYLIB_PATH ?= C:\GitHub\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -99,7 +99,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --memory-init-file 0        # to avoid an external memory initialization code file (.mem)
     # -s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
     # -s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
-    # -preload-file file.res      # embbed file.res resource into .data file
+    # --preload-file file.res     # embbed file.res resource into .data file
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline

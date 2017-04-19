@@ -114,3 +114,12 @@ project/vs2015/*.opendb
 docs/examples/web/*.html
 docs/examples/web/*/*.html
 !docs/examples/web/loader.html
+!docs/examples/web/core/loader.html
+!docs/examples/web/shapes/loader.html
+!docs/examples/web/text/loader.html
+!docs/examples/web/textures/loader.html
+!docs/examples/web/audio/loader.html
+!docs/examples/web/physac/loader.html
+!docs/examples/web/shaders/loader.html
+!docs/examples/web/models/loader.html
+
