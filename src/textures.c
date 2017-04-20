@@ -379,6 +379,8 @@ Texture2D LoadTextureFromImage(Image image)
     texture.height = image.height;
     texture.mipmaps = image.mipmaps;
     texture.format = image.format;
+    
+    TraceLog(INFO, "[TEX %i] Parameters: %ix%i, %i mips, format %i", texture.width, texture.height, texture.mipmaps, texture.format);
 
     return texture;
 }
