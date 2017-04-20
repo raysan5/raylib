@@ -65,7 +65,7 @@
                                 // Required for: rlglLoadTexture() rlDeleteTextures(),
                                 //      rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"              // Required for: fopen() Android mapping, TraceLog()
+#include "utils.h"              // Required for: fopen() Android mapping
 
 // Support only desired texture formats on stb_image
 #if !defined(SUPPORT_FILEFORMAT_BMP)

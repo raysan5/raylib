@@ -295,7 +295,7 @@
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
 //----------------------------------------------------------------------------------
-// Types and Structures Definition
+// Structures Definition
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
@@ -516,6 +516,18 @@ typedef struct AudioStream {
     unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
 } AudioStream;
 
+//----------------------------------------------------------------------------------
+// Enumerators Definition
+//----------------------------------------------------------------------------------
+// Trace log type
+typedef enum { 
+    INFO = 0, 
+    WARNING, 
+    ERROR, 
+    DEBUG, 
+    OTHER 
+} LogType;
+
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
@@ -552,10 +564,18 @@ typedef enum {
 } TextureFilterMode;
 
 // Texture parameters: wrap mode
-typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
+typedef enum { 
+    WRAP_REPEAT = 0, 
+    WRAP_CLAMP, 
+    WRAP_MIRROR 
+} TextureWrapMode;
 
 // Color blending modes (pre-defined)
-typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
+typedef enum { 
+    BLEND_ALPHA = 0, 
+    BLEND_ADDITIVE, 
+    BLEND_MULTIPLIED
+} BlendMode;
 
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
@@ -689,7 +709,7 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
-//RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
 RLAPI void TakeScreenshot(void);                                  // Takes a screenshot and saves it in the same folder as executable
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 

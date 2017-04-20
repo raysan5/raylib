@@ -50,7 +50,7 @@
 #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 
-#include "utils.h"          // Required for: IsFileExtension()
+#include "utils.h"          // Required for: fopen() Android mapping
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     // Following libs are used on LoadTTF()
