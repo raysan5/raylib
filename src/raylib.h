@@ -74,7 +74,6 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
-//#define RLGL_OCULUS_SUPPORT   // Oculus Rift CV1 (complementary to PLATFORM_DESKTOP)
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -516,12 +515,28 @@ typedef struct AudioStream {
     unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
 } AudioStream;
 
+// rRES data returned when reading a resource, 
+// it contains all required data for user (24 byte)
+typedef struct RRESData {
+    unsigned int type;          // Resource type (4 byte)
+
+    unsigned int param1;        // Resouce parameter 1 (4 byte)
+    unsigned int param2;        // Resouce parameter 2 (4 byte)
+    unsigned int param3;        // Resouce parameter 3 (4 byte)
+    unsigned int param4;        // Resouce parameter 4 (4 byte)
+
+    void *data;                 // Resource data pointer (4 byte)
+} RRESData;
+
+// RRES type (pointer to RRESData array)
+typedef struct RRESData *RRES;
+
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
 // Trace log type
 typedef enum { 
-    INFO = 0, 
+    INFO = 0,
     WARNING, 
     ERROR, 
     DEBUG, 
@@ -615,19 +630,6 @@ typedef enum {
     HMD_FOVE_VR,
 } VrDevice;
 
-// rRES data returned when reading a resource, 
-// it contains all required data for user (24 byte)
-typedef struct RRESData {
-    unsigned int type;          // Resource type (4 byte)
-
-    unsigned int param1;        // Resouce parameter 1 (4 byte)
-    unsigned int param2;        // Resouce parameter 2 (4 byte)
-    unsigned int param3;        // Resouce parameter 3 (4 byte)
-    unsigned int param4;        // Resouce parameter 4 (4 byte)
-
-    void *data;                 // Resource data pointer (4 byte)
-} RRESData;
-
 // RRESData type
 typedef enum { 
     RRES_TYPE_RAW = 0, 
@@ -639,9 +641,6 @@ typedef enum {
     RRES_TYPE_FONT_CHARDATA,    // CharInfo data array
     RRES_TYPE_DIRECTORY
 } RRESDataType;
-
-// RRES type (pointer to RRESData array)
-typedef struct RRESData *RRES;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
