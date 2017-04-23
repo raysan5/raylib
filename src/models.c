@@ -607,13 +607,13 @@ Mesh LoadMesh(const char *fileName)
 }
 
 // Load mesh from vertex data
-// NOTE: All vertex data arrays must be same size: numVertex
-Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData)
+// NOTE: All vertex data arrays must be same size: vertexCount
+Mesh LoadMeshEx(int vertexCount, float *vData, float *vtData, float *vnData, Color *cData)
 {
     Mesh mesh = { 0 };
 
-    mesh.vertexCount = numVertex;
-    mesh.triangleCount = numVertex/3;
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = vertexCount/3;
     mesh.vertices = vData;
     mesh.texcoords = vtData;
     mesh.texcoords2 = NULL;
@@ -754,9 +754,9 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     Color *pixels = GetImageData(heightmap);
 
     // NOTE: One vertex per pixel
-    int numTriangles = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
+    int triangleCount = (mapX-1)*(mapZ-1)*2;    // One quad every four pixels
 
-    mesh.vertexCount = numTriangles*3;
+    mesh.vertexCount = triangleCount*3;
 
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
@@ -1615,10 +1615,10 @@ static Mesh LoadOBJ(const char *fileName)
     char dataType;
     char comments[200];
 
-    int numVertex = 0;
-    int numNormals = 0;
-    int numTexCoords = 0;
-    int numTriangles = 0;
+    int vertexCount = 0;
+    int normalCount = 0;
+    int texcoordCount = 0;
+    int triangleCount = 0;
 
     FILE *objFile;
 
@@ -1630,7 +1630,7 @@ static Mesh LoadOBJ(const char *fileName)
         return mesh;
     }
 
-    // First reading pass: Get numVertex, numNormals, numTexCoords, numTriangles
+    // First reading pass: Get vertexCount, normalCount, texcoordCount, triangleCount
     // NOTE: vertex, texcoords and normals could be optimized (to be used indexed on faces definition)
     // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
     while (!feof(objFile))
@@ -1654,40 +1654,40 @@ static Mesh LoadOBJ(const char *fileName)
 
                 if (dataType == 't')    // Read texCoord
                 {
-                    numTexCoords++;
+                    texcoordCount++;
                     fgets(comments, 200, objFile);
                 }
                 else if (dataType == 'n')    // Read normals
                 {
-                    numNormals++;
+                    normalCount++;
                     fgets(comments, 200, objFile);
                 }
                 else    // Read vertex
                 {
-                    numVertex++;
+                    vertexCount++;
                     fgets(comments, 200, objFile);
                 }
             } break;
             case 'f':
             {
-                numTriangles++;
+                triangleCount++;
                 fgets(comments, 200, objFile);
             } break;
             default: break;
         }
     }
 
-    TraceLog(DEBUG, "[%s] Model num vertices: %i", fileName, numVertex);
-    TraceLog(DEBUG, "[%s] Model num texcoords: %i", fileName, numTexCoords);
-    TraceLog(DEBUG, "[%s] Model num normals: %i", fileName, numNormals);
-    TraceLog(DEBUG, "[%s] Model num triangles: %i", fileName, numTriangles);
+    TraceLog(DEBUG, "[%s] Model vertices: %i", fileName, vertexCount);
+    TraceLog(DEBUG, "[%s] Model texcoords: %i", fileName, texcoordCount);
+    TraceLog(DEBUG, "[%s] Model normals: %i", fileName, normalCount);
+    TraceLog(DEBUG, "[%s] Model triangles: %i", fileName, triangleCount);
 
     // Once we know the number of vertices to store, we create required arrays
-    Vector3 *midVertices = (Vector3 *)malloc(numVertex*sizeof(Vector3));
+    Vector3 *midVertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
     Vector3 *midNormals = NULL;
-    if (numNormals > 0) midNormals = (Vector3 *)malloc(numNormals*sizeof(Vector3));
+    if (normalCount > 0) midNormals = (Vector3 *)malloc(normalCount*sizeof(Vector3));
     Vector2 *midTexCoords = NULL;
-    if (numTexCoords > 0) midTexCoords = (Vector2 *)malloc(numTexCoords*sizeof(Vector2));
+    if (texcoordCount > 0) midTexCoords = (Vector2 *)malloc(texcoordCount*sizeof(Vector2));
 
     int countVertex = 0;
     int countNormals = 0;
@@ -1738,7 +1738,7 @@ static Mesh LoadOBJ(const char *fileName)
     // At this point all vertex data (v, vt, vn) has been gathered on midVertices, midTexCoords, midNormals
     // Now we can organize that data into our Mesh struct
 
-    mesh.vertexCount = numTriangles*3;
+    mesh.vertexCount = triangleCount*3;
 
     // Additional arrays to store vertex data as floats
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
@@ -1750,11 +1750,11 @@ static Mesh LoadOBJ(const char *fileName)
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
 
-    int vNum[3], vtNum[3], vnNum[3];    // Used to store triangle indices for v, vt, vn
+    int vCount[3], vtCount[3], vnCount[3];    // Used to store triangle indices for v, vt, vn
 
     rewind(objFile);        // Return to the beginning of the file, to read again
 
-    if (numNormals == 0) TraceLog(INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
+    if (normalCount == 0) TraceLog(INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
 
     // Third reading pass: Get faces (triangles) data and fill VertexArray
     while (!feof(objFile))
@@ -1768,43 +1768,43 @@ static Mesh LoadOBJ(const char *fileName)
             {
                 // NOTE: It could be that OBJ does not have normals or texcoords defined!
 
-                if ((numNormals == 0) && (numTexCoords == 0)) fscanf(objFile, "%i %i %i", &vNum[0], &vNum[1], &vNum[2]);
-                else if (numNormals == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vNum[0], &vtNum[0], &vNum[1], &vtNum[1], &vNum[2], &vtNum[2]);
-                else if (numTexCoords == 0) fscanf(objFile, "%i//%i %i//%i %i//%i", &vNum[0], &vnNum[0], &vNum[1], &vnNum[1], &vNum[2], &vnNum[2]);
-                else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vNum[0], &vtNum[0], &vnNum[0], &vNum[1], &vtNum[1], &vnNum[1], &vNum[2], &vtNum[2], &vnNum[2]);
+                if ((normalCount == 0) && (texcoordCount == 0)) fscanf(objFile, "%i %i %i", &vCount[0], &vCount[1], &vCount[2]);
+                else if (normalCount == 0) fscanf(objFile, "%i/%i %i/%i %i/%i", &vCount[0], &vtCount[0], &vCount[1], &vtCount[1], &vCount[2], &vtCount[2]);
+                else if (texcoordCount == 0) fscanf(objFile, "%i//%i %i//%i %i//%i", &vCount[0], &vnCount[0], &vCount[1], &vnCount[1], &vCount[2], &vnCount[2]);
+                else fscanf(objFile, "%i/%i/%i %i/%i/%i %i/%i/%i", &vCount[0], &vtCount[0], &vnCount[0], &vCount[1], &vtCount[1], &vnCount[1], &vCount[2], &vtCount[2], &vnCount[2]);
 
-                mesh.vertices[vCounter] = midVertices[vNum[0]-1].x;
-                mesh.vertices[vCounter + 1] = midVertices[vNum[0]-1].y;
-                mesh.vertices[vCounter + 2] = midVertices[vNum[0]-1].z;
+                mesh.vertices[vCounter] = midVertices[vCount[0]-1].x;
+                mesh.vertices[vCounter + 1] = midVertices[vCount[0]-1].y;
+                mesh.vertices[vCounter + 2] = midVertices[vCount[0]-1].z;
                 vCounter += 3;
-                mesh.vertices[vCounter] = midVertices[vNum[1]-1].x;
-                mesh.vertices[vCounter + 1] = midVertices[vNum[1]-1].y;
-                mesh.vertices[vCounter + 2] = midVertices[vNum[1]-1].z;
+                mesh.vertices[vCounter] = midVertices[vCount[1]-1].x;
+                mesh.vertices[vCounter + 1] = midVertices[vCount[1]-1].y;
+                mesh.vertices[vCounter + 2] = midVertices[vCount[1]-1].z;
                 vCounter += 3;
-                mesh.vertices[vCounter] = midVertices[vNum[2]-1].x;
-                mesh.vertices[vCounter + 1] = midVertices[vNum[2]-1].y;
-                mesh.vertices[vCounter + 2] = midVertices[vNum[2]-1].z;
+                mesh.vertices[vCounter] = midVertices[vCount[2]-1].x;
+                mesh.vertices[vCounter + 1] = midVertices[vCount[2]-1].y;
+                mesh.vertices[vCounter + 2] = midVertices[vCount[2]-1].z;
                 vCounter += 3;
 
-                if (numNormals > 0)
+                if (normalCount > 0)
                 {
-                    mesh.normals[nCounter] = midNormals[vnNum[0]-1].x;
-                    mesh.normals[nCounter + 1] = midNormals[vnNum[0]-1].y;
-                    mesh.normals[nCounter + 2] = midNormals[vnNum[0]-1].z;
+                    mesh.normals[nCounter] = midNormals[vnCount[0]-1].x;
+                    mesh.normals[nCounter + 1] = midNormals[vnCount[0]-1].y;
+                    mesh.normals[nCounter + 2] = midNormals[vnCount[0]-1].z;
                     nCounter += 3;
-                    mesh.normals[nCounter] = midNormals[vnNum[1]-1].x;
-                    mesh.normals[nCounter + 1] = midNormals[vnNum[1]-1].y;
-                    mesh.normals[nCounter + 2] = midNormals[vnNum[1]-1].z;
+                    mesh.normals[nCounter] = midNormals[vnCount[1]-1].x;
+                    mesh.normals[nCounter + 1] = midNormals[vnCount[1]-1].y;
+                    mesh.normals[nCounter + 2] = midNormals[vnCount[1]-1].z;
                     nCounter += 3;
-                    mesh.normals[nCounter] = midNormals[vnNum[2]-1].x;
-                    mesh.normals[nCounter + 1] = midNormals[vnNum[2]-1].y;
-                    mesh.normals[nCounter + 2] = midNormals[vnNum[2]-1].z;
+                    mesh.normals[nCounter] = midNormals[vnCount[2]-1].x;
+                    mesh.normals[nCounter + 1] = midNormals[vnCount[2]-1].y;
+                    mesh.normals[nCounter + 2] = midNormals[vnCount[2]-1].z;
                     nCounter += 3;
                 }
                 else
                 {
                     // If normals not defined, they are calculated from the 3 vertices [N = (V2 - V1) x (V3 - V1)]
-                    Vector3 norm = VectorCrossProduct(VectorSubtract(midVertices[vNum[1]-1], midVertices[vNum[0]-1]), VectorSubtract(midVertices[vNum[2]-1], midVertices[vNum[0]-1]));
+                    Vector3 norm = VectorCrossProduct(VectorSubtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), VectorSubtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
                     VectorNormalize(&norm);
 
                     mesh.normals[nCounter] = norm.x;
@@ -1821,18 +1821,18 @@ static Mesh LoadOBJ(const char *fileName)
                     nCounter += 3;
                 }
 
-                if (numTexCoords > 0)
+                if (texcoordCount > 0)
                 {
                     // NOTE: If using negative texture coordinates with a texture filter of GL_CLAMP_TO_EDGE doesn't work!
                     // NOTE: Texture coordinates are Y flipped upside-down
-                    mesh.texcoords[tcCounter] = midTexCoords[vtNum[0]-1].x;
-                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[0]-1].y;
+                    mesh.texcoords[tcCounter] = midTexCoords[vtCount[0]-1].x;
+                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtCount[0]-1].y;
                     tcCounter += 2;
-                    mesh.texcoords[tcCounter] = midTexCoords[vtNum[1]-1].x;
-                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[1]-1].y;
+                    mesh.texcoords[tcCounter] = midTexCoords[vtCount[1]-1].x;
+                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtCount[1]-1].y;
                     tcCounter += 2;
-                    mesh.texcoords[tcCounter] = midTexCoords[vtNum[2]-1].x;
-                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtNum[2]-1].y;
+                    mesh.texcoords[tcCounter] = midTexCoords[vtCount[2]-1].x;
+                    mesh.texcoords[tcCounter + 1] = 1.0f - midTexCoords[vtCount[2]-1].y;
                     tcCounter += 2;
                 }
             } break;
@@ -1843,7 +1843,7 @@ static Mesh LoadOBJ(const char *fileName)
     fclose(objFile);
 
     // Security check, just in case no normals or no texcoords defined in OBJ
-    if (numTexCoords == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
+    if (texcoordCount == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
     else
     {
         // Attempt to calculate mesh tangents and binormals using positions and texture coordinates
