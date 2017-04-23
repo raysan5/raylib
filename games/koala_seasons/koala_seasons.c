@@ -68,7 +68,7 @@ int main(void)
     font = LoadSpriteFont("resources/graphics/mainfont.png");
 
     atlas01 = LoadTexture("resources/graphics/atlas01.png");
-    atlas02 = LoadTexture("resources/graphics/atlas02.pvr");
+    atlas02 = LoadTexture("resources/graphics/atlas02.png");
     
 #if defined(PLATFORM_WEB) || defined(PLATFORM_RPI) || defined(PLATFORM_ANDROID)
     colorBlend = LoadShader("resources/shaders/glsl100/base.vs", "resources/shaders/glsl100/blend_color.fs");

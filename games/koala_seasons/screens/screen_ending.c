@@ -465,11 +465,11 @@ void DrawEndingScreen(void)
     DrawTexturePro(atlas01, ending_button_trophy, (Rectangle){GetScreenWidth()*0.871, GetScreenHeight()*0.513, ending_button_trophy.width, ending_button_trophy.height}, (Vector2){ 0, 0}, 0, buttonTrophyColor);
     DrawTexturePro(atlas01, ending_button_share, (Rectangle){GetScreenWidth()*0.871, GetScreenHeight()*0.719, ending_button_share.width, ending_button_share.height}, (Vector2){ 0, 0}, 0, buttonShareColor);
     
-    DrawTextEx(font, FormatText("%03i", seasonsCounter), (Vector2){ GetScreenWidth()*0.73f, GetScreenHeight()*0.14f }, font.size, 1, WHITE);
-    DrawTextEx(font, FormatText("%03i", currentLeavesEnding), (Vector2){ GetScreenWidth()*0.73f, GetScreenHeight()*0.29f }, font.size, 1, WHITE);
-    DrawTextEx(font, FormatText("%04i", currentScore), (Vector2){ GetScreenWidth()*0.715f, GetScreenHeight()*0.426f }, font.size, 1, WHITE);
+    DrawTextEx(font, FormatText("%03i", seasonsCounter), (Vector2){ GetScreenWidth()*0.73f, GetScreenHeight()*0.14f }, font.baseSize, 1, WHITE);
+    DrawTextEx(font, FormatText("%03i", currentLeavesEnding), (Vector2){ GetScreenWidth()*0.73f, GetScreenHeight()*0.29f }, font.baseSize, 1, WHITE);
+    DrawTextEx(font, FormatText("%04i", currentScore), (Vector2){ GetScreenWidth()*0.715f, GetScreenHeight()*0.426f }, font.baseSize, 1, WHITE);
     
-    DrawTextEx(font, FormatText("%s %i - %s %i", initMonthText, initYears, finalMonthText, finalYears), (Vector2){ GetScreenWidth()*0.1f, GetScreenHeight()*0.7f }, font.size/2.0f, 1, WHITE);
+    DrawTextEx(font, FormatText("%s %i - %s %i", initMonthText, initYears, finalMonthText, finalYears), (Vector2){ GetScreenWidth()*0.1f, GetScreenHeight()*0.7f }, font.baseSize/2.0f, 1, WHITE);
     
     for (int i = 0; i < MAX_KILLS; i++)
     {
@@ -495,26 +495,26 @@ void DrawEndingScreen(void)
     //DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.5));
 */
     
-    //DrawTextEx(font, FormatText("%02s", killer), (Vector2){ GetScreenWidth()*0.08, GetScreenHeight()*0.78 }, font.size/2, 1, WHITE);
-    if (killer == 0) DrawTextEx(font, textFire01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.size/2.0f, 1, WHITE);
-    else if (killer == 2) DrawTextEx(font, textDingo01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.size/2.0f, 1, WHITE);
+    //DrawTextEx(font, FormatText("%02s", killer), (Vector2){ GetScreenWidth()*0.08, GetScreenHeight()*0.78 }, font.baseSize/2, 1, WHITE);
+    if (killer == 0) DrawTextEx(font, textFire01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.baseSize/2.0f, 1, WHITE);
+    else if (killer == 2) DrawTextEx(font, textDingo01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.baseSize/2.0f, 1, WHITE);
     else if (killer == 1) 
     {
-        DrawTextEx(font, textSnake01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.size/2.0f, 1, WHITE);
-        DrawTextEx(font, textSnake02, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.83f }, font.size/2.0f, 1, WHITE);
+        DrawTextEx(font, textSnake01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.baseSize/2.0f, 1, WHITE);
+        DrawTextEx(font, textSnake02, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.83f }, font.baseSize/2.0f, 1, WHITE);
     }
     else if (killer == 3) 
     {
-        DrawTextEx(font, textOwl01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.size/2.0f, 1, WHITE);
-        DrawTextEx(font, textOwl02, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.83f }, font.size/2.0f, 1, WHITE);
+        DrawTextEx(font, textOwl01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.baseSize/2.0f, 1, WHITE);
+        DrawTextEx(font, textOwl02, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.83f }, font.baseSize/2.0f, 1, WHITE);
     }
-    else if (killer == 4) DrawTextEx(font, textNaturalDeath01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.size/2.0f, 1, WHITE);
+    else if (killer == 4) DrawTextEx(font, textNaturalDeath01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.baseSize/2.0f, 1, WHITE);
     else if (killer == 5) 
     {
-        DrawTextEx(font, textBee01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.size/2.0f, 1, WHITE);
-        DrawTextEx(font, textBee02, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.83f }, font.size/2.0f, 1, WHITE);
+        DrawTextEx(font, textBee01, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.baseSize/2.0f, 1, WHITE);
+        DrawTextEx(font, textBee02, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.83f }, font.baseSize/2.0f, 1, WHITE);
     }
-    else if (killer == 6) DrawTextEx(font, textEagle, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.size/2.0f, 1, WHITE);
+    else if (killer == 6) DrawTextEx(font, textEagle, (Vector2){ GetScreenWidth()*0.13f, GetScreenHeight()*0.78f }, font.baseSize/2.0f, 1, WHITE);
 }
 
 // Ending Screen Unload logic

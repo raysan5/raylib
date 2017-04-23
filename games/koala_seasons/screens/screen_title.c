@@ -326,7 +326,7 @@ void InitTitleScreen(void)
     koalaMenu.width = gameplay_koala_menu.width/2;
     koalaMenu.height = gameplay_koala_menu.height;
     
-    fontSize = MeasureTextEx(font, "PRESS TO PLAY", font.size, 2);
+    fontSize = MeasureTextEx(font, "PRESS TO PLAY", font.baseSize, 2);
 }
 
 // Title Screen Update logic
@@ -918,7 +918,7 @@ void DrawTitleScreen(void)
     DrawTexturePro(atlas01, (Rectangle){title_titletext.x, title_titletext.y, title_titletext.width, 230},  (Rectangle){GetScreenWidth()*0.49F - title_titletext.width/2, currentValue1, title_titletext.width, 235}, (Vector2){0, 0}, 0, WHITE);
     DrawTexturePro(atlas01, (Rectangle){title_titletext.x, title_titletext.y + 232, title_titletext.width, 116}, (Rectangle){GetScreenWidth()*0.49F - title_titletext.width/2, currentValue2, title_titletext.width, 116}, (Vector2){0, 0}, 0, WHITE);
 
-    if ((framesCounter/60)%2 && framesCounter >= duration) DrawTextEx(font, pressToPlay, (Vector2){ GetScreenWidth()/2 - fontSize.x/2, GetScreenHeight()/2 + fontSize.y*2 }, font.size, 2, (Color){247, 239, 209, 255});
+    if ((framesCounter/60)%2 && framesCounter >= duration) DrawTextEx(font, pressToPlay, (Vector2){ GetScreenWidth()/2 - fontSize.x/2, GetScreenHeight()/2 + fontSize.y*2 }, font.baseSize, 2, (Color){247, 239, 209, 255});
 
     for (int i = 0; i < MAX_particle; i++)
     {

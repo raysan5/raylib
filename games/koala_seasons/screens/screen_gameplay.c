@@ -475,7 +475,7 @@ void UpdateGameplayScreen(void)
         if (numberAlpha <= 0) numberAlpha = 1;
         if (numberScale <= 0) numberScale = 2.5f;
 
-        textSize = MeasureTextEx(font, FormatText("%01i", startNum), font.size*numberScale, 2);
+        textSize = MeasureTextEx(font, FormatText("%01i", startNum), font.baseSize*numberScale, 2);
     }
 
     if (playerActive) finishScreen = 0;
@@ -2914,42 +2914,42 @@ void DrawGameplayScreen(void)
     {
         if (popupScore[i].active)
         {
-            DrawTextEx(font, FormatText("%i", popupScore[i].score), popupScore[i].position, font.size/4*popupScore[i].scale, -5, Fade((Color){255, 73, 73, 255}, popupScore[i].alpha));
+            DrawTextEx(font, FormatText("%i", popupScore[i].score), popupScore[i].position, font.baseSize/4*popupScore[i].scale, -5, Fade((Color){255, 73, 73, 255}, popupScore[i].alpha));
         }
     }
     
-    if (popupBee.active) DrawTextEx(font, FormatText("%i", popupBee.score), popupBee.position, font.size/4*popupBee.scale, -5, Fade((Color){255, 73, 73, 255}, popupBee.alpha));
-    if (popupEagle.active) DrawTextEx(font, FormatText("%i", popupEagle.score), popupEagle.position, font.size/4*popupEagle.scale, -5, Fade((Color){255, 73, 73, 255}, popupEagle.alpha));
+    if (popupBee.active) DrawTextEx(font, FormatText("%i", popupBee.score), popupBee.position, font.baseSize/4*popupBee.scale, -5, Fade((Color){255, 73, 73, 255}, popupBee.alpha));
+    if (popupEagle.active) DrawTextEx(font, FormatText("%i", popupEagle.score), popupEagle.position, font.baseSize/4*popupEagle.scale, -5, Fade((Color){255, 73, 73, 255}, popupEagle.alpha));
 
     for (int i = 0; i < MAX_LEAVES; i++)
     {
-        if (popupLeaves[i].active) DrawTextEx(font, FormatText("+ %i", popupLeaves[i].score), popupLeaves[i].position, font.size/4*popupLeaves[i].scale, -5, Fade((Color){139, 179, 0, 255}, popupLeaves[i].alpha));
+        if (popupLeaves[i].active) DrawTextEx(font, FormatText("+ %i", popupLeaves[i].score), popupLeaves[i].position, font.baseSize/4*popupLeaves[i].scale, -5, Fade((Color){139, 179, 0, 255}, popupLeaves[i].alpha));
     }
     
 
-    DrawTextEx(font, FormatText("%03i", currentLeaves), (Vector2){ 47, 50 }, font.size, -8, counterColor);
+    DrawTextEx(font, FormatText("%03i", currentLeaves), (Vector2){ 47, 50 }, font.baseSize, -8, counterColor);
 
-    if (transforming) DrawTextEx(font, textFinalForm, (Vector2){ GetScreenWidth()/2 - MeasureText(textFinalForm, 40)/2, GetScreenHeight()/4}, font.size, -5, (Color){246, 133, 133, 255});
+    if (transforming) DrawTextEx(font, textFinalForm, (Vector2){ GetScreenWidth()/2 - MeasureText(textFinalForm, 40)/2, GetScreenHeight()/4}, font.baseSize, -5, (Color){246, 133, 133, 255});
     
     if ((currentMonth == 7) && (transitionFramesCounter >= SEASONTRANSITION/2))
     {
-        if (randomMessage <= 4) DrawTextEx(font, textSpring1, (Vector2){GetScreenWidth()/2 - MeasureText(textSpring1, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){185, 222, 105, 255});
-        else DrawTextEx(font, textSpring2, (Vector2){GetScreenWidth()/2 - MeasureText(textSpring2, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){185, 222, 105, 255});
+        if (randomMessage <= 4) DrawTextEx(font, textSpring1, (Vector2){GetScreenWidth()/2 - MeasureText(textSpring1, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){185, 222, 105, 255});
+        else DrawTextEx(font, textSpring2, (Vector2){GetScreenWidth()/2 - MeasureText(textSpring2, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){185, 222, 105, 255});
     }      
     else if ((currentMonth == 10) && (transitionFramesCounter >= SEASONTRANSITION/2))
     {
-        if (randomMessage <= 4) DrawTextEx(font, textSummer1, (Vector2){GetScreenWidth()/2 - MeasureText(textSummer1, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){253, 200, 108, 255}); 
-        else DrawTextEx(font, textSummer2, (Vector2){GetScreenWidth()/2 - MeasureText(textSummer2, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){253, 200, 108, 255}); 
+        if (randomMessage <= 4) DrawTextEx(font, textSummer1, (Vector2){GetScreenWidth()/2 - MeasureText(textSummer1, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){253, 200, 108, 255}); 
+        else DrawTextEx(font, textSummer2, (Vector2){GetScreenWidth()/2 - MeasureText(textSummer2, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){253, 200, 108, 255}); 
     }    
     else if ((currentMonth == 1) && (transitionFramesCounter >= SEASONTRANSITION/2))
     {
-        if (randomMessage <= 4) DrawTextEx(font, textFall1, (Vector2){GetScreenWidth()/2 - MeasureText(textFall1, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){255, 149, 107, 255}); 
-        else DrawTextEx(font, textFall2, (Vector2){GetScreenWidth()/2 - MeasureText(textFall2, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){255, 149, 107, 255}); 
+        if (randomMessage <= 4) DrawTextEx(font, textFall1, (Vector2){GetScreenWidth()/2 - MeasureText(textFall1, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){255, 149, 107, 255}); 
+        else DrawTextEx(font, textFall2, (Vector2){GetScreenWidth()/2 - MeasureText(textFall2, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){255, 149, 107, 255}); 
     }    
     else if (currentMonth == 4 && transitionFramesCounter >= SEASONTRANSITION/2) 
     {
-        if (randomMessage <= 4) DrawTextEx(font, textWinter1, (Vector2){GetScreenWidth()/2 - MeasureText(textWinter1, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){133, 249, 253, 255});
-        else DrawTextEx(font, textWinter2, (Vector2){GetScreenWidth()/2 - MeasureText(textWinter2, 40)/2, GetScreenHeight()/3}, font.size, -5, (Color){133, 249, 253, 255});
+        if (randomMessage <= 4) DrawTextEx(font, textWinter1, (Vector2){GetScreenWidth()/2 - MeasureText(textWinter1, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){133, 249, 253, 255});
+        else DrawTextEx(font, textWinter2, (Vector2){GetScreenWidth()/2 - MeasureText(textWinter2, 40)/2, GetScreenHeight()/3}, font.baseSize, -5, (Color){133, 249, 253, 255});
     }
     
 #if defined(DEBUG)
@@ -3933,5 +3933,5 @@ static void Reset(void)
     firePos.x = -200;
     firePos.y = 0;
     
-    textSize = MeasureTextEx(font, "3", font.size*5, 2);
+    textSize = MeasureTextEx(font, "3", font.baseSize*5, 2);
 }
