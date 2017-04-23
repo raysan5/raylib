@@ -36,7 +36,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # define raylib directory for include and library
-RAYLIB_PATH ?= D:\GitHub\raylib
+RAYLIB_PATH ?= C:\raylib\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
