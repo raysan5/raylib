@@ -111,7 +111,7 @@ void UpdateDrawFrame(void)
 
         ClearBackground(RAYWHITE);
 
-        DrawTexture(checked, screenWidth/2 - checked.width/2, screenHeight/2 - checked.height/2, WHITE);
+        DrawTexture(checked, screenWidth/2 - checked.width/2, screenHeight/2 - checked.height/2, Fade(WHITE, 0.5f));
         DrawTexture(fudesumi, 430, -30, WHITE);
 
         DrawText("CHECKED TEXTURE ", 84, 100, 30, BROWN);

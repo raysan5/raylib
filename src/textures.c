@@ -65,7 +65,7 @@
                                 // Required for: rlglLoadTexture() rlDeleteTextures(),
                                 //      rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"              // Required for: fopen() Android mapping, TraceLog()
+#include "utils.h"              // Required for: fopen() Android mapping
 
 // Support only desired texture formats on stb_image
 #if !defined(SUPPORT_FILEFORMAT_BMP)
@@ -379,6 +379,8 @@ Texture2D LoadTextureFromImage(Image image)
     texture.height = image.height;
     texture.mipmaps = image.mipmaps;
     texture.format = image.format;
+    
+    TraceLog(INFO, "[TEX %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
 
     return texture;
 }

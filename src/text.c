@@ -50,7 +50,7 @@
 #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 
-#include "utils.h"          // Required for: IsFileExtension()
+#include "utils.h"          // Required for: fopen() Android mapping
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     // Following libs are used on LoadTTF()
@@ -316,7 +316,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
         //UnloadResource(rres[0]);
     }
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    else if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontTTF(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    else if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
     else if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
@@ -341,7 +341,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 // Load SpriteFont from TTF font file with generation parameters
 // NOTE: You can pass an array with desired characters, those characters should be available in the font
 // if array is NULL, default char set is selected 32..126
-SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount, int *fontChars)
+SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
     SpriteFont spriteFont = { 0 };
 

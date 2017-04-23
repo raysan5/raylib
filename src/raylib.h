@@ -74,7 +74,6 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
-//#define RLGL_OCULUS_SUPPORT   // Oculus Rift CV1 (complementary to PLATFORM_DESKTOP)
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -295,7 +294,7 @@
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
 //----------------------------------------------------------------------------------
-// Types and Structures Definition
+// Structures Definition
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
@@ -516,6 +515,34 @@ typedef struct AudioStream {
     unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
 } AudioStream;
 
+// rRES data returned when reading a resource, 
+// it contains all required data for user (24 byte)
+typedef struct RRESData {
+    unsigned int type;          // Resource type (4 byte)
+
+    unsigned int param1;        // Resouce parameter 1 (4 byte)
+    unsigned int param2;        // Resouce parameter 2 (4 byte)
+    unsigned int param3;        // Resouce parameter 3 (4 byte)
+    unsigned int param4;        // Resouce parameter 4 (4 byte)
+
+    void *data;                 // Resource data pointer (4 byte)
+} RRESData;
+
+// RRES type (pointer to RRESData array)
+typedef struct RRESData *RRES;
+
+//----------------------------------------------------------------------------------
+// Enumerators Definition
+//----------------------------------------------------------------------------------
+// Trace log type
+typedef enum { 
+    INFO = 0,
+    WARNING, 
+    ERROR, 
+    DEBUG, 
+    OTHER 
+} LogType;
+
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
@@ -552,10 +579,18 @@ typedef enum {
 } TextureFilterMode;
 
 // Texture parameters: wrap mode
-typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
+typedef enum { 
+    WRAP_REPEAT = 0, 
+    WRAP_CLAMP, 
+    WRAP_MIRROR 
+} TextureWrapMode;
 
 // Color blending modes (pre-defined)
-typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
+typedef enum { 
+    BLEND_ALPHA = 0, 
+    BLEND_ADDITIVE, 
+    BLEND_MULTIPLIED
+} BlendMode;
 
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
@@ -595,19 +630,6 @@ typedef enum {
     HMD_FOVE_VR,
 } VrDevice;
 
-// rRES data returned when reading a resource, 
-// it contains all required data for user (24 byte)
-typedef struct RRESData {
-    unsigned int type;          // Resource type (4 byte)
-
-    unsigned int param1;        // Resouce parameter 1 (4 byte)
-    unsigned int param2;        // Resouce parameter 2 (4 byte)
-    unsigned int param3;        // Resouce parameter 3 (4 byte)
-    unsigned int param4;        // Resouce parameter 4 (4 byte)
-
-    void *data;                 // Resource data pointer (4 byte)
-} RRESData;
-
 // RRESData type
 typedef enum { 
     RRES_TYPE_RAW = 0, 
@@ -619,9 +641,6 @@ typedef enum {
     RRES_TYPE_FONT_CHARDATA,    // CharInfo data array
     RRES_TYPE_DIRECTORY
 } RRESDataType;
-
-// RRES type (pointer to RRESData array)
-typedef struct RRESData *RRES;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -689,7 +708,7 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
 RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
-//RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
 RLAPI void TakeScreenshot(void);                                  // Takes a screenshot and saves it in the same folder as executable
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 
@@ -847,7 +866,7 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 //------------------------------------------------------------------------------------
 RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load SpriteFont from file into GPU memory (VRAM)
-RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load SpriteFont from TTF font file with generation parameters
+RLAPI SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load SpriteFont from file with extended parameters
 RLAPI void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory (VRAM)
 
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)

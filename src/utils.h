@@ -46,8 +46,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
-
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
 #endif
@@ -60,8 +58,6 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-void TraceLog(int msgType, const char *text, ...);              // Outputs a trace log message
-
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
 #if defined(SUPPORT_SAVE_BMP)
 void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize);

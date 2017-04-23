@@ -4,7 +4,7 @@
 #
 #   NOTE: By default examples are compiled using raylib static library and OpenAL Soft shared library
 #
-#   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -23,20 +23,22 @@
 #
 #**************************************************************************************************
 
+.PHONY: all clean
+
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
 # define NO to use OpenAL Soft as static library (shared by default)
-SHARED_OPENAL ?= YES
+SHARED_OPENAL ?= NO
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     SHARED_OPENAL = NO
 endif
 
 # define raylib directory for include and library
-RAYLIB_PATH = D:\GitHub\raylib
+RAYLIB_PATH ?= C:\raylib\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -99,7 +101,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --memory-init-file 0        # to avoid an external memory initialization code file (.mem)
     # -s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
     # -s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
-    # -preload-file file.res      # embbed file.res resource into .data file
+    # --preload-file file.res     # embbed file.res resource into .data file
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
@@ -174,7 +176,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
-        # on XWindow could require also below libraries, just uncomment
+        # on XWindow requires also below libraries
         LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
@@ -202,7 +204,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # just adjust the correct path to libraylib.bc
+    # NOTE: Set the correct path to libraylib.bc
     LIBS = $(RAYLIB_RELEASE)/libraylib.bc
 endif
 
@@ -282,8 +284,7 @@ EXAMPLES = \
     fix_dylib \
 
 
-# typing 'make' will invoke the default target entry called 'all',
-# in this case, the 'default' target entry is raylib
+# typing 'make' will invoke the default target entry
 all: examples
 
 # generic compilation pattern
