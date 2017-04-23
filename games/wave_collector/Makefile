@@ -2,8 +2,6 @@
 #
 #   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
-#   NOTE: By default examples are compiled using raylib static library and OpenAL Soft shared library
-#
 #   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
@@ -38,7 +36,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # define raylib directory for include and library
-RAYLIB_PATH = C:\GitHub\raylib
+RAYLIB_PATH ?= D:\GitHub\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -180,7 +178,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
-        # libraries for OS X 10.9 desktop compiling
+        # libraries for OSX 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
@@ -216,7 +214,7 @@ ifeq ($(PLATFORM_OS),WINDOWS)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    WEB_EXT = .html
+    EXT = .html
     WEB_SHELL = --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
 endif
 
@@ -228,12 +226,11 @@ SCREENS = \
 	screens/screen_ending.o \
 
 # typing 'make' will invoke the default target entry
+default: wave_collector
 
-all: wave_collector
-
-# compile template - advance_game
+# compile program
 wave_collector: wave_collector.c $(SCREENS)
-	$(CC) -o $@$(WEB_EXT) $< $(SCREENS) $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
+	$(CC) -o $@$(EXT) $^ $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
     
 # compile screen LOGO
 screens/screen_logo.o: screens/screen_logo.c
