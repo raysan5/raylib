@@ -2719,6 +2719,8 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
 // Register mouse input events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
+    /*
+    // Lock mouse pointer when click on screen
     if (eventType == EMSCRIPTEN_EVENT_CLICK)
     {
         EmscriptenPointerlockChangeEvent plce;
@@ -2732,6 +2734,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
             //if (plce.isActive) TraceLog(WARNING, "Pointer lock exit did not work!");
         }
     }
+    */
     
     return 0;
 }
