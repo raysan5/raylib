@@ -490,7 +490,7 @@ void UpdateGameplayScreen(void)
 
         if (monthTimer >= monthChange)
         {
-            if ((currentMonth == 10)) 
+            if (currentMonth == 10)
             {
                 clockInitRotation = 225;
                 clockFinalRotation = clockInitRotation + 90;
