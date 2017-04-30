@@ -351,7 +351,7 @@ typedef struct Image {
     int format;             // Data format (TextureFormat type)
 } Image;
 
-// Texture2D type, bpp always RGBA (32bit)
+// Texture2D type
 // NOTE: Data stored in GPU memory
 typedef struct Texture2D {
     unsigned int id;        // OpenGL texture id

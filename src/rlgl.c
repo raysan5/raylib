@@ -64,7 +64,7 @@
 
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on LoadText()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
-#include <string.h>                 // Required for: strcmp(), strlen(), strtok()
+#include <string.h>                 // Required for: strcmp(), strlen(), strtok() [Used only in extensions loading]
 #include <math.h>                   // Required for: atan2()
 
 #ifndef RLGL_STANDALONE
