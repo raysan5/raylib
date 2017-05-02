@@ -68,6 +68,7 @@
 //-------------------------------------------------
 #define SUPPORT_FILEFORMAT_WAV
 #define SUPPORT_FILEFORMAT_OGG
+#define SUPPORT_FILEFORMAT_XM
 //-------------------------------------------------
 
 #if defined(AUDIO_STANDALONE)
@@ -75,7 +76,7 @@
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
 #else
     #include "raylib.h"
-    #include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
+    #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
 #ifdef __APPLE__

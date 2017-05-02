@@ -29,10 +29,14 @@
 PLATFORM ?= PLATFORM_DESKTOP
 
 # define NO to use OpenAL Soft as static library (shared by default)
-SHARED_OPENAL ?= NO
+SHARED_OPENAL ?= YES
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    SHARED_OPENAL = NO
+endif
 
 # define raylib directory for include and library
-RAYLIB_PATH = C:\GitHub\raylib
+RAYLIB_PATH ?= C:\GitHub\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -77,7 +81,7 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux to enable timespec and drflac
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         CFLAGS = -O2 -s -Wall -std=c99
@@ -90,11 +94,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
-    # -O2                        # if used, also set --memory-init-file 0
-    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
-    #-s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
-    #-s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
+    CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
+    # -O2                         # if used, also set --memory-init-file 0
+    # --memory-init-file 0        # to avoid an external memory initialization code file (.mem)
+    # -s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
+    # -s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
+    # --preload-file file.res     # embbed file.res resource into .data file
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
@@ -236,28 +241,31 @@ EXAMPLES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_colors_palette \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_lines_bezier \
     textures/textures_logo_raylib \
     textures/textures_image_loading \
     textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_to_image \
     textures/textures_raw_data \
+    textures/textures_particles_blending \
     textures/textures_image_processing \
     textures/textures_image_drawing \
     text/text_sprite_fonts \
     text/text_bmfont_ttf \
-    text/text_rbmf_fonts \
+    text/text_raylib_fonts \
     text/text_format_text \
     text/text_writing_anim \
     text/text_ttf_loading \
     text/text_bmfont_unordered \
+    text/text_input_box \
     models/models_geometric_shapes \
     models/models_box_collisions \
     models/models_billboard \
     models/models_obj_loading \
     models/models_heightmap \
     models/models_cubicmap \
-    models/models_ray_picking \
+    models/models_mesh_picking \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
@@ -266,6 +274,11 @@ EXAMPLES = \
     audio/audio_music_stream \
     audio/audio_module_playing \
     audio/audio_raw_stream \
+    physac/physics_demo \
+    physac/physics_friction \
+    physac/physics_movement \
+    physac/physics_restitution \
+    physac/physics_shatter \
 
 
 # typing 'make' will invoke the default target entry called 'all',
@@ -372,6 +385,10 @@ shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
 # compile [shapes] example - raylib logo animation
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
+    
+# compile [shapes] example - lines bezier
+shapes/shapes_lines_bezier: shapes/shapes_lines_bezier.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
 
 # compile [textures] example - raylib logo texture loading
 textures/textures_logo_raylib: textures/textures_logo_raylib.c
@@ -399,7 +416,13 @@ textures/textures_to_image: textures/textures_to_image.c
     
 # compile [textures] example - texture raw data
 textures/textures_raw_data: textures/textures_raw_data.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
+    --preload-file textures/resources/fudesumi.raw@resources/fudesumi.raw
+    
+# compile [textures] example - texture particles blending
+textures/textures_particles_blending: textures/textures_particles_blending.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
+    --preload-file textures/resources/smoke.png@resources/smoke.png
 
 # compile [textures] example - texture image processing
 textures/textures_image_processing: textures/textures_image_processing.c
@@ -426,17 +449,17 @@ text/text_bmfont_ttf: text/text_bmfont_ttf.c
     --preload-file text/resources/bmfont.png@resources/bmfont.png \
     --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
 
-# compile [text] example - raylib bitmap fonts (rBMF)
-text/text_rbmf_fonts: text/text_rbmf_fonts.c
+# compile [text] example - raylib fonts
+text/text_raylib_fonts: text/text_raylib_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
-    --preload-file text/resources/fonts/alagard.rbmf \
-    --preload-file text/resources/fonts/pixelplay.rbmf \
-    --preload-file text/resources/fonts/mecha.rbmf \
-    --preload-file text/resources/fonts/setback.rbmf \
-    --preload-file text/resources/fonts/romulus.rbmf \
-    --preload-file text/resources/fonts/pixantiqua.rbmf \
-    --preload-file text/resources/fonts/alpha_beta.rbmf \
-    --preload-file text/resources/fonts/jupiter_crash.rbmf
+    --preload-file text/resources/fonts/alagard.png@resources/fonts/alagard.png \
+    --preload-file text/resources/fonts/pixelplay.png@resources/fonts/pixelplay.png \
+    --preload-file text/resources/fonts/mecha.png@resources/fonts/mecha.png \
+    --preload-file text/resources/fonts/setback.png@resources/fonts/setback.png \
+    --preload-file text/resources/fonts/romulus.png@resources/fonts/romulus.png \
+    --preload-file text/resources/fonts/pixantiqua.png@resources/fonts/pixantiqua.png \
+    --preload-file text/resources/fonts/alpha_beta.png@resources/fonts/alpha_beta.png \
+    --preload-file text/resources/fonts/jupiter_crash.png@resources/fonts/jupiter_crash.png
 
 # compile [text] example - text formatting
 text/text_format_text: text/text_format_text.c
@@ -456,6 +479,10 @@ text/text_bmfont_unordered: text/text_bmfont_unordered.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
     --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
     --preload-file text/resources/pixantiqua_0.png@resources/pixantiqua_0.png
+
+# compile [text] example - text input box
+text/text_input_box: text/text_input_box.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL)
 
 # compile [models] example - basic geometric 3d shapes
 models/models_geometric_shapes: models/models_geometric_shapes.c
@@ -491,8 +518,8 @@ models/models_cubicmap: models/models_cubicmap.c
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
-# compile [models] example - model ray picking
-models/models_ray_picking: models/models_ray_picking.c
+# compile [models] example - model mesh picking
+models/models_mesh_picking: models/models_mesh_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
     --preload-file models/resources/tower.obj@resources/tower.obj \
     --preload-file models/resources/tower.png@resources/tower.png
@@ -508,7 +535,7 @@ shaders/shaders_model_shader: shaders/shaders_model_shader.c
 # compile [shaders] example - shapes texture shader
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
-    --preload-file shaders/resources/sonic.png@resources/sonic.png \
+    --preload-file shaders/resources/fudesumi.png@resources/fudesumi.png \
     --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
     --preload-file shaders/resources/shaders/glsl100/grayscale.fs@resources/shaders/glsl100/grayscale.fs
 
@@ -529,26 +556,45 @@ shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
     --preload-file shaders/resources/shaders/glsl100/bloom.fs@resources/shaders/glsl100/bloom.fs
 
 # compile [audio] example - sound loading and playing (WAV and OGG)
-audio_sound_loading: audio_sound_loading.c
+audio/audio_sound_loading: audio/audio_sound_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
     --preload-file audio/resources/weird.wav@resources/weird.wav \
     --preload-file audio/resources/tanatana.ogg@resources/tanatana.ogg
 
 # compile [audio] example - music stream playing (OGG)
-audio_music_stream: audio_music_stream.c
+audio/audio_music_stream: audio/audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
     --preload-file audio/resources/guitar_noodling.ogg@resources/guitar_noodling.ogg
 
-# compile [audio] example - music stream playing (OGG)
-audio_module_playing: audio_module_playing.c
+# compile [audio] example - module playing (XM)
+audio/audio_module_playing: audio/audio_module_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) \
     --preload-file audio/resources/mini1111.xm@resources/mini1111.xm
 
-# compile [audio] example - music stream playing (OGG)
-audio_raw_stream: audio_raw_stream.c
+# compile [audio] example - raw audio streaming
+audio/audio_raw_stream: audio/audio_raw_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s ALLOW_MEMORY_GROWTH=1
 
-    
+# compile [physac] example - physics demo
+physac/physics_demo: physac/physics_demo.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
+
+# compile [physac] example - physics friction
+physac/physics_friction: physac/physics_friction.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
+
+# compile [physac] example - physics movement
+physac/physics_movement: physac/physics_movement.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
+
+# compile [physac] example - physics restitution
+physac/physics_restitution: physac/physics_restitution.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
+
+# compile [physac] example - physics shatter
+physac/physics_shatter: physac/physics_shatter.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s USE_PTHREADS=1
+
 # fix dylib install path name for each executable (MAC)
 fix_dylib:
 ifeq ($(PLATFORM_OS),OSX)
@@ -565,7 +611,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
 		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     else
-		del *.o *.exe
+		del *.o *.exe /s
     endif
     endif
 endif
@@ -574,6 +620,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 	rm -f *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-	del *.o *.html *.js
+    # TODO: Remove all generated files in all folders... avoid deleting loader.html!
+	del *.o *.html *.js *.data
 endif
 	@echo Cleaning done

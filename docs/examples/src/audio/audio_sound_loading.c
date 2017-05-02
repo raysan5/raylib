@@ -24,8 +24,8 @@ int main()
 
     InitAudioDevice();      // Initialize audio device
 
-    Sound fxWav = LoadSound("resources/audio/weird.wav");         // Load WAV audio file
-    Sound fxOgg = LoadSound("resources/audio/tanatana.ogg");      // Load OGG audio file
+    Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
+    Sound fxOgg = LoadSound("resources/tanatana.ogg");      // Load OGG audio file
     
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------

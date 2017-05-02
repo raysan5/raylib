@@ -22,7 +22,7 @@
 *   #define RLGL_STANDALONE
 *       Use rlgl as standalone library (no raylib dependency)
 *
-*   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
+*   #define SUPPORT_VR_SIMULATOR
 *       Support VR simulation functionality (stereo rendering)
 *
 *   #define SUPPORT_DISTORTION_SHADER
@@ -56,7 +56,7 @@
 
 // Default configuration flags (supported features)
 //-------------------------------------------------
-#define SUPPORT_VR_SIMULATION
+#define SUPPORT_VR_SIMULATOR
 #define SUPPORT_DISTORTION_SHADER
 //-------------------------------------------------
 
@@ -64,7 +64,7 @@
 
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on LoadText()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
-#include <string.h>                 // Required for: strcmp(), strlen(), strtok()
+#include <string.h>                 // Required for: strcmp(), strlen(), strtok() [Used only in extensions loading]
 #include <math.h>                   // Required for: atan2()
 
 #ifndef RLGL_STANDALONE
@@ -222,6 +222,7 @@ typedef struct DrawCall {
     //Guint fboId;
 } DrawCall;
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
     int hResolution;                // HMD horizontal resolution in pixels
@@ -244,6 +245,7 @@ typedef struct VrStereoConfig {
     Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
     Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
 } VrStereoConfig;
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -287,13 +289,16 @@ static bool texCompETC2Supported = false;   // ETC2/EAC texture compression supp
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
 static VrDeviceInfo hmd;                // Current VR device info
 static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
 static bool vrSimulatorReady = false;   // VR simulator ready flag
 static bool vrStereoRender = false;     // VR stereo rendering enabled/disabled flag
                                         // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
-#endif
+#endif  // defined(SUPPORT_VR_SIMULATOR)
+
+#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 // Extension supported flag: Anisotropic filtering
 static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
@@ -339,12 +344,12 @@ static void UpdateDefaultBuffers(void);     // Update default internal buffers (
 static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
-// Configure stereo rendering (including distortion shader) with HMD device parameters
-static void SetStereoConfig(VrDeviceInfo info);
-
-// Set internal projection and modelview matrix depending on eyes tracking data
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
+#if defined(SUPPORT_VR_SIMULATOR)
+static void SetStereoConfig(VrDeviceInfo info); // Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView); // Set internal projection and modelview matrix depending on eye
 #endif
+
+#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
@@ -1326,7 +1331,7 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount)
+unsigned int rlglLoadTexture(void *data, int width, int height, int format, int mipmapCount)
 {
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
@@ -1334,39 +1339,39 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 
     // Check texture format support by OpenGL 1.1 (compressed textures not supported)
 #if defined(GRAPHICS_API_OPENGL_11)
-    if (textureFormat >= 8)
+    if (format >= COMPRESSED_DXT1_RGB)
     {
         TraceLog(WARNING, "OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }
 #endif
 
-    if ((!texCompDXTSupported) && ((textureFormat == COMPRESSED_DXT1_RGB) || (textureFormat == COMPRESSED_DXT1_RGBA) ||
-        (textureFormat == COMPRESSED_DXT3_RGBA) || (textureFormat == COMPRESSED_DXT5_RGBA)))
+    if ((!texCompDXTSupported) && ((format == COMPRESSED_DXT1_RGB) || (format == COMPRESSED_DXT1_RGBA) ||
+        (format == COMPRESSED_DXT3_RGBA) || (format == COMPRESSED_DXT5_RGBA)))
     {
         TraceLog(WARNING, "DXT compressed texture format not supported");
         return id;
     }
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((!texCompETC1Supported) && (textureFormat == COMPRESSED_ETC1_RGB))
+    if ((!texCompETC1Supported) && (format == COMPRESSED_ETC1_RGB))
     {
         TraceLog(WARNING, "ETC1 compressed texture format not supported");
         return id;
     }
 
-    if ((!texCompETC2Supported) && ((textureFormat == COMPRESSED_ETC2_RGB) || (textureFormat == COMPRESSED_ETC2_EAC_RGBA)))
+    if ((!texCompETC2Supported) && ((format == COMPRESSED_ETC2_RGB) || (format == COMPRESSED_ETC2_EAC_RGBA)))
     {
         TraceLog(WARNING, "ETC2 compressed texture format not supported");
         return id;
     }
 
-    if ((!texCompPVRTSupported) && ((textureFormat == COMPRESSED_PVRT_RGB) || (textureFormat == COMPRESSED_PVRT_RGBA)))
+    if ((!texCompPVRTSupported) && ((format == COMPRESSED_PVRT_RGB) || (format == COMPRESSED_PVRT_RGBA)))
     {
         TraceLog(WARNING, "PVRT compressed texture format not supported");
         return id;
     }
 
-    if ((!texCompASTCSupported) && ((textureFormat == COMPRESSED_ASTC_4x4_RGBA) || (textureFormat == COMPRESSED_ASTC_8x8_RGBA)))
+    if ((!texCompASTCSupported) && ((format == COMPRESSED_ASTC_4x4_RGBA) || (format == COMPRESSED_ASTC_8x8_RGBA)))
     {
         TraceLog(WARNING, "ASTC compressed texture format not supported");
         return id;
@@ -1394,7 +1399,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     // GL_RGBA8                 GL_RGBA     GL_UNSIGNED_BYTE
     // GL_RGB8                  GL_RGB      GL_UNSIGNED_BYTE
 
-    switch (textureFormat)
+    switch (format)
     {
         case UNCOMPRESSED_GRAYSCALE:
         {
@@ -1435,7 +1440,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     }
 #elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
-    switch (textureFormat)
+    switch (format)
     {
         case UNCOMPRESSED_GRAYSCALE: glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
         case UNCOMPRESSED_GRAY_ALPHA: glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
@@ -2068,12 +2073,16 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     int eyesCount = 1;
+#if defined(SUPPORT_VR_SIMULATOR)
     if (vrStereoRender) eyesCount = 2;
+#endif
     
     for (int eye = 0; eye < eyesCount; eye++)
     {
-        if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
-        else modelview = matModelView;
+        if (eyesCount == 1) modelview = matModelView;
+        #if defined(SUPPORT_VR_SIMULATOR)
+        else SetStereoView(eye, matProjection, matModelView);
+        #endif
 
         // Calculate model-view-projection matrix (MVP)
         Matrix matMVP = MatrixMultiply(modelview, projection);        // Transform to screen-space coordinates
@@ -2534,6 +2543,7 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Init VR simulator for selected device
 // NOTE: It modifies the global variable: VrDeviceInfo hmd
 void InitVrSimulator(int vrDevice)
@@ -2761,6 +2771,7 @@ void EndVrDrawing(void)
     }
 #endif
 }
+#endif          // SUPPORT_VR_SIMULATOR
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -3306,11 +3317,15 @@ static void DrawDefaultBuffers()
     Matrix matModelView = modelview;
     
     int eyesCount = 1;
+#if defined(SUPPORT_VR_SIMULATOR)
     if (vrStereoRender) eyesCount = 2;
+#endif
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
+        #if defined(SUPPORT_VR_SIMULATOR)
         if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
+        #endif
 
         // Set current shader and upload current MVP matrix
         if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
@@ -3516,6 +3531,7 @@ static void UnloadDefaultBuffers(void)
     free(quads.indices);
 }
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Configure stereo rendering (including distortion shader) with HMD device parameters
 static void SetStereoConfig(VrDeviceInfo hmd)
 {
@@ -3607,6 +3623,8 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
     SetMatrixModelview(eyeModelView);
     SetMatrixProjection(eyeProjection);
 }
+#endif      // defined(SUPPORT_VR_SIMULATOR)
+
 #endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 #if defined(GRAPHICS_API_OPENGL_11)

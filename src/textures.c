@@ -65,7 +65,7 @@
                                 // Required for: rlglLoadTexture() rlDeleteTextures(),
                                 //      rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"              // Required for: fopen() Android mapping, TraceLog()
+#include "utils.h"              // Required for: fopen() Android mapping
 
 // Support only desired texture formats on stb_image
 #if !defined(SUPPORT_FILEFORMAT_BMP)
@@ -154,14 +154,7 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 // Load image from file into CPU memory (RAM)
 Image LoadImage(const char *fileName)
 {
-    Image image;
-
-    // Initialize image default values
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     if (IsFileExtension(fileName, ".rres"))
     {
@@ -195,9 +188,13 @@ Image LoadImage(const char *fileName)
         int imgWidth = 0;
         int imgHeight = 0;
         int imgBpp = 0;
+        
+        FILE *imFile = fopen(fileName, "rb");
 
         // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-        image.data = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 0);
+        image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
+        
+        fclose(imFile);
 
         image.width = imgWidth;
         image.height = imgHeight;
@@ -278,13 +275,7 @@ Image LoadImagePro(void *data, int width, int height, int format)
 // Load an image from RAW file data
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *rawFile = fopen(fileName, "rb");
 
@@ -338,7 +329,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 // Load texture from file into GPU memory (VRAM)
 Texture2D LoadTexture(const char *fileName)
 {
-    Texture2D texture;
+    Texture2D texture = { 0 };
 
     Image image = LoadImage(fileName);
 
@@ -347,11 +338,7 @@ Texture2D LoadTexture(const char *fileName)
         texture = LoadTextureFromImage(image);
         UnloadImage(image);
     }
-    else
-    {
-        TraceLog(WARNING, "Texture could not be created");
-        texture.id = 0;
-    }
+    else TraceLog(WARNING, "Texture could not be created");
 
     return texture;
 }
@@ -360,14 +347,7 @@ Texture2D LoadTexture(const char *fileName)
 // NOTE: image is not unloaded, it must be done manually
 Texture2D LoadTextureFromImage(Image image)
 {
-    Texture2D texture;
-
-    // Init texture to default values
-    texture.id = 0;
-    texture.width = 0;
-    texture.height = 0;
-    texture.mipmaps = 0;
-    texture.format = 0;
+    Texture2D texture = { 0 };
 
     texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
 
@@ -375,6 +355,8 @@ Texture2D LoadTextureFromImage(Image image)
     texture.height = image.height;
     texture.mipmaps = image.mipmaps;
     texture.format = image.format;
+    
+    TraceLog(INFO, "[TEX %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
 
     return texture;
 }
@@ -504,9 +486,8 @@ Color *GetImageData(Image image)
 // NOTE: Compressed texture formats not supported
 Image GetTextureData(Texture2D texture)
 {
-    Image image;
-    image.data = NULL;
-
+    Image image = { 0 };
+    
     if (texture.format < 8)
     {
         image.data = rlglReadTexturePixels(texture);

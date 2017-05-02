@@ -1,51 +1,53 @@
 ﻿/**********************************************************************************************
 *
-*   raylib 1.6.0 (www.raylib.com)
+*   raylib v1.7.0 
 *
-*   A simple and easy-to-use library to learn videogames programming
+*   A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *
-*   Features:
-*     Library written in plain C code (C99)
-*     Uses PascalCase/camelCase notation
-*     Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
-*     Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
-*     Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
-*     Multiple textures support, including compressed formats and mipmaps generation
-*     Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
-*     Materials (diffuse, normal, specular) and Lighting (point, directional, spot) support
-*     Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
-*     Audio loading and playing with streaming support and mixing channels [audio]
-*     VR stereo rendering support with configurable HMD device parameters
-*     Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
-*     Custom color palette for fancy visuals on raywhite background
-*     Minimal external dependencies (GLFW3, OpenGL, OpenAL)
-*     Complete binding for Lua [rlua]
+*   FEATURES:
+*       - Library written in plain C code (C99)
+*       - Uses PascalCase/camelCase notation
+*       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
+*       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
+*       - Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
+*       - Multiple textures support, including compressed formats and mipmaps generation
+*       - Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
+*       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
+*       - Audio loading and playing with streaming support and mixing channels: [audio]
+*       - VR stereo rendering support with configurable HMD device parameters
+*       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
+*       - Custom color palette for fancy visuals on raywhite background
+*       - Minimal external dependencies (GLFW3, OpenGL, OpenAL)
+*       - Complete bindings for Lua, Go and Pascal
 *
-*   External libs:
-*     GLFW3 (www.glfw.org) for window/context management and input [core]
-*     GLAD for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP) [rlgl]
-*     stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA) [textures]
-*     stb_image_write (Sean Barret) for image writting (PNG) [utils]
-*     stb_truetype (Sean Barret) for ttf fonts loading [text]
-*     stb_vorbis (Sean Barret) for ogg audio loading [audio]
-*     jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
-*     jar_mod (Joshua Reisenauer) for MOD audio module loading [audio]
-*     dr_flac (David Reid) for FLAC audio file loading [audio]
-*     OpenAL Soft for audio device/context management [audio]
-*     tinfl for data decompression (DEFLATE algorithm) [utils]
+*   NOTES:
+*       32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
+*       One custom default font could be loaded automatically when InitWindow() [core]
+*       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
+*       If using OpenGL 3.3 or ES2, two default shaders could be loaded automatically (internally defined)
 *
-*   Some design decisions:
-*     32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
-*     One custom default font could be loaded automatically when InitWindow() [core]
-*     If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
-*     If using OpenGL 3.3 or ES2, two default shaders could be loaded automatically (internally defined)
+*   DEPENDENCIES:
+*       GLFW3 (www.glfw.org) for window/context management and input [core]
+*       GLAD for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP) [rlgl]
+*       OpenAL Soft for audio device/context management [audio]
 *
-*   -- LICENSE --
+*   OPTIONAL DEPENDENCIES:
+*       stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA) [textures]
+*       stb_image_write (Sean Barret) for image writting (PNG) [utils]
+*       stb_truetype (Sean Barret) for ttf fonts loading [text]
+*       stb_vorbis (Sean Barret) for ogg audio loading [audio]
+*       jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
+*       jar_mod (Joshua Reisenauer) for MOD audio module loading [audio]
+*       dr_flac (David Reid) for FLAC audio file loading [audio]
+*       tinfl for data decompression (DEFLATE algorithm) [rres]
+*
+*
+*   LICENSE: zlib/libpng
 *
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -98,13 +100,13 @@
 #define RAD2DEG (180.0f/PI)
 
 // raylib Config Flags
-#define FLAG_FULLSCREEN_MODE    1
-#define FLAG_RESIZABLE_WINDOW   2
-#define FLAG_SHOW_LOGO          4
-#define FLAG_SHOW_MOUSE_CURSOR  8
-#define FLAG_CENTERED_MODE     16
-#define FLAG_MSAA_4X_HINT      32
-#define FLAG_VSYNC_HINT        64
+#define FLAG_SHOW_LOGO              1       // Set to show raylib logo at startup
+#define FLAG_FULLSCREEN_MODE        2       // Set to run program in fullscreen
+#define FLAG_WINDOW_RESIZABLE       4       // Set to allow resizable window
+#define FLAG_WINDOW_DECORATED       8       // Set to show window decoration (frame and buttons)
+#define FLAG_WINDOW_TRANSPARENT    16       // Set to allow transparent window
+#define FLAG_MSAA_4X_HINT          32       // Set to try enabling MSAA 4X
+#define FLAG_VSYNC_HINT            64       // Set to try enabling V-Sync on GPU
 
 // Keyboard Function Keys
 #define KEY_SPACE            32
@@ -297,13 +299,9 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #ifndef __APPLE__
-        #if !defined(_STDBOOL_H)
-            typedef enum { false, true } bool;
-            #define _STDBOOL_H
-        #endif
-    #else
-        #include <stdbool.h>
+    #if !defined(_STDBOOL_H)
+        typedef enum { false, true } bool;
+        #define _STDBOOL_H
     #endif
 #endif
 
@@ -371,15 +369,21 @@ typedef struct RenderTexture2D {
     Texture2D depth;        // Depth buffer attachment texture
 } RenderTexture2D;
 
+// SpriteFont character info
+typedef struct CharInfo {
+    int value;              // Character value (Unicode)
+    Rectangle rec;          // Character rectangle in sprite font
+    int offsetX;            // Character offset X when drawing
+    int offsetY;            // Character offset Y when drawing
+    int advanceX;           // Character advance position X
+} CharInfo;
+
 // SpriteFont type, includes texture and charSet array data
 typedef struct SpriteFont {
     Texture2D texture;      // Font texture
-    int size;               // Base size (default chars height)
-    int numChars;           // Number of characters
-    int *charValues;        // Characters values array
-    Rectangle *charRecs;    // Characters rectangles within the texture
-    Vector2 *charOffsets;   // Characters offsets (on drawing)
-    int *charAdvanceX;      // Characters x advance (on drawing)
+    int baseSize;           // Base size (default chars height)
+    int charsCount;         // Number of characters
+    CharInfo *chars;        // Characters info data
 } SpriteFont;
 
 // Camera type, defines a camera position/orientation in 3d space
@@ -465,25 +469,6 @@ typedef struct Model {
     Matrix transform;       // Local transform matrix
     Material material;      // Shader and textures data
 } Model;
-
-// Light type
-typedef struct LightData {
-    unsigned int id;        // Light unique id
-    bool enabled;           // Light enabled
-    int type;               // Light type: LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT
-
-    Vector3 position;       // Light position
-    Vector3 target;         // Light direction: LIGHT_DIRECTIONAL and LIGHT_SPOT (cone direction target)
-    float radius;           // Light attenuation radius light intensity reduced with distance (world distance)
-
-    Color diffuse;          // Light diffuse color
-    float intensity;        // Light intensity level
-
-    float coneAngle;        // Light cone max angle: LIGHT_SPOT
-} LightData, *Light;
-
-// Light types
-typedef enum { LIGHT_POINT, LIGHT_DIRECTIONAL, LIGHT_SPOT } LightType;
 
 // Ray type (useful for raycast)
 typedef struct Ray {
@@ -610,25 +595,33 @@ typedef enum {
     HMD_FOVE_VR,
 } VrDevice;
 
-// rRES data returned when reading a resource, it contains all required data for user (24 byte)
-typedef struct {
+// rRES data returned when reading a resource, 
+// it contains all required data for user (24 byte)
+typedef struct RRESData {
     unsigned int type;          // Resource type (4 byte)
-    
+
     unsigned int param1;        // Resouce parameter 1 (4 byte)
     unsigned int param2;        // Resouce parameter 2 (4 byte)
     unsigned int param3;        // Resouce parameter 3 (4 byte)
     unsigned int param4;        // Resouce parameter 4 (4 byte)
-    
+
     void *data;                 // Resource data pointer (4 byte)
 } RRESData;
 
+// RRESData type
 typedef enum { 
-    RRES_RAW = 0, 
-    RRES_IMAGE, 
-    RRES_WAVE, 
-    RRES_VERTEX, 
-    RRES_TEXT 
+    RRES_TYPE_RAW = 0, 
+    RRES_TYPE_IMAGE, 
+    RRES_TYPE_WAVE, 
+    RRES_TYPE_VERTEX, 
+    RRES_TYPE_TEXT,
+    RRES_TYPE_FONT_IMAGE,
+    RRES_TYPE_FONT_CHARDATA,    // CharInfo data array
+    RRES_TYPE_DIRECTORY
 } RRESDataType;
+
+// RRES type (pointer to RRESData array)
+typedef struct RRESData *RRES;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -652,6 +645,9 @@ RLAPI void CloseWindow(void);                                     // Close Windo
 RLAPI bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
 RLAPI bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)
 RLAPI void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
+RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
+RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
+RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
@@ -679,7 +675,7 @@ RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
-RLAPI float GetFPS(void);                                         // Returns current FPS
+RLAPI int GetFPS(void);                                           // Returns current FPS
 RLAPI float GetFrameTime(void);                                   // Returns time in seconds for one frame
 
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
@@ -691,8 +687,11 @@ RLAPI float *MatrixToFloat(Matrix mat);                           // Converts Ma
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
 RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
+RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
+//RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI void TakeScreenshot(void);                                  // Takes a screenshot and saves it in the same folder as executable
+RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
 
 RLAPI bool IsFileDropped(void);                                   // Check if a file have been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
@@ -769,12 +768,15 @@ RLAPI void DrawPixel(int posX, int posY, Color color);                          
 RLAPI void DrawPixelV(Vector2 position, Color color);                                                    // Draw a pixel (Vector version)
 RLAPI void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color);                // Draw a line
 RLAPI void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);                                     // Draw a line (Vector version)
+RLAPI void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color);                       // Draw a line defining thickness
+RLAPI void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                   // Draw a line using cubic-bezier curves in-out
 RLAPI void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
 RLAPI void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2);       // Draw a gradient-filled circle
 RLAPI void DrawCircleV(Vector2 center, float radius, Color color);                                       // Draw a color-filled circle (Vector version)
 RLAPI void DrawCircleLines(int centerX, int centerY, float radius, Color color);                         // Draw circle outline
 RLAPI void DrawRectangle(int posX, int posY, int width, int height, Color color);                        // Draw a color-filled rectangle
 RLAPI void DrawRectangleRec(Rectangle rec, Color color);                                                 // Draw a color-filled rectangle
+RLAPI void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color);                 // Draw a color-filled rectangle with pro parameters
 RLAPI void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2); // Draw a gradient-filled rectangle
 RLAPI void DrawRectangleV(Vector2 position, Vector2 size, Color color);                                  // Draw a color-filled rectangle (Vector version)
 RLAPI void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
@@ -820,7 +822,7 @@ RLAPI Image ImageText(const char *text, int fontSize, Color color);             
 RLAPI Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing, Color tint);     // Create an image from text (custom sprite font)
 RLAPI void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec);                         // Draw a source image within a destination image
 RLAPI void ImageDrawText(Image *dst, Vector2 position, const char *text, int fontSize, Color color);     // Draw text (default font) within an image (destination)
-RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text, 
+RLAPI void ImageDrawTextEx(Image *dst, Vector2 position, SpriteFont font, const char *text,
                            float fontSize, int spacing, Color color);                                    // Draw text (custom sprite font) within an image (destination)
 RLAPI void ImageFlipVertical(Image *image);                                                              // Flip image vertically
 RLAPI void ImageFlipHorizontal(Image *image);                                                            // Flip image horizontally
@@ -845,7 +847,7 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 //------------------------------------------------------------------------------------
 RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load SpriteFont from file into GPU memory (VRAM)
-RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int numChars, int *fontChars);    // Load SpriteFont from TTF font file with generation parameters
+RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load SpriteFont from TTF font file with generation parameters
 RLAPI void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory (VRAM)
 
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
@@ -876,7 +878,6 @@ RLAPI void DrawPlane(Vector3 centerPos, Vector2 size, Color color);             
 RLAPI void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 RLAPI void DrawGizmo(Vector3 position);                                                                  // Draw simple gizmo
-RLAPI void DrawLight(Light light);                                                                       // Draw light in 3D world
 //DrawTorus(), DrawTeapot() could be useful?
 
 //------------------------------------------------------------------------------------
@@ -892,21 +893,19 @@ RLAPI void UnloadMesh(Mesh *mesh);                                              
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
-RLAPI Material LoadMaterialEx(Shader shader, Texture2D diffuse, Color color);                           // Load material from basic shading data
 RLAPI Material LoadDefaultMaterial(void);                                                               // Load default material (uses default models shader)
-RLAPI Material LoadStandardMaterial(void);                                                              // Load standard material (uses material attributes and lighting shader)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
-RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, 
+RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis,
                        float rotationAngle, Vector3 scale, Color tint);                                 // Draw a model with extended parameters
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);                      // Draw a model wires (with texture if set)
-RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, 
+RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis,
                             float rotationAngle, Vector3 scale, Color tint);                            // Draw a model wires (with texture if set) with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                               // Draw bounding box (wires)
 
 RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);     // Draw a billboard texture
-RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, 
+RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec,
                             Vector3 center, float size, Color tint);                                    // Draw a billboard texture defined by sourceRec
 
 RLAPI BoundingBox CalculateBoundingBox(Mesh mesh);                                                      // Calculate mesh bounding box limits
@@ -914,7 +913,7 @@ RLAPI bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB
 RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Detect collision between two bounding boxes
 RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere);          // Detect collision between box and sphere
 RLAPI bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius);                // Detect collision between ray and sphere
-RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, 
+RLAPI bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius,
                                      Vector3 *collisionPoint);                                          // Detect collision between ray and sphere, returns collision point
 RLAPI bool CheckCollisionRayBox(Ray ray, BoundingBox box);                                              // Detect collision between ray and box
 RLAPI RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh);                                              // Get collision info between ray and mesh
@@ -930,7 +929,6 @@ RLAPI Shader LoadShader(char *vsFileName, char *fsFileName);              // Loa
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
 RLAPI Shader GetDefaultShader(void);                                      // Get default shader
-RLAPI Shader GetStandardShader(void);                                     // Get standard shader
 RLAPI Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
@@ -946,19 +944,17 @@ RLAPI void EndShaderMode(void);                                           // End
 RLAPI void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
-RLAPI Light CreateLight(int type, Vector3 position, Color diffuse);       // Create a new light, initialize it and add to pool
-RLAPI void DestroyLight(Light light);                                     // Destroy a light and take it out of the list
-
 //------------------------------------------------------------------------------------
 // VR experience Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-RLAPI void InitVrDevice(int vdDevice);            // Init VR device
-RLAPI void CloseVrDevice(void);                   // Close VR device
-RLAPI bool IsVrDeviceReady(void);                 // Detect if VR device is ready
-RLAPI bool IsVrSimulator(void);                   // Detect if VR simulator is running
-RLAPI void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
-RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
+RLAPI void InitVrSimulator(int vrDevice);           // Init VR simulator for selected device
+RLAPI void CloseVrSimulator(void);                  // Close VR simulator for current device
+RLAPI bool IsVrSimulatorReady(void);                // Detect if VR device is ready
+RLAPI void UpdateVrTracking(Camera *camera);        // Update VR tracking (position and orientation) and camera
+RLAPI void ToggleVrMode(void);                      // Enable/Disable VR experience (device or simulator)
+RLAPI void BeginVrDrawing(void);                    // Begin VR simulator stereo rendering
+RLAPI void EndVrDrawing(void);                      // End VR simulator stereo rendering
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
@@ -966,12 +962,13 @@ RLAPI void ToggleVrMode(void);                    // Enable/Disable VR experienc
 RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
 RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
+RLAPI void SetMasterVolume(float volume);                             // Set master volume (listener)
 
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file
 RLAPI Wave LoadWaveEx(void *data, int sampleCount, int sampleRate, int sampleSize, int channels); // Load wave data from raw array data
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound from file
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
-RLAPI void UpdateSound(Sound sound, const void *data, int numSamples);// Update sound buffer with new data
+RLAPI void UpdateSound(Sound sound, const void *data, int samplesCount);// Update sound buffer with new data
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
 RLAPI void PlaySound(Sound sound);                                    // Play a sound
@@ -995,13 +992,14 @@ RLAPI void ResumeMusicStream(Music music);                            // Resume 
 RLAPI bool IsMusicPlaying(Music music);                               // Check if music is playing
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
 RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
+RLAPI void SetMusicLoopCount(Music music, float count);               // Set music loop count (loop repeats)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
 RLAPI AudioStream InitAudioStream(unsigned int sampleRate,
                                   unsigned int sampleSize,
                                   unsigned int channels);             // Init audio stream (to stream raw audio pcm data)
-RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int numSamples); // Update audio stream buffers with data
+RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount); // Update audio stream buffers with data
 RLAPI void CloseAudioStream(AudioStream stream);                      // Close audio stream and free memory
 RLAPI bool IsAudioBufferProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
 RLAPI void PlayAudioStream(AudioStream stream);                       // Play audio stream

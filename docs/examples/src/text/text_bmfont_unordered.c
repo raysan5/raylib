@@ -25,7 +25,7 @@ int main()
     const char msg[256] = "ASCII extended characters:\n¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆ\nÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæ\nçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
 
     // NOTE: Loaded font has an unordered list of characters (chars in the range 32..255)
-    SpriteFont font = LoadSpriteFont("resources/fonts/pixantiqua.fnt");       // BMFont (AngelCode)
+    SpriteFont font = LoadSpriteFont("resources/pixantiqua.fnt");       // BMFont (AngelCode)
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -45,10 +45,10 @@ int main()
             ClearBackground(RAYWHITE);
 
             DrawText("Font name:       PixAntiqua", 40, 50, 20, GRAY);
-            DrawText(FormatText("Font base size:           %i", font.size), 40, 80, 20, GRAY);
-            DrawText(FormatText("Font chars number:     %i", font.numChars), 40, 110, 20, GRAY);
+            DrawText(FormatText("Font base size:           %i", font.baseSize), 40, 80, 20, GRAY);
+            DrawText(FormatText("Font chars number:     %i", font.charsCount), 40, 110, 20, GRAY);
             
-            DrawTextEx(font, msg, (Vector2){ 40, 180 }, font.size, 0, MAROON);
+            DrawTextEx(font, msg, (Vector2){ 40, 180 }, font.baseSize, 0, MAROON);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

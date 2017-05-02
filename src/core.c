@@ -81,7 +81,7 @@
 #include "raylib.h"
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
-#include "utils.h"          // Required for: fopen() Android mapping, TraceLog()
+#include "utils.h"          // Required for: fopen() Android mapping
 
 #define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
 #define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
@@ -2719,6 +2719,8 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
 // Register mouse input events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
+    /*
+    // Lock mouse pointer when click on screen
     if (eventType == EMSCRIPTEN_EVENT_CLICK)
     {
         EmscriptenPointerlockChangeEvent plce;
@@ -2732,6 +2734,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
             //if (plce.isActive) TraceLog(WARNING, "Pointer lock exit did not work!");
         }
     }
+    */
     
     return 0;
 }

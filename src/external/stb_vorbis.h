@@ -1,4 +1,4 @@
-// Ogg Vorbis audio decoder - v1.09 - public domain
+// Ogg Vorbis audio decoder - v1.10 - public domain
 // http://nothings.org/stb_vorbis/
 //
 // Original version written by Sean Barrett in 2007.
@@ -9,12 +9,7 @@
 //
 // LICENSE
 //
-//   This software is dual-licensed to the public domain and under the following
-//   license: you are granted a perpetual, irrevocable license to copy, modify,
-//   publish, and distribute this file as you see fit.
-//
-// No warranty for any purpose is expressed or implied by the author (nor
-// by RAD Game Tools). Report bugs and send enhancements to the author.
+//   See end of file for license information.
 //
 // Limitations:
 //
@@ -37,6 +32,7 @@
 //    manxorist@github   saga musix
 //
 // Partial history:
+//    1.10    - 2017/03/03 - more robust seeking; fix negative ilog(); clear error in open_memory
 //    1.09    - 2016/04/04 - back out 'truncation of last frame' fix from previous version
 //    1.08    - 2016/04/02 - warnings; setup memory leaks; truncation of last frame
 //    1.07    - 2015/01/16 - fixes for crashes on invalid files; warning fixes; const
@@ -280,7 +276,7 @@ extern int stb_vorbis_seek(stb_vorbis *f, unsigned int sample_number);
 // do not need to seek to EXACTLY the target sample when using get_samples_*,
 // you can also use seek_frame().
 
-extern void stb_vorbis_seek_start(stb_vorbis *f);
+extern int stb_vorbis_seek_start(stb_vorbis *f);
 // this function is equivalent to stb_vorbis_seek(f,0)
 
 extern unsigned int stb_vorbis_stream_length_in_samples(stb_vorbis *f);

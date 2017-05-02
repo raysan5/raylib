@@ -22,7 +22,7 @@ int screenWidth = 800;
 int screenHeight = 450;
 
 // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-Texture2D guybrush;
+Texture2D scarfy;
 
 int frameWidth;
 int frameHeight;
@@ -32,7 +32,6 @@ Rectangle destRec;
 Vector2 origin;
 
 int rotation = 0;
-
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -48,10 +47,10 @@ int main()
     //--------------------------------------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "raylib [textures] examples - texture source and destination rectangles");
     
-    guybrush = LoadTexture("resources/guybrush.png");        // Texture loading
+    scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
     
-    frameWidth = guybrush.width/7;
-    frameHeight = guybrush.height;
+    frameWidth = scarfy.width/6;
+    frameHeight = scarfy.height;
     
     // NOTE: On PLATFORM_WEB, NPOT textures support is limited
     
@@ -79,9 +78,9 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(guybrush);       // Texture unloading
+    UnloadTexture(scarfy);          // Texture unloading
      
-    CloseWindow();        // Close window and OpenGL context
+    CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
@@ -108,10 +107,12 @@ void UpdateDrawFrame(void)
         // destRec defines the rectangle where our texture part will fit (scaling it to fit)
         // origin defines the point of the texture used as reference for rotation and scaling
         // rotation defines the texture rotation (using origin as rotation point)
-        DrawTexturePro(guybrush, sourceRec, destRec, origin, rotation, WHITE);
+        DrawTexturePro(scarfy, sourceRec, destRec, origin, rotation, WHITE);
 
         DrawLine(destRec.x, 0, destRec.x, screenHeight, GRAY);
         DrawLine(0, destRec.y, screenWidth, destRec.y, GRAY);
+        
+        DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
     EndDrawing();
     //----------------------------------------------------------------------------------

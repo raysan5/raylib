@@ -4,7 +4,7 @@
 #
 #   NOTE: By default examples are compiled using raylib static library and OpenAL Soft shared library
 #
-#   Copyright (c) 2013-2016 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -23,13 +23,22 @@
 #
 #**************************************************************************************************
 
+.PHONY: all clean
+
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
 # define NO to use OpenAL Soft as static library (shared by default)
-SHARED_OPENAL ?= YES
+SHARED_OPENAL ?= NO
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    SHARED_OPENAL = NO
+endif
+
+# define raylib directory for include and library
+RAYLIB_PATH ?= C:\raylib\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -74,7 +83,7 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         CFLAGS = -O2 -s -Wall -std=c99
@@ -88,10 +97,11 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
-    # -O2                        # if used, also set --memory-init-file 0
-    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
-    #-s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
-    #-s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
+    # -O2                         # if used, also set --memory-init-file 0
+    # --memory-init-file 0        # to avoid an external memory initialization code file (.mem)
+    # -s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
+    # -s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
+    # --preload-file file.res     # embbed file.res resource into .data file
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
@@ -101,24 +111,24 @@ endif
 # define raylib release directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_PATH = ../release/win32/mingw32
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/win32/mingw32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_PATH = ../release/linux
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_PATH = ../release/osx
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/osx
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_PATH = ../release/html5
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/html5
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH = ../release/rpi
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/rpi
 endif
 
 # define any directories containing required header files
-INCLUDES = -I. -I../src -I../src/external -I$(RAYLIB_PATH)
+INCLUDES = -I. -I$(RAYLIB_RELEASE) -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external 
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
@@ -127,9 +137,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries headers
         # GLFW3
-            INCLUDES += -I../src/external/glfw3/include
+            INCLUDES += -I$(RAYLIB_PATH)/src/external/glfw3/include
         # OpenAL Soft
-            INCLUDES += -I../src/external/openal_soft/include
+            INCLUDES += -I$(RAYLIB_PATH)/src/external/openal_soft/include
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # you may optionally create this directory and install raylib 
@@ -142,7 +152,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 # define library paths containing required libs
-LFLAGS = -L. -L../src -L$(RAYLIB_PATH)
+LFLAGS = -L. -L$(RAYLIB_RELEASE) -L$(RAYLIB_PATH)/src 
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LFLAGS += -L/opt/vc/lib
@@ -152,9 +162,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries to link with
         # GLFW3
-            LFLAGS += -L../src/external/glfw3/lib/$(LIBPATH)
+            LFLAGS += -L$(RAYLIB_PATH)/src/external/glfw3/lib/$(LIBPATH)
         # OpenAL Soft
-            LFLAGS += -L../src/external/openal_soft/lib/$(LIBPATH)
+            LFLAGS += -L$(RAYLIB_PATH)/src/external/openal_soft/lib/$(LIBPATH)
     endif
 endif
 
@@ -166,7 +176,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
         LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
-        # on XWindow could require also below libraries, just uncomment
+        # on XWindow requires also below libraries
         LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
@@ -194,19 +204,20 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     LIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # just adjust the correct path to libraylib.bc
-    LIBS = ../release/html5/libraylib.bc
+    # NOTE: Set the correct path to libraylib.bc
+    LIBS = $(RAYLIB_RELEASE)/libraylib.bc
 endif
 
 # define additional parameters and flags for windows
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
-    WINFLAGS = ../src/resources -Wl,--subsystem,windows
+    WINFLAGS = $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
+    WEB_SHELL = --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
 endif
 
 # define all object files required
@@ -232,28 +243,31 @@ EXAMPLES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_colors_palette \
     shapes/shapes_logo_raylib_anim \
+    shapes/shapes_lines_bezier \
     textures/textures_logo_raylib \
     textures/textures_image_loading \
     textures/textures_rectangle \
     textures/textures_srcrec_dstrec \
     textures/textures_to_image \
     textures/textures_raw_data \
+    textures/textures_particles_blending \
     textures/textures_image_processing \
     textures/textures_image_drawing \
     text/text_sprite_fonts \
     text/text_bmfont_ttf \
-    text/text_rbmf_fonts \
+    text/text_raylib_fonts \
     text/text_format_text \
     text/text_writing_anim \
     text/text_ttf_loading \
     text/text_bmfont_unordered \
+    text/text_input_box \
     models/models_geometric_shapes \
     models/models_box_collisions \
     models/models_billboard \
     models/models_obj_loading \
     models/models_heightmap \
     models/models_cubicmap \
-    models/models_ray_picking \
+    models/models_mesh_picking \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
@@ -270,8 +284,7 @@ EXAMPLES = \
     fix_dylib \
 
 
-# typing 'make' will invoke the default target entry called 'all',
-# in this case, the 'default' target entry is raylib
+# typing 'make' will invoke the default target entry
 all: examples
 
 # generic compilation pattern
@@ -372,6 +385,10 @@ shapes/shapes_colors_palette: shapes/shapes_colors_palette.c
 # compile [shapes] example - raylib logo animation
 shapes/shapes_logo_raylib_anim: shapes/shapes_logo_raylib_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [shapes] example - lines bezier
+shapes/shapes_lines_bezier: shapes/shapes_lines_bezier.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - raylib logo texture loading
 textures/textures_logo_raylib: textures/textures_logo_raylib.c
@@ -396,6 +413,10 @@ textures/textures_to_image: textures/textures_to_image.c
 # compile [textures] example - texture raw data
 textures/textures_raw_data: textures/textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [textures] example - texture particles blending
+textures/textures_particles_blending: textures/textures_particles_blending.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [textures] example - texture image processing
 textures/textures_image_processing: textures/textures_image_processing.c
@@ -413,8 +434,8 @@ text/text_sprite_fonts: text/text_sprite_fonts.c
 text/text_bmfont_ttf: text/text_bmfont_ttf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [text] example - raylib bitmap fonts (rBMF)
-text/text_rbmf_fonts: text/text_rbmf_fonts.c
+# compile [text] example - raylib fonts
+text/text_raylib_fonts: text/text_raylib_fonts.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [text] example - text formatting
@@ -431,6 +452,10 @@ text/text_ttf_loading: text/text_ttf_loading.c
 
 # compile [text] example - text bmfont unordered
 text/text_bmfont_unordered: text/text_bmfont_unordered.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
+    
+# compile [text] example - text input box
+text/text_input_box: text/text_input_box.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [models] example - basic geometric 3d shapes
@@ -461,8 +486,8 @@ models/models_heightmap: models/models_heightmap.c
 models/models_cubicmap: models/models_cubicmap.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
-# compile [models] example - model ray picking
-models/models_ray_picking: models/models_ray_picking.c
+# compile [models] example - model mesh picking
+models/models_mesh_picking: models/models_mesh_picking.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [shaders] example - model shader
@@ -499,23 +524,23 @@ audio/audio_raw_stream: audio/audio_raw_stream.c
 
 # compile [physac] example - physics demo
 physac/physics_demo: physac/physics_demo.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics friction
 physac/physics_friction: physac/physics_friction.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics movement
 physac/physics_movement: physac/physics_movement.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics restitution
 physac/physics_restitution: physac/physics_restitution.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics shatter
 physac/physics_shatter: physac/physics_shatter.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
 
 # fix dylib install path name for each executable (MAC)
 fix_dylib:
@@ -533,7 +558,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
 		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     else
-		del *.o *.exe
+		del *.o *.exe /s
     endif
     endif
 endif

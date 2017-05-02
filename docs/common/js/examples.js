@@ -25,6 +25,7 @@ $(document).ready(function() {
         'shapes_basic_shapes',
         'shapes_colors_palette',
         'shapes_logo_raylib_anim',
+        'shapes_lines_bezier',
         'textures_logo_raylib',
         'textures_image_loading',
         'textures_rectangle',
@@ -35,18 +36,19 @@ $(document).ready(function() {
         'textures_image_drawing',
         'text_sprite_fonts',
         'text_bmfont_ttf',
-        'text_rbmf_fonts',
+        'text_raylib_fonts',
         'text_format_text',
         'text_writing_anim',
         'text_ttf_loading',
         'text_bmfont_unordered',
+        'text_input_box',
         'models_geometric_shapes',
         'models_box_collisions',
         'models_billboard',
         'models_obj_loading',
         'models_heightmap',
         'models_cubicmap',
-        'models_ray_picking',
+        'models_mesh_picking',
         'shaders_model_shader',
         'shaders_shapes_textures',
         'shaders_custom_uniform',
@@ -56,68 +58,16 @@ $(document).ready(function() {
         'audio_module_playing',
         'audio_raw_stream'];
 
-    var exampleDesc = [
-        'basic window',
-        'input keys', 
-        'input mouse',
-        'mouse wheel',
-        'input gamepad',
-        'random values',
-        'color select',
-        'drop files',
-        'storage values',
-        'gestures detection',
-        '3d mode',
-        '3d picking',
-        '3d camera free',
-        '3d camera first person',
-        '2d camera',
-        'world screen',
-        'vr simulator',
-        'logo raylib shapes',
-        'basic shapes',
-        'colors palette',
-        'logo raylib anim',
-        'logo raylib texture',
-        'image loading',
-        'texture rectangle',
-        'src-dest. rectangles',
-        'texture to image',
-        'raw data loading',
-        'image processing',
-        'image drawing',
-        'sprite fonts',
-        'bmfonts ttf',
-        'rbmf fonts',
-        'text formatting',
-        'writing animation',
-        'ttf loading',
-        'bmfont unordered',
-        'geometric shapes',
-        'box collisions',
-        'billboard drawing',
-        'obj loading',
-        'heightmap loading',
-        'cubesmap loading',
-        'mesh ray picking',
-        'model shader',
-        'shapes textures shader',
-        'custom uniform in shaders',
-        'postprocessing shaders',
-        'standard lighting',
-        'sound loading',
-        'music streaming',
-        'module playing',
-        'raw stream'];
-
     for (var i = 0; i < exampleName.length; i++)
     {
         var filterType = exampleName[i].substring(0, exampleName[i].indexOf("_"));
+        var exampleBase = exampleName[i].slice(exampleName[i].indexOf('_') + 1);
+        var exampleDesc = exampleBase.replace('_', ' ');
 
         $('#container').append(
             '<div class="mix f' + filterType + '">' +
-            '<a class="fancybox fancybox.iframe" href="examples/web/loader.html?name=' + filterType + '/' + exampleName[i] + '" title="' + exampleDesc[i] + '">' +
-            '<img width="400" height="225" src="../examples/img/' + filterType + '/' + exampleName[i] + '.png"><div class="extext"><p>' + exampleDesc[i] + '</p></div></a>' +
+            '<a class="fancybox fancybox.iframe" href="examples/web/' + filterType + '/' + 'loader.html?name=' + exampleName[i] + '" title="' + exampleDesc + '">' +
+            '<img width="400" height="225" src="../examples/web/' + filterType + '/' + exampleName[i] + '.png"><div class="extext"><p>' + exampleDesc + '</p></div></a>' +
             '</div>');
 
         $('#container a .extext').hide();

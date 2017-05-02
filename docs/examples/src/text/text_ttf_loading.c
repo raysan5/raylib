@@ -25,13 +25,13 @@ int main()
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
     
     // TTF SpriteFont loading with custom generation parameters
-    SpriteFont font = LoadSpriteFontTTF("resources/fonts/KAISG.ttf", 96, 0, 0);
+    SpriteFont font = LoadSpriteFontEx("resources/KAISG.ttf", 96, 0, 0);
     
     // Generate mipmap levels to use trilinear filtering
     // NOTE: On 2D drawing it won't be noticeable, it looks like FILTER_BILINEAR
     GenTextureMipmaps(&font.texture);
 
-    float fontSize = font.size;
+    float fontSize = font.baseSize;
     Vector2 fontPosition = { 40, screenHeight/2 + 50 };
     Vector2 textSize;
 
@@ -82,7 +82,7 @@ int main()
             if (count == 1) // Only support one ttf file dropped
             {
                 UnloadSpriteFont(font);
-                font = LoadSpriteFontTTF(droppedFiles[0], fontSize, 0, 0);
+                font = LoadSpriteFontEx(droppedFiles[0], fontSize, 0, 0);
                 ClearDroppedFiles();
             }
         }
