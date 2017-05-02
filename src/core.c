@@ -629,6 +629,15 @@ void SetWindowMonitor(int monitor)
 #endif
 }
 
+// Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
+void SetWindowMinSize(int width, int height)
+{
+#if defined(PLATFORM_DESKTOP)
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    glfwSetWindowSizeLimits(window, width, height, mode->width, mode->height);
+#endif
+}
+
 // Get current screen width
 int GetScreenWidth(void)
 {
