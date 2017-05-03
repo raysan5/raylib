@@ -189,8 +189,10 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // 
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
 RMDEF Matrix QuaternionToMatrix(Quaternion q);                        // Returns a matrix for a given quaternion
 RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns rotation quaternion for an angle and axis
-RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle); // Returns the rotation angle and axis for a given quaternion
-RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);            // Transform a quaternion given a transformation matrix
+RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle);  // Returns the rotation angle and axis for a given quaternion
+RMDEF Quaternion QuaternionFromEuler(float roll, float pitch, float yaw);           // Returns he quaternion equivalent to Euler angles
+RMDEF Vector3 QuaternionToEuler(Quaternion q);                  // Return the Euler angles equivalent to quaternion (roll, pitch, yaw)
+RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);      // Transform a quaternion given a transformation matrix
 
 #endif  // notdef RAYMATH_EXTERN_INLINE
 
@@ -1178,6 +1180,50 @@ RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
 
     *outAxis = resAxis;
     *outAngle = resAngle;
+}
+
+// Returns he quaternion equivalent to Euler angles
+RMDEF Quaternion QuaternionFromEuler(float roll, float pitch, float yaw)
+{
+	Quaternion q = { 0 };
+
+	float x0 = cosf(roll*0.5f);
+	float x1 = sinf(roll*0.5f);
+	float y0 = cosf(pitch*0.5f);
+	float y1 = sinf(pitch*0.5f);
+	float z0 = cosf(yaw*0.5f);
+	float z1 = sinf(yaw*0.5f);
+
+	q.x = x1*y0*z0 - x0*y1*z1;
+	q.y = x0*y1*z0 + x1*y0*z1;
+	q.z = x0*y0*z1 - x1*y1*z0;
+	q.w = x0*y0*z0 + x1*y1*z1;
+    
+	return q;
+}
+
+// Return the Euler angles equivalent to quaternion (roll, pitch, yaw)
+RMDEF Vector3 QuaternionToEuler(Quaternion q)
+{
+    Vector3 v = { 0 };
+
+	// roll (x-axis rotation)
+	float x0 = 2.0f*(q.w*q.x + q.y*q.z);
+	float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
+	v.x = atan2f(x0, x1);
+
+	// pitch (y-axis rotation)
+	float y0 = 2.0f*(q.w*q.y - q.z*q.x);
+	y0 = y0 > 1.0f ? 1.0f : y0;
+	y0 = y0 < -1.0f ? -1.0f : y0;
+	v.y = asinf(y0);
+
+	// yaw (z-axis rotation)
+	float z0 = 2.0f*(q.w*q.z + q.x*q.y);
+	float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);  
+	v.z = atan2f(z0, z1);
+    
+    return v;
 }
 
 // Transform a quaternion given a transformation matrix
