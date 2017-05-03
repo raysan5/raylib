@@ -98,7 +98,7 @@
      defined(SUPPORT_FILEFORMAT_JPG) || defined(SUPPORT_FILEFORMAT_PSD) || defined(SUPPORT_FILEFORMAT_GIF) || \
      defined(SUPPORT_FILEFORMAT_HDR))
     #define STB_IMAGE_IMPLEMENTATION
-    #include "external/stb_image.h"     // Required for: stbi_load()
+    #include "external/stb_image.h"     // Required for: stbi_load_from_file()
                                         // NOTE: Used to read image data (multiple formats support)
 #endif
                                 
