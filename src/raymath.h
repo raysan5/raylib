@@ -1203,6 +1203,7 @@ RMDEF Quaternion QuaternionFromEuler(float roll, float pitch, float yaw)
 }
 
 // Return the Euler angles equivalent to quaternion (roll, pitch, yaw)
+// NOTE: Angles are returned in a Vector3 struct and in degrees
 RMDEF Vector3 QuaternionToEuler(Quaternion q)
 {
     Vector3 v = { 0 };
@@ -1210,18 +1211,18 @@ RMDEF Vector3 QuaternionToEuler(Quaternion q)
 	// roll (x-axis rotation)
 	float x0 = 2.0f*(q.w*q.x + q.y*q.z);
 	float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
-	v.x = atan2f(x0, x1);
+	v.x = atan2f(x0, x1)*RAD2DEG;
 
 	// pitch (y-axis rotation)
 	float y0 = 2.0f*(q.w*q.y - q.z*q.x);
 	y0 = y0 > 1.0f ? 1.0f : y0;
 	y0 = y0 < -1.0f ? -1.0f : y0;
-	v.y = asinf(y0);
+	v.y = asinf(y0)*RAD2DEG;
 
 	// yaw (z-axis rotation)
 	float z0 = 2.0f*(q.w*q.z + q.x*q.y);
 	float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);  
-	v.z = atan2f(z0, z1);
+	v.z = atan2f(z0, z1)*RAD2DEG;
     
     return v;
 }
