@@ -47,12 +47,16 @@ PLATFORM ?= PLATFORM_DESKTOP
 # define YES if you want shared/dynamic version of library instead of static (default)
 SHARED ?= NO
 
-# define NO to use OpenAL Soft as static library (or shared by default)
+# use OpenAL Soft as shared library (.so / .dll)
+# NOTE: If defined NO, static OpenAL Soft library should be provided
 SHARED_OPENAL ?= NO
 
 # on PLATFORM_WEB force OpenAL Soft shared library
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    SHARED_OPENAL ?= YES
+    SHARED_OPENAL = YES
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    SHARED_OPENAL = YES
 endif
 
 # determine if the file has root access (only for installing raylib)
@@ -76,6 +80,17 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
         endif
     endif
+endif
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # Emscripten required variables
+    EMSDK_PATH = C:/emsdk
+    EMSCRIPTEN_VERSION = 1.37.9
+    CLANG_VERSION=e1.37.9_64bit
+    PYTHON_VERSION=2.7.5.3_64bit
+    NODE_VERSION=4.1.1_64bit
+    export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
+    EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -179,31 +194,16 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
-endif
+#  -D_DEFAULT_SOURCE    use with -std=c99
+CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
+    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
     # -O2                        # if used, also set --memory-init-file 0
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    CFLAGS = -O1 -Wall -std=c99 -fgnu89-inline -Wno-missing-braces
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -376,6 +376,7 @@ external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 # compile utils module
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
+
 
 # It installs generated and needed files to compile projects using raylib.
 # The installation works manually.
