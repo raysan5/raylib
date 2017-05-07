@@ -1,10 +1,19 @@
 #******************************************************************************
 #
-#  raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
+#  raylib makefile
 #
-#  Many Thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
+#  Platforms supported: 
+#    PLATFORM_DESKTOP:  Windows (win32/Win64)
+#    PLATFORM_DESKTOP:  Linux
+#    PLATFORM_DESKTOP:  OSX (Mac)
+#    PLATFORM_ANDROID:  Android (ARM or ARM64)
+#    PLATFORM_RPI:      Raspberry Pi (Raspbian)
+#    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #
-#  Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+#  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
+#  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
+#
+#  Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 #
 #  This software is provided "as-is", without any express or implied warranty.
 #  In no event will the authors be held liable for any damages arising from
@@ -29,7 +38,7 @@
 # Please read the wiki to know how to compile raylib, because there are
 # different methods.
 
-.PHONY: all clean install unistall
+.PHONY: all clean install uninstall
 
 # define raylib platform to compile for
 # possible platforms: PLATFORM_DESKTOP PLATFORM_ANDROID PLATFORM_RPI PLATFORM_WEB
@@ -70,47 +79,55 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # path to Android NDK
+    # Android NDK path
+    # NOTE: Required for standalone toolchain generation
     ANDROID_NDK = $(ANDROID_NDK_HOME)
+    
+    # Android standalone toolchain path
+    # NOTE: This path is also used if toolchain generation
+    #ANDROID_TOOLCHAIN = $(CURDIR)/toolchain
+    ANDROID_TOOLCHAIN = C:/raylib/android-standalone-toolchain
 
-    # possible Android architectures: ARM ARM64
+    # Android architecture: ARM or ARM64
     ANDROID_ARCH ?= ARM
 
-    # define YES to use clang instead of gcc
+    # Android compiler: gcc or clang 
+    # NOTE: Define YES to use clang instead of gcc
     ANDROID_LLVM ?= NO
-
-    # standalone Android toolchain install dir
-    ANDROID_TOOLCHAIN = $(CURDIR)/toolchain
 endif
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
+    # RPI cross-compiler
     CROSS_COMPILE ?= NO
 endif
 
 # define raylib graphics api depending on selected platform
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    GRAPHICS = GRAPHICS_API_OPENGL_ES2
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # define raylib graphics api to use (on RPI, OpenGL ES 2.0 must be used)
-    GRAPHICS = GRAPHICS_API_OPENGL_ES2
-else
-    # define raylib graphics api to use (OpenGL 3.3 by default)
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # by default use OpenGL 3.3 on desktop platforms
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
     #GRAPHICS = GRAPHICS_API_OPENGL_11  # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21  # Uncomment to use OpenGL 2.1
 endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    # on RPI OpenGL ES 2.0 must be used
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
+    # on HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
+    GRAPHICS = GRAPHICS_API_OPENGL_ES2
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    # by default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
 # NOTE: makefiles targets require tab indentation
-
-# define compiler: gcc for C program, define as g++ for C++
+# NOTE: define compiler: gcc for C program, define as g++ for C++
 
 # default gcc compiler
 CC = gcc
 
+# Android toolchain compiler
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM)
         ifeq ($(ANDROID_LLVM),YES)
@@ -128,6 +145,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
+# RPI cross-compiler
 ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(CROSS_COMPILE),YES)
     	# rpi compiler
@@ -135,13 +153,15 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
+# HTML5 emscripten compiler
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # emscripten compiler
     CC = emcc
 endif
 
+# default archiver program to pack libraries
 AR = ar
 
+# Android archiver
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM)
         AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
@@ -171,6 +191,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
     # -O2                        # if used, also set --memory-init-file 0
@@ -179,8 +202,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
 endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O1 -Wall -std=gnu99 -fgnu89-inline -Wno-missing-braces
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    CFLAGS = -O1 -Wall -std=c99 -fgnu89-inline -Wno-missing-braces
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -205,32 +228,32 @@ endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
+# external required libraries (stb and others)
+INCLUDES = -I. -Iexternal
+# OpenAL Soft library
+INCLUDES += -Iexternal/openal_soft/include
+
 # define any directories containing required header files
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-# STB libraries and others
-    INCLUDES = -I. -Iexternal
-# OpenAL Soft library
-    INCLUDES += -Iexternal/openal_soft/include
-# Android includes
-    INCLUDES += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
-    INCLUDES += -I$(ANDROID_NDK)/sources/android/native_app_glue
-else
-# STB libraries and others
-    INCLUDES = -I. -Iexternal
-# GLFW3 library
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # GLFW3 library
     INCLUDES += -Iexternal/glfw3/include
-# OpenAL Soft library
-    INCLUDES += -Iexternal/openal_soft/include
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-# STB libraries and others
-    INCLUDES = -I. -Iexternal
-# RPi libraries
+    # RPI requried libraries
     INCLUDES += -I/opt/vc/include
     INCLUDES += -I/opt/vc/include/interface/vmcs_host/linux
     INCLUDES += -I/opt/vc/include/interface/vcos/pthreads
-# OpenAL Soft library
-    INCLUDES += -Iexternal/openal_soft/include
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    # GLFW3 library
+    INCLUDES += -Iexternal/glfw3/include
+endif
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    # Android required libraries
+    INCLUDES += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
+    # Include android_native_app_glue.h
+    INCLUDES += -Iandroid/jni/include
+    #INCLUDES += -I$(ANDROID_NDK)/sources/android/native_app_glue
 endif
 
 # define output directory for compiled library
@@ -245,6 +268,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         OUTPUT_PATH = ../release/osx
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    OUTPUT_PATH = ../release/rpi
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    OUTPUT_PATH = ../release/html5
+endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM)
         OUTPUT_PATH = ../release/android/armeabi-v7a
@@ -252,12 +281,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM64)
         OUTPUT_PATH = ../release/android/arm64-v8a
     endif
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    OUTPUT_PATH = ../release/html5
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    OUTPUT_PATH = ../release/rpi
 endif
 
 # define all object files required with a wildcard
@@ -268,9 +291,10 @@ OBJS += external/stb_vorbis.o
 
 # typing 'make' will invoke the default target entry called 'all',
 # in this case, the 'default' target entry is raylib
-all: toolchain raylib
+all: raylib
 
-# make standalone Android toolchain
+# generate standalone Android toolchain
+# NOTE: Android toolchain could already be provided
 toolchain:
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM)
@@ -379,7 +403,7 @@ endif
 
 # it removes raylib dev files installed on the system.
 # TODO: see 'install' target.
-unistall :
+uninstall :
 ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
 			rm --force /usr/local/include/raylib.h
