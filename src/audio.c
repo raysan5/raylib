@@ -810,7 +810,8 @@ void StopMusicStream(Music music)
 
     for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
     {
-        alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
+        UpdateAudioStream(music->stream, pcm, AUDIO_BUFFER_SIZE);
+        //alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
     }
 
     free(pcm);
@@ -853,7 +854,7 @@ void UpdateMusicStream(Music music)
 
         int numBuffersToProcess = processed;
         int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, 
-                                 //individual L or R for ogg shorts
+                                 // individual L or R for ogg shorts
 
         for (int i = 0; i < numBuffersToProcess; i++)
         {
