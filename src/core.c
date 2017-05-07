@@ -5,11 +5,10 @@
 *   PLATFORMS SUPPORTED: 
 *       - Windows (win32/Win64)
 *       - Linux (tested on Ubuntu)
-*       - Mac (OSX)
-*       - Android (API Level 9 or greater) 
+*       - OSX (Mac)
+*       - Android (ARM or ARM64) 
 *       - Raspberry Pi (Raspbian)
 *       - HTML5 (Chrome, Firefox)
-*       - Oculus Rift CV1
 *
 *   CONFIGURATION:
 *
