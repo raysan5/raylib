@@ -118,7 +118,7 @@
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
 
-    #ifdef(__linux__)
+    #if defined(__linux__)
         #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
         #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
@@ -668,7 +668,7 @@ int GetScreenHeight(void)
 void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux__
+    #if defined(__linux__)
         XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
     #else
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -681,7 +681,7 @@ void ShowCursor()
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux__
+    #if defined(__linux__)
         XColor col;
         const char nil[] = {0};
 
@@ -1679,7 +1679,7 @@ static void InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Other values: GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
-#ifdef __APPLE__
+#if defined(__APPLE__)
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);  // OSX Requires
 #else
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
@@ -1964,7 +1964,7 @@ static void InitGraphicsDevice(int width, int height)
 // Set viewport parameters
 static void SetupViewport(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__)
     // Get framebuffer size of current window
     // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
     // is automatically reasized to adapt to new DPI.
@@ -3279,7 +3279,7 @@ static void *GamepadThread(void *arg)
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)
 {
-#ifndef PLATFORM_WEB
+#if !defined(PLATFORM_WEB)
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
 

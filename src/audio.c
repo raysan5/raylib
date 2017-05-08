@@ -79,7 +79,7 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
     #include "OpenAL/al.h"          // OpenAL basic header
     #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
 #else
@@ -1326,7 +1326,7 @@ void TraceLog(int msgType, const char *text, ...)
     va_list args;
     int traceDebugMsgs = 0;
 
-#ifdef DO_NOT_TRACE_DEBUG_MSGS
+#if defined(DO_NOT_TRACE_DEBUG_MSGS)
     traceDebugMsgs = 0;
 #endif
 

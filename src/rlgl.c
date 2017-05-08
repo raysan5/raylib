@@ -67,12 +67,12 @@
 #include <string.h>                 // Required for: strcmp(), strlen(), strtok() [Used only in extensions loading]
 #include <math.h>                   // Required for: atan2()
 
-#ifndef RLGL_STANDALONE
+#if !defined(RLGL_STANDALONE)
     #include "raymath.h"            // Required for: Vector3 and Matrix functions
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #ifdef __APPLE__
+    #if defined(__APPLE__)
         #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
     #else
         #include <GL/gl.h>          // OpenGL 1.1 library
@@ -84,7 +84,7 @@
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #ifdef __APPLE__
+    #if defined(__APPLE__)
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
     #define GLAD_IMPLEMENTATION
@@ -1286,21 +1286,17 @@ void rlglLoadExtensions(void *loader)
 {
 #if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
-    #ifndef __APPLE__
+    #if !defined(__APPLE__)
         if (!gladLoadGLLoader((GLADloadproc)loader)) TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
         else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
-    #endif
 
-#if defined(GRAPHICS_API_OPENGL_21)
-    #ifndef __APPLE__
+        #if defined(GRAPHICS_API_OPENGL_21)
         if (GLAD_GL_VERSION_2_1) TraceLog(INFO, "OpenGL 2.1 profile supported");
-    #endif
-#elif defined(GRAPHICS_API_OPENGL_33)
-    #ifndef __APPLE__
+        #elif defined(GRAPHICS_API_OPENGL_33)
         if(GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
         else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+        #endif
     #endif
-#endif
 
     // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
     //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object

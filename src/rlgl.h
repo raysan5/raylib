@@ -59,12 +59,10 @@
 #ifndef RLGL_H
 #define RLGL_H
 
-#ifndef RLGL_STANDALONE
-    #include "raylib.h"         // Required for: Model, Shader, Texture2D, TraceLog()
-#endif
-
-#ifdef RLGL_STANDALONE
+#if defined(RLGL_STANDALONE)
     #define RAYMATH_STANDALONE
+#else
+    #include "raylib.h"         // Required for: Model, Shader, Texture2D, TraceLog()
 #endif
 
 #include "raymath.h"            // Required for: Vector3, Matrix
