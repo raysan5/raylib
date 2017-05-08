@@ -181,7 +181,14 @@ void SetCameraMoveControls(int frontKey, int backKey,
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Camera move modes (first person and third person cameras)
-typedef enum { MOVE_FRONT = 0, MOVE_BACK, MOVE_RIGHT, MOVE_LEFT, MOVE_UP, MOVE_DOWN } CameraMove;
+typedef enum { 
+    MOVE_FRONT = 0, 
+    MOVE_BACK, 
+    MOVE_RIGHT, 
+    MOVE_LEFT, 
+    MOVE_UP, 
+    MOVE_DOWN 
+} CameraMove;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -241,7 +248,7 @@ void SetCameraMode(Camera camera, int mode)
     cameraAngle.y = -asinf(fabsf(dy)/distance.y); // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     // NOTE: Just testing what cameraAngle means
-    //cameraAngle.x = 0.0f*DEG2RAD;      // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
+    //cameraAngle.x = 0.0f*DEG2RAD;       // Camera angle in plane XZ (0 aligned with Z, move positive CCW)
     //cameraAngle.y = -60.0f*DEG2RAD;     // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     playerEyesPosition = camera.position.y;
@@ -257,7 +264,7 @@ void SetCameraMode(Camera camera, int mode)
 // Update camera depending on selected mode
 // NOTE: Camera controls depend on some raylib functions:
 //       System: EnableCursor(), DisableCursor()
-//       Mouse: GetMousePosition(), SetMousePosition(), IsMouseButtonDown(), GetMouseWheelMove()
+//       Mouse: IsMouseButtonDown(), GetMousePosition(), GetMouseWheelMove()
 //       Keys:  IsKeyDown()
 // TODO: Port to quaternion-based camera
 void UpdateCamera(Camera *camera)
