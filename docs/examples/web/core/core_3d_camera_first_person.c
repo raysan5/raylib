@@ -88,6 +88,9 @@ void UpdateDrawFrame(void)
     // Update
     //----------------------------------------------------------------------------------
     UpdateCamera(&camera);          // Update camera and player position
+    
+    // Lock mouse cursor if mouse click on canvas
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) DisableCursor();
     //----------------------------------------------------------------------------------
 
     // Draw
