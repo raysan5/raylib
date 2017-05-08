@@ -203,15 +203,14 @@ static int cameraMode = CAMERA_CUSTOM;                // Current camera mode
 #if defined(CAMERA_STANDALONE)
 // NOTE: Camera controls depend on some raylib input functions
 // TODO: Set your own input functions (used in UpdateCamera())
-static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
-static void SetMousePosition(Vector2 pos) {} 
+static void EnableCursor() {}       // Unlock cursor
+static void DisableCursor() {}      // Lock cursor
+
+static int IsKeyDown(int key) { return 0; }
+
 static int IsMouseButtonDown(int button) { return 0;}
 static int GetMouseWheelMove() { return 0; }
-static int GetScreenWidth() { return 1280; }
-static int GetScreenHeight() { return 720; }
-static void ShowCursor() {}
-static void HideCursor() {}
-static int IsKeyDown(int key) { return 0; }
+static Vector2 GetMousePosition() { return (Vector2){ 0.0f, 0.0f }; }
 #endif
 
 //----------------------------------------------------------------------------------
@@ -246,14 +245,19 @@ void SetCameraMode(Camera camera, int mode)
     //cameraAngle.y = -60.0f*DEG2RAD;     // Camera angle in plane XY (0 aligned with X, move positive CW)
     
     playerEyesPosition = camera.position.y;
+    
+    // Lock cursor for first person and third person cameras
+    if ((mode == CAMERA_FIRST_PERSON) || 
+        (mode == CAMERA_THIRD_PERSON)) DisableCursor();
+    else EnableCursor(); 
 
     cameraMode = mode;
 }
 
 // Update camera depending on selected mode
 // NOTE: Camera controls depend on some raylib functions:
+//       System: EnableCursor(), DisableCursor()
 //       Mouse: GetMousePosition(), SetMousePosition(), IsMouseButtonDown(), GetMouseWheelMove()
-//       System: GetScreenWidth(), GetScreenHeight(), ShowCursor(), HideCursor()
 //       Keys:  IsKeyDown()
 // TODO: Port to quaternion-based camera
 void UpdateCamera(Camera *camera)
@@ -284,36 +288,10 @@ void UpdateCamera(Camera *camera)
 
     if (cameraMode != CAMERA_CUSTOM)
     {
-        // Get screen size
-        int screenWidth = GetScreenWidth();
-        int screenHeight = GetScreenHeight();
-        
-        if ((cameraMode == CAMERA_FIRST_PERSON) || 
-            (cameraMode == CAMERA_THIRD_PERSON))
-        {
-            HideCursor();
+        mousePositionDelta.x = mousePosition.x - previousMousePosition.x;
+        mousePositionDelta.y = mousePosition.y - previousMousePosition.y;
 
-            if (mousePosition.x < (float)screenHeight/3.0f) SetMousePosition((Vector2){ screenWidth - screenHeight/3, mousePosition.y });
-            else if (mousePosition.y < (float)screenHeight/3.0f) SetMousePosition((Vector2){ mousePosition.x, screenHeight - screenHeight/3 });
-            else if (mousePosition.x > (screenWidth - (float)screenHeight/3.0f)) SetMousePosition((Vector2){ screenHeight/3, mousePosition.y });
-            else if (mousePosition.y > (screenHeight - (float)screenHeight/3.0f)) SetMousePosition((Vector2){ mousePosition.x, screenHeight/3 });
-            else
-            {
-                mousePositionDelta.x = mousePosition.x - previousMousePosition.x;
-                mousePositionDelta.y = mousePosition.y - previousMousePosition.y;
-            }
-        }
-        else    // CAMERA_FREE, CAMERA_ORBITAL
-        {
-            ShowCursor();
-
-            mousePositionDelta.x = mousePosition.x - previousMousePosition.x;
-            mousePositionDelta.y = mousePosition.y - previousMousePosition.y;
-        }
-
-        // NOTE: We GetMousePosition() again because it can be modified by a previous SetMousePosition() call
-        // If using directly mousePosition variable we have problems on CAMERA_FIRST_PERSON and CAMERA_THIRD_PERSON
-        previousMousePosition = GetMousePosition();
+        previousMousePosition = mousePosition;
     }
 
     // Support for multiple automatic camera modes

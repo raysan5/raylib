@@ -286,6 +286,10 @@ static int gamepadAxisCount = 0;            // Register number of available game
 
 static Vector2 mousePosition;               // Mouse position on screen
 
+#if defined(PLATFORM_WEB)
+static bool toggleCursorLock = false;       // Ask for cursor pointer lock on next click
+#endif
+
 #if defined(SUPPORT_GESTURES_SYSTEM)
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
 #endif
@@ -709,6 +713,9 @@ void EnableCursor()
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
+#if defined(PLATFORM_WEB)
+    toggleCursorLock = true;
+#endif
     cursorHidden = false;
 }
 
@@ -717,6 +724,9 @@ void DisableCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+#if defined(PLATFORM_WEB)
+    toggleCursorLock = true;
 #endif
     cursorHidden = true;
 }
@@ -1821,12 +1831,13 @@ static void InitGraphicsDevice(int width, int height)
 
     const EGLint framebufferAttribs[] =
     {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    // Type of context support -> Required on RPI?
-        //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,         // Don't use it on Android!
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,     // Type of context support -> Required on RPI?
+        //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth
+        //EGL_TRANSPARENT_TYPE, EGL_TRANSPARENT_RGB, // Request transparent framebuffer
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
         EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
@@ -2744,9 +2755,8 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
 // Register mouse input events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
-    /*
     // Lock mouse pointer when click on screen
-    if (eventType == EMSCRIPTEN_EVENT_CLICK)
+    if ((eventType == EMSCRIPTEN_EVENT_CLICK) && toggleCursorLock)
     {
         EmscriptenPointerlockChangeEvent plce;
         emscripten_get_pointerlock_status(&plce);
@@ -2758,8 +2768,9 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
             emscripten_get_pointerlock_status(&plce);
             //if (plce.isActive) TraceLog(WARNING, "Pointer lock exit did not work!");
         }
+        
+        toggleCursorLock = false;
     }
-    */
     
     return 0;
 }
