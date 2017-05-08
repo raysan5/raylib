@@ -41,6 +41,9 @@
 *   #define SUPPORT_MOUSE_GESTURES
 *       Mouse gestures are directly mapped like touches and processed by gestures system.
 *
+*   #define SUPPORT_BUSY_WAIT_LOOP
+*       Use busy wait loop for timming sync, if not defined, a high-resolution timer is setup and used
+*
 *   DEPENDENCIES:
 *       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
 *       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
@@ -75,6 +78,7 @@
 #define SUPPORT_MOUSE_GESTURES
 #define SUPPORT_CAMERA_SYSTEM
 #define SUPPORT_GESTURES_SYSTEM
+#define SUPPORT_BUSY_WAIT_LOOP
 //-------------------------------------------------
 
 #include "raylib.h"
@@ -104,9 +108,9 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#if defined __linux__ || defined(PLATFORM_WEB)
+#if defined(__linux__) || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
-#elif defined __APPLE__
+#elif defined(__APPLE__)
     #include <unistd.h>             // Required for: usleep()
 #endif
 
@@ -114,13 +118,19 @@
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
 
-    #ifdef __linux__
+    #ifdef(__linux__)
         #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
         #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
     #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
+    
+    #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+    // NOTE: Those functions require linking with winmm library
+    __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
+    __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
+    #endif
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -504,6 +514,10 @@ void CloseWindow(void)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwDestroyWindow(window);
     glfwTerminate();
+#endif
+
+#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+    timeEndPeriod(1);           // Restore time period
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -2042,6 +2056,10 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
 static void InitTimer(void)
 {
     srand(time(NULL));              // Initialize random seed
+    
+#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+    timeBeginPeriod(1);             // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
+#endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     struct timespec now;
@@ -2078,7 +2096,6 @@ static double GetTime(void)
 // http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 static void Wait(float ms)
 {
-#define SUPPORT_BUSY_WAIT_LOOP
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
@@ -2086,9 +2103,9 @@ static void Wait(float ms)
     // Busy wait loop
     while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
 #else
-    #if defined _WIN32
+    #if defined(_WIN32)
         Sleep((unsigned int)ms);
-    #elif defined __linux__ || defined(PLATFORM_WEB)
+    #elif defined(__linux__) || defined(PLATFORM_WEB)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);
@@ -2097,7 +2114,7 @@ static void Wait(float ms)
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
         while (nanosleep(&req, &req) == -1) continue;
-    #elif defined __APPLE__
+    #elif defined(__APPLE__)
         usleep(ms*1000.0f);
     #endif
 #endif
