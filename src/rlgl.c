@@ -317,7 +317,8 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
-static bool npotSupported = false;          // NPOT textures full support
+static bool texNPOTSupported = false;          // NPOT textures full support
+static bool texFloatSupported = false;      // float textures support (32 bit per channel)
 
 static int blendMode = 0;   // Track current blending mode
 
@@ -1050,7 +1051,7 @@ void rlglInit(int width, int height)
 
     // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
     vaoSupported = true;
-    npotSupported = true;
+    texNPOTSupported = true;
 
     // We get a list of available extensions and we check for some of them (compressed textures)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
@@ -1119,7 +1120,10 @@ void rlglInit(int width, int height)
 
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
-        if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) npotSupported = true;
+        if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) texNPOTSupported = true;
+        
+        // Check texture float support
+        if (strcmp(extList[i], (const char *)"OES_texture_float") == 0) texFloatSupported = true;
 #endif
 
         // DDS texture compression support
@@ -1159,7 +1163,7 @@ void rlglInit(int width, int height)
     if (vaoSupported) TraceLog(INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
     else TraceLog(WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
 
-    if (npotSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
+    if (texNPOTSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
     else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
 #endif
 
@@ -1421,6 +1425,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int format, int 
         case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R32G32B32: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;
         case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;
@@ -1446,6 +1451,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int format, int 
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
 #if defined(GRAPHICS_API_OPENGL_ES2)
+        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;  // Requries extension OES_texture_float
         case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;     // NOTE: Not supported by WebGL
@@ -1466,7 +1472,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int format, int 
     // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so CLAMP_TO_EDGE must be used
-    if (npotSupported)
+    if (texNPOTSupported)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repeat on x-axis
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repeat on y-axis
@@ -1646,7 +1652,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
     if (((texture->width > 0) && ((texture->width & (texture->width - 1)) == 0)) &&
         ((texture->height > 0) && ((texture->height & (texture->height - 1)) == 0))) texIsPOT = true;
 
-    if ((texIsPOT) || (npotSupported))
+    if ((texIsPOT) || (texNPOTSupported))
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps

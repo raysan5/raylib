@@ -53,6 +53,7 @@
 // Default configuration flags (supported features)
 //-------------------------------------------------
 #define SUPPORT_FILEFORMAT_PNG
+#define SUPPORT_FILEFORMAT_HDR
 #define SUPPORT_IMAGE_MANIPULATION
 //-------------------------------------------------
 
@@ -205,6 +206,25 @@ Image LoadImage(const char *fileName)
         else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
         else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
     }
+#if defined(SUPPORT_FILEFORMAT_HDR)
+    else if (IsFileExtension(fileName, ".hdr"))
+    {
+        int imgBpp = 0;
+        
+        FILE *imFile = fopen(fileName, "rb");
+
+        // Load 32 bit per channel floats data 
+        image.data = stbi_loadf(imFile, &image.width, &image.height, &imgBpp, 0);
+        
+        if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+        else 
+        {
+            // TODO: Support different number of channels at 32 bit float
+            TraceLog(WARNING, "[%s] Image fileformat not supported (only 3 channel 32 bit floats)", fileName);
+            UnloadImage(image);
+        }
+    }
+#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
     else if (IsFileExtension(fileName, ".dds")) image = LoadDDS(fileName);
 #endif
@@ -298,6 +318,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             case UNCOMPRESSED_R5G5B5A1: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (1 bit alpha)
             case UNCOMPRESSED_R4G4B4A4: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (4 bit alpha)
             case UNCOMPRESSED_R8G8B8A8: image.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
+            case UNCOMPRESSED_R32G32B32: image.data = (float *)malloc(size*12); size *= 12; break;        // 4 byte per channel (12 byte)
             default: TraceLog(WARNING, "Image format not suported"); break;
         }
 
@@ -762,6 +783,7 @@ Image ImageCopy(Image image)
         case UNCOMPRESSED_R4G4B4A4: byteSize *= 2; break;   // 16 bpp (2 bytes)
         case UNCOMPRESSED_R8G8B8: byteSize *= 3; break;     // 24 bpp (3 bytes)
         case UNCOMPRESSED_R8G8B8A8: byteSize *= 4; break;   // 32 bpp (4 bytes)
+        case UNCOMPRESSED_R32G32B32: byteSize *= 12; break; // 4 byte per channel (12 bytes)
         case COMPRESSED_DXT3_RGBA:
         case COMPRESSED_DXT5_RGBA:
         case COMPRESSED_ETC2_EAC_RGBA:
