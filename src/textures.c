@@ -212,9 +212,13 @@ Image LoadImage(const char *fileName)
         int imgBpp = 0;
         
         FILE *imFile = fopen(fileName, "rb");
-
+        
         // Load 32 bit per channel floats data 
-        image.data = stbi_loadf(imFile, &image.width, &image.height, &imgBpp, 0);
+        image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
+
+        fclose(imFile);
+        
+        image.mipmaps = 1;
         
         if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
         else 
