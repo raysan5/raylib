@@ -5,11 +5,10 @@
 *   PLATFORMS SUPPORTED: 
 *       - Windows (win32/Win64)
 *       - Linux (tested on Ubuntu)
-*       - Mac (OSX)
-*       - Android (API Level 9 or greater) 
+*       - OSX (Mac)
+*       - Android (ARM or ARM64) 
 *       - Raspberry Pi (Raspbian)
 *       - HTML5 (Chrome, Firefox)
-*       - Oculus Rift CV1
 *
 *   CONFIGURATION:
 *
@@ -41,6 +40,9 @@
 *
 *   #define SUPPORT_MOUSE_GESTURES
 *       Mouse gestures are directly mapped like touches and processed by gestures system.
+*
+*   #define SUPPORT_BUSY_WAIT_LOOP
+*       Use busy wait loop for timming sync, if not defined, a high-resolution timer is setup and used
 *
 *   DEPENDENCIES:
 *       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
@@ -76,6 +78,7 @@
 #define SUPPORT_MOUSE_GESTURES
 #define SUPPORT_CAMERA_SYSTEM
 #define SUPPORT_GESTURES_SYSTEM
+#define SUPPORT_BUSY_WAIT_LOOP
 //-------------------------------------------------
 
 #include "raylib.h"
@@ -105,9 +108,9 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#if defined __linux__ || defined(PLATFORM_WEB)
+#if defined(__linux__) || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
-#elif defined __APPLE__
+#elif defined(__APPLE__)
     #include <unistd.h>             // Required for: usleep()
 #endif
 
@@ -115,13 +118,19 @@
     //#define GLFW_INCLUDE_NONE     // Disable the standard OpenGL header inclusion on GLFW3
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
 
-    #ifdef __linux__
+    #if defined(__linux__)
         #define GLFW_EXPOSE_NATIVE_X11   // Linux specific definitions for getting
         #define GLFW_EXPOSE_NATIVE_GLX   // native functions like glfwGetX11Window
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
     #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
+    
+    #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+    // NOTE: Those functions require linking with winmm library
+    __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
+    __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
+    #endif
 #endif
 
 #if defined(PLATFORM_ANDROID)
@@ -276,6 +285,10 @@ static int lastGamepadButtonPressed = -1;   // Register last gamepad button pres
 static int gamepadAxisCount = 0;            // Register number of available gamepad axis
 
 static Vector2 mousePosition;               // Mouse position on screen
+
+#if defined(PLATFORM_WEB)
+static bool toggleCursorLock = false;       // Ask for cursor pointer lock on next click
+#endif
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
@@ -507,6 +520,10 @@ void CloseWindow(void)
     glfwTerminate();
 #endif
 
+#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+    timeEndPeriod(1);           // Restore time period
+#endif
+
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     // Close surface, context and display
     if (display != EGL_NO_DISPLAY)
@@ -629,6 +646,15 @@ void SetWindowMonitor(int monitor)
 #endif
 }
 
+// Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
+void SetWindowMinSize(int width, int height)
+{
+#if defined(PLATFORM_DESKTOP)
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    glfwSetWindowSizeLimits(window, width, height, mode->width, mode->height);
+#endif
+}
+
 // Get current screen width
 int GetScreenWidth(void)
 {
@@ -646,7 +672,7 @@ int GetScreenHeight(void)
 void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux__
+    #if defined(__linux__)
         XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
     #else
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -659,7 +685,7 @@ void ShowCursor()
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #ifdef __linux__
+    #if defined(__linux__)
         XColor col;
         const char nil[] = {0};
 
@@ -687,6 +713,9 @@ void EnableCursor()
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
+#if defined(PLATFORM_WEB)
+    toggleCursorLock = true;
+#endif
     cursorHidden = false;
 }
 
@@ -695,6 +724,9 @@ void DisableCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
+#if defined(PLATFORM_WEB)
+    toggleCursorLock = true;
 #endif
     cursorHidden = true;
 }
@@ -1657,7 +1689,7 @@ static void InitGraphicsDevice(int width, int height)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);        // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Profiles Hint: Only 3.3 and above!
                                                                        // Other values: GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
-#ifdef __APPLE__
+#if defined(__APPLE__)
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);  // OSX Requires
 #else
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE); // Fordward Compatibility Hint: Only 3.3 and above!
@@ -1799,12 +1831,13 @@ static void InitGraphicsDevice(int width, int height)
 
     const EGLint framebufferAttribs[] =
     {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    // Type of context support -> Required on RPI?
-        //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,         // Don't use it on Android!
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,     // Type of context support -> Required on RPI?
+        //EGL_SURFACE_TYPE, EGL_WINDOW_BIT,          // Don't use it on Android!
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
         //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth
+        //EGL_TRANSPARENT_TYPE, EGL_TRANSPARENT_RGB, // Request transparent framebuffer
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
         EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
@@ -1942,7 +1975,7 @@ static void InitGraphicsDevice(int width, int height)
 // Set viewport parameters
 static void SetupViewport(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__)
     // Get framebuffer size of current window
     // NOTE: Required to handle HighDPI display correctly on OSX because framebuffer
     // is automatically reasized to adapt to new DPI.
@@ -2034,6 +2067,10 @@ static void SetupFramebufferSize(int displayWidth, int displayHeight)
 static void InitTimer(void)
 {
     srand(time(NULL));              // Initialize random seed
+    
+#if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
+    timeBeginPeriod(1);             // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
+#endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     struct timespec now;
@@ -2070,7 +2107,6 @@ static double GetTime(void)
 // http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 static void Wait(float ms)
 {
-#define SUPPORT_BUSY_WAIT_LOOP
 #if defined(SUPPORT_BUSY_WAIT_LOOP)
     double prevTime = GetTime();
     double nextTime = 0.0;
@@ -2078,9 +2114,9 @@ static void Wait(float ms)
     // Busy wait loop
     while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
 #else
-    #if defined _WIN32
+    #if defined(_WIN32)
         Sleep((unsigned int)ms);
-    #elif defined __linux__ || defined(PLATFORM_WEB)
+    #elif defined(__linux__) || defined(PLATFORM_WEB)
         struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);
@@ -2089,7 +2125,7 @@ static void Wait(float ms)
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
         while (nanosleep(&req, &req) == -1) continue;
-    #elif defined __APPLE__
+    #elif defined(__APPLE__)
         usleep(ms*1000.0f);
     #endif
 #endif
@@ -2719,7 +2755,8 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
 // Register mouse input events
 static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
 {
-    if (eventType == EMSCRIPTEN_EVENT_CLICK)
+    // Lock mouse pointer when click on screen
+    if ((eventType == EMSCRIPTEN_EVENT_CLICK) && toggleCursorLock)
     {
         EmscriptenPointerlockChangeEvent plce;
         emscripten_get_pointerlock_status(&plce);
@@ -2731,6 +2768,8 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
             emscripten_get_pointerlock_status(&plce);
             //if (plce.isActive) TraceLog(WARNING, "Pointer lock exit did not work!");
         }
+        
+        toggleCursorLock = false;
     }
     
     return 0;
@@ -3251,7 +3290,7 @@ static void *GamepadThread(void *arg)
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)
 {
-#ifndef PLATFORM_WEB
+#if !defined(PLATFORM_WEB)
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
 

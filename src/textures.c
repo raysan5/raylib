@@ -53,6 +53,7 @@
 // Default configuration flags (supported features)
 //-------------------------------------------------
 #define SUPPORT_FILEFORMAT_PNG
+#define SUPPORT_FILEFORMAT_HDR
 #define SUPPORT_IMAGE_MANIPULATION
 //-------------------------------------------------
 
@@ -98,7 +99,7 @@
      defined(SUPPORT_FILEFORMAT_JPG) || defined(SUPPORT_FILEFORMAT_PSD) || defined(SUPPORT_FILEFORMAT_GIF) || \
      defined(SUPPORT_FILEFORMAT_HDR))
     #define STB_IMAGE_IMPLEMENTATION
-    #include "external/stb_image.h"     // Required for: stbi_load()
+    #include "external/stb_image.h"     // Required for: stbi_load_from_file()
                                         // NOTE: Used to read image data (multiple formats support)
 #endif
                                 
@@ -154,14 +155,7 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 // Load image from file into CPU memory (RAM)
 Image LoadImage(const char *fileName)
 {
-    Image image;
-
-    // Initialize image default values
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     if (IsFileExtension(fileName, ".rres"))
     {
@@ -212,6 +206,29 @@ Image LoadImage(const char *fileName)
         else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
         else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
     }
+#if defined(SUPPORT_FILEFORMAT_HDR)
+    else if (IsFileExtension(fileName, ".hdr"))
+    {
+        int imgBpp = 0;
+        
+        FILE *imFile = fopen(fileName, "rb");
+        
+        // Load 32 bit per channel floats data 
+        image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
+
+        fclose(imFile);
+        
+        image.mipmaps = 1;
+        
+        if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+        else 
+        {
+            // TODO: Support different number of channels at 32 bit float
+            TraceLog(WARNING, "[%s] Image fileformat not supported (only 3 channel 32 bit floats)", fileName);
+            UnloadImage(image);
+        }
+    }
+#endif
 #if defined(SUPPORT_FILEFORMAT_DDS)
     else if (IsFileExtension(fileName, ".dds")) image = LoadDDS(fileName);
 #endif
@@ -282,13 +299,7 @@ Image LoadImagePro(void *data, int width, int height, int format)
 // Load an image from RAW file data
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *rawFile = fopen(fileName, "rb");
 
@@ -311,6 +322,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             case UNCOMPRESSED_R5G5B5A1: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (1 bit alpha)
             case UNCOMPRESSED_R4G4B4A4: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (4 bit alpha)
             case UNCOMPRESSED_R8G8B8A8: image.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
+            case UNCOMPRESSED_R32G32B32: image.data = (float *)malloc(size*12); size *= 12; break;        // 4 byte per channel (12 byte)
             default: TraceLog(WARNING, "Image format not suported"); break;
         }
 
@@ -342,7 +354,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 // Load texture from file into GPU memory (VRAM)
 Texture2D LoadTexture(const char *fileName)
 {
-    Texture2D texture;
+    Texture2D texture = { 0 };
 
     Image image = LoadImage(fileName);
 
@@ -351,11 +363,7 @@ Texture2D LoadTexture(const char *fileName)
         texture = LoadTextureFromImage(image);
         UnloadImage(image);
     }
-    else
-    {
-        TraceLog(WARNING, "Texture could not be created");
-        texture.id = 0;
-    }
+    else TraceLog(WARNING, "Texture could not be created");
 
     return texture;
 }
@@ -364,14 +372,7 @@ Texture2D LoadTexture(const char *fileName)
 // NOTE: image is not unloaded, it must be done manually
 Texture2D LoadTextureFromImage(Image image)
 {
-    Texture2D texture;
-
-    // Init texture to default values
-    texture.id = 0;
-    texture.width = 0;
-    texture.height = 0;
-    texture.mipmaps = 0;
-    texture.format = 0;
+    Texture2D texture = { 0 };
 
     texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
 
@@ -510,9 +511,8 @@ Color *GetImageData(Image image)
 // NOTE: Compressed texture formats not supported
 Image GetTextureData(Texture2D texture)
 {
-    Image image;
-    image.data = NULL;
-
+    Image image = { 0 };
+    
     if (texture.format < 8)
     {
         image.data = rlglReadTexturePixels(texture);
@@ -787,6 +787,7 @@ Image ImageCopy(Image image)
         case UNCOMPRESSED_R4G4B4A4: byteSize *= 2; break;   // 16 bpp (2 bytes)
         case UNCOMPRESSED_R8G8B8: byteSize *= 3; break;     // 24 bpp (3 bytes)
         case UNCOMPRESSED_R8G8B8A8: byteSize *= 4; break;   // 32 bpp (4 bytes)
+        case UNCOMPRESSED_R32G32B32: byteSize *= 12; break; // 4 byte per channel (12 bytes)
         case COMPRESSED_DXT3_RGBA:
         case COMPRESSED_DXT5_RGBA:
         case COMPRESSED_ETC2_EAC_RGBA:

@@ -184,7 +184,7 @@ Module['FS_createPath']('/resources', 'textures', true, true);
   }
 
  }
- loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 97566, "filename": "/resources/font_arcadian.png"}, {"audio": 0, "start": 97566, "crunched": 0, "end": 97996, "filename": "/resources/lights_map.png"}, {"audio": 1, "start": 97996, "crunched": 0, "end": 1372570, "filename": "/resources/audio/ambient.ogg"}, {"audio": 1, "start": 1372570, "crunched": 0, "end": 1381861, "filename": "/resources/audio/light_off.wav"}, {"audio": 1, "start": 1381861, "crunched": 0, "end": 1384196, "filename": "/resources/audio/light_on.wav"}, {"audio": 1, "start": 1384196, "crunched": 0, "end": 3977117, "filename": "/resources/audio/ritual.ogg"}, {"audio": 1, "start": 3977117, "crunched": 0, "end": 3991196, "filename": "/resources/audio/start.wav"}, {"audio": 0, "start": 3991196, "crunched": 0, "end": 5222414, "filename": "/resources/textures/background.png"}, {"audio": 0, "start": 5222414, "crunched": 0, "end": 5405314, "filename": "/resources/textures/back_title.png"}, {"audio": 0, "start": 5405314, "crunched": 0, "end": 5409716, "filename": "/resources/textures/book.png"}, {"audio": 0, "start": 5409716, "crunched": 0, "end": 5447280, "filename": "/resources/textures/circle_level_iii_off.png"}, {"audio": 0, "start": 5447280, "crunched": 0, "end": 5607587, "filename": "/resources/textures/circle_level_iii_on.png"}, {"audio": 0, "start": 5607587, "crunched": 0, "end": 5635549, "filename": "/resources/textures/circle_level_ii_off.png"}, {"audio": 0, "start": 5635549, "crunched": 0, "end": 5742157, "filename": "/resources/textures/circle_level_ii_on.png"}, {"audio": 0, "start": 5742157, "crunched": 0, "end": 5757605, "filename": "/resources/textures/circle_level_i_off.png"}, {"audio": 0, "start": 5757605, "crunched": 0, "end": 5809048, "filename": "/resources/textures/circle_level_i_on.png"}, {"audio": 0, "start": 5809048, "crunched": 0, "end": 5811860, "filename": "/resources/textures/enemy.png"}, {"audio": 0, "start": 5811860, "crunched": 0, "end": 5839971, "filename": "/resources/textures/foreground_level_i.png"}, {"audio": 0, "start": 5839971, "crunched": 0, "end": 5876092, "filename": "/resources/textures/foreground_level_ii.png"}, {"audio": 0, "start": 5876092, "crunched": 0, "end": 5918228, "filename": "/resources/textures/foreground_level_iii.png"}, {"audio": 0, "start": 5918228, "crunched": 0, "end": 5920503, "filename": "/resources/textures/light.png"}, {"audio": 0, "start": 5920503, "crunched": 0, "end": 5929164, "filename": "/resources/textures/light_glow.png"}, {"audio": 0, "start": 5929164, "crunched": 0, "end": 5937944, "filename": "/resources/textures/light_ray.png"}, {"audio": 0, "start": 5937944, "crunched": 0, "end": 6051956, "filename": "/resources/textures/msg_ritual.png"}, {"audio": 0, "start": 6051956, "crunched": 0, "end": 6054855, "filename": "/resources/textures/player.png"}, {"audio": 0, "start": 6054855, "crunched": 0, "end": 6170729, "filename": "/resources/textures/time_over.png"}, {"audio": 0, "start": 6170729, "crunched": 0, "end": 6384278, "filename": "/resources/textures/title.png"}], "remote_package_size": 6384278, "package_uuid": "4b0f8033-87a2-4d76-b67c-1aa6419b57e9"});
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 97566, "filename": "/resources/font_arcadian.png"}, {"audio": 0, "start": 97566, "crunched": 0, "end": 97996, "filename": "/resources/lights_map.png"}, {"audio": 1, "start": 97996, "crunched": 0, "end": 1372570, "filename": "/resources/audio/ambient.ogg"}, {"audio": 1, "start": 1372570, "crunched": 0, "end": 1381861, "filename": "/resources/audio/light_off.wav"}, {"audio": 1, "start": 1381861, "crunched": 0, "end": 1384196, "filename": "/resources/audio/light_on.wav"}, {"audio": 1, "start": 1384196, "crunched": 0, "end": 3977117, "filename": "/resources/audio/ritual.ogg"}, {"audio": 1, "start": 3977117, "crunched": 0, "end": 3991196, "filename": "/resources/audio/start.wav"}, {"audio": 0, "start": 3991196, "crunched": 0, "end": 5222414, "filename": "/resources/textures/background.png"}, {"audio": 0, "start": 5222414, "crunched": 0, "end": 5405314, "filename": "/resources/textures/back_title.png"}, {"audio": 0, "start": 5405314, "crunched": 0, "end": 5409716, "filename": "/resources/textures/book.png"}, {"audio": 0, "start": 5409716, "crunched": 0, "end": 5447280, "filename": "/resources/textures/circle_level_iii_off.png"}, {"audio": 0, "start": 5447280, "crunched": 0, "end": 5607587, "filename": "/resources/textures/circle_level_iii_on.png"}, {"audio": 0, "start": 5607587, "crunched": 0, "end": 5635549, "filename": "/resources/textures/circle_level_ii_off.png"}, {"audio": 0, "start": 5635549, "crunched": 0, "end": 5742157, "filename": "/resources/textures/circle_level_ii_on.png"}, {"audio": 0, "start": 5742157, "crunched": 0, "end": 5757605, "filename": "/resources/textures/circle_level_i_off.png"}, {"audio": 0, "start": 5757605, "crunched": 0, "end": 5809048, "filename": "/resources/textures/circle_level_i_on.png"}, {"audio": 0, "start": 5809048, "crunched": 0, "end": 5811860, "filename": "/resources/textures/enemy.png"}, {"audio": 0, "start": 5811860, "crunched": 0, "end": 5839971, "filename": "/resources/textures/foreground_level_i.png"}, {"audio": 0, "start": 5839971, "crunched": 0, "end": 5876092, "filename": "/resources/textures/foreground_level_ii.png"}, {"audio": 0, "start": 5876092, "crunched": 0, "end": 5918228, "filename": "/resources/textures/foreground_level_iii.png"}, {"audio": 0, "start": 5918228, "crunched": 0, "end": 5920503, "filename": "/resources/textures/light.png"}, {"audio": 0, "start": 5920503, "crunched": 0, "end": 5929164, "filename": "/resources/textures/light_glow.png"}, {"audio": 0, "start": 5929164, "crunched": 0, "end": 5937944, "filename": "/resources/textures/light_ray.png"}, {"audio": 0, "start": 5937944, "crunched": 0, "end": 6051956, "filename": "/resources/textures/msg_ritual.png"}, {"audio": 0, "start": 6051956, "crunched": 0, "end": 6054855, "filename": "/resources/textures/player.png"}, {"audio": 0, "start": 6054855, "crunched": 0, "end": 6170729, "filename": "/resources/textures/time_over.png"}, {"audio": 0, "start": 6170729, "crunched": 0, "end": 6384278, "filename": "/resources/textures/title.png"}], "remote_package_size": 6384278, "package_uuid": "51e1317c-9b7a-47c9-9f0e-030d007e42e1"});
 
 })();
 
@@ -1395,85 +1395,14 @@ function abortOnCannotGrowMemory() {
   abort('Cannot enlarge memory arrays. Either (1) compile with  -s TOTAL_MEMORY=X  with X higher than the current value ' + TOTAL_MEMORY + ', (2) compile with  -s ALLOW_MEMORY_GROWTH=1  which adjusts the size at runtime but prevents some optimizations, (3) set Module.TOTAL_MEMORY to a higher value before the program runs, or if you want malloc to return NULL (0) instead of this abort, compile with  -s ABORTING_MALLOC=0 ');
 }
 
-if (!Module['reallocBuffer']) Module['reallocBuffer'] = function(size) {
-  var ret;
-  try {
-    if (ArrayBuffer.transfer) {
-      ret = ArrayBuffer.transfer(buffer, size);
-    } else {
-      var oldHEAP8 = HEAP8;
-      ret = new ArrayBuffer(size);
-      var temp = new Int8Array(ret);
-      temp.set(oldHEAP8);
-    }
-  } catch(e) {
-    return false;
-  }
-  var success = _emscripten_replace_memory(ret);
-  if (!success) return false;
-  return ret;
-};
 
 function enlargeMemory() {
-  // TOTAL_MEMORY is the current size of the actual array, and DYNAMICTOP is the new top.
-  assert(HEAP32[DYNAMICTOP_PTR>>2] > TOTAL_MEMORY); // This function should only ever be called after the ceiling of the dynamic heap has already been bumped to exceed the current total size of the asm.js heap.
-
-
-  var PAGE_MULTIPLE = Module["usingWasm"] ? WASM_PAGE_SIZE : ASMJS_PAGE_SIZE; // In wasm, heap size must be a multiple of 64KB. In asm.js, they need to be multiples of 16MB.
-  var LIMIT = 2147483648 - PAGE_MULTIPLE; // We can do one page short of 2GB as theoretical maximum.
-
-  if (HEAP32[DYNAMICTOP_PTR>>2] > LIMIT) {
-    Module.printErr('Cannot enlarge memory, asked to go up to ' + HEAP32[DYNAMICTOP_PTR>>2] + ' bytes, but the limit is ' + LIMIT + ' bytes!');
-    return false;
-  }
-
-  var OLD_TOTAL_MEMORY = TOTAL_MEMORY;
-  TOTAL_MEMORY = Math.max(TOTAL_MEMORY, MIN_TOTAL_MEMORY); // So the loop below will not be infinite, and minimum asm.js memory size is 16MB.
-
-  while (TOTAL_MEMORY < HEAP32[DYNAMICTOP_PTR>>2]) { // Keep incrementing the heap size as long as it's less than what is requested.
-    if (TOTAL_MEMORY <= 536870912) {
-      TOTAL_MEMORY = alignUp(2 * TOTAL_MEMORY, PAGE_MULTIPLE); // Simple heuristic: double until 1GB...
-    } else {
-      TOTAL_MEMORY = Math.min(alignUp((3 * TOTAL_MEMORY + 2147483648) / 4, PAGE_MULTIPLE), LIMIT); // ..., but after that, add smaller increments towards 2GB, which we cannot reach
-    }
-  }
-
-  var start = Date.now();
-
-  var replacement = Module['reallocBuffer'](TOTAL_MEMORY);
-  if (!replacement || replacement.byteLength != TOTAL_MEMORY) {
-    Module.printErr('Failed to grow the heap from ' + OLD_TOTAL_MEMORY + ' bytes to ' + TOTAL_MEMORY + ' bytes, not enough memory!');
-    if (replacement) {
-      Module.printErr('Expected to get back a buffer of size ' + TOTAL_MEMORY + ' bytes, but instead got back a buffer of size ' + replacement.byteLength);
-    }
-    return false;
-  }
-
-  // everything worked
-
-  updateGlobalBuffer(replacement);
-  updateGlobalBufferViews();
-
-  Module.printErr('enlarged memory arrays from ' + OLD_TOTAL_MEMORY + ' to ' + TOTAL_MEMORY + ', took ' + (Date.now() - start) + ' ms (has ArrayBuffer.transfer? ' + (!!ArrayBuffer.transfer) + ')');
-
-  if (!Module["usingWasm"]) {
-    Module.printErr('Warning: Enlarging memory arrays, this is not fast! ' + [OLD_TOTAL_MEMORY, TOTAL_MEMORY]);
-  }
-
-
-  return true;
+  abortOnCannotGrowMemory();
 }
 
-var byteLength;
-try {
-  byteLength = Function.prototype.call.bind(Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, 'byteLength').get);
-  byteLength(new ArrayBuffer(4)); // can fail on older ie
-} catch(e) { // can fail on older node/v8
-  byteLength = function(buffer) { return buffer.byteLength; };
-}
 
 var TOTAL_STACK = Module['TOTAL_STACK'] || 5242880;
-var TOTAL_MEMORY = Module['TOTAL_MEMORY'] || 16777216;
+var TOTAL_MEMORY = Module['TOTAL_MEMORY'] || 33554432;
 if (TOTAL_MEMORY < TOTAL_STACK) Module.printErr('TOTAL_MEMORY should be larger than TOTAL_STACK, was ' + TOTAL_MEMORY + '! (TOTAL_STACK=' + TOTAL_STACK + ')');
 
 // Initialize the runtime's memory
@@ -8087,14 +8016,6 @@ function copyTempDouble(ptr) {
       GL.programInfos[id] = null;
     }
 
-  function _emscripten_get_pointerlock_status(pointerlockStatus) {
-      if (pointerlockStatus) JSEvents.fillPointerlockChangeEventData(pointerlockStatus);
-      if (!document.body || (!document.body.requestPointerLock && !document.body.mozRequestPointerLock && !document.body.webkitRequestPointerLock && !document.body.msRequestPointerLock)) {
-        return -1;
-      }
-      return 0;
-    }
-
   function _alSourcePlay(source) {
       if (!AL.currentContext) {
         return;
@@ -8497,29 +8418,6 @@ function copyTempDouble(ptr) {
 
   function _glUniform4f(location, v0, v1, v2, v3) {
       GLctx.uniform4f(GL.uniforms[location], v0, v1, v2, v3);
-    }
-
-  function _emscripten_request_pointerlock(target, deferUntilInEventHandler) {
-      if (!target) target = '#canvas';
-      target = JSEvents.findEventTarget(target);
-      if (!target) return -4;
-      if (!target.requestPointerLock && !target.mozRequestPointerLock && !target.webkitRequestPointerLock && !target.msRequestPointerLock) {
-        return -1;
-      }
-  
-      var canPerformRequests = JSEvents.canPerformEventHandlerRequests();
-  
-      // Queue this function call if we're not currently in an event handler and the user saw it appropriate to do so.
-      if (!canPerformRequests) {
-        if (deferUntilInEventHandler) {
-          JSEvents.deferCall(JSEvents.requestPointerLock, 2 /* priority below fullscreen */, [target]);
-          return 1;
-        } else {
-          return -2;
-        }
-      }
-  
-      return JSEvents.requestPointerLock(target);
     }
 
   function _emscripten_glVertexAttrib2f(x0, x1, x2) { GLctx['vertexAttrib2f'](x0, x1, x2) }
@@ -10323,7 +10221,10 @@ function copyTempDouble(ptr) {
    
   Module["_llvm_bswap_i32"] = _llvm_bswap_i32;
 
-  function _glTexParameteri(x0, x1, x2) { GLctx['texParameteri'](x0, x1, x2) }
+  function _emscripten_set_click_callback(target, userData, useCapture, callbackfunc) {
+      JSEvents.registerMouseEventCallback(target, userData, useCapture, callbackfunc, 4, "click");
+      return 0;
+    }
 
   function _glfwSetKeyCallback(winid, cbfun) {
       GLFW.setKeyCallback(winid, cbfun);
@@ -10545,10 +10446,7 @@ function copyTempDouble(ptr) {
 
   function _glTexParameterf(x0, x1, x2) { GLctx['texParameterf'](x0, x1, x2) }
 
-  function _emscripten_set_click_callback(target, userData, useCapture, callbackfunc) {
-      JSEvents.registerMouseEventCallback(target, userData, useCapture, callbackfunc, 4, "click");
-      return 0;
-    }
+  function _glTexParameteri(x0, x1, x2) { GLctx['texParameteri'](x0, x1, x2) }
 
   function _glFrontFace(x0) { GLctx['frontFace'](x0) }
 
@@ -10972,31 +10870,22 @@ function invoke_viiii(index,a1,a2,a3,a4) {
   }
 }
 
-Module.asmGlobalArg = { "Math": Math, "Int8Array": Int8Array, "Int16Array": Int16Array, "Int32Array": Int32Array, "Uint8Array": Uint8Array, "Uint16Array": Uint16Array, "Uint32Array": Uint32Array, "Float32Array": Float32Array, "Float64Array": Float64Array, "NaN": NaN, "Infinity": Infinity, "byteLength": byteLength };
+Module.asmGlobalArg = { "Math": Math, "Int8Array": Int8Array, "Int16Array": Int16Array, "Int32Array": Int32Array, "Uint8Array": Uint8Array, "Uint16Array": Uint16Array, "Uint32Array": Uint32Array, "Float32Array": Float32Array, "Float64Array": Float64Array, "NaN": NaN, "Infinity": Infinity };
 
-Module.asmLibraryArg = { "abort": abort, "assert": assert, "enlargeMemory": enlargeMemory, "getTotalMemory": getTotalMemory, "abortOnCannotGrowMemory": abortOnCannotGrowMemory, "abortStackOverflow": abortStackOverflow, "nullFunc_viiiii": nullFunc_viiiii, "nullFunc_vd": nullFunc_vd, "nullFunc_vid": nullFunc_vid, "nullFunc_vi": nullFunc_vi, "nullFunc_vii": nullFunc_vii, "nullFunc_ii": nullFunc_ii, "nullFunc_viddd": nullFunc_viddd, "nullFunc_vidd": nullFunc_vidd, "nullFunc_iiii": nullFunc_iiii, "nullFunc_viiiiiiii": nullFunc_viiiiiiii, "nullFunc_viiiiii": nullFunc_viiiiii, "nullFunc_viii": nullFunc_viii, "nullFunc_vidddd": nullFunc_vidddd, "nullFunc_vdi": nullFunc_vdi, "nullFunc_viiiiiii": nullFunc_viiiiiii, "nullFunc_viiiiiiiii": nullFunc_viiiiiiiii, "nullFunc_iii": nullFunc_iii, "nullFunc_i": nullFunc_i, "nullFunc_vdddddd": nullFunc_vdddddd, "nullFunc_vdddd": nullFunc_vdddd, "nullFunc_vdd": nullFunc_vdd, "nullFunc_v": nullFunc_v, "nullFunc_viid": nullFunc_viid, "nullFunc_viiii": nullFunc_viiii, "invoke_viiiii": invoke_viiiii, "invoke_vd": invoke_vd, "invoke_vid": invoke_vid, "invoke_vi": invoke_vi, "invoke_vii": invoke_vii, "invoke_ii": invoke_ii, "invoke_viddd": invoke_viddd, "invoke_vidd": invoke_vidd, "invoke_iiii": invoke_iiii, "invoke_viiiiiiii": invoke_viiiiiiii, "invoke_viiiiii": invoke_viiiiii, "invoke_viii": invoke_viii, "invoke_vidddd": invoke_vidddd, "invoke_vdi": invoke_vdi, "invoke_viiiiiii": invoke_viiiiiii, "invoke_viiiiiiiii": invoke_viiiiiiiii, "invoke_iii": invoke_iii, "invoke_i": invoke_i, "invoke_vdddddd": invoke_vdddddd, "invoke_vdddd": invoke_vdddd, "invoke_vdd": invoke_vdd, "invoke_v": invoke_v, "invoke_viid": invoke_viid, "invoke_viiii": invoke_viiii, "_emscripten_glGetTexParameterfv": _emscripten_glGetTexParameterfv, "_glUseProgram": _glUseProgram, "_emscripten_glShaderSource": _emscripten_glShaderSource, "_glfwCreateWindow": _glfwCreateWindow, "_emscripten_glReleaseShaderCompiler": _emscripten_glReleaseShaderCompiler, "_emscripten_glBlendFuncSeparate": _emscripten_glBlendFuncSeparate, "_emscripten_glUniform4iv": _emscripten_glUniform4iv, "_emscripten_glVertexAttribPointer": _emscripten_glVertexAttribPointer, "_emscripten_glGetIntegerv": _emscripten_glGetIntegerv, "_emscripten_glCullFace": _emscripten_glCullFace, "_emscripten_glIsProgram": _emscripten_glIsProgram, "_emscripten_glStencilMaskSeparate": _emscripten_glStencilMaskSeparate, "_emscripten_glViewport": _emscripten_glViewport, "_emscripten_glFrontFace": _emscripten_glFrontFace, "_alBufferData": _alBufferData, "___assert_fail": ___assert_fail, "_glDeleteProgram": _glDeleteProgram, "_emscripten_glUniform3fv": _emscripten_glUniform3fv, "_emscripten_glPolygonOffset": _emscripten_glPolygonOffset, "_emscripten_glUseProgram": _emscripten_glUseProgram, "_emscripten_glBlendColor": _emscripten_glBlendColor, "_glBindBuffer": _glBindBuffer, "_emscripten_glDepthFunc": _emscripten_glDepthFunc, "_glGetShaderInfoLog": _glGetShaderInfoLog, "_alSource3f": _alSource3f, "_emscripten_set_fullscreenchange_callback": _emscripten_set_fullscreenchange_callback, "_emscripten_set_touchmove_callback": _emscripten_set_touchmove_callback, "_emscripten_set_main_loop_timing": _emscripten_set_main_loop_timing, "_glDisable": _glDisable, "_glBlendFunc": _glBlendFunc, "_emscripten_glDisableVertexAttribArray": _emscripten_glDisableVertexAttribArray, "_glGetAttribLocation": _glGetAttribLocation, "_glDisableVertexAttribArray": _glDisableVertexAttribArray, "_glCreateShader": _glCreateShader, "_emscripten_glReadPixels": _emscripten_glReadPixels, "_alcGetString": _alcGetString, "_emscripten_glSampleCoverage": _emscripten_glSampleCoverage, "_emscripten_glVertexPointer": _emscripten_glVertexPointer, "_emscripten_set_touchstart_callback": _emscripten_set_touchstart_callback, "emscriptenWebGLComputeImageSize": emscriptenWebGLComputeImageSize, "_emscripten_glGetBooleanv": _emscripten_glGetBooleanv, "___syscall221": ___syscall221, "_glUniform4f": _glUniform4f, "_llvm_stacksave": _llvm_stacksave, "_emscripten_glUniform1i": _emscripten_glUniform1i, "_emscripten_glStencilFuncSeparate": _emscripten_glStencilFuncSeparate, "_emscripten_glLoadMatrixf": _emscripten_glLoadMatrixf, "_emscripten_glGenBuffers": _emscripten_glGenBuffers, "_emscripten_glDeleteObjectARB": _emscripten_glDeleteObjectARB, "_glfwSetWindowSizeCallback": _glfwSetWindowSizeCallback, "_emscripten_glGetShaderPrecisionFormat": _emscripten_glGetShaderPrecisionFormat, "_glfwInit": _glfwInit, "_emscripten_glGetPointerv": _emscripten_glGetPointerv, "_glGenBuffers": _glGenBuffers, "_glShaderSource": _glShaderSource, "_emscripten_glGetString": _emscripten_glGetString, "_emscripten_glIsFramebuffer": _emscripten_glIsFramebuffer, "_emscripten_glIsEnabled": _emscripten_glIsEnabled, "_emscripten_glScissor": _emscripten_glScissor, "_emscripten_glVertexAttrib4fv": _emscripten_glVertexAttrib4fv, "_emscripten_glFramebufferTexture2D": _emscripten_glFramebufferTexture2D, "_emscripten_glTexParameteriv": _emscripten_glTexParameteriv, "_emscripten_glBindProgramARB": _emscripten_glBindProgramARB, "_emscripten_glStencilOpSeparate": _emscripten_glStencilOpSeparate, "_alSourcePlay": _alSourcePlay, "_alSourcei": _alSourcei, "_emscripten_glFramebufferRenderbuffer": _emscripten_glFramebufferRenderbuffer, "___syscall140": ___syscall140, "_glfwSetErrorCallback": _glfwSetErrorCallback, "_glfwDefaultWindowHints": _glfwDefaultWindowHints, "_emscripten_glIsBuffer": _emscripten_glIsBuffer, "___syscall146": ___syscall146, "_glfwDestroyWindow": _glfwDestroyWindow, "_emscripten_glGetActiveAttrib": _emscripten_glGetActiveAttrib, "_emscripten_glAttachShader": _emscripten_glAttachShader, "_glVertexAttribPointer": _glVertexAttribPointer, "_emscripten_glUniform2i": _emscripten_glUniform2i, "_emscripten_glUniform2f": _emscripten_glUniform2f, "_alcCreateContext": _alcCreateContext, "_glfwTerminate": _glfwTerminate, "_emscripten_glTexParameterfv": _emscripten_glTexParameterfv, "_emscripten_glUniformMatrix2fv": _emscripten_glUniformMatrix2fv, "_glGetProgramInfoLog": _glGetProgramInfoLog, "_emscripten_glGetUniformiv": _emscripten_glGetUniformiv, "_emscripten_glTexParameterf": _emscripten_glTexParameterf, "_emscripten_glGetAttachedShaders": _emscripten_glGetAttachedShaders, "_emscripten_glGenTextures": _emscripten_glGenTextures, "_emscripten_glTexParameteri": _emscripten_glTexParameteri, "_emscripten_glIsShader": _emscripten_glIsShader, "_llvm_stackrestore": _llvm_stackrestore, "_glfwMakeContextCurrent": _glfwMakeContextCurrent, "_emscripten_glClear": _emscripten_glClear, "_glDrawElements": _glDrawElements, "_alGetSourcei": _alGetSourcei, "_glBufferSubData": _glBufferSubData, "_alcMakeContextCurrent": _alcMakeContextCurrent, "_emscripten_glGenVertexArrays": _emscripten_glGenVertexArrays, "_emscripten_glVertexAttrib2fv": _emscripten_glVertexAttrib2fv, "_glViewport": _glViewport, "_alSourceQueueBuffers": _alSourceQueueBuffers, "_emscripten_glGetTexParameteriv": _emscripten_glGetTexParameteriv, "___setErrNo": ___setErrNo, "_eglGetProcAddress": _eglGetProcAddress, "_alcGetCurrentContext": _alcGetCurrentContext, "_emscripten_glBindAttribLocation": _emscripten_glBindAttribLocation, "_glDeleteTextures": _glDeleteTextures, "_glDepthFunc": _glDepthFunc, "_emscripten_glClientActiveTexture": _emscripten_glClientActiveTexture, "_emscripten_glVertexAttrib2f": _emscripten_glVertexAttrib2f, "_emscripten_glFlush": _emscripten_glFlush, "_emscripten_glCheckFramebufferStatus": _emscripten_glCheckFramebufferStatus, "_emscripten_glGenerateMipmap": _emscripten_glGenerateMipmap, "_emscripten_glGetError": _emscripten_glGetError, "_alGenBuffers": _alGenBuffers, "_emscripten_glClearDepthf": _emscripten_glClearDepthf, "_emscripten_glBufferData": _emscripten_glBufferData, "_emscripten_glUniform3i": _emscripten_glUniform3i, "_emscripten_glRotatef": _emscripten_glRotatef, "_emscripten_glDeleteShader": _emscripten_glDeleteShader, "_glEnable": _glEnable, "_glGenTextures": _glGenTextures, "_emscripten_glMatrixMode": _emscripten_glMatrixMode, "_alDeleteSources": _alDeleteSources, "_emscripten_glClearStencil": _emscripten_glClearStencil, "_emscripten_glGetUniformLocation": _emscripten_glGetUniformLocation, "emscriptenWebGLGet": emscriptenWebGLGet, "_alSourceUnqueueBuffers": _alSourceUnqueueBuffers, "_emscripten_glEnableVertexAttribArray": _emscripten_glEnableVertexAttribArray, "_alGetError": _alGetError, "_emscripten_get_now": _emscripten_get_now, "_emscripten_glNormalPointer": _emscripten_glNormalPointer, "_glAttachShader": _glAttachShader, "_emscripten_glTexCoordPointer": _emscripten_glTexCoordPointer, "_emscripten_glEnable": _emscripten_glEnable, "_glCreateProgram": _glCreateProgram, "_glUniformMatrix4fv": _glUniformMatrix4fv, "_emscripten_glClearDepth": _emscripten_glClearDepth, "___lock": ___lock, "emscriptenWebGLGetTexPixelData": emscriptenWebGLGetTexPixelData, "___syscall6": ___syscall6, "___syscall5": ___syscall5, "___syscall145": ___syscall145, "_emscripten_glVertexAttrib3f": _emscripten_glVertexAttrib3f, "_time": _time, "_emscripten_glVertexAttrib1f": _emscripten_glVertexAttrib1f, "_emscripten_glGetFramebufferAttachmentParameteriv": _emscripten_glGetFramebufferAttachmentParameteriv, "_emscripten_glBlendEquationSeparate": _emscripten_glBlendEquationSeparate, "_exit": _exit, "_emscripten_glBindFramebuffer": _emscripten_glBindFramebuffer, "_glGetString": _glGetString, "_emscripten_glUniform4i": _emscripten_glUniform4i, "_alSourcef": _alSourcef, "_emscripten_glDrawRangeElements": _emscripten_glDrawRangeElements, "_glCullFace": _glCullFace, "_llvm_pow_f64": _llvm_pow_f64, "_emscripten_set_keypress_callback": _emscripten_set_keypress_callback, "__emscripten_sample_gamepad_data": __emscripten_sample_gamepad_data, "_emscripten_get_gamepad_status": _emscripten_get_gamepad_status, "_emscripten_glUniform4f": _emscripten_glUniform4f, "_glfwSwapInterval": _glfwSwapInterval, "_glfwGetVideoModes": _glfwGetVideoModes, "_emscripten_set_click_callback": _emscripten_set_click_callback, "_emscripten_glShaderBinary": _emscripten_glShaderBinary, "_emscripten_glDrawElements": _emscripten_glDrawElements, "_emscripten_glBlendFunc": _emscripten_glBlendFunc, "_emscripten_get_num_gamepads": _emscripten_get_num_gamepads, "_glCompressedTexImage2D": _glCompressedTexImage2D, "_emscripten_glUniform1iv": _emscripten_glUniform1iv, "_emscripten_glGetVertexAttribPointerv": _emscripten_glGetVertexAttribPointerv, "_glClearDepthf": _glClearDepthf, "_emscripten_glCompressedTexSubImage2D": _emscripten_glCompressedTexSubImage2D, "emscriptenWebGLGetUniform": emscriptenWebGLGetUniform, "_emscripten_glGenRenderbuffers": _emscripten_glGenRenderbuffers, "_emscripten_glDeleteVertexArrays": _emscripten_glDeleteVertexArrays, "_glfwSetWindowShouldClose": _glfwSetWindowShouldClose, "_emscripten_glUniform1fv": _emscripten_glUniform1fv, "_emscripten_glGetActiveUniform": _emscripten_glGetActiveUniform, "_glBindTexture": _glBindTexture, "_emscripten_glUniform3iv": _emscripten_glUniform3iv, "_emscripten_glUniform2iv": _emscripten_glUniform2iv, "_emscripten_glHint": _emscripten_glHint, "_glfwSetCharCallback": _glfwSetCharCallback, "emscriptenWebGLGetVertexAttrib": emscriptenWebGLGetVertexAttrib, "_glGetFloatv": _glGetFloatv, "_emscripten_glDeleteProgram": _emscripten_glDeleteProgram, "_emscripten_glDeleteRenderbuffers": _emscripten_glDeleteRenderbuffers, "_glfwSetScrollCallback": _glfwSetScrollCallback, "_emscripten_glDrawElementsInstanced": _emscripten_glDrawElementsInstanced, "_emscripten_glVertexAttrib4f": _emscripten_glVertexAttrib4f, "_alcDestroyContext": _alcDestroyContext, "_glDrawArrays": _glDrawArrays, "_emscripten_glTexSubImage2D": _emscripten_glTexSubImage2D, "_emscripten_memcpy_big": _emscripten_memcpy_big, "_emscripten_glPixelStorei": _emscripten_glPixelStorei, "_glCompileShader": _glCompileShader, "_alListenerf": _alListenerf, "_emscripten_glUniformMatrix3fv": _emscripten_glUniformMatrix3fv, "_emscripten_glColorPointer": _emscripten_glColorPointer, "_emscripten_glGetBufferParameteriv": _emscripten_glGetBufferParameteriv, "_emscripten_glFinish": _emscripten_glFinish, "_emscripten_request_pointerlock": _emscripten_request_pointerlock, "_emscripten_set_gamepaddisconnected_callback": _emscripten_set_gamepaddisconnected_callback, "_emscripten_asm_const_iii": _emscripten_asm_const_iii, "_emscripten_glDepthMask": _emscripten_glDepthMask, "_glfwSetWindowIconifyCallback": _glfwSetWindowIconifyCallback, "_emscripten_glDrawBuffers": _emscripten_glDrawBuffers, "_alSourceStop": _alSourceStop, "_glFrontFace": _glFrontFace, "_emscripten_glGetObjectParameterivARB": _emscripten_glGetObjectParameterivARB, "_emscripten_exit_pointerlock": _emscripten_exit_pointerlock, "_alcCloseDevice": _alcCloseDevice, "_glUniform1i": _glUniform1i, "_glEnableVertexAttribArray": _glEnableVertexAttribArray, "_emscripten_glStencilFunc": _emscripten_glStencilFunc, "_abort": _abort, "_alcGetContextsDevice": _alcGetContextsDevice, "_emscripten_glUniform2fv": _emscripten_glUniform2fv, "_glfwGetCursorPos": _glfwGetCursorPos, "_glDeleteBuffers": _glDeleteBuffers, "_glBufferData": _glBufferData, "_glTexImage2D": _glTexImage2D, "_emscripten_glGetShaderiv": _emscripten_glGetShaderiv, "_glfwSetKeyCallback": _glfwSetKeyCallback, "_emscripten_glGenFramebuffers": _emscripten_glGenFramebuffers, "_emscripten_glUniformMatrix4fv": _emscripten_glUniformMatrix4fv, "_emscripten_glLoadIdentity": _emscripten_glLoadIdentity, "_glDeleteShader": _glDeleteShader, "_emscripten_glUniform1f": _emscripten_glUniform1f, "_glGetProgramiv": _glGetProgramiv, "_llvm_exp2_f32": _llvm_exp2_f32, "_emscripten_glIsRenderbuffer": _emscripten_glIsRenderbuffer, "_glfwGetTime": _glfwGetTime, "_emscripten_glRenderbufferStorage": _emscripten_glRenderbufferStorage, "_emscripten_set_gamepadconnected_callback": _emscripten_set_gamepadconnected_callback, "_alListener3f": _alListener3f, "_emscripten_glGetVertexAttribiv": _emscripten_glGetVertexAttribiv, "_emscripten_glBindVertexArray": _emscripten_glBindVertexArray, "_emscripten_glDrawArraysInstanced": _emscripten_glDrawArraysInstanced, "_emscripten_set_touchcancel_callback": _emscripten_set_touchcancel_callback, "_emscripten_glCreateShader": _emscripten_glCreateShader, "_emscripten_glStencilMask": _emscripten_glStencilMask, "_emscripten_glDeleteTextures": _emscripten_glDeleteTextures, "_glfwGetKey": _glfwGetKey, "_glfwGetPrimaryMonitor": _glfwGetPrimaryMonitor, "_glLinkProgram": _glLinkProgram, "_emscripten_glVertexAttribDivisor": _emscripten_glVertexAttribDivisor, "_emscripten_set_touchend_callback": _emscripten_set_touchend_callback, "_emscripten_glGetUniformfv": _emscripten_glGetUniformfv, "_emscripten_glGetVertexAttribfv": _emscripten_glGetVertexAttribfv, "_emscripten_glGetRenderbufferParameteriv": _emscripten_glGetRenderbufferParameteriv, "_glGetShaderiv": _glGetShaderiv, "_emscripten_glVertexAttrib3fv": _emscripten_glVertexAttrib3fv, "_glGetUniformLocation": _glGetUniformLocation, "_emscripten_glGetInfoLogARB": _emscripten_glGetInfoLogARB, "_emscripten_glCompileShader": _emscripten_glCompileShader, "_glClear": _glClear, "_emscripten_glFrustum": _emscripten_glFrustum, "_emscripten_glDisable": _emscripten_glDisable, "_emscripten_glDepthRangef": _emscripten_glDepthRangef, "__exit": __exit, "_emscripten_glLineWidth": _emscripten_glLineWidth, "_emscripten_glUniform3f": _emscripten_glUniform3f, "_emscripten_glGetShaderInfoLog": _emscripten_glGetShaderInfoLog, "_emscripten_glStencilOp": _emscripten_glStencilOp, "_glBindAttribLocation": _glBindAttribLocation, "_glPixelStorei": _glPixelStorei, "_emscripten_glColorMask": _emscripten_glColorMask, "_emscripten_glLinkProgram": _emscripten_glLinkProgram, "_emscripten_glBlendEquation": _emscripten_glBlendEquation, "_emscripten_glIsTexture": _emscripten_glIsTexture, "_alDeleteBuffers": _alDeleteBuffers, "_emscripten_glGetProgramiv": _emscripten_glGetProgramiv, "_emscripten_glVertexAttrib1fv": _emscripten_glVertexAttrib1fv, "_emscripten_glBindTexture": _emscripten_glBindTexture, "_glfwSetMouseButtonCallback": _glfwSetMouseButtonCallback, "_emscripten_get_pointerlock_status": _emscripten_get_pointerlock_status, "_emscripten_glActiveTexture": _emscripten_glActiveTexture, "_emscripten_glDeleteBuffers": _emscripten_glDeleteBuffers, "___syscall54": ___syscall54, "___unlock": ___unlock, "_emscripten_glBufferSubData": _emscripten_glBufferSubData, "_glfwSwapBuffers": _glfwSwapBuffers, "_emscripten_glDepthRange": _emscripten_glDepthRange, "_emscripten_set_main_loop": _emscripten_set_main_loop, "_emscripten_glBindRenderbuffer": _emscripten_glBindRenderbuffer, "_emscripten_glGetProgramInfoLog": _emscripten_glGetProgramInfoLog, "_glfwWindowHint": _glfwWindowHint, "_alGenSources": _alGenSources, "_glfwSetCursorPosCallback": _glfwSetCursorPosCallback, "_emscripten_glDeleteFramebuffers": _emscripten_glDeleteFramebuffers, "_emscripten_glUniform4fv": _emscripten_glUniform4fv, "_alcOpenDevice": _alcOpenDevice, "_emscripten_glDrawArrays": _emscripten_glDrawArrays, "_emscripten_glCompressedTexImage2D": _emscripten_glCompressedTexImage2D, "_emscripten_glClearColor": _emscripten_glClearColor, "_emscripten_glGetShaderSource": _emscripten_glGetShaderSource, "_emscripten_glCreateProgram": _emscripten_glCreateProgram, "_emscripten_glCopyTexSubImage2D": _emscripten_glCopyTexSubImage2D, "_emscripten_glGetAttribLocation": _emscripten_glGetAttribLocation, "_glTexParameteri": _glTexParameteri, "_emscripten_glValidateProgram": _emscripten_glValidateProgram, "_emscripten_glBindBuffer": _emscripten_glBindBuffer, "_emscripten_glGetFloatv": _emscripten_glGetFloatv, "_emscripten_glDetachShader": _emscripten_glDetachShader, "_glClearColor": _glClearColor, "_emscripten_glEnableClientState": _emscripten_glEnableClientState, "_glTexParameterf": _glTexParameterf, "_glfwSetCursorEnterCallback": _glfwSetCursorEnterCallback, "_emscripten_glCopyTexImage2D": _emscripten_glCopyTexImage2D, "_emscripten_glTexImage2D": _emscripten_glTexImage2D, "DYNAMICTOP_PTR": DYNAMICTOP_PTR, "tempDoublePtr": tempDoublePtr, "ABORT": ABORT, "STACKTOP": STACKTOP, "STACK_MAX": STACK_MAX, "cttz_i8": cttz_i8 };
+Module.asmLibraryArg = { "abort": abort, "assert": assert, "enlargeMemory": enlargeMemory, "getTotalMemory": getTotalMemory, "abortOnCannotGrowMemory": abortOnCannotGrowMemory, "abortStackOverflow": abortStackOverflow, "nullFunc_viiiii": nullFunc_viiiii, "nullFunc_vd": nullFunc_vd, "nullFunc_vid": nullFunc_vid, "nullFunc_vi": nullFunc_vi, "nullFunc_vii": nullFunc_vii, "nullFunc_ii": nullFunc_ii, "nullFunc_viddd": nullFunc_viddd, "nullFunc_vidd": nullFunc_vidd, "nullFunc_iiii": nullFunc_iiii, "nullFunc_viiiiiiii": nullFunc_viiiiiiii, "nullFunc_viiiiii": nullFunc_viiiiii, "nullFunc_viii": nullFunc_viii, "nullFunc_vidddd": nullFunc_vidddd, "nullFunc_vdi": nullFunc_vdi, "nullFunc_viiiiiii": nullFunc_viiiiiii, "nullFunc_viiiiiiiii": nullFunc_viiiiiiiii, "nullFunc_iii": nullFunc_iii, "nullFunc_i": nullFunc_i, "nullFunc_vdddddd": nullFunc_vdddddd, "nullFunc_vdddd": nullFunc_vdddd, "nullFunc_vdd": nullFunc_vdd, "nullFunc_v": nullFunc_v, "nullFunc_viid": nullFunc_viid, "nullFunc_viiii": nullFunc_viiii, "invoke_viiiii": invoke_viiiii, "invoke_vd": invoke_vd, "invoke_vid": invoke_vid, "invoke_vi": invoke_vi, "invoke_vii": invoke_vii, "invoke_ii": invoke_ii, "invoke_viddd": invoke_viddd, "invoke_vidd": invoke_vidd, "invoke_iiii": invoke_iiii, "invoke_viiiiiiii": invoke_viiiiiiii, "invoke_viiiiii": invoke_viiiiii, "invoke_viii": invoke_viii, "invoke_vidddd": invoke_vidddd, "invoke_vdi": invoke_vdi, "invoke_viiiiiii": invoke_viiiiiii, "invoke_viiiiiiiii": invoke_viiiiiiiii, "invoke_iii": invoke_iii, "invoke_i": invoke_i, "invoke_vdddddd": invoke_vdddddd, "invoke_vdddd": invoke_vdddd, "invoke_vdd": invoke_vdd, "invoke_v": invoke_v, "invoke_viid": invoke_viid, "invoke_viiii": invoke_viiii, "_emscripten_glGetTexParameterfv": _emscripten_glGetTexParameterfv, "_glUseProgram": _glUseProgram, "_emscripten_glShaderSource": _emscripten_glShaderSource, "_glfwCreateWindow": _glfwCreateWindow, "_emscripten_glReleaseShaderCompiler": _emscripten_glReleaseShaderCompiler, "_emscripten_glBlendFuncSeparate": _emscripten_glBlendFuncSeparate, "_emscripten_glUniform4iv": _emscripten_glUniform4iv, "_emscripten_glVertexAttribPointer": _emscripten_glVertexAttribPointer, "_emscripten_glGetIntegerv": _emscripten_glGetIntegerv, "_emscripten_glCullFace": _emscripten_glCullFace, "_emscripten_glIsProgram": _emscripten_glIsProgram, "_emscripten_glStencilMaskSeparate": _emscripten_glStencilMaskSeparate, "_emscripten_glViewport": _emscripten_glViewport, "_emscripten_glFrontFace": _emscripten_glFrontFace, "_alBufferData": _alBufferData, "___assert_fail": ___assert_fail, "_glDeleteProgram": _glDeleteProgram, "_emscripten_glUniform3fv": _emscripten_glUniform3fv, "_emscripten_glPolygonOffset": _emscripten_glPolygonOffset, "_emscripten_glUseProgram": _emscripten_glUseProgram, "_emscripten_glBlendColor": _emscripten_glBlendColor, "_glBindBuffer": _glBindBuffer, "_emscripten_glDepthFunc": _emscripten_glDepthFunc, "_glGetShaderInfoLog": _glGetShaderInfoLog, "_alSource3f": _alSource3f, "_emscripten_set_fullscreenchange_callback": _emscripten_set_fullscreenchange_callback, "_emscripten_set_touchmove_callback": _emscripten_set_touchmove_callback, "_emscripten_set_main_loop_timing": _emscripten_set_main_loop_timing, "_emscripten_set_gamepaddisconnected_callback": _emscripten_set_gamepaddisconnected_callback, "_glDisable": _glDisable, "_glBlendFunc": _glBlendFunc, "_emscripten_glDisableVertexAttribArray": _emscripten_glDisableVertexAttribArray, "_glGetAttribLocation": _glGetAttribLocation, "_glDisableVertexAttribArray": _glDisableVertexAttribArray, "_glCreateShader": _glCreateShader, "_alcGetString": _alcGetString, "_emscripten_glSampleCoverage": _emscripten_glSampleCoverage, "_emscripten_glVertexPointer": _emscripten_glVertexPointer, "_emscripten_set_touchstart_callback": _emscripten_set_touchstart_callback, "emscriptenWebGLComputeImageSize": emscriptenWebGLComputeImageSize, "_emscripten_glGetBooleanv": _emscripten_glGetBooleanv, "_emscripten_glGetShaderSource": _emscripten_glGetShaderSource, "_glUniform4f": _glUniform4f, "_llvm_stacksave": _llvm_stacksave, "_emscripten_glUniform1i": _emscripten_glUniform1i, "_emscripten_glStencilFuncSeparate": _emscripten_glStencilFuncSeparate, "_emscripten_glFrustum": _emscripten_glFrustum, "_emscripten_glGenBuffers": _emscripten_glGenBuffers, "_emscripten_glDeleteObjectARB": _emscripten_glDeleteObjectARB, "_glfwSetWindowSizeCallback": _glfwSetWindowSizeCallback, "_emscripten_glGetShaderPrecisionFormat": _emscripten_glGetShaderPrecisionFormat, "_glfwInit": _glfwInit, "_emscripten_glGetPointerv": _emscripten_glGetPointerv, "_glGenBuffers": _glGenBuffers, "_glShaderSource": _glShaderSource, "_emscripten_glGetString": _emscripten_glGetString, "_emscripten_glIsFramebuffer": _emscripten_glIsFramebuffer, "_emscripten_glIsEnabled": _emscripten_glIsEnabled, "_emscripten_glScissor": _emscripten_glScissor, "_emscripten_glVertexAttrib4fv": _emscripten_glVertexAttrib4fv, "_emscripten_glFramebufferTexture2D": _emscripten_glFramebufferTexture2D, "_emscripten_glTexParameteriv": _emscripten_glTexParameteriv, "_emscripten_glBindProgramARB": _emscripten_glBindProgramARB, "_emscripten_glStencilOpSeparate": _emscripten_glStencilOpSeparate, "_alSourcePlay": _alSourcePlay, "_alSourcei": _alSourcei, "_emscripten_glFramebufferRenderbuffer": _emscripten_glFramebufferRenderbuffer, "___syscall140": ___syscall140, "_glfwSetErrorCallback": _glfwSetErrorCallback, "_glfwDefaultWindowHints": _glfwDefaultWindowHints, "_emscripten_glIsBuffer": _emscripten_glIsBuffer, "___syscall146": ___syscall146, "_glfwDestroyWindow": _glfwDestroyWindow, "_emscripten_glGetActiveAttrib": _emscripten_glGetActiveAttrib, "_emscripten_glAttachShader": _emscripten_glAttachShader, "_glVertexAttribPointer": _glVertexAttribPointer, "_emscripten_glUniform2i": _emscripten_glUniform2i, "_emscripten_glUniform2f": _emscripten_glUniform2f, "_alcCreateContext": _alcCreateContext, "_glfwTerminate": _glfwTerminate, "_emscripten_glTexParameterfv": _emscripten_glTexParameterfv, "_emscripten_glUniformMatrix2fv": _emscripten_glUniformMatrix2fv, "_glGetProgramInfoLog": _glGetProgramInfoLog, "_alcGetContextsDevice": _alcGetContextsDevice, "_emscripten_glTexParameterf": _emscripten_glTexParameterf, "_emscripten_glGetAttachedShaders": _emscripten_glGetAttachedShaders, "_emscripten_glGenTextures": _emscripten_glGenTextures, "_emscripten_glTexParameteri": _emscripten_glTexParameteri, "_llvm_stackrestore": _llvm_stackrestore, "_glfwMakeContextCurrent": _glfwMakeContextCurrent, "_emscripten_glClear": _emscripten_glClear, "_glDrawElements": _glDrawElements, "_alGetSourcei": _alGetSourcei, "_glBufferSubData": _glBufferSubData, "_alcMakeContextCurrent": _alcMakeContextCurrent, "_emscripten_glGenVertexArrays": _emscripten_glGenVertexArrays, "_emscripten_glVertexAttrib2fv": _emscripten_glVertexAttrib2fv, "_glViewport": _glViewport, "_alSourceQueueBuffers": _alSourceQueueBuffers, "_emscripten_glGetTexParameteriv": _emscripten_glGetTexParameteriv, "___setErrNo": ___setErrNo, "_eglGetProcAddress": _eglGetProcAddress, "_alcGetCurrentContext": _alcGetCurrentContext, "_emscripten_glBindAttribLocation": _emscripten_glBindAttribLocation, "_glDeleteTextures": _glDeleteTextures, "_glDepthFunc": _glDepthFunc, "_emscripten_glClientActiveTexture": _emscripten_glClientActiveTexture, "_emscripten_glVertexAttrib2f": _emscripten_glVertexAttrib2f, "_emscripten_glFlush": _emscripten_glFlush, "_emscripten_glCheckFramebufferStatus": _emscripten_glCheckFramebufferStatus, "_emscripten_glGenerateMipmap": _emscripten_glGenerateMipmap, "_emscripten_glGetError": _emscripten_glGetError, "_alGenBuffers": _alGenBuffers, "_emscripten_glClearDepthf": _emscripten_glClearDepthf, "_emscripten_glBufferData": _emscripten_glBufferData, "_emscripten_glUniform3i": _emscripten_glUniform3i, "_emscripten_glRotatef": _emscripten_glRotatef, "_emscripten_glDeleteShader": _emscripten_glDeleteShader, "_glEnable": _glEnable, "_emscripten_glReadPixels": _emscripten_glReadPixels, "_emscripten_glMatrixMode": _emscripten_glMatrixMode, "_alDeleteSources": _alDeleteSources, "_emscripten_glClearStencil": _emscripten_glClearStencil, "_emscripten_glGetUniformLocation": _emscripten_glGetUniformLocation, "emscriptenWebGLGet": emscriptenWebGLGet, "_alSourceUnqueueBuffers": _alSourceUnqueueBuffers, "_emscripten_glEnableVertexAttribArray": _emscripten_glEnableVertexAttribArray, "_alGetError": _alGetError, "_emscripten_get_now": _emscripten_get_now, "_emscripten_glNormalPointer": _emscripten_glNormalPointer, "_glAttachShader": _glAttachShader, "_emscripten_glTexCoordPointer": _emscripten_glTexCoordPointer, "_emscripten_glEnable": _emscripten_glEnable, "_glCreateProgram": _glCreateProgram, "_glUniformMatrix4fv": _glUniformMatrix4fv, "_emscripten_glClearDepth": _emscripten_glClearDepth, "___lock": ___lock, "emscriptenWebGLGetTexPixelData": emscriptenWebGLGetTexPixelData, "___syscall6": ___syscall6, "___syscall5": ___syscall5, "___syscall145": ___syscall145, "_emscripten_glVertexAttrib3f": _emscripten_glVertexAttrib3f, "_time": _time, "_emscripten_glVertexAttrib1f": _emscripten_glVertexAttrib1f, "_emscripten_glGetFramebufferAttachmentParameteriv": _emscripten_glGetFramebufferAttachmentParameteriv, "_emscripten_glBlendEquationSeparate": _emscripten_glBlendEquationSeparate, "_exit": _exit, "_emscripten_glBindFramebuffer": _emscripten_glBindFramebuffer, "_glGetString": _glGetString, "_emscripten_glUniform4i": _emscripten_glUniform4i, "_alSourcef": _alSourcef, "_emscripten_glDrawRangeElements": _emscripten_glDrawRangeElements, "_glCullFace": _glCullFace, "_llvm_pow_f64": _llvm_pow_f64, "_emscripten_set_keypress_callback": _emscripten_set_keypress_callback, "__emscripten_sample_gamepad_data": __emscripten_sample_gamepad_data, "_emscripten_get_gamepad_status": _emscripten_get_gamepad_status, "_emscripten_glUniform4f": _emscripten_glUniform4f, "_glfwSwapInterval": _glfwSwapInterval, "_glfwGetVideoModes": _glfwGetVideoModes, "_emscripten_set_click_callback": _emscripten_set_click_callback, "_emscripten_glShaderBinary": _emscripten_glShaderBinary, "_emscripten_glDrawElements": _emscripten_glDrawElements, "_emscripten_glBlendFunc": _emscripten_glBlendFunc, "_emscripten_get_num_gamepads": _emscripten_get_num_gamepads, "___syscall221": ___syscall221, "_glCompressedTexImage2D": _glCompressedTexImage2D, "_emscripten_glUniform1iv": _emscripten_glUniform1iv, "_emscripten_glGetVertexAttribPointerv": _emscripten_glGetVertexAttribPointerv, "_glClearDepthf": _glClearDepthf, "_emscripten_glCompressedTexSubImage2D": _emscripten_glCompressedTexSubImage2D, "emscriptenWebGLGetUniform": emscriptenWebGLGetUniform, "_emscripten_glGenRenderbuffers": _emscripten_glGenRenderbuffers, "_emscripten_glDeleteVertexArrays": _emscripten_glDeleteVertexArrays, "_glfwSetWindowShouldClose": _glfwSetWindowShouldClose, "_emscripten_glUniform1fv": _emscripten_glUniform1fv, "_emscripten_glGetActiveUniform": _emscripten_glGetActiveUniform, "_glBindTexture": _glBindTexture, "_emscripten_glUniform3iv": _emscripten_glUniform3iv, "_emscripten_glUniform2iv": _emscripten_glUniform2iv, "_emscripten_glHint": _emscripten_glHint, "_glfwSetCharCallback": _glfwSetCharCallback, "emscriptenWebGLGetVertexAttrib": emscriptenWebGLGetVertexAttrib, "_emscripten_glLoadMatrixf": _emscripten_glLoadMatrixf, "_emscripten_glDeleteProgram": _emscripten_glDeleteProgram, "_emscripten_glDeleteRenderbuffers": _emscripten_glDeleteRenderbuffers, "_glfwSetScrollCallback": _glfwSetScrollCallback, "_emscripten_glDrawElementsInstanced": _emscripten_glDrawElementsInstanced, "_emscripten_glVertexAttrib4f": _emscripten_glVertexAttrib4f, "_alcDestroyContext": _alcDestroyContext, "_glDrawArrays": _glDrawArrays, "_emscripten_glTexSubImage2D": _emscripten_glTexSubImage2D, "_emscripten_memcpy_big": _emscripten_memcpy_big, "_emscripten_glPixelStorei": _emscripten_glPixelStorei, "_glCompileShader": _glCompileShader, "_alListenerf": _alListenerf, "_emscripten_glUniformMatrix3fv": _emscripten_glUniformMatrix3fv, "_emscripten_glColorPointer": _emscripten_glColorPointer, "_emscripten_glGetBufferParameteriv": _emscripten_glGetBufferParameteriv, "_emscripten_glFinish": _emscripten_glFinish, "_glfwSwapBuffers": _glfwSwapBuffers, "_glGetFloatv": _glGetFloatv, "_emscripten_asm_const_iii": _emscripten_asm_const_iii, "_emscripten_glDepthMask": _emscripten_glDepthMask, "_glfwSetWindowIconifyCallback": _glfwSetWindowIconifyCallback, "_emscripten_glDrawBuffers": _emscripten_glDrawBuffers, "_alSourceStop": _alSourceStop, "_glFrontFace": _glFrontFace, "_emscripten_glGetObjectParameterivARB": _emscripten_glGetObjectParameterivARB, "_emscripten_exit_pointerlock": _emscripten_exit_pointerlock, "_alcCloseDevice": _alcCloseDevice, "_glUniform1i": _glUniform1i, "_glEnableVertexAttribArray": _glEnableVertexAttribArray, "_emscripten_glStencilFunc": _emscripten_glStencilFunc, "_abort": _abort, "_emscripten_glGetUniformiv": _emscripten_glGetUniformiv, "_emscripten_glUniform2fv": _emscripten_glUniform2fv, "_glDeleteBuffers": _glDeleteBuffers, "_glBufferData": _glBufferData, "_glTexImage2D": _glTexImage2D, "_emscripten_glGetShaderiv": _emscripten_glGetShaderiv, "_glfwSetKeyCallback": _glfwSetKeyCallback, "_emscripten_glGenFramebuffers": _emscripten_glGenFramebuffers, "_emscripten_glUniformMatrix4fv": _emscripten_glUniformMatrix4fv, "_emscripten_glLoadIdentity": _emscripten_glLoadIdentity, "_glDeleteShader": _glDeleteShader, "_emscripten_glUniform1f": _emscripten_glUniform1f, "_glGetProgramiv": _glGetProgramiv, "_llvm_exp2_f32": _llvm_exp2_f32, "_emscripten_glIsRenderbuffer": _emscripten_glIsRenderbuffer, "_glfwGetTime": _glfwGetTime, "_emscripten_glRenderbufferStorage": _emscripten_glRenderbufferStorage, "_emscripten_set_gamepadconnected_callback": _emscripten_set_gamepadconnected_callback, "_alListener3f": _alListener3f, "_emscripten_glGetVertexAttribiv": _emscripten_glGetVertexAttribiv, "_emscripten_glBindVertexArray": _emscripten_glBindVertexArray, "_emscripten_glDrawArraysInstanced": _emscripten_glDrawArraysInstanced, "_emscripten_set_touchcancel_callback": _emscripten_set_touchcancel_callback, "_emscripten_glCreateShader": _emscripten_glCreateShader, "_emscripten_glStencilMask": _emscripten_glStencilMask, "_emscripten_glDeleteTextures": _emscripten_glDeleteTextures, "_glfwGetKey": _glfwGetKey, "_glfwGetPrimaryMonitor": _glfwGetPrimaryMonitor, "_glLinkProgram": _glLinkProgram, "_emscripten_glVertexAttribDivisor": _emscripten_glVertexAttribDivisor, "_emscripten_set_touchend_callback": _emscripten_set_touchend_callback, "_emscripten_glGetUniformfv": _emscripten_glGetUniformfv, "_emscripten_glGetVertexAttribfv": _emscripten_glGetVertexAttribfv, "_emscripten_glGetRenderbufferParameteriv": _emscripten_glGetRenderbufferParameteriv, "_emscripten_glDeleteFramebuffers": _emscripten_glDeleteFramebuffers, "_glGetShaderiv": _glGetShaderiv, "_emscripten_glVertexAttrib3fv": _emscripten_glVertexAttrib3fv, "_glGetUniformLocation": _glGetUniformLocation, "_emscripten_glGetInfoLogARB": _emscripten_glGetInfoLogARB, "_emscripten_glCompileShader": _emscripten_glCompileShader, "_glClear": _glClear, "_glGenTextures": _glGenTextures, "_emscripten_glDisable": _emscripten_glDisable, "_emscripten_glDepthRangef": _emscripten_glDepthRangef, "__exit": __exit, "_emscripten_glLineWidth": _emscripten_glLineWidth, "_emscripten_glUniform3f": _emscripten_glUniform3f, "_emscripten_glGetShaderInfoLog": _emscripten_glGetShaderInfoLog, "_emscripten_glStencilOp": _emscripten_glStencilOp, "_glBindAttribLocation": _glBindAttribLocation, "_glPixelStorei": _glPixelStorei, "_emscripten_glColorMask": _emscripten_glColorMask, "_emscripten_glLinkProgram": _emscripten_glLinkProgram, "_emscripten_glBlendEquation": _emscripten_glBlendEquation, "_emscripten_glIsTexture": _emscripten_glIsTexture, "_alDeleteBuffers": _alDeleteBuffers, "_emscripten_glGetProgramiv": _emscripten_glGetProgramiv, "_emscripten_glVertexAttrib1fv": _emscripten_glVertexAttrib1fv, "_emscripten_glBindTexture": _emscripten_glBindTexture, "_glfwSetMouseButtonCallback": _glfwSetMouseButtonCallback, "_glfwGetCursorPos": _glfwGetCursorPos, "_emscripten_glActiveTexture": _emscripten_glActiveTexture, "_emscripten_glDeleteBuffers": _emscripten_glDeleteBuffers, "___syscall54": ___syscall54, "___unlock": ___unlock, "_emscripten_glBufferSubData": _emscripten_glBufferSubData, "_emscripten_glDepthRange": _emscripten_glDepthRange, "_emscripten_set_main_loop": _emscripten_set_main_loop, "_emscripten_glBindRenderbuffer": _emscripten_glBindRenderbuffer, "_emscripten_glGetProgramInfoLog": _emscripten_glGetProgramInfoLog, "_glfwWindowHint": _glfwWindowHint, "_alGenSources": _alGenSources, "_glfwSetCursorPosCallback": _glfwSetCursorPosCallback, "_emscripten_glIsShader": _emscripten_glIsShader, "_emscripten_glUniform4fv": _emscripten_glUniform4fv, "_alcOpenDevice": _alcOpenDevice, "_emscripten_glDrawArrays": _emscripten_glDrawArrays, "_emscripten_glCompressedTexImage2D": _emscripten_glCompressedTexImage2D, "_emscripten_glClearColor": _emscripten_glClearColor, "_emscripten_glCreateProgram": _emscripten_glCreateProgram, "_emscripten_glCopyTexSubImage2D": _emscripten_glCopyTexSubImage2D, "_emscripten_glGetAttribLocation": _emscripten_glGetAttribLocation, "_glTexParameteri": _glTexParameteri, "_emscripten_glValidateProgram": _emscripten_glValidateProgram, "_emscripten_glBindBuffer": _emscripten_glBindBuffer, "_emscripten_glGetFloatv": _emscripten_glGetFloatv, "_emscripten_glDetachShader": _emscripten_glDetachShader, "_glClearColor": _glClearColor, "_emscripten_glEnableClientState": _emscripten_glEnableClientState, "_glTexParameterf": _glTexParameterf, "_glfwSetCursorEnterCallback": _glfwSetCursorEnterCallback, "_emscripten_glCopyTexImage2D": _emscripten_glCopyTexImage2D, "_emscripten_glTexImage2D": _emscripten_glTexImage2D, "DYNAMICTOP_PTR": DYNAMICTOP_PTR, "tempDoublePtr": tempDoublePtr, "ABORT": ABORT, "STACKTOP": STACKTOP, "STACK_MAX": STACK_MAX, "cttz_i8": cttz_i8 };
 // EMSCRIPTEN_START_ASM
 var asm = (function(global, env, buffer) {
-  'almost asm';
+  'use asm';
   
   
-  var Int8View = global.Int8Array;
-  var Int16View = global.Int16Array;
-  var Int32View = global.Int32Array;
-  var Uint8View = global.Uint8Array;
-  var Uint16View = global.Uint16Array;
-  var Uint32View = global.Uint32Array;
-  var Float32View = global.Float32Array;
-  var Float64View = global.Float64Array;
-  var HEAP8 = new Int8View(buffer);
-  var HEAP16 = new Int16View(buffer);
-  var HEAP32 = new Int32View(buffer);
-  var HEAPU8 = new Uint8View(buffer);
-  var HEAPU16 = new Uint16View(buffer);
-  var HEAPU32 = new Uint32View(buffer);
-  var HEAPF32 = new Float32View(buffer);
-  var HEAPF64 = new Float64View(buffer);
-  var byteLength = global.byteLength;
+  var HEAP8 = new global.Int8Array(buffer);
+  var HEAP16 = new global.Int16Array(buffer);
+  var HEAP32 = new global.Int32Array(buffer);
+  var HEAPU8 = new global.Uint8Array(buffer);
+  var HEAPU16 = new global.Uint16Array(buffer);
+  var HEAPU32 = new global.Uint32Array(buffer);
+  var HEAPF32 = new global.Float32Array(buffer);
+  var HEAPF64 = new global.Float64Array(buffer);
 
 
   var DYNAMICTOP_PTR=env.DYNAMICTOP_PTR|0;
@@ -11114,25 +11003,25 @@ var asm = (function(global, env, buffer) {
   var _emscripten_set_fullscreenchange_callback=env._emscripten_set_fullscreenchange_callback;
   var _emscripten_set_touchmove_callback=env._emscripten_set_touchmove_callback;
   var _emscripten_set_main_loop_timing=env._emscripten_set_main_loop_timing;
+  var _emscripten_set_gamepaddisconnected_callback=env._emscripten_set_gamepaddisconnected_callback;
   var _glDisable=env._glDisable;
   var _glBlendFunc=env._glBlendFunc;
   var _emscripten_glDisableVertexAttribArray=env._emscripten_glDisableVertexAttribArray;
   var _glGetAttribLocation=env._glGetAttribLocation;
   var _glDisableVertexAttribArray=env._glDisableVertexAttribArray;
   var _glCreateShader=env._glCreateShader;
-  var _emscripten_glReadPixels=env._emscripten_glReadPixels;
   var _alcGetString=env._alcGetString;
   var _emscripten_glSampleCoverage=env._emscripten_glSampleCoverage;
   var _emscripten_glVertexPointer=env._emscripten_glVertexPointer;
   var _emscripten_set_touchstart_callback=env._emscripten_set_touchstart_callback;
   var emscriptenWebGLComputeImageSize=env.emscriptenWebGLComputeImageSize;
   var _emscripten_glGetBooleanv=env._emscripten_glGetBooleanv;
-  var ___syscall221=env.___syscall221;
+  var _emscripten_glGetShaderSource=env._emscripten_glGetShaderSource;
   var _glUniform4f=env._glUniform4f;
   var _llvm_stacksave=env._llvm_stacksave;
   var _emscripten_glUniform1i=env._emscripten_glUniform1i;
   var _emscripten_glStencilFuncSeparate=env._emscripten_glStencilFuncSeparate;
-  var _emscripten_glLoadMatrixf=env._emscripten_glLoadMatrixf;
+  var _emscripten_glFrustum=env._emscripten_glFrustum;
   var _emscripten_glGenBuffers=env._emscripten_glGenBuffers;
   var _emscripten_glDeleteObjectARB=env._emscripten_glDeleteObjectARB;
   var _glfwSetWindowSizeCallback=env._glfwSetWindowSizeCallback;
@@ -11169,12 +11058,11 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glTexParameterfv=env._emscripten_glTexParameterfv;
   var _emscripten_glUniformMatrix2fv=env._emscripten_glUniformMatrix2fv;
   var _glGetProgramInfoLog=env._glGetProgramInfoLog;
-  var _emscripten_glGetUniformiv=env._emscripten_glGetUniformiv;
+  var _alcGetContextsDevice=env._alcGetContextsDevice;
   var _emscripten_glTexParameterf=env._emscripten_glTexParameterf;
   var _emscripten_glGetAttachedShaders=env._emscripten_glGetAttachedShaders;
   var _emscripten_glGenTextures=env._emscripten_glGenTextures;
   var _emscripten_glTexParameteri=env._emscripten_glTexParameteri;
-  var _emscripten_glIsShader=env._emscripten_glIsShader;
   var _llvm_stackrestore=env._llvm_stackrestore;
   var _glfwMakeContextCurrent=env._glfwMakeContextCurrent;
   var _emscripten_glClear=env._emscripten_glClear;
@@ -11206,7 +11094,7 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glRotatef=env._emscripten_glRotatef;
   var _emscripten_glDeleteShader=env._emscripten_glDeleteShader;
   var _glEnable=env._glEnable;
-  var _glGenTextures=env._glGenTextures;
+  var _emscripten_glReadPixels=env._emscripten_glReadPixels;
   var _emscripten_glMatrixMode=env._emscripten_glMatrixMode;
   var _alDeleteSources=env._alDeleteSources;
   var _emscripten_glClearStencil=env._emscripten_glClearStencil;
@@ -11252,6 +11140,7 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glDrawElements=env._emscripten_glDrawElements;
   var _emscripten_glBlendFunc=env._emscripten_glBlendFunc;
   var _emscripten_get_num_gamepads=env._emscripten_get_num_gamepads;
+  var ___syscall221=env.___syscall221;
   var _glCompressedTexImage2D=env._glCompressedTexImage2D;
   var _emscripten_glUniform1iv=env._emscripten_glUniform1iv;
   var _emscripten_glGetVertexAttribPointerv=env._emscripten_glGetVertexAttribPointerv;
@@ -11269,7 +11158,7 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glHint=env._emscripten_glHint;
   var _glfwSetCharCallback=env._glfwSetCharCallback;
   var emscriptenWebGLGetVertexAttrib=env.emscriptenWebGLGetVertexAttrib;
-  var _glGetFloatv=env._glGetFloatv;
+  var _emscripten_glLoadMatrixf=env._emscripten_glLoadMatrixf;
   var _emscripten_glDeleteProgram=env._emscripten_glDeleteProgram;
   var _emscripten_glDeleteRenderbuffers=env._emscripten_glDeleteRenderbuffers;
   var _glfwSetScrollCallback=env._glfwSetScrollCallback;
@@ -11286,8 +11175,8 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glColorPointer=env._emscripten_glColorPointer;
   var _emscripten_glGetBufferParameteriv=env._emscripten_glGetBufferParameteriv;
   var _emscripten_glFinish=env._emscripten_glFinish;
-  var _emscripten_request_pointerlock=env._emscripten_request_pointerlock;
-  var _emscripten_set_gamepaddisconnected_callback=env._emscripten_set_gamepaddisconnected_callback;
+  var _glfwSwapBuffers=env._glfwSwapBuffers;
+  var _glGetFloatv=env._glGetFloatv;
   var _emscripten_asm_const_iii=env._emscripten_asm_const_iii;
   var _emscripten_glDepthMask=env._emscripten_glDepthMask;
   var _glfwSetWindowIconifyCallback=env._glfwSetWindowIconifyCallback;
@@ -11301,9 +11190,8 @@ var asm = (function(global, env, buffer) {
   var _glEnableVertexAttribArray=env._glEnableVertexAttribArray;
   var _emscripten_glStencilFunc=env._emscripten_glStencilFunc;
   var _abort=env._abort;
-  var _alcGetContextsDevice=env._alcGetContextsDevice;
+  var _emscripten_glGetUniformiv=env._emscripten_glGetUniformiv;
   var _emscripten_glUniform2fv=env._emscripten_glUniform2fv;
-  var _glfwGetCursorPos=env._glfwGetCursorPos;
   var _glDeleteBuffers=env._glDeleteBuffers;
   var _glBufferData=env._glBufferData;
   var _glTexImage2D=env._glTexImage2D;
@@ -11336,13 +11224,14 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glGetUniformfv=env._emscripten_glGetUniformfv;
   var _emscripten_glGetVertexAttribfv=env._emscripten_glGetVertexAttribfv;
   var _emscripten_glGetRenderbufferParameteriv=env._emscripten_glGetRenderbufferParameteriv;
+  var _emscripten_glDeleteFramebuffers=env._emscripten_glDeleteFramebuffers;
   var _glGetShaderiv=env._glGetShaderiv;
   var _emscripten_glVertexAttrib3fv=env._emscripten_glVertexAttrib3fv;
   var _glGetUniformLocation=env._glGetUniformLocation;
   var _emscripten_glGetInfoLogARB=env._emscripten_glGetInfoLogARB;
   var _emscripten_glCompileShader=env._emscripten_glCompileShader;
   var _glClear=env._glClear;
-  var _emscripten_glFrustum=env._emscripten_glFrustum;
+  var _glGenTextures=env._glGenTextures;
   var _emscripten_glDisable=env._emscripten_glDisable;
   var _emscripten_glDepthRangef=env._emscripten_glDepthRangef;
   var __exit=env.__exit;
@@ -11361,13 +11250,12 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glVertexAttrib1fv=env._emscripten_glVertexAttrib1fv;
   var _emscripten_glBindTexture=env._emscripten_glBindTexture;
   var _glfwSetMouseButtonCallback=env._glfwSetMouseButtonCallback;
-  var _emscripten_get_pointerlock_status=env._emscripten_get_pointerlock_status;
+  var _glfwGetCursorPos=env._glfwGetCursorPos;
   var _emscripten_glActiveTexture=env._emscripten_glActiveTexture;
   var _emscripten_glDeleteBuffers=env._emscripten_glDeleteBuffers;
   var ___syscall54=env.___syscall54;
   var ___unlock=env.___unlock;
   var _emscripten_glBufferSubData=env._emscripten_glBufferSubData;
-  var _glfwSwapBuffers=env._glfwSwapBuffers;
   var _emscripten_glDepthRange=env._emscripten_glDepthRange;
   var _emscripten_set_main_loop=env._emscripten_set_main_loop;
   var _emscripten_glBindRenderbuffer=env._emscripten_glBindRenderbuffer;
@@ -11375,13 +11263,12 @@ var asm = (function(global, env, buffer) {
   var _glfwWindowHint=env._glfwWindowHint;
   var _alGenSources=env._alGenSources;
   var _glfwSetCursorPosCallback=env._glfwSetCursorPosCallback;
-  var _emscripten_glDeleteFramebuffers=env._emscripten_glDeleteFramebuffers;
+  var _emscripten_glIsShader=env._emscripten_glIsShader;
   var _emscripten_glUniform4fv=env._emscripten_glUniform4fv;
   var _alcOpenDevice=env._alcOpenDevice;
   var _emscripten_glDrawArrays=env._emscripten_glDrawArrays;
   var _emscripten_glCompressedTexImage2D=env._emscripten_glCompressedTexImage2D;
   var _emscripten_glClearColor=env._emscripten_glClearColor;
-  var _emscripten_glGetShaderSource=env._emscripten_glGetShaderSource;
   var _emscripten_glCreateProgram=env._emscripten_glCreateProgram;
   var _emscripten_glCopyTexSubImage2D=env._emscripten_glCopyTexSubImage2D;
   var _emscripten_glGetAttribLocation=env._emscripten_glGetAttribLocation;
@@ -11397,20 +11284,6 @@ var asm = (function(global, env, buffer) {
   var _emscripten_glCopyTexImage2D=env._emscripten_glCopyTexImage2D;
   var _emscripten_glTexImage2D=env._emscripten_glTexImage2D;
   var tempFloat = 0.0;
-
-function _emscripten_replace_memory(newBuffer) {
-  if ((byteLength(newBuffer) & 0xffffff || byteLength(newBuffer) <= 0xffffff) || byteLength(newBuffer) > 0x80000000) return false;
-  HEAP8 = new Int8View(newBuffer);
-  HEAP16 = new Int16View(newBuffer);
-  HEAP32 = new Int32View(newBuffer);
-  HEAPU8 = new Uint8View(newBuffer);
-  HEAPU16 = new Uint16View(newBuffer);
-  HEAPU32 = new Uint32View(newBuffer);
-  HEAPF32 = new Float32View(newBuffer);
-  HEAPF64 = new Float64View(newBuffer);
-  buffer = newBuffer;
-  return true;
-}
 
 // EMSCRIPTEN_START_FUNCS
 
@@ -16740,24 +16613,9 @@ function _EmscriptenMouseCallback($0,$1,$2) {
  $0 = $0|0;
  $1 = $1|0;
  $2 = $2|0;
- var $3 = 0, $4 = 0, $5 = 0, $6 = 0, label = 0, sp = 0;
+ var label = 0, sp = 0;
  sp = STACKTOP;
- STACKTOP = STACKTOP + 272|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(272|0);
- $3 = sp;
- $4 = ($0|0)==(4);
- if (!($4)) {
-  STACKTOP = sp;return 0;
- }
- (_emscripten_get_pointerlock_status(($3|0))|0);
- $5 = HEAP32[$3>>2]|0;
- $6 = ($5|0)==(0);
- if ($6) {
-  (_emscripten_request_pointerlock((0|0),1)|0);
- } else {
-  (_emscripten_exit_pointerlock()|0);
-  (_emscripten_get_pointerlock_status(($3|0))|0);
- }
- STACKTOP = sp;return 0;
+ return 0;
 }
 function _EmscriptenTouchCallback($0,$1,$2) {
  $0 = $0|0;
@@ -17446,7 +17304,7 @@ function _ImageFormat($0,$1) {
 function _LoadTextureFromImage($0,$1) {
  $0 = $0|0;
  $1 = $1|0;
- var $$sroa$12$0$$sroa_idx6 = 0, $$sroa$15$0$$sroa_idx8 = 0, $$sroa$6$0$$sroa_idx2 = 0, $$sroa$9$0$$sroa_idx4 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $vararg_buffer = 0, $vararg_ptr1 = 0, $vararg_ptr2 = 0, $vararg_ptr3 = 0;
+ var $$sroa$10$0$$sroa_idx6 = 0, $$sroa$12$0$$sroa_idx8 = 0, $$sroa$6$0$$sroa_idx2 = 0, $$sroa$8$0$$sroa_idx4 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $vararg_buffer = 0, $vararg_ptr1 = 0, $vararg_ptr2 = 0, $vararg_ptr3 = 0;
  var $vararg_ptr4 = 0, label = 0, sp = 0;
  sp = STACKTOP;
  STACKTOP = STACKTOP + 32|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(32|0);
@@ -17476,12 +17334,12 @@ function _LoadTextureFromImage($0,$1) {
  HEAP32[$0>>2] = $11;
  $$sroa$6$0$$sroa_idx2 = ((($0)) + 4|0);
  HEAP32[$$sroa$6$0$$sroa_idx2>>2] = $12;
- $$sroa$9$0$$sroa_idx4 = ((($0)) + 8|0);
- HEAP32[$$sroa$9$0$$sroa_idx4>>2] = $13;
- $$sroa$12$0$$sroa_idx6 = ((($0)) + 12|0);
- HEAP32[$$sroa$12$0$$sroa_idx6>>2] = $10;
- $$sroa$15$0$$sroa_idx8 = ((($0)) + 16|0);
- HEAP32[$$sroa$15$0$$sroa_idx8>>2] = $8;
+ $$sroa$8$0$$sroa_idx4 = ((($0)) + 8|0);
+ HEAP32[$$sroa$8$0$$sroa_idx4>>2] = $13;
+ $$sroa$10$0$$sroa_idx6 = ((($0)) + 12|0);
+ HEAP32[$$sroa$10$0$$sroa_idx6>>2] = $10;
+ $$sroa$12$0$$sroa_idx8 = ((($0)) + 16|0);
+ HEAP32[$$sroa$12$0$$sroa_idx8>>2] = $8;
  STACKTOP = sp;return;
 }
 function _UnloadImage($0) {
@@ -26657,8 +26515,8 @@ function _stbi__stdio_eof($0) {
 function _LoadImage($0,$1) {
  $0 = $0|0;
  $1 = $1|0;
- var $$sink = 0, $$sroa$0$0 = 0, $$sroa$0$0$copyload = 0, $$sroa$0$1 = 0, $$sroa$0$144 = 0, $$sroa$10$0 = 0, $$sroa$10$0$$sroa_idx19 = 0, $$sroa$10$0$$sroa_idx20 = 0, $$sroa$10$0$copyload = 0, $$sroa$10$1 = 0, $$sroa$10$140 = 0, $$sroa$10$141 = 0, $$sroa$13$0 = 0, $$sroa$13$0$$sroa_idx23 = 0, $$sroa$13$0$$sroa_idx24 = 0, $$sroa$13$0$copyload = 0, $$sroa$13$1 = 0, $$sroa$13$146 = 0, $$sroa$13$147 = 0, $$sroa$15$0 = 0;
- var $$sroa$15$0$$sroa_idx27 = 0, $$sroa$15$0$$sroa_idx28 = 0, $$sroa$15$0$copyload = 0, $$sroa$15$1 = 0, $$sroa$15$2 = 0, $$sroa$15$248 = 0, $$sroa$15$249 = 0, $$sroa$7$0 = 0, $$sroa$7$0$$sroa_idx15 = 0, $$sroa$7$0$$sroa_idx16 = 0, $$sroa$7$0$copyload = 0, $$sroa$7$1 = 0, $$sroa$7$142 = 0, $$sroa$7$143 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0;
+ var $$sink = 0, $$sroa$0$0 = 0, $$sroa$0$0$copyload = 0, $$sroa$0$1 = 0, $$sroa$0$144 = 0, $$sroa$11$0 = 0, $$sroa$11$0$$sroa_idx23 = 0, $$sroa$11$0$$sroa_idx24 = 0, $$sroa$11$0$copyload = 0, $$sroa$11$1 = 0, $$sroa$11$146 = 0, $$sroa$11$147 = 0, $$sroa$12$0 = 0, $$sroa$12$0$$sroa_idx27 = 0, $$sroa$12$0$$sroa_idx28 = 0, $$sroa$12$0$copyload = 0, $$sroa$12$1 = 0, $$sroa$12$2 = 0, $$sroa$12$248 = 0, $$sroa$12$249 = 0;
+ var $$sroa$7$0 = 0, $$sroa$7$0$$sroa_idx15 = 0, $$sroa$7$0$$sroa_idx16 = 0, $$sroa$7$0$copyload = 0, $$sroa$7$1 = 0, $$sroa$7$142 = 0, $$sroa$7$143 = 0, $$sroa$9$0 = 0, $$sroa$9$0$$sroa_idx19 = 0, $$sroa$9$0$$sroa_idx20 = 0, $$sroa$9$0$copyload = 0, $$sroa$9$1 = 0, $$sroa$9$140 = 0, $$sroa$9$141 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0;
  var $16 = 0, $17 = 0, $18 = 0, $19 = 0, $2 = 0, $20 = 0, $21 = 0, $22 = 0, $23 = 0, $24 = 0, $25 = 0, $26 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $vararg_buffer = 0;
  var $vararg_buffer1 = 0, $vararg_buffer4 = 0, $vararg_buffer9 = 0, $vararg_ptr7 = 0, $vararg_ptr8 = 0, label = 0, sp = 0;
  sp = STACKTOP;
@@ -26680,7 +26538,7 @@ function _LoadImage($0,$1) {
    if ($20) {
     HEAP32[$vararg_buffer1>>2] = $1;
     _TraceLog(1,13399,$vararg_buffer1);
-    $$sroa$10$141 = 0;$$sroa$13$147 = 0;$$sroa$15$249 = 0;$$sroa$7$143 = 0;
+    $$sroa$11$147 = 0;$$sroa$12$249 = 0;$$sroa$7$143 = 0;$$sroa$9$141 = 0;
     break;
    }
    HEAP32[$3>>2] = 0;
@@ -26714,13 +26572,13 @@ function _LoadImage($0,$1) {
     break;
    }
    default: {
-    $$sroa$15$1 = 0;
+    $$sroa$12$1 = 0;
    }
    }
    if ((label|0) == 11) {
-    $$sroa$15$1 = $$sink;
+    $$sroa$12$1 = $$sink;
    }
-   $$sroa$0$1 = $22;$$sroa$10$1 = $24;$$sroa$13$1 = 1;$$sroa$15$2 = $$sroa$15$1;$$sroa$7$1 = $23;
+   $$sroa$0$1 = $22;$$sroa$11$1 = 1;$$sroa$12$2 = $$sroa$12$1;$$sroa$7$1 = $23;$$sroa$9$1 = $24;
    label = 14;
   } else {
    $8 = (_LoadResource($1,0)|0);
@@ -26739,59 +26597,59 @@ function _LoadImage($0,$1) {
     $$sroa$0$0$copyload = HEAP32[$2>>2]|0;
     $$sroa$7$0$$sroa_idx15 = ((($2)) + 4|0);
     $$sroa$7$0$copyload = HEAP32[$$sroa$7$0$$sroa_idx15>>2]|0;
-    $$sroa$10$0$$sroa_idx19 = ((($2)) + 8|0);
-    $$sroa$10$0$copyload = HEAP32[$$sroa$10$0$$sroa_idx19>>2]|0;
-    $$sroa$13$0$$sroa_idx23 = ((($2)) + 12|0);
-    $$sroa$13$0$copyload = HEAP32[$$sroa$13$0$$sroa_idx23>>2]|0;
-    $$sroa$15$0$$sroa_idx27 = ((($2)) + 16|0);
-    $$sroa$15$0$copyload = HEAP32[$$sroa$15$0$$sroa_idx27>>2]|0;
-    $$sroa$0$0 = $$sroa$0$0$copyload;$$sroa$10$0 = $$sroa$10$0$copyload;$$sroa$13$0 = $$sroa$13$0$copyload;$$sroa$15$0 = $$sroa$15$0$copyload;$$sroa$7$0 = $$sroa$7$0$copyload;
+    $$sroa$9$0$$sroa_idx19 = ((($2)) + 8|0);
+    $$sroa$9$0$copyload = HEAP32[$$sroa$9$0$$sroa_idx19>>2]|0;
+    $$sroa$11$0$$sroa_idx23 = ((($2)) + 12|0);
+    $$sroa$11$0$copyload = HEAP32[$$sroa$11$0$$sroa_idx23>>2]|0;
+    $$sroa$12$0$$sroa_idx27 = ((($2)) + 16|0);
+    $$sroa$12$0$copyload = HEAP32[$$sroa$12$0$$sroa_idx27>>2]|0;
+    $$sroa$0$0 = $$sroa$0$0$copyload;$$sroa$11$0 = $$sroa$11$0$copyload;$$sroa$12$0 = $$sroa$12$0$copyload;$$sroa$7$0 = $$sroa$7$0$copyload;$$sroa$9$0 = $$sroa$9$0$copyload;
    } else {
     HEAP32[$vararg_buffer>>2] = $1;
     _TraceLog(1,13347,$vararg_buffer);
-    $$sroa$0$0 = 0;$$sroa$10$0 = 0;$$sroa$13$0 = 0;$$sroa$15$0 = 0;$$sroa$7$0 = 0;
+    $$sroa$0$0 = 0;$$sroa$11$0 = 0;$$sroa$12$0 = 0;$$sroa$7$0 = 0;$$sroa$9$0 = 0;
    }
    _UnloadResource($8);
-   $$sroa$0$1 = $$sroa$0$0;$$sroa$10$1 = $$sroa$10$0;$$sroa$13$1 = $$sroa$13$0;$$sroa$15$2 = $$sroa$15$0;$$sroa$7$1 = $$sroa$7$0;
+   $$sroa$0$1 = $$sroa$0$0;$$sroa$11$1 = $$sroa$11$0;$$sroa$12$2 = $$sroa$12$0;$$sroa$7$1 = $$sroa$7$0;$$sroa$9$1 = $$sroa$9$0;
    label = 14;
   }
  } while(0);
  if ((label|0) == 14) {
   $26 = ($$sroa$0$1|0)==(0|0);
   if ($26) {
-   $$sroa$10$141 = $$sroa$10$1;$$sroa$13$147 = $$sroa$13$1;$$sroa$15$249 = $$sroa$15$2;$$sroa$7$143 = $$sroa$7$1;
+   $$sroa$11$147 = $$sroa$11$1;$$sroa$12$249 = $$sroa$12$2;$$sroa$7$143 = $$sroa$7$1;$$sroa$9$141 = $$sroa$9$1;
   } else {
    HEAP32[$vararg_buffer4>>2] = $1;
    $vararg_ptr7 = ((($vararg_buffer4)) + 4|0);
    HEAP32[$vararg_ptr7>>2] = $$sroa$7$1;
    $vararg_ptr8 = ((($vararg_buffer4)) + 8|0);
-   HEAP32[$vararg_ptr8>>2] = $$sroa$10$1;
+   HEAP32[$vararg_ptr8>>2] = $$sroa$9$1;
    _TraceLog(0,13435,$vararg_buffer4);
-   $$sroa$0$144 = $$sroa$0$1;$$sroa$10$140 = $$sroa$10$1;$$sroa$13$146 = $$sroa$13$1;$$sroa$15$248 = $$sroa$15$2;$$sroa$7$142 = $$sroa$7$1;
+   $$sroa$0$144 = $$sroa$0$1;$$sroa$11$146 = $$sroa$11$1;$$sroa$12$248 = $$sroa$12$2;$$sroa$7$142 = $$sroa$7$1;$$sroa$9$140 = $$sroa$9$1;
    HEAP32[$0>>2] = $$sroa$0$144;
    $$sroa$7$0$$sroa_idx16 = ((($0)) + 4|0);
    HEAP32[$$sroa$7$0$$sroa_idx16>>2] = $$sroa$7$142;
-   $$sroa$10$0$$sroa_idx20 = ((($0)) + 8|0);
-   HEAP32[$$sroa$10$0$$sroa_idx20>>2] = $$sroa$10$140;
-   $$sroa$13$0$$sroa_idx24 = ((($0)) + 12|0);
-   HEAP32[$$sroa$13$0$$sroa_idx24>>2] = $$sroa$13$146;
-   $$sroa$15$0$$sroa_idx28 = ((($0)) + 16|0);
-   HEAP32[$$sroa$15$0$$sroa_idx28>>2] = $$sroa$15$248;
+   $$sroa$9$0$$sroa_idx20 = ((($0)) + 8|0);
+   HEAP32[$$sroa$9$0$$sroa_idx20>>2] = $$sroa$9$140;
+   $$sroa$11$0$$sroa_idx24 = ((($0)) + 12|0);
+   HEAP32[$$sroa$11$0$$sroa_idx24>>2] = $$sroa$11$146;
+   $$sroa$12$0$$sroa_idx28 = ((($0)) + 16|0);
+   HEAP32[$$sroa$12$0$$sroa_idx28>>2] = $$sroa$12$248;
    STACKTOP = sp;return;
   }
  }
  HEAP32[$vararg_buffer9>>2] = $1;
  _TraceLog(1,13474,$vararg_buffer9);
- $$sroa$0$144 = 0;$$sroa$10$140 = $$sroa$10$141;$$sroa$13$146 = $$sroa$13$147;$$sroa$15$248 = $$sroa$15$249;$$sroa$7$142 = $$sroa$7$143;
+ $$sroa$0$144 = 0;$$sroa$11$146 = $$sroa$11$147;$$sroa$12$248 = $$sroa$12$249;$$sroa$7$142 = $$sroa$7$143;$$sroa$9$140 = $$sroa$9$141;
  HEAP32[$0>>2] = $$sroa$0$144;
  $$sroa$7$0$$sroa_idx16 = ((($0)) + 4|0);
  HEAP32[$$sroa$7$0$$sroa_idx16>>2] = $$sroa$7$142;
- $$sroa$10$0$$sroa_idx20 = ((($0)) + 8|0);
- HEAP32[$$sroa$10$0$$sroa_idx20>>2] = $$sroa$10$140;
- $$sroa$13$0$$sroa_idx24 = ((($0)) + 12|0);
- HEAP32[$$sroa$13$0$$sroa_idx24>>2] = $$sroa$13$146;
- $$sroa$15$0$$sroa_idx28 = ((($0)) + 16|0);
- HEAP32[$$sroa$15$0$$sroa_idx28>>2] = $$sroa$15$248;
+ $$sroa$9$0$$sroa_idx20 = ((($0)) + 8|0);
+ HEAP32[$$sroa$9$0$$sroa_idx20>>2] = $$sroa$9$140;
+ $$sroa$11$0$$sroa_idx24 = ((($0)) + 12|0);
+ HEAP32[$$sroa$11$0$$sroa_idx24>>2] = $$sroa$11$146;
+ $$sroa$12$0$$sroa_idx28 = ((($0)) + 16|0);
+ HEAP32[$$sroa$12$0$$sroa_idx28>>2] = $$sroa$12$248;
  STACKTOP = sp;return;
 }
 function _LoadResource($0,$1) {
@@ -30144,34 +30002,29 @@ function _tinfl_decompress($0,$1,$2,$3,$4,$5,$6) {
 function _LoadTexture($0,$1) {
  $0 = $0|0;
  $1 = $1|0;
- var $$byval_copy1 = 0, $$sroa$0$0 = 0, $$sroa$0$0$copyload = 0, $$sroa$5 = 0, $$sroa$5$0$$sroa_idx = 0, $$sroa$5$0$$sroa_idx5 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $vararg_buffer = 0, label = 0, sp = 0;
+ var $$byval_copy1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $vararg_buffer = 0, label = 0, sp = 0;
  sp = STACKTOP;
- STACKTOP = STACKTOP + 80|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(80|0);
- $$byval_copy1 = sp + 60|0;
- $vararg_buffer = sp + 16|0;
- $$sroa$5 = sp;
- $2 = sp + 20|0;
- $3 = sp + 40|0;
- _LoadImage($2,$1);
- $4 = HEAP32[$2>>2]|0;
+ STACKTOP = STACKTOP + 64|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abortStackOverflow(64|0);
+ $$byval_copy1 = sp + 44|0;
+ $vararg_buffer = sp;
+ $2 = sp + 24|0;
+ $3 = sp + 4|0;
+ ;HEAP32[$2>>2]=0|0;HEAP32[$2+4>>2]=0|0;HEAP32[$2+8>>2]=0|0;HEAP32[$2+12>>2]=0|0;HEAP32[$2+16>>2]=0|0;
+ _LoadImage($3,$1);
+ $4 = HEAP32[$3>>2]|0;
  $5 = ($4|0)==(0|0);
  if ($5) {
   _TraceLog(1,14012,$vararg_buffer);
-  $$sroa$0$0 = 0;
+  ;HEAP32[$0>>2]=HEAP32[$2>>2]|0;HEAP32[$0+4>>2]=HEAP32[$2+4>>2]|0;HEAP32[$0+8>>2]=HEAP32[$2+8>>2]|0;HEAP32[$0+12>>2]=HEAP32[$2+12>>2]|0;HEAP32[$0+16>>2]=HEAP32[$2+16>>2]|0;
+  STACKTOP = sp;return;
  } else {
-  ;HEAP32[$$byval_copy1>>2]=HEAP32[$2>>2]|0;HEAP32[$$byval_copy1+4>>2]=HEAP32[$2+4>>2]|0;HEAP32[$$byval_copy1+8>>2]=HEAP32[$2+8>>2]|0;HEAP32[$$byval_copy1+12>>2]=HEAP32[$2+12>>2]|0;HEAP32[$$byval_copy1+16>>2]=HEAP32[$2+16>>2]|0;
-  _LoadTextureFromImage($3,$$byval_copy1);
-  $$sroa$0$0$copyload = HEAP32[$3>>2]|0;
-  $$sroa$5$0$$sroa_idx = ((($3)) + 4|0);
-  ;HEAP32[$$sroa$5>>2]=HEAP32[$$sroa$5$0$$sroa_idx>>2]|0;HEAP32[$$sroa$5+4>>2]=HEAP32[$$sroa$5$0$$sroa_idx+4>>2]|0;HEAP32[$$sroa$5+8>>2]=HEAP32[$$sroa$5$0$$sroa_idx+8>>2]|0;HEAP32[$$sroa$5+12>>2]=HEAP32[$$sroa$5$0$$sroa_idx+12>>2]|0;
-  ;HEAP32[$$byval_copy1>>2]=HEAP32[$2>>2]|0;HEAP32[$$byval_copy1+4>>2]=HEAP32[$2+4>>2]|0;HEAP32[$$byval_copy1+8>>2]=HEAP32[$2+8>>2]|0;HEAP32[$$byval_copy1+12>>2]=HEAP32[$2+12>>2]|0;HEAP32[$$byval_copy1+16>>2]=HEAP32[$2+16>>2]|0;
+  ;HEAP32[$$byval_copy1>>2]=HEAP32[$3>>2]|0;HEAP32[$$byval_copy1+4>>2]=HEAP32[$3+4>>2]|0;HEAP32[$$byval_copy1+8>>2]=HEAP32[$3+8>>2]|0;HEAP32[$$byval_copy1+12>>2]=HEAP32[$3+12>>2]|0;HEAP32[$$byval_copy1+16>>2]=HEAP32[$3+16>>2]|0;
+  _LoadTextureFromImage($2,$$byval_copy1);
+  ;HEAP32[$$byval_copy1>>2]=HEAP32[$3>>2]|0;HEAP32[$$byval_copy1+4>>2]=HEAP32[$3+4>>2]|0;HEAP32[$$byval_copy1+8>>2]=HEAP32[$3+8>>2]|0;HEAP32[$$byval_copy1+12>>2]=HEAP32[$3+12>>2]|0;HEAP32[$$byval_copy1+16>>2]=HEAP32[$3+16>>2]|0;
   _UnloadImage($$byval_copy1);
-  $$sroa$0$0 = $$sroa$0$0$copyload;
+  ;HEAP32[$0>>2]=HEAP32[$2>>2]|0;HEAP32[$0+4>>2]=HEAP32[$2+4>>2]|0;HEAP32[$0+8>>2]=HEAP32[$2+8>>2]|0;HEAP32[$0+12>>2]=HEAP32[$2+12>>2]|0;HEAP32[$0+16>>2]=HEAP32[$2+16>>2]|0;
+  STACKTOP = sp;return;
  }
- HEAP32[$0>>2] = $$sroa$0$0;
- $$sroa$5$0$$sroa_idx5 = ((($0)) + 4|0);
- ;HEAP32[$$sroa$5$0$$sroa_idx5>>2]=HEAP32[$$sroa$5>>2]|0;HEAP32[$$sroa$5$0$$sroa_idx5+4>>2]=HEAP32[$$sroa$5+4>>2]|0;HEAP32[$$sroa$5$0$$sroa_idx5+8>>2]=HEAP32[$$sroa$5+8>>2]|0;HEAP32[$$sroa$5$0$$sroa_idx5+12>>2]=HEAP32[$$sroa$5+12>>2]|0;
- STACKTOP = sp;return;
 }
 function _ImageAlphaMask($0,$1) {
  $0 = $0|0;
@@ -43180,17 +43033,17 @@ function _LoadWaveEx($0,$1,$2,$3,$4,$5) {
 function _WaveCopy($0,$1) {
  $0 = $0|0;
  $1 = $1|0;
- var $$sroa$0$0 = 0, $$sroa$5$0 = 0, $$sroa$5$0$$sroa_idx2 = 0, $$sroa$6$0 = 0, $$sroa$6$0$$sroa_idx4 = 0, $$sroa$7$0 = 0, $$sroa$7$0$$sroa_idx6 = 0, $$sroa$8$0$$sroa_idx8 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $2 = 0, $3 = 0, $4 = 0;
- var $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, label = 0, sp = 0;
+ var $$sroa$0$0 = 0, $$sroa$5$0 = 0, $$sroa$5$0$$sroa_idx2 = 0, $$sroa$6$0 = 0, $$sroa$6$0$$sroa_idx4 = 0, $$sroa$7$0 = 0, $$sroa$7$0$$sroa_idx6 = 0, $$sroa$8$0$$sroa_idx8 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $2 = 0, $20 = 0;
+ var $21 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, label = 0, sp = 0;
  sp = STACKTOP;
  $2 = HEAP32[$1>>2]|0;
- $3 = ((($1)) + 12|0);
+ $3 = ((($1)) + 8|0);
  $4 = HEAP32[$3>>2]|0;
  $5 = Math_imul($4, $2)|0;
- $6 = ((($1)) + 8|0);
- $7 = HEAP32[$6>>2]|0;
- $8 = Math_imul($5, $7)|0;
- $9 = $8 >>> 3;
+ $6 = $5 >>> 3;
+ $7 = ((($1)) + 12|0);
+ $8 = HEAP32[$7>>2]|0;
+ $9 = Math_imul($6, $8)|0;
  $10 = (_malloc($9)|0);
  $11 = ($10|0)==(0|0);
  if ($11) {
@@ -43198,13 +43051,16 @@ function _WaveCopy($0,$1) {
  } else {
   $12 = ((($1)) + 16|0);
   $13 = HEAP32[$12>>2]|0;
-  _memcpy(($10|0),($13|0),($9|0))|0;
-  $14 = HEAP32[$1>>2]|0;
-  $15 = ((($1)) + 4|0);
-  $16 = HEAP32[$15>>2]|0;
-  $17 = HEAP32[$6>>2]|0;
-  $18 = HEAP32[$3>>2]|0;
-  $$sroa$0$0 = $14;$$sroa$5$0 = $16;$$sroa$6$0 = $17;$$sroa$7$0 = $18;
+  $14 = Math_imul($4, $2)|0;
+  $15 = Math_imul($14, $8)|0;
+  $16 = $15 >>> 3;
+  _memcpy(($10|0),($13|0),($16|0))|0;
+  $17 = HEAP32[$1>>2]|0;
+  $18 = ((($1)) + 4|0);
+  $19 = HEAP32[$18>>2]|0;
+  $20 = HEAP32[$3>>2]|0;
+  $21 = HEAP32[$7>>2]|0;
+  $$sroa$0$0 = $17;$$sroa$5$0 = $19;$$sroa$6$0 = $20;$$sroa$7$0 = $21;
  }
  HEAP32[$0>>2] = $$sroa$0$0;
  $$sroa$5$0$$sroa_idx2 = ((($0)) + 4|0);
@@ -43421,10 +43277,10 @@ function _WaveFormat($0,$1,$2,$3) {
   return;
  }
  $99 = HEAP32[$0>>2]|0;
- $100 = Math_imul($99, $3)|0;
- $101 = HEAP32[$7>>2]|0;
- $102 = Math_imul($100, $101)|0;
- $103 = $102 >>> 3;
+ $100 = HEAP32[$7>>2]|0;
+ $101 = Math_imul($100, $99)|0;
+ $102 = $101 >>> 3;
+ $103 = Math_imul($102, $3)|0;
  $104 = (_malloc($103)|0);
  $105 = HEAP32[$96>>2]|0;
  $106 = ($105|0)==(1);
@@ -52982,9 +52838,9 @@ function _compute_twiddle_factors($0,$1,$2,$3) {
  $1 = $1|0;
  $2 = $2|0;
  $3 = $3|0;
- var $$04044 = 0, $$045 = 0, $$14142 = 0, $$143 = 0, $10 = 0, $11 = 0.0, $12 = 0.0, $13 = 0.0, $14 = 0.0, $15 = 0.0, $16 = 0, $17 = 0.0, $18 = 0.0, $19 = 0.0, $20 = 0, $21 = 0, $22 = 0.0, $23 = 0.0, $24 = 0.0, $25 = 0.0;
- var $26 = 0.0, $27 = 0.0, $28 = 0.0, $29 = 0, $30 = 0.0, $31 = 0.0, $32 = 0.0, $33 = 0, $34 = 0, $35 = 0, $36 = 0, $37 = 0, $38 = 0.0, $39 = 0.0, $4 = 0, $40 = 0.0, $41 = 0.0, $42 = 0.0, $43 = 0, $44 = 0.0;
- var $45 = 0.0, $46 = 0.0, $47 = 0, $48 = 0, $49 = 0, $5 = 0, $6 = 0, $7 = 0.0, $8 = 0, $9 = 0.0, $exitcond = 0, $exitcond48 = 0, label = 0, sp = 0;
+ var $$04044 = 0, $$045 = 0, $$14142 = 0, $$143 = 0, $10 = 0, $11 = 0.0, $12 = 0.0, $13 = 0.0, $14 = 0.0, $15 = 0.0, $16 = 0.0, $17 = 0, $18 = 0.0, $19 = 0.0, $20 = 0.0, $21 = 0, $22 = 0, $23 = 0.0, $24 = 0.0, $25 = 0.0;
+ var $26 = 0.0, $27 = 0.0, $28 = 0.0, $29 = 0.0, $30 = 0.0, $31 = 0, $32 = 0.0, $33 = 0.0, $34 = 0.0, $35 = 0, $36 = 0, $37 = 0, $38 = 0, $39 = 0, $4 = 0, $40 = 0.0, $41 = 0.0, $42 = 0.0, $43 = 0.0, $44 = 0.0;
+ var $45 = 0.0, $46 = 0, $47 = 0.0, $48 = 0.0, $49 = 0.0, $5 = 0, $50 = 0, $51 = 0, $52 = 0, $6 = 0, $7 = 0.0, $8 = 0, $9 = 0.0, $exitcond = 0, $exitcond48 = 0, label = 0, sp = 0;
  sp = STACKTOP;
  $4 = $0 >> 2;
  $5 = $0 >> 3;
@@ -52995,39 +52851,41 @@ function _compute_twiddle_factors($0,$1,$2,$3) {
   while(1) {
    $10 = $$04044 << 2;
    $11 = (+($10|0));
-   $12 = $11 * 3.1415926535897931;
+   $12 = $11 * 3.1415927410125732;
    $13 = $12 / $7;
-   $14 = (+Math_cos((+$13)));
-   $15 = $14;
-   $16 = (($1) + ($$045<<2)|0);
-   HEAPF32[$16>>2] = $15;
-   $17 = (+Math_sin((+$13)));
-   $18 = $17;
-   $19 = -$18;
-   $20 = $$045 | 1;
-   $21 = (($1) + ($20<<2)|0);
-   HEAPF32[$21>>2] = $19;
-   $22 = (+($20|0));
-   $23 = $22 * 3.1415926535897931;
-   $24 = $23 / $7;
-   $25 = $24 * 0.5;
-   $26 = (+Math_cos((+$25)));
+   $14 = $13;
+   $15 = (+Math_cos((+$14)));
+   $16 = $15;
+   $17 = (($1) + ($$045<<2)|0);
+   HEAPF32[$17>>2] = $16;
+   $18 = (+Math_sin((+$14)));
+   $19 = $18;
+   $20 = -$19;
+   $21 = $$045 | 1;
+   $22 = (($1) + ($21<<2)|0);
+   HEAPF32[$22>>2] = $20;
+   $23 = (+($21|0));
+   $24 = $23 * 3.1415927410125732;
+   $25 = $24 / $7;
+   $26 = $25 * 0.5;
    $27 = $26;
-   $28 = $27 * 0.5;
-   $29 = (($2) + ($$045<<2)|0);
-   HEAPF32[$29>>2] = $28;
-   $30 = (+Math_sin((+$25)));
-   $31 = $30;
-   $32 = $31 * 0.5;
-   $33 = (($2) + ($20<<2)|0);
-   HEAPF32[$33>>2] = $32;
-   $34 = (($$04044) + 1)|0;
-   $35 = (($$045) + 2)|0;
-   $exitcond48 = ($34|0)==($4|0);
+   $28 = (+Math_cos((+$27)));
+   $29 = $28;
+   $30 = $29 * 0.5;
+   $31 = (($2) + ($$045<<2)|0);
+   HEAPF32[$31>>2] = $30;
+   $32 = (+Math_sin((+$27)));
+   $33 = $32;
+   $34 = $33 * 0.5;
+   $35 = (($2) + ($21<<2)|0);
+   HEAPF32[$35>>2] = $34;
+   $36 = (($$04044) + 1)|0;
+   $37 = (($$045) + 2)|0;
+   $exitcond48 = ($36|0)==($4|0);
    if ($exitcond48) {
     break;
    } else {
-    $$04044 = $34;$$045 = $35;
+    $$04044 = $36;$$045 = $37;
    }
   }
  }
@@ -53038,27 +52896,28 @@ function _compute_twiddle_factors($0,$1,$2,$3) {
  $9 = (+($0|0));
  $$14142 = 0;$$143 = 0;
  while(1) {
-  $36 = $$143 | 1;
-  $37 = $36 << 1;
-  $38 = (+($37|0));
-  $39 = $38 * 3.1415926535897931;
-  $40 = $39 / $9;
-  $41 = (+Math_cos((+$40)));
-  $42 = $41;
-  $43 = (($3) + ($$143<<2)|0);
-  HEAPF32[$43>>2] = $42;
-  $44 = (+Math_sin((+$40)));
+  $38 = $$143 | 1;
+  $39 = $38 << 1;
+  $40 = (+($39|0));
+  $41 = $40 * 3.1415927410125732;
+  $42 = $41 / $9;
+  $43 = $42;
+  $44 = (+Math_cos((+$43)));
   $45 = $44;
-  $46 = -$45;
-  $47 = (($3) + ($36<<2)|0);
-  HEAPF32[$47>>2] = $46;
-  $48 = (($$14142) + 1)|0;
-  $49 = (($$143) + 2)|0;
-  $exitcond = ($48|0)==($5|0);
+  $46 = (($3) + ($$143<<2)|0);
+  HEAPF32[$46>>2] = $45;
+  $47 = (+Math_sin((+$43)));
+  $48 = $47;
+  $49 = -$48;
+  $50 = (($3) + ($38<<2)|0);
+  HEAPF32[$50>>2] = $49;
+  $51 = (($$14142) + 1)|0;
+  $52 = (($$143) + 2)|0;
+  $exitcond = ($51|0)==($5|0);
   if ($exitcond) {
    break;
   } else {
-   $$14142 = $48;$$143 = $49;
+   $$14142 = $51;$$143 = $52;
   }
  }
  return;
@@ -53081,12 +52940,12 @@ function _compute_window($0,$1) {
   $6 = $5 + 0.5;
   $7 = $6 / $4;
   $8 = $7 * 0.5;
-  $9 = $8 * 3.1415926535897931;
+  $9 = $8 * 3.1415927410125732;
   $10 = (+Math_sin((+$9)));
   $11 = $10;
   $12 = (+_square($11));
   $13 = $12;
-  $14 = $13 * 1.5707963267948966;
+  $14 = $13 * 1.5707963705062866;
   $15 = (+Math_sin((+$14)));
   $16 = $15;
   $17 = (($1) + ($$010<<2)|0);
@@ -53889,13 +53748,13 @@ function _UpdateMusicStream($0) {
  if (!($8)) {
   STACKTOP = sp;return;
  }
- $9 = ((($0)) + 20|0);
+ $9 = ((($0)) + 16|0);
  $10 = HEAP32[$9>>2]|0;
- $11 = $10 << 12;
- $12 = ((($0)) + 16|0);
- $13 = HEAP32[$12>>2]|0;
- $14 = Math_imul($11, $13)|0;
- $15 = $14 >>> 3;
+ $11 = $10 << 9;
+ $12 = $11 & 536870400;
+ $13 = ((($0)) + 20|0);
+ $14 = HEAP32[$13>>2]|0;
+ $15 = Math_imul($12, $14)|0;
  $16 = (_calloc($15,1)|0);
  $17 = HEAP32[$2>>2]|0;
  $18 = ($17|0)>(0);
@@ -53913,7 +53772,7 @@ function _UpdateMusicStream($0) {
     switch ($26|0) {
     case 0:  {
      $27 = HEAP32[$20>>2]|0;
-     $28 = HEAP32[$9>>2]|0;
+     $28 = HEAP32[$13>>2]|0;
      $29 = Math_imul($28, $$)|0;
      (_stb_vorbis_get_samples_short_interleaved($27,$28,$16,$29)|0);
      break;
@@ -71562,7 +71421,7 @@ var FUNCTION_TABLE_v = [b21,_UpdateDrawFrame,_emscripten_glLoadIdentity__wrapper
 var FUNCTION_TABLE_viid = [b22,_emscripten_glTexParameterf__wrapper];
 var FUNCTION_TABLE_viiii = [b23,_MouseButtonCallback,_emscripten_glBufferData__wrapper,_emscripten_glBufferSubData__wrapper,_emscripten_glUniform3i__wrapper,_emscripten_glUniformMatrix2fv__wrapper,_emscripten_glUniformMatrix3fv__wrapper,_emscripten_glUniformMatrix4fv__wrapper,_emscripten_glGetAttachedShaders__wrapper,_emscripten_glShaderSource__wrapper,_emscripten_glGetShaderSource__wrapper,_emscripten_glGetShaderInfoLog__wrapper,_emscripten_glGetShaderPrecisionFormat__wrapper,_emscripten_glGetProgramInfoLog__wrapper,_emscripten_glFramebufferRenderbuffer__wrapper,_emscripten_glGetFramebufferAttachmentParameteriv__wrapper,_emscripten_glGetInfoLogARB__wrapper,_emscripten_glVertexPointer__wrapper,_emscripten_glTexCoordPointer__wrapper,_emscripten_glColorPointer__wrapper,_emscripten_glDrawElements__wrapper,_emscripten_glDrawArraysInstanced__wrapper,_emscripten_glViewport__wrapper,_emscripten_glScissor__wrapper,_emscripten_glColorMask__wrapper,_emscripten_glRenderbufferStorage__wrapper,_emscripten_glBlendFuncSeparate__wrapper,_emscripten_glStencilFuncSeparate__wrapper,_emscripten_glStencilOpSeparate__wrapper,b23,b23,b23];
 
-  return { _roundf: _roundf, _main: _main, _llvm_cttz_i32: _llvm_cttz_i32, _bitshift64Lshr: _bitshift64Lshr, _bitshift64Shl: _bitshift64Shl, _fflush: _fflush, _memset: _memset, _sbrk: _sbrk, _memcpy: _memcpy, _llvm_bswap_i32: _llvm_bswap_i32, ___muldi3: ___muldi3, ___uremdi3: ___uremdi3, _i64Subtract: _i64Subtract, ___udivmoddi4: ___udivmoddi4, _i64Add: _i64Add, _emscripten_get_global_libc: _emscripten_get_global_libc, _emscripten_GetProcAddress: _emscripten_GetProcAddress, ___udivdi3: ___udivdi3, ___errno_location: ___errno_location, ___muldsi3: ___muldsi3, _free: _free, _memmove: _memmove, _strstr: _strstr, _malloc: _malloc, runPostSets: runPostSets, _emscripten_replace_memory: _emscripten_replace_memory, stackAlloc: stackAlloc, stackSave: stackSave, stackRestore: stackRestore, establishStackSpace: establishStackSpace, setTempRet0: setTempRet0, getTempRet0: getTempRet0, setThrew: setThrew, stackAlloc: stackAlloc, stackSave: stackSave, stackRestore: stackRestore, establishStackSpace: establishStackSpace, setThrew: setThrew, setTempRet0: setTempRet0, getTempRet0: getTempRet0, dynCall_viiiii: dynCall_viiiii, dynCall_vd: dynCall_vd, dynCall_vid: dynCall_vid, dynCall_vi: dynCall_vi, dynCall_vii: dynCall_vii, dynCall_ii: dynCall_ii, dynCall_viddd: dynCall_viddd, dynCall_vidd: dynCall_vidd, dynCall_iiii: dynCall_iiii, dynCall_viiiiiiii: dynCall_viiiiiiii, dynCall_viiiiii: dynCall_viiiiii, dynCall_viii: dynCall_viii, dynCall_vidddd: dynCall_vidddd, dynCall_vdi: dynCall_vdi, dynCall_viiiiiii: dynCall_viiiiiii, dynCall_viiiiiiiii: dynCall_viiiiiiiii, dynCall_iii: dynCall_iii, dynCall_i: dynCall_i, dynCall_vdddddd: dynCall_vdddddd, dynCall_vdddd: dynCall_vdddd, dynCall_vdd: dynCall_vdd, dynCall_v: dynCall_v, dynCall_viid: dynCall_viid, dynCall_viiii: dynCall_viiii };
+  return { _roundf: _roundf, _main: _main, _llvm_cttz_i32: _llvm_cttz_i32, _bitshift64Lshr: _bitshift64Lshr, _bitshift64Shl: _bitshift64Shl, _fflush: _fflush, _memset: _memset, _sbrk: _sbrk, _memcpy: _memcpy, _llvm_bswap_i32: _llvm_bswap_i32, ___muldi3: ___muldi3, ___uremdi3: ___uremdi3, _i64Subtract: _i64Subtract, ___udivmoddi4: ___udivmoddi4, _i64Add: _i64Add, _emscripten_get_global_libc: _emscripten_get_global_libc, _emscripten_GetProcAddress: _emscripten_GetProcAddress, ___udivdi3: ___udivdi3, ___errno_location: ___errno_location, ___muldsi3: ___muldsi3, _free: _free, _memmove: _memmove, _strstr: _strstr, _malloc: _malloc, runPostSets: runPostSets, stackAlloc: stackAlloc, stackSave: stackSave, stackRestore: stackRestore, establishStackSpace: establishStackSpace, setTempRet0: setTempRet0, getTempRet0: getTempRet0, setThrew: setThrew, stackAlloc: stackAlloc, stackSave: stackSave, stackRestore: stackRestore, establishStackSpace: establishStackSpace, setThrew: setThrew, setTempRet0: setTempRet0, getTempRet0: getTempRet0, dynCall_viiiii: dynCall_viiiii, dynCall_vd: dynCall_vd, dynCall_vid: dynCall_vid, dynCall_vi: dynCall_vi, dynCall_vii: dynCall_vii, dynCall_ii: dynCall_ii, dynCall_viddd: dynCall_viddd, dynCall_vidd: dynCall_vidd, dynCall_iiii: dynCall_iiii, dynCall_viiiiiiii: dynCall_viiiiiiii, dynCall_viiiiii: dynCall_viiiiii, dynCall_viii: dynCall_viii, dynCall_vidddd: dynCall_vidddd, dynCall_vdi: dynCall_vdi, dynCall_viiiiiii: dynCall_viiiiiii, dynCall_viiiiiiiii: dynCall_viiiiiiiii, dynCall_iii: dynCall_iii, dynCall_i: dynCall_i, dynCall_vdddddd: dynCall_vdddddd, dynCall_vdddd: dynCall_vdddd, dynCall_vdd: dynCall_vdd, dynCall_v: dynCall_v, dynCall_viid: dynCall_viid, dynCall_viiii: dynCall_viiii };
 })
 // EMSCRIPTEN_END_ASM
 (Module.asmGlobalArg, Module.asmLibraryArg, buffer);
@@ -71772,7 +71631,6 @@ var _memmove = Module["_memmove"] = asm["_memmove"];
 var _strstr = Module["_strstr"] = asm["_strstr"];
 var stackRestore = Module["stackRestore"] = asm["stackRestore"];
 var _malloc = Module["_malloc"] = asm["_malloc"];
-var _emscripten_replace_memory = Module["_emscripten_replace_memory"] = asm["_emscripten_replace_memory"];
 var dynCall_viiiii = Module["dynCall_viiiii"] = asm["dynCall_viiiii"];
 var dynCall_vd = Module["dynCall_vd"] = asm["dynCall_vd"];
 var dynCall_vid = Module["dynCall_vid"] = asm["dynCall_vid"];

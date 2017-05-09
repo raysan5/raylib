@@ -351,7 +351,7 @@ typedef struct Image {
     int format;             // Data format (TextureFormat type)
 } Image;
 
-// Texture2D type, bpp always RGBA (32bit)
+// Texture2D type
 // NOTE: Data stored in GPU memory
 typedef struct Texture2D {
     unsigned int id;        // OpenGL texture id
@@ -553,6 +553,7 @@ typedef enum {
     UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
     UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
     UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+    UNCOMPRESSED_R32G32B32,         // 32 bit per channel (float) - HDR
     COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
     COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
     COMPRESSED_DXT3_RGBA,           // 8 bpp
@@ -667,6 +668,7 @@ RLAPI void ToggleFullscreen(void);                                // Fullscreen 
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
+RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 

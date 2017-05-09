@@ -4,28 +4,31 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
-    <title>raylib GGJ15 game: Just Do</title>
-
-    <meta name="title" content="raylib game: Just Do">
-    <meta name="description" content="Just Do is a logic/puzzle videogame developed for GGJ15 using raylib. Try it!">
-    <meta name="keywords" content="raylib, logic, puzzle videogames, programming, C, learn, study, simple, easy, free, open source, raysan">
+    <title>raylib HTML5 GAME</title>
+    
+    <meta name="title" content="raylib HTML5 GAME">
+    <meta name="description" content="New HTML5 videogame, developed using raylib videogames library">
+    <meta name="keywords" content="raylib, games, html5, programming, C, C++, library, learn, videogames">
     <meta name="viewport" content="width=device-width">
+    
+    <!-- Facebook metatags for sharing -->
+    <meta property="og:title" content="raylib HTML5 GAME">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image" content="http://www.raylib.com/img/raylib_logo.png">
+    <meta property="og:image" content="http://www.raylib.com/img/raylib_logo.png">
+    <meta property="og:url" content="http://www.raylib.com/games">
+    <meta property="og:site_name" content="raylib.com">
+    <meta property="og:description" content="New hmtl5 videogame, developed using raylib videogames library">
 
-    <!-- Open Graph data: Facebook/LinkedIn metatags for sharing -->
-    <meta property="og:title" content="raylib game: Just Do"/>
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image" content="http://www.raylib.com/img/just_do.png"/>
-    <meta property="og:url" content="http://www.raylib.com/just_do.html" />
-    <meta property="og:site_name" content="raylib game: Just Do"/>
-    <meta property="og:description" content="Just Do is a logic/puzzle videogame developed for GGJ15 using raylib. Try it!"/>
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary"/>
-    <meta name="twitter:site" content="@raysan5"/>
-    <meta name="twitter:title" content="raylib game: Just Do"/>
-    <meta name="twitter:description" content="Just Do is a logic/puzzle videogame developed for GGJ15 using raylib. Try it!"/>
-    <meta name="twitter:image" content="http://www.raylib.com/img/just_do.png"/>
-    <meta name="twitter:url" content="http://www.raylib.com/just_do.html"/>    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@emegemegames">
+    <meta name="twitter:title" content="raylib HTML5 GAME">
+    <meta name="twitter:description" content="New HTML5 videogame, developed using raylib videogames library">
+    <meta name="twitter:image" content="http://www.raylib.com/img/raylib_logo.png">
+    <meta name="twitter:url" content="http://www.raylib.com/img/raylib_logo.png">
+    
+    <!--<link rel="stylesheet" href="./Koala Seasons by emegeme_files/main.css">-->
+    <link rel="shortcut icon" href="http://www.raylib.com/favicon.ico">
     
     <style>
       body {
@@ -33,18 +36,34 @@
         margin: 0;
         padding: none;
       }
-
-      .emscripten { padding-right: 0; display: block; }
+      
+      #header_part {
+        width: 100%;
+        height: 80px;
+        background-color: #888888;
+      }
+      
+      #logo {
+        width:64px; 
+        height:64px; 
+        float:left; 
+        position:relative; 
+        margin:10px; 
+        background-image:url(http://www.raylib.com/common/img/raylib_logo_64x64.png);
+      }
+      
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
       div.emscripten { text-align: center; }      
-      div.emscripten_border { border: 1px solid black; margin-top: 50px; }
+      div.emscripten_border { border: 1px solid black; }
+      
       /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten { border: 0px none; }
-
+      canvas.emscripten { border: 0px none; background: black; }
+      
       #emscripten_logo {
         display: inline-block;
         margin: 0;
       }
-
+      
       .spinner {
         height: 30px;
         width: 30px;
@@ -53,21 +72,18 @@
         margin-left: 20px;
         display: inline-block;
         vertical-align: top;
-
         -webkit-animation: rotation .8s linear infinite;
         -moz-animation: rotation .8s linear infinite;
         -o-animation: rotation .8s linear infinite;
         animation: rotation 0.8s linear infinite;
-
-        border-left: 5px solid rgb(235, 235, 235);
-        border-right: 5px solid rgb(235, 235, 235);
-        border-bottom: 5px solid rgb(235, 235, 235);
-        border-top: 5px solid rgb(120, 120, 120);
+        border-left: 5px solid black;
+        border-right: 5px solid black;
+        border-bottom: 5px solid black;
+        border-top: 5px solid red;
         
         border-radius: 100%;
-        background-color: rgb(189, 215, 46);
+        background-color: rgb(245, 245, 245);
       }
-
       @-webkit-keyframes rotation {
         from {-webkit-transform: rotate(0deg);}
         to {-webkit-transform: rotate(360deg);}
@@ -84,21 +100,21 @@
         from {transform: rotate(0deg);}
         to {transform: rotate(360deg);}
       }
-
+      
       #status {
         display: inline-block;
         vertical-align: top;
         margin-top: 30px;
         margin-left: 20px;
         font-weight: bold;
-        color: rgb(120, 120, 120);
+        color: rgb(40, 40, 40);
       }
-
+      
       #progress {
         height: 20px;
         width: 30px;
       }
-
+      
       #controls {
         display: inline-block;
         float: right;
@@ -106,7 +122,7 @@
         margin-top: 30px;
         margin-right: 20px;
       }
-
+      
       #output {
         width: 100%;
         height: 140px;
@@ -118,40 +134,34 @@
         font-family: 'Lucida Console', Monaco, monospace;
         outline: none;
       }
-
-      svg#Layer_1 {margin-top: 5px;}
-      #logo{width:64px; height:64px; float:left; position:relative; margin:10px; background-image:url(http://www.raylib.com/common/img/raylib_logo_64x64.png);}
     </style>
   </head>
   <body>
-    <a id="logo" href="index.htm"></a>
+    <div id="header_part">
+        <a id="logo" href="http://www.raylib.com"></a>
+        
+        <div class="spinner" id='spinner'></div>
+        <div class="emscripten" id="status">Downloading...</div>
 
-    <div class="spinner" id='spinner'></div>
-    <div class="emscripten" id="status">Downloading...</div>
+        <span id='controls'>
+          <span><input type="button" value="Fullscreen" onclick="Module.requestFullscreen(false, false)"></span>
+        </span>
 
-<span id='controls'>
-  <span><input type="checkbox" id="resize">Resize canvas</span>
-  <span><input type="checkbox" id="pointerLock">Lock/hide mouse pointer &nbsp;&nbsp;&nbsp;</span>
-  <span><input type="button" value="Fullscreen" onclick="Module.requestFullScreen(document.getElementById('pointerLock').checked, 
-                                                                            document.getElementById('resize').checked)">
-  </span>
-</span>
-
-    <div class="emscripten">
-      <progress value="0" max="100" id="progress" hidden=1></progress>
+        <div class="emscripten">
+          <progress value="0" max="100" id="progress" hidden=1></progress>
+        </div>
     </div>
-
     
     <div class="emscripten_border">
       <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>
+    
     <textarea id="output" rows="8"></textarea>
 
     <script type='text/javascript'>
       var statusElement = document.getElementById('status');
       var progressElement = document.getElementById('progress');
       var spinnerElement = document.getElementById('spinner');
-
       var Module = {
         preRun: [],
         postRun: [],
@@ -159,7 +169,7 @@
           var element = document.getElementById('output');
           if (element) element.value = ''; // clear browser cache
           return function(text) {
-            text = Array.prototype.slice.call(arguments).join(' ');
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
             // These replacements are necessary if you render to raw HTML
             //text = text.replace(/&/g, "&amp;");
             //text = text.replace(/</g, "&lt;");
@@ -173,7 +183,7 @@
           };
         })(),
         printErr: function(text) {
-          text = Array.prototype.slice.call(arguments).join(' ');
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
           if (0) { // XXX disabled for safety typeof dump == 'function') {
             dump(text + '\n'); // fast, straight to the real console
           } else {
@@ -182,12 +192,10 @@
         },
         canvas: (function() {
           var canvas = document.getElementById('canvas');
-
           // As a default initial behavior, pop up an alert when webgl context is lost. To make your
           // application robust, you may want to override this behavior before shipping!
           // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
           canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
-
           return canvas;
         })(),
         setStatus: function(text) {
@@ -227,17 +235,5 @@
       };
     </script>
     <script async type="text/javascript" src="just_do.js"></script>
-    
-    <!-- Google Analytics tracking code -->
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','http://www.google-analytics.com/analytics.js','ga');
-
-        ga('create', 'UA-45733555-1', 'raylib.com');
-        ga('require', 'linkid', 'linkid.js');
-        ga('send', 'pageview');
-    </script>
   </body>
 </html>

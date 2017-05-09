@@ -79,7 +79,7 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
     #include "OpenAL/al.h"          // OpenAL basic header
     #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
 #else
@@ -570,7 +570,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     // NOTE: Only supported mono <--> stereo
     if (wave->channels != channels)
     {
-        void *data = malloc(wave->sampleCount*channels*wave->sampleSize/8);
+        void *data = malloc(wave->sampleCount*wave->sampleSize/8*channels);
 
         if ((wave->channels == 1) && (channels == 2))       // mono ---> stereo (duplicate mono information)
         {
@@ -607,7 +607,7 @@ Wave WaveCopy(Wave wave)
 {
     Wave newWave = { 0 };
 
-    newWave.data = malloc(wave.sampleCount*wave.channels*wave.sampleSize/8);
+    newWave.data = malloc(wave.sampleCount*wave.sampleSize/8*wave.channels);
 
     if (newWave.data != NULL)
     {
@@ -632,7 +632,7 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
     {
         int sampleCount = finalSample - initSample;
 
-        void *data = malloc(sampleCount*wave->channels*wave->sampleSize/8);
+        void *data = malloc(sampleCount*wave->sampleSize/8*wave->channels);
 
         memcpy(data, (unsigned char*)wave->data + (initSample*wave->channels*wave->sampleSize/8), sampleCount*wave->channels*wave->sampleSize/8);
 
@@ -810,7 +810,8 @@ void StopMusicStream(Music music)
 
     for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
     {
-        alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
+        UpdateAudioStream(music->stream, pcm, AUDIO_BUFFER_SIZE);
+        //alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
     }
 
     free(pcm);
@@ -849,11 +850,11 @@ void UpdateMusicStream(Music music)
         bool active = true;
 
         // NOTE: Using dynamic allocation because it could require more than 16KB
-        void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.channels*music->stream.sampleSize/8, 1);
+        void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
 
         int numBuffersToProcess = processed;
         int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, 
-                                 //individual L or R for ogg shorts
+                                 // individual L or R for ogg shorts
 
         for (int i = 0; i < numBuffersToProcess; i++)
         {
@@ -1245,23 +1246,19 @@ static Wave LoadWAV(const char *fileName)
 // NOTE: Using stb_vorbis library
 static Wave LoadOGG(const char *fileName)
 {
-    Wave wave;
+    Wave wave = { 0 };
 
     stb_vorbis *oggFile = stb_vorbis_open_filename(fileName, NULL, NULL);
 
-    if (oggFile == NULL)
-    {
-        TraceLog(WARNING, "[%s] OGG file could not be opened", fileName);
-        wave.data = NULL;
-    }
+    if (oggFile == NULL) TraceLog(WARNING, "[%s] OGG file could not be opened", fileName);
     else
     {
         stb_vorbis_info info = stb_vorbis_get_info(oggFile);
-
+        
         wave.sampleRate = info.sample_rate;
         wave.sampleSize = 16;                   // 16 bit per sample (short)
         wave.channels = info.channels;
-        wave.sampleCount = (int)stb_vorbis_stream_length_in_samples(oggFile);
+        wave.sampleCount = (int)stb_vorbis_stream_length_in_samples(oggFile);  // Independent by channel
 
         float totalSeconds = stb_vorbis_stream_length_in_seconds(oggFile);
         if (totalSeconds > 10) TraceLog(WARNING, "[%s] Ogg audio length is larger than 10 seconds (%f), that's a big file in memory, consider music streaming", fileName, totalSeconds);
@@ -1329,7 +1326,7 @@ void TraceLog(int msgType, const char *text, ...)
     va_list args;
     int traceDebugMsgs = 0;
 
-#ifdef DO_NOT_TRACE_DEBUG_MSGS
+#if defined(DO_NOT_TRACE_DEBUG_MSGS)
     traceDebugMsgs = 0;
 #endif
 
