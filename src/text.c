@@ -443,7 +443,7 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
                 index = GetCharIndex(spriteFont, (int)letter + 64);
                 i++;
             }
-            else index = GetCharIndex(spriteFont, (int)text[i]);
+            else index = GetCharIndex(spriteFont, (unsigned char)text[i]);
 
             DrawTexturePro(spriteFont.texture, spriteFont.chars[index].rec,
                            (Rectangle){ position.x + textOffsetX + spriteFont.chars[index].offsetX*scaleFactor,
