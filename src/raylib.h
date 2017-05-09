@@ -479,8 +479,8 @@ typedef struct Ray {
 typedef struct RayHitInfo {
     bool hit;               // Did the ray hit something?
     float distance;         // Distance to nearest hit
-    Vector3 hitPosition;    // Position of nearest hit
-    Vector3 hitNormal;      // Surface normal of hit
+    Vector3 position;       // Position of nearest hit
+    Vector3 normal;         // Surface normal of hit
 } RayHitInfo;
 
 // Wave type, defines audio wave data
