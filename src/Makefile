@@ -325,12 +325,12 @@ else
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
-			@echo "raylib shared library (libraylib.so) generated!"
+			@echo "raylib shared library generated (libraylib.so)!"
         endif
     else
         # compile raylib static library.
 		$(AR) rcs $(OUTPUT_PATH)/libraylib.a $(OBJS)
-		@echo "libraylib.a generated (static library)!"
+		@echo "raylib static library generated (libraylib.a)!"
         ifeq ($(SHARED_OPENAL),NO)
 			@echo "expected OpenAL Soft static library linking"
         else
