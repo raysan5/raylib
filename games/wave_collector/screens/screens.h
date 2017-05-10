@@ -38,7 +38,8 @@ GameScreen currentScreen;
 SpriteFont font;
 Music music;
 int endingStatus;       // 1 - Win, 2 - Lose
-//char *sampleFilename;
+
+char *sampleFilename;   // Required for custom music file
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
