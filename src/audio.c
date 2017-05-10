@@ -801,20 +801,26 @@ void ResumeMusicStream(Music music)
 }
 
 // Stop music playing (close stream)
+// TODO: To clear a buffer, make sure they have been already processed!
 void StopMusicStream(Music music)
 {
     alSourceStop(music->stream.source);
     
+    /*
     // Clear stream buffers
+    // WARNING: Queued buffers must have been processed before unqueueing and reloaded with data!!!
     void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
-
+    
     for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
     {
-        UpdateAudioStream(music->stream, pcm, AUDIO_BUFFER_SIZE);
-        //alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
+        
+        
+        //UpdateAudioStream(music->stream, pcm, AUDIO_BUFFER_SIZE);       // Update one buffer at a time
+        alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
     }
 
     free(pcm);
+    */
     
     // Restart music context
     switch (music->ctxType)
@@ -896,9 +902,9 @@ void UpdateMusicStream(Music music)
                 break;
             }
         }
-
-        // This error is registered when UpdateAudioStream() fails
-        if (alGetError() == AL_INVALID_VALUE) TraceLog(WARNING, "OpenAL: Error buffering data...");
+        
+        // Free allocated pcm data
+        free(pcm);
 
         // Reset audio stream for looping
         if (!active)
@@ -918,8 +924,6 @@ void UpdateMusicStream(Music music)
             // just make sure to play again on window restore
             if (state != AL_PLAYING) PlayMusicStream(music);
         }
-
-        free(pcm);
     }
 }
 
@@ -1066,7 +1070,8 @@ void CloseAudioStream(AudioStream stream)
 }
 
 // Update audio stream buffers with data
-// NOTE: Only updates one buffer per call
+// NOTE 1: Only updates one buffer of the stream source: unqueue -> update -> queue
+// NOTE 2: To unqueue a buffer it needs to be processed: IsAudioBufferProcessed()
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
     ALuint buffer = 0;
@@ -1075,9 +1080,10 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
     // Check if any buffer was available for unqueue
     if (alGetError() != AL_INVALID_VALUE)
     {
-        alBufferData(buffer, stream.format, data, samplesCount*stream.channels*stream.sampleSize/8, stream.sampleRate);
+        alBufferData(buffer, stream.format, data, samplesCount*stream.sampleSize/8*stream.channels, stream.sampleRate);
         alSourceQueueBuffers(stream.source, 1, &buffer);
     }
+    else TraceLog(WARNING, "[AUD ID %i] Audio buffer not available for unqueuing", stream.source);
 }
 
 // Check if any audio stream buffers requires refill
