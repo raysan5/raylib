@@ -108,6 +108,16 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
+#ifdef _WIN32
+    #include <direct.h>             // Required for: _getch(), _chdir()
+    #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
+    #define CHDIR _chdir
+#else
+    #include "unistd.h"             // Required for: getch(), chdir() (POSIX)
+    #define GETCWD getcwd
+    #define CHDIR chdir
+#endif
+
 #if defined(__linux__) || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
 #elif defined(__APPLE__)
@@ -259,6 +269,7 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 static const char *windowTitle;             // Window text title...
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static bool cursorHidden = false;           // Track if cursor is hidden
+static int screenshotCounter = 0;           // Screenshots counter
 
 // Register mouse states
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
@@ -1131,25 +1142,15 @@ void SetConfigFlags(char flags)
 
 // NOTE TraceLog() function is located in [utils.h]
 
-// Takes a screenshot and saves it in the same folder as executable
-void TakeScreenshot(void)
+// Takes a screenshot of current screen (saved a .png)
+void TakeScreenshot(const char *fileName)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
-    char buffer[20];            // Buffer to store file name
-
     unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
-
-    sprintf(buffer, "screenshot%03i.png", shotNum);
-
-    // Save image as PNG
-    SavePNG(buffer, imgData, renderWidth, renderHeight, 4);
-
+    SavePNG(fileName, imgData, renderWidth, renderHeight, 4); // Save image as PNG
     free(imgData);
 
-    shotNum++;
-
-    TraceLog(INFO, "[%s] Screenshot taken #03i", buffer, shotNum);
+    TraceLog(INFO, "Screenshot taken: %s", fileName);
 #endif
 }
 
@@ -1165,6 +1166,37 @@ bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
+}
+
+// Get directory for a given fileName (with path)
+const char *GetDirectoryPath(const char *fileName)
+{
+    char *lastSlash = NULL;
+    static char filePath[256];      // MAX_DIRECTORY_PATH_SIZE = 256
+    memset(filePath, 0, 256);
+    
+    lastSlash = strrchr(fileName, '\\');
+    strncpy(filePath, fileName, strlen(fileName) - (strlen(lastSlash) - 1));
+    filePath[strlen(fileName) - strlen(lastSlash)] = '\0';
+    
+    return filePath;
+}
+
+// Get current working directory
+const char *GetWorkingDirectory(void)
+{
+    static char currentDir[256];    // MAX_DIRECTORY_PATH_SIZE = 256
+    memset(currentDir, 0, 256);
+    
+    GETCWD(currentDir, 256 - 1);
+    
+    return currentDir;
+}
+
+// Change working directory, returns true if success
+bool ChangeDirectory(const char *dir)
+{
+    return (CHDIR(dir) == 0);
 }
 
 #if defined(PLATFORM_DESKTOP)
@@ -2363,7 +2395,11 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         // NOTE: Before closing window, while loop must be left!
     }
 #if defined(PLATFORM_DESKTOP)
-    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) TakeScreenshot();
+    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
+    {
+        TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+        screenshotCounter++;
+    }
 #endif
     else
     {
@@ -3003,8 +3039,12 @@ static void ProcessKeyboard(void)
     // Check exit key (same functionality as GLFW3 KeyCallback())
     if (currentKeyState[exitKey] == 1) windowShouldClose = true;
 
-    // Check screen capture key
-    if (currentKeyState[301] == 1) TakeScreenshot();    // raylib key: KEY_F12 (GLFW_KEY_F12)
+    // Check screen capture key (raylib key: KEY_F12)
+    if (currentKeyState[301] == 1)
+    {
+        TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+        screenshotCounter++;
+    }
 }
 
 // Restore default keyboard input

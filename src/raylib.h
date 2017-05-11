@@ -711,9 +711,12 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 RLAPI void ShowLogo(void);                                        // Activate raylib logo at startup (can be done with flags)
 RLAPI void SetConfigFlags(char flags);                            // Setup window configuration flags (view FLAGS)
 RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
-RLAPI void TakeScreenshot(void);                                  // Takes a screenshot and saves it in the same folder as executable
-RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 
+RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+RLAPI const char *GetDirectoryPath(const char *fileName);         // Get directory for a given fileName (with path)
+RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory
+RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, returns true if success
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names
 RLAPI void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
