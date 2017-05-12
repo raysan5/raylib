@@ -1052,6 +1052,7 @@ void rlglInit(int width, int height)
     // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
     vaoSupported = true;
     texNPOTSupported = true;
+    texFloatSupported = true;
 
     // We get a list of available extensions and we check for some of them (compressed textures)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
@@ -1425,7 +1426,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int format, int 
         case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R32G32B32: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;
+        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;
         case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;

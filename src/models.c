@@ -1541,11 +1541,11 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.hit = true;
         result.distance = t;
         result.hit = true;
-        result.hitNormal = VectorCrossProduct(edge1, edge2);
-        VectorNormalize(&result.hitNormal);
+        result.normal = VectorCrossProduct(edge1, edge2);
+        VectorNormalize(&result.normal);
         Vector3 rayDir = ray.direction;
         VectorScale(&rayDir, t);
-        result.hitPosition = VectorAdd(ray.position, rayDir);
+        result.position = VectorAdd(ray.position, rayDir);
     }
 
     return result;
@@ -1568,8 +1568,8 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
             VectorScale(&rayDir, t);
             result.hit = true;
             result.distance = t;
-            result.hitNormal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.hitPosition = VectorAdd(ray.position, rayDir);
+            result.normal = (Vector3){ 0.0, 1.0, 0.0 };
+            result.position = VectorAdd(ray.position, rayDir);
         }
     }
 

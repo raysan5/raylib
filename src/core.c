@@ -108,6 +108,16 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
+#ifdef _WIN32
+    #include <direct.h>             // Required for: _getch(), _chdir()
+    #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
+    #define CHDIR _chdir
+#else
+    #include "unistd.h"             // Required for: getch(), chdir() (POSIX)
+    #define GETCWD getcwd
+    #define CHDIR chdir
+#endif
+
 #if defined(__linux__) || defined(PLATFORM_WEB)
     #include <sys/time.h>           // Required for: timespec, nanosleep(), select() - POSIX
 #elif defined(__APPLE__)
@@ -259,6 +269,7 @@ static Matrix downscaleView;                // Matrix to downscale view (in case
 static const char *windowTitle;             // Window text title...
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static bool cursorHidden = false;           // Track if cursor is hidden
+static int screenshotCounter = 0;           // Screenshots counter
 
 // Register mouse states
 static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
@@ -380,7 +391,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-// Initialize Window and Graphics Context (OpenGL)
+// Initialize window and OpenGL context
 void InitWindow(int width, int height, const char *title)
 {
     TraceLog(INFO, "Initializing raylib (v1.7.0)");
@@ -443,7 +454,7 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_ANDROID)
-// Android activity initialization
+// Initialize Android activity
 void InitWindow(int width, int height, void *state)
 {
     TraceLog(INFO, "Initializing raylib (v1.7.0)");
@@ -506,7 +517,7 @@ void InitWindow(int width, int height, void *state)
 }
 #endif
 
-// Close Window and Terminate Context
+// Close window and unload OpenGL context
 void CloseWindow(void)
 {
 #if defined(SUPPORT_DEFAULT_FONT)
@@ -562,7 +573,7 @@ void CloseWindow(void)
     TraceLog(INFO, "Window closed successfully");
 }
 
-// Detect if KEY_ESCAPE pressed or Close icon pressed
+// Check if KEY_ESCAPE pressed or Close icon pressed
 bool WindowShouldClose(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -577,7 +588,7 @@ bool WindowShouldClose(void)
 #endif
 }
 
-// Detect if window has been minimized (or lost focus)
+// Check if window has been minimized (or lost focus)
 bool IsWindowMinimized(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
@@ -587,7 +598,7 @@ bool IsWindowMinimized(void)
 #endif
 }
 
-// Fullscreen toggle (only PLATFORM_DESKTOP)
+// Toggle fullscreen mode (only PLATFORM_DESKTOP)
 void ToggleFullscreen(void)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -646,7 +657,7 @@ void SetWindowMonitor(int monitor)
 #endif
 }
 
-// Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
+// Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
 #if defined(PLATFORM_DESKTOP)
@@ -681,7 +692,7 @@ void ShowCursor()
     cursorHidden = false;
 }
 
-// Hide mouse cursor
+// Hides mouse cursor
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
@@ -701,13 +712,13 @@ void HideCursor()
     cursorHidden = true;
 }
 
-// Check if mouse cursor is hidden
+// Check if cursor is not visible
 bool IsCursorHidden()
 {
     return cursorHidden;
 }
 
-// Enable mouse cursor
+// Enables cursor (unlock cursor)
 void EnableCursor()
 {
 #if defined(PLATFORM_DESKTOP)
@@ -719,7 +730,7 @@ void EnableCursor()
     cursorHidden = false;
 }
 
-// Disable mouse cursor
+// Disables cursor (lock cursor)
 void DisableCursor()
 {
 #if defined(PLATFORM_DESKTOP)
@@ -732,14 +743,14 @@ void DisableCursor()
 }
 #endif  // !defined(PLATFORM_ANDROID)
 
-// Sets Background Color
+// Set background color (framebuffer clear color)
 void ClearBackground(Color color)
 {
     // Clear full framebuffer (not only render area) to color
     rlClearColor(color.r, color.g, color.b, color.a);
 }
 
-// Setup drawing canvas to start drawing
+// Setup canvas (framebuffer) to start drawing
 void BeginDrawing(void)
 {
     currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
@@ -754,7 +765,7 @@ void BeginDrawing(void)
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
-// End canvas drawing and Swap Buffers (Double Buffering)
+// End canvas drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
@@ -782,7 +793,7 @@ void EndDrawing(void)
     }
 }
 
-// Initialize 2D mode with custom camera
+// Initialize 2D mode with custom camera (2D)
 void Begin2dMode(Camera2D camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
@@ -800,7 +811,7 @@ void Begin2dMode(Camera2D camera)
     rlMultMatrixf(MatrixToFloat(matTransform));
 }
 
-// Ends 2D mode custom camera usage
+// Ends 2D mode with custom camera
 void End2dMode(void)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
@@ -808,7 +819,7 @@ void End2dMode(void)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 }
 
-// Initializes 3D mode for drawing (Camera setup)
+// Initializes 3D mode with custom camera (3D)
 void Begin3dMode(Camera camera)
 {
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
@@ -895,283 +906,6 @@ void EndTextureMode(void)
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to MODELVIEW matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
-}
-
-// Set target FPS for the game
-void SetTargetFPS(int fps)
-{
-    if (fps < 1) targetTime = 0.0;
-    else targetTime = 1.0/(double)fps;
-
-    TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
-}
-
-// Returns current FPS
-int GetFPS(void)
-{
-    return (int)(1.0f/GetFrameTime());
-}
-
-// Returns time in seconds for one frame
-float GetFrameTime(void)
-{
-    // NOTE: We round value to milliseconds
-    return (float)frameTime;
-}
-
-// Converts Color to float array and normalizes
-float *ColorToFloat(Color color)
-{
-    static float buffer[4];
-
-    buffer[0] = (float)color.r/255;
-    buffer[1] = (float)color.g/255;
-    buffer[2] = (float)color.b/255;
-    buffer[3] = (float)color.a/255;
-
-    return buffer;
-}
-
-// Converts Vector3 to float array
-float *VectorToFloat(Vector3 vec)
-{
-    static float buffer[3];
-
-    buffer[0] = vec.x;
-    buffer[1] = vec.y;
-    buffer[2] = vec.z;
-
-    return buffer;
-}
-
-// Converts Matrix to float array
-// NOTE: Returned vector is a transposed version of the Matrix struct,
-// it should be this way because, despite raymath use OpenGL column-major convention,
-// Matrix struct memory alignment and variables naming are not coherent
-float *MatrixToFloat(Matrix mat)
-{
-    static float buffer[16];
-
-    buffer[0] = mat.m0;
-    buffer[1] = mat.m4;
-    buffer[2] = mat.m8;
-    buffer[3] = mat.m12;
-    buffer[4] = mat.m1;
-    buffer[5] = mat.m5;
-    buffer[6] = mat.m9;
-    buffer[7] = mat.m13;
-    buffer[8] = mat.m2;
-    buffer[9] = mat.m6;
-    buffer[10] = mat.m10;
-    buffer[11] = mat.m14;
-    buffer[12] = mat.m3;
-    buffer[13] = mat.m7;
-    buffer[14] = mat.m11;
-    buffer[15] = mat.m15;
-
-    return buffer;
-}
-
-// Returns a Color struct from hexadecimal value
-Color GetColor(int hexValue)
-{
-    Color color;
-
-    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
-    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
-    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
-    color.a = (unsigned char)hexValue & 0xFF;
-
-    return color;
-}
-
-// Returns hexadecimal value for a Color
-int GetHexValue(Color color)
-{
-    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-}
-
-// Returns a random value between min and max (both included)
-int GetRandomValue(int min, int max)
-{
-    if (min > max)
-    {
-        int tmp = max;
-        max = min;
-        min = tmp;
-    }
-
-    return (rand()%(abs(max-min)+1) + min);
-}
-
-// Fades color by a percentadge
-Color Fade(Color color, float alpha)
-{
-    if (alpha < 0.0f) alpha = 0.0f;
-    else if (alpha > 1.0f) alpha = 1.0f;
-
-    float colorAlpha = (float)color.a*alpha;
-
-    return (Color){color.r, color.g, color.b, (unsigned char)colorAlpha};
-}
-
-// Activates raylib logo at startup
-void ShowLogo(void)
-{
-    showLogo = true;
-}
-
-// Enable some window/system configurations
-void SetConfigFlags(char flags)
-{
-    configFlags = flags;
-
-    if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
-    if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
-}
-
-// Takes a screenshot and saves it in the same folder as executable
-void TakeScreenshot(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-    static int shotNum = 0;     // Screenshot number, increments every screenshot take during program execution
-    char buffer[20];            // Buffer to store file name
-
-    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
-
-    sprintf(buffer, "screenshot%03i.png", shotNum);
-
-    // Save image as PNG
-    SavePNG(buffer, imgData, renderWidth, renderHeight, 4);
-
-    free(imgData);
-
-    shotNum++;
-
-    TraceLog(INFO, "[%s] Screenshot taken #03i", buffer, shotNum);
-#endif
-}
-
-// Check file extension
-bool IsFileExtension(const char *fileName, const char *ext)
-{
-    bool result = false;
-    const char *fileExt;
-    
-    if ((fileExt = strrchr(fileName, '.')) != NULL)
-    {
-        if (strcmp(fileExt, ext) == 0) result = true;
-    }
-
-    return result;
-}
-
-#if defined(PLATFORM_DESKTOP)
-// Check if a file have been dropped into window
-bool IsFileDropped(void)
-{
-    if (dropFilesCount > 0) return true;
-    else return false;
-}
-
-// Retrieve dropped files into window
-char **GetDroppedFiles(int *count)
-{
-    *count = dropFilesCount;
-    return dropFilesPath;
-}
-
-// Clear dropped files paths buffer
-void ClearDroppedFiles(void)
-{
-    if (dropFilesCount > 0)
-    {
-        for (int i = 0; i < dropFilesCount; i++) free(dropFilesPath[i]);
-
-        free(dropFilesPath);
-
-        dropFilesCount = 0;
-    }
-}
-#endif
-
-// Storage save integer value (to defined position)
-// NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
-void StorageSaveValue(int position, int value)
-{
-    FILE *storageFile = NULL;
-
-    char path[128];
-#if defined(PLATFORM_ANDROID)
-    strcpy(path, internalDataPath);
-    strcat(path, "/");
-    strcat(path, STORAGE_FILENAME);
-#else
-    strcpy(path, STORAGE_FILENAME);
-#endif
-
-    // Try open existing file to append data
-    storageFile = fopen(path, "rb+");
-
-    // If file doesn't exist, create a new storage data file
-    if (!storageFile) storageFile = fopen(path, "wb");
-
-    if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
-    else
-    {
-        // Get file size
-        fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);  // Size in bytes
-        fseek(storageFile, 0, SEEK_SET);
-
-        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
-        else
-        {
-            fseek(storageFile, (position*4), SEEK_SET);
-            fwrite(&value, 1, 4, storageFile);
-        }
-
-        fclose(storageFile);
-    }
-}
-
-// Storage load integer value (from defined position)
-// NOTE: If requested position could not be found, value 0 is returned
-int StorageLoadValue(int position)
-{
-    int value = 0;
-
-    char path[128];
-#if defined(PLATFORM_ANDROID)
-    strcpy(path, internalDataPath);
-    strcat(path, "/");
-    strcat(path, STORAGE_FILENAME);
-#else
-    strcpy(path, STORAGE_FILENAME);
-#endif
-
-    // Try open existing file to append data
-    FILE *storageFile = fopen(path, "rb");
-
-    if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
-    else
-    {
-        // Get file size
-        fseek(storageFile, 0, SEEK_END);
-        int fileSize = ftell(storageFile);      // Size in bytes
-        rewind(storageFile);
-
-        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
-        else
-        {
-            fseek(storageFile, (position*4), SEEK_SET);
-            fread(&value, 4, 1, storageFile);   // Read 1 element of 4 bytes size
-        }
-
-        fclose(storageFile);
-    }
-
-    return value;
 }
 
 // Returns a ray trace from mouse position
@@ -1272,6 +1006,305 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 Matrix GetCameraMatrix(Camera camera)
 {
     return MatrixLookAt(camera.position, camera.target, camera.up);
+}
+
+// Set target FPS (maximum)
+void SetTargetFPS(int fps)
+{
+    if (fps < 1) targetTime = 0.0;
+    else targetTime = 1.0/(double)fps;
+
+    TraceLog(INFO, "Target time per frame: %02.03f milliseconds", (float)targetTime*1000);
+}
+
+// Returns current FPS
+int GetFPS(void)
+{
+    return (int)(1.0f/GetFrameTime());
+}
+
+// Returns time in seconds for last frame drawn
+float GetFrameTime(void)
+{
+    // NOTE: We round value to milliseconds
+    return (float)frameTime;
+}
+
+// Converts Color to float array and normalizes
+float *ColorToFloat(Color color)
+{
+    static float buffer[4];
+
+    buffer[0] = (float)color.r/255;
+    buffer[1] = (float)color.g/255;
+    buffer[2] = (float)color.b/255;
+    buffer[3] = (float)color.a/255;
+
+    return buffer;
+}
+
+// Converts Vector3 to float array
+float *VectorToFloat(Vector3 vec)
+{
+    static float buffer[3];
+
+    buffer[0] = vec.x;
+    buffer[1] = vec.y;
+    buffer[2] = vec.z;
+
+    return buffer;
+}
+
+// NOTE: Returned vector is a transposed version of the Matrix struct,
+// it should be this way because, despite raymath use OpenGL column-major convention,
+// Matrix struct memory alignment and variables naming are not coherent
+float *MatrixToFloat(Matrix mat)
+{
+    static float buffer[16];
+
+    buffer[0] = mat.m0;
+    buffer[1] = mat.m4;
+    buffer[2] = mat.m8;
+    buffer[3] = mat.m12;
+    buffer[4] = mat.m1;
+    buffer[5] = mat.m5;
+    buffer[6] = mat.m9;
+    buffer[7] = mat.m13;
+    buffer[8] = mat.m2;
+    buffer[9] = mat.m6;
+    buffer[10] = mat.m10;
+    buffer[11] = mat.m14;
+    buffer[12] = mat.m3;
+    buffer[13] = mat.m7;
+    buffer[14] = mat.m11;
+    buffer[15] = mat.m15;
+
+    return buffer;
+}
+
+// Returns a Color struct from hexadecimal value
+Color GetColor(int hexValue)
+{
+    Color color;
+
+    color.r = (unsigned char)(hexValue >> 24) & 0xFF;
+    color.g = (unsigned char)(hexValue >> 16) & 0xFF;
+    color.b = (unsigned char)(hexValue >> 8) & 0xFF;
+    color.a = (unsigned char)hexValue & 0xFF;
+
+    return color;
+}
+
+// Returns hexadecimal value for a Color
+int GetHexValue(Color color)
+{
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Returns a random value between min and max (both included)
+int GetRandomValue(int min, int max)
+{
+    if (min > max)
+    {
+        int tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    return (rand()%(abs(max-min)+1) + min);
+}
+
+// Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
+Color Fade(Color color, float alpha)
+{
+    if (alpha < 0.0f) alpha = 0.0f;
+    else if (alpha > 1.0f) alpha = 1.0f;
+
+    float colorAlpha = (float)color.a*alpha;
+
+    return (Color){color.r, color.g, color.b, (unsigned char)colorAlpha};
+}
+
+// Activate raylib logo at startup (can be done with flags)
+void ShowLogo(void)
+{
+    showLogo = true;
+}
+
+// Setup window configuration flags (view FLAGS)
+void SetConfigFlags(char flags)
+{
+    configFlags = flags;
+
+    if (configFlags & FLAG_SHOW_LOGO) showLogo = true;
+    if (configFlags & FLAG_FULLSCREEN_MODE) fullscreen = true;
+}
+
+// NOTE TraceLog() function is located in [utils.h]
+
+// Takes a screenshot of current screen (saved a .png)
+void TakeScreenshot(const char *fileName)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
+    SavePNG(fileName, imgData, renderWidth, renderHeight, 4); // Save image as PNG
+    free(imgData);
+
+    TraceLog(INFO, "Screenshot taken: %s", fileName);
+#endif
+}
+
+// Check file extension
+bool IsFileExtension(const char *fileName, const char *ext)
+{
+    bool result = false;
+    const char *fileExt;
+    
+    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    {
+        if (strcmp(fileExt, ext) == 0) result = true;
+    }
+
+    return result;
+}
+
+// Get directory for a given fileName (with path)
+const char *GetDirectoryPath(const char *fileName)
+{
+    char *lastSlash = NULL;
+    static char filePath[256];      // MAX_DIRECTORY_PATH_SIZE = 256
+    memset(filePath, 0, 256);
+    
+    lastSlash = strrchr(fileName, '\\');
+    strncpy(filePath, fileName, strlen(fileName) - (strlen(lastSlash) - 1));
+    filePath[strlen(fileName) - strlen(lastSlash)] = '\0';
+    
+    return filePath;
+}
+
+// Get current working directory
+const char *GetWorkingDirectory(void)
+{
+    static char currentDir[256];    // MAX_DIRECTORY_PATH_SIZE = 256
+    memset(currentDir, 0, 256);
+    
+    GETCWD(currentDir, 256 - 1);
+    
+    return currentDir;
+}
+
+// Change working directory, returns true if success
+bool ChangeDirectory(const char *dir)
+{
+    return (CHDIR(dir) == 0);
+}
+
+#if defined(PLATFORM_DESKTOP)
+// Check if a file has been dropped into window
+bool IsFileDropped(void)
+{
+    if (dropFilesCount > 0) return true;
+    else return false;
+}
+
+// Get dropped files names
+char **GetDroppedFiles(int *count)
+{
+    *count = dropFilesCount;
+    return dropFilesPath;
+}
+
+// Clear dropped files paths buffer
+void ClearDroppedFiles(void)
+{
+    if (dropFilesCount > 0)
+    {
+        for (int i = 0; i < dropFilesCount; i++) free(dropFilesPath[i]);
+
+        free(dropFilesPath);
+
+        dropFilesCount = 0;
+    }
+}
+#endif
+
+// Save integer value to storage file (to defined position)
+// NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
+void StorageSaveValue(int position, int value)
+{
+    FILE *storageFile = NULL;
+
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
+
+    // Try open existing file to append data
+    storageFile = fopen(path, "rb+");
+
+    // If file doesn't exist, create a new storage data file
+    if (!storageFile) storageFile = fopen(path, "wb");
+
+    if (!storageFile) TraceLog(WARNING, "Storage data file could not be created");
+    else
+    {
+        // Get file size
+        fseek(storageFile, 0, SEEK_END);
+        int fileSize = ftell(storageFile);  // Size in bytes
+        fseek(storageFile, 0, SEEK_SET);
+
+        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
+        else
+        {
+            fseek(storageFile, (position*4), SEEK_SET);
+            fwrite(&value, 1, 4, storageFile);
+        }
+
+        fclose(storageFile);
+    }
+}
+
+// Load integer value from storage file (from defined position)
+// NOTE: If requested position could not be found, value 0 is returned
+int StorageLoadValue(int position)
+{
+    int value = 0;
+
+    char path[128];
+#if defined(PLATFORM_ANDROID)
+    strcpy(path, internalDataPath);
+    strcat(path, "/");
+    strcat(path, STORAGE_FILENAME);
+#else
+    strcpy(path, STORAGE_FILENAME);
+#endif
+
+    // Try open existing file to append data
+    FILE *storageFile = fopen(path, "rb");
+
+    if (!storageFile) TraceLog(WARNING, "Storage data file could not be found");
+    else
+    {
+        // Get file size
+        fseek(storageFile, 0, SEEK_END);
+        int fileSize = ftell(storageFile);      // Size in bytes
+        rewind(storageFile);
+
+        if (fileSize < (position*4)) TraceLog(WARNING, "Storage position could not be found");
+        else
+        {
+            fseek(storageFile, (position*4), SEEK_SET);
+            fread(&value, 4, 1, storageFile);   // Read 1 element of 4 bytes size
+        }
+
+        fclose(storageFile);
+    }
+
+    return value;
 }
 
 //----------------------------------------------------------------------------------
@@ -1559,7 +1592,7 @@ int GetMouseWheelMove(void)
 #endif
 }
 
-// Returns touch position X
+// Returns touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
@@ -1569,7 +1602,7 @@ int GetTouchX(void)
 #endif
 }
 
-// Returns touch position Y
+// Returns touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
@@ -1579,7 +1612,7 @@ int GetTouchY(void)
 #endif
 }
 
-// Returns touch position XY
+// Returns touch position XY for a touch point index (relative to screen size)
 // TODO: Touch position should be scaled depending on display size and render size
 Vector2 GetTouchPosition(int index)
 {
@@ -1836,8 +1869,8 @@ static void InitGraphicsDevice(int width, int height)
         EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
         EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
         EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
-        //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth
-        //EGL_TRANSPARENT_TYPE, EGL_TRANSPARENT_RGB, // Request transparent framebuffer
+        //EGL_ALPHA_SIZE, 8,        // ALPHA bit depth (required for transparent framebuffer)
+        //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
         EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
         //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
         EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
@@ -1912,7 +1945,7 @@ static void InitGraphicsDevice(int width, int height)
 
     VC_DISPMANX_ALPHA_T alpha;
     alpha.flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
-    alpha.opacity = 255;
+    alpha.opacity = 255;    // Set transparency level for framebuffer, requires EGLAttrib: EGL_TRANSPARENT_TYPE
     alpha.mask = 0;
 
     dispmanDisplay = vc_dispmanx_display_open(0);   // LCD
@@ -2362,7 +2395,11 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         // NOTE: Before closing window, while loop must be left!
     }
 #if defined(PLATFORM_DESKTOP)
-    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS) TakeScreenshot();
+    else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
+    {
+        TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+        screenshotCounter++;
+    }
 #endif
     else
     {
@@ -3002,8 +3039,12 @@ static void ProcessKeyboard(void)
     // Check exit key (same functionality as GLFW3 KeyCallback())
     if (currentKeyState[exitKey] == 1) windowShouldClose = true;
 
-    // Check screen capture key
-    if (currentKeyState[301] == 1) TakeScreenshot();    // raylib key: KEY_F12 (GLFW_KEY_F12)
+    // Check screen capture key (raylib key: KEY_F12)
+    if (currentKeyState[301] == 1)
+    {
+        TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+        screenshotCounter++;
+    }
 }
 
 // Restore default keyboard input

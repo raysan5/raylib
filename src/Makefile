@@ -101,7 +101,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android standalone toolchain path
     # NOTE: This path is also used if toolchain generation
     #ANDROID_TOOLCHAIN = $(CURDIR)/toolchain
-    ANDROID_TOOLCHAIN = C:/raylib/android-standalone-toolchain
+    ANDROID_TOOLCHAIN = C:/raylib/android-toolchain
 
     # Android architecture: ARM or ARM64
     ANDROID_ARCH ?= ARM
@@ -230,8 +230,13 @@ endif
 
 # external required libraries (stb and others)
 INCLUDES = -I. -Iexternal
+
 # OpenAL Soft library
-INCLUDES += -Iexternal/openal_soft/include
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    INCLUDES += -Iandroid/jni/include/AL
+else
+    INCLUDES += -Iexternal/openal_soft/include
+endif
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -325,12 +330,12 @@ else
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
-			@echo "raylib shared library (libraylib.so) generated!"
+			@echo "raylib shared library generated (libraylib.so)!"
         endif
     else
         # compile raylib static library.
 		$(AR) rcs $(OUTPUT_PATH)/libraylib.a $(OBJS)
-		@echo "libraylib.a generated (static library)!"
+		@echo "raylib static library generated (libraylib.a)!"
         ifeq ($(SHARED_OPENAL),NO)
 			@echo "expected OpenAL Soft static library linking"
         else
@@ -376,7 +381,6 @@ external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 # compile utils module
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
-
 
 # It installs generated and needed files to compile projects using raylib.
 # The installation works manually.

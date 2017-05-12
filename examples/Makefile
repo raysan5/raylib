@@ -541,6 +541,11 @@ physac/physics_restitution: physac/physics_restitution.c
 # compile [physac] example - physics shatter
 physac/physics_shatter: physac/physics_shatter.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
+    
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+external/native_app_glue.o : native_app_glue.c native_app_glue.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -D$(SHAREDFLAG)
+endif
 
 # fix dylib install path name for each executable (MAC)
 fix_dylib:

@@ -26,6 +26,8 @@
 #include "raylib.h"
 #include "screens.h"
 
+#include <stdio.h>
+
 #include <stdlib.h>                 // Required for: malloc(), free()
 #include <math.h>                   // Required for: sqrtf(), asinf()
 
@@ -79,7 +81,7 @@ static Rectangle waveRec;
 
 // Samples variables
 static Sample *samples;         // Game samples
-static int totalSamples = 0;    // Total game samples (proportional to waveData num samples)
+static int totalSamples;        // Total game samples (proportional to waveData num samples)
 static int collectedSamples;    // Samples collected by player
 static int currentSample;       // Last sample to go through player collect area
 static float samplesSpeed;      // All samples move at the same speed
@@ -91,7 +93,6 @@ static Texture2D texPlayer;
 static Texture2D texSampleSmall;
 static Texture2D texSampleMid;
 static Texture2D texSampleBig;
-static Texture2D texLine;
 
 static RenderTexture2D waveTarget;
 
@@ -103,7 +104,7 @@ static Sound fxPause;           // Pause sound
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
-static void DrawSamples(Sample *samples, int sampleCount, int playedSamples, Rectangle bounds, Color color);
+static void DrawSamplesMap(Sample *samples, int sampleCount, int playedSamples, Rectangle bounds, Color color);
 
 //----------------------------------------------------------------------------------
 // Gameplay Screen Functions Definition
@@ -123,7 +124,6 @@ void InitGameplayScreen(void)
     texSampleSmall = LoadTexture("resources/textures/sample_small.png");
     texSampleMid = LoadTexture("resources/textures/sample_mid.png");
     texSampleBig = LoadTexture("resources/textures/sample_big.png");
-    texLine = LoadTexture("resources/textures/line.png");
     
     waveRec = (Rectangle){ 32, 32, 1280 - 64, 105 };
     waveTarget = LoadRenderTexture(waveRec.width, waveRec.height);
@@ -164,15 +164,15 @@ void InitGameplayScreen(void)
     int samplesDivision = (int)(wave.sampleCount/requiredSamples);
     
     totalSamples = wave.sampleCount/samplesDivision;
-
+    
     // We don't need wave any more (already got waveData)
     UnloadWave(wave);
     
     collectedSamples = 0;
-    
+
     // Init samples
     samples = (Sample *)malloc(totalSamples*sizeof(Sample));
-    
+
     // Normalize wave data (min vs max values) to scale properly
     float minSampleValue = 0.0f;
     float maxSampleValue = 0.0f;
@@ -184,7 +184,7 @@ void InitGameplayScreen(void)
     }
     
     float sampleScaleFactor = 1.0f/(maxSampleValue - minSampleValue);  // 400 pixels maximum size
-    
+
     // Initialize samples
     for (int i = 0; i < totalSamples; i++)
     {
@@ -200,11 +200,16 @@ void InitGameplayScreen(void)
         samples[i].active = true;
         samples[i].collected = false;
         samples[i].color = RED;
+        samples[i].renderable = false;
     }
-    
+
     samplesSpeed = MAX_SAMPLES_SPEED;
     currentSample = 0;
     
+    //FILE *samplesFile = fopen("resources/samples.data", "wb");
+    //fwrite(samples, totalSamples*sizeof(Sample), 1, samplesFile);
+    //fclose(samplesFile);
+
     // We already saved the samples we needed for the game, we can free waveData
     free(waveData);
     
@@ -250,7 +255,7 @@ void UpdateGameplayScreen(void)
             player.position.y += movement.y*0.1f;   // Scale gamepad movement value
         }
         */
-        
+
         // Player logic: check player area limits
         if (player.position.x < playerArea.x) player.position.x = playerArea.x;
         else if ((player.position.x + player.width) > (playerArea.x + playerArea.width)) player.position.x = playerArea.x + playerArea.width - player.width;
@@ -329,15 +334,13 @@ void UpdateGameplayScreen(void)
         // Check ending conditions
         if (currentSample >= totalSamples - 1)
         {
-            StopMusicStream(music);
             endingStatus = 1;           // Win
             finishScreen = 1;
         }
-                                
+
         if (synchro <= 0.0f)
         {
             synchro = 0.0f;
-            StopMusicStream(music);
             endingStatus = 2;           // Loose
             finishScreen = 1;
         }
@@ -365,33 +368,20 @@ void DrawGameplayScreen(void)
             if (i < (currentSample + 1)) col = Fade(DARKGRAY, 0.5f);
             else col = WHITE;
             
-            //DrawCircleV(samples[i].position, samples[i].radius, col);
             if (!samples[i].collected) 
             {
-                if (combo > 50) DrawTexture(texSampleSmall, samples[i].position.x - texSampleSmall.width/2, samples[i].position.y - texSampleSmall.height/2, col);
-                else if (combo > 25) DrawTexture(texSampleMid, samples[i].position.x - texSampleMid.width/2, samples[i].position.y - texSampleMid.height/2, col);
-                else DrawTexture(texSampleBig, samples[i].position.x - texSampleSmall.width/2, samples[i].position.y - texSampleBig.height/2, col);
+                //DrawCircleV(samples[i].position, samples[i].radius, col);
+                
+                if (combo > 30) DrawTexture(texSampleSmall, samples[i].position.x - texSampleSmall.width/2, samples[i].position.y - texSampleSmall.height/2, col);
+                else if (combo > 15) DrawTexture(texSampleMid, samples[i].position.x - texSampleMid.width/2, samples[i].position.y - texSampleMid.height/2, col);
+                else DrawTexture(texSampleBig, samples[i].position.x - texSampleBig.width/2, samples[i].position.y - texSampleBig.height/2, col);
             }
             
             if (i < (currentSample + 1)) col = Fade(GRAY, 0.3f);
-            else col = Fade(WHITE, 0.5f);
+            else col = Fade(RED, 0.5f);
             
             // Draw line between samples
-            //DrawLine(samples[i].position.x, samples[i].position.y, samples[i + 1].position.x, samples[i + 1].position.y, col);
-            
-            float dx = samples[i + 1].position.x - samples[i].position.x;
-            float dy = samples[i + 1].position.y - samples[i].position.y;
-            float d = sqrtf(dx*dx + dy*dy);
-            float angle = asinf(dy/d);
-            
-            // Draw lines using textures
-            //DrawTextureEx(texLine, (Vector2){ samples[i].position.x - 2, samples[i].position.y - 2 }, -RAD2DEG*angle, d/SAMPLES_SPACING, col);
-            
-            // Draw lines using textures - IMPROVED
-            // TODO: Further improving to draw lines properly
-            DrawTexturePro(texLine, (Rectangle){ 0, 0, texLine.width, texLine.height }, 
-                           (Rectangle){ samples[i].position.x, samples[i].position.y, (float)texLine.width*d/SAMPLES_SPACING, texLine.height },
-                           (Vector2){ 0, (float)texLine.height/2 }, -RAD2DEG*angle, col);
+            DrawLineEx(samples[i].position, samples[i + 1].position, 3.0f, col);
         }
     }
 
@@ -432,7 +422,7 @@ void DrawGameplayScreen(void)
     
     // Draw wave
     // NOTE: Old drawing method, replaced by rendertarget      
-    //DrawSamples(samples, totalSamples, currentSample, waveRec, MAROON);
+    //DrawSamplesMap(samples, totalSamples, currentSample, waveRec, MAROON);
     //DrawRectangle(waveRec.x + (int)currentSample*1240/totalSamples, waveRec.y, 2, 99, DARKGRAY);
     //DrawRectangleLines(20, 20, 1240, 140, DARKGRAY);
     //DrawRectangle(20, 150, (float)currentSample/totalSamples*1240, 10, GRAY);
@@ -440,7 +430,7 @@ void DrawGameplayScreen(void)
     // Draw wave using render target
     ClearBackground(BLANK);
     BeginTextureMode(waveTarget);
-        DrawSamples(samples, totalSamples, currentSample, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
+        DrawSamplesMap(samples, totalSamples, currentSample, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
     EndTextureMode();
 
     // TODO: Apply antialiasing shader
@@ -451,13 +441,14 @@ void DrawGameplayScreen(void)
 // Gameplay Screen Unload logic
 void UnloadGameplayScreen(void)
 {
+    StopMusicStream(music);
+    
     // Unload textures
     UnloadTexture(texBackground);
     UnloadTexture(texPlayer);
     UnloadTexture(texSampleSmall);
     UnloadTexture(texSampleMid);
     UnloadTexture(texSampleBig);
-    UnloadTexture(texLine);
     
     UnloadRenderTexture(waveTarget);
 
@@ -466,7 +457,7 @@ void UnloadGameplayScreen(void)
     UnloadSound(fxSampleOff);
     UnloadSound(fxPause);
 
-    free(samples);   // Unload game samples (crashes game)
+    free(samples);   // Unload game samples
 }
 
 // Gameplay Screen should finish?
@@ -483,7 +474,7 @@ int FinishGameplayScreen(void)
 // NOTE: For proper visualization, MSAA x4 is recommended, alternatively
 // it should be rendered to a bigger texture and then scaled down with 
 // bilinear/trilinear texture filtering
-static void DrawSamples(Sample *samples, int sampleCount, int playedSamples, Rectangle bounds, Color color)
+static void DrawSamplesMap(Sample *samples, int sampleCount, int playedSamples, Rectangle bounds, Color color)
 {
     // NOTE: We just pick a sample to draw every increment
     float sampleIncrementX = (float)bounds.width/sampleCount;

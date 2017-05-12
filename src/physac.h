@@ -274,13 +274,13 @@ PHYSACDEF void ClosePhysics(void);                                              
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 #if !defined(PHYSAC_NO_THREADS)
-    static pthread_t physicsThreadId;                       // Physics thread id
+static pthread_t physicsThreadId;                           // Physics thread id
 #endif
 static unsigned int usedMemory = 0;                         // Total allocated dynamic memory
 static bool physicsThreadEnabled = false;                   // Physics thread enabled state
 static double currentTime = 0;                              // Current time in milliseconds
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(__linux__) || defined(PLATFORM_WEB)
-    static double baseTime = 0;                             // Android and RPI platforms base time
+static double baseTime = 0;                                 // Android and RPI platforms base time
 #endif
 static double startTime = 0;                                // Start time in milliseconds
 static double deltaTime = 0;                                // Delta time used for physics steps
@@ -316,10 +316,12 @@ static void FindIncidentFace(Vector2 *v0, Vector2 *v1, PhysicsShape ref, Physics
 static int Clip(Vector2 normal, float clip, Vector2 *faceA, Vector2 *faceB);                                // Calculates clipping based on a normal and two faces
 static bool BiasGreaterThan(float valueA, float valueB);                                                    // Check if values are between bias range
 static Vector2 TriangleBarycenter(Vector2 v1, Vector2 v2, Vector2 v3);                                      // Returns the barycenter of a triangle given by 3 points
+
 static void InitTimer(void);                                                                                // Initializes hi-resolution timer
 static double GetCurrentTime(void);                                                                         // Get current time in milliseconds
 static int GetRandomNumber(int min, int max);                                                               // Returns a random number between min and max (both included)
 
+// Math functions
 static void MathClamp(double *value, double min, double max);                                               // Clamp a value in a range
 static Vector2 MathCross(float value, Vector2 vector);                                                      // Returns the cross product of a vector and a value
 static float MathCrossVector2(Vector2 v1, Vector2 v2);                                                      // Returns the cross product of two vectors
@@ -327,8 +329,10 @@ static float MathLenSqr(Vector2 vector);                                        
 static float MathDot(Vector2 v1, Vector2 v2);                                                               // Returns the dot product of two vectors
 static inline float DistSqr(Vector2 v1, Vector2 v2);                                                        // Returns the square root of distance between two vectors
 static void MathNormalize(Vector2 *vector);                                                                 // Returns the normalized values of a vector
+#if defined(PHYSAC_STANDALONE)
 static Vector2 Vector2Add(Vector2 v1, Vector2 v2);                                                          // Returns the sum of two given vectors
 static Vector2 Vector2Subtract(Vector2 v1, Vector2 v2);                                                     // Returns the subtract of two given vectors
+#endif
 
 static Mat2 Mat2Radians(float radians);                                                                     // Creates a matrix 2x2 from a given radians value
 static void Mat2Set(Mat2 *matrix, float radians);                                                           // Set values from radians to a created matrix 2x2
@@ -1978,6 +1982,7 @@ static void MathNormalize(Vector2 *vector)
     vector->y *= ilength;
 }
 
+#if defined(PHYSAC_STANDALONE)
 // Returns the sum of two given vectors
 static inline Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 {
@@ -1988,7 +1993,7 @@ static inline Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 static inline Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
     return (Vector2){ v1.x - v2.x, v1.y - v2.y };
-}
+#endif
 
 // Creates a matrix 2x2 from a given radians value
 static inline Mat2 Mat2Radians(float radians)

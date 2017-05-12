@@ -19,6 +19,9 @@
 
 #include <stdlib.h>
 
+#include <stdio.h>              // Required for: printf()
+#include <string.h>             // Required for: strcpy()
+
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
@@ -57,20 +60,27 @@ int main(int argc, char *argv[])
 {
 	// Initialization
 	//---------------------------------------------------------
-    /*
 #if !defined(PLATFORM_WEB)
-    // TODO: Add support for dropped files on the exe
-    sampleFilename = (char *)malloc(256);
+    // TODO: Support for dropped files on the exe
+    
+    // Support command line argument for custom music file
     if (argc > 1)
     {
+        // Just supporting an input argument parameter!!! o__O
+        
         if ((IsFileExtension(argv[1], ".ogg")) ||
             (IsFileExtension(argv[1], ".wav")))
         {
+            if (sampleFilename != NULL) free(sampleFilename);
+            
+            sampleFilename = (char *)malloc(256);
             strcpy(sampleFilename, argv[1]);
+            
+            printf("Custom audio file: %s", sampleFilename);
         }
     }
 #endif
-    */
+
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "GGJ17 - WAVE COLLECTOR");
 
@@ -104,8 +114,6 @@ int main(int argc, char *argv[])
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    StopMusicStream(music);
-        
     switch (currentScreen)
     {
         case LOGO: UnloadLogoScreen(); break;
@@ -251,7 +259,7 @@ static void UpdateDrawFrame(void)
 
             } break;
             case GAMEPLAY:
-            { 
+            {
                 UpdateGameplayScreen();
                 
                 if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);

@@ -213,8 +213,12 @@ Image LoadImage(const char *fileName)
         
         FILE *imFile = fopen(fileName, "rb");
         
+        stbi_set_flip_vertically_on_load(true);
+        
         // Load 32 bit per channel floats data 
         image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
+        
+        stbi_set_flip_vertically_on_load(false);
 
         fclose(imFile);
         
@@ -381,7 +385,7 @@ Texture2D LoadTextureFromImage(Image image)
     texture.mipmaps = image.mipmaps;
     texture.format = image.format;
     
-    TraceLog(INFO, "[TEX %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
+    TraceLog(DEBUG, "[TEX ID %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
 
     return texture;
 }
