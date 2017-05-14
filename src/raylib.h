@@ -6,25 +6,23 @@
 *
 *   FEATURES:
 *       - Library written in plain C code (C99)
-*       - Uses PascalCase/camelCase notation
+*       - Multiple platforms supported: Windows, Linux, Mac, Android, Raspberry Pi, HTML5.
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
 *       - Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
 *       - Multiple textures support, including compressed formats and mipmaps generation
 *       - Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
-*       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
+*       - Powerful math module for Vector2, Vector3, Matrix and Quaternion operations: [raymath]
 *       - Audio loading and playing with streaming support and mixing channels: [audio]
 *       - VR stereo rendering support with configurable HMD device parameters
-*       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
-*       - Custom color palette for fancy visuals on raywhite background
 *       - Minimal external dependencies (GLFW3, OpenGL, OpenAL)
 *       - Complete bindings for Lua, Go and Pascal
 *
 *   NOTES:
-*       32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
-*       One custom default font could be loaded automatically when InitWindow() [core]
+*       32bit Colors - Any defined Color is always RGBA (4 byte)
+*       One custom font is loaded by default when InitWindow() [core]
+*       If using OpenGL 3.3 or ES2, one default shader is loaded automatically (internally defined) [rlgl]
 *       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
-*       If using OpenGL 3.3 or ES2, two default shaders could be loaded automatically (internally defined)
 *
 *   DEPENDENCIES:
 *       GLFW3 (www.glfw.org) for window/context management and input [core]
