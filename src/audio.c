@@ -797,7 +797,11 @@ void ResumeMusicStream(Music music)
     ALenum state;
     alGetSourcei(music->stream.source, AL_SOURCE_STATE, &state);
 
-    if (state == AL_PAUSED) alSourcePlay(music->stream.source);
+    if (state == AL_PAUSED) 
+    {
+        TraceLog(INFO, "[AUD ID %i] Resume music stream playing", music->stream.source);
+        alSourcePlay(music->stream.source);
+    }
 }
 
 // Stop music playing (close stream)
@@ -813,8 +817,6 @@ void StopMusicStream(Music music)
     
     for (int i = 0; i < MAX_STREAM_BUFFERS; i++)
     {
-        
-        
         //UpdateAudioStream(music->stream, pcm, AUDIO_BUFFER_SIZE);       // Update one buffer at a time
         alBufferData(music->stream.buffers[i], music->stream.format, pcm, AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, music->stream.sampleRate);
     }
@@ -853,7 +855,7 @@ void UpdateMusicStream(Music music)
 
     if (processed > 0)
     {
-        bool active = true;
+        bool streamEnding = false;
 
         // NOTE: Using dynamic allocation because it could require more than 16KB
         void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
@@ -898,7 +900,7 @@ void UpdateMusicStream(Music music)
 
             if (music->samplesLeft <= 0)
             {
-                active = false;
+                streamEnding = true;
                 break;
             }
         }
@@ -907,7 +909,7 @@ void UpdateMusicStream(Music music)
         free(pcm);
 
         // Reset audio stream for looping
-        if (!active)
+        if (streamEnding)
         {
             StopMusicStream(music);        // Stop music (and reset)
             
