@@ -21,7 +21,7 @@ features
    *  Powerful fonts module with multiple SpriteFonts formats support (XNA bitmap fonts, AngelCode fonts, TTF)
    *  Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
    *  Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
-   *  Materials (diffuse, normal, specular) and Lighting (point, directional, spot) support
+   *  Flexible Materials system, supporting by default diffuse, normal and specular maps
    *  Shaders support, including Model shaders and Postprocessing shaders
    *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
    *  Audio loading and playing with streaming support and mixing channels (WAV, OGG, FLAC, XM, MOD)
@@ -43,31 +43,17 @@ On Raspberry Pi, raylib uses Videocore API and EGL for window/context management
 
 raylib is licensed under a zlib/libpng license. View [LICENSE](https://github.com/raysan5/raylib/blob/master/LICENSE.md).
 
-tools requirements
-------------------
+building
+--------
+
+For detailed building instructions, check [raylib Wiki](https://github.com/raysan5/raylib/wiki).
 
 raylib has been developed using exclusively two tools: 
 
    * Notepad++ (text editor) - [http://notepad-plus-plus.org/](http://notepad-plus-plus.org/)
    * MinGW (GCC compiler) - [http://www.mingw.org/](http://www.mingw.org/)
    
-Those are the tools I recommend to develop with raylib, in fact, those are the tools my students use. 
-I believe those are the best tools to train spartan-programmers.
-
-Someone could argue about debugging. raylib is a library intended for learning and I think C it's a clear enough language
-to allow writing small-mid size programs with a printf-based debugging. All raylib examples have also been written this way.
-
-Since raylib v1.1, you can download a Windows Installer package for easy installation and configuration. Check [raylib Webpage](http://www.raylib.com/)
-
-building source (generate libraylib.a)
---------------------------------------
-
-Check raylib wiki page: [Compile for...](https://github.com/raysan5/raylib/wiki)
-
-building examples
------------------
-
-Check raylib wiki page: [Compile for...](https://github.com/raysan5/raylib/wiki)
+Those are the tools recommended to develop with raylib, in fact, those are the tools my students use. 
 
 contact
 -------
@@ -98,7 +84,7 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  - Marc Agüera for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Daniel Moreno for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Daniel Gomez for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
- - Sergio Martinez for helping on raygui development and tools development (raygui_styler).
+ - [Sergio Martinez](https://github.com/anidealgift) for helping on raygui development and tools development (raygui_styler).
  - [Victor Fisac](https://github.com/victorfisac) for developing physics raylib module (physac) and implementing materials and lighting systems... among multiple other improvements and multiple tools and games. 
  - Albert Martos for helping on raygui and porting examples and game-templates to Android and HTML5.
  - Ian Eito for helping on raygui and porting examples and game-templates to Android and HTML5.
@@ -106,15 +92,22 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  - [Chris Hemingway](https://github.com/cHemingway) for improving raylib on OSX build system.
  - [Emanuele Petriglia](https://github.com/LelixSuper) for working on multiple GNU/Linux improvements and developing [TicTacToe](https://github.com/LelixSuper/TicTacToe) raylib game.
  - [Joshua Reisenauer](https://github.com/kd7tck) for adding audio modules support (XM, MOD) and reviewing audio system.
- - Marcelo Paez (paezao) for his help on OSX to solve High DPI display issue. Thanks Marcelo!
+ - [Marcelo Paez](https://github.com/paezao) for his help on OSX to solve High DPI display issue. Thanks Marcelo!
  - [Ghassan Al-Mashareqa](https://github.com/ghassanpl) for his amazing contribution with raylib Lua module, I just work over his code to implement [rlua](https://github.com/raysan5/raylib/blob/master/src/rlua.h)
  - [Teodor Stoenescu](https://github.com/teodor-stoenescu) for his improvements on OBJ object loading.
+ - [RDR8](https://github.com/RDR8) for helping with Linux build improvements
+ - [Saggi Mizrahi](https://github.com/ficoos) for multiple fixes on Linux and audio system
+ - [Daniel Lemos](https://github.com/xspager) for fixing issues on Linux games building
+ - [Joel Davis](https://github.com/joeld42) for adding raycast picking utilities and a [great example](https://github.com/raysan5/raylib/blob/master/examples/models/models_mesh_picking.c)
+ - [Richard Goodwin](https://github.com/AudioMorphology) for adding RPI touchscreen support
+ - [Milan Nikolic](https://github.com/gen2brain) for adding Android build support with custom standalone toolchain
  
 Please, if I forget someone in this list, excuse me and write me an email to remind me to add you!
 	
-[raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"
-
 license
 -------
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE.md) for further details.
+
+[raysan5]: mailto:ray@raylib.com "Ramon Santamaria - Ray San"
+
