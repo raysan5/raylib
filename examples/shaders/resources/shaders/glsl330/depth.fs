@@ -6,7 +6,7 @@ in vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;     // Depth texture
-uniform vec4 fragTintColor;
+uniform vec4 colDiffuse;
 
 // Output fragment color
 out vec4 finalColor;
