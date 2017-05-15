@@ -436,6 +436,18 @@ ALC_API ALCboolean ALC_APIENTRY alcResetDeviceSOFT(ALCdevice *device, const ALCi
 #define AL_GAIN_LIMIT_SOFT                       0x200E
 #endif
 
+#ifndef AL_SOFT_source_resampler
+#define AL_SOFT_source_resampler
+#define AL_NUM_RESAMPLERS_SOFT                   0x1210
+#define AL_DEFAULT_RESAMPLER_SOFT                0x1211
+#define AL_SOURCE_RESAMPLER_SOFT                 0x1212
+#define AL_RESAMPLER_NAME_SOFT                   0x1213
+typedef const ALchar* (AL_APIENTRY*LPALGETSTRINGISOFT)(ALenum pname, ALsizei index);
+#ifdef AL_ALEXT_PROTOTYPES
+AL_API const ALchar* AL_APIENTRY alGetStringiSOFT(ALenum pname, ALsizei index);
+#endif
+#endif
+
 #ifdef __cplusplus
 }
 #endif

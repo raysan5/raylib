@@ -22,6 +22,48 @@
     #include <emscripten/emscripten.h>
 #endif
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+    #define DEFAULT_VERTEX_SHADER   "resources/shaders/glsl330/base.vs"
+#else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+    #define DEFAULT_VERTEX_SHADER   "resources/shaders/glsl100/base.vs"
+#endif
+
+#define MAX_POSTPRO_SHADERS         12
+
+typedef enum {
+    FX_GRAYSCALE = 0,
+    FX_POSTERIZATION,
+    FX_DREAM_VISION,
+    FX_PIXELIZER,
+    FX_CROSS_HATCHING,
+    FX_CROSS_STITCHING,
+    FX_PREDATOR_VIEW,
+    FX_SCANLINES,
+    FX_FISHEYE,
+    FX_SOBEL,
+    FX_BLOOM,
+    FX_BLUR,
+    //FX_FXAA
+} PostproShader;
+
+static const char *postproShaderText[] = {
+    "GRAYSCALE",
+    "POSTERIZATION",
+    "DREAM_VISION",
+    "PIXELIZER",
+    "CROSS_HATCHING",
+    "CROSS_STITCHING",
+    "PREDATOR_VIEW",
+    "SCANLINES",
+    "FISHEYE",
+    "SOBEL",
+    "BLOOM",
+    "BLUR",
+    //"FXAA"
+};
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -33,9 +75,11 @@ Camera camera = {{ 3.0f, 3.0f, 3.0f }, { 0.0f, 1.5f, 0.0f }, { 0.0f, 1.0f, 0.0f 
 
 Model dwarf;         // OBJ model
 Texture2D texture;   // Model texture
-Shader shader;       // Postpro shader
 
-Vector3 position = { 0.0f, 0.0f, 0.0f };  // Set model position
+Shader shaders[MAX_POSTPRO_SHADERS];        // Postpro shaders
+int currentShader = FX_GRAYSCALE;           // Current shader selected
+
+Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
 
 RenderTexture2D target;
 
@@ -58,8 +102,21 @@ int main()
     texture = LoadTexture("resources/model/dwarf_diffuse.png");   // Load model texture
     dwarf.material.texDiffuse = texture;                          // Set dwarf model diffuse texture
 
-    shader = LoadShader("resources/shaders/glsl100/base.vs",
-						"resources/shaders/glsl100/bloom.fs");    // Load postpro shader
+    // Load all postpro shaders
+    // NOTE 1: All postpro shader use the base vertex shader (DEFAULT_VERTEX_SHADER)
+    // NOTE 2: We load the correct shader depending on GLSL version
+    shaders[FX_GRAYSCALE] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
+    shaders[FX_POSTERIZATION] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/posterization.fs", GLSL_VERSION));
+    shaders[FX_DREAM_VISION] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/dream_vision.fs", GLSL_VERSION));
+    shaders[FX_PIXELIZER] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/pixelizer.fs", GLSL_VERSION));
+    shaders[FX_CROSS_HATCHING] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/cross_hatching.fs", GLSL_VERSION));
+    shaders[FX_CROSS_STITCHING] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/cross_stitching.fs", GLSL_VERSION));
+    shaders[FX_PREDATOR_VIEW] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/predator.fs", GLSL_VERSION));
+    shaders[FX_SCANLINES] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/scanlines.fs", GLSL_VERSION));
+    shaders[FX_FISHEYE] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/fisheye.fs", GLSL_VERSION));
+    shaders[FX_SOBEL] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/sobel.fs", GLSL_VERSION));
+    shaders[FX_BLOOM] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/bloom.fs", GLSL_VERSION));
+    shaders[FX_BLUR] = LoadShader(DEFAULT_VERTEX_SHADER, FormatText("resources/shaders/glsl%i/blur.fs", GLSL_VERSION));
 
     // Create a RenderTexture2D to be used for render to texture
     target = LoadRenderTexture(screenWidth, screenHeight);
@@ -82,7 +139,10 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(shader);       // Unload shader
+    
+    // Unload all postpro shaders
+    for (int i = 0; i < MAX_POSTPRO_SHADERS; i++) UnloadShader(shaders[i]);
+    
     UnloadTexture(texture);     // Unload texture
     UnloadModel(dwarf);         // Unload model
 
@@ -100,6 +160,12 @@ void UpdateDrawFrame(void)
     // Update
     //----------------------------------------------------------------------------------
     UpdateCamera(&camera);              // Update internal camera and our camera
+    
+    if (IsKeyPressed(KEY_RIGHT)) currentShader++;
+    else if (IsKeyPressed(KEY_LEFT)) currentShader--;
+    
+    if (currentShader >= MAX_POSTPRO_SHADERS) currentShader = 0;
+    else if (currentShader < 0) currentShader = MAX_POSTPRO_SHADERS - 1;
     //----------------------------------------------------------------------------------
 
     // Draw
@@ -117,21 +183,26 @@ void UpdateDrawFrame(void)
                 DrawGrid(10, 1.0f);     // Draw a grid
 
             End3dMode();
-      
-            DrawText("HELLO POSTPROCESSING!", 70, 190, 50, RED);
             
         EndTextureMode();           // End drawing to texture (now we have a texture available for next passes)
         
-        BeginShaderMode(shader);
+        // Render previously generated texture using selected postpro shader
+        BeginShaderMode(shaders[currentShader]);
         
             // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
             DrawTextureRec(target.texture, (Rectangle){ 0, 0, target.texture.width, -target.texture.height }, (Vector2){ 0, 0 }, WHITE);
             
         EndShaderMode();
         
+        DrawRectangle(0, 9, 580, 30, Fade(LIGHTGRAY, 0.7f));
+        
         DrawText("(c) Dwarf 3D model by David Moreno", screenWidth - 200, screenHeight - 20, 10, DARKGRAY);
-
-        DrawFPS(10, 10);
+        
+        DrawText("CURRENT POSTPRO SHADER:", 10, 15, 20, BLACK);
+        DrawText(postproShaderText[currentShader], 330, 15, 20, RED);
+        DrawText("< >", 540, 10, 30, DARKBLUE);
+        
+        DrawFPS(700, 15);
 
     EndDrawing();
     //----------------------------------------------------------------------------------

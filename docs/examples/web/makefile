@@ -563,8 +563,7 @@ shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -D$(PLATFORM) $(WINFLAGS) $(WEB_SHELL) -s TOTAL_MEMORY=67108864 \
     --preload-file shaders/resources/model/dwarf.obj@resources/model/dwarf.obj \
     --preload-file shaders/resources/model/dwarf_diffuse.png@resources/model/dwarf_diffuse.png \
-    --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
-    --preload-file shaders/resources/shaders/glsl100/bloom.fs@resources/shaders/glsl100/bloom.fs
+    --preload-file shaders/resources/shaders/glsl100@resources/shaders/glsl100
 
 # compile [audio] example - sound loading and playing (WAV and OGG)
 audio/audio_sound_loading: audio/audio_sound_loading.c

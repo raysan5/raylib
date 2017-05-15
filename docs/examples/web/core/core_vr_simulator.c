@@ -85,6 +85,9 @@ void UpdateDrawFrame(void)
     UpdateCamera(&camera);          // Update camera (simulator mode)
 
     if (IsKeyPressed(KEY_SPACE)) ToggleVrMode();    // Toggle VR mode
+    
+    // Lock mouse cursor if mouse click on canvas
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) DisableCursor();
     //----------------------------------------------------------------------------------
 
     // Draw

@@ -6,25 +6,23 @@
 *
 *   FEATURES:
 *       - Library written in plain C code (C99)
-*       - Uses PascalCase/camelCase notation
+*       - Multiple platforms supported: Windows, Linux, Mac, Android, Raspberry Pi, HTML5.
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
 *       - Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
 *       - Multiple textures support, including compressed formats and mipmaps generation
 *       - Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
-*       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
+*       - Powerful math module for Vector2, Vector3, Matrix and Quaternion operations: [raymath]
 *       - Audio loading and playing with streaming support and mixing channels: [audio]
 *       - VR stereo rendering support with configurable HMD device parameters
-*       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi, HTML5 and Oculus Rift CV1
-*       - Custom color palette for fancy visuals on raywhite background
 *       - Minimal external dependencies (GLFW3, OpenGL, OpenAL)
 *       - Complete bindings for Lua, Go and Pascal
 *
 *   NOTES:
-*       32bit Colors - All defined color are always RGBA (struct Color is 4 byte)
-*       One custom default font could be loaded automatically when InitWindow() [core]
+*       32bit Colors - Any defined Color is always RGBA (4 byte)
+*       One custom font is loaded by default when InitWindow() [core]
+*       If using OpenGL 3.3 or ES2, one default shader is loaded automatically (internally defined) [rlgl]
 *       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
-*       If using OpenGL 3.3 or ES2, two default shaders could be loaded automatically (internally defined)
 *
 *   DEPENDENCIES:
 *       GLFW3 (www.glfw.org) for window/context management and input [core]
@@ -74,7 +72,6 @@
 //#define PLATFORM_ANDROID      // Android device
 //#define PLATFORM_RPI          // Raspberry Pi
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
-//#define RLGL_OCULUS_SUPPORT   // Oculus Rift CV1 (complementary to PLATFORM_DESKTOP)
 
 // Security check in case no PLATFORM_* defined
 #if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
@@ -295,7 +292,7 @@
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
 //----------------------------------------------------------------------------------
-// Types and Structures Definition
+// Structures Definition
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
@@ -352,7 +349,7 @@ typedef struct Image {
     int format;             // Data format (TextureFormat type)
 } Image;
 
-// Texture2D type, bpp always RGBA (32bit)
+// Texture2D type
 // NOTE: Data stored in GPU memory
 typedef struct Texture2D {
     unsigned int id;        // OpenGL texture id
@@ -480,8 +477,8 @@ typedef struct Ray {
 typedef struct RayHitInfo {
     bool hit;               // Did the ray hit something?
     float distance;         // Distance to nearest hit
-    Vector3 hitPosition;    // Position of nearest hit
-    Vector3 hitNormal;      // Surface normal of hit
+    Vector3 position;       // Position of nearest hit
+    Vector3 normal;         // Surface normal of hit
 } RayHitInfo;
 
 // Wave type, defines audio wave data
@@ -516,6 +513,34 @@ typedef struct AudioStream {
     unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
 } AudioStream;
 
+// rRES data returned when reading a resource, 
+// it contains all required data for user (24 byte)
+typedef struct RRESData {
+    unsigned int type;          // Resource type (4 byte)
+
+    unsigned int param1;        // Resouce parameter 1 (4 byte)
+    unsigned int param2;        // Resouce parameter 2 (4 byte)
+    unsigned int param3;        // Resouce parameter 3 (4 byte)
+    unsigned int param4;        // Resouce parameter 4 (4 byte)
+
+    void *data;                 // Resource data pointer (4 byte)
+} RRESData;
+
+// RRES type (pointer to RRESData array)
+typedef struct RRESData *RRES;
+
+//----------------------------------------------------------------------------------
+// Enumerators Definition
+//----------------------------------------------------------------------------------
+// Trace log type
+typedef enum { 
+    INFO = 0,
+    WARNING, 
+    ERROR, 
+    DEBUG, 
+    OTHER 
+} LogType;
+
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
 typedef enum {
@@ -526,6 +551,7 @@ typedef enum {
     UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
     UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
     UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+    UNCOMPRESSED_R32G32B32,         // 32 bit per channel (float) - HDR
     COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
     COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
     COMPRESSED_DXT3_RGBA,           // 8 bpp
@@ -552,10 +578,18 @@ typedef enum {
 } TextureFilterMode;
 
 // Texture parameters: wrap mode
-typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
+typedef enum { 
+    WRAP_REPEAT = 0, 
+    WRAP_CLAMP, 
+    WRAP_MIRROR 
+} TextureWrapMode;
 
 // Color blending modes (pre-defined)
-typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
+typedef enum { 
+    BLEND_ALPHA = 0, 
+    BLEND_ADDITIVE, 
+    BLEND_MULTIPLIED
+} BlendMode;
 
 // Gestures type
 // NOTE: It could be used as flags to enable only some gestures
@@ -595,19 +629,6 @@ typedef enum {
     HMD_FOVE_VR,
 } VrDevice;
 
-// rRES data returned when reading a resource, 
-// it contains all required data for user (24 byte)
-typedef struct RRESData {
-    unsigned int type;          // Resource type (4 byte)
-
-    unsigned int param1;        // Resouce parameter 1 (4 byte)
-    unsigned int param2;        // Resouce parameter 2 (4 byte)
-    unsigned int param3;        // Resouce parameter 3 (4 byte)
-    unsigned int param4;        // Resouce parameter 4 (4 byte)
-
-    void *data;                 // Resource data pointer (4 byte)
-} RRESData;
-
 // RRESData type
 typedef enum { 
     RRES_TYPE_RAW = 0, 
@@ -619,9 +640,6 @@ typedef enum {
     RRES_TYPE_FONT_CHARDATA,    // CharInfo data array
     RRES_TYPE_DIRECTORY
 } RRESDataType;
-
-// RRES type (pointer to RRESData array)
-typedef struct RRESData *RRES;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -636,47 +654,48 @@ extern "C" {            // Prevents name mangling of functions
 // Window and Graphics Device Functions (Module: core)
 //------------------------------------------------------------------------------------
 #if defined(PLATFORM_ANDROID)
-RLAPI void InitWindow(int width, int height, void *state);        // Init Android Activity and OpenGL Graphics (struct android_app)
+RLAPI void InitWindow(int width, int height, void *state);        // Initialize Android activity
 #elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-RLAPI void InitWindow(int width, int height, const char *title);  // Initialize Window and OpenGL Graphics
+RLAPI void InitWindow(int width, int height, const char *title);  // Initialize window and OpenGL context
 #endif
 
-RLAPI void CloseWindow(void);                                     // Close Window and Terminate Context
-RLAPI bool WindowShouldClose(void);                               // Detect if KEY_ESCAPE pressed or Close icon pressed
-RLAPI bool IsWindowMinimized(void);                               // Detect if window has been minimized (or lost focus)
-RLAPI void ToggleFullscreen(void);                                // Fullscreen toggle (only PLATFORM_DESKTOP)
+RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
+RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
+RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
+RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
+RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
 RLAPI int GetScreenWidth(void);                                   // Get current screen width
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
 #if !defined(PLATFORM_ANDROID)
 RLAPI void ShowCursor(void);                                      // Shows cursor
 RLAPI void HideCursor(void);                                      // Hides cursor
-RLAPI bool IsCursorHidden(void);                                  // Returns true if cursor is not visible
-RLAPI void EnableCursor(void);                                    // Enables cursor
-RLAPI void DisableCursor(void);                                   // Disables cursor
+RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
+RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
+RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
 #endif
 
-RLAPI void ClearBackground(Color color);                          // Sets Background Color
-RLAPI void BeginDrawing(void);                                    // Setup drawing canvas to start drawing
-RLAPI void EndDrawing(void);                                      // End canvas drawing and Swap Buffers (Double Buffering)
+RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
+RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
+RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
 
-RLAPI void Begin2dMode(Camera2D camera);                          // Initialize 2D mode with custom camera
-RLAPI void End2dMode(void);                                       // Ends 2D mode custom camera usage
-RLAPI void Begin3dMode(Camera camera);                            // Initializes 3D mode for drawing (Camera setup)
+RLAPI void Begin2dMode(Camera2D camera);                          // Initialize 2D mode with custom camera (2D)
+RLAPI void End2dMode(void);                                       // Ends 2D mode with custom camera
+RLAPI void Begin3dMode(Camera camera);                            // Initializes 3D mode with custom camera (3D)
 RLAPI void End3dMode(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Initializes render texture for drawing
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 
 RLAPI Ray GetMouseRay(Vector2 mousePosition, Camera camera);      // Returns a ray trace from mouse position
-RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position from a 3d world space position
+RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);  // Returns the screen space position for a 3d world space position
 RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns camera transform matrix (view matrix)
 
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 RLAPI int GetFPS(void);                                           // Returns current FPS
-RLAPI float GetFrameTime(void);                                   // Returns time in seconds for one frame
+RLAPI float GetFrameTime(void);                                   // Returns time in seconds for last frame drawn
 
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
@@ -687,18 +706,21 @@ RLAPI float *MatrixToFloat(Matrix mat);                           // Converts Ma
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 
-RLAPI void ShowLogo(void);                                        // Activates raylib logo at startup (can be done with flags)
-RLAPI void SetConfigFlags(char flags);                            // Setup some window configuration flags
-//RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
-RLAPI void TakeScreenshot(void);                                  // Takes a screenshot and saves it in the same folder as executable
-RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+RLAPI void ShowLogo(void);                                        // Activate raylib logo at startup (can be done with flags)
+RLAPI void SetConfigFlags(char flags);                            // Setup window configuration flags (view FLAGS)
+RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 
-RLAPI bool IsFileDropped(void);                                   // Check if a file have been dropped into window
-RLAPI char **GetDroppedFiles(int *count);                         // Retrieve dropped files into window
+RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+RLAPI const char *GetDirectoryPath(const char *fileName);         // Get directory for a given fileName (with path)
+RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory
+RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, returns true if success
+RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
+RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names
 RLAPI void ClearDroppedFiles(void);                               // Clear dropped files paths buffer
 
-RLAPI void StorageSaveValue(int position, int value);             // Storage save integer value (to defined position)
-RLAPI int StorageLoadValue(int position);                         // Storage load integer value (from defined position)
+RLAPI void StorageSaveValue(int position, int value);             // Save integer value to storage file (to defined position)
+RLAPI int StorageLoadValue(int position);                         // Load integer value from storage file (from defined position)
 
 //------------------------------------------------------------------------------------
 // Input Handling Functions (Module: core)
@@ -847,7 +869,7 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 //------------------------------------------------------------------------------------
 RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load SpriteFont from file into GPU memory (VRAM)
-RLAPI SpriteFont LoadSpriteFontTTF(const char *fileName, int fontSize, int charsCount, int *fontChars);  // Load SpriteFont from TTF font file with generation parameters
+RLAPI SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load SpriteFont from file with extended parameters
 RLAPI void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory (VRAM)
 
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
@@ -856,7 +878,7 @@ RLAPI void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
 RLAPI Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing);       // Measure string size for SpriteFont
 
-RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS on top-left corner
+RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS
 RLAPI const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
 RLAPI const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
 
