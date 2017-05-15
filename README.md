@@ -25,23 +25,21 @@ features
    *  Shaders support, including Model shaders and Postprocessing shaders
    *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
    *  Audio loading and playing with streaming support and mixing channels (WAV, OGG, FLAC, XM, MOD)
+   *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi** and **HTML5**
    *  VR stereo rendering support with configurable HMD device parameters
-   *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi**, **HTML5** and **Oculus Rift CV1**
    *  Custom color palette for fancy visuals on raywhite background
    *  Minimal external dependencies (GLFW3, OpenGL, OpenAL)
-   *  Complete binding to LUA
+   *  Complete binding to LUA: [raylib-lua](https://github.com/raysan5/raylib-lua)
 
-raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option by far I found for 
-multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, ...).
+raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option I found for 
+multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, maintained, ...).
 
 raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, [OpenAL Soft](http://kcat.strangesoft.net/openal.html) audio library, in multiple flavours,
 to accomodate to Android, Raspberry Pi and HTML5.
 
-On Android, raylib uses `native_app_glue module` (provided by Android NDK) and native Android libraries to manage window/context, inputs and activity cycle.
+On Android, raylib uses `native_app_glue module` (provided by Android NDK) and native Android libraries to manage window/context, inputs and activity life cycle.
 
 On Raspberry Pi, raylib uses Videocore API and EGL for window/context management and raw inputs reading.
-
-On Oculus Rift CV1, raylib uses Oculus PC SDK libraries but only the core C library ([LibOVR](https://github.com/raysan5/raylib/tree/develop/src/external/OculusSDK/LibOVR)); runtime library (LibOVRRT32_1.dll) must be linked at compilation time.
 
 raylib is licensed under a zlib/libpng license. View [LICENSE](https://github.com/raysan5/raylib/blob/master/LICENSE.md).
 
