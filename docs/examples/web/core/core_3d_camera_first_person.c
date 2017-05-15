@@ -34,7 +34,6 @@ Color colors[MAX_COLUMNS];
 //Vector3 playerPosition;
 Vector3 playerPosition = { 4.0f, 2.0f, 4.0f };      // Define player position
 
-
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------

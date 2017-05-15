@@ -13,11 +13,11 @@ uniform vec4 colDiffuse;
 // NOTE: Add here your custom variables 
 
 // NOTE: Render size values must be passed from code
-const float renderWidth = 800;
-const float renderHeight = 450;
+const float renderWidth = 800.0;
+const float renderHeight = 450.0;
 
-uniform float pixelWidth = 5.0f;
-uniform float pixelHeight = 5.0f;
+float pixelWidth = 5.0;
+float pixelHeight = 5.0;
 
 void main() 
 { 
