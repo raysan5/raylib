@@ -39,7 +39,7 @@ extern "C" {
  * risk having the system force-close the application. This programming
  * model is direct, lightweight, but constraining.
  *
- * The 'threaded_native_app' static library is used to provide a different
+ * The 'android_native_app_glue' static library is used to provide a different
  * execution model where the application can implement its own main event
  * loop in a different thread instead. Here's how it works:
  *
