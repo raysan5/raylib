@@ -246,12 +246,14 @@ PHYSACDEF void ClosePhysics(void);                                              
 #include <stdlib.h>                 // Required for: malloc(), free(), srand(), rand()
 #include <math.h>                   // Required for: cosf(), sinf(), fabs(), sqrtf()
 
+#include "raymath.h"                // Required for: Vector2Add(), Vector2Subtract()
+
 #if defined(_WIN32)
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
 #elif defined(__linux__) || defined(PLATFORM_WEB)
-    #define _DEFAULT_SOURCE         // Enables BSD function definitions and C99 POSIX compliance
+    //#define _DEFAULT_SOURCE         // Enables BSD function definitions and C99 POSIX compliance
     #include <sys/time.h>           // Required for: timespec
     #include <time.h>               // Required for: clock_gettime()
     #include <stdint.h>

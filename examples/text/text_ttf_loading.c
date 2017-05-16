@@ -38,8 +38,11 @@ int main()
     SetTextureFilter(font.texture, FILTER_POINT);
     int currentFontFilter = 0;      // FILTER_POINT
     
+    // NOTE: Drag and drop support only available for desktop platforms: Windows, Linux, OSX
+#if defined(PLATFORM_DESKTOP)
     int count = 0;
     char **droppedFiles;
+#endif
     
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -74,6 +77,7 @@ int main()
         if (IsKeyDown(KEY_LEFT)) fontPosition.x -= 10;
         else if (IsKeyDown(KEY_RIGHT)) fontPosition.x += 10;
         
+#if defined(PLATFORM_DESKTOP)
         // Load a dropped TTF file dynamically (at current fontSize)
         if (IsFileDropped())
         {
@@ -86,6 +90,7 @@ int main()
                 ClearDroppedFiles();
             }
         }
+#endif
         //----------------------------------------------------------------------------------
         
         // Draw
@@ -119,10 +124,11 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+#if defined(PLATFORM_DESKTOP)
+    ClearDroppedFiles();        // Clear internal buffers
+#endif
     UnloadSpriteFont(font);     // SpriteFont unloading
     
-    ClearDroppedFiles();        // Clear internal buffers
-
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     
