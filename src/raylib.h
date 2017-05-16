@@ -473,7 +473,7 @@ typedef struct Ray {
     Vector3 direction;      // Ray direction
 } Ray;
 
-// Information returned from a raycast
+// Raycast hit information
 typedef struct RayHitInfo {
     bool hit;               // Did the ray hit something?
     float distance;         // Distance to nearest hit
@@ -958,7 +958,6 @@ RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint
 RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis,
                             float rotationAngle, Vector3 scale, Color tint);                            // Draw a model wires (with texture if set) with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                               // Draw bounding box (wires)
-
 RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 center, float size, Color tint);     // Draw a billboard texture
 RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec,
                             Vector3 center, float size, Color tint);                                    // Draw a billboard texture defined by sourceRec
@@ -1006,9 +1005,9 @@ RLAPI void EndBlendMode(void);                                            // End
 // VR control functions
 RLAPI void InitVrSimulator(int vrDevice);           // Init VR simulator for selected device
 RLAPI void CloseVrSimulator(void);                  // Close VR simulator for current device
-RLAPI bool IsVrSimulatorReady(void);                // Detect if VR device is ready
+RLAPI bool IsVrSimulatorReady(void);                // Detect if VR simulator is ready
 RLAPI void UpdateVrTracking(Camera *camera);        // Update VR tracking (position and orientation) and camera
-RLAPI void ToggleVrMode(void);                      // Enable/Disable VR experience (device or simulator)
+RLAPI void ToggleVrMode(void);                      // Enable/Disable VR experience
 RLAPI void BeginVrDrawing(void);                    // Begin VR simulator stereo rendering
 RLAPI void EndVrDrawing(void);                      // End VR simulator stereo rendering
 
