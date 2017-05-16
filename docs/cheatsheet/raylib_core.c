@@ -1,62 +1,72 @@
 
     // Window-related functions
     void InitWindow(int width, int height, char* title);                    // Initialize Window and Graphics Context (OpenGL)
-    void CloseWindow(void);                                                 // Close Window and Terminate Context
-    bool WindowShouldClose(void);                                           // Detect if KEY_ESCAPE pressed or Close icon pressed
-    bool IsWindowMinimized(void);                                           // Detect if window has been minimized (or lost focus)
-    void ToggleFullscreen(void);                                            // Fullscreen toggle (by default F11)
+    void CloseWindow(void);                                                 // Close window and unload OpenGL context
+    bool WindowShouldClose(void);                                           // Check if KEY_ESCAPE pressed or Close icon pressed
+    bool IsWindowMinimized(void);                                           // Check if window has been minimized (or lost focus)
+    void ToggleFullscreen(void);                                            // Toggle fullscreen mode (only PLATFORM_DESKTOP)
+    void SetWindowIcon(Image image);                                        // Set icon for window (only PLATFORM_DESKTOP)
+    void SetWindowPosition(int x, int y);                                   // Set window position on screen (only PLATFORM_DESKTOP)
+    void SetWindowMonitor(int monitor);                                     // Set monitor for the current window (fullscreen mode)
+    void SetWindowMinSize(int width, int height);                           // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
     int GetScreenWidth(void);                                               // Get current screen width
     int GetScreenHeight(void);                                              // Get current screen height
     
     // Cursor-related functions
     void ShowCursor(void);                                                  // Shows cursor
     void HideCursor(void);                                                  // Hides cursor
-    bool IsCursorHidden(void);                                              // Returns true if cursor is not visible
-    void EnableCursor(void);                                                // Enables cursor
-    void DisableCursor(void);                                               // Disables cursor
+    bool IsCursorHidden(void);                                              // Check if cursor is not visible
+    void EnableCursor(void);                                                // Enables cursor (unlock cursor)
+    void DisableCursor(void);                                               // Disables cursor (lock cursor)
 
     // Drawing-related functions
-    void ClearBackground(Color color);                                      // Sets Background Color
-    void BeginDrawing(void);                                                // Setup drawing canvas to start drawing
-    void EndDrawing(void);                                                  // End canvas drawing and Swap Buffers (Double Buffering)
-
-    void Begin2dMode(Camera2D camera);                                      // Initialize 2D mode with custom camera
-    void End2dMode(void);                                                   // Ends 2D mode custom camera usage
-    void Begin3dMode(Camera camera);                                        // Initializes 3D mode for drawing (Camera setup)
+    void ClearBackground(Color color);                                      // Set background color (framebuffer clear color)
+    void BeginDrawing(void);                                                // Setup canvas (framebuffer) to start drawing
+    void EndDrawing(void);                                                  // End canvas drawing and swap buffers (double buffering)
+    void Begin2dMode(Camera2D camera);                                      // Initialize 2D mode with custom camera (2D)
+    void End2dMode(void);                                                   // Ends 2D mode with custom camera
+    void Begin3dMode(Camera camera);                                        // Initializes 3D mode with custom camera (3D)
     void End3dMode(void);                                                   // Ends 3D mode and returns to default 2D orthographic mode
     void BeginTextureMode(RenderTexture2D target);                          // Initializes render texture for drawing
     void EndTextureMode(void);                                              // Ends drawing to render texture
-    
+
+    // Screen-space-related functions
     Ray GetMouseRay(Vector2 mousePosition, Camera camera);                  // Returns a ray trace from mouse position
-    Vector2 GetWorldToScreen(Vector3 position, Camera camera);              // Returns the screen space position from a 3d world space position
+    Vector2 GetWorldToScreen(Vector3 position, Camera camera);              // Returns the screen space position for a 3d world space position
     Matrix GetCameraMatrix(Camera camera);                                  // Returns camera transform matrix (view matrix)
 
     // Timming-related functions
     void SetTargetFPS(int fps);                                             // Set target FPS (maximum)
-    float GetFPS(void);                                                     // Returns current FPS
-    float GetFrameTime(void);                                               // Returns time in seconds for one frame
+    int GetFPS(void);                                                       // Returns current FPS
+    float GetFrameTime(void);                                               // Returns time in seconds for last frame drawn
 
     // Color-related functions
-    Color GetColor(int hexValue);                                           // Returns a Color struct from hexadecimal value
     int GetHexValue(Color color);                                           // Returns hexadecimal value for a Color
+    Color GetColor(int hexValue);                                           // Returns a Color struct from hexadecimal value
+    Color Fade(Color color, float alpha);                                   // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
     float *ColorToFloat(Color color);                                       // Converts Color to float array and normalizes
     float *VectorToFloat(Vector3 vec);                                      // Converts Vector3 to float array
     float *MatrixToFloat(Matrix mat);                                       // Converts Matrix to float array
 
     // Misc. functions
+    void ShowLogo(void);                                                    // Activate raylib logo at startup (can be done with flags)
+    void SetConfigFlags(char flags);                                        // Setup window configuration flags (view FLAGS)
+    void TraceLog(int logType, const char *text, ...);                      // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+    void TakeScreenshot(const char *fileName);                              // Takes a screenshot of current screen (saved a .png)
     int GetRandomValue(int min, int max);                                   // Returns a random value between min and max (both included)
-    Color Fade(Color color, float alpha);                                   // Color fade-in or fade-out, alpha goes from 0.0 to 1.0
-    void SetConfigFlags(char flags);                                        // Setup some window configuration flags
-    void ShowLogo(void);                                                    // Activates raylib logo at startup (can be done with flags)
 
-    // Drag-and-drop files functions
-    bool IsFileDropped(void);                                               // Check if a file have been dropped into window
-    char **GetDroppedFiles(int *count);                                     // Retrieve dropped files into window
+    // Files management functions
+    bool IsFileExtension(const char *fileName, const char *ext);            // Check file extension
+    const char *GetDirectoryPath(const char *fileName);                     // Get directory for a given fileName (with path)
+    const char *GetWorkingDirectory(void);                                  // Get current working directory
+    bool ChangeDirectory(const char *dir);                                  // Change working directory, returns true if success
+    bool IsFileDropped(void);                                               // Check if a file has been dropped into window
+    char **GetDroppedFiles(int *count);                                     // Get dropped files names
     void ClearDroppedFiles(void);                                           // Clear dropped files paths buffer
 
     // Persistent storage management
-    void StorageSaveValue(int position, int value);                         // Storage save integer value (to defined position)
-    int StorageLoadValue(int position);                                     // Storage load integer value (from defined position)
+    void StorageSaveValue(int position, int value);                         // Save integer value to storage file (to defined position)
+    int StorageLoadValue(int position);                                     // Load integer value from storage file (from defined position)
     
     // Input-related functions: keyboard
     bool IsKeyPressed(int key);                                             // Detect if a key has been pressed once

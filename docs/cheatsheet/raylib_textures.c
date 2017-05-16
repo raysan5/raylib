@@ -2,11 +2,9 @@
     // Image/Texture2D data loading/unloading functions
     Image LoadImage(const char *fileName);                                                              // Load an image into CPU memory (RAM)
     Image LoadImageEx(Color *pixels, int width, int height);                                            // Load image data from Color array data (RGBA - 32bit)
+    Image LoadImagePro(void *data, int width, int height, int format);                                  // Load image from raw data with parameters
     Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);        // Load image data from RAW file
-    Image LoadImageFromRES(const char *rresName, int resId);                                            // Load an image from rRES file (raylib Resource)
     Texture2D LoadTexture(const char *fileName);                                                        // Load an image as texture into GPU memory
-    Texture2D LoadTextureEx(void *data, int width, int height, int textureFormat, int mipmapCount);     // Load a texture from raw data into GPU memory
-    Texture2D LoadTextureFromRES(const char *rresName, int resId);                                      // Load an image as texture from rRES file (raylib Resource)
     Texture2D LoadTextureFromImage(Image image);                                                        // Load a texture from image data
     RenderTexture2D LoadRenderTexture(int width, int height);                                           // Load a texture to be used for rendering
     void UnloadImage(Image image);                                                                      // Unload image from CPU memory (RAM)
@@ -19,6 +17,7 @@
     // Image manipulation functions
     void ImageToPOT(Image *image, Color fillColor);                                                     // Convert image to POT (power-of-two)
     void ImageFormat(Image *image, int newFormat);                                                      // Convert image data to desired format
+    void ImageAlphaMask(Image *image, Image alphaMask);                                                 // Apply alpha mask to image
     void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp);                             // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
     Image ImageCopy(Image image);                                                                       // Create an image duplicate (useful for transformations)
     void ImageCrop(Image *image, Rectangle crop);                                                       // Crop an image to a defined rectangle
