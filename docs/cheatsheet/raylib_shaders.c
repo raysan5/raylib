@@ -1,9 +1,10 @@
 
     // Shader loading/unloading functions
+    char *LoadText(const char *fileName);                                                               // Load chars array from text file
     Shader LoadShader(char *vsFileName, char *fsFileName);                                              // Load a custom shader and bind default locations
     void UnloadShader(Shader shader);                                                                   // Unload a custom shader from memory
+    
     Shader GetDefaultShader(void);                                                                      // Get default shader
-    Shader GetStandardShader(void);                                                                     // Get standard shader
     Texture2D GetDefaultTexture(void);                                                                  // Get default texture
 
     // Shader access functions
@@ -19,16 +20,13 @@
     void EndShaderMode(void);                                                                           // End custom shader drawing (use default shader)
     void BeginBlendMode(int mode);                                                                      // Begin blending mode (alpha, additive, multiplied)
     void EndBlendMode(void);                                                                            // End blending mode (reset to default: alpha blending)
-    
-    // Light creation/destruction functions
-    Light CreateLight(int type, Vector3 position, Color diffuse);                                       // Create a new light, initialize it and add to pool
-    void DestroyLight(Light light);                                                                     // Destroy a light and take it out of the list
-    
+        
     // VR control functions
-    void InitVrDevice(int vrDevice);                                                                    // Init VR device
-    void CloseVrDevice(void);                                                                           // Close VR device
-    bool IsVrDeviceReady(void);                                                                         // Detect if VR device is ready
-    bool IsVrSimulator(void);                                                                           // Detect if VR simulator is running
+    void InitVrSimulator(int vrDevice);                                                                 // Init VR simulator for selected device
+    void CloseVrSimulator(void);                                                                        // Close VR simulator for current device
+    bool IsVrSimulatorReady(void);                                                                      // Detect if VR simulator is ready
     void UpdateVrTracking(Camera *camera);                                                              // Update VR tracking (position and orientation) and camera
-    void ToggleVrMode(void);                                                                            // Enable/Disable VR experience (device or simulator)
+    void ToggleVrMode(void);                                                                            // Enable/Disable VR experience
+    void BeginVrDrawing(void);                                                                          // Begin VR simulator stereo rendering
+    void EndVrDrawing(void);                                                                            // End VR simulator stereo rendering
     

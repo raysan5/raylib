@@ -89,7 +89,7 @@ int main()
             cursorColor = PURPLE;
             hitObjectName = "Triangle";
 
-            bary = VectorBarycenter(nearestHit.hitPosition, ta, tb, tc);
+            bary = VectorBarycenter(nearestHit.position, ta, tb, tc);
             hitTriangle = true;
         } 
         else hitTriangle = false;
@@ -136,15 +136,15 @@ int main()
                 // If we hit something, draw the cursor at the hit point
                 if (nearestHit.hit) 
                 {
-                    DrawCube(nearestHit.hitPosition, 0.3, 0.3, 0.3, cursorColor);
-                    DrawCubeWires(nearestHit.hitPosition, 0.3, 0.3, 0.3, RED);
+                    DrawCube(nearestHit.position, 0.3, 0.3, 0.3, cursorColor);
+                    DrawCubeWires(nearestHit.position, 0.3, 0.3, 0.3, RED);
 
                     Vector3 normalEnd;
-                    normalEnd.x = nearestHit.hitPosition.x + nearestHit.hitNormal.x;
-                    normalEnd.y = nearestHit.hitPosition.y + nearestHit.hitNormal.y;
-                    normalEnd.z = nearestHit.hitPosition.z + nearestHit.hitNormal.z;
+                    normalEnd.x = nearestHit.position.x + nearestHit.normal.x;
+                    normalEnd.y = nearestHit.position.y + nearestHit.normal.y;
+                    normalEnd.z = nearestHit.position.z + nearestHit.normal.z;
                     
-                    DrawLine3D(nearestHit.hitPosition, normalEnd, RED);
+                    DrawLine3D(nearestHit.position, normalEnd, RED);
                 }
 
                 DrawRay(ray, MAROON);
@@ -163,14 +163,14 @@ int main()
                 DrawText(FormatText("Distance: %3.2f", nearestHit.distance), 10, ypos, 10, BLACK);
                 
                 DrawText(FormatText("Hit Pos: %3.2f %3.2f %3.2f", 
-                                    nearestHit.hitPosition.x, 
-                                    nearestHit.hitPosition.y, 
-                                    nearestHit.hitPosition.z), 10, ypos + 15, 10, BLACK);
+                                    nearestHit.position.x, 
+                                    nearestHit.position.y, 
+                                    nearestHit.position.z), 10, ypos + 15, 10, BLACK);
                                     
                 DrawText(FormatText("Hit Norm: %3.2f %3.2f %3.2f", 
-                                    nearestHit.hitNormal.x, 
-                                    nearestHit.hitNormal.y, 
-                                    nearestHit.hitNormal.z), 10, ypos + 30, 10, BLACK);
+                                    nearestHit.normal.x, 
+                                    nearestHit.normal.y, 
+                                    nearestHit.normal.z), 10, ypos + 30, 10, BLACK);
 
                 if (hitTriangle) DrawText(FormatText("Barycenter: %3.2f %3.2f %3.2f",  bary.x, bary.y, bary.z), 10, ypos + 45, 10, BLACK);
             }

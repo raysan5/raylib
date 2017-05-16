@@ -162,9 +162,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries to link with
         # GLFW3
-            LFLAGS += -L$(RAYLIB_PATH)/src/external/glfw3/lib/$(LIBPATH)
+        LFLAGS += -L$(RAYLIB_PATH)/src/external/glfw3/lib/$(LIBPATH)
         # OpenAL Soft
-            LFLAGS += -L$(RAYLIB_PATH)/src/external/openal_soft/lib/$(LIBPATH)
+        LFLAGS += -L$(RAYLIB_PATH)/src/external/openal_soft/lib/$(LIBPATH)
     endif
 endif
 
@@ -195,6 +195,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         else
             LIBS += -lopenal32dll
         endif
+        PHYSAC_LIBS = -static -lpthread
     endif
     endif
 endif
@@ -524,23 +525,23 @@ audio/audio_raw_stream: audio/audio_raw_stream.c
 
 # compile [physac] example - physics demo
 physac/physics_demo: physac/physics_demo.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) $(PHYSAC_LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics friction
 physac/physics_friction: physac/physics_friction.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) $(PHYSAC_LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics movement
 physac/physics_movement: physac/physics_movement.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) $(PHYSAC_LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics restitution
 physac/physics_restitution: physac/physics_restitution.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) $(PHYSAC_LIBS) -D$(PLATFORM) $(WINFLAGS)
 
 # compile [physac] example - physics shatter
 physac/physics_shatter: physac/physics_shatter.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) -static -lpthread -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDES) $(LFLAGS) $(LIBS) $(PHYSAC_LIBS) -D$(PLATFORM) $(WINFLAGS)
     
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 external/native_app_glue.o : native_app_glue.c native_app_glue.h
