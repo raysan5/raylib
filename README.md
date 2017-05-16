@@ -17,19 +17,19 @@ features
    *  Written in plain C code (C99)
    *  Uses PascalCase/camelCase notation
    *  Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2)
-   *  Unique OpenGL abstraction layer (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c) 
-   *  Powerful fonts module with multiple SpriteFonts formats support (XNA bitmap fonts, AngelCode fonts, TTF)
+   *  Unique OpenGL abstraction layer (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c)
+   *  Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
    *  Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
-   *  Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
+   *  Basic 3d support for Geometrics, Models, Billboards, Heightmaps and Cubicmaps
    *  Flexible Materials system, supporting by default diffuse, normal and specular maps
    *  Shaders support, including Model shaders and Postprocessing shaders
-   *  Powerful math module for Vector and Matrix operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
-   *  Audio loading and playing with streaming support and mixing channels (WAV, OGG, FLAC, XM, MOD)
+   *  Powerful math module for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
+   *  Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
    *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi** and **HTML5**
    *  VR stereo rendering support with configurable HMD device parameters
    *  Custom color palette for fancy visuals on raywhite background
    *  Minimal external dependencies (GLFW3, OpenGL, OpenAL)
-   *  Complete binding to LUA: [raylib-lua](https://github.com/raysan5/raylib-lua)
+   *  Complete bindings to LUA ([raylib-lua](https://github.com/raysan5/raylib-lua)) and Go ([raylib-go](https://github.com/gen2brain/raylib-go))
 
 raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option I found for 
 multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, maintained, ...).
