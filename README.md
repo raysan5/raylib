@@ -37,11 +37,9 @@ multiplatform (Windows, Linux, Mac) window/context and input management (clean, 
 raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, [OpenAL Soft](http://kcat.strangesoft.net/openal.html) audio library, in multiple flavours,
 to accomodate to Android, Raspberry Pi and HTML5.
 
-On Android, raylib uses `native_app_glue module` (provided by Android NDK) and native Android libraries to manage window/context, inputs and activity life cycle.
+*On Android, `native_app_glue module` (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
 
-On Raspberry Pi, raylib uses Videocore API and EGL for window/context management and raw inputs reading.
-
-raylib is licensed under a zlib/libpng license. View [LICENSE](https://github.com/raysan5/raylib/blob/master/LICENSE.md).
+*On Raspberry Pi, Videocore API and EGL libraries are used for window/context management and raw inputs reading.*
 
 building
 --------
