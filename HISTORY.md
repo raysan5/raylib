@@ -166,18 +166,17 @@ New examples, new functions, complete code-base review, multiple bugs corrected.
 notes on raylib 1.7
 -------------------
 
-On May 2017, around 6 month after raylib 1.6, comes another raylib instalment, raylib 1.7. This time library has been improved a lot in terms of consistency and cleanness. As stated in [this patreon article](https://www.patreon.com/posts/raylib-future-7501034), this new raylib version has focused efforts in making it simple and easy-to-use to learn videogames programming.
+On May 2017, around 6 month after raylib 1.6, comes another raylib instalment, raylib 1.7. This time library has been improved a lot in terms of consistency and cleanness. As stated in [this patreon article](https://www.patreon.com/posts/raylib-future-7501034), this new raylib version has focused efforts in becoming more simple and easy-to-use to learn videogames programming. Some highlights of this new version are:
 
-TODO: +30 new functions!
+More than 30 new functions added to the library, functions to control Window, utils to work with filenames and extensions, functions to draw lines with custom thick, mesh loading, functions for 3d ray collisions detailed detection, funtions for VR simulation and much more... Just check [CHANGELOG](CHANGELOG) for a detailed list of additions!
 
-TODO: Configuration flags!
+Support of [configuration flags](https://github.com/raysan5/raylib/issues/200) on every raylib module. Advance users can customize raylib just choosing desired features, defining some configuration flags on modules compilation. That way users can control library size and available functionality.
 
-TODO: Improved build systems!
+Improved [build system](https://github.com/raysan5/raylib/blob/master/src/Makefile) for all supported platforms (Windows, Linux, OSX, RPI, Android, HTML5) with a unique Makefile to compile sources. Added support for Android compilation with a custom standalone toolchain and also multiple build compliation flags.
 
-TODO: Reviewed examples and games!
+New [examples](http://www.raylib.com/examples.html) and [sample games](http://www.raylib.com/games.html) added. All samples material has been reviewed, removing useless examples and adding more comprehensive ones; all material has been ported to latest raylib version and tested in multiple platforms. Examples folder structure has been improved and also build systems.
 
-TODO: Consistency, cleaning!
+Improved library consistency and organization in general. Functions and parameters have been renamed, some parts of the library have been cleaned and simplyfied, some functions has been moved to examples (lighting, Oculus Rift CV1 support) towards a more generic library implementation. Lots of hours have been invested in this process...
 
-
-
+All together derives in another version of **raylib, a simple and easy-to-use library to learn videogames programming**. Enjoy it.
 
