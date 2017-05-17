@@ -1,7 +1,22 @@
 changelog
 ---------
 
-Current Release:    raylib 1.6.0 (20 November 2016)
+Current Release:    raylib 1.7.0 (20 May 2017)
+
+-----------------------------------------------
+Release:     raylib 1.7.0 (20 May 2017)
+-----------------------------------------------
+NOTE: 
+  In this new raylib release, multiple parts of the library have been reviewed for consistency and simplification. 
+  It exposes almost 300 functions, around 30 new functions in comparison with previous version and, again, 
+  it sets a stepping stone towards raylib future.
+
+BIG changes:
+// TODO.
+
+other changes:
+// TODO.
+
 
 -----------------------------------------------
 Release:     raylib 1.6.0 (20 November 2016)
@@ -15,7 +30,7 @@ HUGE changes:
 [audio] COMPLETE REDESIGN: Improved music support and also raw audio data processing and playing, +20 new functions added.
 [physac] COMPLETE REWRITE: Improved performance, functionality and simplified usage, moved to own repository and added multiple examples!
 
-Other changes:
+other changes:
 
 [core] Corrected issue on OSX with HighDPI display
 [core] Added flag to allow resizable window
@@ -166,6 +181,7 @@ BIG changes:
 [physac] NEW MODULE: Basic 2D physics support, use colliders and rigidbodies; apply forces to physic objects.
 
 other changes:
+
 [rlgl] Removed GLEW library dependency, now using GLAD
 [rlgl] Implemented alternative to glGetTexImage() on OpenGL ES
 [rlgl] Using depth data on batch drawing
@@ -204,7 +220,8 @@ BIG changes:
 [gestures] NEW MODULE: Gestures system for Android and HTML5 platforms
 [raygui] NEW MODULE: Set of IMGUI elements for tools development (experimental)
 
-smaller changes:
+other changes:
+
 [rlgl] Added check for OpenGL supported extensions
 [rlgl] Added function SetBlenMode() to select some predefined blending modes 
 [core] Added support for drop&drag of external files into running program
