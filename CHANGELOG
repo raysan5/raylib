@@ -12,11 +12,91 @@ NOTE:
   it sets a stepping stone towards raylib future.
 
 BIG changes:
-// TODO.
+  - More than 30 new functions added to the library, check list below.
+  - Support of configuration flags on every raylib module, to customize library build.
+  - Improved build system for all supported platforms with a unique Makefile to compile sources.
+  - Complete review of examples and sample games, added new sample material.
+  - Improved library consistency and organization in general.
 
 other changes:
-// TODO.
-
+[core] Added function: SetWindowIcon(), to setup icon by code
+[core] Added function: SetWindowMonitor(), to set current display monitor
+[core] Added function: SetWindowMinSize(), to set minimum resize size
+[core] Added function: TakeScreenshot(), made public to API (also launched internally with F12)
+[core] Added function: GetDirectoryPath(), get directory for a given fileName (with path)
+[core] Added function: GetWorkingDirectory(), get current working directory
+[core] Added function: ChangeDirectory(), change working directory
+[core] Added function: TraceLog(), made public to API
+[core] Improved timming system to avoid busy wait loop on frame sync: Wait()
+[core] Added support for gamepad on HTML5 platform
+[core] Support mouse lock, useful for camera system
+[core] Review functions description comments
+[rlgl] Removed function: GetStandardShader(), removed internal standard shader
+[rlgl] Removed function: CreateLight(), removed internal lighting system
+[rlgl] Removed function: DestroyLight(), removed internal lighting system
+[rlgl] Removed function: InitVrDevice(), removed VR device render, using simulator
+[rlgl] Removed function:  CloseVrDevice(), removed VR device render, using simulator
+[rlgl] Removed function: IsVrDeviceReady(), removed VR device render, using simulator
+[rlgl] Removed function: IsVrSimulator(), removed VR device render, using simulator
+[rlgl] Added function: InitVrSimulator(), init VR simulator for selected device
+[rlgl] Added function: CloseVrSimulator(), close VR simulator for current device
+[rlgl] Added function: IsVrSimulatorReady(), detect if VR device is ready
+[rlgl] Added function: BeginVrDrawing(), begin VR simulator stereo rendering
+[rlgl] Added function:  EndVrDrawing(), end VR simulator stereo rendering
+[rlgl] Renamed function: ReadTextFile() to LoadText() and exposed to API
+[rlgl] Removed internal lighting system and standard shader, moved to example
+[rlgl] Removed Oculus Rift support, moved to oculus_rift example
+[rlgl] Removed VR device support and replaced by VR simulator
+[shapes] Added function: DrawLineEx(), draw line with QUADS, supports custom line thick
+[shapes] Added function: DrawLineBezier(), draw a line using cubic-bezier curves in-out
+[shapes] Added function: DrawRectanglePro(), draw a color-filled rectangle with pro parameters
+[textures] Removed function: LoadImageFromRES(), redesigning custom RRES fileformat
+[textures] Removed function: LoadTextureFromRES(), redesigning custom RRES fileformat
+[textures] Removed function: LoadTextureEx(), use instead Image -> LoadImagePro(), LoadImageEx()
+[textures] Added function: LoadImagePro()), load image from raw data with parameters
+[textures] Review TraceLog() message when image file not found
+[text] Renamed function: LoadSpriteFontTTF() to LoadSpriteFontEx(), for consistency
+[text] Removed rBMF fileformat support, replaced by .png
+[text] Refactor SpriteFont struct (better for rres custom fileformat)
+[text] Renamed some variables for consistency
+[models] Added function: LoadMesh(), load mesh from file
+[models] Added function: LoadMeshEx(), load mesh from vertex data
+[models] Added function: UnloadMesh(), unload mesh from memory (RAM and/or VRAM)
+[models] Added function: GetCollisionRayMesh(), get collision info between ray and mesh
+[models] Added function: GetCollisionRayTriangle(), get collision info between ray and triangle
+[models] Added function: GetCollisionRayGround(), get collision info between ray and ground plane
+[models] Renamed function: LoadModelEx() to LoadModelFromMesh()
+[models] Removed function: DrawLight(), removed internal lighting system
+[models] Renamed function: LoadModelEx() to LoadModelFromMesh() for consistency
+[models] Removed function: LoadStandardMaterial(), removed internal standard shader
+[models] Removed function: LoadModelFromRES(), redesigning custom RRES fileformat
+[models] Renamed multiple variables for consistency
+[audio] Added function: SetMasterVolume(), define listener volume
+[audio] Added function: ResumeSound(), resume a paused sound
+[audio] Added function: SetMusicLoopCount(), set number of repeats for a music
+[audio] Added function: LoadWaveEx(), load wave from raw audio data
+[audio] Added function: WaveCrop(), crop wave audio data
+[audio] Added function: WaveFormat(), format audio data
+[audio] Removed function: LoadSoundFromRES(), redesigning custom RRES fileformat
+[audio] Added support for 32bit audio samples
+[audio] Preliminary support for multichannel, limited to mono and stereo
+[audio] Make sure buffers are ready for update: UpdateMusicStream()
+[utils] Replaced function: GetExtension() by IsFileExtension() and made public to API
+[utils] Unified function: TraceLog() between Android and other platforms
+[utils] Removed internal function: GetNextPOT(), simplified implementation
+[raymath] Added function: QuaternionToEuler(), to work with Euler angles
+[raymath] Added function: QuaternionFromEuler(), to work with Euler angles
+[raymath] Added multiple Vector2 math functions
+[build] Integrate Android source building into Makefile
+[example] Added example: shapes_lines_bezier
+[example] Added example: text_input_box
+[github] Moved gh-pages branch to master/docs
+[github] Moved rlua.h and Lua examples to own repo: raylib-lua
+[games] Reviewed full games collection
+[games] New game added to collection: Koala Seasons
+[*] Reviewed and improved examples collection (new assets)
+[*] Reorganized library functions, structs, enums
+[*] Updated STB libraries to latest version
 
 -----------------------------------------------
 Release:     raylib 1.6.0 (20 November 2016)
