@@ -159,7 +159,7 @@ Improved Gamepad support on Windows and Raspberry Pi with the addition of new fu
 
 Improved textures and text functionality, adding new functions for texture filtering control and better TTF/AngelCode fonts loading and generation support.
 
-Build system improvement. Added support for raylib dynamic library generation (raylib.dll) for users that prefer dynamic library linking. Also thinking on advance users, it has been added pre-configured Visual Studio C++ 2015 solution with raylib project and C/C++ examples for users that prefer that professional IDE and compiler.
+Build system improvement. Added support for raylib dynamic library generation (raylib.dll) for users that prefer dynamic library linking. Also thinking on advance users, it has been added pre-configured [Visual Studio C++ 2015 solution](https://github.com/raysan5/raylib/tree/master/project/vs2015) with raylib project and C/C++ examples for users that prefer that professional IDE and compiler.
 
 New examples, new functions, complete code-base review, multiple bugs corrected... this is raylib 1.6. Enjoy making games.
 
@@ -178,5 +178,7 @@ New [examples](http://www.raylib.com/examples.html) and [sample games](http://ww
 
 Improved library consistency and organization in general. Functions and parameters have been renamed, some parts of the library have been cleaned and simplyfied, some functions has been moved to examples (lighting, Oculus Rift CV1 support) towards a more generic library implementation. Lots of hours have been invested in this process...
 
-All together derives in another version of **raylib, a simple and easy-to-use library to learn videogames programming**. Enjoy it.
+Some other features: Gamepad support on HTML5, RPI touch screen support, 32bit audio support, frames timming improvements, public log system, rres file format support...
+
+And here it is another version of **raylib, a simple and easy-to-use library to learn videogames programming**. Enjoy it.
 
