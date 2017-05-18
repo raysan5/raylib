@@ -42,7 +42,7 @@ Thumbs.db
 *.sbr
 *.sdf
 obj/
-[Rr]elease/
+# [Rr]elease/
 [Rr]elease.win32/
 _ReSharper*/
 [Tt]est[Rr]esult*
@@ -90,8 +90,6 @@ xcschememanagement.plist
 xcuserdata/
 DerivedData/
 *.dll
-src/libraylib.a
-src/libraylib.bc
 
 # external libraries DLLs
 !src/external/glfw3/lib/win32/glfw3.dll
@@ -122,6 +120,8 @@ docs/examples/web/*/*.html
 !docs/examples/web/models/loader.html
 
 # raylib release libs
+src/libraylib.a
+src/libraylib.bc
 !release/android/armeabi-v7a/libraylib.a
 !release/android/armeabi-v7a/libraylib.so
 !release/linux/libraylib.a
