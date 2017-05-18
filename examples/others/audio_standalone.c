@@ -11,22 +11,24 @@
 *       jar_mod - MOD audio file loading
 *
 *   Compile audio module using:
-*   gcc -c audio.c stb_vorbis.c -Wall -std=c99 -DAUDIO_STANDALONE
+*       gcc -c audio.c stb_vorbis.c -Wall -std=c99 -DAUDIO_STANDALONE -DAL_LIBTYPE_STATIC
 *
 *   Compile example using:
-*   gcc -o $(NAME_PART).exe $(FILE_NAME) audio.o stb_vorbis.o -lopenal32 -std=c99
+*       gcc -o audio_standalone.exe audio_standalone.c audio.o stb_vorbis.o -lopenal32 -lwinmm /
+*           -Wall -std=c99 -Wl,-allow-multiple-definition
 *
-*   This example has been created using raylib 1.5 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include <stdio.h>
 #if defined(_WIN32)
-#include <conio.h>      // Windows only, no stardard library
+#include <conio.h>          // Windows only, no stardard library
 #endif
+
 #include "audio.h"
 
 #if defined(__linux__)

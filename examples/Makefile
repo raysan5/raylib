@@ -30,15 +30,15 @@
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
+# define raylib directory for include and library
+RAYLIB_PATH ?= C:\raylib\raylib
+
 # define NO to use OpenAL Soft as static library (shared by default)
 SHARED_OPENAL ?= NO
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     SHARED_OPENAL = NO
 endif
-
-# define raylib directory for include and library
-RAYLIB_PATH ?= C:\raylib\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
