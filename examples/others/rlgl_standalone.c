@@ -6,21 +6,22 @@
 *         OpenGL 1.1 does not support shaders but it can also be used.
 *
 *   Compile rlgl module using:
-*   gcc -c rlgl.c -Wall -std=c99 -DRLGL_STANDALONE -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33
+*       gcc -c $(RAYLIB_DIR)\raylib\src\rlgl.c -DRLGL_STANDALONE -DRAYMATH_IMPLEMENTATION -DGRAPHICS_API_OPENGL_33 /
+*           -I$(RAYLIB_DIR)\raylib\src\external -Wall -std=c99
 *
 *   NOTE: rlgl module requires the following header-only files:
 *       external/glad.h - OpenGL extensions loader (stripped to only required extensions)
-*       shader_standard.h - Standard shader for materials and lighting
 *       shader_distortion.h - Distortion shader for VR
 *       raymath.h - Vector and matrix math functions
 *
 *   Compile example using:
-*   gcc -o rlgl_standalone.exe rlgl_standalone.c rlgl.o -lglfw3 -lopengl32 -lgdi32 -std=c99
+*       gcc -o rlgl_standalone.exe rlgl_standalone.c rlgl.o -s $(RAYLIB_DIR)\raylib\raylib_icon -I$(RAYLIB_DIR)\raylib\src /
+*           -L. -L$(RAYLIB_DIR)\raylib\src -lglfw3 -lopengl32 -lgdi32 -Wall -std=c99
 *
-*   This example has been created using raylib 1.5 (www.raylib.com)
+*   This example has been created using raylib 1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

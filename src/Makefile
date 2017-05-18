@@ -44,8 +44,11 @@
 # possible platforms: PLATFORM_DESKTOP PLATFORM_ANDROID PLATFORM_RPI PLATFORM_WEB
 PLATFORM ?= PLATFORM_DESKTOP
 
+# define raylib default path, required to look for emsdk and android-toolchain
+RAYLIB_PATH ?= C:/raylib
+
 # define YES if you want shared/dynamic version of library instead of static (default)
-SHARED ?= NO
+SHARED_RAYLIB ?= NO
 
 # use OpenAL Soft as shared library (.so / .dll)
 # NOTE: If defined NO, static OpenAL Soft library should be provided
@@ -84,7 +87,7 @@ endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
-    EMSDK_PATH = C:/emsdk
+    EMSDK_PATH = $(RAYLIB_PATH)/emsdk
     EMSCRIPTEN_VERSION = 1.37.9
     CLANG_VERSION=e1.37.9_64bit
     PYTHON_VERSION=2.7.5.3_64bit
@@ -101,7 +104,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android standalone toolchain path
     # NOTE: This path is also used if toolchain generation
     #ANDROID_TOOLCHAIN = $(CURDIR)/toolchain
-    ANDROID_TOOLCHAIN = C:/raylib/android-toolchain
+    ANDROID_TOOLCHAIN = $(RAYLIB_PATH)/android-toolchain
 
     # Android architecture: ARM or ARM64
     ANDROID_ARCH ?= ARM
@@ -209,7 +212,7 @@ endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
 # if shared library required, make sure code is compiled as position independent
-ifeq ($(SHARED),YES)
+ifeq ($(SHARED_RAYLIB),YES)
     CFLAGS += -fPIC
     SHAREDFLAG = BUILDING_DLL
     SHAREDLIBS = -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lgdi32
@@ -313,7 +316,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	emcc -O1 $(OBJS) -o $(OUTPUT_PATH)/libraylib.bc
 	@echo "libraylib.bc generated (web version)!"
 else
-    ifeq ($(SHARED),YES)
+    ifeq ($(SHARED_RAYLIB),YES)
         ifeq ($(PLATFORM_OS),LINUX)
             # compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
@@ -388,7 +391,7 @@ ifeq ($(ROOT),root)
         # libraries and header files. These directory (/usr/local/lib and
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
-        ifeq ($(SHARED),YES)
+        ifeq ($(SHARED_RAYLIB),YES)
 			cp --update $(OUTPUT_PATH)/libraylib.so /usr/local/lib/libraylib.so
         else
 			cp --update raylib.h /usr/local/include/raylib.h
@@ -408,7 +411,7 @@ uninstall :
 ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
 			rm --force /usr/local/include/raylib.h
-        ifeq ($(SHARED),YES)
+        ifeq ($(SHARED_RAYLIB),YES)
 			rm --force /usr/local/lib/libraylib.so
         else
 			rm --force /usr/local/lib/libraylib.a
