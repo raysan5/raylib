@@ -147,11 +147,11 @@ notes on raylib 1.6
 
 On November 2016, only 4 months after raylib 1.5, arrives raylib 1.6. This new version represents another big review of the library and includes some interesting additions. This version conmmemorates raylib 3rd anniversary (raylib 1.0 was published on November 2013) and it is a stepping stone for raylib future. raylib roadmap has been reviewed and redefined to focus on its primary objective: create a simple and easy-to-use library to learn videogames programming. Some of the new features:
 
-Complete raylib Lua binding. All raylib functions plus the +60 code examples have been ported to Lua, now Lua users can enjoy coding videogames in Lua while using all the internal power of raylib. This addition also open the doors to Lua scripting support for a future raylib-based engine, being able to move game logic (Init, Update, Draw, De-Init) to Lua scripts while keep using raylib functionality.
+Complete [raylib Lua binding](https://github.com/raysan5/raylib-lua). All raylib functions plus the +60 code examples have been ported to Lua, now Lua users can enjoy coding videogames in Lua while using all the internal power of raylib. This addition also open the doors to Lua scripting support for a future raylib-based engine, being able to move game logic (Init, Update, Draw, De-Init) to Lua scripts while keep using raylib functionality.
 
-Completely redesigned audio module. Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added (+20 new functions) to allow raw audio processing and streaming. FLAC file format support has also been added. In the same line, OpenAL Soft backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
+Completely redesigned [audio module](https://github.com/raysan5/raylib/blob/develop/src/audio.c). Based on the new direction taken in raylib 1.5, it has been further improved and more functionality added (+20 new functions) to allow raw audio processing and streaming. [FLAC file format support](https://github.com/raysan5/raylib/blob/develop/src/external/dr_flac.h) has also been added. In the same line, [OpenAL Soft](https://github.com/kcat/openal-soft) backend is now provided as a static library in Windows to allow static linking and get ride of OpenAL32.dll. Now raylib Windows games are completey self-contained, no external libraries required any more!
 
-Physac module has been moved to its own repository and it has been improved A LOT, actually, library has been completely rewritten from scratch by @victorfisac, multiple samples have been added together with countless new features to match current standard 2D physic libraries. Results are amazing!
+[Physac](https://github.com/victorfisac/Physac) module has been moved to its own repository and it has been improved A LOT, actually, library has been completely rewritten from scratch by [@victorfisac](https://github.com/victorfisac), multiple samples have been added together with countless new features to match current standard 2D physic libraries. Results are amazing!
 
 Camera and gestures modules have been reviewed, highly simplified and ported to single-file header-only libraries for easier portability and usage flexibility. Consequently, camera system usage has been simplified in all examples.
 
@@ -159,7 +159,26 @@ Improved Gamepad support on Windows and Raspberry Pi with the addition of new fu
 
 Improved textures and text functionality, adding new functions for texture filtering control and better TTF/AngelCode fonts loading and generation support.
 
-Build system improvement. Added support for raylib dynamic library generation (raylib.dll) for users that prefer dynamic library linking. Also thinking on advance users, it has been added pre-configured Visual Studio C++ 2015 solution with raylib project and C/C++ examples for users that prefer that professional IDE and compiler.
+Build system improvement. Added support for raylib dynamic library generation (raylib.dll) for users that prefer dynamic library linking. Also thinking on advance users, it has been added pre-configured [Visual Studio C++ 2015 solution](https://github.com/raysan5/raylib/tree/master/project/vs2015) with raylib project and C/C++ examples for users that prefer that professional IDE and compiler.
 
 New examples, new functions, complete code-base review, multiple bugs corrected... this is raylib 1.6. Enjoy making games.
+
+notes on raylib 1.7
+-------------------
+
+On May 2017, around 6 month after raylib 1.6, comes another raylib instalment, raylib 1.7. This time library has been improved a lot in terms of consistency and cleanness. As stated in [this patreon article](https://www.patreon.com/posts/raylib-future-7501034), this new raylib version has focused efforts in becoming more simple and easy-to-use to learn videogames programming. Some highlights of this new version are:
+
+More than 30 new functions added to the library, functions to control Window, utils to work with filenames and extensions, functions to draw lines with custom thick, mesh loading, functions for 3d ray collisions detailed detection, funtions for VR simulation and much more... Just check [CHANGELOG](CHANGELOG) for a detailed list of additions!
+
+Support of [configuration flags](https://github.com/raysan5/raylib/issues/200) on every raylib module. Advance users can customize raylib just choosing desired features, defining some configuration flags on modules compilation. That way users can control library size and available functionality.
+
+Improved [build system](https://github.com/raysan5/raylib/blob/master/src/Makefile) for all supported platforms (Windows, Linux, OSX, RPI, Android, HTML5) with a unique Makefile to compile sources. Added support for Android compilation with a custom standalone toolchain and also multiple build compliation flags.
+
+New [examples](http://www.raylib.com/examples.html) and [sample games](http://www.raylib.com/games.html) added. All samples material has been reviewed, removing useless examples and adding more comprehensive ones; all material has been ported to latest raylib version and tested in multiple platforms. Examples folder structure has been improved and also build systems.
+
+Improved library consistency and organization in general. Functions and parameters have been renamed, some parts of the library have been cleaned and simplyfied, some functions has been moved to examples (lighting, Oculus Rift CV1 support) towards a more generic library implementation. Lots of hours have been invested in this process...
+
+Some other features: Gamepad support on HTML5, RPI touch screen support, 32bit audio support, frames timming improvements, public log system, rres file format support, automatic GIF recording...
+
+And here it is another version of **raylib, a simple and easy-to-use library to learn videogames programming**. Enjoy it.
 

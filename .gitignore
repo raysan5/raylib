@@ -74,7 +74,7 @@ games/*
 !games/*.lua
 !games/*.png
 # Unignore games makefile
-!games/makefile
+!games/Makefile
 
 # Ignore files build by xcode
 *.mode*v*
@@ -96,8 +96,6 @@ src/libraylib.bc
 # external libraries DLLs
 !src/external/glfw3/lib/win32/glfw3.dll
 !src/external/openal_soft/lib/win32/OpenAL32.dll
-!src/external/OculusSDK/LibOVR/LibOVRRT32_1.dll
-!src/external/pthread/lib/pthreadGC2.dll
 
 # Visual Studio project
 project/vs2015/*.db
@@ -122,4 +120,11 @@ docs/examples/web/*/*.html
 !docs/examples/web/physac/loader.html
 !docs/examples/web/shaders/loader.html
 !docs/examples/web/models/loader.html
+
+# raylib release libs
+!release/android/armeabi-v7a/libraylib.a
+!release/android/armeabi-v7a/libraylib.so
+!release/linux/libraylib.a
+!release/linux/libraylib.so
+!release/rpi/libraylib.a
 

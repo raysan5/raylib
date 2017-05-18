@@ -232,11 +232,7 @@ endif
 INCLUDES = -I. -Iexternal
 
 # OpenAL Soft library
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    INCLUDES += -Iandroid/jni/include/AL
-else
-    INCLUDES += -Iexternal/openal_soft/include
-endif
+INCLUDES += -Iexternal/openal_soft/include
 
 # define any directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -257,7 +253,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android required libraries
     INCLUDES += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
     # Include android_native_app_glue.h
-    INCLUDES += -Iandroid/jni/include
+    INCLUDES += -Iexternal/android/native_app_glue
     #INCLUDES += -I$(ANDROID_NDK)/sources/android/native_app_glue
 endif
 
