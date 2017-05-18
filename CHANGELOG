@@ -16,6 +16,7 @@ BIG changes:
   - Support of configuration flags on every raylib module, to customize library build.
   - Improved build system for all supported platforms with a unique Makefile to compile sources.
   - Complete review of examples and sample games, added new sample material.
+  - Support automatic GIF recording of current window, just pressing Ctrl+F12
   - Improved library consistency and organization in general.
 
 other changes:
