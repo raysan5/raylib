@@ -44,6 +44,9 @@
 *   #define SUPPORT_BUSY_WAIT_LOOP
 *       Use busy wait loop for timming sync, if not defined, a high-resolution timer is setup and used
 *
+*   #define SUPPORT_GIF_RECORDING
+*       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
+*
 *   DEPENDENCIES:
 *       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
 *       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
@@ -79,6 +82,7 @@
 #define SUPPORT_CAMERA_SYSTEM
 #define SUPPORT_GESTURES_SYSTEM
 #define SUPPORT_BUSY_WAIT_LOOP
+#define SUPPORT_GIF_RECORDING
 //-------------------------------------------------
 
 #include "raylib.h"
@@ -97,7 +101,12 @@
 
 #if defined(SUPPORT_CAMERA_SYSTEM) && !defined(PLATFORM_ANDROID)
     #define CAMERA_IMPLEMENTATION
-    #include "camera.h"     // Camera system functionality
+    #include "camera.h"         // Camera system functionality
+#endif
+
+#if defined(SUPPORT_GIF_RECORDING)
+    #define GIF_IMPLEMENTATION
+    #include "external/gif.h"   // Support GIF recording
 #endif
 
 #include <stdio.h>          // Standard input / output lib
@@ -318,6 +327,12 @@ static double targetTime = 0.0;             // Desired time for one frame, if 0 
 static char configFlags = 0;                // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
+#if defined(SUPPORT_GIF_RECORDING)
+static GifWriter gifWriter;
+static int gifFramesCounter = 0;
+static bool gifRecording = false;
+#endif
+
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by core)
 //----------------------------------------------------------------------------------
@@ -520,6 +535,14 @@ void InitWindow(int width, int height, void *state)
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
+#if defined(SUPPORT_GIF_RECORDING)
+    if (gifRecording)
+    {
+        GifEnd(&gifWriter);
+        gifRecording = false;
+    }
+#endif
+    
 #if defined(SUPPORT_DEFAULT_FONT)
     UnloadDefaultFont();
 #endif
@@ -770,6 +793,35 @@ void EndDrawing(void)
 {
     rlglDraw();                     // Draw Buffers (Only OpenGL 3+ and ES2)
 
+#if defined(SUPPORT_GIF_RECORDING)
+
+    #define GIF_RECORD_FRAMERATE    10
+
+    if (gifRecording)
+    {
+        gifFramesCounter++;
+        
+        // NOTE: We record one gif frame every 10 game frames
+        if ((gifFramesCounter%GIF_RECORD_FRAMERATE) == 0)
+        {
+            // Get image data for the current frame (from backbuffer)
+            // NOTE: This process is very slow... :(
+            unsigned char *screenData = rlglReadScreenPixels(screenWidth, screenHeight);
+            GifWriteFrame(&gifWriter, screenData, screenWidth, screenHeight, 10, 8, false);
+            
+            free(screenData);   // Free image data
+        }
+        
+        if (((gifFramesCounter/15)%2) == 1)
+        {
+            DrawCircle(30, screenHeight - 20, 10, RED);
+            DrawText("RECORDING", 50, screenHeight - 25, 10, MAROON);
+        }
+        
+        rlglDraw();                 // Draw RECORDING message
+    }
+#endif
+   
     SwapBuffers();                  // Copy back buffer to front buffer
     PollInputEvents();              // Poll user events
 
@@ -2397,10 +2449,37 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 #if defined(PLATFORM_DESKTOP)
     else if (key == GLFW_KEY_F12 && action == GLFW_PRESS)
     {
-        TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
-        screenshotCounter++;
+    #if defined(SUPPORT_GIF_RECORDING)
+        if (mods == GLFW_MOD_CONTROL)
+        {
+            if (gifRecording)
+            {
+                GifEnd(&gifWriter);
+                gifRecording = false;
+                
+                TraceLog(INFO, "End animated GIF recording");
+            }
+            else 
+            {
+                gifRecording = true;
+                gifFramesCounter = 0;
+                
+                // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
+                // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
+                GifBegin(&gifWriter, FormatText("screenrec%03i.gif", screenshotCounter), screenWidth, screenHeight, (int)(GetFrameTime()*10.0f), 8, false);
+                screenshotCounter++;
+                
+                TraceLog(INFO, "Begin animated GIF recording: %s", FormatText("screenrec%03i.gif", screenshotCounter));
+            }
+        }
+        else
+    #endif  // SUPPORT_GIF_RECORDING
+        {
+            TakeScreenshot(FormatText("screenshot%03i.png", screenshotCounter));
+            screenshotCounter++;
+        }
     }
-#endif
+#endif  // PLATFORM_DESKTOP
     else
     {
         currentKeyState[key] = action;
