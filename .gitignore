@@ -127,4 +127,5 @@ src/libraylib.bc
 !release/linux/libraylib.a
 !release/linux/libraylib.so
 !release/rpi/libraylib.a
+!release/win32/mingw32/raylib.dll
 
