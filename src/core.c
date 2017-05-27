@@ -328,7 +328,6 @@ static char configFlags = 0;                // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
 #if defined(SUPPORT_GIF_RECORDING)
-static GifWriter gifWriter;
 static int gifFramesCounter = 0;
 static bool gifRecording = false;
 #endif
@@ -538,7 +537,7 @@ void CloseWindow(void)
 #if defined(SUPPORT_GIF_RECORDING)
     if (gifRecording)
     {
-        GifEnd(&gifWriter);
+        GifEnd();
         gifRecording = false;
     }
 #endif
@@ -807,7 +806,7 @@ void EndDrawing(void)
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is very slow... :(
             unsigned char *screenData = rlglReadScreenPixels(screenWidth, screenHeight);
-            GifWriteFrame(&gifWriter, screenData, screenWidth, screenHeight, 10, 8, false);
+            GifWriteFrame(screenData, screenWidth, screenHeight, 10, 8, false);
             
             free(screenData);   // Free image data
         }
@@ -2454,7 +2453,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
         {
             if (gifRecording)
             {
-                GifEnd(&gifWriter);
+                GifEnd();
                 gifRecording = false;
                 
                 TraceLog(INFO, "End animated GIF recording");
@@ -2466,7 +2465,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
                 
                 // NOTE: delay represents the time between frames in the gif, if we capture a gif frame every
                 // 10 game frames and each frame trakes 16.6ms (60fps), delay between gif frames should be ~16.6*10.
-                GifBegin(&gifWriter, FormatText("screenrec%03i.gif", screenshotCounter), screenWidth, screenHeight, (int)(GetFrameTime()*10.0f), 8, false);
+                GifBegin(FormatText("screenrec%03i.gif", screenshotCounter), screenWidth, screenHeight, (int)(GetFrameTime()*10.0f), 8, false);
                 screenshotCounter++;
                 
                 TraceLog(INFO, "Begin animated GIF recording: %s", FormatText("screenrec%03i.gif", screenshotCounter));
