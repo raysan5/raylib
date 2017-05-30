@@ -23,7 +23,7 @@ features
    *  Basic 3d support for Geometrics, Models, Billboards, Heightmaps and Cubicmaps
    *  Flexible Materials system, supporting by default diffuse, normal and specular maps
    *  Shaders support, including Model shaders and Postprocessing shaders
-   *  Powerful math module for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.c) 
+   *  Powerful math module for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
    *  Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
    *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi** and **HTML5**
    *  VR stereo rendering support with configurable HMD device parameters
