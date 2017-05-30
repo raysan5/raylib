@@ -55,13 +55,15 @@ ipch/
 !tools/rREM/rrem.exe
 
 # Ignore all examples files
-examples/*
+examples/*/*
 # Unignore all examples dirs
 !examples/*/
 # Unignore all examples files with extension
-!examples/*.c
-!examples/*.lua
-!examples/*.png
+!examples/*/*.c
+!examples/*/*.lua
+!examples/*/*.png
+!examples/*/*.html
+!examples/*/*.js
 # Unignore examples Makefile
 !examples/Makefile
 
