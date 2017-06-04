@@ -129,3 +129,5 @@ src/libraylib.bc
 !release/rpi/libraylib.a
 !release/win32/mingw32/raylib.dll
 
+# Meson build system
+builddir/
