@@ -413,6 +413,12 @@ RMDEF void VectorTransform(Vector3 *v, Matrix mat)
     v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
     v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
+    
+    /*
+    v->x = mat.m0*x + mat.m1*y + mat.m2*z + mat.m3;
+    v->y = mat.m4*x + mat.m5*y + mat.m6*z + mat.m7;
+    v->z = mat.m8*x + mat.m9*y + mat.m10*z + mat.m11;
+    */
 };
 
 // Calculate linear interpolation between two vectors
