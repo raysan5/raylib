@@ -414,6 +414,7 @@ RMDEF void VectorTransform(Vector3 *v, Matrix mat)
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
     v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
     
+    // TODO: Transposed matrix (?)
     /*
     v->x = mat.m0*x + mat.m1*y + mat.m2*z + mat.m3;
     v->y = mat.m4*x + mat.m5*y + mat.m6*z + mat.m7;
