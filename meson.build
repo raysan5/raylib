@@ -1,6 +1,7 @@
 project('raylib', 'c', version:	'1.7.0',
 		license: 'zlib',
-		meson_version: '>= 0.39.1')
+		meson_version: '>= 0.39.1',
+		default_options : 'c_std=gnu99')
 
 cc = meson.get_compiler('c')
 
