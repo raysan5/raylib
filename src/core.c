@@ -109,6 +109,10 @@
     #include "external/gif.h"   // Support GIF recording
 #endif
 
+#if defined(__linux__) || defined(PLATFORM_WEB)
+    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
+
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
