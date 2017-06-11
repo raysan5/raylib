@@ -253,6 +253,7 @@ PHYSACDEF void ClosePhysics(void);                                              
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
 #elif defined(__linux__) || defined(PLATFORM_WEB)
+    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
     //#define _DEFAULT_SOURCE         // Enables BSD function definitions and C99 POSIX compliance
     #include <sys/time.h>           // Required for: timespec
     #include <time.h>               // Required for: clock_gettime()
