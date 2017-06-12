@@ -191,20 +191,23 @@ Image LoadImage(const char *fileName)
         int imgBpp = 0;
         
         FILE *imFile = fopen(fileName, "rb");
-
-        // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-        image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
         
-        fclose(imFile);
+        if (imFile != NULL)
+        {
+            // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
+            image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
+            
+            fclose(imFile);
 
-        image.width = imgWidth;
-        image.height = imgHeight;
-        image.mipmaps = 1;
+            image.width = imgWidth;
+            image.height = imgHeight;
+            image.mipmaps = 1;
 
-        if (imgBpp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
-        else if (imgBpp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
-        else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
-        else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+            if (imgBpp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
+            else if (imgBpp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
+            else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
+            else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+        }
     }
 #if defined(SUPPORT_FILEFORMAT_HDR)
     else if (IsFileExtension(fileName, ".hdr"))
