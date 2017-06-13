@@ -5,7 +5,7 @@ project('raylib', 'c', version:	'1.7.0',
 
 cc = meson.get_compiler('c')
 
-glfw_dep = dependency('glfw3')
+glfw_dep = dependency('glfw3', version : '>=3.2')
 gl_dep = dependency('gl')
 openal_dep = dependency('openal')
 x11_dep = dependency('x11')
