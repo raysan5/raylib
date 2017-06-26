@@ -1912,7 +1912,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
+    glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_DIFFUSE].tex.id);
 
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
@@ -1946,13 +1946,13 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     glUseProgram(material.shader.id);
 
     // Upload to shader material.colDiffuse
-    glUniform4f(material.shader.colDiffuseLoc, (float)material.colDiffuse.r/255, (float)material.colDiffuse.g/255, (float)material.colDiffuse.b/255, (float)material.colDiffuse.a/255);
+    glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR01], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, (float)material.maps[TEXMAP_DIFFUSE].color.g/255, (float)material.maps[TEXMAP_DIFFUSE].color.b/255, (float)material.maps[TEXMAP_DIFFUSE].color.a/255);
 
-    // Upload to shader material.colAmbient (if available)
-    if (material.shader.colAmbientLoc != -1) glUniform4f(material.shader.colAmbientLoc, (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
+    // TODO: Upload to shader material.colAmbient (if available)
+    //if (material.shader.locs[LOC_TEXTURE_COLOR02] != -1) glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR02], (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
 
     // Upload to shader material.colSpecular (if available)
-    if (material.shader.colSpecularLoc != -1) glUniform4f(material.shader.colSpecularLoc, (float)material.colSpecular.r/255, (float)material.colSpecular.g/255, (float)material.colSpecular.b/255, (float)material.colSpecular.a/255);
+    if (material.shader.locs[LOC_TEXTURE_COLOR03] != -1) glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR03], (float)material.maps[TEXMAP_SPECULAR].color.r/255, (float)material.maps[TEXMAP_SPECULAR].color.g/255, (float)material.maps[TEXMAP_SPECULAR].color.b/255, (float)material.maps[TEXMAP_SPECULAR].color.a/255);
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -1984,34 +1984,34 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         int viewDirLoc = glGetUniformLocation(material.shader.id, "viewDir");
         if (viewDirLoc != -1) glUniform3f(viewDirLoc, matView.m8, matView.m9, matView.m10);
 
-        // Check if glossiness is located in shader and upload value
+        // TODO: Check if glossiness is located in shader and upload value
         int glossinessLoc = glGetUniformLocation(material.shader.id, "glossiness");
-        if (glossinessLoc != -1) glUniform1f(glossinessLoc, material.glossiness);
+        //if (glossinessLoc != -1) glUniform1f(glossinessLoc, material.glossiness);
     }
 
     // Set shader textures (diffuse, normal, specular)
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, material.texDiffuse.id);
-    glUniform1i(material.shader.mapTexture0Loc, 0);         // Diffuse texture fits in active texture unit 0
+    glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_DIFFUSE].tex.id);
+    glUniform1i(material.shader.locs[LOC_TEXTURE_MAP01], 0);         // Diffuse texture fits in active texture unit 0
 
-    if ((material.texNormal.id != 0) && (material.shader.mapTexture1Loc != -1))
+    if ((material.maps[TEXMAP_NORMAL].tex.id != 0) && (material.shader.locs[LOC_TEXTURE_MAP01] != -1))
     {
         // Upload to shader specular map flag
         glUniform1i(glGetUniformLocation(material.shader.id, "useNormal"), 1);
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, material.texNormal.id);
-        glUniform1i(material.shader.mapTexture1Loc, 1);     // Normal texture fits in active texture unit 1
+        glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_NORMAL].tex.id);
+        glUniform1i(material.shader.locs[LOC_TEXTURE_MAP01], 1);     // Normal texture fits in active texture unit 1
     }
 
-    if ((material.texSpecular.id != 0) && (material.shader.mapTexture2Loc != -1))
+    if ((material.maps[TEXMAP_SPECULAR].tex.id != 0) && (material.shader.locs[LOC_TEXTURE_MAP02] != -1))
     {
         // Upload to shader specular map flag
         glUniform1i(glGetUniformLocation(material.shader.id, "useSpecular"), 1);
 
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, material.texSpecular.id);
-        glUniform1i(material.shader.mapTexture2Loc, 2);    // Specular texture fits in active texture unit 2
+        glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_SPECULAR].tex.id);
+        glUniform1i(material.shader.locs[LOC_TEXTURE_MAP02], 2);    // Specular texture fits in active texture unit 2
     }
 
     if (vaoSupported)
@@ -2022,54 +2022,54 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     {
         // Bind mesh VBO data: vertex position (shader-location = 0)
         glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
-        glVertexAttribPointer(material.shader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.vertexLoc);
+        glVertexAttribPointer(material.shader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_POSITION]);
 
         // Bind mesh VBO data: vertex texcoords (shader-location = 1)
         glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[1]);
-        glVertexAttribPointer(material.shader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-        glEnableVertexAttribArray(material.shader.texcoordLoc);
+        glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
+        glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TEXCOORD01]);
 
         // Bind mesh VBO data: vertex normals (shader-location = 2, if available)
-        if (material.shader.normalLoc != -1)
+        if (material.shader.locs[LOC_VERTEX_NORMAL] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[2]);
-            glVertexAttribPointer(material.shader.normalLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.normalLoc);
+            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_NORMAL], 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_NORMAL]);
         }
 
         // Bind mesh VBO data: vertex colors (shader-location = 3, if available)
-        if (material.shader.colorLoc != -1)
+        if (material.shader.locs[LOC_VERTEX_COLOR] != -1)
         {
             if (mesh.vboId[3] != 0)
             {
                 glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[3]);
-                glVertexAttribPointer(material.shader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(material.shader.colorLoc);
+                glVertexAttribPointer(material.shader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_COLOR]);
             }
             else
             {
                 // Set default value for unused attribute
                 // NOTE: Required when using default shader and no VAO support
-                glVertexAttrib4f(material.shader.colorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
-                glDisableVertexAttribArray(material.shader.colorLoc);
+                glVertexAttrib4f(material.shader.locs[LOC_VERTEX_COLOR], 1.0f, 1.0f, 1.0f, 1.0f);
+                glDisableVertexAttribArray(material.shader.locs[LOC_VERTEX_COLOR]);
             }
         }
 
         // Bind mesh VBO data: vertex tangents (shader-location = 4, if available)
-        if (material.shader.tangentLoc != -1)
+        if (material.shader.locs[LOC_VERTEX_TANGENT] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            glVertexAttribPointer(material.shader.tangentLoc, 3, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.tangentLoc);
+            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TANGENT], 3, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TANGENT]);
         }
 
         // Bind mesh VBO data: vertex texcoords2 (shader-location = 5, if available)
-        if (material.shader.texcoord2Loc != -1)
+        if (material.shader.locs[LOC_VERTEX_TEXCOORD02] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[5]);
-            glVertexAttribPointer(material.shader.texcoord2Loc, 2, GL_FLOAT, 0, 0, 0);
-            glEnableVertexAttribArray(material.shader.texcoord2Loc);
+            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TEXCOORD02], 2, GL_FLOAT, 0, 0, 0);
+            glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TEXCOORD02]);
         }
 
         if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
@@ -2091,20 +2091,20 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         Matrix matMVP = MatrixMultiply(modelview, projection);        // Transform to screen-space coordinates
 
         // Send combined model-view-projection matrix to shader
-        glUniformMatrix4fv(material.shader.mvpLoc, 1, false, MatrixToFloat(matMVP));
+        glUniformMatrix4fv(material.shader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
 
         // Draw call!
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
         else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     }
 
-    if (material.texNormal.id != 0)
+    if (material.maps[TEXMAP_NORMAL].tex.id != 0)
     {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    if (material.texSpecular.id != 0)
+    if (material.maps[TEXMAP_SPECULAR].tex.id != 0)
     {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -3036,24 +3036,24 @@ static void LoadDefaultShaderLocations(Shader *shader)
     //          vertex texcoord2 location   = 5
 
     // Get handles to GLSL input attibute locations
-    shader->vertexLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
-    shader->texcoordLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD_NAME);
-    shader->texcoord2Loc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD2_NAME);
-    shader->normalLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_NORMAL_NAME);
-    shader->tangentLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TANGENT_NAME);
-    shader->colorLoc = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
+    shader->locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_POSITION_NAME);
+    shader->locs[LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD_NAME);
+    shader->locs[LOC_VERTEX_TEXCOORD02] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TEXCOORD2_NAME);
+    shader->locs[LOC_VERTEX_NORMAL] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_NORMAL_NAME);
+    shader->locs[LOC_VERTEX_TANGENT] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_TANGENT_NAME);
+    shader->locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
 
     // Get handles to GLSL uniform locations (vertex shader)
-    shader->mvpLoc  = glGetUniformLocation(shader->id, "mvpMatrix");
+    shader->locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader->id, "mvpMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader->colDiffuseLoc = glGetUniformLocation(shader->id, "colDiffuse");
-    shader->colAmbientLoc = glGetUniformLocation(shader->id, "colAmbient");
-    shader->colSpecularLoc = glGetUniformLocation(shader->id, "colSpecular");
+    shader->locs[LOC_TEXTURE_COLOR01] = glGetUniformLocation(shader->id, "colDiffuse");
+    shader->locs[LOC_TEXTURE_COLOR02] = glGetUniformLocation(shader->id, "colAmbient");
+    shader->locs[LOC_TEXTURE_COLOR03] = glGetUniformLocation(shader->id, "colSpecular");
 
-    shader->mapTexture0Loc = glGetUniformLocation(shader->id, "texture0");
-    shader->mapTexture1Loc = glGetUniformLocation(shader->id, "texture1");
-    shader->mapTexture2Loc = glGetUniformLocation(shader->id, "texture2");
+    shader->locs[LOC_TEXTURE_MAP01] = glGetUniformLocation(shader->id, "texture0");
+    shader->locs[LOC_TEXTURE_MAP02] = glGetUniformLocation(shader->id, "texture1");
+    shader->locs[LOC_TEXTURE_MAP03] = glGetUniformLocation(shader->id, "texture2");
 
     // TODO: Try to find all expected/recognized shader locations (predefined names, must be documented)
 }
@@ -3155,15 +3155,15 @@ static void LoadDefaultBuffers(void)
     glGenBuffers(2, &lines.vboId[0]);
     glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*2*MAX_LINES_BATCH, lines.vertices, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(currentShader.vertexLoc);
-    glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_POSITION]);
+    glVertexAttribPointer(currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
 
     // Vertex color buffer (shader-location = 3)
     glGenBuffers(2, &lines.vboId[1]);
     glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*2*MAX_LINES_BATCH, lines.colors, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(currentShader.colorLoc);
-    glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_COLOR]);
+    glVertexAttribPointer(currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (lines)", lines.vaoId);
     else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully (lines)", lines.vboId[0], lines.vboId[1]);
@@ -3181,15 +3181,15 @@ static void LoadDefaultBuffers(void)
     glGenBuffers(1, &triangles.vboId[0]);
     glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*3*MAX_TRIANGLES_BATCH, triangles.vertices, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(currentShader.vertexLoc);
-    glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_POSITION]);
+    glVertexAttribPointer(currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
 
     // Vertex color buffer (shader-location = 3)
     glGenBuffers(1, &triangles.vboId[1]);
     glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*3*MAX_TRIANGLES_BATCH, triangles.colors, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(currentShader.colorLoc);
-    glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_COLOR]);
+    glVertexAttribPointer(currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     if (vaoSupported) TraceLog(INFO, "[VAO ID %i] Default buffers VAO initialized successfully (triangles)", triangles.vaoId);
     else TraceLog(INFO, "[VBO ID %i][VBO ID %i] Default buffers VBOs initialized successfully (triangles)", triangles.vboId[0], triangles.vboId[1]);
@@ -3207,22 +3207,22 @@ static void LoadDefaultBuffers(void)
     glGenBuffers(1, &quads.vboId[0]);
     glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*4*MAX_QUADS_BATCH, quads.vertices, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(currentShader.vertexLoc);
-    glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_POSITION]);
+    glVertexAttribPointer(currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
 
     // Vertex texcoord buffer (shader-location = 1)
     glGenBuffers(1, &quads.vboId[1]);
     glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*4*MAX_QUADS_BATCH, quads.texcoords, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(currentShader.texcoordLoc);
-    glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
+    glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_TEXCOORD01]);
+    glVertexAttribPointer(currentShader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
 
     // Vertex color buffer (shader-location = 3)
     glGenBuffers(1, &quads.vboId[2]);
     glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*4*MAX_QUADS_BATCH, quads.colors, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(currentShader.colorLoc);
-    glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+    glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_COLOR]);
+    glVertexAttribPointer(currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
     // Fill index buffer
     glGenBuffers(1, &quads.vboId[3]);
@@ -3338,9 +3338,9 @@ static void DrawDefaultBuffers()
             // Create modelview-projection matrix
             Matrix matMVP = MatrixMultiply(modelview, projection);
 
-            glUniformMatrix4fv(currentShader.mvpLoc, 1, false, MatrixToFloat(matMVP));
-            glUniform4f(currentShader.colDiffuseLoc, 1.0f, 1.0f, 1.0f, 1.0f);
-            glUniform1i(currentShader.mapTexture0Loc, 0);
+            glUniformMatrix4fv(currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
+            glUniform4f(currentShader.locs[LOC_TEXTURE_COLOR01], 1.0f, 1.0f, 1.0f, 1.0f);
+            glUniform1i(currentShader.locs[LOC_TEXTURE_MAP01], 0);
 
             // NOTE: Additional map textures not considered for default buffers drawing
         }
@@ -3358,13 +3358,13 @@ static void DrawDefaultBuffers()
             {
                 // Bind vertex attrib: position (shader-location = 0)
                 glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[0]);
-                glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-                glEnableVertexAttribArray(currentShader.vertexLoc);
+                glVertexAttribPointer(currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_POSITION]);
 
                 // Bind vertex attrib: color (shader-location = 3)
                 glBindBuffer(GL_ARRAY_BUFFER, lines.vboId[1]);
-                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(currentShader.colorLoc);
+                glVertexAttribPointer(currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_COLOR]);
             }
 
             glDrawArrays(GL_LINES, 0, lines.vCounter);
@@ -3386,13 +3386,13 @@ static void DrawDefaultBuffers()
             {
                 // Bind vertex attrib: position (shader-location = 0)
                 glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[0]);
-                glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-                glEnableVertexAttribArray(currentShader.vertexLoc);
+                glVertexAttribPointer(currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_POSITION]);
 
                 // Bind vertex attrib: color (shader-location = 3)
                 glBindBuffer(GL_ARRAY_BUFFER, triangles.vboId[1]);
-                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(currentShader.colorLoc);
+                glVertexAttribPointer(currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_COLOR]);
             }
 
             glDrawArrays(GL_TRIANGLES, 0, triangles.vCounter);
@@ -3416,18 +3416,18 @@ static void DrawDefaultBuffers()
             {
                 // Bind vertex attrib: position (shader-location = 0)
                 glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[0]);
-                glVertexAttribPointer(currentShader.vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-                glEnableVertexAttribArray(currentShader.vertexLoc);
+                glVertexAttribPointer(currentShader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_POSITION]);
 
                 // Bind vertex attrib: texcoord (shader-location = 1)
                 glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[1]);
-                glVertexAttribPointer(currentShader.texcoordLoc, 2, GL_FLOAT, 0, 0, 0);
-                glEnableVertexAttribArray(currentShader.texcoordLoc);
+                glVertexAttribPointer(currentShader.locs[LOC_VERTEX_TEXCOORD01], 2, GL_FLOAT, 0, 0, 0);
+                glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_TEXCOORD01]);
 
                 // Bind vertex attrib: color (shader-location = 3)
                 glBindBuffer(GL_ARRAY_BUFFER, quads.vboId[2]);
-                glVertexAttribPointer(currentShader.colorLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-                glEnableVertexAttribArray(currentShader.colorLoc);
+                glVertexAttribPointer(currentShader.locs[LOC_VERTEX_COLOR], 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(currentShader.locs[LOC_VERTEX_COLOR]);
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
             }

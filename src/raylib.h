@@ -291,6 +291,11 @@
 #define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
+// Shader and material limits
+#define MAX_SHADER_LOCATIONS        32
+#define MAX_MATERIAL_TEXTURE_MAPS    8
+#define MAX_MATERIAL_PARAMS          8
+
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
@@ -420,43 +425,24 @@ typedef struct Mesh {
     unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
 } Mesh;
 
-// Shader type (generic shader)
+// Shader type (generic)
 typedef struct Shader {
     unsigned int id;        // Shader program id
-
-    // Vertex attributes locations (default locations)
-    int vertexLoc;          // Vertex attribute location point    (default-location = 0)
-    int texcoordLoc;        // Texcoord attribute location point  (default-location = 1)
-    int texcoord2Loc;       // Texcoord2 attribute location point (default-location = 5)
-    int normalLoc;          // Normal attribute location point    (default-location = 2)
-    int tangentLoc;         // Tangent attribute location point   (default-location = 4)
-    int colorLoc;           // Color attibute location point      (default-location = 3)
-
-    // Uniform locations
-    int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
-    int colDiffuseLoc;      // Diffuse color uniform location point (fragment shader)
-    int colAmbientLoc;      // Ambient color uniform location point (fragment shader)
-    int colSpecularLoc;     // Specular color uniform location point (fragment shader)
-
-    // Texture map locations (generic for any kind of map)
-    int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
-    int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
-    int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
+    int locs[MAX_SHADER_LOCATIONS];             // Initialized on LoadShader(), set to MAX_SHADER_LOCATIONS
 } Shader;
 
-// Material type
+// Material texture map
+typedef struct TextureMap {
+    Texture2D tex;
+    Color color;
+    float value;
+} TextureMap;
+
+// Material type (generic)
 typedef struct Material {
-    Shader shader;          // Standard shader (supports 3 map textures)
-
-    Texture2D texDiffuse;   // Diffuse texture  (binded to shader mapTexture0Loc)
-    Texture2D texNormal;    // Normal texture   (binded to shader mapTexture1Loc)
-    Texture2D texSpecular;  // Specular texture (binded to shader mapTexture2Loc)
-
-    Color colDiffuse;       // Diffuse color
-    Color colAmbient;       // Ambient color
-    Color colSpecular;      // Specular color
-
-    float glossiness;       // Glossiness level (Ranges from 0 to 1000)
+    Shader shader;
+    TextureMap maps[MAX_MATERIAL_TEXTURE_MAPS]; // Initialized on LoadMaterial*(), set to MAX_MATERIAL_TEXTURE_MAPS
+    float *params;          // Initialized on LoadMaterial*(), set to MAX_MATERIAL_PARAMS
 } Material;
 
 // Model type
@@ -539,6 +525,58 @@ typedef enum {
     DEBUG, 
     OTHER 
 } LogType;
+
+typedef enum {
+    LOC_VERTEX_POSITION = 0,
+    LOC_VERTEX_TEXCOORD01,
+    LOC_VERTEX_TEXCOORD02,
+    LOC_VERTEX_TEXCOORD03,
+    LOC_VERTEX_TEXCOORD04,
+    LOC_VERTEX_NORMAL,
+    LOC_VERTEX_TANGENT,
+    LOC_VERTEX_COLOR,
+    LOC_MATRIX_MVP,
+    LOC_MATRIX_VIEW,
+    LOC_MATRIX_PROJECTION,
+    LOC_TEXTURE_MAP01,
+    LOC_TEXTURE_MAP02,
+    LOC_TEXTURE_MAP03,
+    LOC_TEXTURE_MAP04,
+    LOC_TEXTURE_MAP05,
+    LOC_TEXTURE_MAP06,
+    LOC_TEXTURE_MAP07,
+    LOC_TEXTURE_MAP08,
+    LOC_TEXTURE_COLOR01,
+    LOC_TEXTURE_COLOR02,
+    LOC_TEXTURE_COLOR03,
+    LOC_TEXTURE_COLOR04,
+    LOC_TEXTURE_COLOR05,
+    LOC_TEXTURE_COLOR06,
+    LOC_TEXTURE_COLOR07,
+    LOC_TEXTURE_COLOR08
+} ShaderLocationIndex;
+
+typedef enum {
+    TEXMAP_DIFFUSE  = 0,
+    TEXMAP_SPECULAR = 1,
+    TEXMAP_NORMAL   = 2,
+} TexmapBasicIndex;
+
+typedef enum {
+    TEXMAP_ALBEDO    = 0,
+    TEXMAP_METALNESS = 1,
+    TEXMAP_ROUGHNESS = 3,
+    TEXMAP_OCCLUSION,
+    TEXMAP_EMISSION,
+    TEXMAP_HEIGHT
+} TexmapPBRIndex;
+
+typedef enum {
+    TEXMAP_CUBEMAP  = 8,
+    TEXMAP_IRRADIANCE,
+    TEXMAP_PREFILTER,
+    TEXMAP_BRDF,
+} TexmapEnvIndex;
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform

@@ -720,15 +720,16 @@ Material LoadDefaultMaterial(void)
     Material material = { 0 };
 
     material.shader = GetDefaultShader();
-    material.texDiffuse = GetDefaultTexture();      // White texture (1x1 pixel)
-    //material.texNormal;           // NOTE: By default, not set
-    //material.texSpecular;         // NOTE: By default, not set
+    material.maps[TEXMAP_DIFFUSE].tex = GetDefaultTexture();   // White texture (1x1 pixel)
+    //material.maps[TEXMAP_NORMAL].tex;           // NOTE: By default, not set
+    //material.maps[TEXMAP_SPECULAR].tex;         // NOTE: By default, not set
 
-    material.colDiffuse = WHITE;    // Diffuse color
-    material.colAmbient = WHITE;    // Ambient color
-    material.colSpecular = WHITE;   // Specular color
+    material.maps[TEXMAP_DIFFUSE].color = WHITE;    // Diffuse color
+    //material.colAmbient = WHITE;    // Ambient color
+    material.maps[TEXMAP_SPECULAR].color = WHITE;   // Specular color
 
-    material.glossiness = 100.0f;   // Glossiness level
+    //material.glossiness = 100.0f;   // Glossiness level
+    //material.params[PARAM_GLOSSINES] = 100.0f;   // Glossiness level
 
     return material;
 }
@@ -736,9 +737,9 @@ Material LoadDefaultMaterial(void)
 // Unload material from memory
 void UnloadMaterial(Material material)
 {
-    rlDeleteTextures(material.texDiffuse.id);
-    rlDeleteTextures(material.texNormal.id);
-    rlDeleteTextures(material.texSpecular.id);
+    rlDeleteTextures(material.maps[TEXMAP_DIFFUSE].tex.id);
+    rlDeleteTextures(material.maps[TEXMAP_NORMAL].tex.id);
+    rlDeleteTextures(material.maps[TEXMAP_SPECULAR].tex.id);
 }
 
 // Generate a mesh from heightmap
@@ -1225,7 +1226,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
 
     model.transform = MatrixMultiply(model.transform, matTransform);
-    model.material.colDiffuse = tint;       // TODO: Multiply tint color by diffuse color?
+    model.material.maps[TEXMAP_DIFFUSE].color = tint;       // TODO: Multiply tint color by diffuse color?
 
     rlglDrawMesh(model.mesh, model.material, model.transform);
 }
@@ -1979,23 +1980,24 @@ static Material LoadMTL(const char *fileName)
                     case 'a':   // Ka float float float    Ambient color (RGB)
                     {
                         sscanf(buffer, "Ka %f %f %f", &color.x, &color.y, &color.z);
-                        material.colAmbient.r = (unsigned char)(color.x*255);
-                        material.colAmbient.g = (unsigned char)(color.y*255);
-                        material.colAmbient.b = (unsigned char)(color.z*255);
+                        // TODO: Support ambient color
+                        //material.colAmbient.r = (unsigned char)(color.x*255);
+                        //material.colAmbient.g = (unsigned char)(color.y*255);
+                        //material.colAmbient.b = (unsigned char)(color.z*255);
                     } break;
                     case 'd':   // Kd float float float     Diffuse color (RGB)
                     {
                         sscanf(buffer, "Kd %f %f %f", &color.x, &color.y, &color.z);
-                        material.colDiffuse.r = (unsigned char)(color.x*255);
-                        material.colDiffuse.g = (unsigned char)(color.y*255);
-                        material.colDiffuse.b = (unsigned char)(color.z*255);
+                        material.maps[TEXMAP_DIFFUSE].color.r = (unsigned char)(color.x*255);
+                        material.maps[TEXMAP_DIFFUSE].color.g = (unsigned char)(color.y*255);
+                        material.maps[TEXMAP_DIFFUSE].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 's':   // Ks float float float     Specular color (RGB)
                     {
                         sscanf(buffer, "Ks %f %f %f", &color.x, &color.y, &color.z);
-                        material.colSpecular.r = (unsigned char)(color.x*255);
-                        material.colSpecular.g = (unsigned char)(color.y*255);
-                        material.colSpecular.b = (unsigned char)(color.z*255);
+                        material.maps[TEXMAP_SPECULAR].color.r = (unsigned char)(color.x*255);
+                        material.maps[TEXMAP_SPECULAR].color.g = (unsigned char)(color.y*255);
+                        material.maps[TEXMAP_SPECULAR].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 'e':   // Ke float float float     Emmisive color (RGB)
                     {
@@ -2011,7 +2013,7 @@ static Material LoadMTL(const char *fileName)
                     int shininess = 0;
                     sscanf(buffer, "Ns %i", &shininess);
 
-                    material.glossiness = (float)shininess;
+                    //material.params[PARAM_GLOSSINES] = (float)shininess;
                 }
                 else if (buffer[1] == 'i')  // Ni int   Refraction index.
                 {
@@ -2027,12 +2029,12 @@ static Material LoadMTL(const char *fileName)
                         if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
                         {
                             result = sscanf(buffer, "map_Kd %s", mapFileName);
-                            if (result != EOF) material.texDiffuse = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[TEXMAP_DIFFUSE].tex = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
                         {
                             result = sscanf(buffer, "map_Ks %s", mapFileName);
-                            if (result != EOF) material.texSpecular = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[TEXMAP_SPECULAR].tex = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
                         {
@@ -2042,12 +2044,12 @@ static Material LoadMTL(const char *fileName)
                     case 'B':       // map_Bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_Bump %s", mapFileName);
-                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
                     } break;
                     case 'b':       // map_bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_bump %s", mapFileName);
-                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
                     } break;
                     case 'd':       // map_d string         Opacity texture map.
                     {
@@ -2062,7 +2064,7 @@ static Material LoadMTL(const char *fileName)
                 {
                     float alpha = 1.0f;
                     sscanf(buffer, "d %f", &alpha);
-                    material.colDiffuse.a = (unsigned char)(alpha*255);
+                    material.maps[TEXMAP_DIFFUSE].color.a = (unsigned char)(alpha*255);
                 }
                 else if (buffer[1] == 'i')  // disp string  Displacement map
                 {
@@ -2072,13 +2074,13 @@ static Material LoadMTL(const char *fileName)
             case 'b':   // bump string      Bump texture map
             {
                 result = sscanf(buffer, "bump %s", mapFileName);
-                if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
             } break;
             case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
             {
                 float ialpha = 0.0f;
                 sscanf(buffer, "Tr %f", &ialpha);
-                material.colDiffuse.a = (unsigned char)((1.0f - ialpha)*255);
+                material.maps[TEXMAP_DIFFUSE].color.a = (unsigned char)((1.0f - ialpha)*255);
 
             } break;
             case 'r':   // refl string      Reflection texture map
