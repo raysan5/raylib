@@ -587,6 +587,27 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
+// Load model from files (mesh and material)
+Model LoadModel(const char *fileName)
+{
+    Model model = { 0 };
+
+    model.mesh = LoadMesh(fileName);
+    model.transform = MatrixIdentity();
+    model.material = LoadMaterialDefault();
+
+    return model;
+}
+
+// Unload model from memory (RAM and/or VRAM)
+void UnloadModel(Model model)
+{
+    UnloadMesh(&model.mesh);
+    UnloadMaterial(model.material);
+
+    TraceLog(INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
+}
+
 // Load mesh from file
 Mesh LoadMesh(const char *fileName)
 {
@@ -608,6 +629,7 @@ Mesh LoadMesh(const char *fileName)
 
 // Load mesh from vertex data
 // NOTE: All vertex data arrays must be same size: vertexCount
+/*
 Mesh LoadMeshEx(int vertexCount, float *vData, float *vtData, float *vnData, Color *cData)
 {
     Mesh mesh = { 0 };
@@ -626,78 +648,33 @@ Mesh LoadMeshEx(int vertexCount, float *vData, float *vtData, float *vnData, Col
 
     return mesh;
 }
-
-// Load model from file
-Model LoadModel(const char *fileName)
-{
-    Model model = { 0 };
-
-    model.mesh = LoadMesh(fileName);
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
-}
-
-// Load model from mesh data
-Model LoadModelFromMesh(Mesh data, bool dynamic)
-{
-    Model model = { 0 };
-
-    model.mesh = data;
-
-    rlglLoadMesh(&model.mesh, dynamic);  // Upload vertex data to GPU
-
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
-}
+*/
 
 // Load heightmap model from image data
 // NOTE: model map size is defined in generic units
-Model LoadHeightmap(Image heightmap, Vector3 size)
+Mesh LoadMeshHeightmap(Image heightmap, Vector3 size)
 {
-    Model model = { 0 };
+    Mesh mesh = GenMeshHeightmap(heightmap, size);
 
-    model.mesh = GenMeshHeightmap(heightmap, size);
+    rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
 
-    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
+    return mesh;
 }
 
 // Load cubes-based map model from image data
-Model LoadCubicmap(Image cubicmap)
+Mesh LoadMeshCubicmap(Image cubicmap)
 {
-    Model model = { 0 };
+    Mesh mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
 
-    model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
+    rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
 
-    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
+    return mesh;
 }
 
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh *mesh)
 {
     rlglUnloadMesh(mesh);
-}
-
-// Unload model from memory (RAM and/or VRAM)
-void UnloadModel(Model model)
-{
-    UnloadMesh(&model.mesh);
-    UnloadMaterial(model.material);
-
-    TraceLog(INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
 }
 
 // Load material data (from file)
@@ -714,8 +691,8 @@ Material LoadMaterial(const char *fileName)
     return material;
 }
 
-// Load default material (uses default models shader)
-Material LoadDefaultMaterial(void)
+// Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+Material LoadMaterialDefault(void)
 {
     Material material = { 0 };
 
@@ -734,13 +711,311 @@ Material LoadDefaultMaterial(void)
     return material;
 }
 
+// Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
+Material LoadMaterialPBR(Texture2D cubemap, Color albedo, int metalness, int roughness)
+{
+    Material mat = { 0 };
+    
+    #define     PATH_PBR_VS     "resources/shaders/pbr.vs"              // Path to physically based rendering vertex shader
+    #define     PATH_PBR_FS     "resources/shaders/pbr.fs"              // Path to physically based rendering fragment shader
+   
+    mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
+    
+    // Set up environment shader texture units
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "irradianceMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "prefilterMap"), (int[1]){ 1 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "brdfLUT"), (int[1]){ 2 }, 1);
+    
+    // Set up PBR shader material texture units
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.sampler"), (int[1]){ 3 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.sampler"), (int[1]){ 4 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.sampler"), (int[1]){ 5 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.sampler"), (int[1]){ 6 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.sampler"), (int[1]){ 7 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "emission.sampler"), (int[1]){ 8 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "height.sampler"), (int[1]){ 9 }, 1);
+    
+    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "viewPos");
+
+    // Set up material properties color
+    mat.maps[TEXMAP_ALBEDO].color = albedo;
+    mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
+    mat.maps[TEXMAP_METALNESS].color = (Color){ metalness, 0, 0, 0 };
+    mat.maps[TEXMAP_ROUGHNESS].color = (Color){ roughness, 0, 0, 0 };
+    mat.maps[TEXMAP_OCCLUSION].color = (Color){ 255, 255, 255, 255 };
+    mat.maps[TEXMAP_EMISSION].color = (Color){ 0, 0, 0, 0 };
+    mat.maps[TEXMAP_HEIGHT].color = (Color){ 0, 0, 0, 0 };
+
+    // Set up material cubemap
+    mat.maps[TEXMAP_CUBEMAP].tex = cubemap;
+    
+    // NOTE: All maps textures are set to { 0 }
+
+    return mat;
+}
+
+// Load environment material: cubemap, irradiance, prefilter and BRDF maps
+// NOTE: Irradiance, prefilter and brdf textures are generated from HDR cubemap texture
+Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSize, int prefilterSize, int brdfSize)
+{
+    Material env = { 0 };
+    
+    #define     PATH_CUBE_VS            "resources/shaders/cubemap.vs"          // Path to equirectangular to cubemap vertex shader
+    #define     PATH_CUBE_FS            "resources/shaders/cubemap.fs"          // Path to equirectangular to cubemap fragment shader
+    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
+    #define     PATH_SKYBOX_FS          "resources/shaders/skybox.fs"           // Path to skybox vertex shader
+    #define     PATH_IRRADIANCE_FS      "resources/shaders/irradiance.fs"       // Path to irradiance (GI) calculation fragment shader
+    #define     PATH_PREFILTER_FS       "resources/shaders/prefilter.fs"        // Path to reflection prefilter calculation fragment shader
+    #define     PATH_BRDF_VS            "resources/shaders/brdf.vs"             // Path to bidirectional reflectance distribution function vertex shader 
+    #define     PATH_BRDF_FS            "resources/shaders/brdf.fs"             // Path to bidirectional reflectance distribution function fragment shader
+
+    #define LOC_CUSTOM_SKYRESOLUTION    15
+    
+    env.shader = LoadShader(PATH_SKYBOX_VS, PATH_SKYBOX_FS);
+
+    // Load cubemap required shaders
+    Shader cubeShader = LoadShader(PATH_CUBE_VS, PATH_CUBE_FS);
+    Shader irradianceShader = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
+    Shader prefilterShader = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
+    Shader brdfShader = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
+
+    // Get cubemap shader locations
+    int cubeProjectionLoc = GetShaderLocation(cubeShader, "projection");
+    int cubeViewLoc = GetShaderLocation(cubeShader, "view");
+
+    // Get skybox shader locations
+    int skyProjectionLoc = GetShaderLocation(env.shader, "projection");
+    env.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(env.shader, "view");
+    env.shader.locs[LOC_CUSTOM_SKYRESOLUTION] = GetShaderLocation(env.shader, "resolution");
+
+    // Get irradiance shader locations
+    int irradianceProjectionLoc = GetShaderLocation(irradianceShader, "projection");
+    int irradianceViewLoc = GetShaderLocation(irradianceShader, "view");
+
+    // Get prefilter shader locations
+    int prefilterProjectionLoc = GetShaderLocation(prefilterShader, "projection");
+    int prefilterViewLoc = GetShaderLocation(prefilterShader, "view");
+    int prefilterRoughnessLoc = GetShaderLocation(prefilterShader, "roughness");
+
+    // Set up shaders constant values
+    SetShaderValuei(cubeShader, GetShaderLocation(cubeShader, "equirectangularMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(irradianceShader, GetShaderLocation(irradianceShader, "environmentMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(prefilterShader, GetShaderLocation(prefilterShader, "environmentMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(env.shader, GetShaderLocation(env.shader, "environmentMap"), (int[1]){ 0 }, 1);
+
+    /*
+    // Set up depth face culling and cube map seamless
+    glDepthFunc(GL_LEQUAL);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    glLineWidth(2);
+
+    // Load HDR environment texture
+    Texture2D skyTex = LoadTexture(filename);
+
+    // Set up framebuffer for skybox
+    unsigned int captureFBO, captureRBO;
+    glGenFramebuffers(1, &captureFBO);
+    glGenRenderbuffers(1, &captureRBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, cubemapSize, cubemapSize);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
+
+    // Set up cubemap to render and attach to framebuffer
+    // NOTE: faces are stored with 16 bit floating point values
+    glGenTextures(1, &env.maps[TEXMAP_CUBEMAP].tex.id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_CUBEMAP].tex.id);
+    for (unsigned int i = 0; i < 6; i++) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, cubemapSize, cubemapSize, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Create projection (transposed) and different views for each face
+    Matrix captureProjection = MatrixPerspective(90.0f, 1.0f, 0.01, 1000.0);
+    MatrixTranspose(&captureProjection);
+    Matrix captureViews[6] = {
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
+    };
+
+    // Convert HDR equirectangular environment map to cubemap equivalent
+    glUseProgram(cubeShader.id);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, skyTex.id);
+    SetShaderValueMatrix(cubeShader, cubeProjectionLoc, captureProjection);
+
+    // Note: don't forget to configure the viewport to the capture dimensions
+    rlViewport(0, 0, cubemapSize, cubemapSize);
+    rlEnableRenderTexture(captureFBO);
+
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        SetShaderValueMatrix(cubeShader, cubeViewLoc, captureViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env.maps[TEXMAP_CUBEMAP].tex.id, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        RenderCube();
+    }
+
+    // Unbind framebuffer and textures
+    rlEnableRenderTexture(0);
+
+    // Create an irradiance cubemap, and re-scale capture FBO to irradiance scale
+    glGenTextures(1, &env.maps[TEXMAP_IRRADIANCE].tex.id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_IRRADIANCE].tex.id);
+    for (unsigned int i = 0; i < 6; i++) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, irradianceSize, irradianceSize, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, irradianceSize, irradianceSize);
+
+    // Solve diffuse integral by convolution to create an irradiance cubemap
+    glUseProgram(irradianceShader.id);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_CUBEMAP].tex.id);
+    SetShaderValueMatrix(irradianceShader, irradianceProjectionLoc, captureProjection);
+
+    // Note: don't forget to configure the viewport to the capture dimensions
+    rlViewport(0, 0, irradianceSize, irradianceSize);
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        SetShaderValueMatrix(irradianceShader, irradianceViewLoc, captureViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env.maps[TEXMAP_IRRADIANCE].tex.id, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        RenderCube();
+    }
+
+    // Unbind framebuffer and textures
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Create a prefiltered HDR environment map
+    glGenTextures(1, &env.maps[TEXMAP_PREFILTER].tex.id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_PREFILTER].tex.id);
+    for (unsigned int i = 0; i < 6; i++) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, prefilterSize, prefilterSize, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Generate mipmaps for the prefiltered HDR texture
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+    // Prefilter HDR and store data into mipmap levels
+    glUseProgram(prefilterShader.id);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_CUBEMAP].tex.id);
+    SetShaderValueMatrix(prefilterShader, prefilterProjectionLoc, captureProjection);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+
+    for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
+    {
+        // Resize framebuffer according to mip-level size.
+        unsigned int mipWidth  = prefilterSize*powf(0.5f, mip);
+        unsigned int mipHeight = prefilterSize*powf(0.5f, mip);
+        glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+        glViewport(0, 0, mipWidth, mipHeight);
+
+        float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
+        glUniform1f(prefilterRoughnessLoc, roughness);
+
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            SetShaderValueMatrix(prefilterShader, prefilterViewLoc, captureViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env.maps[TEXMAP_PREFILTER].tex.id, mip);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            RenderCube();
+        }
+    }
+
+    // Unbind framebuffer and textures
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Generate BRDF convolution texture
+    glGenTextures(1, &env.maps[TEXMAP_BRDF].tex.id);
+    glBindTexture(GL_TEXTURE_2D, env.maps[TEXMAP_BRDF].tex.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, brdfSize, brdfSize, 0, GL_RG, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Render BRDF LUT into a quad using default FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, brdfSize, brdfSize);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, env.maps[TEXMAP_BRDF].tex.id, 0);
+
+    rlViewport(0, 0, brdfSize, brdfSize);
+    glUseProgram(brdfShader.id);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    RenderQuad();
+
+    // Unbind framebuffer and textures
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Then before rendering, configure the viewport to the actual screen dimensions
+    Matrix defaultProjection = MatrixPerspective(60.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
+    MatrixTranspose(&defaultProjection);
+    SetShaderValueMatrix(cubeShader, cubeProjectionLoc, defaultProjection);
+    SetShaderValueMatrix(env.shader, skyProjectionLoc, defaultProjection);
+    SetShaderValueMatrix(irradianceShader, irradianceProjectionLoc, defaultProjection);
+    SetShaderValueMatrix(prefilterShader, prefilterProjectionLoc, defaultProjection);
+    */
+    
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    
+    UnloadShader(cubeShader);
+    UnloadShader(irradianceShader);
+    UnloadShader(prefilterShader);
+    UnloadShader(brdfShader);
+    
+    return env;
+}
+
 // Unload material from memory
 void UnloadMaterial(Material material)
 {
-    rlDeleteTextures(material.maps[TEXMAP_DIFFUSE].tex.id);
-    rlDeleteTextures(material.maps[TEXMAP_NORMAL].tex.id);
-    rlDeleteTextures(material.maps[TEXMAP_SPECULAR].tex.id);
+    // Unload material shader
+    UnloadShader(material.shader);
+
+    // Unload loaded texture maps
+    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
+    {
+        // NOTE: We already check for (tex.id > 0) inside function
+        rlDeleteTextures(material.maps[i].tex.id); 
+    }
 }
+
+// Set material texture
+void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
+{
+    mat->maps[texmapType].tex = texture;
+}
+
+// Unset texture from material and unload it from GPU
+void UnsetMaterialTexture(Material *mat, int texmapType)
+{
+    UnloadTexture(mat->maps[texmapType].tex);
+    mat->maps[texmapType].tex = (Texture2D){ 0 };
+}
+
 
 // Generate a mesh from heightmap
 static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
@@ -1937,7 +2212,7 @@ static Material LoadMTL(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     128
 
-    Material material = { 0 };  // LoadDefaultMaterial();
+    Material material = { 0 };
 
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };

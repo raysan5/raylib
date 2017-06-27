@@ -293,7 +293,7 @@
 
 // Shader and material limits
 #define MAX_SHADER_LOCATIONS        32
-#define MAX_MATERIAL_TEXTURE_MAPS    8
+#define MAX_MATERIAL_TEXTURE_MAPS   12
 #define MAX_MATERIAL_PARAMS          8
 
 //----------------------------------------------------------------------------------
@@ -973,21 +973,27 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 //------------------------------------------------------------------------------------
 
 // Model loading/unloading functions
-RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
-RLAPI Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData);         // Load mesh from vertex data
-RLAPI Model LoadModel(const char *fileName);                                                            // Load model from file
-RLAPI Model LoadModelFromMesh(Mesh data, bool dynamic);                                                 // Load model from mesh data
-RLAPI Model LoadHeightmap(Image heightmap, Vector3 size);                                               // Load heightmap model from image data
-RLAPI Model LoadCubicmap(Image cubicmap);                                                               // Load cubes-based map model from image data
-RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (mesh and material)
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
+
+// Mesh loading/unloading functions
+RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
+RLAPI Mesh LoadMeshHeightmap(Image heightmap, Vector3 size);                                            // Load heightmap model from image data
+RLAPI Mesh LoadMeshCubicmap(Image cubicmap);                                                            // Load cubes-based map model from image data
+//RLAPI void UpdateMesh(Mesh *mesh, int type, void *data);                                                // Update mesh data (CPU and GPU)
+RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
 
 // Material loading/unloading functions
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
-RLAPI Material LoadDefaultMaterial(void);                                                               // Load default material (uses default models shader)
+RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+RLAPI Material LoadMaterialPBR(Texture2D cubemap, Color albedo, int metalness, int roughness);          // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS...)
+//RLAPI Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSize, int prefilterSize, int brdfSize); // Load environment material: cubemap, irradiance, prefilter and BRDF maps
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
+RLAPI void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture);                        // Set material texture
+RLAPI void UnsetMaterialTexture(Material *mat, int texmapType);                                         // Unset texture from material and unload it from GPU
 
 // Model drawing functions
+RLAPI void DrawMesh(Mesh mesh, Material material, Matrix transform);
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
 RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis,
                        float rotationAngle, Vector3 scale, Color tint);                                 // Draw a model with extended parameters

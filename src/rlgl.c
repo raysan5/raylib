@@ -923,7 +923,7 @@ void rlDisableWireMode(void)
 // Unload texture from GPU memory
 void rlDeleteTextures(unsigned int id)
 {
-    if (id != 0) glDeleteTextures(1, &id);
+    if (id > 0) glDeleteTextures(1, &id);
 }
 
 // Unload render texture from GPU memory

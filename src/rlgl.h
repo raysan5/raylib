@@ -105,11 +105,6 @@
     #define MAX_QUADS_BATCH         1024    // Be careful with text, every letter maps a quad
 #endif
 
-// Shader and material limits
-#define MAX_SHADER_LOCATIONS        32
-#define MAX_MATERIAL_TEXTURE_MAPS    8
-#define MAX_MATERIAL_PARAMS          8
-
 // Texture parameters (equivalent to OpenGL defines)
 #define RL_TEXTURE_WRAP_S               0x2802      // GL_TEXTURE_WRAP_S
 #define RL_TEXTURE_WRAP_T               0x2803      // GL_TEXTURE_WRAP_T
@@ -236,6 +231,11 @@ typedef unsigned char byte;
         unsigned int vaoId;     // OpenGL Vertex Array Object id
         unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
+    
+    // Shader and material limits
+    #define MAX_SHADER_LOCATIONS        32
+    #define MAX_MATERIAL_TEXTURE_MAPS   12
+    #define MAX_MATERIAL_PARAMS          8
     
     // Shader type (generic)
     typedef struct Shader {
