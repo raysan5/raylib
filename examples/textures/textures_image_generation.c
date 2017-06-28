@@ -11,7 +11,7 @@
 
 #include "raylib.h"
 
-#define TEXTURES_NUM 5 // for now we have 5 generation algorithms
+#define TEXTURES_NUM 7 // for now we have 7 generation algorithms
 
 int main()
 {
@@ -22,16 +22,20 @@ int main()
 
     Image verticalGradient = GenImageGradientV(screenWidth, screenHeight, RED, BLUE);
     Image horizontalGradient = GenImageGradientH(screenWidth, screenHeight, RED, BLUE);
+    Image radialGradient = GenImageRadialGradient(screenWidth, screenHeight, WHITE, BLACK);
     Image checked = GenImageChecked(screenWidth, screenHeight, 32, 32, RED, BLUE);
     Image whiteNoise = GenImageWhiteNoise(screenWidth, screenHeight, 0.5f);
+    Image perlinNoise = GenImagePerlinNoise(screenWidth, screenHeight, 8.f);
     Image cellular = GenImageCellular(screenWidth, screenHeight, 32);
 
     Texture2D textures[TEXTURES_NUM];
     textures[0] = LoadTextureFromImage(verticalGradient);
     textures[1] = LoadTextureFromImage(horizontalGradient);
-    textures[2] = LoadTextureFromImage(checked);
-    textures[3] = LoadTextureFromImage(whiteNoise);
-    textures[4] = LoadTextureFromImage(cellular);
+    textures[2] = LoadTextureFromImage(radialGradient);
+    textures[3] = LoadTextureFromImage(checked);
+    textures[4] = LoadTextureFromImage(whiteNoise);
+    textures[5] = LoadTextureFromImage(perlinNoise);
+    textures[6] = LoadTextureFromImage(cellular);
 
     int currentTexture = 0;
 
