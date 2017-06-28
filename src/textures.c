@@ -553,6 +553,18 @@ void UpdateTexture(Texture2D texture, const void *pixels)
     rlglUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
+// Save image to a PNG file
+void SaveImageAs(const char* fileName, Image image)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+    unsigned char* imgData = (unsigned char*)GetImageData(image); // this works since Color is just a container for the RGBA values
+    SavePNG(fileName, imgData, image.width, image.height, 4);
+    free(imgData);
+
+    TraceLog(INFO, "Image saved: %s", fileName);
+#endif
+}
+
 // Convert image data to desired format
 void ImageFormat(Image *image, int newFormat)
 {
