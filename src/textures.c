@@ -1493,7 +1493,7 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
 }
 
 // Generate image: radial gradient
-Image GenImageRadialGradient(int width, int height, Color inner, Color outer)
+Image GenImageRadialGradient(int width, int height, float density, Color inner, Color outer)
 {
     Color *pixels = (Color*)malloc(width * height * sizeof(Color));
     float radius = (width < height) ? (float)width / 2.f : (float)height / 2.f;
@@ -1505,7 +1505,8 @@ Image GenImageRadialGradient(int width, int height, Color inner, Color outer)
         for (int x = 0; x < width; x++)
         {
             float dist = hypotf((float)x - center_x, (float)y - center_y);
-            float factor = dist / radius;
+            float factor = (dist - radius * density) / (radius * (1.f - density));
+            factor = fmax(factor, 0.f);
             factor = fmin(factor, 1.f); // dist can be bigger than radius so we have to check
             pixels[y*width + x].r = (int)((float)outer.r * factor + (float)inner.r * (1.f - factor));
             pixels[y*width + x].g = (int)((float)outer.g * factor + (float)inner.g * (1.f - factor));
