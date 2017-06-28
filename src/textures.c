@@ -554,7 +554,7 @@ void UpdateTexture(Texture2D texture, const void *pixels)
 }
 
 // Save image to a PNG file
-void SaveImageAs(Image image, const char *fileName)
+void SaveImageAs(const char* fileName, Image image)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     unsigned char* imgData = (unsigned char*)GetImageData(image); // this works since Color is just a container for the RGBA values

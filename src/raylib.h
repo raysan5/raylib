@@ -849,7 +849,7 @@ RLAPI void UnloadRenderTexture(RenderTexture2D target);                         
 RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data
-RLAPI void SaveImageAs(Image image, const char *fileName);                                               // Save image to a PNG file
+RLAPI void SaveImageAs(const char *fileName, Image image);                                               // Save image to a PNG file
 
 // Image manipulation functions
 RLAPI void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
