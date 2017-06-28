@@ -1431,6 +1431,148 @@ void ImageColorBrightness(Image *image, int brightness)
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
+// Generate image: vertical gradient
+Image GenImageGradientV(int width, int height, Color top, Color bottom)
+{
+    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+
+    for (int j = 0; j < height; j++)
+    {
+        float factor = (float)j / (float)height;
+        for (int i = 0; i < width; i++)
+        {
+            pixels[j*width + i].r = (int)((float)bottom.r * factor + (float)top.r * (1.f - factor));
+            pixels[j*width + i].g = (int)((float)bottom.g * factor + (float)top.g * (1.f - factor));
+            pixels[j*width + i].b = (int)((float)bottom.b * factor + (float)top.b * (1.f - factor));
+            pixels[j*width + i].a = (int)((float)bottom.a * factor + (float)top.a * (1.f - factor));
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    free(pixels);
+
+    return image;
+}
+
+// Generate image: horizontal gradient
+Image GenImageGradientH(int width, int height, Color left, Color right)
+{
+    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+
+    for (int i = 0; i < width; i++)
+    {
+        float factor = (float)i / (float)width;
+        for (int j = 0; j < height; j++)
+        {
+            pixels[j*width + i].r = (int)((float)right.r * factor + (float)left.r * (1.f - factor));
+            pixels[j*width + i].g = (int)((float)right.g * factor + (float)left.g * (1.f - factor));
+            pixels[j*width + i].b = (int)((float)right.b * factor + (float)left.b * (1.f - factor));
+            pixels[j*width + i].a = (int)((float)right.a * factor + (float)left.a * (1.f - factor));
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    free(pixels);
+
+    return image;
+}
+
+// Generate image: checked
+Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
+{
+    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            if ((x/checksX + y/checksY) % 2 == 0) pixels[y*width + x] = col1;
+            else pixels[y*width + x] = col2;
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    free(pixels);
+
+    return image;
+}
+
+// Generate image: white noise
+Image GenImageWhiteNoise(int width, int height, float factor)
+{
+    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+
+    for (int i = 0; i < width*height; i++)
+    {
+        if (GetRandomValue(0, 99) < (int)(factor * 100.f)) pixels[i] = WHITE;
+        else pixels[i] = BLACK;
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    free(pixels);
+
+    return image;
+}
+
+// Generate image: cellular algorithm. Bigger tileSize means bigger cells
+Image GenImageCellular(int width, int height, int tileSize)
+{
+    Color *pixels = (Color*)malloc(width*height*sizeof(Color));
+
+    int seeds_per_row = width / tileSize;
+    int seeds_per_col = height / tileSize;
+    int seeds_count = seeds_per_row * seeds_per_col;
+
+    Vector2* seeds = (Vector2*)malloc(seeds_count * sizeof(Vector2));
+
+    for (int i = 0; i < seeds_count; i++)
+    {
+        int y = (i / seeds_per_row) * tileSize + GetRandomValue(0, tileSize-1);
+        int x = (i % seeds_per_row) * tileSize + GetRandomValue(0, tileSize-1);
+        seeds[i] = (Vector2){x, y};
+    }
+
+    for (int y = 0; y < height; y++)
+    {
+        int tile_y = y / tileSize;
+        for (int x = 0; x < width; x++)
+        {
+            int tile_x = x / tileSize;
+
+            float min_distance = strtod("Inf", NULL);
+
+            // Check all adjacent tiles
+            for (int i = -1; i < 2; i++)
+            {
+                if (tile_x + i < 0 || tile_x + i >= seeds_per_row) continue;
+
+                for (int j = -1; j < 2; j++)
+                {
+                    if (tile_y + j < 0 || tile_y + j >= seeds_per_col) continue;
+
+                    Vector2 neighbor_seed = seeds[(tile_y+j) * seeds_per_row + tile_x+i];
+
+                    float dist = hypot(x - (int)neighbor_seed.x, y - (int)neighbor_seed.y);
+                    min_distance = fmin(min_distance, dist);
+                }
+            }
+
+            // I made this up but it seems to give good results at all tile sizes
+            int intensity = (int)(min_distance * 256.f / tileSize);
+            if (intensity > 255) intensity = 255;
+
+            Color c = {intensity, intensity, intensity, 255};
+            pixels[y*width + x] = c;
+        }
+    }
+    free(seeds);
+
+    Image image = LoadImageEx(pixels, width, height);
+    free(pixels);
+
+    return image;
+}
+
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D *texture)
 {
