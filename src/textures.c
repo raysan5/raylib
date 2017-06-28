@@ -68,6 +68,9 @@
 
 #include "utils.h"              // Required for: fopen() Android mapping
 
+#define STB_PERLIN_IMPLEMENTATION
+#include "external/stb_perlin.h"// Required for: stb_perlin_fbm_noise3
+
 // Support only desired texture formats on stb_image
 #if !defined(SUPPORT_FILEFORMAT_BMP)
     #define STBI_NO_BMP
@@ -1477,6 +1480,34 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
     return image;
 }
 
+// Generate image: radial gradient
+Image GenImageRadialGradient(int width, int height, Color inner, Color outer)
+{
+    Color *pixels = (Color*)malloc(width * height * sizeof(Color));
+    float radius = (width < height) ? (float)width / 2.f : (float)height / 2.f;
+
+    float center_x = (float)width / 2.f;
+    float center_y = (float)height / 2.f;
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float dist = hypotf((float)x - center_x, (float)y - center_y);
+            float factor = dist / radius;
+            factor = fmin(factor, 1.f); // dist can be bigger than radius so we have to check
+            pixels[y*width + x].r = (int)((float)outer.r * factor + (float)inner.r * (1.f - factor));
+            pixels[y*width + x].g = (int)((float)outer.g * factor + (float)inner.g * (1.f - factor));
+            pixels[y*width + x].b = (int)((float)outer.b * factor + (float)inner.b * (1.f - factor));
+            pixels[y*width + x].a = (int)((float)outer.a * factor + (float)inner.a * (1.f - factor));
+        }
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    free(pixels);
+
+    return image;
+}
+
 // Generate image: checked
 Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
 {
@@ -1506,6 +1537,30 @@ Image GenImageWhiteNoise(int width, int height, float factor)
     {
         if (GetRandomValue(0, 99) < (int)(factor * 100.f)) pixels[i] = WHITE;
         else pixels[i] = BLACK;
+    }
+
+    Image image = LoadImageEx(pixels, width, height);
+    free(pixels);
+
+    return image;
+}
+
+// Generate image: perlin noise
+Image GenImagePerlinNoise(int width, int height, float scale)
+{
+    Color *pixels = (Color*)malloc(width * height * sizeof(Color));
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float nx = (float)x * scale / (float)width;
+            float ny = (float)y * scale / (float)height;
+            // we need to translate the data from [-1; 1] to [0; 1]
+            float p = (stb_perlin_fbm_noise3(nx, ny, 1.f, 2.f, 0.5f, 6, 0, 0, 0) + 1.f) / 2.f;
+            int intensity = (int)(p * 255.f);
+            pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};
+        }
     }
 
     Image image = LoadImageEx(pixels, width, height);
