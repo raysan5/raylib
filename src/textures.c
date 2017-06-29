@@ -2397,7 +2397,7 @@ static Image LoadASTC(const char *fileName)
         unsigned char blockZ;       // Block Z dimensions (1 for 2D images)
         unsigned char width[3];     // Image width in pixels (24bit value)
         unsigned char height[3];    // Image height in pixels (24bit value)
-        unsigned char lenght[3];    // Image Z-size (1 for 2D images)
+        unsigned char length[3];    // Image Z-size (1 for 2D images)
     } ASTCHeader;
 
     Image image;
