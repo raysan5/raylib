@@ -124,7 +124,7 @@ RMDEF Vector2 Vector2Zero(void);                                // Vector with c
 RMDEF Vector2 Vector2One(void);                                 // Vector with components value 1.0f
 RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2);               // Add two vectors (v1 + v2)
 RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2);          // Subtract two vectors (v1 - v2)
-RMDEF float Vector2Lenght(Vector2 v);                           // Calculate vector length
+RMDEF float Vector2Length(Vector2 v);                           // Calculate vector length
 RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2);          // Calculate two vectors dot product
 RMDEF float Vector2Distance(Vector2 v1, Vector2 v2);            // Calculate distance between two vectors
 RMDEF float Vector2Angle(Vector2 v1, Vector2 v2);               // Calculate angle between two vectors in X-axis
@@ -287,7 +287,7 @@ RMDEF void Vector2Divide(Vector2 *v, float div)
 // Normalize provided vector
 RMDEF void Vector2Normalize(Vector2 *v)
 {
-    Vector2Divide(v, Vector2Lenght(*v));
+    Vector2Divide(v, Vector2Length(*v));
 }
 
 //----------------------------------------------------------------------------------

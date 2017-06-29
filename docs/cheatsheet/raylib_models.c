@@ -3,11 +3,11 @@
     void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color);                                     // Draw a line in 3D world space
     void DrawCircle3D(Vector3 center, float radius, Vector3 rotationAxis, 
                       float rotationAngle, Color color);                                                // Draw a circle in 3D world space
-    void DrawCube(Vector3 position, float width, float height, float lenght, Color color);              // Draw cube
+    void DrawCube(Vector3 position, float width, float height, float length, Color color);              // Draw cube
     void DrawCubeV(Vector3 position, Vector3 size, Color color);                                        // Draw cube (Vector version)
-    void DrawCubeWires(Vector3 position, float width, float height, float lenght, Color color);         // Draw cube wires
+    void DrawCubeWires(Vector3 position, float width, float height, float length, Color color);         // Draw cube wires
     void DrawCubeTexture(Texture2D texture, Vector3 position, float width, 
-                         float height, float lenght, Color color);                                      // Draw cube textured
+                         float height, float length, Color color);                                      // Draw cube textured
     void DrawSphere(Vector3 centerPos, float radius, Color color);                                      // Draw sphere
     void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color);             // Draw sphere with extended parameters
     void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color);          // Draw sphere wires
