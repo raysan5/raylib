@@ -19,6 +19,7 @@ int main()
     int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - procedural images generation");
+    SetTargetFPS(60);
 
     Image verticalGradient = GenImageGradientV(screenWidth, screenHeight, RED, BLUE);
     Image horizontalGradient = GenImageGradientH(screenWidth, screenHeight, RED, BLUE);
@@ -52,6 +53,13 @@ int main()
         EndDrawing();
     }
 
+    UnloadImage(verticalGradient);
+    UnloadImage(horizontalGradient);
+    UnloadImage(radialGradient);
+    UnloadImage(checked);
+    UnloadImage(whiteNoise);
+    UnloadImage(perlinNoise);
+    UnloadImage(cellular);
     for (int i = 0; i < TEXTURES_NUM; i++) // unload the textures
     {
         UnloadTexture(textures[i]);
