@@ -1637,6 +1637,7 @@ static Mesh LoadOBJ(const char *fileName)
     // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
     while (!feof(objFile))
     {
+        dataType = '\0';
         fscanf(objFile, "%c", &dataType);
 
         switch (dataType)
