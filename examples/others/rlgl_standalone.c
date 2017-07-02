@@ -62,10 +62,10 @@ int main(void)
     
     if (!glfwInit())
     {
-        TraceLog(WARNING, "GLFW3: Can not initialize GLFW");
+        TraceLog(LOG_WARNING, "GLFW3: Can not initialize GLFW");
         return 1;
     }
-    else TraceLog(INFO, "GLFW3: GLFW initialized successfully");
+    else TraceLog(LOG_INFO, "GLFW3: GLFW initialized successfully");
     
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
@@ -81,7 +81,7 @@ int main(void)
         glfwTerminate();
         return 2;
     }
-    else TraceLog(INFO, "GLFW3: Window created successfully");
+    else TraceLog(LOG_INFO, "GLFW3: Window created successfully");
     
     glfwSetWindowPos(window, 200, 200);
     
@@ -190,7 +190,7 @@ int main(void)
 // GLFW3: Error callback
 static void ErrorCallback(int error, const char* description)
 {
-    TraceLog(ERROR, description);
+    TraceLog(LOG_ERROR, description);
 }
 
 // GLFW3: Keyboard callback
