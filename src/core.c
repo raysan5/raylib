@@ -412,7 +412,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 // Initialize window and OpenGL context
 void InitWindow(int width, int height, const char *title)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.7.0)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
 
     // Store window title (could be useful...)
     windowTitle = title;
@@ -475,7 +475,7 @@ void InitWindow(int width, int height, const char *title)
 // Initialize Android activity
 void InitWindow(int width, int height, void *state)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.7.0)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
 
     app_dummy();
 
