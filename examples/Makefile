@@ -33,6 +33,10 @@ PLATFORM ?= PLATFORM_DESKTOP
 # define raylib directory for include and library
 RAYLIB_PATH ?= C:\raylib\raylib
 
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH = /home/pi/raylib
+endif
+
 # define NO to use OpenAL Soft as static library (shared by default)
 SHARED_OPENAL ?= NO
 
@@ -131,7 +135,7 @@ endif
 INCLUDES = -I. -I$(RAYLIB_RELEASE) -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external 
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES += -I../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
