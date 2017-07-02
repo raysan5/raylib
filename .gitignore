@@ -42,7 +42,7 @@ Thumbs.db
 *.sbr
 *.sdf
 obj/
-# [Rr]elease/
+[Rr]elease/
 [Rr]elease.win32/
 _ReSharper*/
 [Tt]est[Rr]esult*

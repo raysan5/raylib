@@ -1453,13 +1453,13 @@ Image GenImageGradientV(int width, int height, Color top, Color bottom)
 
     for (int j = 0; j < height; j++)
     {
-        float factor = (float)j / (float)height;
+        float factor = (float)j/(float)height;
         for (int i = 0; i < width; i++)
         {
-            pixels[j*width + i].r = (int)((float)bottom.r * factor + (float)top.r * (1.f - factor));
-            pixels[j*width + i].g = (int)((float)bottom.g * factor + (float)top.g * (1.f - factor));
-            pixels[j*width + i].b = (int)((float)bottom.b * factor + (float)top.b * (1.f - factor));
-            pixels[j*width + i].a = (int)((float)bottom.a * factor + (float)top.a * (1.f - factor));
+            pixels[j*width + i].r = (int)((float)bottom.r*factor + (float)top.r*(1.f - factor));
+            pixels[j*width + i].g = (int)((float)bottom.g*factor + (float)top.g*(1.f - factor));
+            pixels[j*width + i].b = (int)((float)bottom.b*factor + (float)top.b*(1.f - factor));
+            pixels[j*width + i].a = (int)((float)bottom.a*factor + (float)top.a*(1.f - factor));
         }
     }
 
@@ -1476,13 +1476,13 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
 
     for (int i = 0; i < width; i++)
     {
-        float factor = (float)i / (float)width;
+        float factor = (float)i/(float)width;
         for (int j = 0; j < height; j++)
         {
-            pixels[j*width + i].r = (int)((float)right.r * factor + (float)left.r * (1.f - factor));
-            pixels[j*width + i].g = (int)((float)right.g * factor + (float)left.g * (1.f - factor));
-            pixels[j*width + i].b = (int)((float)right.b * factor + (float)left.b * (1.f - factor));
-            pixels[j*width + i].a = (int)((float)right.a * factor + (float)left.a * (1.f - factor));
+            pixels[j*width + i].r = (int)((float)right.r*factor + (float)left.r*(1.f - factor));
+            pixels[j*width + i].g = (int)((float)right.g*factor + (float)left.g*(1.f - factor));
+            pixels[j*width + i].b = (int)((float)right.b*factor + (float)left.b*(1.f - factor));
+            pixels[j*width + i].a = (int)((float)right.a*factor + (float)left.a*(1.f - factor));
         }
     }
 
@@ -1493,25 +1493,28 @@ Image GenImageGradientH(int width, int height, Color left, Color right)
 }
 
 // Generate image: radial gradient
-Image GenImageRadialGradient(int width, int height, float density, Color inner, Color outer)
+Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer)
 {
-    Color *pixels = (Color*)malloc(width * height * sizeof(Color));
-    float radius = (width < height) ? (float)width / 2.f : (float)height / 2.f;
+    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+    float radius = (width < height) ? (float)width/2.0f : (float)height/2.0f;
 
-    float center_x = (float)width / 2.f;
-    float center_y = (float)height / 2.f;
+    float centerX = (float)width/2.0f;
+    float centerY = (float)height/2.0f;
+    
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            float dist = hypotf((float)x - center_x, (float)y - center_y);
-            float factor = (dist - radius * density) / (radius * (1.f - density));
+            float dist = hypotf((float)x - centerX, (float)y - centerY);
+            float factor = (dist - radius*density)/(radius*(1.0f - density));
+            
             factor = fmax(factor, 0.f);
             factor = fmin(factor, 1.f); // dist can be bigger than radius so we have to check
-            pixels[y*width + x].r = (int)((float)outer.r * factor + (float)inner.r * (1.f - factor));
-            pixels[y*width + x].g = (int)((float)outer.g * factor + (float)inner.g * (1.f - factor));
-            pixels[y*width + x].b = (int)((float)outer.b * factor + (float)inner.b * (1.f - factor));
-            pixels[y*width + x].a = (int)((float)outer.a * factor + (float)inner.a * (1.f - factor));
+            
+            pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
+            pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
+            pixels[y*width + x].b = (int)((float)outer.b*factor + (float)inner.b*(1.0f - factor));
+            pixels[y*width + x].a = (int)((float)outer.a*factor + (float)inner.a*(1.0f - factor));
         }
     }
 
@@ -1530,7 +1533,7 @@ Image GenImageChecked(int width, int height, int checksX, int checksY, Color col
     {
         for (int x = 0; x < width; x++)
         {
-            if ((x/checksX + y/checksY) % 2 == 0) pixels[y*width + x] = col1;
+            if ((x/checksX + y/checksY)%2 == 0) pixels[y*width + x] = col1;
             else pixels[y*width + x] = col2;
         }
     }
@@ -1548,7 +1551,7 @@ Image GenImageWhiteNoise(int width, int height, float factor)
 
     for (int i = 0; i < width*height; i++)
     {
-        if (GetRandomValue(0, 99) < (int)(factor * 100.f)) pixels[i] = WHITE;
+        if (GetRandomValue(0, 99) < (int)(factor*100.0f)) pixels[i] = WHITE;
         else pixels[i] = BLACK;
     }
 
@@ -1561,17 +1564,19 @@ Image GenImageWhiteNoise(int width, int height, float factor)
 // Generate image: perlin noise
 Image GenImagePerlinNoise(int width, int height, float scale)
 {
-    Color *pixels = (Color*)malloc(width * height * sizeof(Color));
+    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
 
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            float nx = (float)x * scale / (float)width;
-            float ny = (float)y * scale / (float)height;
+            float nx = (float)x*scale/(float)width;
+            float ny = (float)y*scale/(float)height;
+            
             // we need to translate the data from [-1; 1] to [0; 1]
-            float p = (stb_perlin_fbm_noise3(nx, ny, 1.f, 2.f, 0.5f, 6, 0, 0, 0) + 1.f) / 2.f;
-            int intensity = (int)(p * 255.f);
+            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6, 0, 0, 0) + 1.0f) / 2.0f;
+            
+            int intensity = (int)(p * 255.0f);
             pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};
         }
     }
@@ -1585,54 +1590,55 @@ Image GenImagePerlinNoise(int width, int height, float scale)
 // Generate image: cellular algorithm. Bigger tileSize means bigger cells
 Image GenImageCellular(int width, int height, int tileSize)
 {
-    Color *pixels = (Color*)malloc(width*height*sizeof(Color));
+    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
 
-    int seeds_per_row = width / tileSize;
-    int seeds_per_col = height / tileSize;
-    int seeds_count = seeds_per_row * seeds_per_col;
+    int seedsPerRow = width/tileSize;
+    int seedsPerCol = height/tileSize;
+    int seedsCount = seedsPerRow * seedsPerCol;
 
-    Vector2* seeds = (Vector2*)malloc(seeds_count * sizeof(Vector2));
+    Vector2 *seeds = (Vector2 *)malloc(seedsCount*sizeof(Vector2));
 
-    for (int i = 0; i < seeds_count; i++)
+    for (int i = 0; i < seedsCount; i++)
     {
-        int y = (i / seeds_per_row) * tileSize + GetRandomValue(0, tileSize-1);
-        int x = (i % seeds_per_row) * tileSize + GetRandomValue(0, tileSize-1);
+        int y = (i/seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
+        int x = (i%seedsPerRow)*tileSize + GetRandomValue(0, tileSize - 1);
         seeds[i] = (Vector2){x, y};
     }
 
     for (int y = 0; y < height; y++)
     {
-        int tile_y = y / tileSize;
+        int tileY = y/tileSize;
+        
         for (int x = 0; x < width; x++)
         {
-            int tile_x = x / tileSize;
+            int tileX = x/tileSize;
 
-            float min_distance = strtod("Inf", NULL);
+            float minDistance = strtod("Inf", NULL);
 
             // Check all adjacent tiles
             for (int i = -1; i < 2; i++)
             {
-                if (tile_x + i < 0 || tile_x + i >= seeds_per_row) continue;
+                if ((tileX + i < 0) || (tileX + i >= seedsPerRow)) continue;
 
                 for (int j = -1; j < 2; j++)
                 {
-                    if (tile_y + j < 0 || tile_y + j >= seeds_per_col) continue;
+                    if ((tileY + j < 0) || (tileY + j >= seedsPerCol)) continue;
 
-                    Vector2 neighbor_seed = seeds[(tile_y+j) * seeds_per_row + tile_x+i];
+                    Vector2 neighborSeed = seeds[(tileY + j)*seedsPerRow + tileX + i];
 
-                    float dist = hypot(x - (int)neighbor_seed.x, y - (int)neighbor_seed.y);
-                    min_distance = fmin(min_distance, dist);
+                    float dist = hypot(x - (int)neighborSeed.x, y - (int)neighborSeed.y);
+                    minDistance = fmin(minDistance, dist);
                 }
             }
 
             // I made this up but it seems to give good results at all tile sizes
-            int intensity = (int)(min_distance * 256.f / tileSize);
+            int intensity = (int)(minDistance*256.0f/tileSize);
             if (intensity > 255) intensity = 255;
 
-            Color c = {intensity, intensity, intensity, 255};
-            pixels[y*width + x] = c;
+            pixels[y*width + x] = (Color){ intensity, intensity, intensity, 255 };
         }
     }
+    
     free(seeds);
 
     Image image = LoadImageEx(pixels, width, height);
