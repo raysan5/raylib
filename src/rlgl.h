@@ -236,11 +236,11 @@ typedef unsigned char byte;
     
     // TraceLog message types
     typedef enum { 
-        INFO = 0, 
-        ERROR, 
-        WARNING, 
-        DEBUG, 
-        OTHER 
+        LOG_INFO = 0, 
+        LOG_ERROR, 
+        LOG_WARNING, 
+        LOG_DEBUG, 
+        LOG_OTHER 
     } TraceLogType;
     
     // Texture formats (support depends on OpenGL version)
@@ -416,8 +416,8 @@ void EndShaderMode(void);                                           // End custo
 void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
 void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
-void TraceLog(int msgType, const char *text, ...);
-float *MatrixToFloat(Matrix mat);
+void TraceLog(int msgType, const char *text, ...);                  // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+float *MatrixToFloat(Matrix mat);                                   // Get float array from Matrix data
 
 void InitVrSimulator(int vrDevice);         // Init VR simulator for selected device
 void CloseVrSimulator(void);                // Close VR simulator for current device

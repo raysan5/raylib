@@ -256,7 +256,7 @@ extern void LoadDefaultFont(void)
 
     defaultFont.baseSize = defaultFont.chars[0].rec.height;
 
-    TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
+    TraceLog(LOG_INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
 
 // Unload raylib default font
@@ -330,7 +330,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     if (spriteFont.texture.id == 0)
     {
-        TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
+        TraceLog(LOG_WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
     else SetTextureFilter(spriteFont.texture, FILTER_POINT);    // By default we set point filter (best performance)
@@ -364,7 +364,7 @@ SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, 
 
     if (spriteFont.texture.id == 0)
     {
-        TraceLog(WARNING, "[%s] SpriteFont could not be generated, using default font", fileName);
+        TraceLog(LOG_WARNING, "[%s] SpriteFont could not be generated, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
 
@@ -380,7 +380,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
         UnloadTexture(spriteFont.texture);
         free(spriteFont.chars);
 
-        TraceLog(DEBUG, "Unloaded sprite font data");
+        TraceLog(LOG_DEBUG, "Unloaded sprite font data");
     }
 }
 
@@ -677,7 +677,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
         xPosToRead = charSpacing;
     }
 
-    TraceLog(DEBUG, "SpriteFont data parsed correctly from image");
+    TraceLog(LOG_DEBUG, "SpriteFont data parsed correctly from image");
 
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
@@ -713,7 +713,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 
     spriteFont.baseSize = spriteFont.chars[0].rec.height;
 
-    TraceLog(INFO, "Image file loaded correctly as SpriteFont");
+    TraceLog(LOG_INFO, "Image file loaded correctly as SpriteFont");
 
     return spriteFont;
 }
@@ -743,7 +743,7 @@ static SpriteFont LoadBMFont(const char *fileName)
 
     if (fntFile == NULL)
     {
-        TraceLog(WARNING, "[%s] FNT file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] FNT file could not be opened", fileName);
         return font;
     }
 
@@ -756,20 +756,20 @@ static SpriteFont LoadBMFont(const char *fileName)
     searchPoint = strstr(buffer, "lineHeight");
     sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &texWidth, &texHeight);
 
-    TraceLog(DEBUG, "[%s] Font size: %i", fileName, fontSize);
-    TraceLog(DEBUG, "[%s] Font texture scale: %ix%i", fileName, texWidth, texHeight);
+    TraceLog(LOG_DEBUG, "[%s] Font size: %i", fileName, fontSize);
+    TraceLog(LOG_DEBUG, "[%s] Font texture scale: %ix%i", fileName, texWidth, texHeight);
 
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "file");
     sscanf(searchPoint, "file=\"%128[^\"]\"", texFileName);
 
-    TraceLog(DEBUG, "[%s] Font texture filename: %s", fileName, texFileName);
+    TraceLog(LOG_DEBUG, "[%s] Font texture filename: %s", fileName, texFileName);
 
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "count");
     sscanf(searchPoint, "count=%i", &charsCount);
 
-    TraceLog(DEBUG, "[%s] Font num chars: %i", fileName, charsCount);
+    TraceLog(LOG_DEBUG, "[%s] Font num chars: %i", fileName, charsCount);
 
     // Compose correct path using route of .fnt file (fileName) and texFileName
     char *texPath = NULL;
@@ -785,7 +785,7 @@ static SpriteFont LoadBMFont(const char *fileName)
     strncat(texPath, fileName, strlen(fileName) - strlen(lastSlash) + 1);
     strncat(texPath, texFileName, strlen(texFileName));
 
-    TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
+    TraceLog(LOG_DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
 
     Image imFont = LoadImage(texPath);
 
@@ -832,7 +832,7 @@ static SpriteFont LoadBMFont(const char *fileName)
         UnloadSpriteFont(font);
         font = GetDefaultFont();
     }
-    else TraceLog(INFO, "[%s] SpriteFont loaded successfully", fileName);
+    else TraceLog(LOG_INFO, "[%s] SpriteFont loaded successfully", fileName);
 
     return font;
 }
@@ -853,7 +853,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
     float guessSize = ceilf((float)fontSize*3/4)*ceilf(sqrtf((float)charsCount));
     int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));      // Calculate next POT
 
-    TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
+    TraceLog(LOG_INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
 
     unsigned char *ttfBuffer = (unsigned char *)malloc(MAX_TTF_SIZE*1024*1024);
     unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
@@ -865,22 +865,22 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
 
     if (ttfFile == NULL)
     {
-        TraceLog(WARNING, "[%s] TTF file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] TTF file could not be opened", fileName);
         return font;
     }
 
     // NOTE: We try reading up to 16 MB of elements of 1 byte
     fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
 
-    if (fontChars[0] != 32) TraceLog(WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
+    if (fontChars[0] != 32) TraceLog(LOG_WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
     // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
     // TODO: Replace this function by a proper packing method and support random chars order,
     // we already receive a list (fontChars) with the ordered expected characters
     int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, fontChars[0], charsCount, charData);
 
-    //if (result > 0) TraceLog(INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
-    if (result < 0) TraceLog(WARNING, "TTF spritefont loading: Not all the characters fit in the font");
+    //if (result > 0) TraceLog(LOG_INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
+    if (result < 0) TraceLog(LOG_WARNING, "TTF spritefont loading: Not all the characters fit in the font");
 
     free(ttfBuffer);
 

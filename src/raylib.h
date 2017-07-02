@@ -1,6 +1,6 @@
 ﻿/**********************************************************************************************
 *
-*   raylib v1.7.0 
+*   raylib v1.8.0 
 *
 *   A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *
@@ -533,11 +533,11 @@ typedef struct RRESData *RRES;
 //----------------------------------------------------------------------------------
 // Trace log type
 typedef enum { 
-    INFO = 0,
-    WARNING, 
-    ERROR, 
-    DEBUG, 
-    OTHER 
+    LOG_INFO = 0,
+    LOG_WARNING, 
+    LOG_ERROR, 
+    LOG_DEBUG, 
+    LOG_OTHER 
 } LogType;
 
 // Texture formats
@@ -711,10 +711,9 @@ RLAPI float *MatrixToFloat(Matrix mat);                           // Converts Ma
 // Misc. functions
 RLAPI void ShowLogo(void);                                        // Activate raylib logo at startup (can be done with flags)
 RLAPI void SetConfigFlags(char flags);                            // Setup window configuration flags (view FLAGS)
-RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
-
 
 // Files management functions
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension

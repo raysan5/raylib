@@ -595,10 +595,10 @@ Mesh LoadMesh(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_OBJ)
     if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
 #else
-    TraceLog(WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
+    TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
 
-    if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
+    if (mesh.vertexCount == 0) TraceLog(LOG_WARNING, "Mesh could not be loaded");
     else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
 
     // TODO: Initialize default mesh data in case loading fails, maybe a cube?
@@ -697,7 +697,7 @@ void UnloadModel(Model model)
     UnloadMesh(&model.mesh);
     UnloadMaterial(model.material);
 
-    TraceLog(INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
+    TraceLog(LOG_INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
 }
 
 // Load material data (from file)
@@ -708,7 +708,7 @@ Material LoadMaterial(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MTL)
     if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
 #else
-    TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+    TraceLog(LOG_WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
 #endif
 
     return material;
@@ -1628,7 +1628,7 @@ static Mesh LoadOBJ(const char *fileName)
 
     if (objFile == NULL)
     {
-        TraceLog(WARNING, "[%s] OBJ file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] OBJ file could not be opened", fileName);
         return mesh;
     }
 
@@ -1680,10 +1680,10 @@ static Mesh LoadOBJ(const char *fileName)
         }
     }
 
-    TraceLog(DEBUG, "[%s] Model vertices: %i", fileName, vertexCount);
-    TraceLog(DEBUG, "[%s] Model texcoords: %i", fileName, texcoordCount);
-    TraceLog(DEBUG, "[%s] Model normals: %i", fileName, normalCount);
-    TraceLog(DEBUG, "[%s] Model triangles: %i", fileName, triangleCount);
+    TraceLog(LOG_DEBUG, "[%s] Model vertices: %i", fileName, vertexCount);
+    TraceLog(LOG_DEBUG, "[%s] Model texcoords: %i", fileName, texcoordCount);
+    TraceLog(LOG_DEBUG, "[%s] Model normals: %i", fileName, normalCount);
+    TraceLog(LOG_DEBUG, "[%s] Model triangles: %i", fileName, triangleCount);
 
     // Once we know the number of vertices to store, we create required arrays
     Vector3 *midVertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
@@ -1757,7 +1757,7 @@ static Mesh LoadOBJ(const char *fileName)
 
     rewind(objFile);        // Return to the beginning of the file, to read again
 
-    if (normalCount == 0) TraceLog(INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
+    if (normalCount == 0) TraceLog(LOG_INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
 
     // Third reading pass: Get faces (triangles) data and fill VertexArray
     while (!feof(objFile))
@@ -1924,7 +1924,7 @@ static Mesh LoadOBJ(const char *fileName)
     free(midTexCoords);
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-    TraceLog(INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
+    TraceLog(LOG_INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return mesh;
 }
@@ -1950,7 +1950,7 @@ static Material LoadMTL(const char *fileName)
 
     if (mtlFile == NULL)
     {
-        TraceLog(WARNING, "[%s] MTL file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] MTL file could not be opened", fileName);
         return material;
     }
 
@@ -1965,7 +1965,7 @@ static Material LoadMTL(const char *fileName)
                 // TODO: Support multiple materials in a single .mtl
                 sscanf(buffer, "newmtl %s", mapFileName);
 
-                TraceLog(INFO, "[%s] Loading material...", mapFileName);
+                TraceLog(LOG_INFO, "[%s] Loading material...", mapFileName);
             }
             case 'i':   // illum int        Illumination model
             {
@@ -2090,7 +2090,7 @@ static Material LoadMTL(const char *fileName)
     fclose(mtlFile);
 
     // NOTE: At this point we have all material data
-    TraceLog(INFO, "[%s] Material loaded successfully", fileName);
+    TraceLog(LOG_INFO, "[%s] Material loaded successfully", fileName);
 
     return material;
 }
