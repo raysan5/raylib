@@ -1028,8 +1028,8 @@ RLAPI char *LoadText(const char *fileName);                               // Loa
 RLAPI Shader LoadShader(char *vsFileName, char *fsFileName);              // Load shader from files and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
-RLAPI Shader GetDefaultShader(void);                                      // Get default shader
-RLAPI Texture2D GetDefaultTexture(void);                                  // Get default texture
+RLAPI Shader GetShaderDefault(void);                                      // Get default shader
+RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location

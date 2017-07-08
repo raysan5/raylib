@@ -1183,7 +1183,7 @@ void rlglInit(int width, int height)
     // Init default white texture
     unsigned char pixels[4] = { 255, 255, 255, 255 };   // 1 pixel RGBA (4 bytes)
 
-    whiteTexture = rlglLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
+    whiteTexture = rlLoadTexture(pixels, 1, 1, UNCOMPRESSED_R8G8B8A8, 1);
 
     if (whiteTexture != 0) TraceLog(INFO, "[TEX ID %i] Base white texture loaded successfully", whiteTexture);
     else TraceLog(WARNING, "Base white texture could not be loaded");
@@ -1277,7 +1277,7 @@ void rlglDraw(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: In a future version, models could be stored in a stack...
-    //for (int i = 0; i < modelsCount; i++) rlglDrawMesh(models[i]->mesh, models[i]->material, models[i]->transform);
+    //for (int i = 0; i < modelsCount; i++) rlDrawMesh(models[i]->mesh, models[i]->material, models[i]->transform);
 
     // NOTE: Default buffers upload and draw
     UpdateDefaultBuffers();
@@ -1309,7 +1309,7 @@ void rlglLoadExtensions(void *loader)
 }
 
 // Get world coordinates from screen coordinates
-Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
+Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
 {
     Vector3 result = { 0.0f, 0.0f, 0.0f };
 
@@ -1332,7 +1332,7 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-unsigned int rlglLoadTexture(void *data, int width, int height, int format, int mipmapCount)
+unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount)
 {
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
@@ -1515,7 +1515,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int format, int 
 }
 
 // Load a texture to be used for rendering (fbo with color and depth attachments)
-RenderTexture2D rlglLoadRenderTexture(int width, int height)
+RenderTexture2D rlLoadRenderTexture(int width, int height)
 {
     RenderTexture2D target;
 
@@ -1610,7 +1610,7 @@ RenderTexture2D rlglLoadRenderTexture(int width, int height)
 }
 
 // Update already loaded texture in GPU with new data
-void rlglUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
+void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
 {
     glBindTexture(GL_TEXTURE_2D, id);
 
@@ -1642,8 +1642,14 @@ void rlglUpdateTexture(unsigned int id, int width, int height, int format, const
 #endif
 }
 
+// Unload texture from GPU memory
+void rlUnloadTexture(unsigned int id)
+{
+    if (id > 0) glDeleteTextures(1, &id);
+}
+
 // Generate mipmap data for selected texture
-void rlglGenerateMipmaps(Texture2D *texture)
+void rlGenerateMipmaps(Texture2D *texture)
 {
     glBindTexture(GL_TEXTURE_2D, texture->id);
 
@@ -1657,7 +1663,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
-        void *data = rlglReadTexturePixels(*texture);
+        void *data = rlReadTexturePixels(*texture);
 
         // NOTE: data size is reallocated to fit mipmaps data
         // NOTE: CPU mipmap generation only supports RGBA 32bit data
@@ -1709,7 +1715,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
 }
 
 // Upload vertex data into a VAO (if supported) and VBO
-void rlglLoadMesh(Mesh *mesh, bool dynamic)
+void rlLoadMesh(Mesh *mesh, bool dynamic)
 {
     mesh->vaoId = 0;        // Vertex Array Object
     mesh->vboId[0] = 0;     // Vertex positions VBO
@@ -1846,7 +1852,7 @@ void rlglLoadMesh(Mesh *mesh, bool dynamic)
 }
 
 // Update vertex data on GPU (upload new data to one buffer)
-void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
+void rlUpdateMesh(Mesh mesh, int buffer, int numVertex)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Activate mesh VAO
@@ -1908,7 +1914,7 @@ void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex)
 }
 
 // Draw a 3d mesh with material and transform
-void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
+void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
@@ -1943,8 +1949,17 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(material.shader.id);
+    glUseProgram(material.shader.id);   // Bind shader program
 
+    /*
+    // Calculate and send to shader model matrix
+    Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
+    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
+    Matrix transform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
+    SetShaderValueMatrix(mat.shader, GetShaderLocation(mat.shader, "mMatrix"), transform);
+    */
+    
     // Upload to shader material.colDiffuse
     glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR01], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, (float)material.maps[TEXMAP_DIFFUSE].color.g/255, (float)material.maps[TEXMAP_DIFFUSE].color.b/255, (float)material.maps[TEXMAP_DIFFUSE].color.a/255);
 
@@ -1962,56 +1977,20 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     // Calculate model-view matrix combining matModel and matView
     Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
 
-    // If not using default shader, we check for some additional location points
-    // NOTE: This method is quite inefficient... it's a temporal solution while looking for a better one
-    if (material.shader.id != defaultShader.id)
+
+    // Active required texture maps if available
+    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
     {
-        // Check if model matrix is located in shader and upload value
-        int modelMatrixLoc = glGetUniformLocation(material.shader.id, "modelMatrix");
-        if (modelMatrixLoc != -1)
+        if (material.maps[i].tex.id > 0)
         {
-            // Transpose and inverse model transformations matrix for fragment normal calculations
-            Matrix transInvTransform = transform;
-            MatrixTranspose(&transInvTransform);
-            MatrixInvert(&transInvTransform);
-
-            // Send model transformations matrix to shader
-            glUniformMatrix4fv(modelMatrixLoc, 1, false, MatrixToFloat(transInvTransform));
+            glActiveTexture(GL_TEXTURE0 + i);
+            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) 
+            {
+                glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].tex.id);
+            }
+            else glBindTexture(GL_TEXTURE_2D, material.maps[i].tex.id);
+            glUniform1i(material.shader.locs[LOC_TEXTURE_MAP01 + i], i);
         }
-
-        // Check if view direction is located in shader and upload value
-        // NOTE: View matrix values m8, m9 and m10 are view direction vector axis (target - position)
-        int viewDirLoc = glGetUniformLocation(material.shader.id, "viewDir");
-        if (viewDirLoc != -1) glUniform3f(viewDirLoc, matView.m8, matView.m9, matView.m10);
-
-        // TODO: Check if glossiness is located in shader and upload value
-        int glossinessLoc = glGetUniformLocation(material.shader.id, "glossiness");
-        //if (glossinessLoc != -1) glUniform1f(glossinessLoc, material.glossiness);
-    }
-
-    // Set shader textures (diffuse, normal, specular)
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_DIFFUSE].tex.id);
-    glUniform1i(material.shader.locs[LOC_TEXTURE_MAP01], 0);         // Diffuse texture fits in active texture unit 0
-
-    if ((material.maps[TEXMAP_NORMAL].tex.id != 0) && (material.shader.locs[LOC_TEXTURE_MAP01] != -1))
-    {
-        // Upload to shader specular map flag
-        glUniform1i(glGetUniformLocation(material.shader.id, "useNormal"), 1);
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_NORMAL].tex.id);
-        glUniform1i(material.shader.locs[LOC_TEXTURE_MAP01], 1);     // Normal texture fits in active texture unit 1
-    }
-
-    if ((material.maps[TEXMAP_SPECULAR].tex.id != 0) && (material.shader.locs[LOC_TEXTURE_MAP02] != -1))
-    {
-        // Upload to shader specular map flag
-        glUniform1i(glGetUniformLocation(material.shader.id, "useSpecular"), 1);
-
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_SPECULAR].tex.id);
-        glUniform1i(material.shader.locs[LOC_TEXTURE_MAP02], 2);    // Specular texture fits in active texture unit 2
     }
 
     if (vaoSupported)
@@ -2020,6 +1999,8 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
     else
     {
+        // TODO: Simplify VBO binding into a for loop
+
         // Bind mesh VBO data: vertex position (shader-location = 0)
         glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[0]);
         glVertexAttribPointer(material.shader.locs[LOC_VERTEX_POSITION], 3, GL_FLOAT, 0, 0, 0);
@@ -2097,26 +2078,22 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, 0); // Indexed vertices draw
         else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     }
-
-    if (material.maps[TEXMAP_NORMAL].tex.id != 0)
+    
+    // Unbind all binded texture maps
+    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
     {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        if (material.maps[i].tex.id > 0)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
+            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+            else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
+        }
     }
 
-    if (material.maps[TEXMAP_SPECULAR].tex.id != 0)
-    {
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    glActiveTexture(GL_TEXTURE0);               // Set shader active texture to default 0
-    glBindTexture(GL_TEXTURE_2D, 0);            // Unbind textures
-
-    if (vaoSupported) glBindVertexArray(0);     // Unbind VAO
+    if (vaoSupported) glBindVertexArray(0);         // Unbind VAO
     else
     {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);      // Unbind VBOs
+        glBindBuffer(GL_ARRAY_BUFFER, 0);           // Unbind VBOs
         if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
@@ -2129,7 +2106,7 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 }
 
 // Unload mesh data from CPU and GPU
-void rlglUnloadMesh(Mesh *mesh)
+void rlUnloadMesh(Mesh *mesh)
 {
     if (mesh->vertices != NULL) free(mesh->vertices);
     if (mesh->texcoords != NULL) free(mesh->texcoords);
@@ -2151,7 +2128,7 @@ void rlglUnloadMesh(Mesh *mesh)
 }
 
 // Read screen pixel data (color buffer)
-unsigned char *rlglReadScreenPixels(int width, int height)
+unsigned char *rlReadScreenPixels(int width, int height)
 {
     unsigned char *screenData = (unsigned char *)calloc(width*height*4, sizeof(unsigned char));
 
@@ -2182,7 +2159,7 @@ unsigned char *rlglReadScreenPixels(int width, int height)
 // Read texture pixel data
 // NOTE: glGetTexImage() is not available on OpenGL ES 2.0
 // Texture2D width and height are required on OpenGL ES 2.0. There is no way to get it from texture id.
-void *rlglReadTexturePixels(Texture2D texture)
+void *rlReadTexturePixels(Texture2D texture)
 {
     void *pixels = NULL;
 
@@ -2235,7 +2212,7 @@ void *rlglReadTexturePixels(Texture2D texture)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 
-    RenderTexture2D fbo = rlglLoadRenderTexture(texture.width, texture.height);
+    RenderTexture2D fbo = rlLoadRenderTexture(texture.width, texture.height);
 
     // NOTE: Two possible Options:
     // 1 - Bind texture to color fbo attachment and glReadPixels()
@@ -2328,7 +2305,7 @@ void rlglRecordDraw(void)
 //----------------------------------------------------------------------------------
 
 // Get default internal texture (white texture)
-Texture2D GetDefaultTexture(void)
+Texture2D GetTextureDefault(void)
 {
     Texture2D texture;
 
@@ -2438,7 +2415,7 @@ void EndShaderMode(void)
 }
 
 // Get default shader
-Shader GetDefaultShader(void)
+Shader GetShaderDefault(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     return defaultShader;
@@ -2609,7 +2586,7 @@ void InitVrSimulator(int vrDevice)
 
     // Initialize framebuffer and textures for stereo rendering
     // NOTE: screen size should match HMD aspect ratio
-    vrConfig.stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
+    vrConfig.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight);
     
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
@@ -2727,7 +2704,7 @@ void EndVrDrawing(void)
         // Draw RenderTexture (stereoFbo) using distortion shader
         currentShader = vrConfig.distortionShader;
 #else
-        currentShader = GetDefaultShader();
+        currentShader = GetShaderDefault();
 #endif
 
         rlEnableTexture(vrConfig.stereoFbo.texture.id);

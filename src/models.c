@@ -620,7 +620,7 @@ Mesh LoadMesh(const char *fileName)
 #endif
 
     if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
-    else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
+    else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
 
     // TODO: Initialize default mesh data in case loading fails, maybe a cube?
 
@@ -644,7 +644,7 @@ Mesh LoadMeshEx(int vertexCount, float *vData, float *vtData, float *vnData, Col
     mesh.colors = (unsigned char *)cData;
     mesh.indices = NULL;
 
-    rlglLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
 
     return mesh;
 }
@@ -656,7 +656,7 @@ Mesh LoadMeshHeightmap(Image heightmap, Vector3 size)
 {
     Mesh mesh = GenMeshHeightmap(heightmap, size);
 
-    rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
+    rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
 
     return mesh;
 }
@@ -666,7 +666,7 @@ Mesh LoadMeshCubicmap(Image cubicmap)
 {
     Mesh mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
 
-    rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
+    rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
 
     return mesh;
 }
@@ -674,7 +674,7 @@ Mesh LoadMeshCubicmap(Image cubicmap)
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh *mesh)
 {
-    rlglUnloadMesh(mesh);
+    rlUnloadMesh(mesh);
 }
 
 // Load material data (from file)
@@ -696,8 +696,8 @@ Material LoadMaterialDefault(void)
 {
     Material material = { 0 };
 
-    material.shader = GetDefaultShader();
-    material.maps[TEXMAP_DIFFUSE].tex = GetDefaultTexture();   // White texture (1x1 pixel)
+    material.shader = GetShaderDefault();
+    material.maps[TEXMAP_DIFFUSE].tex = GetTextureDefault();   // White texture (1x1 pixel)
     //material.maps[TEXMAP_NORMAL].tex;           // NOTE: By default, not set
     //material.maps[TEXMAP_SPECULAR].tex;         // NOTE: By default, not set
 
@@ -747,10 +747,10 @@ Material LoadMaterialPBR(Texture2D cubemap, Color albedo, int metalness, int rou
     mat.maps[TEXMAP_HEIGHT].value = 0.0f;           //(Color){ 0, 0, 0, 0 };
 
     // Set up environment materials cubemap
-    mat.maps[TEXMAP_CUBEMAP].tex = cubemap;
-    //mat.maps[TEXMAP_IRRADIANCE] = env.maps[TEXMAP_IRRADIANCE];
-    //mat.maps[TEXMAP_PREFILTER] = env.maps[TEXMAP_PREFILTER];
-    //mat.maps[TEXMAP_BRDF] = env.maps[TEXMAP_BRDF];
+    mat.maps[TEXMAP_CUBEMAP].tex = cubemap;                         // Texture2D rlGenMapCubemap(Shader shader, Texture2D cubemap, int size);
+    //mat.maps[TEXMAP_IRRADIANCE] = env.maps[TEXMAP_IRRADIANCE];    // Texture2D GenMapIrradiance(Texture2D cubemap, int size);
+    //mat.maps[TEXMAP_PREFILTER] = env.maps[TEXMAP_PREFILTER];      // Texture2D GenMapPrefilter(Texture2D cubemap, int size);
+    //mat.maps[TEXMAP_BRDF] = env.maps[TEXMAP_BRDF];                // Texture2D GenMapBRDF(Texture2D cubemap, int size);
     
     // NOTE: All maps textures are set to { 0 }
 
@@ -784,7 +784,10 @@ Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSi
   
     // Set up shaders constant values
     SetShaderValuei(env.shader, GetShaderLocation(env.shader, "cubeMap"), (int[1]){ 0 }, 1);
-
+    
+    // Load HDR environment texture
+    Texture2D skyTex = LoadTexture(filename);
+    
     
     // Generate texture: CUBEMAP
     //----------------------------------------
@@ -803,11 +806,9 @@ Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSi
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     glLineWidth(2);
 
-    // Load HDR environment texture
-    Texture2D skyTex = LoadTexture(filename);
-
     // Set up framebuffer for skybox
     unsigned int captureFBO, captureRBO;
+    
     glGenFramebuffers(1, &captureFBO);
     glGenRenderbuffers(1, &captureRBO);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
@@ -981,7 +982,7 @@ Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSi
     // Generate texture: BRDF
     //----------------------------------------
     Shader brdfShader = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
-    
+    /*
     RenderTexture2D brdfMap = LoadRenderTexture(brdfSize, brdfSize);
     
     BeginDrawing();
@@ -996,6 +997,7 @@ Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSi
     EndDrawing();
     
     UnloadRenderTexture(brdfMap);
+    */
     /*
     // Generate BRDF convolution texture
     glGenTextures(1, &env.maps[TEXMAP_BRDF].tex.id);
@@ -1553,7 +1555,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     model.transform = MatrixMultiply(model.transform, matTransform);
     model.material.maps[TEXMAP_DIFFUSE].color = tint;       // TODO: Multiply tint color by diffuse color?
 
-    rlglDrawMesh(model.mesh, model.material, model.transform);
+    rlDrawMesh(model.mesh, model.material, model.transform);
 }
 
 // Draw a model wires (with texture if set)

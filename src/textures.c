@@ -63,8 +63,8 @@
 #include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                                // Required for: rlglLoadTexture() rlDeleteTextures(),
-                                //      rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+                                // Required for: rlLoadTexture() rlDeleteTextures(),
+                                //      rlGenerateMipmaps(), some funcs for DrawTexturePro()
 
 #include "utils.h"              // Required for: fopen() Android mapping
 
@@ -381,7 +381,7 @@ Texture2D LoadTextureFromImage(Image image)
 {
     Texture2D texture = { 0 };
 
-    texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
+    texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
 
     texture.width = image.width;
     texture.height = image.height;
@@ -396,7 +396,7 @@ Texture2D LoadTextureFromImage(Image image)
 // Load texture for rendering (framebuffer)
 RenderTexture2D LoadRenderTexture(int width, int height)
 {
-    RenderTexture2D target = rlglLoadRenderTexture(width, height);
+    RenderTexture2D target = rlLoadRenderTexture(width, height);
 
     return target;
 }
@@ -522,7 +522,7 @@ Image GetTextureData(Texture2D texture)
     
     if (texture.format < 8)
     {
-        image.data = rlglReadTexturePixels(texture);
+        image.data = rlReadTexturePixels(texture);
 
         if (image.data != NULL)
         {
@@ -550,7 +550,7 @@ Image GetTextureData(Texture2D texture)
 // NOTE: pixels data must match texture.format
 void UpdateTexture(Texture2D texture, const void *pixels)
 {
-    rlglUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
+    rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
 // Convert image data to desired format
@@ -1444,9 +1444,9 @@ void GenTextureMipmaps(Texture2D *texture)
     {
         TraceLog(WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
     }
-    else rlglGenerateMipmaps(texture);
+    else rlGenerateMipmaps(texture);
 #else
-    rlglGenerateMipmaps(texture);
+    rlGenerateMipmaps(texture);
 #endif
 }
 

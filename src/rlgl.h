@@ -400,24 +400,22 @@ void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
-unsigned int rlglLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU
-RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
-void rlglUpdateTexture(unsigned int id, int width, int height, int format, const void *data);         // Update GPU texture with new data
-void rlglGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
+// Textures data management
+unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU
+void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data);    // Update GPU texture with new data
+void rlUnloadTexture(unsigned int id);
+void rlGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
+void *rlReadTexturePixels(Texture2D texture);                     // Read texture pixel data
+unsigned char *rlReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
+RenderTexture2D rlLoadRenderTexture(int width, int height);       // Load a texture to be used for rendering (fbo with color and depth attachments)
 
-void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
-void rlglDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
-void rlglUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU
+// Vertex data management
+void rlLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
+void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
+void rlDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
+void rlUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU
 
-Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
-
-unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
-void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
-
-// VR functions exposed to core module but not to raylib users
-void BeginVrDrawing(void);                  // Begin VR drawing configuration
-void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -427,35 +425,34 @@ void EndVrDrawing(void);                    // End VR drawing process (and deskt
 // Shaders System Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
+Shader LoadShader(char *vsFileName, char *fsFileName);  // Load a custom shader and bind default locations
+void UnloadShader(Shader shader);                       // Unload a custom shader from memory
 
-Shader GetDefaultShader(void);                                      // Get default shader
-Shader GetStandardShader(void);                                     // Get default shader
-Texture2D GetDefaultTexture(void);                                  // Get default texture
+Shader GetShaderDefault(void);                          // Get default shader
+Texture2D GetTextureDefault(void);                      // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
-void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
-void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
 
-void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
-void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
-void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
-void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
+void BeginShaderMode(Shader shader);                    // Begin custom shader drawing
+void EndShaderMode(void);                               // End custom shader drawing (use default shader)
+void BeginBlendMode(int mode);                          // Begin blending mode (alpha, additive, multiplied)
+void EndBlendMode(void);                                // End blending mode (reset to default: alpha blending)
 
-void TraceLog(int msgType, const char *text, ...);
-float *MatrixToFloat(Matrix mat);
+void InitVrSimulator(int vrDevice);                     // Init VR simulator for selected device
+void CloseVrSimulator(void);                            // Close VR simulator for current device
+void UpdateVrTracking(Camera *camera);                  // Update VR tracking (position and orientation) and camera
+void ToggleVrMode(void);                                // Enable/Disable VR experience (device or simulator)
+void BeginVrDrawing(void);                              // Begin VR stereo rendering
+void EndVrDrawing(void);                                // End VR stereo rendering
 
-void InitVrSimulator(int vrDevice);         // Init VR simulator for selected device
-void CloseVrSimulator(void);                // Close VR simulator for current device
-void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
-void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
-void BeginVrDrawing(void);                  // Begin VR stereo rendering
-void EndVrDrawing(void);                    // End VR stereo rendering
+void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+float *MatrixToFloat(Matrix mat);                       // Converts Matrix to float array
 #endif
 
 #ifdef __cplusplus

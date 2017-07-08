@@ -809,7 +809,7 @@ void EndDrawing(void)
         {
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is very slow... :(
-            unsigned char *screenData = rlglReadScreenPixels(screenWidth, screenHeight);
+            unsigned char *screenData = rlReadScreenPixels(screenWidth, screenHeight);
             GifWriteFrame(screenData, screenWidth, screenHeight, 10, 8, false);
             
             free(screenData);   // Free image data
@@ -994,10 +994,10 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     MatrixTranspose(&matView);
 
 //#define USE_RLGL_UNPROJECT
-#if defined(USE_RLGL_UNPROJECT)     // OPTION 1: Use rlglUnproject()
+#if defined(USE_RLGL_UNPROJECT)     // OPTION 1: Use rlUnproject()
 
-    Vector3 nearPoint = rlglUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
-    Vector3 farPoint = rlglUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
+    Vector3 nearPoint = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
+    Vector3 farPoint = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
 #else   // OPTION 2: Compute unprojection directly here
 
@@ -1201,7 +1201,7 @@ void SetConfigFlags(char flags)
 void TakeScreenshot(const char *fileName)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-    unsigned char *imgData = rlglReadScreenPixels(renderWidth, renderHeight);
+    unsigned char *imgData = rlReadScreenPixels(renderWidth, renderHeight);
     SavePNG(fileName, imgData, renderWidth, renderHeight, 4); // Save image as PNG
     free(imgData);
 
