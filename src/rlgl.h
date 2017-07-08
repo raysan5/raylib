@@ -400,7 +400,6 @@ Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a cu
 void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
 
 Shader GetDefaultShader(void);                                      // Get default shader
-Shader GetStandardShader(void);                                     // Get default shader
 Texture2D GetDefaultTexture(void);                                  // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
