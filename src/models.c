@@ -76,9 +76,6 @@ static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
 static Material LoadMTL(const char *fileName);  // Load MTL material data
 #endif
 
-static Mesh GenMeshHeightmap(Image image, Vector3 size);
-static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -599,6 +596,20 @@ Model LoadModel(const char *fileName)
     return model;
 }
 
+// Load model from generated mesh
+Model LoadModelFromMesh(Mesh mesh, bool dynamic)
+{
+    Model model = { 0 };
+    
+    rlLoadMesh(&mesh, dynamic);
+    
+    model.mesh = mesh;
+    model.transform = MatrixIdentity();
+    model.material = LoadMaterialDefault();
+
+    return model;
+}
+
 // Unload model from memory (RAM and/or VRAM)
 void UnloadModel(Model model)
 {
@@ -627,204 +638,72 @@ Mesh LoadMesh(const char *fileName)
     return mesh;
 }
 
-// Load mesh from vertex data
-// NOTE: All vertex data arrays must be same size: vertexCount
-/*
-Mesh LoadMeshEx(int vertexCount, float *vData, float *vtData, float *vnData, Color *cData)
-{
-    Mesh mesh = { 0 };
-
-    mesh.vertexCount = vertexCount;
-    mesh.triangleCount = vertexCount/3;
-    mesh.vertices = vData;
-    mesh.texcoords = vtData;
-    mesh.texcoords2 = NULL;
-    mesh.normals = vnData;
-    mesh.tangents = NULL;
-    mesh.colors = (unsigned char *)cData;
-    mesh.indices = NULL;
-
-    rlLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
-
-    return mesh;
-}
-*/
-
-// Load heightmap model from image data
-// NOTE: model map size is defined in generic units
-Mesh LoadMeshHeightmap(Image heightmap, Vector3 size)
-{
-    Mesh mesh = GenMeshHeightmap(heightmap, size);
-
-    rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
-
-    return mesh;
-}
-
-// Load cubes-based map model from image data
-Mesh LoadMeshCubicmap(Image cubicmap)
-{
-    Mesh mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
-
-    rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static model)
-
-    return mesh;
-}
-
 // Unload mesh from memory (RAM and/or VRAM)
 void UnloadMesh(Mesh *mesh)
 {
     rlUnloadMesh(mesh);
 }
 
-// Load material data (from file)
-Material LoadMaterial(const char *fileName)
+// Generated cuboid mesh
+Mesh GenMeshCube(float width, float height, float length)
 {
-    Material material = { 0 };
-
-#if defined(SUPPORT_FILEFORMAT_MTL)
-    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
-#else
-    TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
-#endif
-
-    return material;
+    Mesh mesh = { 0 };
+    
+    float vertices[] = {
+            -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f , 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f
+        };
+        
+    mesh.vertices = (float *)malloc(36*3*sizeof(float));
+    memcpy(mesh.vertices, vertices, 36*3*sizeof(float));
+    
+    mesh.texcoords = (float *)malloc(36*2*sizeof(float));
+    memcpy(mesh.texcoords, &vertices[36*3], 36*2*sizeof(float));
+    
+    mesh.normals = (float *)malloc(8*sizeof(float));
+    memcpy(mesh.normals, &vertices[36*3 + 36*2], 36*3*sizeof(float));
+    
+    mesh.vertexCount = 36;
+    
+    return mesh;
 }
-
-// Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-Material LoadMaterialDefault(void)
-{
-    Material material = { 0 };
-
-    material.shader = GetShaderDefault();
-    material.maps[TEXMAP_DIFFUSE].tex = GetTextureDefault();   // White texture (1x1 pixel)
-    //material.maps[TEXMAP_NORMAL].tex;           // NOTE: By default, not set
-    //material.maps[TEXMAP_SPECULAR].tex;         // NOTE: By default, not set
-
-    material.maps[TEXMAP_DIFFUSE].color = WHITE;    // Diffuse color
-    //material.colAmbient = WHITE;    // Ambient color
-    material.maps[TEXMAP_SPECULAR].color = WHITE;   // Specular color
-
-    //material.glossiness = 100.0f;   // Glossiness level
-    //material.params[PARAM_GLOSSINES] = 100.0f;   // Glossiness level
-
-    return material;
-}
-
-// Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
-Material LoadMaterialPBR(Texture2D hdr, Color albedo, int metalness, int roughness)
-{
-    Material mat = { 0 };
-    
-    #define     PATH_PBR_VS     "resources/shaders/pbr.vs"              // Path to physically based rendering vertex shader
-    #define     PATH_PBR_FS     "resources/shaders/pbr.fs"              // Path to physically based rendering fragment shader
-   
-    mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
-    
-    // Set up environment shader texture units
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "irradianceMap"), (int[1]){ 0 }, 1);      // GL_TEXTURE0
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "prefilterMap"), (int[1]){ 1 }, 1);       // GL_TEXTURE1
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "brdfLUT"), (int[1]){ 2 }, 1);            // GL_TEXTURE2
-    
-    // Set up PBR shader material texture units
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.sampler"), (int[1]){ 3 }, 1);     // GL_TEXTURE3
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.sampler"), (int[1]){ 4 }, 1);    // GL_TEXTURE4
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.sampler"), (int[1]){ 5 }, 1);  // GL_TEXTURE5
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.sampler"), (int[1]){ 6 }, 1);  // GL_TEXTURE6
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.sampler"), (int[1]){ 7 }, 1);  // GL_TEXTURE7
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "emission.sampler"), (int[1]){ 8 }, 1);   // GL_TEXTURE8
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "height.sampler"), (int[1]){ 9 }, 1);     // GL_TEXTURE9
-    
-    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "viewPos");
-
-    // Set up material properties color
-    mat.maps[TEXMAP_ALBEDO].color = albedo;
-    mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
-    mat.maps[TEXMAP_METALNESS].value = metalness;
-    mat.maps[TEXMAP_ROUGHNESS].value = roughness;
-    mat.maps[TEXMAP_OCCLUSION].value = 1.0f;
-    mat.maps[TEXMAP_EMISSION].value = 0.0f;
-    mat.maps[TEXMAP_HEIGHT].value = 0.0f;
-    
-#define         CUBEMAP_SIZE                1024                // Cubemap texture size
-#define         IRRADIANCE_SIZE             32                  // Irradiance map from cubemap texture size
-#define         PREFILTERED_SIZE            256                 // Prefiltered HDR environment map texture size
-#define         BRDF_SIZE                   512                 // BRDF LUT texture map size
-
-    // Set up environment materials cubemap
-    mat.maps[TEXMAP_CUBEMAP].tex = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
-    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(mat.maps[TEXMAP_CUBEMAP].tex, IRRADIANCE_SIZE);
-    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(mat.maps[TEXMAP_CUBEMAP].tex, PREFILTERED_SIZE);
-    mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(mat.maps[TEXMAP_CUBEMAP].tex, BRDF_SIZE);
-    
-    // NOTE: All maps textures are set to { 0 }
-    
-    // Reset viewport dimensions to default
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());   
-
-    return mat;
-}
-
-// Load environment material: cubemap, irradiance, prefilter and BRDF maps
-// NOTE: Irradiance, prefilter and brdf textures are generated from HDR cubemap texture
-Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSize, int prefilterSize, int brdfSize)
-{
-    Material env = { 0 };
-    
-    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
-    #define     PATH_SKYBOX_FS          "resources/shaders/skybox.fs"           // Path to skybox vertex shader
-
-    #define LOC_CUSTOM_SKYRESOLUTION    15
-    
-    env.shader = LoadShader(PATH_SKYBOX_VS, PATH_SKYBOX_FS);
-
-    // Get skybox shader locations
-    int skyProjectionLoc = GetShaderLocation(env.shader, "projection");
-    env.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(env.shader, "view");
-    env.shader.locs[LOC_CUSTOM_SKYRESOLUTION] = GetShaderLocation(env.shader, "resolution");
-  
-    // Set up shaders constant values
-    SetShaderValuei(env.shader, GetShaderLocation(env.shader, "cubeMap"), (int[1]){ 0 }, 1);
-    
-    // Then before rendering, configure the viewport to the actual screen dimensions
-    Matrix defaultProjection = MatrixPerspective(60.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
-    MatrixTranspose(&defaultProjection);
-    
-    SetShaderValueMatrix(env.shader, skyProjectionLoc, defaultProjection);
-    
-    return env;
-}
-
-// Unload material from memory
-void UnloadMaterial(Material material)
-{
-    // Unload material shader
-    UnloadShader(material.shader);
-
-    // Unload loaded texture maps
-    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
-    {
-        // NOTE: We already check for (tex.id > 0) inside function
-        rlDeleteTextures(material.maps[i].tex.id); 
-    }
-}
-
-// Set material texture
-void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
-{
-    mat->maps[texmapType].tex = texture;
-}
-
-// Unset texture from material and unload it from GPU
-void UnsetMaterialTexture(Material *mat, int texmapType)
-{
-    UnloadTexture(mat->maps[texmapType].tex);
-    mat->maps[texmapType].tex = (Texture2D){ 0 };
-}
-
 
 // Generate a mesh from heightmap
-static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
+Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
 
@@ -929,7 +808,7 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     return mesh;
 }
 
-static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
+Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh = { 0 };
 
@@ -1281,6 +1160,151 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     free(cubicmapPixels);   // Free image pixel data
 
     return mesh;
+}
+
+// Load material data (from file)
+Material LoadMaterial(const char *fileName)
+{
+    Material material = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_MTL)
+    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
+#else
+    TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+#endif
+
+    return material;
+}
+
+// Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+Material LoadMaterialDefault(void)
+{
+    Material material = { 0 };
+
+    material.shader = GetShaderDefault();
+    material.maps[TEXMAP_DIFFUSE].tex = GetTextureDefault();   // White texture (1x1 pixel)
+    //material.maps[TEXMAP_NORMAL].tex;           // NOTE: By default, not set
+    //material.maps[TEXMAP_SPECULAR].tex;         // NOTE: By default, not set
+
+    material.maps[TEXMAP_DIFFUSE].color = WHITE;    // Diffuse color
+    //material.colAmbient = WHITE;    // Ambient color
+    material.maps[TEXMAP_SPECULAR].color = WHITE;   // Specular color
+
+    //material.glossiness = 100.0f;   // Glossiness level
+    //material.params[PARAM_GLOSSINES] = 100.0f;   // Glossiness level
+
+    return material;
+}
+
+// Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
+Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float roughness)
+{
+    Material mat = { 0 };
+    
+    #define     PATH_PBR_VS     "resources/shaders/pbr.vs"              // Path to physically based rendering vertex shader
+    #define     PATH_PBR_FS     "resources/shaders/pbr.fs"              // Path to physically based rendering fragment shader
+   
+    mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
+    
+    // Set up environment shader texture units
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "irradianceMap"), (int[1]){ 0 }, 1);      // GL_TEXTURE0
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "prefilterMap"), (int[1]){ 1 }, 1);       // GL_TEXTURE1
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "brdfLUT"), (int[1]){ 2 }, 1);            // GL_TEXTURE2
+    
+    // Set up PBR shader material texture units
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.sampler"), (int[1]){ 3 }, 1);     // GL_TEXTURE3
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.sampler"), (int[1]){ 4 }, 1);    // GL_TEXTURE4
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.sampler"), (int[1]){ 5 }, 1);  // GL_TEXTURE5
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.sampler"), (int[1]){ 6 }, 1);  // GL_TEXTURE6
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.sampler"), (int[1]){ 7 }, 1);  // GL_TEXTURE7
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "emission.sampler"), (int[1]){ 8 }, 1);   // GL_TEXTURE8
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "height.sampler"), (int[1]){ 9 }, 1);     // GL_TEXTURE9
+    
+    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "viewPos");
+
+    // Set up material properties color
+    mat.maps[TEXMAP_ALBEDO].color = albedo;
+    mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
+    mat.maps[TEXMAP_METALNESS].value = metalness;
+    mat.maps[TEXMAP_ROUGHNESS].value = roughness;
+    mat.maps[TEXMAP_OCCLUSION].value = 1.0f;
+    mat.maps[TEXMAP_EMISSION].value = 0.0f;
+    mat.maps[TEXMAP_HEIGHT].value = 0.0f;
+    
+    #define CUBEMAP_SIZE        1024        // Cubemap texture size
+    #define IRRADIANCE_SIZE       32        // Irradiance map from cubemap texture size
+    #define PREFILTERED_SIZE     256        // Prefiltered HDR environment map texture size
+    #define BRDF_SIZE            512        // BRDF LUT texture map size
+
+    // Set up environment materials cubemap
+    mat.maps[TEXMAP_CUBEMAP].tex = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
+    //mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(mat.maps[TEXMAP_CUBEMAP].tex, IRRADIANCE_SIZE);
+    //mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(mat.maps[TEXMAP_CUBEMAP].tex, PREFILTERED_SIZE);
+    mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(mat.maps[TEXMAP_CUBEMAP].tex, BRDF_SIZE);
+    
+    // NOTE: All maps textures are set to { 0 }
+    
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());   
+
+    return mat;
+}
+
+// Load environment material: cubemap, irradiance, prefilter and BRDF maps
+// NOTE: Irradiance, prefilter and brdf textures are generated from HDR cubemap texture
+Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSize, int prefilterSize, int brdfSize)
+{
+    Material env = { 0 };
+    
+    #define PATH_SKYBOX_VS      "resources/shaders/skybox.vs"       // Path to skybox vertex shader
+    #define PATH_SKYBOX_FS      "resources/shaders/skybox.fs"       // Path to skybox vertex shader
+
+    #define LOC_CUSTOM_SKYRESOLUTION    15
+    
+    env.shader = LoadShader(PATH_SKYBOX_VS, PATH_SKYBOX_FS);
+
+    // Get skybox shader locations
+    int skyProjectionLoc = GetShaderLocation(env.shader, "projection");
+    env.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(env.shader, "view");
+    env.shader.locs[LOC_CUSTOM_SKYRESOLUTION] = GetShaderLocation(env.shader, "resolution");
+  
+    // Set up shaders constant values
+    SetShaderValuei(env.shader, GetShaderLocation(env.shader, "cubeMap"), (int[1]){ 0 }, 1);
+    
+    // Then before rendering, configure the viewport to the actual screen dimensions
+    Matrix defaultProjection = MatrixPerspective(60.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
+    MatrixTranspose(&defaultProjection);
+    
+    SetShaderValueMatrix(env.shader, skyProjectionLoc, defaultProjection);
+    
+    return env;
+}
+
+// Unload material from memory
+void UnloadMaterial(Material material)
+{
+    // Unload material shader
+    UnloadShader(material.shader);
+
+    // Unload loaded texture maps
+    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
+    {
+        // NOTE: We already check for (tex.id > 0) inside function
+        rlDeleteTextures(material.maps[i].tex.id); 
+    }
+}
+
+// Set material texture
+void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
+{
+    mat->maps[texmapType].tex = texture;
+}
+
+// Unset texture from material and unload it from GPU
+void UnsetMaterialTexture(Material *mat, int texmapType)
+{
+    UnloadTexture(mat->maps[texmapType].tex);
+    mat->maps[texmapType].tex = (Texture2D){ 0 };
 }
 
 // Draw a model (with texture if set)
