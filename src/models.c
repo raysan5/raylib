@@ -648,7 +648,7 @@ void UnloadMesh(Mesh *mesh)
 Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
-    
+    /*
     float vertices[] = {
             -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
             1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
@@ -687,18 +687,117 @@ Mesh GenMeshCube(float width, float height, float length)
             -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
             -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f
         };
-        
-    mesh.vertices = (float *)malloc(36*3*sizeof(float));
-    memcpy(mesh.vertices, vertices, 36*3*sizeof(float));
+    */
+    float vertices[] = {
+        -width/2, -height/2, length/2,
+        width/2, -height/2, length/2,
+        width/2, height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        -width/2, height/2, length/2,
+        width/2, height/2, length/2,
+        width/2, height/2, -length/2,
+        -width/2, -height/2, -length/2,
+        width/2, -height/2, -length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, length/2,
+        width/2, -height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, height/2, length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, -height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, height/2, -length/2
+    };
     
-    mesh.texcoords = (float *)malloc(36*2*sizeof(float));
-    memcpy(mesh.texcoords, &vertices[36*3], 36*2*sizeof(float));
+    float texcoords[] = {
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f
+    };
     
-    mesh.normals = (float *)malloc(8*sizeof(float));
-    memcpy(mesh.normals, &vertices[36*3 + 36*2], 36*3*sizeof(float));
+    float normals[] = {
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f
+    };
+
+    mesh.vertices = (float *)malloc(24*3*sizeof(float));
+    memcpy(mesh.vertices, vertices, 24*3*sizeof(float));
     
-    mesh.vertexCount = 36;
+    mesh.texcoords = (float *)malloc(24*2*sizeof(float));
+    memcpy(mesh.texcoords, texcoords, 24*2*sizeof(float));
     
+    mesh.normals = (float *)malloc(24*3*sizeof(float));
+    memcpy(mesh.normals, normals, 24*3*sizeof(float));
+    
+    mesh.indices = (unsigned short *)malloc(36*sizeof(unsigned short));
+    
+    int k = 0;
+
+    // Indices can be initialized right now
+    for (int i = 0; i < 36; i+=6)
+    {
+        mesh.indices[i] = 4*k;
+        mesh.indices[i+1] = 4*k+1;
+        mesh.indices[i+2] = 4*k+2;
+        mesh.indices[i+3] = 4*k;
+        mesh.indices[i+4] = 4*k+2;
+        mesh.indices[i+5] = 4*k+3;
+
+        k++;
+    }
+    
+    mesh.vertexCount = 24;
+    mesh.triangleCount = 12;
+
     return mesh;
 }
 
@@ -1245,7 +1344,7 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     // NOTE: All maps textures are set to { 0 }
     
     // Reset viewport dimensions to default
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());   
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
 
     return mat;
 }
