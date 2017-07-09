@@ -1735,7 +1735,6 @@ Texture2D rlGenMapCubemap(Texture2D skyHDR, int size)
     SetShaderValuei(shader, GetShaderLocation(shader, "equirectangularMap"), (int[1]){ 0 }, 1);
     
     // Set up depth face culling and cubemap seamless
-    // TODO: Review all those functions
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
@@ -1819,7 +1818,7 @@ Texture2D rlGenMapIrradiance(Texture2D cubemap, int size)
     int viewLoc = GetShaderLocation(shader, "view");
     
     // Set up shaders constant values
-    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ TEXMAP_CUBEMAP }, 1);
     
     // Setup framebuffer
     unsigned int fbo, rbo;
@@ -1896,7 +1895,7 @@ Texture2D rlGenMapPrefilter(Texture2D cubemap, int size)
     int viewLoc = GetShaderLocation(shader, "view");
     int roughnessLoc = GetShaderLocation(shader, "roughness");
     
-    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ TEXMAP_CUBEMAP }, 1);
     
     // Setup framebuffer
     unsigned int fbo, rbo;

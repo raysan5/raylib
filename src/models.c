@@ -1305,19 +1305,19 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
    
     mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
     
-    // Set up environment shader texture units
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "irradianceMap"), (int[1]){ 0 }, 1);      // GL_TEXTURE0
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "prefilterMap"), (int[1]){ 1 }, 1);       // GL_TEXTURE1
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "brdfLUT"), (int[1]){ 2 }, 1);            // GL_TEXTURE2
-    
     // Set up PBR shader material texture units
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.sampler"), (int[1]){ 3 }, 1);     // GL_TEXTURE3
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.sampler"), (int[1]){ 4 }, 1);    // GL_TEXTURE4
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.sampler"), (int[1]){ 5 }, 1);  // GL_TEXTURE5
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.sampler"), (int[1]){ 6 }, 1);  // GL_TEXTURE6
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.sampler"), (int[1]){ 7 }, 1);  // GL_TEXTURE7
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "emission.sampler"), (int[1]){ 8 }, 1);   // GL_TEXTURE8
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "height.sampler"), (int[1]){ 9 }, 1);     // GL_TEXTURE9
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.sampler"), (int[1]){ TEXMAP_ALBEDO }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.sampler"), (int[1]){ TEXMAP_NORMAL }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.sampler"), (int[1]){ TEXMAP_METALNESS }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.sampler"), (int[1]){ TEXMAP_ROUGHNESS }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.sampler"), (int[1]){ TEXMAP_OCCLUSION }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "emission.sampler"), (int[1]){ TEXMAP_EMISSION }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "height.sampler"), (int[1]){ TEXMAP_HEIGHT }, 1);
+    
+    // Set up environment shader texture units
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "irradianceMap"), (int[1]){ TEXMAP_IRRADIANCE }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "prefilterMap"), (int[1]){ TEXMAP_PREFILTER }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "brdfLUT"), (int[1]){ TEXMAP_BRDF }, 1);
     
     mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "viewPos");
 
@@ -1337,8 +1337,8 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
 
     // Set up environment materials cubemap
     mat.maps[TEXMAP_CUBEMAP].tex = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
-    //mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(mat.maps[TEXMAP_CUBEMAP].tex, IRRADIANCE_SIZE);
-    //mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(mat.maps[TEXMAP_CUBEMAP].tex, PREFILTERED_SIZE);
+    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(mat.maps[TEXMAP_CUBEMAP].tex, IRRADIANCE_SIZE);
+    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(mat.maps[TEXMAP_CUBEMAP].tex, PREFILTERED_SIZE);
     mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(mat.maps[TEXMAP_CUBEMAP].tex, BRDF_SIZE);
     
     // NOTE: All maps textures are set to { 0 }
@@ -1347,36 +1347,6 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
 
     return mat;
-}
-
-// Load environment material: cubemap, irradiance, prefilter and BRDF maps
-// NOTE: Irradiance, prefilter and brdf textures are generated from HDR cubemap texture
-Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSize, int prefilterSize, int brdfSize)
-{
-    Material env = { 0 };
-    
-    #define PATH_SKYBOX_VS      "resources/shaders/skybox.vs"       // Path to skybox vertex shader
-    #define PATH_SKYBOX_FS      "resources/shaders/skybox.fs"       // Path to skybox vertex shader
-
-    #define LOC_CUSTOM_SKYRESOLUTION    15
-    
-    env.shader = LoadShader(PATH_SKYBOX_VS, PATH_SKYBOX_FS);
-
-    // Get skybox shader locations
-    int skyProjectionLoc = GetShaderLocation(env.shader, "projection");
-    env.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(env.shader, "view");
-    env.shader.locs[LOC_CUSTOM_SKYRESOLUTION] = GetShaderLocation(env.shader, "resolution");
-  
-    // Set up shaders constant values
-    SetShaderValuei(env.shader, GetShaderLocation(env.shader, "cubeMap"), (int[1]){ 0 }, 1);
-    
-    // Then before rendering, configure the viewport to the actual screen dimensions
-    Matrix defaultProjection = MatrixPerspective(60.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
-    MatrixTranspose(&defaultProjection);
-    
-    SetShaderValueMatrix(env.shader, skyProjectionLoc, defaultProjection);
-    
-    return env;
 }
 
 // Unload material from memory

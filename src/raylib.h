@@ -990,7 +990,6 @@ RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                   
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
 RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
 RLAPI Material LoadMaterialPBR(Texture2D cubemap, Color albedo, float metalness, float roughness);      // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS...)
-//RLAPI Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSize, int prefilterSize, int brdfSize); // Load environment material: cubemap, irradiance, prefilter and BRDF maps
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 RLAPI void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture);                        // Set material texture
 RLAPI void UnsetMaterialTexture(Material *mat, int texmapType);                                         // Unset texture from material and unload it from GPU
