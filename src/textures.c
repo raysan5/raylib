@@ -413,7 +413,7 @@ void UnloadImage(Image image)
 // Unload texture from GPU memory (VRAM)
 void UnloadTexture(Texture2D texture)
 {
-    if (texture.id != 0)
+    if (texture.id > 0)
     {
         rlDeleteTextures(texture.id);
 
@@ -424,7 +424,7 @@ void UnloadTexture(Texture2D texture)
 // Unload render texture from GPU memory (VRAM)
 void UnloadRenderTexture(RenderTexture2D target)
 {
-    if (target.id != 0) rlDeleteRenderTextures(target);
+    if (target.id > 0) rlDeleteRenderTextures(target);
 }
 
 // Get pixel data from image in the form of Color struct array
@@ -1576,7 +1576,7 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Co
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
     // Check if texture is valid
-    if (texture.id != 0)
+    if (texture.id > 0)
     {
         if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
         if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;

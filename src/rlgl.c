@@ -345,6 +345,9 @@ static void UpdateDefaultBuffers(void);     // Update default internal buffers (
 static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
+static void RenderCube(void);
+static void RenderQuad(void);
+
 #if defined(SUPPORT_VR_SIMULATOR)
 static void SetStereoConfig(VrDeviceInfo info); // Configure stereo rendering (including distortion shader) with HMD device parameters
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView); // Set internal projection and modelview matrix depending on eye
@@ -930,9 +933,9 @@ void rlDeleteTextures(unsigned int id)
 void rlDeleteRenderTextures(RenderTexture2D target)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (target.id != 0) glDeleteFramebuffers(1, &target.id);
-    if (target.texture.id != 0) glDeleteTextures(1, &target.texture.id);
-    if (target.depth.id != 0) glDeleteTextures(1, &target.depth.id);
+    if (target.id > 0) glDeleteFramebuffers(1, &target.id);
+    if (target.texture.id > 0) glDeleteTextures(1, &target.texture.id);
+    if (target.depth.id > 0) glDeleteTextures(1, &target.depth.id);
 
     TraceLog(INFO, "[FBO ID %i] Unloaded render texture data from VRAM (GPU)", target.id);
 #endif
@@ -1001,6 +1004,29 @@ int rlGetVersion(void)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     return OPENGL_ES_20;
 #endif
+}
+
+// Get world coordinates from screen coordinates
+Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
+{
+    Vector3 result = { 0.0f, 0.0f, 0.0f };
+
+    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
+    Matrix matProjView = MatrixMultiply(proj, view);
+    MatrixInvert(&matProjView);
+
+    // Create quaternion from source point
+    Quaternion quat = { source.x, source.y, source.z, 1.0f };
+
+    // Multiply quat point by unproject matrix
+    QuaternionTransform(&quat, matProjView);
+
+    // Normalized world points in vectors
+    result.x = quat.x/quat.w;
+    result.y = quat.y/quat.w;
+    result.z = quat.z/quat.w;
+
+    return result;
 }
 
 //----------------------------------------------------------------------------------
@@ -1308,29 +1334,6 @@ void rlglLoadExtensions(void *loader)
 #endif
 }
 
-// Get world coordinates from screen coordinates
-Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
-{
-    Vector3 result = { 0.0f, 0.0f, 0.0f };
-
-    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
-    Matrix matProjView = MatrixMultiply(proj, view);
-    MatrixInvert(&matProjView);
-
-    // Create quaternion from source point
-    Quaternion quat = { source.x, source.y, source.z, 1.0f };
-
-    // Multiply quat point by unproject matrix
-    QuaternionTransform(&quat, matProjView);
-
-    // Normalized world points in vectors
-    result.x = quat.x/quat.w;
-    result.y = quat.y/quat.w;
-    result.z = quat.z/quat.w;
-
-    return result;
-}
-
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
 unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount)
 {
@@ -1514,6 +1517,46 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     return id;
 }
 
+// Update already loaded texture in GPU with new data
+void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
+{
+    glBindTexture(GL_TEXTURE_2D, id);
+
+#if defined(GRAPHICS_API_OPENGL_33)
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RG, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
+        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        default: TraceLog(WARNING, "Texture format updating not supported"); break;
+    }
+#elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
+        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
+        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        default: TraceLog(WARNING, "Texture format updating not supported"); break;
+    }
+#endif
+}
+
+// Unload texture from GPU memory
+void rlUnloadTexture(unsigned int id)
+{
+    if (id > 0) glDeleteTextures(1, &id);
+}
+
+
 // Load a texture to be used for rendering (fbo with color and depth attachments)
 RenderTexture2D rlLoadRenderTexture(int width, int height)
 {
@@ -1607,45 +1650,6 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
 #endif
 
     return target;
-}
-
-// Update already loaded texture in GPU with new data
-void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
-{
-    glBindTexture(GL_TEXTURE_2D, id);
-
-#if defined(GRAPHICS_API_OPENGL_33)
-    switch (format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RG, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
-        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        default: TraceLog(WARNING, "Texture format updating not supported"); break;
-    }
-#elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
-    switch (format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
-        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        default: TraceLog(WARNING, "Texture format updating not supported"); break;
-    }
-#endif
-}
-
-// Unload texture from GPU memory
-void rlUnloadTexture(unsigned int id)
-{
-    if (id > 0) glDeleteTextures(1, &id);
 }
 
 // Generate mipmap data for selected texture
@@ -1759,9 +1763,9 @@ Texture2D rlGenMapCubemap(Texture2D skyHDR, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Create projection (transposed) and different views for each face
-    Matrix captureProjection = MatrixPerspective(90.0f, 1.0f, 0.01, 1000.0);
-    MatrixTranspose(&captureProjection);
-    Matrix captureViews[6] = {
+    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    MatrixTranspose(&fboProjection);
+    Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
@@ -1774,18 +1778,18 @@ Texture2D rlGenMapCubemap(Texture2D skyHDR, int size)
     glUseProgram(shader.id);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, skyHDR.id);
-    SetShaderValueMatrix(shader, projectionLoc, captureProjection);
+    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
 
     // Note: don't forget to configure the viewport to the capture dimensions
-    rlViewport(0, 0, size, size);
+    glViewport(0, 0, size, size);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     for (unsigned int i = 0; i < 6; i++)
     {
-        SetShaderValueMatrix(shader, viewLoc, captureViews[i]);
+        SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap.id, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // TODO: RenderCube();
+        RenderCube();
     }
 
     // Unbind framebuffer and textures
@@ -1836,9 +1840,9 @@ Texture2D rlGenMapIrradiance(Texture2D cubemap, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
     // Create projection (transposed) and different views for each face
-    Matrix captureProjection = MatrixPerspective(90.0f, 1.0f, 0.01, 1000.0);
-    MatrixTranspose(&captureProjection);
-    Matrix captureViews[6] = {
+    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    MatrixTranspose(&fboProjection);
+    Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
@@ -1851,18 +1855,18 @@ Texture2D rlGenMapIrradiance(Texture2D cubemap, int size)
     glUseProgram(shader.id);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    SetShaderValueMatrix(shader, projectionLoc, captureProjection);
+    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
 
     // Note: don't forget to configure the viewport to the capture dimensions
-    rlViewport(0, 0, size, size);
+    glViewport(0, 0, size, size);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     for (unsigned int i = 0; i < 6; i++)
     {
-        SetShaderValueMatrix(shader, viewLoc, captureViews[i]);
+        SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradiance.id, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // TODO: RenderCube();
+        RenderCube();
     }
 
     // Unbind framebuffer and textures
@@ -1916,9 +1920,9 @@ Texture2D rlGenMapPrefilter(Texture2D cubemap, int size)
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     
     // Create projection (transposed) and different views for each face
-    Matrix captureProjection = MatrixPerspective(90.0f, 1.0f, 0.01, 1000.0);
-    MatrixTranspose(&captureProjection);
-    Matrix captureViews[6] = {
+    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    MatrixTranspose(&fboProjection);
+    Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
@@ -1931,7 +1935,7 @@ Texture2D rlGenMapPrefilter(Texture2D cubemap, int size)
     glUseProgram(shader.id);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    SetShaderValueMatrix(shader, projectionLoc, captureProjection);
+    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     
@@ -1952,10 +1956,10 @@ Texture2D rlGenMapPrefilter(Texture2D cubemap, int size)
 
         for (unsigned int i = 0; i < 6; ++i)
         {
-            SetShaderValueMatrix(shader, viewLoc, captureViews[i]);
+            SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            // TODO: RenderCube();
+            RenderCube();
         }
     }
 
@@ -2000,7 +2004,7 @@ Texture2D rlGenMapBRDF(Texture2D cubemap, int size)
     rlViewport(0, 0, size, size);
     glUseProgram(shader.id);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // TODO: RenderQuad();
+    RenderQuad();
 
     // Unbind framebuffer and textures
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -2013,7 +2017,121 @@ Texture2D rlGenMapBRDF(Texture2D cubemap, int size)
     return brdf;
 }
 
+// Renders a 1x1 3D cube in NDC
+GLuint cubeVAO = 0;
+GLuint cubeVBO = 0;
+static void RenderCube(void)
+{
+    // Initialize if it is not yet
+    if (cubeVAO == 0)
+    {
+        GLfloat vertices[] = {
+            -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f , 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f
+        };
+
+        // Set up cube VAO
+        glGenVertexArrays(1, &cubeVAO);
+        glGenBuffers(1, &cubeVBO);
+
+        // Fill buffer
+        glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        // Link vertex attributes
+        glBindVertexArray(cubeVAO);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)(6*sizeof(GLfloat)));
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+
+    // Render cube
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
+
+// Renders a 1x1 XY quad in NDC
+GLuint quadVAO = 0;
+GLuint quadVBO;
+static void RenderQuad(void)
+{
+    // Initialize if it is not yet
+    if (quadVAO == 0)
+    {
+        GLfloat quadVertices[] = {
+            // Positions        // Texture Coords
+            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+
+        // Set up plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+
+        // Fill buffer
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+
+        // Link vertex attributes
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
+    }
+
+    // Render quad
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+
+
+
 // Upload vertex data into a VAO (if supported) and VBO
+// TODO: Check if mesh has already been loaded in GPU
 void rlLoadMesh(Mesh *mesh, bool dynamic)
 {
     mesh->vaoId = 0;        // Vertex Array Object
@@ -2248,8 +2366,12 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    glUseProgram(material.shader.id);   // Bind shader program
+    // Bind shader program
+    glUseProgram(material.shader.id);   
 
+    
+    // Matrices and other values required by shader
+    //-----------------------------------------------------
     /*
     // Calculate and send to shader model matrix
     Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
@@ -2260,13 +2382,20 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     */
     
     // Upload to shader material.colDiffuse
-    glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR01], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, (float)material.maps[TEXMAP_DIFFUSE].color.g/255, (float)material.maps[TEXMAP_DIFFUSE].color.b/255, (float)material.maps[TEXMAP_DIFFUSE].color.a/255);
+    glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR01], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, 
+                                                           (float)material.maps[TEXMAP_DIFFUSE].color.g/255, 
+                                                           (float)material.maps[TEXMAP_DIFFUSE].color.b/255, 
+                                                           (float)material.maps[TEXMAP_DIFFUSE].color.a/255);
 
     // TODO: Upload to shader material.colAmbient (if available)
     //if (material.shader.locs[LOC_TEXTURE_COLOR02] != -1) glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR02], (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
 
     // Upload to shader material.colSpecular (if available)
-    if (material.shader.locs[LOC_TEXTURE_COLOR03] != -1) glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR03], (float)material.maps[TEXMAP_SPECULAR].color.r/255, (float)material.maps[TEXMAP_SPECULAR].color.g/255, (float)material.maps[TEXMAP_SPECULAR].color.b/255, (float)material.maps[TEXMAP_SPECULAR].color.a/255);
+    if (material.shader.locs[LOC_TEXTURE_COLOR03] != -1) 
+        glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR03], (float)material.maps[TEXMAP_SPECULAR].color.r/255, 
+                                                               (float)material.maps[TEXMAP_SPECULAR].color.g/255, 
+                                                               (float)material.maps[TEXMAP_SPECULAR].color.b/255, 
+                                                               (float)material.maps[TEXMAP_SPECULAR].color.a/255);
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -2275,27 +2404,22 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Calculate model-view matrix combining matModel and matView
     Matrix matModelView = MatrixMultiply(transform, matView);           // Transform to camera-space coordinates
+    //-----------------------------------------------------
 
-
-    // Active required texture maps if available
+    // Bind active texture maps (if available)
     for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
     {
         if (material.maps[i].tex.id > 0)
         {
             glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) 
-            {
-                glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].tex.id);
-            }
+            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].tex.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].tex.id);
             glUniform1i(material.shader.locs[LOC_TEXTURE_MAP01 + i], i);
         }
     }
 
-    if (vaoSupported)
-    {
-        glBindVertexArray(mesh.vaoId);
-    }
+    // Bind vertex array objects (or VBOs)
+    if (vaoSupported) glBindVertexArray(mesh.vaoId);
     else
     {
         // TODO: Simplify VBO binding into a for loop
@@ -2389,16 +2513,19 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
         }
     }
 
-    if (vaoSupported) glBindVertexArray(0);         // Unbind VAO
+    // Unind vertex array objects (or VBOs)
+    if (vaoSupported) glBindVertexArray(0);
     else
     {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);           // Unbind VBOs
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    glUseProgram(0);        // Unbind shader program
+    // Unbind shader program
+    glUseProgram(0);
 
     // Restore projection/modelview matrices
+    // NOTE: In stereo rendering matrices are being modified to fit every eye
     projection = matProjection;
     modelview = matView;
 #endif
@@ -2666,7 +2793,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
         shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
         // After shader loading, we try to load default location names
-        if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+        if (shader.id > 0) LoadDefaultShaderLocations(&shader);
 
         // Shader strings must be freed
         free(vShaderStr);
@@ -2686,7 +2813,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 // Unload shader from GPU memory (VRAM)
 void UnloadShader(Shader shader)
 {
-    if (shader.id != 0)
+    if (shader.id > 0)
     {
         rlDeleteShader(shader.id);
         TraceLog(INFO, "[SHDR ID %i] Unloaded shader program data", shader.id);
@@ -2890,7 +3017,7 @@ void InitVrSimulator(int vrDevice)
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
     vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
-    if (vrConfig.distortionShader.id != 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
+    if (vrConfig.distortionShader.id > 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
 #endif
 
     SetStereoConfig(hmd);
@@ -3182,7 +3309,7 @@ static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShade
     glBindAttribLocation(program, 4, DEFAULT_ATTRIB_TANGENT_NAME);
     glBindAttribLocation(program, 5, DEFAULT_ATTRIB_TEXCOORD2_NAME);
 
-    // NOTE: If some attrib name is no found on the shader, it locations becomes -1
+    // NOTE: If some attrib name is not found on the shader, it locations becomes -1
 
     glLinkProgram(program);
 
@@ -3291,10 +3418,10 @@ static Shader LoadDefaultShader(void)
 
     shader.id = LoadShaderProgram(vDefaultShaderStr, fDefaultShaderStr);
 
-    if (shader.id != 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
+    if (shader.id > 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
-    if (shader.id != 0) LoadDefaultShaderLocations(&shader);
+    if (shader.id > 0) LoadDefaultShaderLocations(&shader);
 
     return shader;
 }

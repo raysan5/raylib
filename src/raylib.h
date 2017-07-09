@@ -974,19 +974,22 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (mesh and material)
+RLAPI Model LoadModelFromMesh(Mesh mesh, bool dynamic);                                                // Load model from generated mesh
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 // Mesh loading/unloading functions
 RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
-RLAPI Mesh LoadMeshHeightmap(Image heightmap, Vector3 size);                                            // Load heightmap model from image data
-RLAPI Mesh LoadMeshCubicmap(Image cubicmap);                                                            // Load cubes-based map model from image data
 //RLAPI void UpdateMesh(Mesh *mesh, int type, void *data);                                                // Update mesh data (CPU and GPU)
 RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+
+RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
+RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
+RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
 
 // Material loading/unloading functions
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
 RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-RLAPI Material LoadMaterialPBR(Texture2D cubemap, Color albedo, int metalness, int roughness);          // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS...)
+RLAPI Material LoadMaterialPBR(Texture2D cubemap, Color albedo, float metalness, float roughness);      // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS...)
 //RLAPI Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSize, int prefilterSize, int brdfSize); // Load environment material: cubemap, irradiance, prefilter and BRDF maps
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 RLAPI void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture);                        // Set material texture
