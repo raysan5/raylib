@@ -10,7 +10,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-
 #include "raymath.h"
 
 int main()
@@ -28,10 +27,8 @@ int main()
     Image image = LoadImage("resources/cubicmap.png");      // Load cubicmap image (RAM)
     Texture2D cubicmap = LoadTextureFromImage(image);       // Convert image to texture to display (VRAM)
     
-    Model model;
-    model.mesh = LoadMeshCubicmap(image);                     // Load cubicmap mesh (generated from image)
-    model.transform = MatrixIdentity();                       // Set default transform matrix
-    model.material = LoadMaterialDefault();                   // Load default material
+    Mesh mesh = GenMeshCubicmap(image, VectorOne());
+    Model model = LoadModelFromMesh(mesh, false);
     
     // NOTE: By default each cube is mapped to one part of texture atlas
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture

@@ -43,7 +43,7 @@ int main()
     skybox.material.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(skybox.material.shader, "view");
     
     // Then before rendering, configure the viewport to the actual screen dimensions
-    Matrix proj = MatrixPerspective(45.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
+    Matrix proj = MatrixPerspective(60.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
     MatrixTranspose(&proj);
     SetShaderValueMatrix(skybox.material.shader, skyProjectionLoc, proj);
 
