@@ -417,6 +417,11 @@ void rlUnloadMesh(Mesh *mesh);                                    // Unload mesh
 
 Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 
+Texture2D rlGenMapCubemap(Texture2D cubemap, int size);
+Texture2D rlGenMapIrradiance(Texture2D cubemap, int size);
+Texture2D rlGenMapPrefilter(Texture2D cubemap, int size);
+Texture2D rlGenMapBRDF(Texture2D cubemap, int size);
+
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
 

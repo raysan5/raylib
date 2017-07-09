@@ -712,7 +712,7 @@ Material LoadMaterialDefault(void)
 }
 
 // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
-Material LoadMaterialPBR(Texture2D cubemap, Color albedo, int metalness, int roughness)
+Material LoadMaterialPBR(Texture2D hdr, Color albedo, int metalness, int roughness)
 {
     Material mat = { 0 };
     
@@ -740,19 +740,27 @@ Material LoadMaterialPBR(Texture2D cubemap, Color albedo, int metalness, int rou
     // Set up material properties color
     mat.maps[TEXMAP_ALBEDO].color = albedo;
     mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
-    mat.maps[TEXMAP_METALNESS].value = metalness;   //(Color){ metalness, 0, 0, 0 };
-    mat.maps[TEXMAP_ROUGHNESS].value = roughness;   //(Color){ roughness, 0, 0, 0 };
-    mat.maps[TEXMAP_OCCLUSION].value = 1.0f;        //(Color){ 255, 255, 255, 255 };
-    mat.maps[TEXMAP_EMISSION].value = 0.0f;         //(Color){ 0, 0, 0, 0 };
-    mat.maps[TEXMAP_HEIGHT].value = 0.0f;           //(Color){ 0, 0, 0, 0 };
+    mat.maps[TEXMAP_METALNESS].value = metalness;
+    mat.maps[TEXMAP_ROUGHNESS].value = roughness;
+    mat.maps[TEXMAP_OCCLUSION].value = 1.0f;
+    mat.maps[TEXMAP_EMISSION].value = 0.0f;
+    mat.maps[TEXMAP_HEIGHT].value = 0.0f;
+    
+#define         CUBEMAP_SIZE                1024                // Cubemap texture size
+#define         IRRADIANCE_SIZE             32                  // Irradiance map from cubemap texture size
+#define         PREFILTERED_SIZE            256                 // Prefiltered HDR environment map texture size
+#define         BRDF_SIZE                   512                 // BRDF LUT texture map size
 
     // Set up environment materials cubemap
-    mat.maps[TEXMAP_CUBEMAP].tex = cubemap;                         // Texture2D rlGenMapCubemap(Shader shader, Texture2D cubemap, int size);
-    //mat.maps[TEXMAP_IRRADIANCE] = env.maps[TEXMAP_IRRADIANCE];    // Texture2D GenMapIrradiance(Texture2D cubemap, int size);
-    //mat.maps[TEXMAP_PREFILTER] = env.maps[TEXMAP_PREFILTER];      // Texture2D GenMapPrefilter(Texture2D cubemap, int size);
-    //mat.maps[TEXMAP_BRDF] = env.maps[TEXMAP_BRDF];                // Texture2D GenMapBRDF(Texture2D cubemap, int size);
+    mat.maps[TEXMAP_CUBEMAP].tex = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
+    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(mat.maps[TEXMAP_CUBEMAP].tex, IRRADIANCE_SIZE);
+    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(mat.maps[TEXMAP_CUBEMAP].tex, PREFILTERED_SIZE);
+    mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(mat.maps[TEXMAP_CUBEMAP].tex, BRDF_SIZE);
     
     // NOTE: All maps textures are set to { 0 }
+    
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());   
 
     return mat;
 }
@@ -766,13 +774,6 @@ Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSi
     #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
     #define     PATH_SKYBOX_FS          "resources/shaders/skybox.fs"           // Path to skybox vertex shader
 
-    #define     PATH_CUBEMAP_VS            "resources/shaders/cubemap.vs"          // Path to equirectangular to cubemap vertex shader
-    #define     PATH_CUBEMAP_FS            "resources/shaders/cubemap.fs"          // Path to equirectangular to cubemap fragment shader
-    #define     PATH_IRRADIANCE_FS      "resources/shaders/irradiance.fs"       // Path to irradiance (GI) calculation fragment shader
-    #define     PATH_PREFILTER_FS       "resources/shaders/prefilter.fs"        // Path to reflection prefilter calculation fragment shader
-    #define     PATH_BRDF_VS            "resources/shaders/brdf.vs"             // Path to bidirectional reflectance distribution function vertex shader 
-    #define     PATH_BRDF_FS            "resources/shaders/brdf.fs"             // Path to bidirectional reflectance distribution function fragment shader
-
     #define LOC_CUSTOM_SKYRESOLUTION    15
     
     env.shader = LoadShader(PATH_SKYBOX_VS, PATH_SKYBOX_FS);
@@ -785,258 +786,11 @@ Material LoadMaterialEnv(const char *filename, int cubemapSize, int irradianceSi
     // Set up shaders constant values
     SetShaderValuei(env.shader, GetShaderLocation(env.shader, "cubeMap"), (int[1]){ 0 }, 1);
     
-    // Load HDR environment texture
-    Texture2D skyTex = LoadTexture(filename);
-    
-    
-    // Generate texture: CUBEMAP
-    //----------------------------------------
-    Shader cubemapShader = LoadShader(PATH_CUBEMAP_VS, PATH_CUBEMAP_FS);
-    
-    // Get cubemap shader locations
-    int cubeProjectionLoc = GetShaderLocation(cubemapShader, "projection");
-    int cubeViewLoc = GetShaderLocation(cubemapShader, "view");
-    
-    SetShaderValuei(cubemapShader, GetShaderLocation(cubemapShader, "equirectangularMap"), (int[1]){ 0 }, 1);
-
-    /*
-    // Set up depth face culling and cube map seamless
-    glDepthFunc(GL_LEQUAL);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-    glLineWidth(2);
-
-    // Set up framebuffer for skybox
-    unsigned int captureFBO, captureRBO;
-    
-    glGenFramebuffers(1, &captureFBO);
-    glGenRenderbuffers(1, &captureRBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, cubemapSize, cubemapSize);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
-
-    // Set up cubemap to render and attach to framebuffer
-    // NOTE: faces are stored with 16 bit floating point values
-    glGenTextures(1, &env.maps[TEXMAP_CUBEMAP].tex.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_CUBEMAP].tex.id);
-    for (unsigned int i = 0; i < 6; i++) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, cubemapSize, cubemapSize, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Create projection (transposed) and different views for each face
-    Matrix captureProjection = MatrixPerspective(90.0f, 1.0f, 0.01, 1000.0);
-    MatrixTranspose(&captureProjection);
-    Matrix captureViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
-    };
-
-    // Convert HDR equirectangular environment map to cubemap equivalent
-    glUseProgram(cubemapShader.id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, skyTex.id);
-    SetShaderValueMatrix(cubemapShader, cubeProjectionLoc, captureProjection);
-
-    // Note: don't forget to configure the viewport to the capture dimensions
-    rlViewport(0, 0, cubemapSize, cubemapSize);
-    rlEnableRenderTexture(captureFBO);
-
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        SetShaderValueMatrix(cubemapShader, cubeViewLoc, captureViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env.maps[TEXMAP_CUBEMAP].tex.id, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        RenderCube();
-    }
-
-    // Unbind framebuffer and textures
-    rlEnableRenderTexture(0);
-    */
-    
-    UnloadShader(cubemapShader);
-    //----------------------------------------
-
-    
-    // Generate texture: IRRADIANCE
-    //----------------------------------------
-    Shader irradianceShader = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
-    
-    // Get irradiance shader locations
-    int irradianceProjectionLoc = GetShaderLocation(irradianceShader, "projection");
-    int irradianceViewLoc = GetShaderLocation(irradianceShader, "view");
-    
-    // Set up shaders constant values
-    SetShaderValuei(irradianceShader, GetShaderLocation(irradianceShader, "environmentMap"), (int[1]){ 0 }, 1);
-    
-    /*
-    // Create an irradiance cubemap, and re-scale capture FBO to irradiance scale
-    glGenTextures(1, &env.maps[TEXMAP_IRRADIANCE].tex.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_IRRADIANCE].tex.id);
-    for (unsigned int i = 0; i < 6; i++) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, irradianceSize, irradianceSize, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, irradianceSize, irradianceSize);
-
-    // Solve diffuse integral by convolution to create an irradiance cubemap
-    glUseProgram(irradianceShader.id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_CUBEMAP].tex.id);
-    SetShaderValueMatrix(irradianceShader, irradianceProjectionLoc, captureProjection);
-
-    // Note: don't forget to configure the viewport to the capture dimensions
-    rlViewport(0, 0, irradianceSize, irradianceSize);
-    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        SetShaderValueMatrix(irradianceShader, irradianceViewLoc, captureViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env.maps[TEXMAP_IRRADIANCE].tex.id, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        RenderCube();
-    }
-
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    */
-    
-    UnloadShader(irradianceShader);
-    //----------------------------------------
-    
-
-    // Generate texture: PREFILTER
-    //----------------------------------------
-    Shader prefilterShader = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
-    
-    // Get prefilter shader locations
-    int prefilterProjectionLoc = GetShaderLocation(prefilterShader, "projection");
-    int prefilterViewLoc = GetShaderLocation(prefilterShader, "view");
-    int prefilterRoughnessLoc = GetShaderLocation(prefilterShader, "roughness");
-    
-    SetShaderValuei(prefilterShader, GetShaderLocation(prefilterShader, "environmentMap"), (int[1]){ 0 }, 1);
-    
-    /*
-    // Create a prefiltered HDR environment map
-    glGenTextures(1, &env.maps[TEXMAP_PREFILTER].tex.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_PREFILTER].tex.id);
-    for (unsigned int i = 0; i < 6; i++) glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, prefilterSize, prefilterSize, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Generate mipmaps for the prefiltered HDR texture
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-
-    // Prefilter HDR and store data into mipmap levels
-    glUseProgram(prefilterShader.id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env.maps[TEXMAP_CUBEMAP].tex.id);
-    SetShaderValueMatrix(prefilterShader, prefilterProjectionLoc, captureProjection);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-
-    for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
-    {
-        // Resize framebuffer according to mip-level size.
-        unsigned int mipWidth  = prefilterSize*powf(0.5f, mip);
-        unsigned int mipHeight = prefilterSize*powf(0.5f, mip);
-        glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
-        glViewport(0, 0, mipWidth, mipHeight);
-
-        float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
-        glUniform1f(prefilterRoughnessLoc, roughness);
-
-        for (unsigned int i = 0; i < 6; ++i)
-        {
-            SetShaderValueMatrix(prefilterShader, prefilterViewLoc, captureViews[i]);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env.maps[TEXMAP_PREFILTER].tex.id, mip);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            RenderCube();
-        }
-    }
-
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    */
-    
-    UnloadShader(prefilterShader);
-    //----------------------------------------
-    
-    
-    // Generate texture: BRDF
-    //----------------------------------------
-    Shader brdfShader = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
-    /*
-    RenderTexture2D brdfMap = LoadRenderTexture(brdfSize, brdfSize);
-    
-    BeginDrawing();
-    BeginTextureMode(brdfMap);
-    rlViewport(0, 0, brdfSize, brdfSize);
-    BeginShaderMode(brdfShader);
-    
-    RenderQuad();
-    
-    EndShaderMode();
-    EndTextureMode();
-    EndDrawing();
-    
-    UnloadRenderTexture(brdfMap);
-    */
-    /*
-    // Generate BRDF convolution texture
-    glGenTextures(1, &env.maps[TEXMAP_BRDF].tex.id);
-    glBindTexture(GL_TEXTURE_2D, env.maps[TEXMAP_BRDF].tex.id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, brdfSize, brdfSize, 0, GL_RG, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Render BRDF LUT into a quad using default FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, brdfSize, brdfSize);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, env.maps[TEXMAP_BRDF].tex.id, 0);
-
-    rlViewport(0, 0, brdfSize, brdfSize);
-    glUseProgram(brdfShader.id);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    RenderQuad();
-
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    */
-    
     // Then before rendering, configure the viewport to the actual screen dimensions
     Matrix defaultProjection = MatrixPerspective(60.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
     MatrixTranspose(&defaultProjection);
     
     SetShaderValueMatrix(env.shader, skyProjectionLoc, defaultProjection);
-    //SetShaderValueMatrix(cubemapShader, cubeProjectionLoc, defaultProjection);          // Not required any more
-    //SetShaderValueMatrix(irradianceShader, irradianceProjectionLoc, defaultProjection); // Not required any more
-    //SetShaderValueMatrix(prefilterShader, prefilterProjectionLoc, defaultProjection);   // Not required any more
-    
-    UnloadShader(brdfShader);
-    //----------------------------------------
-    
-    // Reset viewport dimensions to default
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());   
     
     return env;
 }
