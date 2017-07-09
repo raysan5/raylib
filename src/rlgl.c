@@ -1736,10 +1736,8 @@ Texture2D rlGenMapCubemap(Texture2D skyHDR, int size)
     
     // Set up depth face culling and cubemap seamless
     // TODO: Review all those functions
-    glDepthFunc(GL_LEQUAL);
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-    glLineWidth(2);
 
     // Setup framebuffer
     unsigned int fbo, rbo;
@@ -1799,6 +1797,10 @@ Texture2D rlGenMapCubemap(Texture2D skyHDR, int size)
     
     cubemap.width = size;
     cubemap.height = size;
+    
+    // Reset viewport dimensions to default
+    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    //glEnable(GL_CULL_FACE);
     
     return cubemap;
 }
@@ -2257,7 +2259,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
         if (vaoId > 0)
         {
             mesh->vaoId = vaoId;
-            TraceLog(INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
+            TraceLog(INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (%i vertices)", mesh->vaoId, mesh->vertexCount);
         }
         else TraceLog(WARNING, "Mesh could not be uploaded to VRAM (GPU)");
     }
@@ -2388,7 +2390,11 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
                                                            (float)material.maps[TEXMAP_DIFFUSE].color.a/255);
 
     // TODO: Upload to shader material.colAmbient (if available)
-    //if (material.shader.locs[LOC_TEXTURE_COLOR02] != -1) glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR02], (float)material.colAmbient.r/255, (float)material.colAmbient.g/255, (float)material.colAmbient.b/255, (float)material.colAmbient.a/255);
+    //if (material.shader.locs[LOC_TEXTURE_COLOR02] != -1) 
+        // glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR02], (float)material.colAmbient.r/255, 
+                                                               // (float)material.colAmbient.g/255, 
+                                                               // (float)material.colAmbient.b/255, 
+                                                               // (float)material.colAmbient.a/255);
 
     // Upload to shader material.colSpecular (if available)
     if (material.shader.locs[LOC_TEXTURE_COLOR03] != -1) 
@@ -2476,7 +2482,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
             glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TEXCOORD02]);
         }
 
-        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
+        if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.vboId[6]);
     }
 
     int eyesCount = 1;
@@ -2505,12 +2511,9 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // Unbind all binded texture maps
     for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
     {
-        if (material.maps[i].tex.id > 0)
-        {
-            glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-            else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
-        }
+        glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
+        if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
     }
 
     // Unind vertex array objects (or VBOs)
@@ -3751,6 +3754,7 @@ static void DrawDefaultBuffers()
         // Draw lines buffers
         if (lines.vCounter > 0)
         {
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, whiteTexture);
 
             if (vaoSupported)
@@ -3779,6 +3783,7 @@ static void DrawDefaultBuffers()
         // Draw triangles buffers
         if (triangles.vCounter > 0)
         {
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, whiteTexture);
 
             if (vaoSupported)
@@ -3843,7 +3848,8 @@ static void DrawDefaultBuffers()
                 numIndicesToProcess = quadsCount*6;  // Get number of Quads*6 index by Quad
 
                 //TraceLog(DEBUG, "Quads to render: %i - Vertex Count: %i", quadsCount, draws[i].vertexCount);
-
+                
+                glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, draws[i].textureId);
 
                 // NOTE: The final parameter tells the GPU the offset in bytes from the start of the index buffer to the location of the first index to process

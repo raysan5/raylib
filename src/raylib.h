@@ -1034,6 +1034,8 @@ RLAPI void UnloadShader(Shader shader);                                   // Unl
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader
 RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
 
+RLAPI Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);
+
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)

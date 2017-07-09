@@ -417,7 +417,7 @@ void rlUnloadMesh(Mesh *mesh);                                    // Unload mesh
 
 Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
 
-Texture2D rlGenMapCubemap(Texture2D cubemap, int size);
+Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);
 Texture2D rlGenMapIrradiance(Texture2D cubemap, int size);
 Texture2D rlGenMapPrefilter(Texture2D cubemap, int size);
 Texture2D rlGenMapBRDF(Texture2D cubemap, int size);
