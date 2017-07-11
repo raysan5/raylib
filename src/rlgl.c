@@ -333,12 +333,12 @@ static int screenHeight;    // Default framebuffer height
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat);
+static void LoadTextureCompressed(unsigned char *data, int width, int height, int compressedFormat, int mipmapCount);
 static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShaderStr);  // Load custom shader strings and return program id
 
-static Shader LoadDefaultShader(void);      // Load default shader (just vertex positioning and texture coloring)
-static void LoadDefaultShaderLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
-static void UnloadDefaultShader(void);      // Unload default shader
+static Shader LoadShaderDefault(void);      // Load default shader (just vertex positioning and texture coloring)
+static void LoadShaderDefaultLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
+static void UnLoadShaderDefault(void);      // Unload default shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
@@ -1215,7 +1215,7 @@ void rlglInit(int width, int height)
     else TraceLog(WARNING, "Base white texture could not be loaded");
 
     // Init default Shader (customized for GL 3.3 and ES2)
-    defaultShader = LoadDefaultShader();
+    defaultShader = LoadShaderDefault();
     currentShader = defaultShader;
 
     // Init default vertex arrays buffers (lines, triangles, quads)
@@ -1287,7 +1287,7 @@ void rlglInit(int width, int height)
 void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    UnloadDefaultShader();
+    UnLoadShaderDefault();
     UnloadDefaultBuffers();
 
     // Delete default white texture
@@ -1430,17 +1430,17 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
         case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;
-        case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;
-        case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;
-        case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_ETC1_RGB8_OES); break;           // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG); break;        // NOTE: Requires PowerVR GPU
-        case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG); break;     // NOTE: Requires PowerVR GPU
-        case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-        case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_8x8_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mipmapCount); break;
+        case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipmapCount); break;
+        case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mipmapCount); break;
+        case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, mipmapCount); break;
+        case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) LoadTextureCompressed((unsigned char *)data, width, height, GL_ETC1_RGB8_OES, mipmapCount); break;                      // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB8_ETC2, mipmapCount); break;               // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA8_ETC2_EAC, mipmapCount); break;     // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG, mipmapCount); break;    // NOTE: Requires PowerVR GPU
+        case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, mipmapCount); break;  // NOTE: Requires PowerVR GPU
+        case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_ASTC_4x4_KHR, mipmapCount); break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_ASTC_8x8_KHR, mipmapCount); break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
         default: TraceLog(WARNING, "Texture format not recognized"); break;
     }
 #elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1455,18 +1455,18 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
 #if defined(GRAPHICS_API_OPENGL_ES2)
-        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;  // Requries extension OES_texture_float
-        case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
-        case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;     // NOTE: Not supported by WebGL
-        case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT); break;     // NOTE: Not supported by WebGL
-        case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_ETC1_RGB8_OES); break;           // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB8_ETC2); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA8_ETC2_EAC); break;    // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-        case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG); break;        // NOTE: Requires PowerVR GPU
-        case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG); break;     // NOTE: Requires PowerVR GPU
-        case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_4x4_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-        case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_ASTC_8x8_KHR); break; // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;  // NOTE: Requires extension OES_texture_float
+        case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mipmapCount); break;
+        case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipmapCount); break;
+        case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mipmapCount); break;      // NOTE: Not supported by WebGL
+        case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, mipmapCount); break;      // NOTE: Not supported by WebGL
+        case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) LoadTextureCompressed((unsigned char *)data, width, height, GL_ETC1_RGB8_OES, mipmapCount); break;                      // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB8_ETC2, mipmapCount); break;               // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA8_ETC2_EAC, mipmapCount); break;     // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG, mipmapCount); break;    // NOTE: Requires PowerVR GPU
+        case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, mipmapCount); break;  // NOTE: Requires PowerVR GPU
+        case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_ASTC_4x4_KHR, mipmapCount); break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_ASTC_8x8_KHR, mipmapCount); break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
 #endif
         default: TraceLog(WARNING, "Texture format not supported"); break;
     }
@@ -2795,7 +2795,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
         shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
         // After shader loading, we try to load default location names
-        if (shader.id > 0) LoadDefaultShaderLocations(&shader);
+        if (shader.id > 0) LoadShaderDefaultLocations(&shader);
 
         // Shader strings must be freed
         free(vShaderStr);
@@ -3019,7 +3019,7 @@ void InitVrSimulator(int vrDevice)
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
     vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
-    if (vrConfig.distortionShader.id > 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
+    if (vrConfig.distortionShader.id > 0) LoadShaderDefaultLocations(&vrConfig.distortionShader);
 #endif
 
     SetStereoConfig(hmd);
@@ -3188,7 +3188,7 @@ void EndVrDrawing(void)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
 // NOTE: Expected compressed image data and POT image
-static void LoadCompressedTexture(unsigned char *data, int width, int height, int mipmapCount, int compressedFormat)
+static void LoadTextureCompressed(unsigned char *data, int width, int height, int compressedFormat, int mipmapCount)
 {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -3355,7 +3355,7 @@ static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShade
 
 // Load default shader (just vertex positioning and texture coloring)
 // NOTE: This shader program is used for batch buffers (lines, triangles, quads)
-static Shader LoadDefaultShader(void)
+static Shader LoadShaderDefault(void)
 {
     Shader shader;
 
@@ -3420,17 +3420,19 @@ static Shader LoadDefaultShader(void)
 
     shader.id = LoadShaderProgram(vDefaultShaderStr, fDefaultShaderStr);
 
-    if (shader.id > 0) TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
+    if (shader.id > 0) 
+    {
+        TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
+        LoadShaderDefaultLocations(&shader);
+    }
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
-
-    if (shader.id > 0) LoadDefaultShaderLocations(&shader);
 
     return shader;
 }
 
 // Get location handlers to for shader attributes and uniforms
 // NOTE: If any location is not found, loc point becomes -1
-static void LoadDefaultShaderLocations(Shader *shader)
+static void LoadShaderDefaultLocations(Shader *shader)
 {
     // NOTE: Default shader attrib locations have been fixed before linking:
     //          vertex position location    = 0
@@ -3464,7 +3466,7 @@ static void LoadDefaultShaderLocations(Shader *shader)
 }
 
 // Unload default shader
-static void UnloadDefaultShader(void)
+static void UnLoadShaderDefault(void)
 {
     glUseProgram(0);
 
