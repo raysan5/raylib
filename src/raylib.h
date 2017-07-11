@@ -559,12 +559,12 @@ typedef enum {
 typedef enum {
     TEXMAP_DIFFUSE  = 0,
     TEXMAP_SPECULAR = 1,
-    TEXMAP_NORMAL   = 2,
 } TexmapBasicIndex;
 
 typedef enum {
     TEXMAP_ALBEDO    = 0,
     TEXMAP_METALNESS = 1,
+    TEXMAP_NORMAL    = 2,
     TEXMAP_ROUGHNESS = 3,
     TEXMAP_OCCLUSION,
     TEXMAP_EMISSION,

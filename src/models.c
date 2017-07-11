@@ -1336,10 +1336,11 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     #define BRDF_SIZE            512        // BRDF LUT texture map size
 
     // Set up environment materials cubemap
-    mat.maps[TEXMAP_CUBEMAP].tex = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
-    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(mat.maps[TEXMAP_CUBEMAP].tex, IRRADIANCE_SIZE);
-    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(mat.maps[TEXMAP_CUBEMAP].tex, PREFILTERED_SIZE);
-    mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(mat.maps[TEXMAP_CUBEMAP].tex, BRDF_SIZE);
+    Texture2D cubemap = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
+    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(cubemap, IRRADIANCE_SIZE);
+    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(cubemap, PREFILTERED_SIZE);
+    mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(cubemap, BRDF_SIZE);
+    UnloadTexture(cubemap);
     
     // NOTE: All maps textures are set to { 0 }
     
