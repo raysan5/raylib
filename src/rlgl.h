@@ -374,23 +374,24 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 // Functions Declaration - OpenGL equivalent functions (common to 1.1, 3.3+, ES2)
 // NOTE: This functions are used to completely abstract raylib code from OpenGL layer
 //------------------------------------------------------------------------------------
-void rlEnableTexture(unsigned int id);          // Enable texture usage
-void rlDisableTexture(void);                    // Disable texture usage
+void rlEnableTexture(unsigned int id);                  // Enable texture usage
+void rlDisableTexture(void);                            // Disable texture usage
 void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
-void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
-void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
-void rlEnableDepthTest(void);                   // Enable depth test
-void rlDisableDepthTest(void);                  // Disable depth test
-void rlEnableWireMode(void);                    // Enable wire mode
-void rlDisableWireMode(void);                   // Disable wire mode
-void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
+void rlEnableRenderTexture(unsigned int id);            // Enable render texture (fbo)
+void rlDisableRenderTexture(void);                      // Disable render texture (fbo), return to default framebuffer
+void rlEnableDepthTest(void);                           // Enable depth test
+void rlDisableDepthTest(void);                          // Disable depth test
+void rlEnableWireMode(void);                            // Enable wire mode
+void rlDisableWireMode(void);                           // Disable wire mode
+void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
 void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
-void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
-void rlDeleteVertexArrays(unsigned int id);     // Unload vertex data (VAO) from GPU memory
-void rlDeleteBuffers(unsigned int id);          // Unload vertex data (VBO) from GPU memory
-void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
-void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
-int rlGetVersion(void);                         // Returns current OpenGL version
+void rlDeleteShader(unsigned int id);                   // Delete OpenGL shader program from GPU
+void rlDeleteVertexArrays(unsigned int id);             // Unload vertex data (VAO) from GPU memory
+void rlDeleteBuffers(unsigned int id);                  // Unload vertex data (VBO) from GPU memory
+void rlClearColor(byte r, byte g, byte b, byte a);      // Clear color buffer with color
+void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
+int rlGetVersion(void);                                 // Returns current OpenGL version
+Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
@@ -404,23 +405,22 @@ void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU
 void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data);    // Update GPU texture with new data
 void rlUnloadTexture(unsigned int id);
-void rlGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
-void *rlReadTexturePixels(Texture2D texture);                     // Read texture pixel data
-unsigned char *rlReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
-RenderTexture2D rlLoadRenderTexture(int width, int height);       // Load a texture to be used for rendering (fbo with color and depth attachments)
+void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
+void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
+unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
+RenderTexture2D rlLoadRenderTexture(int width, int height);         // Load a texture to be used for rendering (fbo with color and depth attachments)
 
 // Vertex data management
-void rlLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
-void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
-void rlDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
-void rlUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU
+void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
+void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
+void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
+void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
-Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
-
-Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);
-Texture2D rlGenMapIrradiance(Texture2D cubemap, int size);
-Texture2D rlGenMapPrefilter(Texture2D cubemap, int size);
-Texture2D rlGenMapBRDF(Texture2D cubemap, int size);
+// Texture maps generation (PBR)
+Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map`from HDR texture
+Texture2D rlGenMapIrradiance(Texture2D cubemap, int size);          // Generate irradiance texture map
+Texture2D rlGenMapPrefilter(Texture2D cubemap, int size);           // Generate prefilter texture map
+Texture2D rlGenMapBRDF(Texture2D cubemap, int size);                // Generate BRDF texture map
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
