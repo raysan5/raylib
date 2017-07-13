@@ -337,7 +337,7 @@ static void LoadTextureCompressed(unsigned char *data, int width, int height, in
 static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShaderStr);  // Load custom shader strings and return program id
 
 static Shader LoadShaderDefault(void);      // Load default shader (just vertex positioning and texture coloring)
-static void LoadShaderDefaultLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
+static void SetShaderDefaultLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnLoadShaderDefault(void);      // Unload default shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
@@ -2383,7 +2383,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     */
     
     // Upload to shader material.colDiffuse
-    glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR01], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, 
+    glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, 
                                                            (float)material.maps[TEXMAP_DIFFUSE].color.g/255, 
                                                            (float)material.maps[TEXMAP_DIFFUSE].color.b/255, 
                                                            (float)material.maps[TEXMAP_DIFFUSE].color.a/255);
@@ -2396,8 +2396,8 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
                                                                // (float)material.colAmbient.a/255);
 
     // Upload to shader material.colSpecular (if available)
-    if (material.shader.locs[LOC_TEXTURE_COLOR03] != -1) 
-        glUniform4f(material.shader.locs[LOC_TEXTURE_COLOR03], (float)material.maps[TEXMAP_SPECULAR].color.r/255, 
+    if (material.shader.locs[LOC_COLOR_SPECULAR] != -1) 
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[TEXMAP_SPECULAR].color.r/255, 
                                                                (float)material.maps[TEXMAP_SPECULAR].color.g/255, 
                                                                (float)material.maps[TEXMAP_SPECULAR].color.b/255, 
                                                                (float)material.maps[TEXMAP_SPECULAR].color.a/255);
@@ -2419,7 +2419,8 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
             glActiveTexture(GL_TEXTURE0 + i);
             if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].tex.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].tex.id);
-            glUniform1i(material.shader.locs[LOC_TEXTURE_MAP01 + i], i);
+            
+            glUniform1i(material.shader.locs[LOC_TEXMAP_DIFFUSE + i], i);
         }
     }
 
@@ -2794,8 +2795,8 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     {
         shader.id = LoadShaderProgram(vShaderStr, fShaderStr);
 
-        // After shader loading, we try to load default location names
-        if (shader.id > 0) LoadShaderDefaultLocations(&shader);
+        // After shader loading, we TRY to set default location names
+        if (shader.id > 0) SetShaderDefaultLocations(&shader);
 
         // Shader strings must be freed
         free(vShaderStr);
@@ -2807,6 +2808,32 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
         TraceLog(WARNING, "Custom shader could not be loaded");
         shader = defaultShader;
     }
+    
+    
+    // Get available shader uniforms
+    // NOTE: This information is useful for debug...
+    int uniformCount = -1;
+    
+    glGetProgramiv(shader.id, GL_ACTIVE_UNIFORMS, &uniformCount);
+    
+    for(int i = 0; i < uniformCount; i++)
+    {
+        int namelen = -1;
+        int num = -1;
+        char name[256]; // Assume no variable names longer than 256
+        GLenum type = GL_ZERO;
+
+        // Get the name of the uniforms
+        glGetActiveUniform(shader.id, i,sizeof(name) - 1, &namelen, &num, &type, name);
+        
+        name[namelen] = 0;
+
+        // Get the location of the named uniform
+        GLuint location = glGetUniformLocation(shader.id, name);
+        
+        TraceLog(INFO, "[SHDR ID %i] Active uniform [%s] set at location: %i", shader.id, name, location);
+    }
+    
 #endif
 
     return shader;
@@ -2860,7 +2887,8 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     location = glGetUniformLocation(shader.id, uniformName);
 
-    if (location == -1) TraceLog(DEBUG, "[SHDR ID %i] Shader location for %s could not be found", shader.id, uniformName);
+    if (location == -1) TraceLog(WARNING, "[SHDR ID %i] Shader uniform [%s] COULD NOT BE FOUND", shader.id, uniformName);
+    else TraceLog(INFO, "[SHDR ID %i] Shader uniform [%s] set at location: %i", shader.id, uniformName, location);
 #endif
     return location;
 }
@@ -3019,7 +3047,7 @@ void InitVrSimulator(int vrDevice)
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
     vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
-    if (vrConfig.distortionShader.id > 0) LoadShaderDefaultLocations(&vrConfig.distortionShader);
+    if (vrConfig.distortionShader.id > 0) SetShaderDefaultLocations(&vrConfig.distortionShader);
 #endif
 
     SetStereoConfig(hmd);
@@ -3423,7 +3451,17 @@ static Shader LoadShaderDefault(void)
     if (shader.id > 0) 
     {
         TraceLog(INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
-        LoadShaderDefaultLocations(&shader);
+        
+        // Set default shader locations
+        // Get handles to GLSL input attibute locations
+        shader.locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader.id, "vertexPosition");
+        shader.locs[LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader.id, "vertexTexCoord");
+        shader.locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader.id, "vertexColor");
+
+        // Get handles to GLSL uniform locations
+        shader.locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvpMatrix");
+        shader.locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
+        shader.locs[LOC_TEXMAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
     }
     else TraceLog(WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
@@ -3432,7 +3470,7 @@ static Shader LoadShaderDefault(void)
 
 // Get location handlers to for shader attributes and uniforms
 // NOTE: If any location is not found, loc point becomes -1
-static void LoadShaderDefaultLocations(Shader *shader)
+static void SetShaderDefaultLocations(Shader *shader)
 {
     // NOTE: Default shader attrib locations have been fixed before linking:
     //          vertex position location    = 0
@@ -3454,13 +3492,10 @@ static void LoadShaderDefaultLocations(Shader *shader)
     shader->locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader->id, "mvpMatrix");
 
     // Get handles to GLSL uniform locations (fragment shader)
-    shader->locs[LOC_TEXTURE_COLOR01] = glGetUniformLocation(shader->id, "colDiffuse");
-    shader->locs[LOC_TEXTURE_COLOR02] = glGetUniformLocation(shader->id, "colAmbient");
-    shader->locs[LOC_TEXTURE_COLOR03] = glGetUniformLocation(shader->id, "colSpecular");
-
-    shader->locs[LOC_TEXTURE_MAP01] = glGetUniformLocation(shader->id, "texture0");
-    shader->locs[LOC_TEXTURE_MAP02] = glGetUniformLocation(shader->id, "texture1");
-    shader->locs[LOC_TEXTURE_MAP03] = glGetUniformLocation(shader->id, "texture2");
+    shader->locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader->id, "colDiffuse");
+    shader->locs[LOC_TEXMAP_DIFFUSE] = glGetUniformLocation(shader->id, "texture0");
+    shader->locs[LOC_TEXMAP_NORMAL] = glGetUniformLocation(shader->id, "texture1");
+    shader->locs[LOC_TEXMAP_SPECULAR] = glGetUniformLocation(shader->id, "texture2");
 
     // TODO: Try to find all expected/recognized shader locations (predefined names, must be documented)
 }
@@ -3746,8 +3781,8 @@ static void DrawDefaultBuffers()
             Matrix matMVP = MatrixMultiply(modelview, projection);
 
             glUniformMatrix4fv(currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
-            glUniform4f(currentShader.locs[LOC_TEXTURE_COLOR01], 1.0f, 1.0f, 1.0f, 1.0f);
-            glUniform1i(currentShader.locs[LOC_TEXTURE_MAP01], 0);
+            glUniform4f(currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
+            glUniform1i(currentShader.locs[LOC_TEXMAP_DIFFUSE], 0);
 
             // NOTE: Additional map textures not considered for default buffers drawing
         }

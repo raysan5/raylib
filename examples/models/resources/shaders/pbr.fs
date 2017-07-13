@@ -41,17 +41,22 @@ uniform MaterialProperty albedo;
 uniform MaterialProperty normals;
 uniform MaterialProperty metalness;
 uniform MaterialProperty roughness;
-uniform MaterialProperty ao;
+uniform MaterialProperty occlusion;
 uniform MaterialProperty emission;
 uniform MaterialProperty height;
-
-// Input lighting values
-uniform Light lights[MAX_LIGHTS];
 
 // Input uniform values
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
+
+//uniform sampler2D albedo;
+//uniform sampler2D normals;
+//uniform sampler2D metalness;
+
+// Input lighting values
+uniform Light lights[MAX_LIGHTS];
+
 
 // Other uniform values
 uniform int renderMode;
@@ -184,17 +189,19 @@ void main()
     else texCoord = fragTexCoord;   // Use default texture coordinates
 
     // Fetch material values from texture sampler or color attributes
-    vec3 color = pow(ComputeMaterialProperty(albedo), vec3(2.2));
-    vec3 metal = ComputeMaterialProperty(metalness);
-    vec3 rough = ComputeMaterialProperty(roughness);
-    vec3 emiss = ComputeMaterialProperty(emission);
-    vec3 occlusion = ComputeMaterialProperty(ao);
+    vec3 color = pow(texture(albedo.sampler, texCoord).rgb, vec3(2.2));//pow(ComputeMaterialProperty(albedo), vec3(2.2));
+    vec3 metal = texture(metalness.sampler, texCoord).rgb; //ComputeMaterialProperty(metalness);
+    vec3 rough = texture(roughness.sampler, texCoord).rgb; //ComputeMaterialProperty(roughness);
+    vec3 emiss = texture(emission.sampler, texCoord).rgb; //ComputeMaterialProperty(emission);
+    vec3 ao = texture(occlusion.sampler, texCoord).rgb; //ComputeMaterialProperty(occlusion);
 
+    vec3 all = color + metal + rough + emiss + ao;
+    
     // Check if normal mapping is enabled
     if (normals.useSampler == 1)
     {
         // Fetch normal map color and transform lighting values to tangent space
-        normal = ComputeMaterialProperty(normals);
+        normal = texture(normals.sampler, texCoord).rgb; //ComputeMaterialProperty(normals);
         normal = normalize(normal*2.0 - 1.0);
         normal = normalize(normal*TBN);
 
@@ -210,6 +217,7 @@ void main()
     vec3 Lo = vec3(0.0);
     vec3 lightDot = vec3(0.0);
 
+    /*
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
         if (lights[i].enabled == 1)
@@ -251,6 +259,7 @@ void main()
             lightDot += radiance*NdotL + brdf*lights[i].color.a;
         }
     }
+    */
 
     // Calculate ambient lighting using IBL
     vec3 F = fresnelSchlickRoughness(max(dot(normal, view), 0.0), F0, rough.r);
@@ -268,7 +277,7 @@ void main()
     vec3 reflection = prefilterColor*(F*brdf.x + brdf.y);
 
     // Calculate final lighting
-    vec3 ambient = (kD*diffuse + reflection)*occlusion;
+    vec3 ambient = (kD*diffuse + reflection)*ao;
 
     // Calculate fragment color based on render mode
     vec3 fragmentColor = ambient + Lo + emiss;                              // Physically Based Rendering
@@ -277,7 +286,7 @@ void main()
     else if (renderMode == 2) fragmentColor = normal;                       // Normals
     else if (renderMode == 3) fragmentColor = metal;                        // Metalness
     else if (renderMode == 4) fragmentColor = rough;                        // Roughness
-    else if (renderMode == 5) fragmentColor = occlusion;                    // Ambient Occlusion
+    else if (renderMode == 5) fragmentColor = ao;                           // Ambient Occlusion
     else if (renderMode == 6) fragmentColor = emiss;                        // Emission
     else if (renderMode == 7) fragmentColor = lightDot;                     // Lighting
     else if (renderMode == 8) fragmentColor = kS;                           // Fresnel
@@ -291,5 +300,5 @@ void main()
     fragmentColor = pow(fragmentColor, vec3(1.0/2.2));
 
     // Calculate final fragment color
-    finalColor = vec4(fragmentColor, 1.0);
+    finalColor = vec4(all, 1.0);//vec4(fragmentColor, 1.0);      // It works, so texture is correctly binded!
 }

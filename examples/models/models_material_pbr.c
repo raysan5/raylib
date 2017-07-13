@@ -30,11 +30,9 @@ int main()
     Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
     model.material = LoadMaterialPBR(texHDR, (Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
     
-    model.material.maps[TEXMAP_ALBEDO].tex = LoadTexture("resources/pbr/trooper_albedo.png");
-
-    SetShaderValuei(model.material.shader, GetShaderLocation(model.material.shader, "albedo.sampler"), (int[1]){ TEXMAP_ALBEDO }, 1);
-    SetShaderValuei(model.material.shader, GetShaderLocation(model.material.shader, "albedo.useSampler"), (int[1]){ 1 }, 1);
-
+    //model.material.maps[TEXMAP_ALBEDO].tex = LoadTexture("resources/pbr/trooper_albedo.png");
+    SetMaterialTexture(&model.material, TEXMAP_ALBEDO, LoadTexture("resources/pbr/trooper_albedo.png"));
+/*
     SetMaterialTexture(&model.material, TEXMAP_NORMAL, LoadTexture("resources/pbr/trooper_normals.png"));
     SetTextureFilter(model.material.maps[TEXMAP_NORMAL].tex, FILTER_BILINEAR);
 
@@ -49,8 +47,9 @@ int main()
 
     for (int i = 0; i < 12; i++)
     {
-       printf("TexMap %i ID: %i\n", i, model.material.maps[i].tex.id);
+       //printf("TexMap %i ID: %i\n", i, model.material.maps[i].tex.id);
     }
+*/
 
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
@@ -73,7 +72,7 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawModel(model, VectorZero(), 1.0f, RED);
+                DrawModel(model, VectorZero(), 1.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);
 

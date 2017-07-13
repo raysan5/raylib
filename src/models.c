@@ -1305,20 +1305,20 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
    
     mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
     
-    // Set up PBR shader material texture units
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.sampler"), (int[1]){ TEXMAP_ALBEDO }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.sampler"), (int[1]){ TEXMAP_NORMAL }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.sampler"), (int[1]){ TEXMAP_METALNESS }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.sampler"), (int[1]){ TEXMAP_ROUGHNESS }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.sampler"), (int[1]){ TEXMAP_OCCLUSION }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "emission.sampler"), (int[1]){ TEXMAP_EMISSION }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "height.sampler"), (int[1]){ TEXMAP_HEIGHT }, 1);
-    
-    // Set up environment shader texture units
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "irradianceMap"), (int[1]){ TEXMAP_IRRADIANCE }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "prefilterMap"), (int[1]){ TEXMAP_PREFILTER }, 1);
-    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "brdfLUT"), (int[1]){ TEXMAP_BRDF }, 1);
-    
+    // Get required locations points for PBR material
+    // NOTE: Those location names must be available and used in the shader code
+    mat.shader.locs[LOC_TEXMAP_ALBEDO] = GetShaderLocation(mat.shader, "albedo.sampler");
+    mat.shader.locs[LOC_TEXMAP_METALNESS] = GetShaderLocation(mat.shader, "metalness.sampler");
+    mat.shader.locs[LOC_TEXMAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
+    mat.shader.locs[LOC_TEXMAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
+    mat.shader.locs[LOC_TEXMAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
+    mat.shader.locs[LOC_TEXMAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
+    mat.shader.locs[LOC_TEXMAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
+    mat.shader.locs[LOC_TEXMAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
+    mat.shader.locs[LOC_TEXMAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
+    mat.shader.locs[LOC_TEXMAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
+
+    // Set view matrix location
     mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "viewPos");
 
     // Set up material properties color
@@ -1337,8 +1337,8 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
 
     // Set up environment materials cubemap
     Texture2D cubemap = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
-    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(cubemap, IRRADIANCE_SIZE);
-    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(cubemap, PREFILTERED_SIZE);
+    // mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(cubemap, IRRADIANCE_SIZE);
+    // mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(cubemap, PREFILTERED_SIZE);
     mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(cubemap, BRDF_SIZE);
     UnloadTexture(cubemap);
     
