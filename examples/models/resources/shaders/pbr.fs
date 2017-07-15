@@ -74,8 +74,12 @@ vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir);
 
 vec3 ComputeMaterialProperty(MaterialProperty property)
 {
-    if (property.useSampler == 1) return texture(property.sampler, texCoord).rgb;
-    else return property.color;
+    vec result = vec3(0.0, 0.0, 0.0);
+
+    if (property.useSampler == 1) result = texture(property.sampler, texCoord).rgb;
+    else result = property.color;
+
+    return result;
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -177,6 +181,7 @@ void main()
     vec3 refl = reflect(-view, normal);
 
     // Check if parallax mapping is enabled and calculate texture coordinates to use based on height map
+    // NOTE: remember that 'texCoord' variable must be assigned before calling any ComputeMaterialProperty() function
     if (height.useSampler == 1) texCoord = ParallaxMapping(fragTexCoord, view);
     else texCoord = fragTexCoord;   // Use default texture coordinates
 
