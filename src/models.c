@@ -1337,8 +1337,8 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
 
     // Set up environment materials cubemap
     Texture2D cubemap = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
-    // mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(cubemap, IRRADIANCE_SIZE);
-    // mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(cubemap, PREFILTERED_SIZE);
+    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(cubemap, IRRADIANCE_SIZE);
+    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(cubemap, PREFILTERED_SIZE);
     mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(cubemap, BRDF_SIZE);
     UnloadTexture(cubemap);
     

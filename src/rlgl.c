@@ -1731,8 +1731,9 @@ Texture2D rlGenMapCubemap(Texture2D skyHDR, int size)
     // Get cubemap shader locations
     int projectionLoc = GetShaderLocation(shader, "projection");
     int viewLoc = GetShaderLocation(shader, "view");
-    
-    SetShaderValuei(shader, GetShaderLocation(shader, "equirectangularMap"), (int[1]){ 0 }, 1);
+    int texmapLoc = GetShaderLocation(shader, "equirectangularMap");
+
+    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);   // Set default active texture to 0
     
     // Set up depth face culling and cubemap seamless
     glDisable(GL_CULL_FACE);
@@ -1816,9 +1817,10 @@ Texture2D rlGenMapIrradiance(Texture2D cubemap, int size)
     // Get irradiance shader locations
     int projectionLoc = GetShaderLocation(shader, "projection");
     int viewLoc = GetShaderLocation(shader, "view");
+    int texmapLoc = GetShaderLocation(shader, "environmentMap");
     
     // Set up shaders constant values
-    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ TEXMAP_CUBEMAP }, 1);
+    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
     
     // Setup framebuffer
     unsigned int fbo, rbo;
@@ -1894,8 +1896,9 @@ Texture2D rlGenMapPrefilter(Texture2D cubemap, int size)
     int projectionLoc = GetShaderLocation(shader, "projection");
     int viewLoc = GetShaderLocation(shader, "view");
     int roughnessLoc = GetShaderLocation(shader, "roughness");
+    int texmapLoc = GetShaderLocation(shader, "environmentMap");
     
-    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ TEXMAP_CUBEMAP }, 1);
+    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
     
     // Setup framebuffer
     unsigned int fbo, rbo;

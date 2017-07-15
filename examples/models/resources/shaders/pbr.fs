@@ -50,10 +50,6 @@ uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
 
-//uniform sampler2D albedo;
-//uniform sampler2D normals;
-//uniform sampler2D metalness;
-
 // Input lighting values
 uniform Light lights[MAX_LIGHTS];
 
@@ -185,8 +181,10 @@ void main()
     vec3 refl = reflect(-view, normal);
 
     // Check if parallax mapping is enabled and calculate texture coordinates to use based on height map
-    if (height.useSampler == 1) texCoord = ParallaxMapping(fragTexCoord, view);
-    else texCoord = fragTexCoord;   // Use default texture coordinates
+    //if (height.useSampler == 1) texCoord = ParallaxMapping(fragTexCoord, view);
+    //else texCoord = fragTexCoord;   // Use default texture coordinates
+        
+    texCoord = fragTexCoord;   // Use default texture coordinates
 
     // Fetch material values from texture sampler or color attributes
     vec3 color = pow(texture(albedo.sampler, texCoord).rgb, vec3(2.2));//pow(ComputeMaterialProperty(albedo), vec3(2.2));
@@ -194,8 +192,6 @@ void main()
     vec3 rough = texture(roughness.sampler, texCoord).rgb; //ComputeMaterialProperty(roughness);
     vec3 emiss = texture(emission.sampler, texCoord).rgb; //ComputeMaterialProperty(emission);
     vec3 ao = texture(occlusion.sampler, texCoord).rgb; //ComputeMaterialProperty(occlusion);
-
-    vec3 all = color + metal + rough + emiss + ao;
     
     // Check if normal mapping is enabled
     if (normals.useSampler == 1)
@@ -300,5 +296,5 @@ void main()
     fragmentColor = pow(fragmentColor, vec3(1.0/2.2));
 
     // Calculate final fragment color
-    finalColor = vec4(all, 1.0);//vec4(fragmentColor, 1.0);      // It works, so texture is correctly binded!
+    finalColor = vec4(fragmentColor, 1.0);      // It works, so texture is correctly binded!
 }

@@ -32,24 +32,22 @@ int main()
     
     //model.material.maps[TEXMAP_ALBEDO].tex = LoadTexture("resources/pbr/trooper_albedo.png");
     SetMaterialTexture(&model.material, TEXMAP_ALBEDO, LoadTexture("resources/pbr/trooper_albedo.png"));
-/*
     SetMaterialTexture(&model.material, TEXMAP_NORMAL, LoadTexture("resources/pbr/trooper_normals.png"));
-    SetTextureFilter(model.material.maps[TEXMAP_NORMAL].tex, FILTER_BILINEAR);
-
     SetMaterialTexture(&model.material, TEXMAP_METALNESS, LoadTexture("resources/pbr/trooper_metalness.png"));
-    SetTextureFilter(model.material.maps[TEXMAP_METALNESS].tex, FILTER_BILINEAR);
-
     SetMaterialTexture(&model.material, TEXMAP_ROUGHNESS, LoadTexture("resources/pbr/trooper_roughness.png"));
-    SetTextureFilter(model.material.maps[TEXMAP_ROUGHNESS].tex, FILTER_BILINEAR);
-
     SetMaterialTexture(&model.material, TEXMAP_OCCLUSION, LoadTexture("resources/pbr/trooper_ao.png"));
+    
+    // Set textures filtering for better quality
+    SetTextureFilter(model.material.maps[TEXMAP_ALBEDO].tex, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[TEXMAP_NORMAL].tex, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[TEXMAP_METALNESS].tex, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[TEXMAP_ROUGHNESS].tex, FILTER_BILINEAR);
     SetTextureFilter(model.material.maps[TEXMAP_OCCLUSION].tex, FILTER_BILINEAR);
 
     for (int i = 0; i < 12; i++)
     {
        //printf("TexMap %i ID: %i\n", i, model.material.maps[i].tex.id);
     }
-*/
 
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
@@ -62,6 +60,10 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
+        
+        // Send to material PBR shader camera view position
+        float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
+        SetShaderValue(model.material.shader, model.material.shader.locs[LOC_MATRIX_VIEW], cameraPos, 3);
         //----------------------------------------------------------------------------------
 
         // Draw
