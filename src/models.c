@@ -1418,6 +1418,47 @@ void UnsetMaterialTexture(Material *mat, int texmapType)
 {
     UnloadTexture(mat->maps[texmapType].tex);
     mat->maps[texmapType].tex = (Texture2D){ 0 };
+
+    // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
+    int location = -1;
+    switch (texmapType)
+    {
+        case TEXMAP_ALBEDO:
+        {
+            location = GetShaderLocation(mat->shader, "albedo.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_NORMAL:
+        {
+            location = GetShaderLocation(mat->shader, "normals.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_METALNESS:
+        {
+            location = GetShaderLocation(mat->shader, "metalness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_ROUGHNESS:
+        {
+            location = GetShaderLocation(mat->shader, "roughness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_OCCLUSION:
+        {
+            location = GetShaderLocation(mat->shader, "occlusion.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_EMISSION:
+        {
+            location = GetShaderLocation(mat->shader, "emission.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_HEIGHT:
+        {
+            location = GetShaderLocation(mat->shader, "height.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+    }
 }
 
 // Draw a model (with texture if set)
