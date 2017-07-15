@@ -154,6 +154,7 @@ typedef unsigned char byte;
         LOC_VERTEX_TANGENT,
         LOC_VERTEX_COLOR,
         LOC_MATRIX_MVP,
+        LOC_MATRIX_MODEL,
         LOC_MATRIX_VIEW,
         LOC_MATRIX_PROJECTION,
         LOC_VECTOR_VIEW,

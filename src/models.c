@@ -1319,6 +1319,7 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     mat.shader.locs[LOC_TEXMAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
 
     // Set view matrix location
+    mat.shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(mat.shader, "mMatrix");
     mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
     mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
 

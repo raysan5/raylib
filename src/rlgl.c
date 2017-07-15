@@ -2378,7 +2378,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     //-----------------------------------------------------
     
     // Calculate and send to shader model matrix (used by PBR shader)
-    SetShaderValueMatrix(material.shader, GetShaderLocation(material.shader, "mMatrix"), transform);
+    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
     
     
     // Upload to shader material.colDiffuse
