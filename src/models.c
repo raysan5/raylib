@@ -1369,6 +1369,7 @@ void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
 {
     mat->maps[texmapType].tex = texture;
 
+    // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
     int location = -1;
     switch (texmapType)
     {
