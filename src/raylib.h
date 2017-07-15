@@ -536,6 +536,7 @@ typedef enum {
     LOC_MATRIX_MVP,
     LOC_MATRIX_VIEW,
     LOC_MATRIX_PROJECTION,
+    LOC_VECTOR_VIEW,
     LOC_COLOR_DIFFUSE,
     LOC_COLOR_SPECULAR,
     LOC_COLOR_AMBIENT,
@@ -1027,7 +1028,7 @@ RLAPI void UnloadShader(Shader shader);                                   // Unl
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader
 RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
 
-RLAPI Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);
+RLAPI Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location

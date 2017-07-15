@@ -94,7 +94,7 @@ int main()
         
         // Send to material PBR shader camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-        SetShaderValue(model.material.shader, model.material.shader.locs[LOC_MATRIX_VIEW], cameraPos, 3);
+        SetShaderValue(model.material.shader, model.material.shader.locs[LOC_VECTOR_VIEW], cameraPos, 3);
         //----------------------------------------------------------------------------------
 
         // Draw

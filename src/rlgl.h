@@ -150,46 +150,48 @@ typedef unsigned char byte;
         LOC_VERTEX_POSITION = 0,
         LOC_VERTEX_TEXCOORD01,
         LOC_VERTEX_TEXCOORD02,
-        LOC_VERTEX_TEXCOORD03,
-        LOC_VERTEX_TEXCOORD04,
         LOC_VERTEX_NORMAL,
         LOC_VERTEX_TANGENT,
         LOC_VERTEX_COLOR,
         LOC_MATRIX_MVP,
         LOC_MATRIX_VIEW,
         LOC_MATRIX_PROJECTION,
-        LOC_TEXTURE_MAP01,
-        LOC_TEXTURE_MAP02,
-        LOC_TEXTURE_MAP03,
-        LOC_TEXTURE_MAP04,
-        LOC_TEXTURE_MAP05,
-        LOC_TEXTURE_MAP06,
-        LOC_TEXTURE_MAP07,
-        LOC_TEXTURE_MAP08,
-        LOC_TEXTURE_COLOR01,
-        LOC_TEXTURE_COLOR02,
-        LOC_TEXTURE_COLOR03,
-        LOC_TEXTURE_COLOR04,
-        LOC_TEXTURE_COLOR05,
-        LOC_TEXTURE_COLOR06,
-        LOC_TEXTURE_COLOR07,
-        LOC_TEXTURE_COLOR08
+        LOC_VECTOR_VIEW,
+        LOC_COLOR_DIFFUSE,
+        LOC_COLOR_SPECULAR,
+        LOC_COLOR_AMBIENT,
+        LOC_TEXMAP_ALBEDO,          // LOC_TEXMAP_DIFFUSE
+        LOC_TEXMAP_METALNESS,       // LOC_TEXMAP_SPECULAR
+        LOC_TEXMAP_NORMAL,
+        LOC_TEXMAP_ROUGHNESS,
+        LOC_TEXMAP_OCCUSION,
+        LOC_TEXMAP_EMISSION,
+        LOC_TEXMAP_HEIGHT,
+        LOC_TEXMAP_CUBEMAP,
+        LOC_TEXMAP_IRRADIANCE,
+        LOC_TEXMAP_PREFILTER,
+        LOC_TEXMAP_BRDF
     } ShaderLocationIndex;
 
-    typedef enum {
-        TEXMAP_DIFFUSE = 0,
-        TEXMAP_SPECULAR = 1,
-        TEXMAP_NORMAL = 2,
-    } TexmapBasicIndex;
+    #define LOC_TEXMAP_DIFFUSE      LOC_TEXMAP_ALBEDO
+    #define LOC_TEXMAP_SPECULAR     LOC_TEXMAP_METALNESS
 
     typedef enum {
-        TEXMAP_ALBEDO = 0,
-        TEXMAP_METALNESS = 1,
+        TEXMAP_ALBEDO    = 0,       // TEXMAP_DIFFUSE
+        TEXMAP_METALNESS = 1,       // TEXMAP_SPECULAR
+        TEXMAP_NORMAL    = 2,
         TEXMAP_ROUGHNESS = 3,
         TEXMAP_OCCLUSION,
         TEXMAP_EMISSION,
-        TEXMAP_HEIGHT
-    } TexmapPBRIndex;
+        TEXMAP_HEIGHT,
+        TEXMAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        TEXMAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        TEXMAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        TEXMAP_BRDF
+    } TexmapIndex;
+
+    #define TEXMAP_DIFFUSE      TEXMAP_ALBEDO
+    #define TEXMAP_SPECULAR     TEXMAP_METALNESS
 
     // Color type, RGBA (32bit)
     typedef struct Color {
@@ -417,7 +419,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d
 void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
 // Texture maps generation (PBR)
-Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map`from HDR texture
+Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
 Texture2D rlGenMapIrradiance(Texture2D cubemap, int size);          // Generate irradiance texture map
 Texture2D rlGenMapPrefilter(Texture2D cubemap, int size);           // Generate prefilter texture map
 Texture2D rlGenMapBRDF(Texture2D cubemap, int size);                // Generate BRDF texture map
