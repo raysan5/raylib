@@ -46,7 +46,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 450;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT);
+    SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
     InitWindow(screenWidth, screenHeight, "raylib [models] example - pbr material");
 
     // Define the camera to look into our 3d world

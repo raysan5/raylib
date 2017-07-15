@@ -24,16 +24,12 @@ int main()
     // Define the camera to look into our 3d world
     Camera camera = {{ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 
-    // Load skybox model and shader
-    #define PATH_SKYBOX_VS      "resources/shaders/skybox.vs"       // Path to skybox vertex shader
-    #define PATH_SKYBOX_FS      "resources/shaders/skybox.fs"       // Path to skybox fragment shader
-    #define PATH_TEXTURES_HDR   "resources/pinetree.hdr"            // Path to HDR image
-    
+    // Load skybox model and shader    
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
     Model skybox = LoadModelFromMesh(cube, false);
-    skybox.material.shader = LoadShader(PATH_SKYBOX_VS, PATH_SKYBOX_FS);
+    skybox.material.shader = LoadShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
-    Texture2D texHDR = LoadTexture(PATH_TEXTURES_HDR);
+    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
     skybox.material.maps[TEXMAP_CUBEMAP].tex = rlGenMapCubemap(texHDR, 512);
     SetShaderValuei(skybox.material.shader, GetShaderLocation(skybox.material.shader, "environmentMap"), (int[1]){ TEXMAP_CUBEMAP }, 1);
 

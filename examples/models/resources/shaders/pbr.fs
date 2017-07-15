@@ -74,7 +74,7 @@ vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir);
 
 vec3 ComputeMaterialProperty(MaterialProperty property)
 {
-    vec result = vec3(0.0, 0.0, 0.0);
+    vec3 result = vec3(0.0, 0.0, 0.0);
 
     if (property.useSampler == 1) result = texture(property.sampler, texCoord).rgb;
     else result = property.color;
