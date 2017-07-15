@@ -2376,6 +2376,11 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     
     // Matrices and other values required by shader
     //-----------------------------------------------------
+    
+    // Calculate and send to shader model matrix (used by PBR shader)
+    SetShaderValueMatrix(material.shader, GetShaderLocation(material.shader, "mMatrix"), transform);
+    
+    
     // Upload to shader material.colDiffuse
     glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, 
                                                            (float)material.maps[TEXMAP_DIFFUSE].color.g/255, 
@@ -2404,12 +2409,9 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
         if (material.maps[i].tex.id > 0)
         {
             glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) 
-            {
-                glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].tex.id);
-            }
+            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].tex.id);
             else glBindTexture(GL_TEXTURE_2D, material.maps[i].tex.id);
-            
+
             glUniform1i(material.shader.locs[LOC_TEXMAP_DIFFUSE + i], i);
         }
     }
@@ -2502,10 +2504,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-        if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) 
-        {
-            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-        }
+        if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
         else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
     }
 

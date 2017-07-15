@@ -1318,6 +1318,9 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     mat.shader.locs[LOC_TEXMAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
     mat.shader.locs[LOC_TEXMAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
 
+    // Set view matrix location
+    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "viewPos");
+
     // Set up material properties color
     mat.maps[TEXMAP_ALBEDO].color = albedo;
     mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
@@ -1365,6 +1368,46 @@ void UnloadMaterial(Material material)
 void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
 {
     mat->maps[texmapType].tex = texture;
+
+    int location = -1;
+    switch (texmapType)
+    {
+        case TEXMAP_ALBEDO:
+        {
+            location = GetShaderLocation(mat->shader, "albedo.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_NORMAL:
+        {
+            location = GetShaderLocation(mat->shader, "normals.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_METALNESS:
+        {
+            location = GetShaderLocation(mat->shader, "metalness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_ROUGHNESS:
+        {
+            location = GetShaderLocation(mat->shader, "roughness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_OCCLUSION:
+        {
+            location = GetShaderLocation(mat->shader, "occlusion.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_EMISSION:
+        {
+            location = GetShaderLocation(mat->shader, "emission.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_HEIGHT:
+        {
+            location = GetShaderLocation(mat->shader, "height.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+    }
 }
 
 // Unset texture from material and unload it from GPU
