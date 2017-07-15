@@ -31,7 +31,7 @@ struct Light {
 
 // Input vertex attributes (from vertex shader)
 in vec2 fragTexCoord;
-in vec3 fragPos;
+in vec3 fragPosition;
 in vec3 fragNormal;
 in vec3 fragTangent;
 in vec3 fragBinormal;
@@ -45,13 +45,13 @@ uniform MaterialProperty occlusion;
 uniform MaterialProperty emission;
 uniform MaterialProperty height;
 
-// Input lighting values
-uniform Light lights[MAX_LIGHTS];
-
 // Input uniform values
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
+
+// Input lighting values
+uniform Light lights[MAX_LIGHTS];
 
 // Other uniform values
 uniform int renderMode;
@@ -173,7 +173,7 @@ void main()
 
     // Calculate lighting required attributes
     vec3 normal = normalize(fragNormal);
-    vec3 view = normalize(viewPos - fragPos);
+    vec3 view = normalize(viewPos - fragPosition);
     vec3 refl = reflect(-view, normal);
 
     // Check if parallax mapping is enabled and calculate texture coordinates to use based on height map
@@ -217,8 +217,8 @@ void main()
             if (lights[i].type == LIGHT_DIRECTIONAL) light = -normalize(lights[i].target - lights[i].position);
             else if (lights[i].type == LIGHT_POINT)
             {
-                light = normalize(lights[i].position - fragPos);
-                float distance = length(lights[i].position - fragPos);
+                light = normalize(lights[i].position - fragPosition);
+                float distance = length(lights[i].position - fragPosition);
                 float attenuation = 1.0/(distance*distance);
                 radiance *= attenuation;
             }
@@ -269,6 +269,7 @@ void main()
 
     // Calculate fragment color based on render mode
     vec3 fragmentColor = ambient + Lo + emiss;                              // Physically Based Rendering
+
     if (renderMode == 1) fragmentColor = color;                             // Albedo
     else if (renderMode == 2) fragmentColor = normal;                       // Normals
     else if (renderMode == 3) fragmentColor = metal;                        // Metalness
