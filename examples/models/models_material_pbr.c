@@ -22,7 +22,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib [models] example - pbr material");
 
     // Define the camera to look into our 3d world
-    Camera camera = {{ 4.0f, 4.0f, 4.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
+    Camera camera = {{ 4.0f, 4.0f, 4.0f }, { 0.0f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 
     // Load model and PBR material
     Model model = LoadModel("resources/pbr/trooper.obj");
@@ -37,17 +37,16 @@ int main()
     SetMaterialTexture(&model.material, TEXMAP_ROUGHNESS, LoadTexture("resources/pbr/trooper_roughness.png"));
     SetMaterialTexture(&model.material, TEXMAP_OCCLUSION, LoadTexture("resources/pbr/trooper_ao.png"));
     
+    SetShaderValuei(model.material.shader, GetShaderLocation(model.material.shader, "normals.enabled"), (int[1]){ 1 }, 1);
+    
     // Set textures filtering for better quality
     SetTextureFilter(model.material.maps[TEXMAP_ALBEDO].tex, FILTER_BILINEAR);
     SetTextureFilter(model.material.maps[TEXMAP_NORMAL].tex, FILTER_BILINEAR);
     SetTextureFilter(model.material.maps[TEXMAP_METALNESS].tex, FILTER_BILINEAR);
     SetTextureFilter(model.material.maps[TEXMAP_ROUGHNESS].tex, FILTER_BILINEAR);
     SetTextureFilter(model.material.maps[TEXMAP_OCCLUSION].tex, FILTER_BILINEAR);
-
-    for (int i = 0; i < 12; i++)
-    {
-       //printf("TexMap %i ID: %i\n", i, model.material.maps[i].tex.id);
-    }
+    
+    int viewPosLoc = GetShaderLocation(model.material.shader, "viewPos");
 
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
@@ -63,7 +62,7 @@ int main()
         
         // Send to material PBR shader camera view position
         float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-        SetShaderValue(model.material.shader, model.material.shader.locs[LOC_MATRIX_VIEW], cameraPos, 3);
+        SetShaderValue(model.material.shader, viewPosLoc, cameraPos, 3);
         //----------------------------------------------------------------------------------
 
         // Draw

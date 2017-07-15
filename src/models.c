@@ -1318,9 +1318,6 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     mat.shader.locs[LOC_TEXMAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
     mat.shader.locs[LOC_TEXMAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
 
-    // Set view matrix location
-    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "viewPos");
-
     // Set up material properties color
     mat.maps[TEXMAP_ALBEDO].color = albedo;
     mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };

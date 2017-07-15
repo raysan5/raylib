@@ -16,9 +16,10 @@
 #define     LIGHT_POINT             1
 
 struct MaterialProperty {
-    vec3 color;
-    int useSampler;
+    int enabled;
     sampler2D sampler;
+    float value;
+    vec3 color;
 };
 
 struct Light {
@@ -65,21 +66,12 @@ const float PI = 3.14159265359;
 // Output fragment color
 out vec4 finalColor;
 
-vec3 ComputeMaterialProperty(MaterialProperty property);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 fresnelSchlick(float cosTheta, vec3 F0);
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir);
-
-vec3 ComputeMaterialProperty(MaterialProperty property)
-{
-    //if (property.useSampler == 1) return texture(property.sampler, texCoord).rgb;
-    //else return property.color;
-    
-    return texture(property.sampler, texCoord).rgb;
-}
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -181,20 +173,18 @@ void main()
     vec3 refl = reflect(-view, normal);
 
     // Check if parallax mapping is enabled and calculate texture coordinates to use based on height map
-    //if (height.useSampler == 1) texCoord = ParallaxMapping(fragTexCoord, view);
-    //else texCoord = fragTexCoord;   // Use default texture coordinates
-        
-    texCoord = fragTexCoord;   // Use default texture coordinates
+    if (height.enabled == 1) texCoord = ParallaxMapping(fragTexCoord, view);
+    else texCoord = fragTexCoord;   // Use default texture coordinates
 
     // Fetch material values from texture sampler or color attributes
-    vec3 color = pow(texture(albedo.sampler, texCoord).rgb, vec3(2.2));//pow(ComputeMaterialProperty(albedo), vec3(2.2));
-    vec3 metal = texture(metalness.sampler, texCoord).rgb; //ComputeMaterialProperty(metalness);
-    vec3 rough = texture(roughness.sampler, texCoord).rgb; //ComputeMaterialProperty(roughness);
-    vec3 emiss = texture(emission.sampler, texCoord).rgb; //ComputeMaterialProperty(emission);
-    vec3 ao = texture(occlusion.sampler, texCoord).rgb; //ComputeMaterialProperty(occlusion);
+    vec3 color = pow(texture(albedo.sampler, texCoord).rgb, vec3(2.2));
+    vec3 metal = texture(metalness.sampler, texCoord).rgb;
+    vec3 rough = texture(roughness.sampler, texCoord).rgb;
+    vec3 emiss = vec3(0);//texture(emission.sampler, texCoord).rgb;
+    vec3 ao = texture(occlusion.sampler, texCoord).rgb;
     
     // Check if normal mapping is enabled
-    if (normals.useSampler == 1)
+    if (normals.enabled == 1)
     {
         // Fetch normal map color and transform lighting values to tangent space
         normal = texture(normals.sampler, texCoord).rgb; //ComputeMaterialProperty(normals);
