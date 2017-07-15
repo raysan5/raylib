@@ -30,8 +30,8 @@ struct Light {
 };
 
 // Input vertex attributes (from vertex shader)
-in vec2 fragTexCoord;
 in vec3 fragPosition;
+in vec2 fragTexCoord;
 in vec3 fragNormal;
 in vec3 fragTangent;
 in vec3 fragBinormal;
