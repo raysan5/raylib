@@ -26,8 +26,8 @@ int main()
 
     // Load skybox model and shader
     #define PATH_SKYBOX_VS      "resources/shaders/skybox.vs"       // Path to skybox vertex shader
-    #define PATH_SKYBOX_FS      "resources/shaders/skybox.fs"       // Path to skybox vertex shader
-    #define PATH_TEXTURES_HDR   "resources/pinetree.hdr"
+    #define PATH_SKYBOX_FS      "resources/shaders/skybox.fs"       // Path to skybox fragment shader
+    #define PATH_TEXTURES_HDR   "resources/pinetree.hdr"            // Path to HDR image
     
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
     Model skybox = LoadModelFromMesh(cube, false);
