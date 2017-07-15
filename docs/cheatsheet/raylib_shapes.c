@@ -4,12 +4,15 @@
     void DrawPixelV(Vector2 position, Color color);                                                     // Draw a pixel (Vector version)
     void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color);                 // Draw a line
     void DrawLineV(Vector2 startPos, Vector2 endPos, Color color);                                      // Draw a line (Vector version)
+    void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color);                        // Draw a line defining thickness
+    void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                    // Draw a line using cubic-bezier curves in-out
     void DrawCircle(int centerX, int centerY, float radius, Color color);                               // Draw a color-filled circle
     void DrawCircleGradient(int centerX, int centerY, float radius, Color color1, Color color2);        // Draw a gradient-filled circle
     void DrawCircleV(Vector2 center, float radius, Color color);                                        // Draw a color-filled circle (Vector version)
     void DrawCircleLines(int centerX, int centerY, float radius, Color color);                          // Draw circle outline
     void DrawRectangle(int posX, int posY, int width, int height, Color color);                         // Draw a color-filled rectangle
     void DrawRectangleRec(Rectangle rec, Color color);                                                  // Draw a color-filled rectangle
+    void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color);                  // Draw a color-filled rectangle with pro parameters
     void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2);  // Draw a gradient-filled rectangle
     void DrawRectangleV(Vector2 position, Vector2 size, Color color);                                   // Draw a color-filled rectangle (Vector version)
     void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                    // Draw rectangle outline

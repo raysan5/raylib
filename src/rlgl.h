@@ -2,8 +2,8 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   rlgl allows usage of OpenGL 1.1 style functions (rlVertex) that are internally mapped to 
-*   selected OpenGL version (1.1, 2.1, 3.3 Core, ES 2.0). 
+*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to 
+*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...). 
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal 
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
@@ -11,20 +11,33 @@
 *       rlglDraw()  - Process internal buffers and send required draw calls
 *       rlglClose() - De-initialize internal buffers data and other auxiliar resources
 *
-*   External libs:
+*   CONFIGURATION:
+*
+*   #define GRAPHICS_API_OPENGL_11
+*   #define GRAPHICS_API_OPENGL_21
+*   #define GRAPHICS_API_OPENGL_33
+*   #define GRAPHICS_API_OPENGL_ES2
+*       Use selected OpenGL graphics backend, should be supported by platform
+*       Those preprocessor defines are only used on rlgl module, if OpenGL version is 
+*       required by any other module, use rlGetVersion() tocheck it
+*
+*   #define RLGL_STANDALONE
+*       Use rlgl as standalone library (no raylib dependency)
+*
+*   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
+*       Support VR simulation functionality (stereo rendering)
+*
+*   #define SUPPORT_SHADER_DISTORTION
+*       Include stereo rendering distortion shader (shader_distortion.h)
+*
+*   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
 *       GLAD        - OpenGL extensions loading (OpenGL 3.3 Core only)
 *
-*   Module Configuration Flags:
-*       GRAPHICS_API_OPENGL_11  - Use OpenGL 1.1 backend
-*       GRAPHICS_API_OPENGL_21  - Use OpenGL 2.1 backend
-*       GRAPHICS_API_OPENGL_33  - Use OpenGL 3.3 Core profile backend
-*       GRAPHICS_API_OPENGL_ES2 - Use OpenGL ES 2.0 backend
 *
-*       RLGL_STANDALONE             - Use rlgl as standalone library (no raylib dependency)
+*   LICENSE: zlib/libpng
 *
-*
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -46,27 +59,13 @@
 #ifndef RLGL_H
 #define RLGL_H
 
-//#define RLGL_STANDALONE       // NOTE: To use rlgl as standalone lib, just uncomment this line
-
-#ifndef RLGL_STANDALONE
-    #include "raylib.h"         // Required for: Model, Shader, Texture2D
-    #include "utils.h"          // Required for: TraceLog()
-#endif
-
-#ifdef RLGL_STANDALONE
+#if defined(RLGL_STANDALONE)
     #define RAYMATH_STANDALONE
+#else
+    #include "raylib.h"         // Required for: Model, Shader, Texture2D, TraceLog()
 #endif
 
 #include "raymath.h"            // Required for: Vector3, Matrix
-
-// Select desired OpenGL version
-// NOTE: Those preprocessor defines are only used on rlgl module,
-// if OpenGL version is required by any other module, it uses rlGetVersion()
-
-// Choose opengl version here or just define it at compile time: -DGRAPHICS_API_OPENGL_33
-//#define GRAPHICS_API_OPENGL_11     // Only available on PLATFORM_DESKTOP
-//#define GRAPHICS_API_OPENGL_33     // Only available on PLATFORM_DESKTOP and RLGL_OCULUS_SUPPORT
-//#define GRAPHICS_API_OPENGL_ES2    // Only available on PLATFORM_ANDROID or PLATFORM_RPI or PLATFORM_WEB
 
 // Security check in case no GRAPHICS_API_OPENGL_* defined
 #if !defined(GRAPHICS_API_OPENGL_11) && !defined(GRAPHICS_API_OPENGL_21) && !defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_ES2)
@@ -124,14 +123,20 @@
 #define RL_WRAP_CLAMP                   0x812F      // GL_CLAMP_TO_EDGE
 #define RL_WRAP_CLAMP_MIRROR            0x8742      // GL_MIRROR_CLAMP_EXT
 
+// Matrix modes (equivalent to OpenGL)
+#define RL_MODELVIEW                    0x1700      // GL_MODELVIEW 
+#define RL_PROJECTION                   0x1701      // GL_PROJECTION
+#define RL_TEXTURE                      0x1702      // GL_TEXTURE
+
+// Primitive assembly draw modes
+#define RL_LINES                        0x0001      // GL_LINES
+#define RL_TRIANGLES                    0x0004      // GL_TRIANGLES
+#define RL_QUADS                        0x0007      // GL_QUADS
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef enum { OPENGL_11 = 1, OPENGL_21, OPENGL_33, OPENGL_ES_20 } GlVersion;
-
-typedef enum { RL_PROJECTION, RL_MODELVIEW, RL_TEXTURE } MatrixMode;
-
-typedef enum { RL_LINES, RL_TRIANGLES, RL_QUADS } DrawMode;
 
 typedef unsigned char byte;
 
@@ -148,28 +153,23 @@ typedef unsigned char byte;
         unsigned char b;
         unsigned char a;
     } Color;
+    
+    // Texture2D type
+    // NOTE: Data stored in GPU memory
+    typedef struct Texture2D {
+        unsigned int id;        // OpenGL texture id
+        int width;              // Texture base width
+        int height;             // Texture base height
+        int mipmaps;            // Mipmap levels, 1 by default
+        int format;             // Data format (TextureFormat)
+    } Texture2D;
 
-    // Texture formats (support depends on OpenGL version)
-    typedef enum {
-        UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
-        UNCOMPRESSED_GRAY_ALPHA,
-        UNCOMPRESSED_R5G6B5,            // 16 bpp
-        UNCOMPRESSED_R8G8B8,            // 24 bpp
-        UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
-        UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
-        UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-        COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
-        COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
-        COMPRESSED_DXT3_RGBA,           // 8 bpp
-        COMPRESSED_DXT5_RGBA,           // 8 bpp
-        COMPRESSED_ETC1_RGB,            // 4 bpp
-        COMPRESSED_ETC2_RGB,            // 4 bpp
-        COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
-        COMPRESSED_PVRT_RGB,            // 4 bpp
-        COMPRESSED_PVRT_RGBA,           // 4 bpp
-        COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-        COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
-    } TextureFormat;
+    // RenderTexture2D type, for texture rendering
+    typedef struct RenderTexture2D {
+        unsigned int id;        // Render texture (fbo) id
+        Texture2D texture;      // Color buffer attachment texture
+        Texture2D depth;        // Depth buffer attachment texture
+    } RenderTexture2D;
 
     // Vertex data definning a mesh
     typedef struct Mesh {
@@ -211,23 +211,6 @@ typedef unsigned char byte;
         int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
     } Shader;
 
-    // Texture2D type
-    // NOTE: Data stored in GPU memory
-    typedef struct Texture2D {
-        unsigned int id;        // OpenGL texture id
-        int width;              // Texture base width
-        int height;             // Texture base height
-        int mipmaps;            // Mipmap levels, 1 by default
-        int format;             // Data format (TextureFormat)
-    } Texture2D;
-
-    // RenderTexture2D type, for texture rendering
-    typedef struct RenderTexture2D {
-        unsigned int id;        // Render texture (fbo) id
-        Texture2D texture;      // Color buffer attachment texture
-        Texture2D depth;        // Depth buffer attachment texture
-    } RenderTexture2D;
-
     // Material type
     typedef struct Material {
         Shader shader;          // Standard shader (supports 3 map types: diffuse, normal, specular)
@@ -250,6 +233,38 @@ typedef unsigned char byte;
         Vector3 up;             // Camera up vector (rotation over its axis)
         float fovy;             // Camera field-of-view apperture in Y (degrees)
     } Camera;
+    
+    // TraceLog message types
+    typedef enum { 
+        INFO = 0, 
+        ERROR, 
+        WARNING, 
+        DEBUG, 
+        OTHER 
+    } TraceLogType;
+    
+    // Texture formats (support depends on OpenGL version)
+    typedef enum {
+        UNCOMPRESSED_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
+        UNCOMPRESSED_GRAY_ALPHA,
+        UNCOMPRESSED_R5G6B5,            // 16 bpp
+        UNCOMPRESSED_R8G8B8,            // 24 bpp
+        UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
+        UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
+        UNCOMPRESSED_R8G8B8A8,          // 32 bpp
+        UNCOMPRESSED_R32G32B32,         // 32 bit per channel (float) - HDR
+        COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
+        COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
+        COMPRESSED_DXT3_RGBA,           // 8 bpp
+        COMPRESSED_DXT5_RGBA,           // 8 bpp
+        COMPRESSED_ETC1_RGB,            // 4 bpp
+        COMPRESSED_ETC2_RGB,            // 4 bpp
+        COMPRESSED_ETC2_EAC_RGBA,       // 8 bpp
+        COMPRESSED_PVRT_RGB,            // 4 bpp
+        COMPRESSED_PVRT_RGBA,           // 4 bpp
+        COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
+        COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
+    } TextureFormat;
 
     // Texture parameters: filter mode
     // NOTE 1: Filtering considers mipmaps if available in the texture
@@ -264,13 +279,18 @@ typedef unsigned char byte;
     } TextureFilterMode;
     
     // Texture parameters: wrap mode
-    typedef enum { WRAP_REPEAT = 0, WRAP_CLAMP, WRAP_MIRROR } TextureWrapMode;
+    typedef enum { 
+        WRAP_REPEAT = 0, 
+        WRAP_CLAMP, 
+        WRAP_MIRROR 
+    } TextureWrapMode;
 
     // Color blending modes (pre-defined)
-    typedef enum { BLEND_ALPHA = 0, BLEND_ADDITIVE, BLEND_MULTIPLIED } BlendMode;
-
-    // TraceLog message types
-    typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
+    typedef enum { 
+        BLEND_ALPHA = 0, 
+        BLEND_ADDITIVE, 
+        BLEND_MULTIPLIED 
+    } BlendMode;
 
     // VR Head Mounted Display devices
     typedef enum {
@@ -349,7 +369,7 @@ void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
-unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount);    // Load texture in GPU
+unsigned int rlglLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU
 RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
 void rlglUpdateTexture(unsigned int id, int width, int height, int format, const void *data);         // Update GPU texture with new data
 void rlglGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
@@ -399,19 +419,12 @@ void EndBlendMode(void);                                            // End blend
 void TraceLog(int msgType, const char *text, ...);
 float *MatrixToFloat(Matrix mat);
 
-void InitVrDevice(int vrDevice);            // Init VR device
-void CloseVrDevice(void);                   // Close VR device
-bool IsVrDeviceReady(void);                 // Detect if VR device is ready
-bool IsVrSimulator(void);                   // Detect if VR simulator is running
+void InitVrSimulator(int vrDevice);         // Init VR simulator for selected device
+void CloseVrSimulator(void);                // Close VR simulator for current device
 void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
-
-// Oculus Rift API for direct access the device (no simulator)
-bool InitOculusDevice(void);                // Initialize Oculus device (returns true if success)
-void CloseOculusDevice(void);               // Close Oculus device
-void UpdateOculusTracking(Camera *camera);  // Update Oculus head position-orientation tracking (and camera)
-void BeginOculusDrawing(void);              // Setup Oculus buffers for drawing
-void EndOculusDrawing(void);                // Finish Oculus drawing and blit framebuffer to mirror
+void BeginVrDrawing(void);                  // Begin VR stereo rendering
+void EndVrDrawing(void);                    // End VR stereo rendering
 #endif
 
 #ifdef __cplusplus

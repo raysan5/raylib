@@ -19,20 +19,20 @@
     void DrawRay(Ray ray, Color color);                                                                 // Draw a ray line
     void DrawGrid(int slices, float spacing);                                                           // Draw a grid (centered at (0, 0, 0))
     void DrawGizmo(Vector3 position);                                                                   // Draw simple gizmo
-    void DrawLight(Light light);                                                                        // Draw light in 3D world
 
     // Model loading/unloading functions
-    Model LoadModel(const char *fileName);                                                              // Load a 3d model (.OBJ)
-    Model LoadModelEx(Mesh data, bool dynamic);                                                         // Load a 3d model (from mesh data)
-    Model LoadModelFromRES(const char *rresName, int resId);                                            // Load a 3d model from rRES file (raylib Resource)
-    Model LoadHeightmap(Image heightmap, Vector3 size);                                                 // Load a heightmap image as a 3d model
-    Model LoadCubicmap(Image cubicmap);                                                                 // Load a map image as a 3d model (cubes based)
-    void UnloadModel(Model model);                                                                      // Unload 3d model from memory
+    Mesh LoadMesh(const char *fileName);                                                                // Load mesh from file
+    Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData);           // Load mesh from vertex data
+    Model LoadModel(const char *fileName);                                                              // Load model from file
+    Model LoadModelFromMesh(Mesh data, bool dynamic);                                                   // Load model from mesh data
+    Model LoadHeightmap(Image heightmap, Vector3 size);                                                 // Load heightmap model from image data
+    Model LoadCubicmap(Image cubicmap);                                                                 // Load cubes-based map model from image data
+    void UnloadMesh(Mesh *mesh);                                                                        // Unload mesh from memory (RAM and/or VRAM)
+    void UnloadModel(Model model);                                                                      // Unload model from memory (RAM and/or VRAM)
 
     // Material loading/unloading functions
     Material LoadMaterial(const char *fileName);                                                        // Load material data (from file)
     Material LoadDefaultMaterial(void);                                                                 // Load default material (uses default models shader)
-    Material LoadStandardMaterial(void);                                                                // Load standard material (uses material attributes and lighting shader)
     void UnloadMaterial(Material material);                                                             // Unload material textures from VRAM
 
     // Model drawing functions
@@ -55,4 +55,7 @@
     bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadius, Vector3 *collisionPoint);   // Detect collision between ray and sphere ex.
     bool CheckCollisionRayBox(Ray ray, Vector3 minBBox, Vector3 maxBBox);                                           // Detect collision between ray and box
     BoundingBox CalculateBoundingBox(Mesh mesh);                                                                    // Calculate mesh bounding box limits
+    RayHitInfo GetCollisionRayMesh(Ray ray, Mesh *mesh);                                                // Get collision info between ray and mesh
+    RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3);                    // Get collision info between ray and triangle
+    RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight);                                      // Get collision info between ray and ground plane (Y-normal plane)
     

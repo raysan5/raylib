@@ -7,7 +7,7 @@
 *   The level is actually the wave and the wave is the level!
 *   Be fast! Be smart! Be the best wave collector!
 *
-*   This game has been created using raylib (www.raylib.com)
+*   This game has been created using raylib v1.7 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
 *   Copyright (c) 2017 Ramon Santamaria (@raysan5)
@@ -18,6 +18,9 @@
 #include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
 
 #include <stdlib.h>
+
+#include <stdio.h>              // Required for: printf()
+#include <string.h>             // Required for: strcpy()
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -42,14 +45,13 @@ static int transToScreen = -1;
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
+static void ChangeToScreen(int screen);     // No transition effect
+
 static void TransitionToScreen(int screen);
-static void ChangeToScreen(int screen);    // No transition effect
 static void UpdateTransition(void);
 static void DrawTransition(void);
 
-static void UpdateDrawFrame(void);         // Update and Draw one frame
-
-//static const char *GetExtension(const char *fileName);
+static void UpdateDrawFrame(void);          // Update and Draw one frame
 
 //----------------------------------------------------------------------------------
 // Main entry point
@@ -58,20 +60,27 @@ int main(int argc, char *argv[])
 {
 	// Initialization
 	//---------------------------------------------------------
-    /*
 #if !defined(PLATFORM_WEB)
-    // TODO: Add support for dropped files on the exe
-    sampleFilename = (char *)malloc(256);
+    // TODO: Support for dropped files on the exe
+    
+    // Support command line argument for custom music file
     if (argc > 1)
     {
-        if ((strcmp(GetExtension(argv[1]), "ogg") == 0) ||
-            (strcmp(GetExtension(argv[1]), "wav") == 0))
+        // Just supporting an input argument parameter!!! o__O
+        
+        if ((IsFileExtension(argv[1], ".ogg")) ||
+            (IsFileExtension(argv[1], ".wav")))
         {
+            if (sampleFilename != NULL) free(sampleFilename);
+            
+            sampleFilename = (char *)malloc(256);
             strcpy(sampleFilename, argv[1]);
+            
+            printf("Custom audio file: %s", sampleFilename);
         }
     }
 #endif
-    */
+
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "GGJ17 - WAVE COLLECTOR");
 
@@ -130,18 +139,8 @@ int main(int argc, char *argv[])
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
-// Define transition to next screen
-static void TransitionToScreen(int screen)
-{
-    onTransition = true;
-    transFadeOut = false;
-    transFromScreen = currentScreen;
-    transToScreen = screen;
-    transAlpha = 0.0f;
-}
-
 // Change to next screen, no transition
-void ChangeToScreen(int screen)
+static void ChangeToScreen(int screen)
 {
     // Unload current screen
     switch (currentScreen)
@@ -166,8 +165,18 @@ void ChangeToScreen(int screen)
     currentScreen = screen;
 }
 
+// Define transition to next screen
+static void TransitionToScreen(int screen)
+{
+    onTransition = true;
+    transFadeOut = false;
+    transFromScreen = currentScreen;
+    transToScreen = screen;
+    transAlpha = 0.0f;
+}
+
 // Update transition effect
-void UpdateTransition(void)
+static void UpdateTransition(void)
 {
     if (!transFadeOut)
     {
@@ -175,7 +184,7 @@ void UpdateTransition(void)
         
         // NOTE: Due to float internal representation, condition jumps on 1.0f instead of 1.05f
         // For that reason we compare against 1.01f, to avoid last frame loading stop
-        if (transAlpha > 1.01f)
+        if ((int)transAlpha >= 1)
         {
             transAlpha = 1.0f;
         
@@ -209,7 +218,7 @@ void UpdateTransition(void)
     {
         transAlpha -= 0.05f;
         
-        if (transAlpha <= 0.0f)
+        if ((int)transAlpha <= 0)
         {
             transAlpha = 0.0f;
             transFadeOut = false;
@@ -221,13 +230,13 @@ void UpdateTransition(void)
 }
 
 // Draw transition effect (full-screen rectangle)
-void DrawTransition(void)
+static void DrawTransition(void)
 {
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, transAlpha));
 }
 
 // Update and draw game frame
-void UpdateDrawFrame(void)
+static void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
@@ -250,7 +259,7 @@ void UpdateDrawFrame(void)
 
             } break;
             case GAMEPLAY:
-            { 
+            {
                 UpdateGameplayScreen();
                 
                 if (FinishGameplayScreen() == 1) TransitionToScreen(ENDING);
@@ -291,20 +300,6 @@ void UpdateDrawFrame(void)
         // Draw full screen rectangle in front of everything
         if (onTransition) DrawTransition();
     
-        //DrawFPS(10, 10);
-    
     EndDrawing();
     //----------------------------------------------------------------------------------
 }
-
-/*
-#if !defined(PLATFORM_WEB)
-// Get the extension for a filename
-static const char *GetExtension(const char *fileName)
-{
-    const char *dot = strrchr(fileName, '.');
-    if (!dot || dot == fileName) return "";
-    return (dot + 1);
-}
-#endif
-*/

@@ -4,22 +4,28 @@
 *
 *   CONFIGURATION:
 *
-*   #define SUPPORT_SAVE_PNG
-*       Enable saving PNG fileformat
+*   #define SUPPORT_SAVE_PNG (defined by default)
+*       Support saving image data as PNG fileformat
 *       NOTE: Requires stb_image_write library
 *
 *   #define SUPPORT_SAVE_BMP
+*       Support saving image data as BMP fileformat
+*       NOTE: Requires stb_image_write library
 *
-*   #define DO_NOT_TRACE_DEBUG_MSGS
-*       Avoid showing DEBUG TraceLog() messages
+*   #define SUPPORT_TRACELOG
+*       Show TraceLog() output messages
+*       NOTE: By default DEBUG traces not shown
+*
+*   #define SUPPORT_TRACELOG_DEBUG
+*       Show TraceLog() DEBUG messages
 *
 *   DEPENDENCIES:
-*       stb_image_write - PNG writting functions
+*       stb_image_write - BMP/PNG writting functions
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -37,6 +43,9 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
+
+#define SUPPORT_TRACELOG            // Output tracelog messages
+//#define SUPPORT_TRACELOG_DEBUG     // Avoid DEBUG messages tracing
 
 #include "utils.h"
 
@@ -59,9 +68,6 @@
 #define RRES_IMPLEMENTATION
 #include "rres.h"
 
-//#define NO_TRACELOG                 // Avoid TraceLog() output (any type)
-#define DO_NOT_TRACE_DEBUG_MSGS     // Avoid DEBUG messages tracing
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -82,15 +88,16 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
-// Outputs a trace log message
+
+// Output trace log messages
 void TraceLog(int msgType, const char *text, ...)
 {
-#if !defined(NO_TRACELOG)
+#if defined(SUPPORT_TRACELOG)
     static char buffer[128];
-    int traceDebugMsgs = 1;
+    int traceDebugMsgs = 0;
     
-#ifdef DO_NOT_TRACE_DEBUG_MSGS
-    traceDebugMsgs = 0;
+#if defined(SUPPORT_TRACELOG_DEBUG)
+    traceDebugMsgs = 1;
 #endif
 
     switch(msgType)
@@ -125,22 +132,37 @@ void TraceLog(int msgType, const char *text, ...)
 
     if (msgType == ERROR) exit(1);  // If ERROR message, exit program
     
-#endif  // NO_TRACELOG
+#endif  // SUPPORT_TRACELOG
 }
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+
+#if defined(SUPPORT_SAVE_BMP)
 // Creates a BMP image file from an array of pixel data
 void SaveBMP(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
     stbi_write_bmp(fileName, width, height, compSize, imgData);
 }
+#endif
 
+#if defined(SUPPORT_SAVE_PNG)
 // Creates a PNG image file from an array of pixel data
 void SavePNG(const char *fileName, unsigned char *imgData, int width, int height, int compSize)
 {
     stbi_write_png(fileName, width, height, compSize, imgData, width*compSize);
 }
 #endif
+#endif
+
+// Keep track of memory allocated
+// NOTE: mallocType defines the type of data allocated
+/*
+void RecordMalloc(int mallocType, int mallocSize, const char *msg)
+{
+    // TODO: Investigate how to record memory allocation data...
+    // Maybe creating my own malloc function...
+}
+*/
 
 #if defined(PLATFORM_ANDROID)
 // Initialize asset manager from android app
@@ -161,24 +183,6 @@ FILE *android_fopen(const char *fileName, const char *mode)
     return funopen(asset, android_read, android_write, android_seek, android_close);
 }
 #endif
-
-// Keep track of memory allocated
-// NOTE: mallocType defines the type of data allocated
-/*
-void RecordMalloc(int mallocType, int mallocSize, const char *msg)
-{
-    // TODO: Investigate how to record memory allocation data...
-    // Maybe creating my own malloc function...
-}
-*/
-
-// Get the extension for a filename
-const char *GetExtension(const char *fileName)
-{
-    const char *dot = strrchr(fileName, '.');
-    if (!dot || dot == fileName) return "";
-    return (dot + 1);
-}
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition

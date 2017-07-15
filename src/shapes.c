@@ -13,7 +13,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -57,7 +57,7 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-// No private (static) functions in this module (.c file)
+static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic easing
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -101,6 +101,64 @@ void DrawLineV(Vector2 startPos, Vector2 endPos, Color color)
         rlVertex2f(startPos.x, startPos.y);
         rlVertex2f(endPos.x, endPos.y);
     rlEnd();
+}
+
+// Draw a line defining thickness
+void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
+{
+    if (startPos.x > endPos.x)
+    {
+        Vector2 tempPos = startPos;
+        startPos = endPos;
+        endPos = tempPos;
+    }
+    
+    float dx = endPos.x - startPos.x;
+    float dy = endPos.y - startPos.y;
+    
+    float d = sqrtf(dx*dx + dy*dy);
+    float angle = asinf(dy/d);
+    
+    rlEnableTexture(GetDefaultTexture().id);
+
+    rlPushMatrix();
+        rlTranslatef((float)startPos.x, (float)startPos.y, 0);
+        rlRotatef(-RAD2DEG*angle, 0, 0, 1);
+        rlTranslatef(0, -thick/2.0f, 0);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            rlVertex2f(0.0f, 0.0f);
+            rlVertex2f(0.0f, thick);
+            rlVertex2f(d, thick);
+            rlVertex2f(d, 0.0f);
+        rlEnd();
+    rlPopMatrix();
+
+    rlDisableTexture();
+}
+
+// Draw line using cubic-bezier curves in-out
+void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
+{
+    #define LINE_DIVISIONS         24   // Bezier line divisions
+
+    Vector2 previous = startPos;
+    Vector2 current;
+
+    for (int i = 1; i <= LINE_DIVISIONS; i++)
+    {
+        // Cubic easing in-out
+        // NOTE: Easing is calcutated only for y position value 
+        current.y = EaseCubicInOut(i, startPos.y, endPos.y - startPos.y, LINE_DIVISIONS);
+        current.x = previous.x + (endPos.x - startPos.x)/LINE_DIVISIONS;
+        
+        DrawLineEx(previous, current, thick, color);
+        
+        previous = current;
+    }
 }
 
 // Draw a color-filled circle
@@ -559,4 +617,16 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
     }
 
     return retRec;
+}
+
+//----------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------
+
+// Cubic easing in-out 
+// NOTE: Required for DrawLineBezier()
+static float EaseCubicInOut(float t, float b, float c, float d) 
+{ 
+    if ((t/=d/2) < 1) return (c/2*t*t*t + b);
+    return (c/2*((t-=2)*t*t + 2) + b);
 }

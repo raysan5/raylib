@@ -4,7 +4,7 @@
 *
 *   Ending Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -77,12 +77,12 @@ void DrawEndingScreen(void)
     if (endingStatus == 1)          // Win
     {
         DrawTexture(texWin, GetScreenWidth()/2 - texWin.width/2, 90, WHITE);
-        DrawTextEx(font, "congrats, you got the wave!", (Vector2){ 200, 335 }, font.size, 0, WHITE);
+        DrawTextEx(font, "congrats, you got the wave!", (Vector2){ 200, 335 }, font.baseSize, 0, WHITE);
     }
     else if (endingStatus == 2)     // Lose
     {
         DrawTexture(texLose, GetScreenWidth()/2 - texWin.width/2, 90, WHITE);
-        DrawTextEx(font, "it seems you lose the wave...", (Vector2){ 205, 335 }, font.size, 0, WHITE);
+        DrawTextEx(font, "it seems you lose the wave...", (Vector2){ 205, 335 }, font.baseSize, 0, WHITE);
     }
     
     DrawRectangle(0, GetScreenHeight() - 70, 560, 40, Fade(RAYWHITE, 0.8f));
@@ -91,7 +91,7 @@ void DrawEndingScreen(void)
     DrawText("powered by", GetScreenWidth() - 162, GetScreenHeight() - 190, 20, DARKGRAY);
     DrawTexture(texLogo, GetScreenWidth() - 128 - 34, GetScreenHeight() - 128 - 36, WHITE);
     
-    if ((framesCounter > 80) && ((framesCounter/40)%2)) DrawTextEx(font, "mouse click to return", (Vector2){ 300, 464 }, font.size, 0, SKYBLUE);
+    if ((framesCounter > 80) && ((framesCounter/40)%2)) DrawTextEx(font, "mouse click to return", (Vector2){ 300, 464 }, font.baseSize, 0, SKYBLUE);
 }
 
 // Ending Screen Unload logic

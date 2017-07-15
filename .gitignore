@@ -3,6 +3,8 @@
 
 # Ignore VIM's backup generated files
 *.swp
+*.swo
+*~
 
 # Ignore Android generated files and folders
 src_android/obj/
@@ -40,6 +42,7 @@ Thumbs.db
 *.sbr
 *.sdf
 obj/
+# [Rr]elease/
 [Rr]elease.win32/
 _ReSharper*/
 [Tt]est[Rr]esult*
@@ -62,6 +65,17 @@ examples/*
 # Unignore examples Makefile
 !examples/Makefile
 
+# Ignore all games files
+games/*
+# Unignore all games dirs
+!games/*/
+# Unignore all games files with extension
+!games/*.c
+!games/*.lua
+!games/*.png
+# Unignore games makefile
+!games/Makefile
+
 # Ignore files build by xcode
 *.mode*v*
 *.pbxuser
@@ -76,14 +90,10 @@ xcschememanagement.plist
 xcuserdata/
 DerivedData/
 *.dll
-src/libraylib.a
-src/libraylib.bc
 
 # external libraries DLLs
 !src/external/glfw3/lib/win32/glfw3.dll
 !src/external/openal_soft/lib/win32/OpenAL32.dll
-!src/external/OculusSDK/LibOVR/LibOVRRT32_1.dll
-!src/external/pthread/lib/pthreadGC2.dll
 
 # Visual Studio project
 project/vs2015/*.db
@@ -95,4 +105,26 @@ project/vs2015/*.opendb
 !project/vs2015/external/openal_soft/lib/win32/OpenAL32.dll
 !project/vs2015/external/openal_soft/lib/win64/OpenAL32.dll
 !project/vs2015/external/lua/lib/win32/lua53.dll
+
+# Web examples 
+docs/examples/web/*.html
+docs/examples/web/*/*.html
+!docs/examples/web/loader.html
+!docs/examples/web/core/loader.html
+!docs/examples/web/shapes/loader.html
+!docs/examples/web/text/loader.html
+!docs/examples/web/textures/loader.html
+!docs/examples/web/audio/loader.html
+!docs/examples/web/physac/loader.html
+!docs/examples/web/shaders/loader.html
+!docs/examples/web/models/loader.html
+
+# raylib release libs
+src/libraylib.a
+src/libraylib.bc
+!release/android/armeabi-v7a/libraylib.a
+!release/android/armeabi-v7a/libraylib.so
+!release/linux/libraylib.a
+!release/linux/libraylib.so
+!release/rpi/libraylib.a
 

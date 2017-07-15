@@ -4,7 +4,7 @@
 *
 *   Level02 Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -154,17 +154,4 @@ void UnloadLevel02Screen(void)
 int FinishLevel02Screen(void)
 {
     return finishScreen;
-}
-
-// Calculate distance between two points
-float Vector2Distance(Vector2 v1, Vector2 v2)
-{
-    float result;
-
-    float dx = v2.x - v1.x;
-    float dy = v2.y - v1.y;
-
-    result = sqrt(dx*dx + dy*dy);
-
-    return result;
 }

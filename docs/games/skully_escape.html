@@ -4,28 +4,28 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
-    <title>King GameJam - Skully Escape</title>
+    <title>raylib HTML5 GAME</title>
     
-    <meta name="title" content="Skully Escape">
-    <meta name="description" content="Skully Escape, new raylib videogame, developed during the King GameJam in Barcelona">
-    <meta name="keywords" content="skully, raylib, gamejam, King, programming, C, C++, library, learn, videogames">
+    <meta name="title" content="raylib HTML5 GAME">
+    <meta name="description" content="New HTML5 videogame, developed using raylib videogames library">
+    <meta name="keywords" content="raylib, games, html5, programming, C, C++, library, learn, videogames">
     <meta name="viewport" content="width=device-width">
     
     <!-- Facebook metatags for sharing -->
-    <meta property="og:title" content="Skully Escape">
+    <meta property="og:title" content="raylib HTML5 GAME">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:image" content="http://www.raylib.com/img/raylib_logo.png">
-    <meta property="og:image" content="http://www.raylib.com/img/raylib_logo.png">
-    <meta property="og:url" content="http://www.raylib.com/games/skully_escape.png">
+    <meta property="og:image" content="http://www.raylib.com/common/img/raylib_logo.png">
+    <meta property="og:image" content="http://www.raylib.com/common/img/raylib_logo.png">
+    <meta property="og:url" content="http://www.raylib.com/games">
     <meta property="og:site_name" content="raylib.com">
-    <meta property="og:description" content="Skully Escape, new raylib videogame, developed during the King GameJam in Barcelona">
+    <meta property="og:description" content="New hmtl5 videogame, developed using raylib videogames library">
 
     <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@emegemegames">
-    <meta name="twitter:title" content="Koala Seasons">
-    <meta name="twitter:description" content="Skully Escape, new raylib videogame, developed during the King GameJam in Barcelona">
-    <meta name="twitter:image" content="http://www.raylib.com/img/raylib_logo.png">
-    <meta name="twitter:url" content="http://www.raylib.com/img/raylib_logo.png">
+    <meta name="twitter:title" content="raylib HTML5 GAME">
+    <meta name="twitter:description" content="New HTML5 videogame, developed using raylib videogames library">
+    <meta name="twitter:image" content="http://www.raylib.com/common/img/raylib_logo.png">
+    <meta name="twitter:url" content="http://www.raylib.com/common/img/raylib_logo.png">
     
     <!--<link rel="stylesheet" href="./Koala Seasons by emegeme_files/main.css">-->
     <link rel="shortcut icon" href="http://www.raylib.com/favicon.ico">
@@ -51,18 +51,19 @@
         margin:10px; 
         background-image:url(http://www.raylib.com/common/img/raylib_logo_64x64.png);
       }
-
+      
       .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
       div.emscripten { text-align: center; }      
       div.emscripten_border { border: 1px solid black; }
+      
       /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten { border: 0px none; }
-
+      canvas.emscripten { border: 0px none; background: black; }
+      
       #emscripten_logo {
         display: inline-block;
         margin: 0;
       }
-
+      
       .spinner {
         height: 30px;
         width: 30px;
@@ -71,21 +72,18 @@
         margin-left: 20px;
         display: inline-block;
         vertical-align: top;
-
         -webkit-animation: rotation .8s linear infinite;
         -moz-animation: rotation .8s linear infinite;
         -o-animation: rotation .8s linear infinite;
         animation: rotation 0.8s linear infinite;
-
-        border-left: 5px solid rgb(235, 235, 235);
-        border-right: 5px solid rgb(235, 235, 235);
-        border-bottom: 5px solid rgb(235, 235, 235);
-        border-top: 5px solid rgb(120, 120, 120);
+        border-left: 5px solid black;
+        border-right: 5px solid black;
+        border-bottom: 5px solid black;
+        border-top: 5px solid red;
         
         border-radius: 100%;
-        background-color: rgb(189, 215, 46);
+        background-color: rgb(245, 245, 245);
       }
-
       @-webkit-keyframes rotation {
         from {-webkit-transform: rotate(0deg);}
         to {-webkit-transform: rotate(360deg);}
@@ -102,21 +100,21 @@
         from {transform: rotate(0deg);}
         to {transform: rotate(360deg);}
       }
-
+      
       #status {
         display: inline-block;
         vertical-align: top;
         margin-top: 30px;
         margin-left: 20px;
         font-weight: bold;
-        color: rgb(120, 120, 120);
+        color: rgb(40, 40, 40);
       }
-
+      
       #progress {
         height: 20px;
         width: 30px;
       }
-
+      
       #controls {
         display: inline-block;
         float: right;
@@ -124,15 +122,15 @@
         margin-top: 30px;
         margin-right: 20px;
       }
-
+      
       #output {
         width: 100%;
-        height: 200px;
+        height: 140px;
         margin: 0 auto;
         margin-top: 10px;
         display: block;
         background-color: black;
-        color: white;
+        color: rgb(37, 174, 38);
         font-family: 'Lucida Console', Monaco, monospace;
         outline: none;
       }
@@ -146,7 +144,7 @@
         <div class="emscripten" id="status">Downloading...</div>
 
         <span id='controls'>
-          <span><input type="button" value="Fullscreen" onclick="Module.requestFullScreen(false, false)"></span>
+          <span><input type="button" value="Fullscreen" onclick="Module.requestFullscreen(false, false)"></span>
         </span>
 
         <div class="emscripten">
@@ -164,7 +162,6 @@
       var statusElement = document.getElementById('status');
       var progressElement = document.getElementById('progress');
       var spinnerElement = document.getElementById('spinner');
-
       var Module = {
         preRun: [],
         postRun: [],
@@ -195,12 +192,10 @@
         },
         canvas: (function() {
           var canvas = document.getElementById('canvas');
-
           // As a default initial behavior, pop up an alert when webgl context is lost. To make your
           // application robust, you may want to override this behavior before shipping!
           // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
           canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
-
           return canvas;
         })(),
         setStatus: function(text) {
@@ -240,17 +235,5 @@
       };
     </script>
     <script async type="text/javascript" src="skully_escape.js"></script>
-    
-    <!-- Google Analytics tracking code -->
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','http://www.google-analytics.com/analytics.js','ga');
-
-        ga('create', 'UA-45733555-1', 'raylib.com');
-        ga('require', 'linkid', 'linkid.js');
-        ga('send', 'pageview');
-    </script>
   </body>
 </html>

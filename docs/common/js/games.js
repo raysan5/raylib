@@ -14,14 +14,12 @@ $(document).ready(function() {
         'sample_space_invaders',
         'sample_floppy',
         'sample_tetris',
-        'sample_gold_fever',
-        'sample_doom',
-        'game_raylib_features',
         'game_drturtle',
         'game_just_do',
         'game_skully_escape',
         'game_koala_seasons',
         'game_light_my_ritual',
+        'game_wave_collector',
         'user_raymario',    
         'user_crazyball',
         'user_tictactoe',
@@ -40,14 +38,12 @@ $(document).ready(function() {
         'space invaders',
         'floppy',
         'tetris',
-        'gold fever',
-        'doom',
-        'raylib Features DEMO',
         'Dr Turtle & Mr Gamera',
         'JUST DO',
         'Skully Escape',
         'Koala Seasons',
         'LIGHT MY RITUAL',
+        'Wave Collector',
         'RayMario (Victor Fisac)',    
         'CrazyBall (Victor Fisac)',
         'Tic-Tac-Toe (LelixSuper)',
@@ -83,8 +79,6 @@ $(document).ready(function() {
             */
         }
         
-        if (exampleName[i] == 'game_koala_seasons') linkTag = '<a target="_blank" href="http://www.koalaseasons.com" title="' + exampleDesc[i] + '">';
-
         $('#container').append(
             '<div class="mix f' + filterType + '">' + linkTag +
             '<img width="400" height="225" src="../games/img/' + exampleName[i] + '.png"><div class="extext"><p>' + exampleDesc[i] + '</p></div></a>' +

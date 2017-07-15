@@ -1,19 +1,17 @@
 #**************************************************************************************************
 #
-#   raylib - Simple Game
+#   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
 #
-#   makefile to compile simple game for desktop platforms, Raspberry Pi and HTML5 (emscripten)
+#   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
 #
-#   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
-#    
-#   This software is provided "as-is", without any express or implied warranty. In no event 
+#   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
 #
-#   Permission is granted to anyone to use this software for any purpose, including commercial 
+#   Permission is granted to anyone to use this software for any purpose, including commercial
 #   applications, and to alter it and redistribute it freely, subject to the following restrictions:
 #
-#     1. The origin of this software must not be misrepresented; you must not claim that you 
-#     wrote the original software. If you use this software in a product, an acknowledgment 
+#     1. The origin of this software must not be misrepresented; you must not claim that you
+#     wrote the original software. If you use this software in a product, an acknowledgment
 #     in the product documentation would be appreciated but is not required.
 #
 #     2. Altered source versions must be plainly marked as such, and must not be misrepresented
@@ -29,6 +27,16 @@
 # possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
+
+# define NO to use OpenAL Soft as static library (shared by default)
+SHARED_OPENAL ?= NO
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    SHARED_OPENAL = NO
+endif
+
+# define raylib directory for include and library
+RAYLIB_PATH ?= C:\raylib\raylib
 
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -65,61 +73,96 @@ endif
 endif
 
 # define compiler flags:
-#  -O2         defines optimization level
-#  -Wall       turns on most, but not all, compiler warnings
-#  -std=c99    use standard C from 1999 revision
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS = -O2 -Wall -std=gnu99 -fgnu89-inline
-else
-    CFLAGS = -O2 -Wall -std=c99
+#  -O2                  defines optimization level
+#  -Og                  enable debugging
+#  -s                   strip unnecessary data from build
+#  -Wall                turns on most, but not all, compiler warnings
+#  -std=c99             defines C language mode (standard C from 1999 revision)
+#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline       declaring inline functions support (GCC optimized)
+#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        CFLAGS = -O2 -s -Wall -std=c99
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        CFLAGS = -O2 -s -Wall -std=c99 -D_DEFAULT_SOURCE
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        CFLAGS = -O2 -s -Wall -std=c99
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    CFLAGS = -O1 -Wall -std=c99 -s USE_GLFW=3 --preload-file resources --shell-file ../../templates/web_shell/shell.html
-    #-s ASSERTIONS=1            # to check for memory allocation errors (-O1 disables it)
-    #-s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
-    #-s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
+    CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 -s TOTAL_MEMORY=67108864 --profiling --preload-file resources
+    # -O2                         # if used, also set --memory-init-file 0
+    # --memory-init-file 0        # to avoid an external memory initialization code file (.mem)
+    # -s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
+    # -s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
+    # --preload-file file.res     # embbed file.res resource into .data file
 endif
-
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    CFLAGS = -O2 -s -Wall -std=gnu99 -fgnu89-inline
+endif
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
 
-# define any directories containing required header files
+# define raylib release directory for compiled library
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/win32/mingw32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/osx
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/html5
+endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES = -I. -I../../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/rpi
+endif
+
+# define any directories containing required header files
+INCLUDES = -I. -I$(RAYLIB_RELEASE) -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external 
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),LINUX)
-        INCLUDES = -I. -I../src -I/usr/local/include/raylib/
-    else
-        INCLUDES = -I. -I../../src -IC:/raylib/raylib/src
+    ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries headers
         # GLFW3
-            INCLUDES += -I../../external/glfw3/include
+            INCLUDES += -I$(RAYLIB_PATH)/src/external/glfw3/include
         # OpenAL Soft
-            INCLUDES += -I../../external/openal_soft/include
+            INCLUDES += -I$(RAYLIB_PATH)/src/external/openal_soft/include
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # you may optionally create this directory and install raylib 
+        # and related headers there. Edit ../src/Makefile appropriately.
+            INCLUDES += -I/usr/local/include/raylib
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        # additional directories for MacOS
     endif
 endif
 
 # define library paths containing required libs
+LFLAGS = -L. -L$(RAYLIB_RELEASE) -L$(RAYLIB_PATH)/src 
+
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    LFLAGS = -L. -L../../src -L/opt/vc/lib
+    LFLAGS += -L/opt/vc/lib
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),LINUX)
-        LFLAGS = -L. -L../../src
-    else
-        LFLAGS = -L. -L../../src
-        ifeq ($(PLATFORM_OS),WINDOWS)
-            LFLAGS += -LC:/raylib/raylib/src
-        endif
+    ifeq ($(PLATFORM_OS),WINDOWS)
         # external libraries to link with
         # GLFW3
-            LFLAGS += -L../../external/glfw3/lib/$(LIBPATH)
-        ifneq ($(PLATFORM_OS),OSX)
+            LFLAGS += -L$(RAYLIB_PATH)/src/external/glfw3/lib/$(LIBPATH)
         # OpenAL Soft
-            LFLAGS += -L../../external/openal_soft/lib/$(LIBPATH)
-        endif
+            LFLAGS += -L$(RAYLIB_PATH)/src/external/openal_soft/lib/$(LIBPATH)
     endif
 endif
 
@@ -130,18 +173,26 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -pthread -ldl -lX11 \
-               -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+        # on XWindow requires also below libraries
+        LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
     ifeq ($(PLATFORM_OS),OSX)
-        # libraries for OS X 10.9 desktop compiling
+        # libraries for OSX 10.9 desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -framework OpenGL -framework OpenAl -framework Cocoa
+        LIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
     else
         # libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LIBS = -lraylib -lglfw3 -lglew32 -lopengl32 -lopenal32 -lgdi32
+        LIBS = -lraylib -lglfw3 -lopengl32 -lgdi32
+        # if static OpenAL Soft required, define the corresponding libs
+        ifeq ($(SHARED_OPENAL),NO)
+            LIBS += -lopenal32 -lwinmm
+            CFLAGS += -Wl,-allow-multiple-definition
+        else
+            LIBS += -lopenal32dll
+        endif
     endif
     endif
 endif
@@ -152,18 +203,19 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # NOTE: Set the correct path to libraylib.bc
-    LIBS = ../../src/libraylib.bc
+    LIBS = $(RAYLIB_RELEASE)/libraylib.bc
 endif
 
 # define additional parameters and flags for windows
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains windows exe icon
     # -Wl,--subsystem,windows hides the console window
-    WINFLAGS = C:/raylib/raylib/src/resources -Wl,--subsystem,windows
+    WINFLAGS = $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
+    WEB_SHELL = --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
 endif
 
 # typing 'make' will invoke the default target entry called 'all',
@@ -186,10 +238,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		rm -f *.o
     else
     ifeq ($(PLATFORM_OS),LINUX)
-		find . -type f -executable -delete
-		rm -f screens/*.o
+		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     else
-		del *.o *.exe
+		del *.o *.exe /s
     endif
     endif
 endif

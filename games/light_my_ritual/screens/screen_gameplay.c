@@ -4,7 +4,7 @@
 *
 *   Gameplay Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -687,7 +687,7 @@ void DrawGameplayScreen(void)
         }
         
         // Draw time left for ritual
-        DrawTextEx(font, FormatText("%02.2f", (99.0f - ritualTime)), (Vector2){ 560, 20 }, font.size, 0, WHITE);
+        DrawTextEx(font, FormatText("%02.2f", (99.0f - ritualTime)), (Vector2){ 560, 20 }, font.baseSize, 0, WHITE);
         
         // Draw light energy bar
         DrawRectangle(20, 30, 400, 20, GRAY);
@@ -703,7 +703,7 @@ void DrawGameplayScreen(void)
         // Show message: "You run out of light!!!" if player.lightEnergy <= 0
         if (player.lightEnergy < 2)
         {
-            if ((framesCounter/20)%2) DrawTextEx(font, "YOU'RE RUNNING OUT OF LIGHT!", (Vector2){ 20, 60 }, font.size/2, 0, WHITE);
+            if ((framesCounter/20)%2) DrawTextEx(font, "YOU'RE RUNNING OUT OF LIGHT!", (Vector2){ 20, 60 }, font.baseSize/2, 0, WHITE);
         }
     }
     else if (!timeOver)   // LEVEL_FINISHED

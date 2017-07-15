@@ -4,24 +4,24 @@
 *
 *   CONFIGURATION:
 *
-*   #define SUPPORT_STB_IMAGE / INCLUDE_STB_IMAGE
-*
-*   #define SUPPORT_FILEFORMAT_BMP / SUPPORT_LOAD_BMP
-*   #define SUPPORT_FILEFORMAT_PNG / SUPPORT_LOAD_PNG
+*   #define SUPPORT_FILEFORMAT_BMP
+*   #define SUPPORT_FILEFORMAT_PNG
 *   #define SUPPORT_FILEFORMAT_TGA
-*   #define SUPPORT_FILEFORMAT_JPG / ENABLE_LOAD_JPG
+*   #define SUPPORT_FILEFORMAT_JPG
 *   #define SUPPORT_FILEFORMAT_GIF
+*   #define SUPPORT_FILEFORMAT_PSD
 *   #define SUPPORT_FILEFORMAT_HDR
-*   #define SUPPORT_FILEFORMAT_DDS / ENABLE_LOAD_DDS
+*   #define SUPPORT_FILEFORMAT_DDS
 *   #define SUPPORT_FILEFORMAT_PKM
 *   #define SUPPORT_FILEFORMAT_KTX
 *   #define SUPPORT_FILEFORMAT_PVR
 *   #define SUPPORT_FILEFORMAT_ASTC
-*       Selected desired fileformats to be supported for loading. Some of those formats are 
+*       Selecte desired fileformats to be supported for image data loading. Some of those formats are 
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
-*   #define SUPPORT_IMAGE_RESIZE / INCLUDE_STB_IMAGE_RESIZE
 *   #define SUPPORT_IMAGE_MANIPULATION
+*       Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
+*       If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
 *
 *   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
@@ -31,7 +31,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -50,6 +50,13 @@
 *
 **********************************************************************************************/
 
+// Default configuration flags (supported features)
+//-------------------------------------------------
+#define SUPPORT_FILEFORMAT_PNG
+#define SUPPORT_FILEFORMAT_HDR
+#define SUPPORT_IMAGE_MANIPULATION
+//-------------------------------------------------
+
 #include "raylib.h"
 
 #include <stdlib.h>             // Required for: malloc(), free()
@@ -59,25 +66,48 @@
                                 // Required for: rlglLoadTexture() rlDeleteTextures(),
                                 //      rlglGenerateMipmaps(), some funcs for DrawTexturePro()
 
-#include "utils.h"              // Required for: fopen() Android mapping, TraceLog()
+#include "utils.h"              // Required for: fopen() Android mapping
 
-// Support only desired texture formats, by default: JPEG, PNG, BMP, TGA
-//#define STBI_NO_JPEG          // Image format .jpg and .jpeg
-//#define STBI_NO_PNG
-//#define STBI_NO_BMP
-//#define STBI_NO_TGA
-#define STBI_NO_PSD
-#define STBI_NO_GIF
-#define STBI_NO_HDR
+// Support only desired texture formats on stb_image
+#if !defined(SUPPORT_FILEFORMAT_BMP)
+    #define STBI_NO_BMP
+#endif
+#if !defined(SUPPORT_FILEFORMAT_PNG)
+    #define STBI_NO_PNG
+#endif
+#if !defined(SUPPORT_FILEFORMAT_TGA)
+    #define STBI_NO_TGA
+#endif
+#if !defined(SUPPORT_FILEFORMAT_JPG)
+    #define STBI_NO_JPEG        // Image format .jpg and .jpeg
+#endif
+#if !defined(SUPPORT_FILEFORMAT_PSD)
+    #define STBI_NO_PSD
+#endif
+#if !defined(SUPPORT_FILEFORMAT_GIF)
+    #define STBI_NO_GIF
+#endif
+#if !defined(SUPPORT_FILEFORMAT_HDR)
+    #define STBI_NO_HDR
+#endif
+
+// Image fileformats not supported by default
 #define STBI_NO_PIC
 #define STBI_NO_PNM             // Image format .ppm and .pgm
-#define STB_IMAGE_IMPLEMENTATION
-#include "external/stb_image.h" // Required for: stbi_load()
-                                // NOTE: Used to read image data (multiple formats support)
 
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8()
-                                        // NOTE: Used for image scaling on ImageResize()
+#if (defined(SUPPORT_FILEFORMAT_BMP) || defined(SUPPORT_FILEFORMAT_PNG) || defined(SUPPORT_FILEFORMAT_TGA) || \
+     defined(SUPPORT_FILEFORMAT_JPG) || defined(SUPPORT_FILEFORMAT_PSD) || defined(SUPPORT_FILEFORMAT_GIF) || \
+     defined(SUPPORT_FILEFORMAT_HDR))
+    #define STB_IMAGE_IMPLEMENTATION
+    #include "external/stb_image.h"     // Required for: stbi_load_from_file()
+                                        // NOTE: Used to read image data (multiple formats support)
+#endif
+                                
+#if defined(SUPPORT_IMAGE_MANIPULATION)
+    #define STB_IMAGE_RESIZE_IMPLEMENTATION
+    #include "external/stb_image_resize.h"  // Required for: stbir_resize_uint8()
+                                            // NOTE: Used for image scaling on ImageResize()
+#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -102,11 +132,21 @@
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+#if defined(SUPPORT_FILEFORMAT_DDS)
 static Image LoadDDS(const char *fileName);   // Load DDS file
+#endif
+#if defined(SUPPORT_FILEFORMAT_PKM)
 static Image LoadPKM(const char *fileName);   // Load PKM file
+#endif
+#if defined(SUPPORT_FILEFORMAT_KTX)
 static Image LoadKTX(const char *fileName);   // Load KTX file
+#endif
+#if defined(SUPPORT_FILEFORMAT_PVR)
 static Image LoadPVR(const char *fileName);   // Load PVR file
+#endif
+#if defined(SUPPORT_FILEFORMAT_ASTC)
 static Image LoadASTC(const char *fileName);  // Load ASTC file
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -115,52 +155,9 @@ static Image LoadASTC(const char *fileName);  // Load ASTC file
 // Load image from file into CPU memory (RAM)
 Image LoadImage(const char *fileName)
 {
-    Image image;
+    Image image = { 0 };
 
-    // Initialize image default values
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
-
-    if ((strcmp(GetExtension(fileName),"png") == 0) ||
-        (strcmp(GetExtension(fileName),"bmp") == 0) ||
-        (strcmp(GetExtension(fileName),"tga") == 0) ||
-        (strcmp(GetExtension(fileName),"jpg") == 0)
-#ifndef STBI_NO_GIF
-        || (strcmp(GetExtension(fileName),"gif") == 0)
-#endif
-#ifndef STBI_NO_PSD
-        || (strcmp(GetExtension(fileName),"psd") == 0)
-#endif
-#ifndef STBI_NO_PIC
-        || (strcmp(GetExtension(fileName),"pic") == 0)
-#endif
-       )
-    {
-        int imgWidth = 0;
-        int imgHeight = 0;
-        int imgBpp = 0;
-
-        // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
-        image.data = stbi_load(fileName, &imgWidth, &imgHeight, &imgBpp, 0);
-
-        image.width = imgWidth;
-        image.height = imgHeight;
-        image.mipmaps = 1;
-
-        if (imgBpp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
-        else if (imgBpp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
-        else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
-        else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
-    }
-    else if (strcmp(GetExtension(fileName),"dds") == 0) image = LoadDDS(fileName);
-    else if (strcmp(GetExtension(fileName),"pkm") == 0) image = LoadPKM(fileName);
-    else if (strcmp(GetExtension(fileName),"ktx") == 0) image = LoadKTX(fileName);
-    else if (strcmp(GetExtension(fileName),"pvr") == 0) image = LoadPVR(fileName);
-    else if (strcmp(GetExtension(fileName),"astc") == 0) image = LoadASTC(fileName);
-    else if (strcmp(GetExtension(fileName),"rres") == 0)
+    if (IsFileExtension(fileName, ".rres"))
     {
         RRES rres = LoadResource(fileName, 0);
 
@@ -171,6 +168,87 @@ Image LoadImage(const char *fileName)
 
         UnloadResource(rres);
     }
+    else if ((IsFileExtension(fileName, ".png"))
+#if defined(SUPPORT_FILEFORMAT_BMP)
+        || (IsFileExtension(fileName, ".bmp"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_TGA)
+        || (IsFileExtension(fileName, ".tga"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_JPG)
+        || (IsFileExtension(fileName, ".jpg"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_DDS)
+        || (IsFileExtension(fileName, ".gif"))
+#endif
+#if defined(SUPPORT_FILEFORMAT_PSD)
+        || (IsFileExtension(fileName, ".psd"))
+#endif
+       )
+    {
+        int imgWidth = 0;
+        int imgHeight = 0;
+        int imgBpp = 0;
+        
+        FILE *imFile = fopen(fileName, "rb");
+
+        // NOTE: Using stb_image to load images (Supports: BMP, TGA, PNG, JPG, ...)
+        image.data = stbi_load_from_file(imFile, &imgWidth, &imgHeight, &imgBpp, 0);
+        
+        fclose(imFile);
+
+        image.width = imgWidth;
+        image.height = imgHeight;
+        image.mipmaps = 1;
+
+        if (imgBpp == 1) image.format = UNCOMPRESSED_GRAYSCALE;
+        else if (imgBpp == 2) image.format = UNCOMPRESSED_GRAY_ALPHA;
+        else if (imgBpp == 3) image.format = UNCOMPRESSED_R8G8B8;
+        else if (imgBpp == 4) image.format = UNCOMPRESSED_R8G8B8A8;
+    }
+#if defined(SUPPORT_FILEFORMAT_HDR)
+    else if (IsFileExtension(fileName, ".hdr"))
+    {
+        int imgBpp = 0;
+        
+        FILE *imFile = fopen(fileName, "rb");
+        
+        stbi_set_flip_vertically_on_load(true);
+        
+        // Load 32 bit per channel floats data 
+        image.data = stbi_loadf_from_file(imFile, &image.width, &image.height, &imgBpp, 0);
+        
+        stbi_set_flip_vertically_on_load(false);
+
+        fclose(imFile);
+        
+        image.mipmaps = 1;
+        
+        if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+        else 
+        {
+            // TODO: Support different number of channels at 32 bit float
+            TraceLog(WARNING, "[%s] Image fileformat not supported (only 3 channel 32 bit floats)", fileName);
+            UnloadImage(image);
+        }
+    }
+#endif
+#if defined(SUPPORT_FILEFORMAT_DDS)
+    else if (IsFileExtension(fileName, ".dds")) image = LoadDDS(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_PKM)
+    else if (IsFileExtension(fileName, ".pkm")) image = LoadPKM(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_KTX)
+    else if (IsFileExtension(fileName, ".ktx")) image = LoadKTX(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_PVR)
+    else if (IsFileExtension(fileName, ".pvr")) image = LoadPVR(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_ASTC)
+    else if (IsFileExtension(fileName, ".astc")) image = LoadASTC(fileName);
+#endif
+    else TraceLog(WARNING, "[%s] Image fileformat not supported", fileName);
 
     if (image.data != NULL) TraceLog(INFO, "[%s] Image loaded successfully (%ix%i)", fileName, image.width, image.height);
     else TraceLog(WARNING, "[%s] Image could not be loaded", fileName);
@@ -225,13 +303,7 @@ Image LoadImagePro(void *data, int width, int height, int format)
 // Load an image from RAW file data
 Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize)
 {
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *rawFile = fopen(fileName, "rb");
 
@@ -254,6 +326,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             case UNCOMPRESSED_R5G5B5A1: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (1 bit alpha)
             case UNCOMPRESSED_R4G4B4A4: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (4 bit alpha)
             case UNCOMPRESSED_R8G8B8A8: image.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
+            case UNCOMPRESSED_R32G32B32: image.data = (float *)malloc(size*12); size *= 12; break;        // 4 byte per channel (12 byte)
             default: TraceLog(WARNING, "Image format not suported"); break;
         }
 
@@ -285,7 +358,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
 // Load texture from file into GPU memory (VRAM)
 Texture2D LoadTexture(const char *fileName)
 {
-    Texture2D texture;
+    Texture2D texture = { 0 };
 
     Image image = LoadImage(fileName);
 
@@ -294,11 +367,7 @@ Texture2D LoadTexture(const char *fileName)
         texture = LoadTextureFromImage(image);
         UnloadImage(image);
     }
-    else
-    {
-        TraceLog(WARNING, "Texture could not be created");
-        texture.id = 0;
-    }
+    else TraceLog(WARNING, "Texture could not be created");
 
     return texture;
 }
@@ -307,14 +376,7 @@ Texture2D LoadTexture(const char *fileName)
 // NOTE: image is not unloaded, it must be done manually
 Texture2D LoadTextureFromImage(Image image)
 {
-    Texture2D texture;
-
-    // Init texture to default values
-    texture.id = 0;
-    texture.width = 0;
-    texture.height = 0;
-    texture.mipmaps = 0;
-    texture.format = 0;
+    Texture2D texture = { 0 };
 
     texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
 
@@ -322,6 +384,8 @@ Texture2D LoadTextureFromImage(Image image)
     texture.height = image.height;
     texture.mipmaps = image.mipmaps;
     texture.format = image.format;
+    
+    TraceLog(DEBUG, "[TEX ID %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
 
     return texture;
 }
@@ -451,9 +515,8 @@ Color *GetImageData(Image image)
 // NOTE: Compressed texture formats not supported
 Image GetTextureData(Texture2D texture)
 {
-    Image image;
-    image.data = NULL;
-
+    Image image = { 0 };
+    
     if (texture.format < 8)
     {
         image.data = rlglReadTexturePixels(texture);
@@ -463,12 +526,14 @@ Image GetTextureData(Texture2D texture)
             image.width = texture.width;
             image.height = texture.height;
             image.mipmaps = 1;
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGB (from framebuffer)
-            image.format = UNCOMPRESSED_R8G8B8A8;
-#else
-            image.format = texture.format;
-#endif
+            
+            if (rlGetVersion() == OPENGL_ES_20)
+            {
+                // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGBA (from framebuffer)
+                image.format = UNCOMPRESSED_R8G8B8A8;
+            }
+            else image.format = texture.format;
+
             TraceLog(INFO, "Texture pixel data obtained successfully");
         }
         else TraceLog(WARNING, "Texture pixel data could not be obtained");
@@ -664,115 +729,6 @@ void ImageAlphaMask(Image *image, Image alphaMask)
     }
 }
 
-// Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
-// NOTE: In case selected bpp do not represent an known 16bit format,
-// dithered data is stored in the LSB part of the unsigned short
-void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
-{
-    if (image->format >= COMPRESSED_DXT1_RGB)
-    {
-        TraceLog(WARNING, "Compressed data formats can not be dithered");
-        return;
-    }
-
-    if ((rBpp+gBpp+bBpp+aBpp) > 16)
-    {
-        TraceLog(WARNING, "Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
-    }
-    else
-    {
-        Color *pixels = GetImageData(*image);
-
-        free(image->data);      // free old image data
-
-        if ((image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8))
-        {
-            TraceLog(WARNING, "Image format is already 16bpp or lower, dithering could have no effect");
-        }
-
-        // Define new image format, check if desired bpp match internal known format
-        if ((rBpp == 5) && (gBpp == 6) && (bBpp == 5) && (aBpp == 0)) image->format = UNCOMPRESSED_R5G6B5;
-        else if ((rBpp == 5) && (gBpp == 5) && (bBpp == 5) && (aBpp == 1)) image->format = UNCOMPRESSED_R5G5B5A1;
-        else if ((rBpp == 4) && (gBpp == 4) && (bBpp == 4) && (aBpp == 4)) image->format = UNCOMPRESSED_R4G4B4A4;
-        else
-        {
-            image->format = 0;
-            TraceLog(WARNING, "Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
-        }
-
-        // NOTE: We will store the dithered data as unsigned short (16bpp)
-        image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
-
-        Color oldPixel = WHITE;
-        Color newPixel = WHITE;
-
-        int rError, gError, bError;
-        unsigned short rPixel, gPixel, bPixel, aPixel;   // Used for 16bit pixel composition
-
-        #define MIN(a,b) (((a)<(b))?(a):(b))
-
-        for (int y = 0; y < image->height; y++)
-        {
-            for (int x = 0; x < image->width; x++)
-            {
-                oldPixel = pixels[y*image->width + x];
-
-                // NOTE: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
-                newPixel.r = oldPixel.r >> (8 - rBpp);     // R bits
-                newPixel.g = oldPixel.g >> (8 - gBpp);     // G bits
-                newPixel.b = oldPixel.b >> (8 - bBpp);     // B bits
-                newPixel.a = oldPixel.a >> (8 - aBpp);     // A bits (not used on dithering)
-
-                // NOTE: Error must be computed between new and old pixel but using same number of bits!
-                // We want to know how much color precision we have lost...
-                rError = (int)oldPixel.r - (int)(newPixel.r << (8 - rBpp));
-                gError = (int)oldPixel.g - (int)(newPixel.g << (8 - gBpp));
-                bError = (int)oldPixel.b - (int)(newPixel.b << (8 - bBpp));
-
-                pixels[y*image->width + x] = newPixel;
-
-                // NOTE: Some cases are out of the array and should be ignored
-                if (x < (image->width - 1))
-                {
-                    pixels[y*image->width + x+1].r = MIN((int)pixels[y*image->width + x+1].r + (int)((float)rError*7.0f/16), 0xff);
-                    pixels[y*image->width + x+1].g = MIN((int)pixels[y*image->width + x+1].g + (int)((float)gError*7.0f/16), 0xff);
-                    pixels[y*image->width + x+1].b = MIN((int)pixels[y*image->width + x+1].b + (int)((float)bError*7.0f/16), 0xff);
-                }
-
-                if ((x > 0) && (y < (image->height - 1)))
-                {
-                    pixels[(y+1)*image->width + x-1].r = MIN((int)pixels[(y+1)*image->width + x-1].r + (int)((float)rError*3.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x-1].g = MIN((int)pixels[(y+1)*image->width + x-1].g + (int)((float)gError*3.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x-1].b = MIN((int)pixels[(y+1)*image->width + x-1].b + (int)((float)bError*3.0f/16), 0xff);
-                }
-
-                if (y < (image->height - 1))
-                {
-                    pixels[(y+1)*image->width + x].r = MIN((int)pixels[(y+1)*image->width + x].r + (int)((float)rError*5.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x].g = MIN((int)pixels[(y+1)*image->width + x].g + (int)((float)gError*5.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x].b = MIN((int)pixels[(y+1)*image->width + x].b + (int)((float)bError*5.0f/16), 0xff);
-                }
-
-                if ((x < (image->width - 1)) && (y < (image->height - 1)))
-                {
-                    pixels[(y+1)*image->width + x+1].r = MIN((int)pixels[(y+1)*image->width + x+1].r + (int)((float)rError*1.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x+1].g = MIN((int)pixels[(y+1)*image->width + x+1].g + (int)((float)gError*1.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x+1].b = MIN((int)pixels[(y+1)*image->width + x+1].b + (int)((float)bError*1.0f/16), 0xff);
-                }
-
-                rPixel = (unsigned short)newPixel.r;
-                gPixel = (unsigned short)newPixel.g;
-                bPixel = (unsigned short)newPixel.b;
-                aPixel = (unsigned short)newPixel.a;
-
-                ((unsigned short *)image->data)[y*image->width + x] = (rPixel << (gBpp + bBpp + aBpp)) | (gPixel << (bBpp + aBpp)) | (bPixel << aBpp) | aPixel;
-            }
-        }
-
-        free(pixels);
-    }
-}
-
 // Convert image to POT (power-of-two)
 // NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
 void ImageToPOT(Image *image, Color fillColor)
@@ -818,6 +774,7 @@ void ImageToPOT(Image *image, Color fillColor)
     }
 }
 
+#if defined(SUPPORT_IMAGE_MANIPULATION)
 // Copy an image to a new image
 Image ImageCopy(Image image)
 {
@@ -834,6 +791,7 @@ Image ImageCopy(Image image)
         case UNCOMPRESSED_R4G4B4A4: byteSize *= 2; break;   // 16 bpp (2 bytes)
         case UNCOMPRESSED_R8G8B8: byteSize *= 3; break;     // 24 bpp (3 bytes)
         case UNCOMPRESSED_R8G8B8A8: byteSize *= 4; break;   // 32 bpp (4 bytes)
+        case UNCOMPRESSED_R32G32B32: byteSize *= 12; break; // 4 byte per channel (12 bytes)
         case COMPRESSED_DXT3_RGBA:
         case COMPRESSED_DXT5_RGBA:
         case COMPRESSED_ETC2_EAC_RGBA:
@@ -1203,6 +1161,115 @@ void ImageFlipHorizontal(Image *image)
     image->data = processed.data;
 }
 
+// Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
+// NOTE: In case selected bpp do not represent an known 16bit format,
+// dithered data is stored in the LSB part of the unsigned short
+void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
+{
+    if (image->format >= COMPRESSED_DXT1_RGB)
+    {
+        TraceLog(WARNING, "Compressed data formats can not be dithered");
+        return;
+    }
+
+    if ((rBpp+gBpp+bBpp+aBpp) > 16)
+    {
+        TraceLog(WARNING, "Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
+    }
+    else
+    {
+        Color *pixels = GetImageData(*image);
+
+        free(image->data);      // free old image data
+
+        if ((image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8))
+        {
+            TraceLog(WARNING, "Image format is already 16bpp or lower, dithering could have no effect");
+        }
+
+        // Define new image format, check if desired bpp match internal known format
+        if ((rBpp == 5) && (gBpp == 6) && (bBpp == 5) && (aBpp == 0)) image->format = UNCOMPRESSED_R5G6B5;
+        else if ((rBpp == 5) && (gBpp == 5) && (bBpp == 5) && (aBpp == 1)) image->format = UNCOMPRESSED_R5G5B5A1;
+        else if ((rBpp == 4) && (gBpp == 4) && (bBpp == 4) && (aBpp == 4)) image->format = UNCOMPRESSED_R4G4B4A4;
+        else
+        {
+            image->format = 0;
+            TraceLog(WARNING, "Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
+        }
+
+        // NOTE: We will store the dithered data as unsigned short (16bpp)
+        image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
+
+        Color oldPixel = WHITE;
+        Color newPixel = WHITE;
+
+        int rError, gError, bError;
+        unsigned short rPixel, gPixel, bPixel, aPixel;   // Used for 16bit pixel composition
+
+        #define MIN(a,b) (((a)<(b))?(a):(b))
+
+        for (int y = 0; y < image->height; y++)
+        {
+            for (int x = 0; x < image->width; x++)
+            {
+                oldPixel = pixels[y*image->width + x];
+
+                // NOTE: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
+                newPixel.r = oldPixel.r >> (8 - rBpp);     // R bits
+                newPixel.g = oldPixel.g >> (8 - gBpp);     // G bits
+                newPixel.b = oldPixel.b >> (8 - bBpp);     // B bits
+                newPixel.a = oldPixel.a >> (8 - aBpp);     // A bits (not used on dithering)
+
+                // NOTE: Error must be computed between new and old pixel but using same number of bits!
+                // We want to know how much color precision we have lost...
+                rError = (int)oldPixel.r - (int)(newPixel.r << (8 - rBpp));
+                gError = (int)oldPixel.g - (int)(newPixel.g << (8 - gBpp));
+                bError = (int)oldPixel.b - (int)(newPixel.b << (8 - bBpp));
+
+                pixels[y*image->width + x] = newPixel;
+
+                // NOTE: Some cases are out of the array and should be ignored
+                if (x < (image->width - 1))
+                {
+                    pixels[y*image->width + x+1].r = MIN((int)pixels[y*image->width + x+1].r + (int)((float)rError*7.0f/16), 0xff);
+                    pixels[y*image->width + x+1].g = MIN((int)pixels[y*image->width + x+1].g + (int)((float)gError*7.0f/16), 0xff);
+                    pixels[y*image->width + x+1].b = MIN((int)pixels[y*image->width + x+1].b + (int)((float)bError*7.0f/16), 0xff);
+                }
+
+                if ((x > 0) && (y < (image->height - 1)))
+                {
+                    pixels[(y+1)*image->width + x-1].r = MIN((int)pixels[(y+1)*image->width + x-1].r + (int)((float)rError*3.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x-1].g = MIN((int)pixels[(y+1)*image->width + x-1].g + (int)((float)gError*3.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x-1].b = MIN((int)pixels[(y+1)*image->width + x-1].b + (int)((float)bError*3.0f/16), 0xff);
+                }
+
+                if (y < (image->height - 1))
+                {
+                    pixels[(y+1)*image->width + x].r = MIN((int)pixels[(y+1)*image->width + x].r + (int)((float)rError*5.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x].g = MIN((int)pixels[(y+1)*image->width + x].g + (int)((float)gError*5.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x].b = MIN((int)pixels[(y+1)*image->width + x].b + (int)((float)bError*5.0f/16), 0xff);
+                }
+
+                if ((x < (image->width - 1)) && (y < (image->height - 1)))
+                {
+                    pixels[(y+1)*image->width + x+1].r = MIN((int)pixels[(y+1)*image->width + x+1].r + (int)((float)rError*1.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x+1].g = MIN((int)pixels[(y+1)*image->width + x+1].g + (int)((float)gError*1.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x+1].b = MIN((int)pixels[(y+1)*image->width + x+1].b + (int)((float)bError*1.0f/16), 0xff);
+                }
+
+                rPixel = (unsigned short)newPixel.r;
+                gPixel = (unsigned short)newPixel.g;
+                bPixel = (unsigned short)newPixel.b;
+                aPixel = (unsigned short)newPixel.a;
+
+                ((unsigned short *)image->data)[y*image->width + x] = (rPixel << (gBpp + bBpp + aBpp)) | (gPixel << (bBpp + aBpp)) | (bPixel << aBpp) | aPixel;
+            }
+        }
+
+        free(pixels);
+    }
+}
+
 // Modify image color: tint
 void ImageColorTint(Image *image, Color color)
 {
@@ -1359,6 +1426,7 @@ void ImageColorBrightness(Image *image, int brightness)
 
     image->data = processed.data;
 }
+#endif      // SUPPORT_IMAGE_MANIPULATION
 
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D *texture)
@@ -1547,6 +1615,7 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 
+#if defined(SUPPORT_FILEFORMAT_DDS)
 // Loading DDS image data (compressed or uncompressed)
 static Image LoadDDS(const char *fileName)
 {
@@ -1744,7 +1813,9 @@ static Image LoadDDS(const char *fileName)
 
     return image;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_PKM)
 // Loading PKM image data (ETC1/ETC2 compression)
 // NOTE: KTX is the standard Khronos Group compression format (ETC1/ETC2, mipmaps)
 // PKM is a much simpler file format used mainly to contain a single ETC1/ETC2 compressed image (no mipmaps)
@@ -1836,7 +1907,9 @@ static Image LoadPKM(const char *fileName)
 
     return image;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_KTX)
 // Load KTX compressed image data (ETC1/ETC2 compression)
 static Image LoadKTX(const char *fileName)
 {
@@ -1929,7 +2002,9 @@ static Image LoadKTX(const char *fileName)
 
     return image;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_PVR)
 // Loading PVR image data (uncompressed or PVRT compression)
 // NOTE: PVR v2 not supported, use PVR v3 instead
 static Image LoadPVR(const char *fileName)
@@ -2087,7 +2162,9 @@ static Image LoadPVR(const char *fileName)
 
     return image;
 }
+#endif
 
+#if defined(SUPPORT_FILEFORMAT_ASTC)
 // Load ASTC compressed image data (ASTC compression)
 static Image LoadASTC(const char *fileName)
 {
@@ -2170,3 +2247,4 @@ static Image LoadASTC(const char *fileName)
 
     return image;
 }
+#endif

@@ -4,7 +4,7 @@
 *
 *   Title Screen Functions Definitions (Init, Update, Draw, Unload)
 *
-*   Copyright (c) 2014 Ramon Santamaria (Ray San - raysan@raysanweb.com)
+*   Copyright (c) 2014 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -85,7 +85,7 @@ void DrawTitleScreen(void)
     
     DrawText("(c) Developed by Ramon Santamaria (@raysan5)", 20, GetScreenHeight() - 40, 20, LIGHTGRAY); 
     
-    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawTextEx(font, "PRESS ENTER to START LIGHTING", (Vector2){ 230, 450 }, font.size, -2, WHITE);
+    if ((framesCounter > 180) && ((framesCounter/40)%2)) DrawTextEx(font, "PRESS ENTER to START LIGHTING", (Vector2){ 230, 450 }, font.baseSize, -2, WHITE);
 }
 
 // Title Screen Unload logic

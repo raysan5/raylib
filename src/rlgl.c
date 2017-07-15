@@ -2,10 +2,8 @@
 *
 *   rlgl - raylib OpenGL abstraction layer
 *
-*   DESCRIPTION:
-*
-*   rlgl allows usage of OpenGL 1.1 style functions (rlVertex) that are internally mapped to
-*   selected OpenGL version (1.1, 2.1, 3.3 Core, ES 2.0).
+*   rlgl is a wrapper for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0) to 
+*   pseudo-OpenGL 1.1 style functions (rlVertex, rlTranslate, rlRotate...). 
 *
 *   When chosing an OpenGL version greater than OpenGL 1.1, rlgl stores vertex data on internal
 *   VBO buffers (and VAOs if available). It requires calling 3 functions:
@@ -16,34 +14,19 @@
 *   CONFIGURATION:
 *
 *   #define GRAPHICS_API_OPENGL_11
-*       Use OpenGL 1.1 backend
-*
 *   #define GRAPHICS_API_OPENGL_21
-*       Use OpenGL 2.1 backend
-*
 *   #define GRAPHICS_API_OPENGL_33
-*       Use OpenGL 3.3 Core profile backend
-*
 *   #define GRAPHICS_API_OPENGL_ES2
-*       Use OpenGL ES 2.0 backend
+*       Use selected OpenGL backend
 *
 *   #define RLGL_STANDALONE
 *       Use rlgl as standalone library (no raylib dependency)
 *
-*   #define RLGL_NO_DISTORTION_SHADER
-*       Avoid stereo rendering distortion sahder (shader_distortion.h) inclusion
+*   #define SUPPORT_VR_SIMULATOR
+*       Support VR simulation functionality (stereo rendering)
 *
-*   #define SUPPORT_SHADER_DEFAULT / ENABLE_SHADER_DEFAULT
-*
-*   #define SUPPORT_SHADER_DISTORTION
-*
-*
-*   #define SUPPORT_OCULUS_RIFT_CV1 / RLGL_OCULUS_SUPPORT
-*       Enable Oculus Rift CV1 functionality
-*
-*   #define SUPPORT_STEREO_RENDERING
-*
-*   #define RLGL_NO_DEFAULT_SHADER
+*   #define SUPPORT_DISTORTION_SHADER
+*       Include stereo rendering distortion shader (shader_distortion.h)
 *
 *   DEPENDENCIES:
 *       raymath     - 3D math functionality (Vector3, Matrix, Quaternion)
@@ -52,7 +35,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -71,19 +54,25 @@
 *
 **********************************************************************************************/
 
+// Default configuration flags (supported features)
+//-------------------------------------------------
+#define SUPPORT_VR_SIMULATOR
+#define SUPPORT_DISTORTION_SHADER
+//-------------------------------------------------
+
 #include "rlgl.h"
 
 #include <stdio.h>                  // Required for: fopen(), fclose(), fread()... [Used only on LoadText()]
 #include <stdlib.h>                 // Required for: malloc(), free(), rand()
-#include <string.h>                 // Required for: strcmp(), strlen(), strtok()
+#include <string.h>                 // Required for: strcmp(), strlen(), strtok() [Used only in extensions loading]
 #include <math.h>                   // Required for: atan2()
 
-#ifndef RLGL_STANDALONE
+#if !defined(RLGL_STANDALONE)
     #include "raymath.h"            // Required for: Vector3 and Matrix functions
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #ifdef __APPLE__
+    #if defined(__APPLE__)
         #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
     #else
         #include <GL/gl.h>          // OpenGL 1.1 library
@@ -95,7 +84,7 @@
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33)
-    #ifdef __APPLE__
+    #if defined(__APPLE__)
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
     #define GLAD_IMPLEMENTATION
@@ -117,19 +106,8 @@
     #include <stdarg.h>             // Required for: va_list, va_start(), vfprintf(), va_end() [Used only on TraceLog()]
 #endif
 
-#if !defined(GRAPHICS_API_OPENGL_11) && !defined(RLGL_NO_DISTORTION_SHADER)
+#if !defined(GRAPHICS_API_OPENGL_11) && defined(SUPPORT_DISTORTION_SHADER)
     #include "shader_distortion.h"  // Distortion shader to be embedded
-#endif
-
-//#define RLGL_OCULUS_SUPPORT       // Enable Oculus Rift code
-#if defined(RLGL_OCULUS_SUPPORT)
-    #include "external/OculusSDK/LibOVR/Include/OVR_CAPI_GL.h"    // Oculus SDK for OpenGL
-#endif
-
-#if defined(RLGL_STANDALONE)
-    #define OCULUSAPI
-#else
-    #define OCULUSAPI static
 #endif
 
 //----------------------------------------------------------------------------------
@@ -187,15 +165,15 @@
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    #define GL_UNSIGNED_SHORT_5_6_5     0x8363
-    #define GL_UNSIGNED_SHORT_5_5_5_1   0x8034
-    #define GL_UNSIGNED_SHORT_4_4_4_4   0x8033
+    #define GL_UNSIGNED_SHORT_5_6_5             0x8363
+    #define GL_UNSIGNED_SHORT_5_5_5_1           0x8034
+    #define GL_UNSIGNED_SHORT_4_4_4_4           0x8033
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    #define glClearDepth            glClearDepthf
-    #define GL_READ_FRAMEBUFFER     GL_FRAMEBUFFER
-    #define GL_DRAW_FRAMEBUFFER     GL_FRAMEBUFFER
+    #define glClearDepth                glClearDepthf
+    #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
+    #define GL_DRAW_FRAMEBUFFER         GL_FRAMEBUFFER
 #endif
 
 // Default vertex attribute names on shader to set location points
@@ -244,6 +222,7 @@ typedef struct DrawCall {
     //Guint fboId;
 } DrawCall;
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
     int hResolution;                // HMD horizontal resolution in pixels
@@ -266,31 +245,6 @@ typedef struct VrStereoConfig {
     Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
     Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
 } VrStereoConfig;
-
-#if defined(RLGL_OCULUS_SUPPORT)
-typedef struct OculusBuffer {
-    ovrTextureSwapChain textureChain;
-    GLuint depthId;
-    GLuint fboId;
-    int width;
-    int height;
-} OculusBuffer;
-
-typedef struct OculusMirror {
-    ovrMirrorTexture texture;
-    GLuint fboId;
-    int width;
-    int height;
-} OculusMirror;
-
-typedef struct OculusLayer {
-    ovrViewScaleDesc viewScaleDesc;
-    ovrLayerEyeFov eyeLayer;      // layer 0
-    //ovrLayerQuad quadLayer;     // TODO: layer 1: '2D' quad for GUI
-    Matrix eyeProjections[2];
-    int width;
-    int height;
-} OculusLayer;
 #endif
 
 //----------------------------------------------------------------------------------
@@ -305,7 +259,7 @@ static Matrix projection;
 static Matrix *currentMatrix;
 static int currentMatrixMode;
 
-static DrawMode currentDrawMode;
+static int currentDrawMode;
 
 static float currentDepth = -1.0f;
 
@@ -334,7 +288,17 @@ static bool texCompETC1Supported = false;   // ETC1 texture compression support
 static bool texCompETC2Supported = false;   // ETC2/EAC texture compression support
 static bool texCompPVRTSupported = false;   // PVR texture compression support
 static bool texCompASTCSupported = false;   // ASTC texture compression support
-#endif
+
+#if defined(SUPPORT_VR_SIMULATOR)
+// VR global variables
+static VrDeviceInfo hmd;                // Current VR device info
+static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
+static bool vrSimulatorReady = false;   // VR simulator ready flag
+static bool vrStereoRender = false;     // VR stereo rendering enabled/disabled flag
+                                        // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
+#endif  // defined(SUPPORT_VR_SIMULATOR)
+
+#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 // Extension supported flag: Anisotropic filtering
 static bool texAnisotropicFilterSupported = false;  // Anisotropic texture filtering support
@@ -342,26 +306,6 @@ static float maxAnisotropicLevel = 0.0f;        // Maximum anisotropy level supp
 
 // Extension supported flag: Clamp mirror wrap mode
 static bool texClampMirrorSupported = false;    // Clamp mirror wrap mode supported
-
-#if defined(RLGL_OCULUS_SUPPORT)
-// OVR device variables
-static ovrSession session;              // Oculus session (pointer to ovrHmdStruct)
-static ovrHmdDesc hmdDesc;              // Oculus device descriptor parameters
-static ovrGraphicsLuid luid;            // Oculus locally unique identifier for the program (64 bit)
-static OculusLayer layer;               // Oculus drawing layer (similar to photoshop)
-static OculusBuffer buffer;             // Oculus internal buffers (texture chain and fbo)
-static OculusMirror mirror;             // Oculus mirror texture and fbo
-static unsigned int frameIndex = 0;     // Oculus frames counter, used to discard frames from chain
-#endif
-
-// VR global variables
-static VrDeviceInfo hmd;                // Current VR device info
-static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
-static bool vrDeviceReady = false;      // VR device ready flag
-static bool vrSimulator = false;        // VR simulator enabled flag
-static bool vrEnabled = false;          // VR experience enabled (device or simulator)
-static bool vrRendering = true;         // VR stereo rendering enabled/disabled flag
-                                        // NOTE: This flag is useful to render data over stereo image (i.e. FPS)
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
 // NOTE: VAO functionality is exposed through extensions (OES)
@@ -373,14 +317,15 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
-static bool npotSupported = false;          // NPOT textures full support
+static bool texNPOTSupported = false;          // NPOT textures full support
+static bool texFloatSupported = false;      // float textures support (32 bit per channel)
 
 static int blendMode = 0;   // Track current blending mode
 
 // White texture useful for plain color polys (required by shader)
 static unsigned int whiteTexture;
 
-// Default framebuffer size (required by Oculus device)
+// Default framebuffer size
 static int screenWidth;     // Default framebuffer width
 static int screenHeight;    // Default framebuffer height
 
@@ -397,35 +342,15 @@ static void UnloadDefaultShader(void);      // Unload default shader
 
 static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
 static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
-static void DrawDefaultBuffers(int eyesCount); // Draw default internal buffers vertex data
+static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
 static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
 
-// Configure stereo rendering (including distortion shader) with HMD device parameters
-static void SetStereoConfig(VrDeviceInfo info);
-
-// Set internal projection and modelview matrix depending on eyes tracking data
-static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView);
+#if defined(SUPPORT_VR_SIMULATOR)
+static void SetStereoConfig(VrDeviceInfo info); // Configure stereo rendering (including distortion shader) with HMD device parameters
+static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView); // Set internal projection and modelview matrix depending on eye
 #endif
 
-#if defined(RLGL_OCULUS_SUPPORT)
-#if !defined(RLGL_STANDALONE)
-static bool InitOculusDevice(void);                 // Initialize Oculus device (returns true if success)
-static void CloseOculusDevice(void);                // Close Oculus device
-static void UpdateOculusTracking(Camera *camera);   // Update Oculus head position-orientation tracking
-static void BeginOculusDrawing(void);               // Setup Oculus buffers for drawing
-static void EndOculusDrawing(void);                 // Finish Oculus drawing and blit framebuffer to mirror
-#endif
-
-static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height);    // Load Oculus required buffers
-static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer);            // Unload texture required buffers
-static OculusMirror LoadOculusMirror(ovrSession session, int width, int height);    // Load Oculus mirror buffers
-static void UnloadOculusMirror(ovrSession session, OculusMirror mirror);            // Unload Oculus mirror buffers
-static void BlitOculusMirror(ovrSession session, OculusMirror mirror);              // Copy Oculus screen buffer to mirror texture
-static OculusLayer InitOculusLayer(ovrSession session);                             // Init Oculus layer (similar to photoshop)
-static Matrix FromOvrMatrix(ovrMatrix4f ovrM);  // Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
-#endif
-
-
+#endif  // defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 #if defined(GRAPHICS_API_OPENGL_11)
 static int GenerateMipmaps(unsigned char *data, int baseWidth, int baseHeight);
@@ -1126,7 +1051,8 @@ void rlglInit(int width, int height)
 
     // NOTE: On OpenGL 3.3 VAO and NPOT are supported by default
     vaoSupported = true;
-    npotSupported = true;
+    texNPOTSupported = true;
+    texFloatSupported = true;
 
     // We get a list of available extensions and we check for some of them (compressed textures)
     // NOTE: We don't need to check again supported extensions but we do (GLAD already dealt with that)
@@ -1195,7 +1121,10 @@ void rlglInit(int width, int height)
 
         // Check NPOT textures support
         // NOTE: Only check on OpenGL ES, OpenGL 3.3 has NPOT textures full support as core feature
-        if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) npotSupported = true;
+        if (strcmp(extList[i], (const char *)"GL_OES_texture_npot") == 0) texNPOTSupported = true;
+        
+        // Check texture float support
+        if (strcmp(extList[i], (const char *)"OES_texture_float") == 0) texFloatSupported = true;
 #endif
 
         // DDS texture compression support
@@ -1235,7 +1164,7 @@ void rlglInit(int width, int height)
     if (vaoSupported) TraceLog(INFO, "[EXTENSION] VAO extension detected, VAO functions initialized successfully");
     else TraceLog(WARNING, "[EXTENSION] VAO extension not found, VAO usage not supported");
 
-    if (npotSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
+    if (texNPOTSupported) TraceLog(INFO, "[EXTENSION] NPOT textures extension detected, full NPOT textures supported");
     else TraceLog(WARNING, "[EXTENSION] NPOT textures extension not found, limited NPOT support (no-mipmaps, no-repeat)");
 #endif
 
@@ -1352,9 +1281,7 @@ void rlglDraw(void)
 
     // NOTE: Default buffers upload and draw
     UpdateDefaultBuffers();
-
-    if (vrEnabled && vrRendering) DrawDefaultBuffers(2);
-    else DrawDefaultBuffers(1);
+    DrawDefaultBuffers();       // NOTE: Stereo rendering is checked inside
 #endif
 }
 
@@ -1364,21 +1291,17 @@ void rlglLoadExtensions(void *loader)
 {
 #if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
-    #ifndef __APPLE__
+    #if !defined(__APPLE__)
         if (!gladLoadGLLoader((GLADloadproc)loader)) TraceLog(WARNING, "GLAD: Cannot load OpenGL extensions");
         else TraceLog(INFO, "GLAD: OpenGL extensions loaded successfully");
-    #endif
 
-#if defined(GRAPHICS_API_OPENGL_21)
-    #ifndef __APPLE__
+        #if defined(GRAPHICS_API_OPENGL_21)
         if (GLAD_GL_VERSION_2_1) TraceLog(INFO, "OpenGL 2.1 profile supported");
-    #endif
-#elif defined(GRAPHICS_API_OPENGL_33)
-    #ifndef __APPLE__
+        #elif defined(GRAPHICS_API_OPENGL_33)
         if(GLAD_GL_VERSION_3_3) TraceLog(INFO, "OpenGL 3.3 Core profile supported");
         else TraceLog(ERROR, "OpenGL 3.3 Core profile not supported");
+        #endif
     #endif
-#endif
 
     // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
     //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
@@ -1409,7 +1332,7 @@ Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view)
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
-unsigned int rlglLoadTexture(void *data, int width, int height, int textureFormat, int mipmapCount)
+unsigned int rlglLoadTexture(void *data, int width, int height, int format, int mipmapCount)
 {
     glBindTexture(GL_TEXTURE_2D, 0);    // Free any old binding
 
@@ -1417,39 +1340,39 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
 
     // Check texture format support by OpenGL 1.1 (compressed textures not supported)
 #if defined(GRAPHICS_API_OPENGL_11)
-    if (textureFormat >= 8)
+    if (format >= COMPRESSED_DXT1_RGB)
     {
         TraceLog(WARNING, "OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }
 #endif
 
-    if ((!texCompDXTSupported) && ((textureFormat == COMPRESSED_DXT1_RGB) || (textureFormat == COMPRESSED_DXT1_RGBA) ||
-        (textureFormat == COMPRESSED_DXT3_RGBA) || (textureFormat == COMPRESSED_DXT5_RGBA)))
+    if ((!texCompDXTSupported) && ((format == COMPRESSED_DXT1_RGB) || (format == COMPRESSED_DXT1_RGBA) ||
+        (format == COMPRESSED_DXT3_RGBA) || (format == COMPRESSED_DXT5_RGBA)))
     {
         TraceLog(WARNING, "DXT compressed texture format not supported");
         return id;
     }
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if ((!texCompETC1Supported) && (textureFormat == COMPRESSED_ETC1_RGB))
+    if ((!texCompETC1Supported) && (format == COMPRESSED_ETC1_RGB))
     {
         TraceLog(WARNING, "ETC1 compressed texture format not supported");
         return id;
     }
 
-    if ((!texCompETC2Supported) && ((textureFormat == COMPRESSED_ETC2_RGB) || (textureFormat == COMPRESSED_ETC2_EAC_RGBA)))
+    if ((!texCompETC2Supported) && ((format == COMPRESSED_ETC2_RGB) || (format == COMPRESSED_ETC2_EAC_RGBA)))
     {
         TraceLog(WARNING, "ETC2 compressed texture format not supported");
         return id;
     }
 
-    if ((!texCompPVRTSupported) && ((textureFormat == COMPRESSED_PVRT_RGB) || (textureFormat == COMPRESSED_PVRT_RGBA)))
+    if ((!texCompPVRTSupported) && ((format == COMPRESSED_PVRT_RGB) || (format == COMPRESSED_PVRT_RGBA)))
     {
         TraceLog(WARNING, "PVRT compressed texture format not supported");
         return id;
     }
 
-    if ((!texCompASTCSupported) && ((textureFormat == COMPRESSED_ASTC_4x4_RGBA) || (textureFormat == COMPRESSED_ASTC_8x8_RGBA)))
+    if ((!texCompASTCSupported) && ((format == COMPRESSED_ASTC_4x4_RGBA) || (format == COMPRESSED_ASTC_8x8_RGBA)))
     {
         TraceLog(WARNING, "ASTC compressed texture format not supported");
         return id;
@@ -1477,7 +1400,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     // GL_RGBA8                 GL_RGBA     GL_UNSIGNED_BYTE
     // GL_RGB8                  GL_RGB      GL_UNSIGNED_BYTE
 
-    switch (textureFormat)
+    switch (format)
     {
         case UNCOMPRESSED_GRAYSCALE:
         {
@@ -1503,6 +1426,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
         case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
+        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;
         case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;
@@ -1518,7 +1442,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     }
 #elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
-    switch (textureFormat)
+    switch (format)
     {
         case UNCOMPRESSED_GRAYSCALE: glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
         case UNCOMPRESSED_GRAY_ALPHA: glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
@@ -1528,6 +1452,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
 #if defined(GRAPHICS_API_OPENGL_ES2)
+        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;  // Requries extension OES_texture_float
         case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGB_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT); break;
         case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadCompressedTexture((unsigned char *)data, width, height, mipmapCount, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT); break;     // NOTE: Not supported by WebGL
@@ -1548,7 +1473,7 @@ unsigned int rlglLoadTexture(void *data, int width, int height, int textureForma
     // NOTE: glTexParameteri does NOT affect texture uploading, just the way it's used
 #if defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 with no GL_OES_texture_npot support (i.e. WebGL) has limited NPOT support, so CLAMP_TO_EDGE must be used
-    if (npotSupported)
+    if (texNPOTSupported)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // Set texture to repeat on x-axis
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // Set texture to repeat on y-axis
@@ -1728,7 +1653,7 @@ void rlglGenerateMipmaps(Texture2D *texture)
     if (((texture->width > 0) && ((texture->width & (texture->width - 1)) == 0)) &&
         ((texture->height > 0) && ((texture->height & (texture->height - 1)) == 0))) texIsPOT = true;
 
-    if ((texIsPOT) || (npotSupported))
+    if ((texIsPOT) || (texNPOTSupported))
     {
 #if defined(GRAPHICS_API_OPENGL_11)
         // Compute required mipmaps
@@ -2018,9 +1943,6 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    int eyesCount = 1;
-    if (vrEnabled) eyesCount = 2;
-
     glUseProgram(material.shader.id);
 
     // Upload to shader material.colDiffuse
@@ -2153,10 +2075,17 @@ void rlglDrawMesh(Mesh mesh, Material material, Matrix transform)
         if (mesh.indices != NULL) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quads.vboId[3]);
     }
 
+    int eyesCount = 1;
+#if defined(SUPPORT_VR_SIMULATOR)
+    if (vrStereoRender) eyesCount = 2;
+#endif
+    
     for (int eye = 0; eye < eyesCount; eye++)
     {
-        if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
-        else modelview = matModelView;
+        if (eyesCount == 1) modelview = matModelView;
+        #if defined(SUPPORT_VR_SIMULATOR)
+        else SetStereoView(eye, matProjection, matModelView);
+        #endif
 
         // Calculate model-view-projection matrix (MVP)
         Matrix matMVP = MatrixMultiply(modelview, projection);        // Transform to screen-space coordinates
@@ -2324,7 +2253,7 @@ void *rlglReadTexturePixels(Texture2D texture)
 
     pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
 
-    // NOTE: Despite FBO color texture is RGB, we read data as RGBA... reading as RGB doesn't work... o__O
+    // NOTE: We read data as RGBA because FBO texture is configured as RGBA, despite binding a RGB texture...
     glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Re-attach internal FBO color texture before deleting it
@@ -2617,146 +2546,128 @@ void EndBlendMode(void)
     BeginBlendMode(BLEND_ALPHA);
 }
 
-// Init VR device (or simulator)
-// NOTE: If device is not available, it fallbacks to default device (simulator)
+#if defined(SUPPORT_VR_SIMULATOR)
+// Init VR simulator for selected device
 // NOTE: It modifies the global variable: VrDeviceInfo hmd
-void InitVrDevice(int vrDevice)
+void InitVrSimulator(int vrDevice)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    switch (vrDevice)
+    if (vrDevice == HMD_OCULUS_RIFT_DK2)
     {
-        case HMD_DEFAULT_DEVICE: TraceLog(INFO, "Initializing default VR Device (Oculus Rift CV1)");
-        case HMD_OCULUS_RIFT_DK2:
-        case HMD_OCULUS_RIFT_CV1:
-        {
-#if defined(RLGL_OCULUS_SUPPORT)
-            vrDeviceReady = InitOculusDevice();
-#else
-            TraceLog(WARNING, "Oculus Rift not supported by default, recompile raylib with Oculus support");
+        // Oculus Rift DK2 parameters
+        hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
+        hmd.vResolution = 800;                  // HMD vertical resolution in pixels
+        hmd.hScreenSize = 0.14976f;             // HMD horizontal size in meters
+        hmd.vScreenSize = 0.09356f;             // HMD vertical size in meters
+        hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
+        hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
+        hmd.lensSeparationDistance = 0.0635f;   // HMD lens separation distance in meters
+        hmd.interpupillaryDistance = 0.064f;    // HMD IPD (distance between pupils) in meters
+        hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
+        hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
+        hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
+        hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
+        hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
+        hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
+        hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
+        hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
+        
+        TraceLog(INFO, "Initializing VR Simulator (Oculus Rift DK2)");
+    }
+    else if ((vrDevice == HMD_DEFAULT_DEVICE) || (vrDevice == HMD_OCULUS_RIFT_CV1))
+    {
+        // Oculus Rift CV1 parameters
+        // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
+        // new Fresnel-hybrid-asymmetric lenses have been added and, consequently,
+        // previous parameters (DK2) and distortion shader (DK2) doesn't work any more.
+        // I just defined a set of parameters for simulator that approximate to CV1 stereo rendering
+        // but result is not the same obtained with Oculus PC SDK.
+        hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
+        hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
+        hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
+        hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
+        hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
+        hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
+        hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
+        hmd.interpupillaryDistance = 0.07f;     // HMD IPD (distance between pupils) in meters
+        hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
+        hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
+        hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
+        hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
+        hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
+        hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
+        hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
+        hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
+        
+        TraceLog(INFO, "Initializing VR Simulator (Oculus Rift CV1)");
+    }
+    else 
+    {
+        TraceLog(WARNING, "VR Simulator doesn't support selected device parameters,");
+        TraceLog(WARNING, "using default VR Simulator parameters");
+    }
+
+    // Initialize framebuffer and textures for stereo rendering
+    // NOTE: screen size should match HMD aspect ratio
+    vrConfig.stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
+    
+#if defined(SUPPORT_DISTORTION_SHADER)
+    // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
+    vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
+    if (vrConfig.distortionShader.id != 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
 #endif
-        } break;
-        case HMD_VALVE_HTC_VIVE:
-        case HMD_SAMSUNG_GEAR_VR:
-        case HMD_GOOGLE_CARDBOARD:
-        case HMD_SONY_PLAYSTATION_VR:
-        case HMD_RAZER_OSVR:
-        case HMD_FOVE_VR: TraceLog(WARNING, "VR Device not supported");
-        default: break;
-    }
 
-    if (!vrDeviceReady)
-    {
-        TraceLog(WARNING, "VR Device not found: Initializing VR Simulator (Oculus Rift CV1)");
+    SetStereoConfig(hmd);
 
-        if (vrDevice == HMD_OCULUS_RIFT_DK2)
-        {
-            // Oculus Rift DK2 parameters
-            hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
-            hmd.vResolution = 800;                  // HMD vertical resolution in pixels
-            hmd.hScreenSize = 0.14976f;             // HMD horizontal size in meters
-            hmd.vScreenSize = 0.09356f;             // HMD vertical size in meters
-            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
-            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
-            hmd.lensSeparationDistance = 0.0635f;   // HMD lens separation distance in meters
-            hmd.interpupillaryDistance = 0.064f;    // HMD IPD (distance between pupils) in meters
-            hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
-            hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
-            hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
-            hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
-            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
-            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
-            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
-            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-        }
-        else if ((vrDevice == HMD_DEFAULT_DEVICE) || (vrDevice == HMD_OCULUS_RIFT_CV1))
-        {
-            // Oculus Rift CV1 parameters
-            // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
-            // new Fresnel-hybrid-asymmetric lenses have been added and, consequently,
-            // previous parameters (DK2) and distortion shader (DK2) doesn't work any more.
-            // I just defined a set of parameters for simulator that approximate to CV1 stereo rendering
-            // but result is not the same obtained with Oculus PC SDK.
-            hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
-            hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
-            hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
-            hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
-            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
-            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
-            hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
-            hmd.interpupillaryDistance = 0.07f;     // HMD IPD (distance between pupils) in meters
-            hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
-            hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
-            hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
-            hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
-            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
-            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
-            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
-            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-        }
-
-        // Initialize framebuffer and textures for stereo rendering
-        // NOTE: screen size should match HMD aspect ratio
-        vrConfig.stereoFbo = rlglLoadRenderTexture(screenWidth, screenHeight);
-
-        // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
-        vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
-        if (vrConfig.distortionShader.id != 0) LoadDefaultShaderLocations(&vrConfig.distortionShader);
-
-        SetStereoConfig(hmd);
-
-        vrSimulator = true;
-        vrEnabled = true;
-    }
+    vrSimulatorReady = true;
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_11)
-    TraceLog(WARNING, "VR device or simulator not supported on OpenGL 1.1");
+    TraceLog(WARNING, "VR Simulator not supported on OpenGL 1.1");
 #endif
 }
 
-// Close VR device (or simulator)
-void CloseVrDevice(void)
+// Close VR simulator for current device
+void CloseVrSimulator(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-#if defined(RLGL_OCULUS_SUPPORT)
-    if (vrDeviceReady) CloseOculusDevice();
-    else
-#endif
+    if (vrSimulatorReady)
     {
         rlDeleteRenderTextures(vrConfig.stereoFbo); // Unload stereo framebuffer and texture
+        #if defined(SUPPORT_DISTORTION_SHADER)
         UnloadShader(vrConfig.distortionShader);    // Unload distortion shader
+        #endif
     }
 #endif
-    vrDeviceReady = false;
-}
-
-// Detect if VR device is available
-bool IsVrDeviceReady(void)
-{
-    return (vrDeviceReady && vrEnabled);
 }
 
 // Detect if VR simulator is running
-bool IsVrSimulator(void)
+bool IsVrSimulatorReady(void)
 {
-    return (vrSimulator && vrEnabled);
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return vrSimulatorReady;
+#else
+    return false;
+#endif
 }
 
 // Enable/Disable VR experience (device or simulator)
 void ToggleVrMode(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    if (vrDeviceReady || vrSimulator) vrEnabled = !vrEnabled;
-    else vrEnabled = false;
+    vrSimulatorReady = !vrSimulatorReady;
 
-    if (!vrEnabled)
+    if (!vrSimulatorReady)
     {
+        vrStereoRender = false;
+        
         // Reset viewport and default projection-modelview matrices
         rlViewport(0, 0, screenWidth, screenHeight);
         projection = MatrixOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);
         MatrixTranspose(&projection);
         modelview = MatrixIdentity();
     }
+    else vrStereoRender = true;
 #endif
 }
 
@@ -2764,37 +2675,29 @@ void ToggleVrMode(void)
 // NOTE: Camera (position, target, up) gets update with head tracking information
 void UpdateVrTracking(Camera *camera)
 {
-#if defined(RLGL_OCULUS_SUPPORT)
-    if (vrDeviceReady) UpdateOculusTracking(camera);
-#endif
+    // TODO: Simulate 1st person camera system
 }
 
 // Begin Oculus drawing configuration
 void BeginVrDrawing(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-#if defined(RLGL_OCULUS_SUPPORT)
-    if (vrDeviceReady)
-    {
-        BeginOculusDrawing();
-    }
-    else
-#endif
+    if (vrSimulatorReady)
     {
         // Setup framebuffer for stereo rendering
         rlEnableRenderTexture(vrConfig.stereoFbo.id);
+
+        // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA)
+        // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
+        //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
+        //     - Do NOT enable GL_FRAMEBUFFER_SRGB
+        //glEnable(GL_FRAMEBUFFER_SRGB);
+
+        //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
+        rlClearScreenBuffers();             // Clear current framebuffer(s)
+        
+        vrStereoRender = true;
     }
-
-    // NOTE: If your application is configured to treat the texture as a linear format (e.g. GL_RGBA)
-    // and performs linear-to-gamma conversion in GLSL or does not care about gamma-correction, then:
-    //     - Require OculusBuffer format to be OVR_FORMAT_R8G8B8A8_UNORM_SRGB
-    //     - Do NOT enable GL_FRAMEBUFFER_SRGB
-    //glEnable(GL_FRAMEBUFFER_SRGB);
-
-    //glViewport(0, 0, buffer.width, buffer.height);        // Useful if rendering to separate framebuffers (every eye)
-    rlClearScreenBuffers();             // Clear current framebuffer(s)
-
-    vrRendering = true;
 #endif
 }
 
@@ -2802,18 +2705,13 @@ void BeginVrDrawing(void)
 void EndVrDrawing(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-#if defined(RLGL_OCULUS_SUPPORT)
-    if (vrDeviceReady)
+    if (vrSimulatorReady)
     {
-        EndOculusDrawing();
-    }
-    else
-#endif
-    {
-        // Unbind current framebuffer
-        rlDisableRenderTexture();
+        vrStereoRender = false;         // Disable stereo render
+        
+        rlDisableRenderTexture();       // Unbind current framebuffer
 
-        rlClearScreenBuffers();             // Clear current framebuffer
+        rlClearScreenBuffers();         // Clear current framebuffer
 
         // Set viewport to default framebuffer size (screen size)
         rlViewport(0, 0, screenWidth, screenHeight);
@@ -2825,8 +2723,12 @@ void EndVrDrawing(void)
         rlMatrixMode(RL_MODELVIEW);                             // Enable internal modelview matrix
         rlLoadIdentity();                                       // Reset internal modelview matrix
 
+#if defined(SUPPORT_DISTORTION_SHADER)
         // Draw RenderTexture (stereoFbo) using distortion shader
         currentShader = vrConfig.distortionShader;
+#else
+        currentShader = GetDefaultShader();
+#endif
 
         rlEnableTexture(vrConfig.stereoFbo.texture.id);
 
@@ -2855,17 +2757,24 @@ void EndVrDrawing(void)
 
         rlDisableTexture();
 
+        // Update and draw render texture fbo with distortion to backbuffer
         UpdateDefaultBuffers();
-        DrawDefaultBuffers(1);
-
+        DrawDefaultBuffers();
+        
+        // Restore defaultShader
         currentShader = defaultShader;
+
+        // Reset viewport and default projection-modelview matrices
+        rlViewport(0, 0, screenWidth, screenHeight);
+        projection = MatrixOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);
+        MatrixTranspose(&projection);
+        modelview = MatrixIdentity();
+        
+        rlDisableDepthTest();
     }
-
-    rlDisableDepthTest();
-
-    vrRendering = false;
 #endif
 }
+#endif          // SUPPORT_VR_SIMULATOR
 
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
@@ -3405,14 +3314,21 @@ static void UpdateDefaultBuffers(void)
 
 // Draw default internal buffers vertex data
 // NOTE: We draw in this order: lines, triangles, quads
-static void DrawDefaultBuffers(int eyesCount)
+static void DrawDefaultBuffers()
 {
     Matrix matProjection = projection;
     Matrix matModelView = modelview;
+    
+    int eyesCount = 1;
+#if defined(SUPPORT_VR_SIMULATOR)
+    if (vrStereoRender) eyesCount = 2;
+#endif
 
     for (int eye = 0; eye < eyesCount; eye++)
     {
+        #if defined(SUPPORT_VR_SIMULATOR)
         if (eyesCount == 2) SetStereoView(eye, matProjection, matModelView);
+        #endif
 
         // Set current shader and upload current MVP matrix
         if ((lines.vCounter > 0) || (triangles.vCounter > 0) || (quads.vCounter > 0))
@@ -3618,6 +3534,7 @@ static void UnloadDefaultBuffers(void)
     free(quads.indices);
 }
 
+#if defined(SUPPORT_VR_SIMULATOR)
 // Configure stereo rendering (including distortion shader) with HMD device parameters
 static void SetStereoConfig(VrDeviceInfo hmd)
 {
@@ -3652,6 +3569,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     TraceLog(DEBUG, "VR: Distortion Shader: Scale = { %f, %f }", scale[0], scale[1]);
     TraceLog(DEBUG, "VR: Distortion Shader: ScaleIn = { %f, %f }", scaleIn[0], scaleIn[1]);
 
+#if defined(SUPPORT_DISTORTION_SHADER)
     // Update distortion shader with lens and distortion-scale parameters
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "leftLensCenter"), leftLensCenter, 2);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "rightLensCenter"), rightLensCenter, 2);
@@ -3662,6 +3580,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
+#endif
 
     // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
     // ...but with lens distortion it is increased (see Oculus SDK Documentation)
@@ -3693,48 +3612,22 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 // Set internal projection and modelview matrix depending on eyes tracking data
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
 {
-    if (vrEnabled)
-    {
-        Matrix eyeProjection = matProjection;
-        Matrix eyeModelView = matModelView;
+    Matrix eyeProjection = matProjection;
+    Matrix eyeModelView = matModelView;
 
-#if defined(RLGL_OCULUS_SUPPORT)
-        if (vrDeviceReady)
-        {
-            rlViewport(layer.eyeLayer.Viewport[eye].Pos.x, layer.eyeLayer.Viewport[eye].Pos.y,
-                       layer.eyeLayer.Viewport[eye].Size.w, layer.eyeLayer.Viewport[eye].Size.h);
+    // Setup viewport and projection/modelview matrices using tracking data
+    rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
 
-            Quaternion eyeRenderPose = (Quaternion){ layer.eyeLayer.RenderPose[eye].Orientation.x,
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.y,
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.z,
-                                                     layer.eyeLayer.RenderPose[eye].Orientation.w };
-            QuaternionInvert(&eyeRenderPose);
-            Matrix eyeOrientation = QuaternionToMatrix(eyeRenderPose);
-            Matrix eyeTranslation = MatrixTranslate(-layer.eyeLayer.RenderPose[eye].Position.x,
-                                                    -layer.eyeLayer.RenderPose[eye].Position.y,
-                                                    -layer.eyeLayer.RenderPose[eye].Position.z);
+    // Apply view offset to modelview matrix
+    eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
 
-            Matrix eyeView = MatrixMultiply(eyeTranslation, eyeOrientation);    // Matrix containing eye-head movement
-            eyeModelView = MatrixMultiply(matModelView, eyeView);               // Combine internal camera matrix (modelview) wih eye-head movement
+    eyeProjection = vrConfig.eyesProjection[eye];
 
-            eyeProjection = layer.eyeProjections[eye];
-        }
-        else
-#endif
-        {
-            // Setup viewport and projection/modelview matrices using tracking data
-            rlViewport(eye*screenWidth/2, 0, screenWidth/2, screenHeight);
-
-            // Apply view offset to modelview matrix
-            eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
-
-            eyeProjection = vrConfig.eyesProjection[eye];
-        }
-
-        SetMatrixModelview(eyeModelView);
-        SetMatrixProjection(eyeProjection);
-    }
+    SetMatrixModelview(eyeModelView);
+    SetMatrixProjection(eyeProjection);
 }
+#endif      // defined(SUPPORT_VR_SIMULATOR)
+
 #endif //defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
 #if defined(GRAPHICS_API_OPENGL_11)
@@ -3861,304 +3754,6 @@ static Color *GenNextMipmap(Color *srcData, int srcWidth, int srcHeight)
     TraceLog(DEBUG, "Mipmap generated successfully (%ix%i)", width, height);
 
     return mipmap;
-}
-#endif
-
-#if defined(RLGL_OCULUS_SUPPORT)
-// Initialize Oculus device (returns true if success)
-OCULUSAPI bool InitOculusDevice(void)
-{
-    bool oculusReady = false;
-
-    ovrResult result = ovr_Initialize(NULL);
-
-    if (OVR_FAILURE(result)) TraceLog(WARNING, "OVR: Could not initialize Oculus device");
-    else
-    {
-        result = ovr_Create(&session, &luid);
-        if (OVR_FAILURE(result))
-        {
-            TraceLog(WARNING, "OVR: Could not create Oculus session");
-            ovr_Shutdown();
-        }
-        else
-        {
-            hmdDesc = ovr_GetHmdDesc(session);
-
-            TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-            TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-            TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-            TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
-            //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
-            TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
-
-            // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
-            // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
-
-            // Initialize Oculus Buffers
-            layer = InitOculusLayer(session);
-            buffer = LoadOculusBuffer(session, layer.width, layer.height);
-            mirror = LoadOculusMirror(session, hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2);     // NOTE: hardcoded...
-            layer.eyeLayer.ColorTexture[0] = buffer.textureChain;     //SetOculusLayerTexture(eyeLayer, buffer.textureChain);
-
-            // Recenter OVR tracking origin
-            ovr_RecenterTrackingOrigin(session);
-
-            oculusReady = true;
-            vrEnabled = true;
-        }
-    }
-
-    return oculusReady;
-}
-
-// Close Oculus device (and unload buffers)
-OCULUSAPI void CloseOculusDevice(void)
-{
-    UnloadOculusMirror(session, mirror);    // Unload Oculus mirror buffer
-    UnloadOculusBuffer(session, buffer);    // Unload Oculus texture buffers
-
-    ovr_Destroy(session);   // Free Oculus session data
-    ovr_Shutdown();         // Close Oculus device connection
-}
-
-// Update Oculus head position-orientation tracking
-OCULUSAPI void UpdateOculusTracking(Camera *camera)
-{
-    frameIndex++;
-
-    ovrPosef eyePoses[2];
-    ovr_GetEyePoses(session, frameIndex, ovrTrue, layer.viewScaleDesc.HmdToEyeOffset, eyePoses, &layer.eyeLayer.SensorSampleTime);
-
-    layer.eyeLayer.RenderPose[0] = eyePoses[0];
-    layer.eyeLayer.RenderPose[1] = eyePoses[1];
-
-    // TODO: Update external camera with eyePoses data (position, orientation)
-    // NOTE: We can simplify to simple camera if we consider IPD and HMD device configuration again later
-    // it will be useful for the user to draw, lets say, billboards oriented to camera
-
-    // Get session status information
-    ovrSessionStatus sessionStatus;
-    ovr_GetSessionStatus(session, &sessionStatus);
-
-    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
-    if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
-    //if (sessionStatus.HmdPresent)  // HMD is present.
-    //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
-    //if (sessionStatus.HmdMounted)  // HMD is on the user's head.
-    //if (sessionStatus.IsVisible)   // the game or experience has VR focus and is visible in the HMD.
-}
-
-// Setup Oculus buffers for drawing
-OCULUSAPI void BeginOculusDrawing(void)
-{
-    GLuint currentTexId;
-    int currentIndex;
-
-    ovr_GetTextureSwapChainCurrentIndex(session, buffer.textureChain, &currentIndex);
-    ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, currentIndex, &currentTexId);
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTexId, 0);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, buffer.depthId, 0);    // Already binded
-}
-
-// Finish Oculus drawing and blit framebuffer to mirror
-OCULUSAPI void EndOculusDrawing(void)
-{
-    // Unbind current framebuffer (Oculus buffer)
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    ovr_CommitTextureSwapChain(session, buffer.textureChain);
-
-    ovrLayerHeader *layers = &layer.eyeLayer.Header;
-    ovr_SubmitFrame(session, frameIndex, &layer.viewScaleDesc, &layers, 1);
-
-    // Blit mirror texture to back buffer
-    BlitOculusMirror(session, mirror);
-}
-
-// Load Oculus required buffers: texture-swap-chain, fbo, texture-depth
-static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
-{
-    OculusBuffer buffer;
-    buffer.width = width;
-    buffer.height = height;
-
-    // Create OVR texture chain
-    ovrTextureSwapChainDesc desc = {};
-    desc.Type = ovrTexture_2D;
-    desc.ArraySize = 1;
-    desc.Width = width;
-    desc.Height = height;
-    desc.MipLevels = 1;
-    desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;   // Requires glEnable(GL_FRAMEBUFFER_SRGB);
-    desc.SampleCount = 1;
-    desc.StaticImage = ovrFalse;
-
-    ovrResult result = ovr_CreateTextureSwapChainGL(session, &desc, &buffer.textureChain);
-
-    if (!OVR_SUCCESS(result)) TraceLog(WARNING, "OVR: Failed to create swap textures buffer");
-
-    int textureCount = 0;
-    ovr_GetTextureSwapChainLength(session, buffer.textureChain, &textureCount);
-
-    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(WARNING, "OVR: Unable to count swap chain textures");
-
-    for (int i = 0; i < textureCount; ++i)
-    {
-        GLuint chainTexId;
-        ovr_GetTextureSwapChainBufferGL(session, buffer.textureChain, i, &chainTexId);
-        glBindTexture(GL_TEXTURE_2D, chainTexId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    /*
-    // Setup framebuffer object (using depth texture)
-    glGenFramebuffers(1, &buffer.fboId);
-    glGenTextures(1, &buffer.depthId);
-    glBindTexture(GL_TEXTURE_2D, buffer.depthId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, buffer.width, buffer.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
-    */
-
-    // Setup framebuffer object (using depth renderbuffer)
-    glGenFramebuffers(1, &buffer.fboId);
-    glGenRenderbuffers(1, &buffer.depthId);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer.fboId);
-    glBindRenderbuffer(GL_RENDERBUFFER, buffer.depthId);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, buffer.width, buffer.height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer.depthId);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    return buffer;
-}
-
-// Unload texture required buffers
-static void UnloadOculusBuffer(ovrSession session, OculusBuffer buffer)
-{
-    if (buffer.textureChain)
-    {
-        ovr_DestroyTextureSwapChain(session, buffer.textureChain);
-        buffer.textureChain = NULL;
-    }
-
-    if (buffer.depthId != 0) glDeleteTextures(1, &buffer.depthId);
-    if (buffer.fboId != 0) glDeleteFramebuffers(1, &buffer.fboId);
-}
-
-// Load Oculus mirror buffers
-static OculusMirror LoadOculusMirror(ovrSession session, int width, int height)
-{
-    OculusMirror mirror;
-    mirror.width = width;
-    mirror.height = height;
-
-    ovrMirrorTextureDesc mirrorDesc;
-    memset(&mirrorDesc, 0, sizeof(mirrorDesc));
-    mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-    mirrorDesc.Width = mirror.width;
-    mirrorDesc.Height = mirror.height;
-
-    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(WARNING, "Could not create mirror texture");
-
-    glGenFramebuffers(1, &mirror.fboId);
-
-    return mirror;
-}
-
-// Unload Oculus mirror buffers
-static void UnloadOculusMirror(ovrSession session, OculusMirror mirror)
-{
-    if (mirror.fboId != 0) glDeleteFramebuffers(1, &mirror.fboId);
-    if (mirror.texture) ovr_DestroyMirrorTexture(session, mirror.texture);
-}
-
-// Copy Oculus screen buffer to mirror texture
-static void BlitOculusMirror(ovrSession session, OculusMirror mirror)
-{
-    GLuint mirrorTextureId;
-
-    ovr_GetMirrorTextureBufferGL(session, mirror.texture, &mirrorTextureId);
-
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, mirror.fboId);
-    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
-#if defined(GRAPHICS_API_OPENGL_33)
-    // NOTE: glBlitFramebuffer() requires extension: GL_EXT_framebuffer_blit (not available in OpenGL ES 2.0)
-    glBlitFramebuffer(0, 0, mirror.width, mirror.height, 0, mirror.height, mirror.width, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-#endif
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-}
-
-// Init Oculus layer (similar to photoshop)
-static OculusLayer InitOculusLayer(ovrSession session)
-{
-    OculusLayer layer = { 0 };
-
-    layer.viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
-
-    memset(&layer.eyeLayer, 0, sizeof(ovrLayerEyeFov));
-    layer.eyeLayer.Header.Type = ovrLayerType_EyeFov;
-    layer.eyeLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
-
-    ovrEyeRenderDesc eyeRenderDescs[2];
-
-    for (int eye = 0; eye < 2; eye++)
-    {
-        eyeRenderDescs[eye] = ovr_GetRenderDesc(session, eye, hmdDesc.DefaultEyeFov[eye]);
-        ovrMatrix4f ovrPerspectiveProjection = ovrMatrix4f_Projection(eyeRenderDescs[eye].Fov, 0.01f, 10000.0f, ovrProjection_None); //ovrProjection_ClipRangeOpenGL);
-        layer.eyeProjections[eye] = FromOvrMatrix(ovrPerspectiveProjection);      // NOTE: struct ovrMatrix4f { float M[4][4] } --> struct Matrix
-
-        layer.viewScaleDesc.HmdToEyeOffset[eye] = eyeRenderDescs[eye].HmdToEyeOffset;
-        layer.eyeLayer.Fov[eye] = eyeRenderDescs[eye].Fov;
-
-        ovrSizei eyeSize = ovr_GetFovTextureSize(session, eye, layer.eyeLayer.Fov[eye], 1.0f);
-        layer.eyeLayer.Viewport[eye].Size = eyeSize;
-        layer.eyeLayer.Viewport[eye].Pos.x = layer.width;
-        layer.eyeLayer.Viewport[eye].Pos.y = 0;
-
-        layer.height = eyeSize.h;     //std::max(renderTargetSize.y, (uint32_t)eyeSize.h);
-        layer.width += eyeSize.w;
-    }
-
-    return layer;
-}
-
-// Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
-static Matrix FromOvrMatrix(ovrMatrix4f ovrmat)
-{
-    Matrix rmat;
-
-    rmat.m0 = ovrmat.M[0][0];
-    rmat.m1 = ovrmat.M[1][0];
-    rmat.m2 = ovrmat.M[2][0];
-    rmat.m3 = ovrmat.M[3][0];
-    rmat.m4 = ovrmat.M[0][1];
-    rmat.m5 = ovrmat.M[1][1];
-    rmat.m6 = ovrmat.M[2][1];
-    rmat.m7 = ovrmat.M[3][1];
-    rmat.m8 = ovrmat.M[0][2];
-    rmat.m9 = ovrmat.M[1][2];
-    rmat.m10 = ovrmat.M[2][2];
-    rmat.m11 = ovrmat.M[3][2];
-    rmat.m12 = ovrmat.M[0][3];
-    rmat.m13 = ovrmat.M[1][3];
-    rmat.m14 = ovrmat.M[2][3];
-    rmat.m15 = ovrmat.M[3][3];
-
-    MatrixTranspose(&rmat);
-
-    return rmat;
 }
 #endif
 

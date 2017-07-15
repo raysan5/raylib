@@ -2,6 +2,9 @@
 #define AL_EFX_H
 
 
+#include "alc.h"
+#include "al.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

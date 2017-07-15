@@ -14,18 +14,19 @@
     <!-- Facebook metatags for sharing -->
     <meta property="og:title" content="raylib HTML5 GAME">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:image" content="http://www.raylib.com/img/raylib_logo.png">
-    <meta property="og:image" content="http://www.raylib.com/img/raylib_logo.png">
+    <meta property="og:image" content="http://www.raylib.com/common/img/raylib_logo.png">
+    <meta property="og:image" content="http://www.raylib.com/common/img/raylib_logo.png">
     <meta property="og:url" content="http://www.raylib.com/games">
     <meta property="og:site_name" content="raylib.com">
     <meta property="og:description" content="New hmtl5 videogame, developed using raylib videogames library">
 
+    <!-- Twitter metatags for sharing -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:site" content="@emegemegames">
+    <meta name="twitter:site" content="@raysan5">
     <meta name="twitter:title" content="raylib HTML5 GAME">
     <meta name="twitter:description" content="New HTML5 videogame, developed using raylib videogames library">
-    <meta name="twitter:image" content="http://www.raylib.com/img/raylib_logo.png">
-    <meta name="twitter:url" content="http://www.raylib.com/img/raylib_logo.png">
+    <meta name="twitter:image" content="http://www.raylib.com/common/img/raylib_logo.png">
+    <meta name="twitter:url" content="http://www.raylib.com/common/img/raylib_logo.png">
     
     <!--<link rel="stylesheet" href="./Koala Seasons by emegeme_files/main.css">-->
     <link rel="shortcut icon" href="http://www.raylib.com/favicon.ico">
@@ -49,7 +50,7 @@
         float:left; 
         position:relative; 
         margin:10px; 
-        background-image:url(http://www.raylib.com/img/raylib_logo64x64.png);
+        background-image:url(http://www.raylib.com/common/img/raylib_logo_64x64.png);
       }
       
       .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
@@ -57,7 +58,7 @@
       div.emscripten_border { border: 1px solid black; }
       
       /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten { border: 0px none; }
+      canvas.emscripten { border: 0px none; background: black; }
       
       #emscripten_logo {
         display: inline-block;
@@ -144,7 +145,7 @@
         <div class="emscripten" id="status">Downloading...</div>
 
         <span id='controls'>
-          <span><input type="button" value="Fullscreen" onclick="Module.requestFullScreen(false, false)"></span>
+          <span><input type="button" value="Fullscreen" onclick="Module.requestFullscreen(false, false)"></span>
         </span>
 
         <div class="emscripten">

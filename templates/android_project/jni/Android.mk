@@ -34,13 +34,13 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := openal
 
 # Precompiled lib
-LOCAL_SRC_FILES := libs/libopenal.a
+LOCAL_SRC_FILES := libs/libopenal.so
 
 # Export headers
 LOCAL_EXPORT_C_INCLUDES := include
 
 # Build static library
-include $(PREBUILT_STATIC_LIBRARY)
+include $(PREBUILT_SHARED_LIBRARY)
 #--------------------------------------------------------------------
 
 

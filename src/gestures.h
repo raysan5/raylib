@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib Gestures System - Gestures Processing based on input gesture events (touch/mouse)
+*   raylib.gestures - Gestures system, gestures processing based on input events (touch/mouse)
 *
 *   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
 *
@@ -24,7 +24,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -147,7 +147,7 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-#elif defined(__linux)
+#elif defined(__linux__)
     #include <sys/time.h>       // Required for: timespec
     #include <time.h>           // Required for: clock_gettime()
 #endif
@@ -213,8 +213,11 @@ static unsigned int enabledGestures = 0b0000001111111111;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+#if defined(GESTURES_STANDALONE)
+// Some required math functions provided by raymath.h
 static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition);
 static float Vector2Distance(Vector2 v1, Vector2 v2);
+#endif
 static double GetCurrentTime(void);
 
 //----------------------------------------------------------------------------------
@@ -477,13 +480,11 @@ float GetGesturePinchAngle(void)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
+#if defined(GESTURES_STANDALONE)
 // Returns angle from two-points vector with X-axis
-static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition)
+static float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float angle;
-
-    angle = atan2f(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x)*(180.0f/PI);
+    float angle = angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
     
     if (angle < 0) angle += 360.0f;
 
@@ -502,6 +503,7 @@ static float Vector2Distance(Vector2 v1, Vector2 v2)
 
     return result;
 }
+#endif
 
 // Time measure returned are milliseconds
 static double GetCurrentTime(void)
@@ -517,7 +519,7 @@ static double GetCurrentTime(void)
     time = (double)currentTime/clockFrequency*1000.0f;  // Time in miliseconds
 #endif
 
-#if defined(__linux)
+#if defined(__linux__)
     // NOTE: Only for Linux-based systems
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
