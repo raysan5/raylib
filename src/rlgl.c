@@ -2380,7 +2380,6 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // Calculate and send to shader model matrix (used by PBR shader)
     SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
     
-    
     // Upload to shader material.colDiffuse
     glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, 
                                                            (float)material.maps[TEXMAP_DIFFUSE].color.g/255, 
