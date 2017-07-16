@@ -145,6 +145,54 @@ typedef unsigned char byte;
     // Boolean type
     typedef enum { false, true } bool;
     #endif
+    
+    typedef enum {
+        LOC_VERTEX_POSITION = 0,
+        LOC_VERTEX_TEXCOORD01,
+        LOC_VERTEX_TEXCOORD02,
+        LOC_VERTEX_NORMAL,
+        LOC_VERTEX_TANGENT,
+        LOC_VERTEX_COLOR,
+        LOC_MATRIX_MVP,
+        LOC_MATRIX_MODEL,
+        LOC_MATRIX_VIEW,
+        LOC_MATRIX_PROJECTION,
+        LOC_VECTOR_VIEW,
+        LOC_COLOR_DIFFUSE,
+        LOC_COLOR_SPECULAR,
+        LOC_COLOR_AMBIENT,
+        LOC_TEXMAP_ALBEDO,          // LOC_TEXMAP_DIFFUSE
+        LOC_TEXMAP_METALNESS,       // LOC_TEXMAP_SPECULAR
+        LOC_TEXMAP_NORMAL,
+        LOC_TEXMAP_ROUGHNESS,
+        LOC_TEXMAP_OCCUSION,
+        LOC_TEXMAP_EMISSION,
+        LOC_TEXMAP_HEIGHT,
+        LOC_TEXMAP_CUBEMAP,
+        LOC_TEXMAP_IRRADIANCE,
+        LOC_TEXMAP_PREFILTER,
+        LOC_TEXMAP_BRDF
+    } ShaderLocationIndex;
+
+    #define LOC_TEXMAP_DIFFUSE      LOC_TEXMAP_ALBEDO
+    #define LOC_TEXMAP_SPECULAR     LOC_TEXMAP_METALNESS
+
+    typedef enum {
+        TEXMAP_ALBEDO    = 0,       // TEXMAP_DIFFUSE
+        TEXMAP_METALNESS = 1,       // TEXMAP_SPECULAR
+        TEXMAP_NORMAL    = 2,
+        TEXMAP_ROUGHNESS = 3,
+        TEXMAP_OCCLUSION,
+        TEXMAP_EMISSION,
+        TEXMAP_HEIGHT,
+        TEXMAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        TEXMAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        TEXMAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        TEXMAP_BRDF
+    } TexmapIndex;
+
+    #define TEXMAP_DIFFUSE      TEXMAP_ALBEDO
+    #define TEXMAP_SPECULAR     TEXMAP_METALNESS
 
     // Color type, RGBA (32bit)
     typedef struct Color {
@@ -186,44 +234,30 @@ typedef unsigned char byte;
         unsigned int vaoId;     // OpenGL Vertex Array Object id
         unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
     } Mesh;
-
-    // Shader type (generic shader)
+    
+    // Shader and material limits
+    #define MAX_SHADER_LOCATIONS        32
+    #define MAX_MATERIAL_TEXTURE_MAPS   12
+    #define MAX_MATERIAL_PARAMS          8
+    
+    // Shader type (generic)
     typedef struct Shader {
         unsigned int id;        // Shader program id
-
-        // Vertex attributes locations (default locations)
-        int vertexLoc;          // Vertex attribute location point (default-location = 0)
-        int texcoordLoc;        // Texcoord attribute location point (default-location = 1)
-        int normalLoc;          // Normal attribute location point (default-location = 2)
-        int colorLoc;           // Color attibute location point (default-location = 3)
-        int tangentLoc;         // Tangent attribute location point (default-location = 4)
-        int texcoord2Loc;       // Texcoord2 attribute location point (default-location = 5)
-
-        // Uniform locations
-        int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
-        int colDiffuseLoc;       // Color uniform location point (fragment shader)
-        int colAmbientLoc;      // Ambient color uniform location point (fragment shader)
-        int colSpecularLoc;     // Specular color uniform location point (fragment shader)
-
-        // Texture map locations (generic for any kind of map)
-        int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
-        int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
-        int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
+        int locs[MAX_SHADER_LOCATIONS];     // Initialized on LoadShader(), set to MAX_SHADER_LOCATIONS
     } Shader;
 
-    // Material type
+    // Material texture map
+    typedef struct TextureMap {
+        Texture2D tex;
+        Color color;
+        float value;
+    } TextureMap;
+
+    // Material type (generic)
     typedef struct Material {
-        Shader shader;          // Standard shader (supports 3 map types: diffuse, normal, specular)
-
-        Texture2D texDiffuse;   // Diffuse texture
-        Texture2D texNormal;    // Normal texture
-        Texture2D texSpecular;  // Specular texture
-
-        Color colDiffuse;       // Diffuse color
-        Color colAmbient;       // Ambient color
-        Color colSpecular;      // Specular color
-
-        float glossiness;       // Glossiness level (Ranges from 0 to 1000)
+        Shader shader;
+        TextureMap maps[MAX_TEXTURE_MAPS];  // Initialized on LoadMaterial*(), set to MAX_TEXTURE_MAPS
+        float *params;          // Initialized on LoadMaterial*(), set to MAX_MATERIAL_PARAMS
     } Material;
 
     // Camera type, defines a camera position/orientation in 3d space
@@ -343,23 +377,24 @@ void rlColor4f(float x, float y, float z, float w); // Define one vertex (color)
 // Functions Declaration - OpenGL equivalent functions (common to 1.1, 3.3+, ES2)
 // NOTE: This functions are used to completely abstract raylib code from OpenGL layer
 //------------------------------------------------------------------------------------
-void rlEnableTexture(unsigned int id);          // Enable texture usage
-void rlDisableTexture(void);                    // Disable texture usage
+void rlEnableTexture(unsigned int id);                  // Enable texture usage
+void rlDisableTexture(void);                            // Disable texture usage
 void rlTextureParameters(unsigned int id, int param, int value); // Set texture parameters (filter, wrap)
-void rlEnableRenderTexture(unsigned int id);    // Enable render texture (fbo)
-void rlDisableRenderTexture(void);              // Disable render texture (fbo), return to default framebuffer
-void rlEnableDepthTest(void);                   // Enable depth test
-void rlDisableDepthTest(void);                  // Disable depth test
-void rlEnableWireMode(void);                    // Enable wire mode
-void rlDisableWireMode(void);                   // Disable wire mode
-void rlDeleteTextures(unsigned int id);         // Delete OpenGL texture from GPU
+void rlEnableRenderTexture(unsigned int id);            // Enable render texture (fbo)
+void rlDisableRenderTexture(void);                      // Disable render texture (fbo), return to default framebuffer
+void rlEnableDepthTest(void);                           // Enable depth test
+void rlDisableDepthTest(void);                          // Disable depth test
+void rlEnableWireMode(void);                            // Enable wire mode
+void rlDisableWireMode(void);                           // Disable wire mode
+void rlDeleteTextures(unsigned int id);                 // Delete OpenGL texture from GPU
 void rlDeleteRenderTextures(RenderTexture2D target);    // Delete render textures (fbo) from GPU
-void rlDeleteShader(unsigned int id);           // Delete OpenGL shader program from GPU
-void rlDeleteVertexArrays(unsigned int id);     // Unload vertex data (VAO) from GPU memory
-void rlDeleteBuffers(unsigned int id);          // Unload vertex data (VBO) from GPU memory
-void rlClearColor(byte r, byte g, byte b, byte a);  // Clear color buffer with color
-void rlClearScreenBuffers(void);                // Clear used screen buffers (color and depth)
-int rlGetVersion(void);                         // Returns current OpenGL version
+void rlDeleteShader(unsigned int id);                   // Delete OpenGL shader program from GPU
+void rlDeleteVertexArrays(unsigned int id);             // Unload vertex data (VAO) from GPU memory
+void rlDeleteBuffers(unsigned int id);                  // Unload vertex data (VBO) from GPU memory
+void rlClearColor(byte r, byte g, byte b, byte a);      // Clear color buffer with color
+void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
+int rlGetVersion(void);                                 // Returns current OpenGL version
+Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
@@ -369,24 +404,26 @@ void rlglClose(void);                           // De-init rlgl
 void rlglDraw(void);                            // Draw VAO/VBO
 void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
 
-unsigned int rlglLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU
-RenderTexture2D rlglLoadRenderTexture(int width, int height);   // Load a texture to be used for rendering (fbo with color and depth attachments)
-void rlglUpdateTexture(unsigned int id, int width, int height, int format, const void *data);         // Update GPU texture with new data
-void rlglGenerateMipmaps(Texture2D *texture);                       // Generate mipmap data for selected texture
+// Textures data management
+unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU
+void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data);    // Update GPU texture with new data
+void rlUnloadTexture(unsigned int id);
+void rlGenerateMipmaps(Texture2D *texture);                         // Generate mipmap data for selected texture
+void *rlReadTexturePixels(Texture2D texture);                       // Read texture pixel data
+unsigned char *rlReadScreenPixels(int width, int height);           // Read screen pixel data (color buffer)
+RenderTexture2D rlLoadRenderTexture(int width, int height);         // Load a texture to be used for rendering (fbo with color and depth attachments)
 
-void rlglLoadMesh(Mesh *mesh, bool dynamic);                        // Upload vertex data into GPU and provided VAO/VBO ids
-void rlglUpdateMesh(Mesh mesh, int buffer, int numVertex);          // Update vertex data on GPU (upload new data to one buffer)
-void rlglDrawMesh(Mesh mesh, Material material, Matrix transform);  // Draw a 3d mesh with material and transform
-void rlglUnloadMesh(Mesh *mesh);                                    // Unload mesh data from CPU and GPU
+// Vertex data management
+void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload vertex data into GPU and provided VAO/VBO ids
+void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
+void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
+void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
-Vector3 rlglUnproject(Vector3 source, Matrix proj, Matrix view);    // Get world coordinates from screen coordinates
-
-unsigned char *rlglReadScreenPixels(int width, int height);         // Read screen pixel data (color buffer)
-void *rlglReadTexturePixels(Texture2D texture);                     // Read texture pixel data
-
-// VR functions exposed to core module but not to raylib users
-void BeginVrDrawing(void);                  // Begin VR drawing configuration
-void EndVrDrawing(void);                    // End VR drawing process (and desktop mirror)
+// Texture maps generation (PBR)
+Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
+Texture2D rlGenMapIrradiance(Texture2D cubemap, int size);          // Generate irradiance texture map
+Texture2D rlGenMapPrefilter(Texture2D cubemap, int size);           // Generate prefilter texture map
+Texture2D rlGenMapBRDF(Texture2D cubemap, int size);                // Generate BRDF texture map
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -396,34 +433,34 @@ void EndVrDrawing(void);                    // End VR drawing process (and deskt
 // Shaders System Functions (Module: rlgl)
 // NOTE: This functions are useless when using OpenGL 1.1
 //------------------------------------------------------------------------------------
-Shader LoadShader(char *vsFileName, char *fsFileName);              // Load a custom shader and bind default locations
-void UnloadShader(Shader shader);                                   // Unload a custom shader from memory
+Shader LoadShader(char *vsFileName, char *fsFileName);  // Load a custom shader and bind default locations
+void UnloadShader(Shader shader);                       // Unload a custom shader from memory
 
-Shader GetDefaultShader(void);                                      // Get default shader
-Texture2D GetDefaultTexture(void);                                  // Get default texture
+Shader GetShaderDefault(void);                          // Get default shader
+Texture2D GetTextureDefault(void);                      // Get default texture
 
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 
-void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
-void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
 
-void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
-void EndShaderMode(void);                                           // End custom shader drawing (use default shader)
-void BeginBlendMode(int mode);                                      // Begin blending mode (alpha, additive, multiplied)
-void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
+void BeginShaderMode(Shader shader);                    // Begin custom shader drawing
+void EndShaderMode(void);                               // End custom shader drawing (use default shader)
+void BeginBlendMode(int mode);                          // Begin blending mode (alpha, additive, multiplied)
+void EndBlendMode(void);                                // End blending mode (reset to default: alpha blending)
 
-void TraceLog(int msgType, const char *text, ...);                  // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-float *MatrixToFloat(Matrix mat);                                   // Get float array from Matrix data
+void InitVrSimulator(int vrDevice);                     // Init VR simulator for selected device
+void CloseVrSimulator(void);                            // Close VR simulator for current device
+void UpdateVrTracking(Camera *camera);                  // Update VR tracking (position and orientation) and camera
+void ToggleVrMode(void);                                // Enable/Disable VR experience (device or simulator)
+void BeginVrDrawing(void);                              // Begin VR stereo rendering
+void EndVrDrawing(void);                                // End VR stereo rendering
 
-void InitVrSimulator(int vrDevice);         // Init VR simulator for selected device
-void CloseVrSimulator(void);                // Close VR simulator for current device
-void UpdateVrTracking(Camera *camera);      // Update VR tracking (position and orientation) and camera
-void ToggleVrMode(void);                    // Enable/Disable VR experience (device or simulator)
-void BeginVrDrawing(void);                  // Begin VR stereo rendering
-void EndVrDrawing(void);                    // End VR stereo rendering
+void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+float *MatrixToFloat(Matrix mat);                       // Converts Matrix to float array
 #endif
 
 #ifdef __cplusplus

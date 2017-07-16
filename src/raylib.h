@@ -291,6 +291,11 @@
 #define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
+// Shader and material limits
+#define MAX_SHADER_LOCATIONS        32
+#define MAX_MATERIAL_TEXTURE_MAPS   12
+#define MAX_MATERIAL_PARAMS          8
+
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
@@ -420,43 +425,24 @@ typedef struct Mesh {
     unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
 } Mesh;
 
-// Shader type (generic shader)
+// Shader type (generic)
 typedef struct Shader {
     unsigned int id;        // Shader program id
-
-    // Vertex attributes locations (default locations)
-    int vertexLoc;          // Vertex attribute location point    (default-location = 0)
-    int texcoordLoc;        // Texcoord attribute location point  (default-location = 1)
-    int texcoord2Loc;       // Texcoord2 attribute location point (default-location = 5)
-    int normalLoc;          // Normal attribute location point    (default-location = 2)
-    int tangentLoc;         // Tangent attribute location point   (default-location = 4)
-    int colorLoc;           // Color attibute location point      (default-location = 3)
-
-    // Uniform locations
-    int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
-    int colDiffuseLoc;      // Diffuse color uniform location point (fragment shader)
-    int colAmbientLoc;      // Ambient color uniform location point (fragment shader)
-    int colSpecularLoc;     // Specular color uniform location point (fragment shader)
-
-    // Texture map locations (generic for any kind of map)
-    int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
-    int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
-    int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
+    int locs[MAX_SHADER_LOCATIONS];             // Initialized on LoadShader(), set to MAX_SHADER_LOCATIONS
 } Shader;
 
-// Material type
+// Material texture map
+typedef struct TextureMap {
+    Texture2D tex;
+    Color color;
+    float value;
+} TextureMap;
+
+// Material type (generic)
 typedef struct Material {
-    Shader shader;          // Standard shader (supports 3 map textures)
-
-    Texture2D texDiffuse;   // Diffuse texture  (binded to shader mapTexture0Loc)
-    Texture2D texNormal;    // Normal texture   (binded to shader mapTexture1Loc)
-    Texture2D texSpecular;  // Specular texture (binded to shader mapTexture2Loc)
-
-    Color colDiffuse;       // Diffuse color
-    Color colAmbient;       // Ambient color
-    Color colSpecular;      // Specular color
-
-    float glossiness;       // Glossiness level (Ranges from 0 to 1000)
+    Shader shader;
+    TextureMap maps[MAX_MATERIAL_TEXTURE_MAPS]; // Initialized on LoadMaterial*(), set to MAX_MATERIAL_TEXTURE_MAPS
+    float *params;          // Initialized on LoadMaterial*(), set to MAX_MATERIAL_PARAMS
 } Material;
 
 // Model type
@@ -539,6 +525,54 @@ typedef enum {
     LOG_DEBUG, 
     LOG_OTHER 
 } LogType;
+
+typedef enum {
+    LOC_VERTEX_POSITION = 0,
+    LOC_VERTEX_TEXCOORD01,
+    LOC_VERTEX_TEXCOORD02,
+    LOC_VERTEX_NORMAL,
+    LOC_VERTEX_TANGENT,
+    LOC_VERTEX_COLOR,
+    LOC_MATRIX_MVP,
+    LOC_MATRIX_MODEL,
+    LOC_MATRIX_VIEW,
+    LOC_MATRIX_PROJECTION,
+    LOC_VECTOR_VIEW,
+    LOC_COLOR_DIFFUSE,
+    LOC_COLOR_SPECULAR,
+    LOC_COLOR_AMBIENT,
+    LOC_TEXMAP_ALBEDO,          // LOC_TEXMAP_DIFFUSE
+    LOC_TEXMAP_METALNESS,       // LOC_TEXMAP_SPECULAR
+    LOC_TEXMAP_NORMAL,
+    LOC_TEXMAP_ROUGHNESS,
+    LOC_TEXMAP_OCCUSION,
+    LOC_TEXMAP_EMISSION,
+    LOC_TEXMAP_HEIGHT,
+    LOC_TEXMAP_CUBEMAP,
+    LOC_TEXMAP_IRRADIANCE,
+    LOC_TEXMAP_PREFILTER,
+    LOC_TEXMAP_BRDF
+} ShaderLocationIndex;
+
+#define LOC_TEXMAP_DIFFUSE      LOC_TEXMAP_ALBEDO
+#define LOC_TEXMAP_SPECULAR     LOC_TEXMAP_METALNESS
+
+typedef enum {
+    TEXMAP_ALBEDO    = 0,       // TEXMAP_DIFFUSE
+    TEXMAP_METALNESS = 1,       // TEXMAP_SPECULAR
+    TEXMAP_NORMAL    = 2,
+    TEXMAP_ROUGHNESS = 3,
+    TEXMAP_OCCLUSION,
+    TEXMAP_EMISSION,
+    TEXMAP_HEIGHT,
+    TEXMAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    TEXMAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    TEXMAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    TEXMAP_BRDF
+} TexmapIndex;
+
+#define TEXMAP_DIFFUSE      TEXMAP_ALBEDO
+#define TEXMAP_SPECULAR     TEXMAP_METALNESS
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -944,19 +978,26 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 //------------------------------------------------------------------------------------
 
 // Model loading/unloading functions
-RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
-RLAPI Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData);         // Load mesh from vertex data
-RLAPI Model LoadModel(const char *fileName);                                                            // Load model from file
-RLAPI Model LoadModelFromMesh(Mesh data, bool dynamic);                                                 // Load model from mesh data
-RLAPI Model LoadHeightmap(Image heightmap, Vector3 size);                                               // Load heightmap model from image data
-RLAPI Model LoadCubicmap(Image cubicmap);                                                               // Load cubes-based map model from image data
-RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (mesh and material)
+RLAPI Model LoadModelFromMesh(Mesh mesh, bool dynamic);                                                // Load model from generated mesh
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
+
+// Mesh loading/unloading functions
+RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
+//RLAPI void UpdateMesh(Mesh *mesh, int type, void *data);                                                // Update mesh data (CPU and GPU)
+RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+
+RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
+RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
+RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
 
 // Material loading/unloading functions
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
-RLAPI Material LoadDefaultMaterial(void);                                                               // Load default material (uses default models shader)
+RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+RLAPI Material LoadMaterialPBR(Texture2D cubemap, Color albedo, float metalness, float roughness);      // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS...)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
+RLAPI void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture);                        // Set material texture
+RLAPI void UnsetMaterialTexture(Material *mat, int texmapType);                                         // Unset texture from material and unload it from GPU
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
@@ -993,8 +1034,10 @@ RLAPI char *LoadText(const char *fileName);                               // Loa
 RLAPI Shader LoadShader(char *vsFileName, char *fsFileName);              // Load shader from files and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
-RLAPI Shader GetDefaultShader(void);                                      // Get default shader
-RLAPI Texture2D GetDefaultTexture(void);                                  // Get default texture
+RLAPI Shader GetShaderDefault(void);                                      // Get default shader
+RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
+
+RLAPI Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location

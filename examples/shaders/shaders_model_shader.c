@@ -38,7 +38,7 @@ int main()
                                "resources/shaders/glsl330/grayscale.fs");   // Load model shader
 
     dwarf.material.shader = shader;             // Set shader effect to 3d model
-    dwarf.material.texDiffuse = texture;        // Bind texture to model
+    dwarf.material.maps[TEXMAP_DIFFUSE].tex = texture;        // Bind texture to model
     
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
     

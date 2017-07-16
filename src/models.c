@@ -76,9 +76,6 @@ static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
 static Material LoadMTL(const char *fileName);  // Load MTL material data
 #endif
 
-static Mesh GenMeshHeightmap(Image image, Vector3 size);
-static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -587,108 +584,30 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
-// Load mesh from file
-Mesh LoadMesh(const char *fileName)
-{
-    Mesh mesh = { 0 };
-
-#if defined(SUPPORT_FILEFORMAT_OBJ)
-    if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
-#else
-    TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
-#endif
-
-    if (mesh.vertexCount == 0) TraceLog(LOG_WARNING, "Mesh could not be loaded");
-    else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
-
-    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
-
-    return mesh;
-}
-
-// Load mesh from vertex data
-// NOTE: All vertex data arrays must be same size: vertexCount
-Mesh LoadMeshEx(int vertexCount, float *vData, float *vtData, float *vnData, Color *cData)
-{
-    Mesh mesh = { 0 };
-
-    mesh.vertexCount = vertexCount;
-    mesh.triangleCount = vertexCount/3;
-    mesh.vertices = vData;
-    mesh.texcoords = vtData;
-    mesh.texcoords2 = NULL;
-    mesh.normals = vnData;
-    mesh.tangents = NULL;
-    mesh.colors = (unsigned char *)cData;
-    mesh.indices = NULL;
-
-    rlglLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
-
-    return mesh;
-}
-
-// Load model from file
+// Load model from files (mesh and material)
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
 
     model.mesh = LoadMesh(fileName);
     model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
+    model.material = LoadMaterialDefault();
 
     return model;
 }
 
-// Load model from mesh data
-Model LoadModelFromMesh(Mesh data, bool dynamic)
+// Load model from generated mesh
+Model LoadModelFromMesh(Mesh mesh, bool dynamic)
 {
     Model model = { 0 };
-
-    model.mesh = data;
-
-    rlglLoadMesh(&model.mesh, dynamic);  // Upload vertex data to GPU
-
+    
+    rlLoadMesh(&mesh, dynamic);
+    
+    model.mesh = mesh;
     model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
+    model.material = LoadMaterialDefault();
 
     return model;
-}
-
-// Load heightmap model from image data
-// NOTE: model map size is defined in generic units
-Model LoadHeightmap(Image heightmap, Vector3 size)
-{
-    Model model = { 0 };
-
-    model.mesh = GenMeshHeightmap(heightmap, size);
-
-    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
-}
-
-// Load cubes-based map model from image data
-Model LoadCubicmap(Image cubicmap)
-{
-    Model model = { 0 };
-
-    model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
-
-    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
-}
-
-// Unload mesh from memory (RAM and/or VRAM)
-void UnloadMesh(Mesh *mesh)
-{
-    rlglUnloadMesh(mesh);
 }
 
 // Unload model from memory (RAM and/or VRAM)
@@ -700,49 +619,190 @@ void UnloadModel(Model model)
     TraceLog(LOG_INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
 }
 
-// Load material data (from file)
-Material LoadMaterial(const char *fileName)
+// Load mesh from file
+Mesh LoadMesh(const char *fileName)
 {
-    Material material = { 0 };
+    Mesh mesh = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_MTL)
-    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
+#if defined(SUPPORT_FILEFORMAT_OBJ)
+    if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
 #else
-    TraceLog(LOG_WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+    TraceLog(WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
 
-    return material;
+    if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
+    else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
+
+    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
+
+    return mesh;
 }
 
-// Load default material (uses default models shader)
-Material LoadDefaultMaterial(void)
+// Unload mesh from memory (RAM and/or VRAM)
+void UnloadMesh(Mesh *mesh)
 {
-    Material material = { 0 };
-
-    material.shader = GetDefaultShader();
-    material.texDiffuse = GetDefaultTexture();      // White texture (1x1 pixel)
-    //material.texNormal;           // NOTE: By default, not set
-    //material.texSpecular;         // NOTE: By default, not set
-
-    material.colDiffuse = WHITE;    // Diffuse color
-    material.colAmbient = WHITE;    // Ambient color
-    material.colSpecular = WHITE;   // Specular color
-
-    material.glossiness = 100.0f;   // Glossiness level
-
-    return material;
+    rlUnloadMesh(mesh);
 }
 
-// Unload material from memory
-void UnloadMaterial(Material material)
+// Generated cuboid mesh
+Mesh GenMeshCube(float width, float height, float length)
 {
-    rlDeleteTextures(material.texDiffuse.id);
-    rlDeleteTextures(material.texNormal.id);
-    rlDeleteTextures(material.texSpecular.id);
+    Mesh mesh = { 0 };
+    /*
+    float vertices[] = {
+            -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f , 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f
+        };
+    */
+    float vertices[] = {
+        -width/2, -height/2, length/2,
+        width/2, -height/2, length/2,
+        width/2, height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        -width/2, height/2, length/2,
+        width/2, height/2, length/2,
+        width/2, height/2, -length/2,
+        -width/2, -height/2, -length/2,
+        width/2, -height/2, -length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, length/2,
+        width/2, -height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, height/2, length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, -height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, height/2, -length/2
+    };
+    
+    float texcoords[] = {
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f
+    };
+    
+    float normals[] = {
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f
+    };
+
+    mesh.vertices = (float *)malloc(24*3*sizeof(float));
+    memcpy(mesh.vertices, vertices, 24*3*sizeof(float));
+    
+    mesh.texcoords = (float *)malloc(24*2*sizeof(float));
+    memcpy(mesh.texcoords, texcoords, 24*2*sizeof(float));
+    
+    mesh.normals = (float *)malloc(24*3*sizeof(float));
+    memcpy(mesh.normals, normals, 24*3*sizeof(float));
+    
+    mesh.indices = (unsigned short *)malloc(36*sizeof(unsigned short));
+    
+    int k = 0;
+
+    // Indices can be initialized right now
+    for (int i = 0; i < 36; i+=6)
+    {
+        mesh.indices[i] = 4*k;
+        mesh.indices[i+1] = 4*k+1;
+        mesh.indices[i+2] = 4*k+2;
+        mesh.indices[i+3] = 4*k;
+        mesh.indices[i+4] = 4*k+2;
+        mesh.indices[i+5] = 4*k+3;
+
+        k++;
+    }
+    
+    mesh.vertexCount = 24;
+    mesh.triangleCount = 12;
+
+    return mesh;
 }
 
 // Generate a mesh from heightmap
-static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
+Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
 
@@ -847,7 +907,7 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     return mesh;
 }
 
-static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
+Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh = { 0 };
 
@@ -1201,6 +1261,202 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     return mesh;
 }
 
+// Load material data (from file)
+Material LoadMaterial(const char *fileName)
+{
+    Material material = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_MTL)
+    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
+#else
+    TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+#endif
+
+    return material;
+}
+
+// Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+Material LoadMaterialDefault(void)
+{
+    Material material = { 0 };
+
+    material.shader = GetShaderDefault();
+    material.maps[TEXMAP_DIFFUSE].tex = GetTextureDefault();   // White texture (1x1 pixel)
+    //material.maps[TEXMAP_NORMAL].tex;           // NOTE: By default, not set
+    //material.maps[TEXMAP_SPECULAR].tex;         // NOTE: By default, not set
+
+    material.maps[TEXMAP_DIFFUSE].color = WHITE;    // Diffuse color
+    material.maps[TEXMAP_SPECULAR].color = WHITE;   // Specular color
+
+    return material;
+}
+
+// Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
+Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float roughness)
+{
+    Material mat = { 0 };
+    
+    #define     PATH_PBR_VS     "resources/shaders/pbr.vs"              // Path to physically based rendering vertex shader
+    #define     PATH_PBR_FS     "resources/shaders/pbr.fs"              // Path to physically based rendering fragment shader
+   
+    mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
+    
+    // Get required locations points for PBR material
+    // NOTE: Those location names must be available and used in the shader code
+    mat.shader.locs[LOC_TEXMAP_ALBEDO] = GetShaderLocation(mat.shader, "albedo.sampler");
+    mat.shader.locs[LOC_TEXMAP_METALNESS] = GetShaderLocation(mat.shader, "metalness.sampler");
+    mat.shader.locs[LOC_TEXMAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
+    mat.shader.locs[LOC_TEXMAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
+    mat.shader.locs[LOC_TEXMAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
+    mat.shader.locs[LOC_TEXMAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
+    mat.shader.locs[LOC_TEXMAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
+    mat.shader.locs[LOC_TEXMAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
+    mat.shader.locs[LOC_TEXMAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
+    mat.shader.locs[LOC_TEXMAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
+
+    // Set view matrix location
+    mat.shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(mat.shader, "mMatrix");
+    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
+    mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
+
+    // Set up material properties color
+    mat.maps[TEXMAP_ALBEDO].color = albedo;
+    mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
+    mat.maps[TEXMAP_METALNESS].value = metalness;
+    mat.maps[TEXMAP_ROUGHNESS].value = roughness;
+    mat.maps[TEXMAP_OCCLUSION].value = 1.0f;
+    mat.maps[TEXMAP_EMISSION].value = 0.0f;
+    mat.maps[TEXMAP_HEIGHT].value = 0.0f;
+    
+    #define CUBEMAP_SIZE        1024        // Cubemap texture size
+    #define IRRADIANCE_SIZE       32        // Irradiance map from cubemap texture size
+    #define PREFILTERED_SIZE     256        // Prefiltered HDR environment map texture size
+    #define BRDF_SIZE            512        // BRDF LUT texture map size
+
+    // Set up environment materials cubemap
+    Texture2D cubemap = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
+    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(cubemap, IRRADIANCE_SIZE);
+    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(cubemap, PREFILTERED_SIZE);
+    mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(cubemap, BRDF_SIZE);
+    UnloadTexture(cubemap);
+    
+    // NOTE: All maps textures are set to { 0 }
+    
+    // Reset viewport dimensions to default
+    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+
+    return mat;
+}
+
+// Unload material from memory
+void UnloadMaterial(Material material)
+{
+    // Unload material shader
+    UnloadShader(material.shader);
+
+    // Unload loaded texture maps
+    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
+    {
+        // NOTE: We already check for (tex.id > 0) inside function
+        rlDeleteTextures(material.maps[i].tex.id); 
+    }
+}
+
+// Set material texture
+void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
+{
+    mat->maps[texmapType].tex = texture;
+
+    // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
+    int location = -1;
+    switch (texmapType)
+    {
+        case TEXMAP_ALBEDO:
+        {
+            location = GetShaderLocation(mat->shader, "albedo.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_NORMAL:
+        {
+            location = GetShaderLocation(mat->shader, "normals.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_METALNESS:
+        {
+            location = GetShaderLocation(mat->shader, "metalness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_ROUGHNESS:
+        {
+            location = GetShaderLocation(mat->shader, "roughness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_OCCLUSION:
+        {
+            location = GetShaderLocation(mat->shader, "occlusion.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_EMISSION:
+        {
+            location = GetShaderLocation(mat->shader, "emission.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+        case TEXMAP_HEIGHT:
+        {
+            location = GetShaderLocation(mat->shader, "height.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+        } break;
+    }
+}
+
+// Unset texture from material and unload it from GPU
+void UnsetMaterialTexture(Material *mat, int texmapType)
+{
+    UnloadTexture(mat->maps[texmapType].tex);
+    mat->maps[texmapType].tex = (Texture2D){ 0 };
+
+    // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
+    int location = -1;
+    switch (texmapType)
+    {
+        case TEXMAP_ALBEDO:
+        {
+            location = GetShaderLocation(mat->shader, "albedo.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_NORMAL:
+        {
+            location = GetShaderLocation(mat->shader, "normals.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_METALNESS:
+        {
+            location = GetShaderLocation(mat->shader, "metalness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_ROUGHNESS:
+        {
+            location = GetShaderLocation(mat->shader, "roughness.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_OCCLUSION:
+        {
+            location = GetShaderLocation(mat->shader, "occlusion.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_EMISSION:
+        {
+            location = GetShaderLocation(mat->shader, "emission.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+        case TEXMAP_HEIGHT:
+        {
+            location = GetShaderLocation(mat->shader, "height.useSampler");
+            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+        } break;
+    }
+}
+
 // Draw a model (with texture if set)
 void DrawModel(Model model, Vector3 position, float scale, Color tint)
 {
@@ -1225,9 +1481,9 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
 
     model.transform = MatrixMultiply(model.transform, matTransform);
-    model.material.colDiffuse = tint;       // TODO: Multiply tint color by diffuse color?
+    model.material.maps[TEXMAP_DIFFUSE].color = tint;       // TODO: Multiply tint color by diffuse color?
 
-    rlglDrawMesh(model.mesh, model.material, model.transform);
+    rlDrawMesh(model.mesh, model.material, model.transform);
 }
 
 // Draw a model wires (with texture if set)
@@ -1980,23 +2236,24 @@ static Material LoadMTL(const char *fileName)
                     case 'a':   // Ka float float float    Ambient color (RGB)
                     {
                         sscanf(buffer, "Ka %f %f %f", &color.x, &color.y, &color.z);
-                        material.colAmbient.r = (unsigned char)(color.x*255);
-                        material.colAmbient.g = (unsigned char)(color.y*255);
-                        material.colAmbient.b = (unsigned char)(color.z*255);
+                        // TODO: Support ambient color
+                        //material.colAmbient.r = (unsigned char)(color.x*255);
+                        //material.colAmbient.g = (unsigned char)(color.y*255);
+                        //material.colAmbient.b = (unsigned char)(color.z*255);
                     } break;
                     case 'd':   // Kd float float float     Diffuse color (RGB)
                     {
                         sscanf(buffer, "Kd %f %f %f", &color.x, &color.y, &color.z);
-                        material.colDiffuse.r = (unsigned char)(color.x*255);
-                        material.colDiffuse.g = (unsigned char)(color.y*255);
-                        material.colDiffuse.b = (unsigned char)(color.z*255);
+                        material.maps[TEXMAP_DIFFUSE].color.r = (unsigned char)(color.x*255);
+                        material.maps[TEXMAP_DIFFUSE].color.g = (unsigned char)(color.y*255);
+                        material.maps[TEXMAP_DIFFUSE].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 's':   // Ks float float float     Specular color (RGB)
                     {
                         sscanf(buffer, "Ks %f %f %f", &color.x, &color.y, &color.z);
-                        material.colSpecular.r = (unsigned char)(color.x*255);
-                        material.colSpecular.g = (unsigned char)(color.y*255);
-                        material.colSpecular.b = (unsigned char)(color.z*255);
+                        material.maps[TEXMAP_SPECULAR].color.r = (unsigned char)(color.x*255);
+                        material.maps[TEXMAP_SPECULAR].color.g = (unsigned char)(color.y*255);
+                        material.maps[TEXMAP_SPECULAR].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 'e':   // Ke float float float     Emmisive color (RGB)
                     {
@@ -2012,7 +2269,7 @@ static Material LoadMTL(const char *fileName)
                     int shininess = 0;
                     sscanf(buffer, "Ns %i", &shininess);
 
-                    material.glossiness = (float)shininess;
+                    //material.params[PARAM_GLOSSINES] = (float)shininess;
                 }
                 else if (buffer[1] == 'i')  // Ni int   Refraction index.
                 {
@@ -2028,12 +2285,12 @@ static Material LoadMTL(const char *fileName)
                         if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
                         {
                             result = sscanf(buffer, "map_Kd %s", mapFileName);
-                            if (result != EOF) material.texDiffuse = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[TEXMAP_DIFFUSE].tex = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
                         {
                             result = sscanf(buffer, "map_Ks %s", mapFileName);
-                            if (result != EOF) material.texSpecular = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[TEXMAP_SPECULAR].tex = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
                         {
@@ -2043,12 +2300,12 @@ static Material LoadMTL(const char *fileName)
                     case 'B':       // map_Bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_Bump %s", mapFileName);
-                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
                     } break;
                     case 'b':       // map_bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_bump %s", mapFileName);
-                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
                     } break;
                     case 'd':       // map_d string         Opacity texture map.
                     {
@@ -2063,7 +2320,7 @@ static Material LoadMTL(const char *fileName)
                 {
                     float alpha = 1.0f;
                     sscanf(buffer, "d %f", &alpha);
-                    material.colDiffuse.a = (unsigned char)(alpha*255);
+                    material.maps[TEXMAP_DIFFUSE].color.a = (unsigned char)(alpha*255);
                 }
                 else if (buffer[1] == 'i')  // disp string  Displacement map
                 {
@@ -2073,13 +2330,13 @@ static Material LoadMTL(const char *fileName)
             case 'b':   // bump string      Bump texture map
             {
                 result = sscanf(buffer, "bump %s", mapFileName);
-                if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
             } break;
             case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
             {
                 float ialpha = 0.0f;
                 sscanf(buffer, "Tr %f", &ialpha);
-                material.colDiffuse.a = (unsigned char)((1.0f - ialpha)*255);
+                material.maps[TEXMAP_DIFFUSE].color.a = (unsigned char)((1.0f - ialpha)*255);
 
             } break;
             case 'r':   // refl string      Reflection texture map

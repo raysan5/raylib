@@ -63,8 +63,8 @@
 #include <string.h>             // Required for: strcmp(), strrchr(), strncmp()
 
 #include "rlgl.h"               // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3 or ES2
-                                // Required for: rlglLoadTexture() rlDeleteTextures(),
-                                //      rlglGenerateMipmaps(), some funcs for DrawTexturePro()
+                                // Required for: rlLoadTexture() rlDeleteTextures(),
+                                //      rlGenerateMipmaps(), some funcs for DrawTexturePro()
 
 #include "utils.h"              // Required for: fopen() Android mapping
 
@@ -384,7 +384,7 @@ Texture2D LoadTextureFromImage(Image image)
 {
     Texture2D texture = { 0 };
 
-    texture.id = rlglLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
+    texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
 
     texture.width = image.width;
     texture.height = image.height;
@@ -399,7 +399,7 @@ Texture2D LoadTextureFromImage(Image image)
 // Load texture for rendering (framebuffer)
 RenderTexture2D LoadRenderTexture(int width, int height)
 {
-    RenderTexture2D target = rlglLoadRenderTexture(width, height);
+    RenderTexture2D target = rlLoadRenderTexture(width, height);
 
     return target;
 }
@@ -416,7 +416,7 @@ void UnloadImage(Image image)
 // Unload texture from GPU memory (VRAM)
 void UnloadTexture(Texture2D texture)
 {
-    if (texture.id != 0)
+    if (texture.id > 0)
     {
         rlDeleteTextures(texture.id);
 
@@ -427,7 +427,7 @@ void UnloadTexture(Texture2D texture)
 // Unload render texture from GPU memory (VRAM)
 void UnloadRenderTexture(RenderTexture2D target)
 {
-    if (target.id != 0) rlDeleteRenderTextures(target);
+    if (target.id > 0) rlDeleteRenderTextures(target);
 }
 
 // Get pixel data from image in the form of Color struct array
@@ -525,7 +525,7 @@ Image GetTextureData(Texture2D texture)
     
     if (texture.format < 8)
     {
-        image.data = rlglReadTexturePixels(texture);
+        image.data = rlReadTexturePixels(texture);
 
         if (image.data != NULL)
         {
@@ -553,7 +553,7 @@ Image GetTextureData(Texture2D texture)
 // NOTE: pixels data must match texture.format
 void UpdateTexture(Texture2D texture, const void *pixels)
 {
-    rlglUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
+    rlUpdateTexture(texture.id, texture.width, texture.height, texture.format, pixels);
 }
 
 // Save image to a PNG file
@@ -1660,9 +1660,9 @@ void GenTextureMipmaps(Texture2D *texture)
     {
         TraceLog(LOG_WARNING, "Limited NPOT support, no mipmaps available for NPOT textures");
     }
-    else rlglGenerateMipmaps(texture);
+    else rlGenerateMipmaps(texture);
 #else
-    rlglGenerateMipmaps(texture);
+    rlGenerateMipmaps(texture);
 #endif
 }
 
@@ -1792,7 +1792,7 @@ void DrawTextureRec(Texture2D texture, Rectangle sourceRec, Vector2 position, Co
 void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, Vector2 origin, float rotation, Color tint)
 {
     // Check if texture is valid
-    if (texture.id != 0)
+    if (texture.id > 0)
     {
         if (sourceRec.width < 0) sourceRec.x -= sourceRec.width;
         if (sourceRec.height < 0) sourceRec.y -= sourceRec.height;
