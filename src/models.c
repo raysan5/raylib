@@ -627,10 +627,10 @@ Mesh LoadMesh(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_OBJ)
     if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
 #else
-    TraceLog(WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
+    TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
 
-    if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
+    if (mesh.vertexCount == 0) TraceLog(LOG_WARNING, "Mesh could not be loaded");
     else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
 
     // TODO: Initialize default mesh data in case loading fails, maybe a cube?
@@ -1269,7 +1269,7 @@ Material LoadMaterial(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_MTL)
     if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
 #else
-    TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+    TraceLog(LOG_WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
 #endif
 
     return material;

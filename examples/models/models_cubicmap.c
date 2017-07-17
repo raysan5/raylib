@@ -26,7 +26,7 @@ int main()
     Image image = LoadImage("resources/cubicmap.png");      // Load cubicmap image (RAM)
     Texture2D cubicmap = LoadTextureFromImage(image);       // Convert image to texture to display (VRAM)
     
-    Mesh mesh = GenMeshCubicmap(image, VectorOne());
+    Mesh mesh = GenMeshCubicmap(image, (Vector3){ 1.0f, 1.0f, 1.0f });
     Model model = LoadModelFromMesh(mesh, false);
     
     // NOTE: By default each cube is mapped to one part of texture atlas
