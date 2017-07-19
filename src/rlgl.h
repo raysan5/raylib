@@ -238,27 +238,27 @@ typedef unsigned char byte;
     } Mesh;
     
     // Shader and material limits
-    #define MAX_SHADER_LOCATIONS        32
-    #define MAX_MATERIAL_MAPS   12
+    #define MAX_SHADER_LOCATIONS    32
+    #define MAX_MATERIAL_MAPS       12
     
     // Shader type (generic)
     typedef struct Shader {
-        unsigned int id;        // Shader program id
-        int locs[MAX_SHADER_LOCATIONS];     // Initialized on LoadShader(), set to MAX_SHADER_LOCATIONS
+        unsigned int id;                // Shader program id
+        int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
     } Shader;
 
     // Material texture map
     typedef struct MaterialMap {
-        Texture2D tex;
-        Color color;
-        float value;
+        Texture2D texture;      // Material map texture
+        Color color;            // Material map color
+        float value;            // Material map value
     } MaterialMap;
 
     // Material type (generic)
     typedef struct Material {
-        Shader shader;
-        MaterialMap maps[MAX_TEXTURE_MAPS];  // Initialized on LoadMaterial*(), set to MAX_TEXTURE_MAPS
-        float *params;          // Initialized on LoadMaterial*(), set to MAX_MATERIAL_PARAMS
+        Shader shader;          // Material shader
+        MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+        float *params;          // Material generic parameters (if required)
     } Material;
 
     // Camera type, defines a camera position/orientation in 3d space
@@ -394,17 +394,17 @@ void rlDeleteVertexArrays(unsigned int id);             // Unload vertex data (V
 void rlDeleteBuffers(unsigned int id);                  // Unload vertex data (VBO) from GPU memory
 void rlClearColor(byte r, byte g, byte b, byte a);      // Clear color buffer with color
 void rlClearScreenBuffers(void);                        // Clear used screen buffers (color and depth)
-int rlGetVersion(void);                                 // Returns current OpenGL version
-Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
 void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
 void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
-void rlglDraw(void);                // Update and Draw default buffers (lines, triangles, quads)
+void rlglDraw(void);                            // Update and Draw default buffers (lines, triangles, quads)
 
+int rlGetVersion(void);                         // Returns current OpenGL version
 void rlLoadExtensions(void *loader);            // Load OpenGL extensions
+Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
 // Textures data management
 unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU

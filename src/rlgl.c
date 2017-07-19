@@ -992,43 +992,6 @@ void rlClearScreenBuffers(void)
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     // Stencil buffer not used...
 }
 
-// Returns current OpenGL version
-int rlGetVersion(void)
-{
-#if defined(GRAPHICS_API_OPENGL_11)
-    return OPENGL_11;
-#elif defined(GRAPHICS_API_OPENGL_21)
-    return OPENGL_21;
-#elif defined(GRAPHICS_API_OPENGL_33)
-    return OPENGL_33;
-#elif defined(GRAPHICS_API_OPENGL_ES2)
-    return OPENGL_ES_20;
-#endif
-}
-
-// Get world coordinates from screen coordinates
-Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
-{
-    Vector3 result = { 0.0f, 0.0f, 0.0f };
-
-    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
-    Matrix matProjView = MatrixMultiply(proj, view);
-    MatrixInvert(&matProjView);
-
-    // Create quaternion from source point
-    Quaternion quat = { source.x, source.y, source.z, 1.0f };
-
-    // Multiply quat point by unproject matrix
-    QuaternionTransform(&quat, matProjView);
-
-    // Normalized world points in vectors
-    result.x = quat.x/quat.w;
-    result.y = quat.y/quat.w;
-    result.z = quat.z/quat.w;
-
-    return result;
-}
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition - rlgl Functions
 //----------------------------------------------------------------------------------
@@ -1287,11 +1250,10 @@ void rlglInit(int width, int height)
 void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    UnloadShaderDefault();
-    UnloadBuffersDefault();
-
-    // Delete default white texture
-    glDeleteTextures(1, &whiteTexture);
+    UnloadShaderDefault();              // Unload default shader
+    UnloadBuffersDefault();             // Unload default buffers (lines, triangles, quads)  
+    glDeleteTextures(1, &whiteTexture); // Unload default texture
+    
     TraceLog(LOG_INFO, "[TEX ID %i] Unloaded texture data (base white texture) from VRAM", whiteTexture);
 
     free(draws);
@@ -1308,6 +1270,20 @@ void rlglDraw(void)
     // NOTE: Default buffers upload and draw
     UpdateBuffersDefault();
     DrawBuffersDefault();       // NOTE: Stereo rendering is checked inside
+#endif
+}
+
+// Returns current OpenGL version
+int rlGetVersion(void)
+{
+#if defined(GRAPHICS_API_OPENGL_11)
+    return OPENGL_11;
+#elif defined(GRAPHICS_API_OPENGL_21)
+    return OPENGL_21;
+#elif defined(GRAPHICS_API_OPENGL_33)
+    return OPENGL_33;
+#elif defined(GRAPHICS_API_OPENGL_ES2)
+    return OPENGL_ES_20;
 #endif
 }
 
@@ -1332,6 +1308,29 @@ void rlLoadExtensions(void *loader)
     // With GLAD, we can check if an extension is supported using the GLAD_GL_xxx booleans
     //if (GLAD_GL_ARB_vertex_array_object) // Use GL_ARB_vertex_array_object
 #endif
+}
+
+// Get world coordinates from screen coordinates
+Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
+{
+    Vector3 result = { 0.0f, 0.0f, 0.0f };
+
+    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
+    Matrix matProjView = MatrixMultiply(proj, view);
+    MatrixInvert(&matProjView);
+
+    // Create quaternion from source point
+    Quaternion quat = { source.x, source.y, source.z, 1.0f };
+
+    // Multiply quat point by unproject matrix
+    QuaternionTransform(&quat, matProjView);
+
+    // Normalized world points in vectors
+    result.x = quat.x/quat.w;
+    result.y = quat.y/quat.w;
+    result.z = quat.z/quat.w;
+
+    return result;
 }
 
 // Convert image data to OpenGL texture (returns OpenGL valid Id)
