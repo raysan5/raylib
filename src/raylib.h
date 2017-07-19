@@ -996,10 +996,9 @@ RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                   
 // Material loading/unloading functions
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
 RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-RLAPI Material LoadMaterialPBR(Texture2D cubemap, Color albedo, float metalness, float roughness);      // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS...)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
-RLAPI void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture);                        // Set material texture
-RLAPI void UnsetMaterialTexture(Material *mat, int texmapType);                                         // Unset texture from material and unload it from GPU
+RLAPI void SetMaterialTexture(Material *mat, int mapType, Texture2D texture);                           // Set material texture
+RLAPI void UnsetMaterialTexture(Material *mat, int mapType);                                            // Unset texture from material and unload it from GPU
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)
@@ -1048,10 +1047,11 @@ RLAPI void SetMatrixProjection(Matrix proj);                              // Set
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
 
 // Texture maps generation (PBR)
-RLAPI Texture2D GenTextureCubemap(Texture2D skyHDR, int size);            // Generate cubemap texture from HDR texture
-RLAPI Texture2D GenTextureIrradiance(Texture2D cubemap, int size);        // Generate irradiance texture using cubemap data
-RLAPI Texture2D GenTexturePrefilter(Texture2D cubemap, int size);         // Generate prefilter texture using cubemap data
-RLAPI Texture2D GenTextureBRDF(Texture2D cubemap, int size);              // Generate BRDF texture using cubemap data
+// NOTE: Required shaders should be provided
+RLAPI Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
+RLAPI Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
+RLAPI Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
+RLAPI Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
 RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing

@@ -1272,6 +1272,9 @@ Material LoadMaterial(const char *fileName)
     TraceLog(LOG_WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
 #endif
 
+    // Our material uses the default shader (DIFFUSE, SPECULAR, NORMAL)
+    material.shader = GetShaderDefault();
+
     return material;
 }
 
@@ -1282,65 +1285,13 @@ Material LoadMaterialDefault(void)
 
     material.shader = GetShaderDefault();
     material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
-    //material.maps[MAP_NORMAL].tex;           // NOTE: By default, not set
-    //material.maps[MAP_SPECULAR].tex;         // NOTE: By default, not set
+    //material.maps[MAP_NORMAL].texture;         // NOTE: By default, not set
+    //material.maps[MAP_SPECULAR].texture;       // NOTE: By default, not set
 
     material.maps[MAP_DIFFUSE].color = WHITE;    // Diffuse color
     material.maps[MAP_SPECULAR].color = WHITE;   // Specular color
 
     return material;
-}
-
-// Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
-Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float roughness)
-{
-    Material mat = { 0 };       // NOTE: All maps textures are set to { 0 }
-    
-    #define     PATH_PBR_VS     "resources/shaders/pbr.vs"              // Path to physically based rendering vertex shader
-    #define     PATH_PBR_FS     "resources/shaders/pbr.fs"              // Path to physically based rendering fragment shader
-   
-    mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
-    
-    // Get required locations points for PBR material
-    // NOTE: Those location names must be available and used in the shader code
-    mat.shader.locs[LOC_MAP_ALBEDO] = GetShaderLocation(mat.shader, "albedo.sampler");
-    mat.shader.locs[LOC_MAP_METALNESS] = GetShaderLocation(mat.shader, "metalness.sampler");
-    mat.shader.locs[LOC_MAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
-    mat.shader.locs[LOC_MAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
-    mat.shader.locs[LOC_MAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
-    mat.shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
-    mat.shader.locs[LOC_MAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
-    mat.shader.locs[LOC_MAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
-    mat.shader.locs[LOC_MAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
-    mat.shader.locs[LOC_MAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
-
-    // Set view matrix location
-    mat.shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(mat.shader, "mMatrix");
-    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
-    mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
-
-    // Set up material properties color
-    mat.maps[MAP_ALBEDO].color = albedo;
-    mat.maps[MAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
-    mat.maps[MAP_METALNESS].value = metalness;
-    mat.maps[MAP_ROUGHNESS].value = roughness;
-    mat.maps[MAP_OCCLUSION].value = 1.0f;
-    mat.maps[MAP_EMISSION].value = 0.0f;
-    mat.maps[MAP_HEIGHT].value = 0.0f;
-    
-    #define CUBEMAP_SIZE         512        // Cubemap texture size
-    #define IRRADIANCE_SIZE       32        // Irradiance map from cubemap texture size
-    #define PREFILTERED_SIZE     256        // Prefiltered HDR environment map texture size
-    #define BRDF_SIZE            512        // BRDF LUT texture map size
-
-    // Set up environment materials cubemap
-    Texture2D cubemap = GenTextureCubemap(hdr, CUBEMAP_SIZE);
-    mat.maps[MAP_IRRADIANCE].texture = GenTextureIrradiance(cubemap, IRRADIANCE_SIZE);
-    mat.maps[MAP_PREFILTER].texture = GenTexturePrefilter(cubemap, PREFILTERED_SIZE);
-    mat.maps[MAP_BRDF].texture = GenTextureBRDF(cubemap, BRDF_SIZE);
-    UnloadTexture(cubemap);
-
-    return mat;
 }
 
 // Unload material from memory
@@ -1358,96 +1309,96 @@ void UnloadMaterial(Material material)
 }
 
 // Set material texture
-void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
+void SetMaterialTexture(Material *mat, int mapType, Texture2D texture)
 {
-    mat->maps[texmapType].texture = texture;
+    mat->maps[mapType].texture = texture;
 
     // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
     int location = -1;
-    switch (texmapType)
+    switch (mapType)
     {
         case MAP_ALBEDO:
         {
             location = GetShaderLocation(mat->shader, "albedo.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
         } break;
         case MAP_NORMAL:
         {
             location = GetShaderLocation(mat->shader, "normals.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
         } break;
         case MAP_METALNESS:
         {
             location = GetShaderLocation(mat->shader, "metalness.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
         } break;
         case MAP_ROUGHNESS:
         {
             location = GetShaderLocation(mat->shader, "roughness.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
         } break;
         case MAP_OCCLUSION:
         {
             location = GetShaderLocation(mat->shader, "occlusion.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
         } break;
         case MAP_EMISSION:
         {
             location = GetShaderLocation(mat->shader, "emission.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
         } break;
         case MAP_HEIGHT:
         {
             location = GetShaderLocation(mat->shader, "height.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
         } break;
     }
 }
 
 // Unset texture from material and unload it from GPU
-void UnsetMaterialTexture(Material *mat, int texmapType)
+void UnsetMaterialTexture(Material *mat, int mapType)
 {
-    UnloadTexture(mat->maps[texmapType].texture);
-    mat->maps[texmapType].texture = (Texture2D){ 0 };
+    UnloadTexture(mat->maps[mapType].texture);
+    mat->maps[mapType].texture = (Texture2D){ 0 };
 
     // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
     int location = -1;
-    switch (texmapType)
+    switch (mapType)
     {
         case MAP_ALBEDO:
         {
             location = GetShaderLocation(mat->shader, "albedo.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
         } break;
         case MAP_NORMAL:
         {
             location = GetShaderLocation(mat->shader, "normals.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
         } break;
         case MAP_METALNESS:
         {
             location = GetShaderLocation(mat->shader, "metalness.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
         } break;
         case MAP_ROUGHNESS:
         {
             location = GetShaderLocation(mat->shader, "roughness.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
         } break;
         case MAP_OCCLUSION:
         {
             location = GetShaderLocation(mat->shader, "occlusion.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
         } break;
         case MAP_EMISSION:
         {
             location = GetShaderLocation(mat->shader, "emission.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
         } break;
         case MAP_HEIGHT:
         {
             location = GetShaderLocation(mat->shader, "height.useSampler");
-            SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
+            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
         } break;
     }
 }
@@ -2188,7 +2139,7 @@ static Material LoadMTL(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     128
 
-    Material material = { 0 };  // LoadDefaultMaterial();
+    Material material = { 0 };
 
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };

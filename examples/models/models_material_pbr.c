@@ -12,32 +12,16 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#define         MAX_LIGHTS            4         // Max lights supported by shader
-#define         LIGHT_DISTANCE        3.5f      // Light distance from world center
-#define         LIGHT_HEIGHT          1.0f      // Light height position
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
 
-typedef enum {
-    LIGHT_DIRECTIONAL,
-    LIGHT_POINT
-} LightType;
+#define CUBEMAP_SIZE         512        // Cubemap texture size
+#define IRRADIANCE_SIZE       32        // Irradiance texture size
+#define PREFILTERED_SIZE     256        // Prefiltered HDR environment texture size
+#define BRDF_SIZE            512        // BRDF LUT texture size
 
-typedef struct {
-    bool enabled;
-    LightType type;
-    Vector3 position;
-    Vector3 target;
-    Color color;
-    int enabledLoc;
-    int typeLoc;
-    int posLoc;
-    int targetLoc;
-    int colorLoc;
-} Light;
-
-int lightsCount = 0;                     // Current amount of created lights
-
-Light CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shader);         // Defines a light and get locations from PBR shader
-void UpdateLightValues(Shader shader, Light light);                                         // Send to PBR shader light values
+// PBR material loading
+static Material LoadMaterialPBR(Color albedo, float metalness, float roughness);
 
 int main()
 {
@@ -54,33 +38,15 @@ int main()
 
     // Load model and PBR material
     Model model = LoadModel("resources/pbr/trooper.obj");
-    
-    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
-    model.material = LoadMaterialPBR(texHDR, (Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
-    
-    SetMaterialTexture(&model.material, MAP_ALBEDO, LoadTexture("resources/pbr/trooper_albedo.png"));
-    SetMaterialTexture(&model.material, MAP_NORMAL, LoadTexture("resources/pbr/trooper_normals.png"));
-    SetMaterialTexture(&model.material, MAP_METALNESS, LoadTexture("resources/pbr/trooper_metalness.png"));
-    SetMaterialTexture(&model.material, MAP_ROUGHNESS, LoadTexture("resources/pbr/trooper_roughness.png"));
-    SetMaterialTexture(&model.material, MAP_OCCLUSION, LoadTexture("resources/pbr/trooper_ao.png"));
-    
-    // Set textures filtering for better quality
-    SetTextureFilter(model.material.maps[MAP_ALBEDO].texture, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[MAP_NORMAL].texture, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[MAP_METALNESS].texture, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[MAP_ROUGHNESS].texture, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[MAP_OCCLUSION].texture, FILTER_BILINEAR);
-    
-    int renderModeLoc = GetShaderLocation(model.material.shader, "renderMode");
-    SetShaderValuei(model.material.shader, renderModeLoc, (int[1]){ 0 }, 1);
+    model.material = LoadMaterialPBR((Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
 
-    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
-    
     // Define lights attributes
     Light lights[MAX_LIGHTS] = { CreateLight(LIGHT_POINT, (Vector3){ LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 0, 255 }, model.material.shader),
     CreateLight(LIGHT_POINT, (Vector3){ 0.0f, LIGHT_HEIGHT, LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 255, 0, 255 }, model.material.shader),
     CreateLight(LIGHT_POINT, (Vector3){ -LIGHT_DISTANCE, LIGHT_HEIGHT, 0.0f }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 0, 0, 255, 255 }, model.material.shader),
     CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 0.0f, LIGHT_HEIGHT*2.0f, -LIGHT_DISTANCE }, (Vector3){ 0.0f, 0.0f, 0.0f }, (Color){ 255, 0, 255, 255 }, model.material.shader) };
+    
+    SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -127,59 +93,88 @@ int main()
     return 0;
 }
 
-// Defines a light and get locations from PBR shader
-Light CreateLight(int type, Vector3 pos, Vector3 targ, Color color, Shader shader)
+// Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
+// NOTE: PBR shader is loaded inside this function
+static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 {
-    Light light = { 0 };
+    Material mat = { 0 };       // NOTE: All maps textures are set to { 0 }
+    
+    #define     PATH_PBR_VS     "resources/shaders/pbr.vs"      // Path to physically based rendering vertex shader
+    #define     PATH_PBR_FS     "resources/shaders/pbr.fs"      // Path to physically based rendering fragment shader
+   
+    mat.shader = LoadShader(PATH_PBR_VS, PATH_PBR_FS);
+    
+    // Get required locations points for PBR material
+    // NOTE: Those location names must be available and used in the shader code
+    mat.shader.locs[LOC_MAP_ALBEDO] = GetShaderLocation(mat.shader, "albedo.sampler");
+    mat.shader.locs[LOC_MAP_METALNESS] = GetShaderLocation(mat.shader, "metalness.sampler");
+    mat.shader.locs[LOC_MAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
+    mat.shader.locs[LOC_MAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
+    mat.shader.locs[LOC_MAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
+    mat.shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
+    mat.shader.locs[LOC_MAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
+    mat.shader.locs[LOC_MAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
+    mat.shader.locs[LOC_MAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
+    mat.shader.locs[LOC_MAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
 
-    if (lightsCount < MAX_LIGHTS)
-    {
-        light.enabled = true;
-        light.type = type;
-        light.position = pos;
-        light.target = targ;
-        light.color = color;
+    // Set view matrix location
+    mat.shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(mat.shader, "mMatrix");
+    mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
+    mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
+    
+    // Set PBR standard maps 
+    SetMaterialTexture(&mat, MAP_ALBEDO, LoadTexture("resources/pbr/trooper_albedo.png"));
+    SetMaterialTexture(&mat, MAP_NORMAL, LoadTexture("resources/pbr/trooper_normals.png"));
+    SetMaterialTexture(&mat, MAP_METALNESS, LoadTexture("resources/pbr/trooper_metalness.png"));
+    SetMaterialTexture(&mat, MAP_ROUGHNESS, LoadTexture("resources/pbr/trooper_roughness.png"));
+    SetMaterialTexture(&mat, MAP_OCCLUSION, LoadTexture("resources/pbr/trooper_ao.png"));
+    
+    // Set environment maps
+    #define     PATH_CUBEMAP_VS         "resources/shaders/cubemap.vs"          // Path to equirectangular to cubemap vertex shader
+    #define     PATH_CUBEMAP_FS         "resources/shaders/cubemap.fs"          // Path to equirectangular to cubemap fragment shader
+    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
+    #define     PATH_IRRADIANCE_FS      "resources/shaders/irradiance.fs"       // Path to irradiance (GI) calculation fragment shader
+    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
+    #define     PATH_PREFILTER_FS       "resources/shaders/prefilter.fs"        // Path to reflection prefilter calculation fragment shader
+    #define     PATH_BRDF_VS            "resources/shaders/brdf.vs"     // Path to bidirectional reflectance distribution function vertex shader 
+    #define     PATH_BRDF_FS            "resources/shaders/brdf.fs"     // Path to bidirectional reflectance distribution function fragment shader
+    
+    Shader shdrCubemap = LoadShader(PATH_CUBEMAP_VS, PATH_CUBEMAP_FS);
+    Shader shdrIrradiance = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
+    Shader shdrPrefilter = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
+    Shader shdrBRDF = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
 
-        char enabledName[32] = "lights[x].enabled\0";
-        char typeName[32] = "lights[x].type\0";
-        char posName[32] = "lights[x].position\0";
-        char targetName[32] = "lights[x].target\0";
-        char colorName[32] = "lights[x].color\0";
-        enabledName[7] = '0' + lightsCount;
-        typeName[7] = '0' + lightsCount;
-        posName[7] = '0' + lightsCount;
-        targetName[7] = '0' + lightsCount;
-        colorName[7] = '0' + lightsCount;
+    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
+    Texture2D cubemap = GenTextureCubemap(shdrCubemap, texHDR, CUBEMAP_SIZE);
+    SetMaterialTexture(&mat, MAP_IRRADIANCE, GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE));
+    SetMaterialTexture(&mat, MAP_PREFILTER, GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE));
+    SetMaterialTexture(&mat, MAP_BRDF, GenTextureBRDF(shdrBRDF, cubemap, BRDF_SIZE));
+    UnloadTexture(cubemap);
+    UnloadTexture(texHDR);
+    
+    UnloadShader(shdrCubemap);
+    UnloadShader(shdrIrradiance);
+    UnloadShader(shdrPrefilter);
+    UnloadShader(shdrBRDF);
+    
+    // Set textures filtering for better quality
+    SetTextureFilter(mat.maps[MAP_ALBEDO].texture, FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MAP_NORMAL].texture, FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MAP_METALNESS].texture, FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MAP_ROUGHNESS].texture, FILTER_BILINEAR);
+    SetTextureFilter(mat.maps[MAP_OCCLUSION].texture, FILTER_BILINEAR);
+    
+    int renderModeLoc = GetShaderLocation(mat.shader, "renderMode");
+    SetShaderValuei(mat.shader, renderModeLoc, (int[1]){ 0 }, 1);
 
-        light.enabledLoc = GetShaderLocation(shader, enabledName);
-        light.typeLoc = GetShaderLocation(shader, typeName);
-        light.posLoc = GetShaderLocation(shader, posName);
-        light.targetLoc = GetShaderLocation(shader, targetName);
-        light.colorLoc = GetShaderLocation(shader, colorName);
+    // Set up material properties color
+    mat.maps[MAP_ALBEDO].color = albedo;
+    mat.maps[MAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
+    mat.maps[MAP_METALNESS].value = metalness;
+    mat.maps[MAP_ROUGHNESS].value = roughness;
+    mat.maps[MAP_OCCLUSION].value = 1.0f;
+    mat.maps[MAP_EMISSION].value = 0.5f;
+    mat.maps[MAP_HEIGHT].value = 0.5f;
 
-        UpdateLightValues(shader, light);
-        lightsCount++;
-    }
-
-    return light;
-}
-
-// Send to PBR shader light values
-void UpdateLightValues(Shader shader, Light light)
-{
-    // Send to shader light enabled state and type
-    SetShaderValuei(shader, light.enabledLoc, (int[1]){ light.enabled }, 1);
-    SetShaderValuei(shader, light.typeLoc, (int[1]){ light.type }, 1);
-
-    // Send to shader light position values
-    float position[3] = { light.position.x, light.position.y, light.position.z };
-    SetShaderValue(shader, light.posLoc, position, 3);
-
-    // Send to shader light target position values
-    float target[3] = { light.target.x, light.target.y, light.target.z };
-    SetShaderValue(shader, light.targetLoc, target, 3);
-
-    // Send to shader light color values
-    float diff[4] = { (float)light.color.r/(float)255, (float)light.color.g/(float)255, (float)light.color.b/(float)255, (float)light.color.a/(float)255 };
-    SetShaderValue(shader, light.colorLoc, diff, 4);
+    return mat;
 }

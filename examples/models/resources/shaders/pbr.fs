@@ -8,10 +8,11 @@
 
 #version 330
 
-#define     MAX_LIGHTS              4
 #define     MAX_REFLECTION_LOD      4.0
 #define     MAX_DEPTH_LAYER         20
 #define     MIN_DEPTH_LAYER         10
+
+#define     MAX_LIGHTS              4
 #define     LIGHT_DIRECTIONAL       0
 #define     LIGHT_POINT             1
 
