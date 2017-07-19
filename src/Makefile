@@ -145,6 +145,14 @@ endif
 # default gcc compiler
 CC = gcc
 
+
+# For OS X
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),OSX)
+		CC = clang
+	endif
+endif
+
 # Android toolchain compiler
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM)
@@ -328,8 +336,9 @@ else
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM_OS),OSX)
-			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS) -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
-			@echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -dynamiclib -o $(OUTPUT_PATH)/libraylib.dylib $(OBJS) -L/usr/local/Cellar/glfw/3.2.1/lib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+			install_name_tool -id "libraylib.dylib" $(OUTPUT_PATH)/libraylib.dylib
+			@echo "raylib shared library generated (libraylib.dylib)!"
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
