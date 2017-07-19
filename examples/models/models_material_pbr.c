@@ -58,18 +58,18 @@ int main()
     Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
     model.material = LoadMaterialPBR(texHDR, (Color){ 255, 255, 255, 255 }, 1.0f, 1.0f);
     
-    SetMaterialTexture(&model.material, TEXMAP_ALBEDO, LoadTexture("resources/pbr/trooper_albedo.png"));
-    SetMaterialTexture(&model.material, TEXMAP_NORMAL, LoadTexture("resources/pbr/trooper_normals.png"));
-    SetMaterialTexture(&model.material, TEXMAP_METALNESS, LoadTexture("resources/pbr/trooper_metalness.png"));
-    SetMaterialTexture(&model.material, TEXMAP_ROUGHNESS, LoadTexture("resources/pbr/trooper_roughness.png"));
-    SetMaterialTexture(&model.material, TEXMAP_OCCLUSION, LoadTexture("resources/pbr/trooper_ao.png"));
+    SetMaterialTexture(&model.material, MAP_ALBEDO, LoadTexture("resources/pbr/trooper_albedo.png"));
+    SetMaterialTexture(&model.material, MAP_NORMAL, LoadTexture("resources/pbr/trooper_normals.png"));
+    SetMaterialTexture(&model.material, MAP_METALNESS, LoadTexture("resources/pbr/trooper_metalness.png"));
+    SetMaterialTexture(&model.material, MAP_ROUGHNESS, LoadTexture("resources/pbr/trooper_roughness.png"));
+    SetMaterialTexture(&model.material, MAP_OCCLUSION, LoadTexture("resources/pbr/trooper_ao.png"));
     
     // Set textures filtering for better quality
-    SetTextureFilter(model.material.maps[TEXMAP_ALBEDO].tex, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[TEXMAP_NORMAL].tex, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[TEXMAP_METALNESS].tex, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[TEXMAP_ROUGHNESS].tex, FILTER_BILINEAR);
-    SetTextureFilter(model.material.maps[TEXMAP_OCCLUSION].tex, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[MAP_ALBEDO].texture, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[MAP_NORMAL].texture, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[MAP_METALNESS].texture, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[MAP_ROUGHNESS].texture, FILTER_BILINEAR);
+    SetTextureFilter(model.material.maps[MAP_OCCLUSION].texture, FILTER_BILINEAR);
     
     int renderModeLoc = GetShaderLocation(model.material.shader, "renderMode");
     SetShaderValuei(model.material.shader, renderModeLoc, (int[1]){ 0 }, 1);

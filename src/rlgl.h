@@ -146,6 +146,7 @@ typedef unsigned char byte;
     typedef enum { false, true } bool;
     #endif
     
+    // Shader location point type
     typedef enum {
         LOC_VERTEX_POSITION = 0,
         LOC_VERTEX_TEXCOORD01,
@@ -161,38 +162,39 @@ typedef unsigned char byte;
         LOC_COLOR_DIFFUSE,
         LOC_COLOR_SPECULAR,
         LOC_COLOR_AMBIENT,
-        LOC_TEXMAP_ALBEDO,          // LOC_TEXMAP_DIFFUSE
-        LOC_TEXMAP_METALNESS,       // LOC_TEXMAP_SPECULAR
-        LOC_TEXMAP_NORMAL,
-        LOC_TEXMAP_ROUGHNESS,
-        LOC_TEXMAP_OCCUSION,
-        LOC_TEXMAP_EMISSION,
-        LOC_TEXMAP_HEIGHT,
-        LOC_TEXMAP_CUBEMAP,
-        LOC_TEXMAP_IRRADIANCE,
-        LOC_TEXMAP_PREFILTER,
-        LOC_TEXMAP_BRDF
+        LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
+        LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
+        LOC_MAP_NORMAL,
+        LOC_MAP_ROUGHNESS,
+        LOC_MAP_OCCUSION,
+        LOC_MAP_EMISSION,
+        LOC_MAP_HEIGHT,
+        LOC_MAP_CUBEMAP,
+        LOC_MAP_IRRADIANCE,
+        LOC_MAP_PREFILTER,
+        LOC_MAP_BRDF
     } ShaderLocationIndex;
 
-    #define LOC_TEXMAP_DIFFUSE      LOC_TEXMAP_ALBEDO
-    #define LOC_TEXMAP_SPECULAR     LOC_TEXMAP_METALNESS
+    #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
+    #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
 
+    // Material map type
     typedef enum {
-        TEXMAP_ALBEDO    = 0,       // TEXMAP_DIFFUSE
-        TEXMAP_METALNESS = 1,       // TEXMAP_SPECULAR
-        TEXMAP_NORMAL    = 2,
-        TEXMAP_ROUGHNESS = 3,
-        TEXMAP_OCCLUSION,
-        TEXMAP_EMISSION,
-        TEXMAP_HEIGHT,
-        TEXMAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        TEXMAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        TEXMAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        TEXMAP_BRDF
+        MAP_ALBEDO    = 0,       // MAP_DIFFUSE
+        MAP_METALNESS = 1,       // MAP_SPECULAR
+        MAP_NORMAL    = 2,
+        MAP_ROUGHNESS = 3,
+        MAP_OCCLUSION,
+        MAP_EMISSION,
+        MAP_HEIGHT,
+        MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_BRDF
     } TexmapIndex;
 
-    #define TEXMAP_DIFFUSE      TEXMAP_ALBEDO
-    #define TEXMAP_SPECULAR     TEXMAP_METALNESS
+    #define MAP_DIFFUSE      MAP_ALBEDO
+    #define MAP_SPECULAR     MAP_METALNESS
 
     // Color type, RGBA (32bit)
     typedef struct Color {
@@ -237,8 +239,7 @@ typedef unsigned char byte;
     
     // Shader and material limits
     #define MAX_SHADER_LOCATIONS        32
-    #define MAX_MATERIAL_TEXTURE_MAPS   12
-    #define MAX_MATERIAL_PARAMS          8
+    #define MAX_MATERIAL_MAPS   12
     
     // Shader type (generic)
     typedef struct Shader {
@@ -247,16 +248,16 @@ typedef unsigned char byte;
     } Shader;
 
     // Material texture map
-    typedef struct TextureMap {
+    typedef struct MaterialMap {
         Texture2D tex;
         Color color;
         float value;
-    } TextureMap;
+    } MaterialMap;
 
     // Material type (generic)
     typedef struct Material {
         Shader shader;
-        TextureMap maps[MAX_TEXTURE_MAPS];  // Initialized on LoadMaterial*(), set to MAX_TEXTURE_MAPS
+        MaterialMap maps[MAX_TEXTURE_MAPS];  // Initialized on LoadMaterial*(), set to MAX_TEXTURE_MAPS
         float *params;          // Initialized on LoadMaterial*(), set to MAX_MATERIAL_PARAMS
     } Material;
 
@@ -400,9 +401,10 @@ Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coo
 // Functions Declaration - rlgl functionality
 //------------------------------------------------------------------------------------
 void rlglInit(int width, int height);           // Initialize rlgl (buffers, shaders, textures, states)
-void rlglClose(void);                           // De-init rlgl
-void rlglDraw(void);                            // Draw VAO/VBO
-void rlglLoadExtensions(void *loader);          // Load OpenGL extensions
+void rlglClose(void);                           // De-inititialize rlgl (buffers, shaders, textures)
+void rlglDraw(void);                // Update and Draw default buffers (lines, triangles, quads)
+
+void rlLoadExtensions(void *loader);            // Load OpenGL extensions
 
 // Textures data management
 unsigned int rlLoadTexture(void *data, int width, int height, int format, int mipmapCount);    // Load texture in GPU
@@ -418,12 +420,6 @@ void rlLoadMesh(Mesh *mesh, bool dynamic);                          // Upload ve
 void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update vertex data on GPU (upload new data to one buffer)
 void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
 void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
-
-// Texture maps generation (PBR)
-Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
-Texture2D rlGenMapIrradiance(Texture2D cubemap, int size);          // Generate irradiance texture map
-Texture2D rlGenMapPrefilter(Texture2D cubemap, int size);           // Generate prefilter texture map
-Texture2D rlGenMapBRDF(Texture2D cubemap, int size);                // Generate BRDF texture map
 
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
@@ -447,11 +443,19 @@ void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // S
 void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
 
+// Texture maps generation (PBR)
+Texture2D GenTextureCubemap(Texture2D skyHDR, int size);            // Generate cubemap texture map from HDR texture
+Texture2D GenTextureIrradiance(Texture2D cubemap, int size);        // Generate irradiance texture map
+Texture2D GenTexturePrefilter(Texture2D cubemap, int size);         // Generate prefilter texture map
+Texture2D GenTextureBRDF(Texture2D cubemap, int size);              // Generate BRDF texture map
+
+// Shading and blending
 void BeginShaderMode(Shader shader);                    // Begin custom shader drawing
 void EndShaderMode(void);                               // End custom shader drawing (use default shader)
 void BeginBlendMode(int mode);                          // Begin blending mode (alpha, additive, multiplied)
 void EndBlendMode(void);                                // End blending mode (reset to default: alpha blending)
 
+// VR simulator functionality
 void InitVrSimulator(int vrDevice);                     // Init VR simulator for selected device
 void CloseVrSimulator(void);                            // Close VR simulator for current device
 void UpdateVrTracking(Camera *camera);                  // Update VR tracking (position and orientation) and camera

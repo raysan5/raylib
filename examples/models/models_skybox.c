@@ -30,8 +30,8 @@ int main()
     skybox.material.shader = LoadShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
     Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
-    skybox.material.maps[TEXMAP_CUBEMAP].tex = rlGenMapCubemap(texHDR, 512);
-    SetShaderValuei(skybox.material.shader, GetShaderLocation(skybox.material.shader, "environmentMap"), (int[1]){ TEXMAP_CUBEMAP }, 1);
+    skybox.material.maps[MAP_CUBEMAP].texture = GenTextureCubemap(texHDR, 512);
+    SetShaderValuei(skybox.material.shader, GetShaderLocation(skybox.material.shader, "environmentMap"), (int[1]){ MAP_CUBEMAP }, 1);
 
     // Get skybox shader locations
     skybox.material.shader.locs[LOC_MATRIX_PROJECTION] = GetShaderLocation(skybox.material.shader, "projection");
@@ -66,7 +66,7 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawModel(skybox, VectorZero(), 1.0f, RED);
+                DrawModel(skybox, VectorZero(), 1.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);
 

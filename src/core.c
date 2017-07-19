@@ -1878,7 +1878,7 @@ static void InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_DESKTOP)
     // Load OpenGL 3.3 extensions
     // NOTE: GLFW loader function is passed as parameter
-    rlglLoadExtensions(glfwGetProcAddress);
+    rlLoadExtensions(glfwGetProcAddress);
 #endif
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)

@@ -1281,12 +1281,12 @@ Material LoadMaterialDefault(void)
     Material material = { 0 };
 
     material.shader = GetShaderDefault();
-    material.maps[TEXMAP_DIFFUSE].tex = GetTextureDefault();   // White texture (1x1 pixel)
-    //material.maps[TEXMAP_NORMAL].tex;           // NOTE: By default, not set
-    //material.maps[TEXMAP_SPECULAR].tex;         // NOTE: By default, not set
+    material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
+    //material.maps[MAP_NORMAL].tex;           // NOTE: By default, not set
+    //material.maps[MAP_SPECULAR].tex;         // NOTE: By default, not set
 
-    material.maps[TEXMAP_DIFFUSE].color = WHITE;    // Diffuse color
-    material.maps[TEXMAP_SPECULAR].color = WHITE;   // Specular color
+    material.maps[MAP_DIFFUSE].color = WHITE;    // Diffuse color
+    material.maps[MAP_SPECULAR].color = WHITE;   // Specular color
 
     return material;
 }
@@ -1294,7 +1294,7 @@ Material LoadMaterialDefault(void)
 // Load PBR material (Supports: ALBEDO, NORMAL, METALNESS, ROUGHNESS, AO, EMMISIVE, HEIGHT maps)
 Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float roughness)
 {
-    Material mat = { 0 };
+    Material mat = { 0 };       // NOTE: All maps textures are set to { 0 }
     
     #define     PATH_PBR_VS     "resources/shaders/pbr.vs"              // Path to physically based rendering vertex shader
     #define     PATH_PBR_FS     "resources/shaders/pbr.fs"              // Path to physically based rendering fragment shader
@@ -1303,16 +1303,16 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     
     // Get required locations points for PBR material
     // NOTE: Those location names must be available and used in the shader code
-    mat.shader.locs[LOC_TEXMAP_ALBEDO] = GetShaderLocation(mat.shader, "albedo.sampler");
-    mat.shader.locs[LOC_TEXMAP_METALNESS] = GetShaderLocation(mat.shader, "metalness.sampler");
-    mat.shader.locs[LOC_TEXMAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
-    mat.shader.locs[LOC_TEXMAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
-    mat.shader.locs[LOC_TEXMAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
-    mat.shader.locs[LOC_TEXMAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
-    mat.shader.locs[LOC_TEXMAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
-    mat.shader.locs[LOC_TEXMAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
-    mat.shader.locs[LOC_TEXMAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
-    mat.shader.locs[LOC_TEXMAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
+    mat.shader.locs[LOC_MAP_ALBEDO] = GetShaderLocation(mat.shader, "albedo.sampler");
+    mat.shader.locs[LOC_MAP_METALNESS] = GetShaderLocation(mat.shader, "metalness.sampler");
+    mat.shader.locs[LOC_MAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
+    mat.shader.locs[LOC_MAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
+    mat.shader.locs[LOC_MAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
+    mat.shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
+    mat.shader.locs[LOC_MAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
+    mat.shader.locs[LOC_MAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
+    mat.shader.locs[LOC_MAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
+    mat.shader.locs[LOC_MAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
 
     // Set view matrix location
     mat.shader.locs[LOC_MATRIX_MODEL] = GetShaderLocation(mat.shader, "mMatrix");
@@ -1320,30 +1320,25 @@ Material LoadMaterialPBR(Texture2D hdr, Color albedo, float metalness, float rou
     mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
 
     // Set up material properties color
-    mat.maps[TEXMAP_ALBEDO].color = albedo;
-    mat.maps[TEXMAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
-    mat.maps[TEXMAP_METALNESS].value = metalness;
-    mat.maps[TEXMAP_ROUGHNESS].value = roughness;
-    mat.maps[TEXMAP_OCCLUSION].value = 1.0f;
-    mat.maps[TEXMAP_EMISSION].value = 0.0f;
-    mat.maps[TEXMAP_HEIGHT].value = 0.0f;
+    mat.maps[MAP_ALBEDO].color = albedo;
+    mat.maps[MAP_NORMAL].color = (Color){ 128, 128, 255, 255 };
+    mat.maps[MAP_METALNESS].value = metalness;
+    mat.maps[MAP_ROUGHNESS].value = roughness;
+    mat.maps[MAP_OCCLUSION].value = 1.0f;
+    mat.maps[MAP_EMISSION].value = 0.0f;
+    mat.maps[MAP_HEIGHT].value = 0.0f;
     
-    #define CUBEMAP_SIZE        1024        // Cubemap texture size
+    #define CUBEMAP_SIZE         512        // Cubemap texture size
     #define IRRADIANCE_SIZE       32        // Irradiance map from cubemap texture size
     #define PREFILTERED_SIZE     256        // Prefiltered HDR environment map texture size
     #define BRDF_SIZE            512        // BRDF LUT texture map size
 
     // Set up environment materials cubemap
-    Texture2D cubemap = rlGenMapCubemap(hdr, CUBEMAP_SIZE);
-    mat.maps[TEXMAP_IRRADIANCE].tex = rlGenMapIrradiance(cubemap, IRRADIANCE_SIZE);
-    mat.maps[TEXMAP_PREFILTER].tex = rlGenMapPrefilter(cubemap, PREFILTERED_SIZE);
-    mat.maps[TEXMAP_BRDF].tex = rlGenMapBRDF(cubemap, BRDF_SIZE);
+    Texture2D cubemap = GenTextureCubemap(hdr, CUBEMAP_SIZE);
+    mat.maps[MAP_IRRADIANCE].texture = GenTextureIrradiance(cubemap, IRRADIANCE_SIZE);
+    mat.maps[MAP_PREFILTER].texture = GenTexturePrefilter(cubemap, PREFILTERED_SIZE);
+    mat.maps[MAP_BRDF].texture = GenTextureBRDF(cubemap, BRDF_SIZE);
     UnloadTexture(cubemap);
-    
-    // NOTE: All maps textures are set to { 0 }
-    
-    // Reset viewport dimensions to default
-    rlViewport(0, 0, GetScreenWidth(), GetScreenHeight());
 
     return mat;
 }
@@ -1355,53 +1350,53 @@ void UnloadMaterial(Material material)
     UnloadShader(material.shader);
 
     // Unload loaded texture maps
-    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         // NOTE: We already check for (tex.id > 0) inside function
-        rlDeleteTextures(material.maps[i].tex.id); 
+        rlDeleteTextures(material.maps[i].texture.id); 
     }
 }
 
 // Set material texture
 void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
 {
-    mat->maps[texmapType].tex = texture;
+    mat->maps[texmapType].texture = texture;
 
     // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
     int location = -1;
     switch (texmapType)
     {
-        case TEXMAP_ALBEDO:
+        case MAP_ALBEDO:
         {
             location = GetShaderLocation(mat->shader, "albedo.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
         } break;
-        case TEXMAP_NORMAL:
+        case MAP_NORMAL:
         {
             location = GetShaderLocation(mat->shader, "normals.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
         } break;
-        case TEXMAP_METALNESS:
+        case MAP_METALNESS:
         {
             location = GetShaderLocation(mat->shader, "metalness.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
         } break;
-        case TEXMAP_ROUGHNESS:
+        case MAP_ROUGHNESS:
         {
             location = GetShaderLocation(mat->shader, "roughness.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
         } break;
-        case TEXMAP_OCCLUSION:
+        case MAP_OCCLUSION:
         {
             location = GetShaderLocation(mat->shader, "occlusion.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
         } break;
-        case TEXMAP_EMISSION:
+        case MAP_EMISSION:
         {
             location = GetShaderLocation(mat->shader, "emission.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
         } break;
-        case TEXMAP_HEIGHT:
+        case MAP_HEIGHT:
         {
             location = GetShaderLocation(mat->shader, "height.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 1 }, 1);
@@ -1412,44 +1407,44 @@ void SetMaterialTexture(Material *mat, int texmapType, Texture2D texture)
 // Unset texture from material and unload it from GPU
 void UnsetMaterialTexture(Material *mat, int texmapType)
 {
-    UnloadTexture(mat->maps[texmapType].tex);
-    mat->maps[texmapType].tex = (Texture2D){ 0 };
+    UnloadTexture(mat->maps[texmapType].texture);
+    mat->maps[texmapType].texture = (Texture2D){ 0 };
 
     // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
     int location = -1;
     switch (texmapType)
     {
-        case TEXMAP_ALBEDO:
+        case MAP_ALBEDO:
         {
             location = GetShaderLocation(mat->shader, "albedo.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
         } break;
-        case TEXMAP_NORMAL:
+        case MAP_NORMAL:
         {
             location = GetShaderLocation(mat->shader, "normals.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
         } break;
-        case TEXMAP_METALNESS:
+        case MAP_METALNESS:
         {
             location = GetShaderLocation(mat->shader, "metalness.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
         } break;
-        case TEXMAP_ROUGHNESS:
+        case MAP_ROUGHNESS:
         {
             location = GetShaderLocation(mat->shader, "roughness.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
         } break;
-        case TEXMAP_OCCLUSION:
+        case MAP_OCCLUSION:
         {
             location = GetShaderLocation(mat->shader, "occlusion.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
         } break;
-        case TEXMAP_EMISSION:
+        case MAP_EMISSION:
         {
             location = GetShaderLocation(mat->shader, "emission.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
         } break;
-        case TEXMAP_HEIGHT:
+        case MAP_HEIGHT:
         {
             location = GetShaderLocation(mat->shader, "height.useSampler");
             SetShaderValuei(mat->shader, location, (int [1]){ 0 }, 1);
@@ -1481,7 +1476,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
 
     model.transform = MatrixMultiply(model.transform, matTransform);
-    model.material.maps[TEXMAP_DIFFUSE].color = tint;       // TODO: Multiply tint color by diffuse color?
+    model.material.maps[MAP_DIFFUSE].color = tint;       // TODO: Multiply tint color by diffuse color?
 
     rlDrawMesh(model.mesh, model.material, model.transform);
 }
@@ -2244,16 +2239,16 @@ static Material LoadMTL(const char *fileName)
                     case 'd':   // Kd float float float     Diffuse color (RGB)
                     {
                         sscanf(buffer, "Kd %f %f %f", &color.x, &color.y, &color.z);
-                        material.maps[TEXMAP_DIFFUSE].color.r = (unsigned char)(color.x*255);
-                        material.maps[TEXMAP_DIFFUSE].color.g = (unsigned char)(color.y*255);
-                        material.maps[TEXMAP_DIFFUSE].color.b = (unsigned char)(color.z*255);
+                        material.maps[MAP_DIFFUSE].color.r = (unsigned char)(color.x*255);
+                        material.maps[MAP_DIFFUSE].color.g = (unsigned char)(color.y*255);
+                        material.maps[MAP_DIFFUSE].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 's':   // Ks float float float     Specular color (RGB)
                     {
                         sscanf(buffer, "Ks %f %f %f", &color.x, &color.y, &color.z);
-                        material.maps[TEXMAP_SPECULAR].color.r = (unsigned char)(color.x*255);
-                        material.maps[TEXMAP_SPECULAR].color.g = (unsigned char)(color.y*255);
-                        material.maps[TEXMAP_SPECULAR].color.b = (unsigned char)(color.z*255);
+                        material.maps[MAP_SPECULAR].color.r = (unsigned char)(color.x*255);
+                        material.maps[MAP_SPECULAR].color.g = (unsigned char)(color.y*255);
+                        material.maps[MAP_SPECULAR].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 'e':   // Ke float float float     Emmisive color (RGB)
                     {
@@ -2285,12 +2280,12 @@ static Material LoadMTL(const char *fileName)
                         if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
                         {
                             result = sscanf(buffer, "map_Kd %s", mapFileName);
-                            if (result != EOF) material.maps[TEXMAP_DIFFUSE].tex = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[MAP_DIFFUSE].texture = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
                         {
                             result = sscanf(buffer, "map_Ks %s", mapFileName);
-                            if (result != EOF) material.maps[TEXMAP_SPECULAR].tex = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[MAP_SPECULAR].texture = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
                         {
@@ -2300,12 +2295,12 @@ static Material LoadMTL(const char *fileName)
                     case 'B':       // map_Bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_Bump %s", mapFileName);
-                        if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
                     } break;
                     case 'b':       // map_bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_bump %s", mapFileName);
-                        if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
                     } break;
                     case 'd':       // map_d string         Opacity texture map.
                     {
@@ -2320,7 +2315,7 @@ static Material LoadMTL(const char *fileName)
                 {
                     float alpha = 1.0f;
                     sscanf(buffer, "d %f", &alpha);
-                    material.maps[TEXMAP_DIFFUSE].color.a = (unsigned char)(alpha*255);
+                    material.maps[MAP_DIFFUSE].color.a = (unsigned char)(alpha*255);
                 }
                 else if (buffer[1] == 'i')  // disp string  Displacement map
                 {
@@ -2330,13 +2325,13 @@ static Material LoadMTL(const char *fileName)
             case 'b':   // bump string      Bump texture map
             {
                 result = sscanf(buffer, "bump %s", mapFileName);
-                if (result != EOF) material.maps[TEXMAP_NORMAL].tex = LoadTexture(mapFileName);
+                if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
             } break;
             case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
             {
                 float ialpha = 0.0f;
                 sscanf(buffer, "Tr %f", &ialpha);
-                material.maps[TEXMAP_DIFFUSE].color.a = (unsigned char)((1.0f - ialpha)*255);
+                material.maps[MAP_DIFFUSE].color.a = (unsigned char)((1.0f - ialpha)*255);
 
             } break;
             case 'r':   // refl string      Reflection texture map

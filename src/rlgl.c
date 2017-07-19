@@ -340,13 +340,13 @@ static Shader LoadShaderDefault(void);      // Load default shader (just vertex 
 static void SetShaderDefaultLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
 static void UnloadShaderDefault(void);      // Unload default shader
 
-static void LoadDefaultBuffers(void);       // Load default internal buffers (lines, triangles, quads)
-static void UpdateDefaultBuffers(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
-static void DrawDefaultBuffers(void);       // Draw default internal buffers vertex data
-static void UnloadDefaultBuffers(void);     // Unload default internal buffers vertex data from CPU and GPU
+static void LoadBuffersDefault(void);       // Load default internal buffers (lines, triangles, quads)
+static void UpdateBuffersDefault(void);     // Update default internal buffers (VAOs/VBOs) with vertex data
+static void DrawBuffersDefault(void);       // Draw default internal buffers vertex data
+static void UnloadBuffersDefault(void);     // Unload default internal buffers vertex data from CPU and GPU
 
-static void RenderCube(void);
-static void RenderQuad(void);
+static void GenDrawCube(void);              // Generate and draw cube
+static void GenDrawQuad(void);              // Generate and draw quad
 
 #if defined(SUPPORT_VR_SIMULATOR)
 static void SetStereoConfig(VrDeviceInfo info); // Configure stereo rendering (including distortion shader) with HMD device parameters
@@ -1219,7 +1219,7 @@ void rlglInit(int width, int height)
     currentShader = defaultShader;
 
     // Init default vertex arrays buffers (lines, triangles, quads)
-    LoadDefaultBuffers();
+    LoadBuffersDefault();
 
     // Init temp vertex buffer, used when transformation required (translate, rotate, scale)
     tempBuffer = (Vector3 *)malloc(sizeof(Vector3)*TEMP_VERTEX_BUFFER_SIZE);
@@ -1288,7 +1288,7 @@ void rlglClose(void)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     UnloadShaderDefault();
-    UnloadDefaultBuffers();
+    UnloadBuffersDefault();
 
     // Delete default white texture
     glDeleteTextures(1, &whiteTexture);
@@ -1306,14 +1306,14 @@ void rlglDraw(void)
     //for (int i = 0; i < modelsCount; i++) rlDrawMesh(models[i]->mesh, models[i]->material, models[i]->transform);
 
     // NOTE: Default buffers upload and draw
-    UpdateDefaultBuffers();
-    DrawDefaultBuffers();       // NOTE: Stereo rendering is checked inside
+    UpdateBuffersDefault();
+    DrawBuffersDefault();       // NOTE: Stereo rendering is checked inside
 #endif
 }
 
 // Load OpenGL extensions
 // NOTE: External loader function could be passed as a pointer
-void rlglLoadExtensions(void *loader)
+void rlLoadExtensions(void *loader)
 {
 #if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_33)
     // NOTE: glad is generated and contains only required OpenGL 3.3 Core extensions (and lower versions)
@@ -1718,422 +1718,6 @@ void rlGenerateMipmaps(Texture2D *texture)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-// Generated cubemap texture
-Texture2D rlGenMapCubemap(Texture2D skyHDR, int size)
-{
-    Texture2D cubemap = { 0 };
-    
-    #define     PATH_CUBEMAP_VS         "resources/shaders/cubemap.vs"          // Path to equirectangular to cubemap vertex shader
-    #define     PATH_CUBEMAP_FS         "resources/shaders/cubemap.fs"          // Path to equirectangular to cubemap fragment shader
-    
-    Shader shader = LoadShader(PATH_CUBEMAP_VS, PATH_CUBEMAP_FS);
-    
-    // Get cubemap shader locations
-    int projectionLoc = GetShaderLocation(shader, "projection");
-    int viewLoc = GetShaderLocation(shader, "view");
-    int texmapLoc = GetShaderLocation(shader, "equirectangularMap");
-
-    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);   // Set default active texture to 0
-    
-    // Set up depth face culling and cubemap seamless
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-    // Setup framebuffer
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-    // Set up cubemap to render and attach to framebuffer
-    // NOTE: faces are stored with 16 bit floating point values
-    glGenTextures(1, &cubemap.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    for (unsigned int i = 0; i < 6; i++) 
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
-    MatrixTranspose(&fboProjection);
-    Matrix fboViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
-    };
-
-    // Convert HDR equirectangular environment map to cubemap equivalent
-    glUseProgram(shader.id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, skyHDR.id);
-    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
-
-    // Note: don't forget to configure the viewport to the capture dimensions
-    glViewport(0, 0, size, size);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap.id, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        RenderCube();
-    }
-
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    UnloadShader(shader);
-    
-    cubemap.width = size;
-    cubemap.height = size;
-    
-    // Reset viewport dimensions to default
-    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
-    //glEnable(GL_CULL_FACE);
-    
-    return cubemap;
-}
-
-Texture2D rlGenMapIrradiance(Texture2D cubemap, int size)
-{
-    Texture2D irradiance = { 0 };
-    
-    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
-    #define     PATH_IRRADIANCE_FS      "resources/shaders/irradiance.fs"       // Path to irradiance (GI) calculation fragment shader
-
-    Shader shader = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
-    
-    // Get irradiance shader locations
-    int projectionLoc = GetShaderLocation(shader, "projection");
-    int viewLoc = GetShaderLocation(shader, "view");
-    int texmapLoc = GetShaderLocation(shader, "environmentMap");
-    
-    // Set up shaders constant values
-    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
-    
-    // Setup framebuffer
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-    
-    // Create an irradiance cubemap, and re-scale capture FBO to irradiance scale
-    glGenTextures(1, &irradiance.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance.id);
-    for (unsigned int i = 0; i < 6; i++) 
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
-    MatrixTranspose(&fboProjection);
-    Matrix fboViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
-    };
-
-    // Solve diffuse integral by convolution to create an irradiance cubemap
-    glUseProgram(shader.id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
-
-    // Note: don't forget to configure the viewport to the capture dimensions
-    glViewport(0, 0, size, size);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradiance.id, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        RenderCube();
-    }
-
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    UnloadShader(shader);
-    
-    irradiance.width = size;
-    irradiance.height = size;
-    
-    return irradiance;
-}
-
-Texture2D rlGenMapPrefilter(Texture2D cubemap, int size)
-{
-    Texture2D prefilter = { 0 };
-    
-    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
-    #define     PATH_PREFILTER_FS       "resources/shaders/prefilter.fs"        // Path to reflection prefilter calculation fragment shader
-    
-    Shader shader = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
-    
-    // Get prefilter shader locations
-    int projectionLoc = GetShaderLocation(shader, "projection");
-    int viewLoc = GetShaderLocation(shader, "view");
-    int roughnessLoc = GetShaderLocation(shader, "roughness");
-    int texmapLoc = GetShaderLocation(shader, "environmentMap");
-    
-    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
-    
-    // Setup framebuffer
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-    
-    // Create a prefiltered HDR environment map
-    glGenTextures(1, &prefilter.id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter.id);
-    for (unsigned int i = 0; i < 6; i++) 
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Generate mipmaps for the prefiltered HDR texture
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    
-    // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
-    MatrixTranspose(&fboProjection);
-    Matrix fboViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
-    };
-
-    // Prefilter HDR and store data into mipmap levels
-    glUseProgram(shader.id);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
-    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    
-    #define MAX_MIPMAP_LEVELS   5   // Max number of prefilter texture mipmaps
-
-    for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
-    {
-        // Resize framebuffer according to mip-level size.
-        unsigned int mipWidth  = size*powf(0.5f, mip);
-        unsigned int mipHeight = size*powf(0.5f, mip);
-        
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
-        glViewport(0, 0, mipWidth, mipHeight);
-
-        float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
-        glUniform1f(roughnessLoc, roughness);
-
-        for (unsigned int i = 0; i < 6; ++i)
-        {
-            SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            RenderCube();
-        }
-    }
-
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    UnloadShader(shader);
-    
-    prefilter.width = size;
-    prefilter.height = size;
-    
-    return prefilter;
-}
-
-Texture2D rlGenMapBRDF(Texture2D cubemap, int size)
-{
-    Texture2D brdf = { 0 };
-    
-    #define PATH_BRDF_VS    "resources/shaders/brdf.vs"     // Path to bidirectional reflectance distribution function vertex shader 
-    #define PATH_BRDF_FS    "resources/shaders/brdf.fs"     // Path to bidirectional reflectance distribution function fragment shader
-    
-    Shader shader = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
-    
-    // Generate BRDF convolution texture
-    glGenTextures(1, &brdf.id);
-    glBindTexture(GL_TEXTURE_2D, brdf.id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, size, size, 0, GL_RG, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Render BRDF LUT into a quad using FBO
-    unsigned int fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf.id, 0);
-    
-    rlViewport(0, 0, size, size);
-    glUseProgram(shader.id);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    RenderQuad();
-
-    // Unbind framebuffer and textures
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-   
-    UnloadShader(shader);
-    
-    brdf.width = size;
-    brdf.height = size;
-    
-    return brdf;
-}
-
-// Renders a 1x1 3D cube in NDC
-GLuint cubeVAO = 0;
-GLuint cubeVBO = 0;
-static void RenderCube(void)
-{
-    // Initialize if it is not yet
-    if (cubeVAO == 0)
-    {
-        GLfloat vertices[] = {
-            -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-            1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-            -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-            -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-            -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, 1.0f , 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f
-        };
-
-        // Set up cube VAO
-        glGenVertexArrays(1, &cubeVAO);
-        glGenBuffers(1, &cubeVBO);
-
-        // Fill buffer
-        glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        // Link vertex attributes
-        glBindVertexArray(cubeVAO);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)(6*sizeof(GLfloat)));
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-    }
-
-    // Render cube
-    glBindVertexArray(cubeVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
-}
-
-// Renders a 1x1 XY quad in NDC
-GLuint quadVAO = 0;
-GLuint quadVBO;
-static void RenderQuad(void)
-{
-    // Initialize if it is not yet
-    if (quadVAO == 0)
-    {
-        GLfloat quadVertices[] = {
-            // Positions        // Texture Coords
-            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-            1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        };
-
-        // Set up plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-
-        // Fill buffer
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-
-        // Link vertex attributes
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
-    }
-
-    // Render quad
-    glBindVertexArray(quadVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
-}
-
-
-
 // Upload vertex data into a VAO (if supported) and VBO
 // TODO: Check if mesh has already been loaded in GPU
 void rlLoadMesh(Mesh *mesh, bool dynamic)
@@ -2339,7 +1923,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.maps[TEXMAP_DIFFUSE].tex.id);
+    glBindTexture(GL_TEXTURE_2D, material.maps[MAP_DIFFUSE].tex.id);
 
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
@@ -2381,17 +1965,17 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
     
     // Upload to shader material.colDiffuse
-    glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[TEXMAP_DIFFUSE].color.r/255, 
-                                                           (float)material.maps[TEXMAP_DIFFUSE].color.g/255, 
-                                                           (float)material.maps[TEXMAP_DIFFUSE].color.b/255, 
-                                                           (float)material.maps[TEXMAP_DIFFUSE].color.a/255);
+    glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255, 
+                                                           (float)material.maps[MAP_DIFFUSE].color.g/255, 
+                                                           (float)material.maps[MAP_DIFFUSE].color.b/255, 
+                                                           (float)material.maps[MAP_DIFFUSE].color.a/255);
 
     // Upload to shader material.colSpecular (if available)
     if (material.shader.locs[LOC_COLOR_SPECULAR] != -1) 
-        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[TEXMAP_SPECULAR].color.r/255, 
-                                                               (float)material.maps[TEXMAP_SPECULAR].color.g/255, 
-                                                               (float)material.maps[TEXMAP_SPECULAR].color.b/255, 
-                                                               (float)material.maps[TEXMAP_SPECULAR].color.a/255);
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255, 
+                                                               (float)material.maps[MAP_SPECULAR].color.g/255, 
+                                                               (float)material.maps[MAP_SPECULAR].color.b/255, 
+                                                               (float)material.maps[MAP_SPECULAR].color.a/255);
 
     // At this point the modelview matrix just contains the view matrix (camera)
     // That's because Begin3dMode() sets it an no model-drawing function modifies it, all use rlPushMatrix() and rlPopMatrix()
@@ -2403,15 +1987,15 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
-    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        if (material.maps[i].tex.id > 0)
+        if (material.maps[i].texture.id > 0)
         {
             glActiveTexture(GL_TEXTURE0 + i);
-            if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].tex.id);
-            else glBindTexture(GL_TEXTURE_2D, material.maps[i].tex.id);
+            if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, material.maps[i].texture.id);
+            else glBindTexture(GL_TEXTURE_2D, material.maps[i].texture.id);
 
-            glUniform1i(material.shader.locs[LOC_TEXMAP_DIFFUSE + i], i);
+            glUniform1i(material.shader.locs[LOC_MAP_DIFFUSE + i], i);
         }
     }
 
@@ -2500,10 +2084,10 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     }
     
     // Unbind all binded texture maps
-    for (int i = 0; i < MAX_MATERIAL_TEXTURE_MAPS; i++)
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i);       // Set shader active texture
-        if ((i == TEXMAP_IRRADIANCE) || (i == TEXMAP_PREFILTER) || (i == TEXMAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        if ((i == MAP_IRRADIANCE) || (i == MAP_PREFILTER) || (i == MAP_CUBEMAP)) glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
         else glBindTexture(GL_TEXTURE_2D, 0);   // Unbind current active texture
     }
 
@@ -2738,6 +2322,17 @@ Texture2D GetTextureDefault(void)
     return texture;
 }
 
+// Get default shader
+Shader GetShaderDefault(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return defaultShader;
+#else
+    Shader shader = { 0 };
+    return shader;
+#endif
+}
+
 // Load text data from file
 // NOTE: text chars array should be freed manually
 char *LoadText(const char *fileName)
@@ -2860,17 +2455,6 @@ void EndShaderMode(void)
 #endif
 }
 
-// Get default shader
-Shader GetShaderDefault(void)
-{
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    return defaultShader;
-#else
-    Shader shader = { 0 };
-    return shader;
-#endif
-}
-
 // Get shader uniform location
 int GetShaderLocation(Shader shader, const char *uniformName)
 {
@@ -2942,6 +2526,321 @@ void SetMatrixModelview(Matrix view)
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     modelview = view;
 #endif
+}
+
+// Generate cubemap texture from HDR texture
+Texture2D GenTextureCubemap(Texture2D skyHDR, int size)
+{
+    Texture2D cubemap = { 0 };
+    
+    #define     PATH_CUBEMAP_VS         "resources/shaders/cubemap.vs"          // Path to equirectangular to cubemap vertex shader
+    #define     PATH_CUBEMAP_FS         "resources/shaders/cubemap.fs"          // Path to equirectangular to cubemap fragment shader
+    
+    Shader shader = LoadShader(PATH_CUBEMAP_VS, PATH_CUBEMAP_FS);
+    
+    // Get cubemap shader locations
+    int projectionLoc = GetShaderLocation(shader, "projection");
+    int viewLoc = GetShaderLocation(shader, "view");
+    int texmapLoc = GetShaderLocation(shader, "equirectangularMap");
+
+    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);   // Set default active texture to 0
+    
+    // Set up depth face culling and cubemap seamless
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+    // Setup framebuffer
+    unsigned int fbo, rbo;
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &rbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+    // Set up cubemap to render and attach to framebuffer
+    // NOTE: faces are stored with 16 bit floating point values
+    glGenTextures(1, &cubemap.id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
+    for (unsigned int i = 0; i < 6; i++) 
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Create projection (transposed) and different views for each face
+    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    MatrixTranspose(&fboProjection);
+    Matrix fboViews[6] = {
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
+    };
+
+    // Convert HDR equirectangular environment map to cubemap equivalent
+    glUseProgram(shader.id);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, skyHDR.id);
+    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
+
+    // Note: don't forget to configure the viewport to the capture dimensions
+    glViewport(0, 0, size, size);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap.id, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        GenDrawCube();
+    }
+
+    // Unbind framebuffer and textures
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Reset viewport dimensions to default
+    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    //glEnable(GL_CULL_FACE);
+
+    UnloadShader(shader);
+    
+    cubemap.width = size;
+    cubemap.height = size;
+    
+    return cubemap;
+}
+
+// Generate irradiance texture using cubemap data
+Texture2D GenTextureIrradiance(Texture2D cubemap, int size)
+{
+    Texture2D irradiance = { 0 };
+    
+    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
+    #define     PATH_IRRADIANCE_FS      "resources/shaders/irradiance.fs"       // Path to irradiance (GI) calculation fragment shader
+
+    Shader shader = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
+    
+    // Get irradiance shader locations
+    int projectionLoc = GetShaderLocation(shader, "projection");
+    int viewLoc = GetShaderLocation(shader, "view");
+    int texmapLoc = GetShaderLocation(shader, "environmentMap");
+    
+    // Set up shaders constant values
+    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
+    
+    // Setup framebuffer
+    unsigned int fbo, rbo;
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &rbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    
+    // Create an irradiance cubemap, and re-scale capture FBO to irradiance scale
+    glGenTextures(1, &irradiance.id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance.id);
+    for (unsigned int i = 0; i < 6; i++) 
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    // Create projection (transposed) and different views for each face
+    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    MatrixTranspose(&fboProjection);
+    Matrix fboViews[6] = {
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
+    };
+
+    // Solve diffuse integral by convolution to create an irradiance cubemap
+    glUseProgram(shader.id);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
+    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
+
+    // Note: don't forget to configure the viewport to the capture dimensions
+    glViewport(0, 0, size, size);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradiance.id, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        GenDrawCube();
+    }
+
+    // Unbind framebuffer and textures
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Reset viewport dimensions to default
+    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    
+    UnloadShader(shader);
+    
+    irradiance.width = size;
+    irradiance.height = size;
+    
+    return irradiance;
+}
+
+// Generate prefilter texture using cubemap data
+Texture2D GenTexturePrefilter(Texture2D cubemap, int size)
+{
+    Texture2D prefilter = { 0 };
+    
+    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
+    #define     PATH_PREFILTER_FS       "resources/shaders/prefilter.fs"        // Path to reflection prefilter calculation fragment shader
+    
+    Shader shader = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
+    
+    // Get prefilter shader locations
+    int projectionLoc = GetShaderLocation(shader, "projection");
+    int viewLoc = GetShaderLocation(shader, "view");
+    int roughnessLoc = GetShaderLocation(shader, "roughness");
+    int texmapLoc = GetShaderLocation(shader, "environmentMap");
+    
+    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
+    
+    // Setup framebuffer
+    unsigned int fbo, rbo;
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &rbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    
+    // Create a prefiltered HDR environment map
+    glGenTextures(1, &prefilter.id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter.id);
+    for (unsigned int i = 0; i < 6; i++) 
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Generate mipmaps for the prefiltered HDR texture
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    
+    // Create projection (transposed) and different views for each face
+    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    MatrixTranspose(&fboProjection);
+    Matrix fboViews[6] = {
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, 1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
+        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, 0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f, 0.0f })
+    };
+
+    // Prefilter HDR and store data into mipmap levels
+    glUseProgram(shader.id);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.id);
+    SetShaderValueMatrix(shader, projectionLoc, fboProjection);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    
+    #define MAX_MIPMAP_LEVELS   5   // Max number of prefilter texture mipmaps
+
+    for (unsigned int mip = 0; mip < MAX_MIPMAP_LEVELS; mip++)
+    {
+        // Resize framebuffer according to mip-level size.
+        unsigned int mipWidth  = size*powf(0.5f, mip);
+        unsigned int mipHeight = size*powf(0.5f, mip);
+        
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+        glViewport(0, 0, mipWidth, mipHeight);
+
+        float roughness = (float)mip/(float)(MAX_MIPMAP_LEVELS - 1);
+        glUniform1f(roughnessLoc, roughness);
+
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            SetShaderValueMatrix(shader, viewLoc, fboViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilter.id, mip);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            GenDrawCube();
+        }
+    }
+
+    // Unbind framebuffer and textures
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Reset viewport dimensions to default
+    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    
+    UnloadShader(shader);
+    
+    prefilter.width = size;
+    prefilter.height = size;
+    
+    return prefilter;
+}
+
+// Generate BRDF texture using cubemap data
+Texture2D GenTextureBRDF(Texture2D cubemap, int size)
+{
+    Texture2D brdf = { 0 };
+    
+    #define PATH_BRDF_VS    "resources/shaders/brdf.vs"     // Path to bidirectional reflectance distribution function vertex shader 
+    #define PATH_BRDF_FS    "resources/shaders/brdf.fs"     // Path to bidirectional reflectance distribution function fragment shader
+    
+    Shader shader = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
+    
+    // Generate BRDF convolution texture
+    glGenTextures(1, &brdf.id);
+    glBindTexture(GL_TEXTURE_2D, brdf.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, size, size, 0, GL_RG, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Render BRDF LUT into a quad using FBO
+    unsigned int fbo, rbo;
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &rbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, size, size);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf.id, 0);
+    
+    glViewport(0, 0, size, size);
+    glUseProgram(shader.id);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GenDrawQuad();
+
+    // Unbind framebuffer and textures
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Reset viewport dimensions to default
+    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+   
+    UnloadShader(shader);
+    
+    brdf.width = size;
+    brdf.height = size;
+    
+    return brdf;
 }
 
 // Begin blending mode (alpha, additive, multiplied)
@@ -3182,8 +3081,8 @@ void EndVrDrawing(void)
         rlDisableTexture();
 
         // Update and draw render texture fbo with distortion to backbuffer
-        UpdateDefaultBuffers();
-        DrawDefaultBuffers();
+        UpdateBuffersDefault();
+        DrawBuffersDefault();
         
         // Restore defaultShader
         currentShader = defaultShader;
@@ -3452,7 +3351,7 @@ static Shader LoadShaderDefault(void)
         // Get handles to GLSL uniform locations
         shader.locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvpMatrix");
         shader.locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
-        shader.locs[LOC_TEXMAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
+        shader.locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
     }
     else TraceLog(LOG_WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
@@ -3484,9 +3383,9 @@ static void SetShaderDefaultLocations(Shader *shader)
 
     // Get handles to GLSL uniform locations (fragment shader)
     shader->locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader->id, "colDiffuse");
-    shader->locs[LOC_TEXMAP_DIFFUSE] = glGetUniformLocation(shader->id, "texture0");
-    shader->locs[LOC_TEXMAP_NORMAL] = glGetUniformLocation(shader->id, "texture1");
-    shader->locs[LOC_TEXMAP_SPECULAR] = glGetUniformLocation(shader->id, "texture2");
+    shader->locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader->id, "texture0");
+    shader->locs[LOC_MAP_NORMAL] = glGetUniformLocation(shader->id, "texture1");
+    shader->locs[LOC_MAP_SPECULAR] = glGetUniformLocation(shader->id, "texture2");
 
     // TODO: Try to find all expected/recognized shader locations (predefined names, must be documented)
 }
@@ -3504,7 +3403,7 @@ static void UnloadShaderDefault(void)
 }
 
 // Load default internal buffers (lines, triangles, quads)
-static void LoadDefaultBuffers(void)
+static void LoadBuffersDefault(void)
 {
     // [CPU] Allocate and initialize float array buffers to store vertex data (lines, triangles, quads)
     //--------------------------------------------------------------------------------------------
@@ -3677,7 +3576,7 @@ static void LoadDefaultBuffers(void)
 // Update default internal buffers (VAOs/VBOs) with vertex array data
 // NOTE: If there is not vertex data, buffers doesn't need to be updated (vertexCount > 0)
 // TODO: If no data changed on the CPU arrays --> No need to re-update GPU arrays (change flag required)
-static void UpdateDefaultBuffers(void)
+static void UpdateBuffersDefault(void)
 {
     // Update lines vertex buffers
     if (lines.vCounter > 0)
@@ -3747,7 +3646,7 @@ static void UpdateDefaultBuffers(void)
 
 // Draw default internal buffers vertex data
 // NOTE: We draw in this order: lines, triangles, quads
-static void DrawDefaultBuffers()
+static void DrawBuffersDefault()
 {
     Matrix matProjection = projection;
     Matrix matModelView = modelview;
@@ -3773,7 +3672,7 @@ static void DrawDefaultBuffers()
 
             glUniformMatrix4fv(currentShader.locs[LOC_MATRIX_MVP], 1, false, MatrixToFloat(matMVP));
             glUniform4f(currentShader.locs[LOC_COLOR_DIFFUSE], 1.0f, 1.0f, 1.0f, 1.0f);
-            glUniform1i(currentShader.locs[LOC_TEXMAP_DIFFUSE], 0);
+            glUniform1i(currentShader.locs[LOC_MAP_DIFFUSE], 0);
 
             // NOTE: Additional map textures not considered for default buffers drawing
         }
@@ -3897,10 +3796,10 @@ static void DrawDefaultBuffers()
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
             }
 
-            glBindTexture(GL_TEXTURE_2D, 0);  // Unbind textures
+            glBindTexture(GL_TEXTURE_2D, 0);    // Unbind textures
         }
 
-        if (vaoSupported) glBindVertexArray(0);   // Unbind VAO
+        if (vaoSupported) glBindVertexArray(0); // Unbind VAO
 
         glUseProgram(0);    // Unbind shader program
     }
@@ -3928,7 +3827,7 @@ static void DrawDefaultBuffers()
 }
 
 // Unload default internal buffers vertex data from CPU and GPU
-static void UnloadDefaultBuffers(void)
+static void UnloadBuffersDefault(void)
 {
     // Unbind everything
     if (vaoSupported) glBindVertexArray(0);
@@ -3968,6 +3867,120 @@ static void UnloadDefaultBuffers(void)
     free(quads.texcoords);
     free(quads.colors);
     free(quads.indices);
+}
+
+// Renders a 1x1 XY quad in NDC
+static void GenDrawQuad(void)
+{
+    unsigned int quadVAO = 0;
+    unsigned int quadVBO = 0;
+    
+    float vertices[] = {
+        // Positions        // Texture Coords
+        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+    };
+
+    // Set up plane VAO
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+
+    // Fill buffer
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
+
+    // Link vertex attributes
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
+
+    // Draw quad
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+    
+    glDeleteBuffers(1, &quadVBO);
+    glDeleteVertexArrays(1, &quadVAO);
+}
+
+// Renders a 1x1 3D cube in NDC
+GLuint cubeVAO = 0;
+GLuint cubeVBO = 0;
+static void GenDrawCube(void)
+{
+    // Lazy initialization
+    if (cubeVAO == 0)
+    {
+        GLfloat vertices[] = {
+            -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f , 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f
+        };
+
+        // Set up cube VAO
+        glGenVertexArrays(1, &cubeVAO);
+        glGenBuffers(1, &cubeVBO);
+
+        // Fill buffer
+        glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        // Link vertex attributes
+        glBindVertexArray(cubeVAO);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid*)(6*sizeof(GLfloat)));
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+
+    // Draw cube
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+    
+    //glDeleteBuffers(1, &cubeVBO);
+    //glDeleteVertexArrays(1, &cubeVAO);
 }
 
 #if defined(SUPPORT_VR_SIMULATOR)

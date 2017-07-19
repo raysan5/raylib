@@ -292,9 +292,8 @@
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
 // Shader and material limits
-#define MAX_SHADER_LOCATIONS        32
-#define MAX_MATERIAL_TEXTURE_MAPS   12
-#define MAX_MATERIAL_PARAMS          8
+#define MAX_SHADER_LOCATIONS        32      // Maximum number of predefined locations stored in shader struct
+#define MAX_MATERIAL_MAPS           12      // Maximum number of texture maps stored in shader struct
 
 //----------------------------------------------------------------------------------
 // Structures Definition
@@ -405,21 +404,22 @@ typedef struct Camera2D {
 
 // Bounding box type
 typedef struct BoundingBox {
-    Vector3 min;            // minimum vertex box-corner
-    Vector3 max;            // maximum vertex box-corner
+    Vector3 min;            // Minimum vertex box-corner
+    Vector3 max;            // Maximum vertex box-corner
 } BoundingBox;
 
 // Vertex data definning a mesh
 typedef struct Mesh {
-    int vertexCount;        // number of vertices stored in arrays
-    int triangleCount;      // number of triangles stored (indexed or not)
-    float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;        // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
-    unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-    unsigned short *indices;// vertex indices (in case vertex data comes indexed)
+    int vertexCount;        // Number of vertices stored in arrays
+    int triangleCount;      // Number of triangles stored (indexed or not)
+    
+    float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;        // Vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+    unsigned char *colors;  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;// Vertex indices (in case vertex data comes indexed)
 
     unsigned int vaoId;     // OpenGL Vertex Array Object id
     unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
@@ -427,22 +427,22 @@ typedef struct Mesh {
 
 // Shader type (generic)
 typedef struct Shader {
-    unsigned int id;        // Shader program id
-    int locs[MAX_SHADER_LOCATIONS];             // Initialized on LoadShader(), set to MAX_SHADER_LOCATIONS
+    unsigned int id;                // Shader program id
+    int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
 } Shader;
 
 // Material texture map
-typedef struct TextureMap {
-    Texture2D tex;
-    Color color;
-    float value;
-} TextureMap;
+typedef struct MaterialMap {
+    Texture2D texture;      // Material map texture
+    Color color;            // Material map color
+    float value;            // Material map value
+} MaterialMap;
 
 // Material type (generic)
 typedef struct Material {
-    Shader shader;
-    TextureMap maps[MAX_MATERIAL_TEXTURE_MAPS]; // Initialized on LoadMaterial*(), set to MAX_MATERIAL_TEXTURE_MAPS
-    float *params;          // Initialized on LoadMaterial*(), set to MAX_MATERIAL_PARAMS
+    Shader shader;          // Material shader
+    MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+    float *params;          // Material generic parameters (if required)
 } Material;
 
 // Model type
@@ -526,6 +526,7 @@ typedef enum {
     LOG_OTHER 
 } LogType;
 
+// Shader location point type
 typedef enum {
     LOC_VERTEX_POSITION = 0,
     LOC_VERTEX_TEXCOORD01,
@@ -541,38 +542,39 @@ typedef enum {
     LOC_COLOR_DIFFUSE,
     LOC_COLOR_SPECULAR,
     LOC_COLOR_AMBIENT,
-    LOC_TEXMAP_ALBEDO,          // LOC_TEXMAP_DIFFUSE
-    LOC_TEXMAP_METALNESS,       // LOC_TEXMAP_SPECULAR
-    LOC_TEXMAP_NORMAL,
-    LOC_TEXMAP_ROUGHNESS,
-    LOC_TEXMAP_OCCUSION,
-    LOC_TEXMAP_EMISSION,
-    LOC_TEXMAP_HEIGHT,
-    LOC_TEXMAP_CUBEMAP,
-    LOC_TEXMAP_IRRADIANCE,
-    LOC_TEXMAP_PREFILTER,
-    LOC_TEXMAP_BRDF
+    LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
+    LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
+    LOC_MAP_NORMAL,
+    LOC_MAP_ROUGHNESS,
+    LOC_MAP_OCCUSION,
+    LOC_MAP_EMISSION,
+    LOC_MAP_HEIGHT,
+    LOC_MAP_CUBEMAP,
+    LOC_MAP_IRRADIANCE,
+    LOC_MAP_PREFILTER,
+    LOC_MAP_BRDF
 } ShaderLocationIndex;
 
-#define LOC_TEXMAP_DIFFUSE      LOC_TEXMAP_ALBEDO
-#define LOC_TEXMAP_SPECULAR     LOC_TEXMAP_METALNESS
+#define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
+#define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
 
+// Material map type
 typedef enum {
-    TEXMAP_ALBEDO    = 0,       // TEXMAP_DIFFUSE
-    TEXMAP_METALNESS = 1,       // TEXMAP_SPECULAR
-    TEXMAP_NORMAL    = 2,
-    TEXMAP_ROUGHNESS = 3,
-    TEXMAP_OCCLUSION,
-    TEXMAP_EMISSION,
-    TEXMAP_HEIGHT,
-    TEXMAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    TEXMAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    TEXMAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
-    TEXMAP_BRDF
+    MAP_ALBEDO    = 0,       // MAP_DIFFUSE
+    MAP_METALNESS = 1,       // MAP_SPECULAR
+    MAP_NORMAL    = 2,
+    MAP_ROUGHNESS = 3,
+    MAP_OCCLUSION,
+    MAP_EMISSION,
+    MAP_HEIGHT,
+    MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MAP_BRDF
 } TexmapIndex;
 
-#define TEXMAP_DIFFUSE      TEXMAP_ALBEDO
-#define TEXMAP_SPECULAR     TEXMAP_METALNESS
+#define MAP_DIFFUSE      MAP_ALBEDO
+#define MAP_SPECULAR     MAP_METALNESS
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -1037,8 +1039,6 @@ RLAPI void UnloadShader(Shader shader);                                   // Unl
 RLAPI Shader GetShaderDefault(void);                                      // Get default shader
 RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
 
-RLAPI Texture2D rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
-
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 RLAPI void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
@@ -1046,6 +1046,12 @@ RLAPI void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+
+// Texture maps generation (PBR)
+RLAPI Texture2D GenTextureCubemap(Texture2D skyHDR, int size);            // Generate cubemap texture from HDR texture
+RLAPI Texture2D GenTextureIrradiance(Texture2D cubemap, int size);        // Generate irradiance texture using cubemap data
+RLAPI Texture2D GenTexturePrefilter(Texture2D cubemap, int size);         // Generate prefilter texture using cubemap data
+RLAPI Texture2D GenTextureBRDF(Texture2D cubemap, int size);              // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
 RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing
