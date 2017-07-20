@@ -317,7 +317,7 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
-static bool texNPOTSupported = false;          // NPOT textures full support
+static bool texNPOTSupported = false;       // NPOT textures full support
 static bool texFloatSupported = false;      // float textures support (32 bit per channel)
 
 static int blendMode = 0;   // Track current blending mode
@@ -1734,28 +1734,25 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     int drawHint = GL_STATIC_DRAW;
     if (dynamic) drawHint = GL_DYNAMIC_DRAW;
 
-    GLuint vaoId = 0;           // Vertex Array Objects (VAO)
-    GLuint vboId[7] = { 0 };    // Vertex Buffer Objects (VBOs)
-
     if (vaoSupported)
     {
         // Initialize Quads VAO (Buffer A)
-        glGenVertexArrays(1, &vaoId);
-        glBindVertexArray(vaoId);
+        glGenVertexArrays(1, &mesh->vaoId);
+        glBindVertexArray(mesh->vaoId);
     }
 
     // NOTE: Attributes must be uploaded considering default locations points
 
     // Enable vertex attributes: position (shader-location = 0)
-    glGenBuffers(1, &vboId[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
+    glGenBuffers(1, &mesh->vboId[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->vertices, drawHint);
     glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(0);
 
     // Enable vertex attributes: texcoords (shader-location = 1)
-    glGenBuffers(1, &vboId[1]);
-    glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
+    glGenBuffers(1, &mesh->vboId[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords, drawHint);
     glVertexAttribPointer(1, 2, GL_FLOAT, 0, 0, 0);
     glEnableVertexAttribArray(1);
@@ -1763,8 +1760,8 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     // Enable vertex attributes: normals (shader-location = 2)
     if (mesh->normals != NULL)
     {
-        glGenBuffers(1, &vboId[2]);
-        glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
+        glGenBuffers(1, &mesh->vboId[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[2]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->normals, drawHint);
         glVertexAttribPointer(2, 3, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(2);
@@ -1779,8 +1776,8 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     // Default color vertex attribute (shader-location = 3)
     if (mesh->colors != NULL)
     {
-        glGenBuffers(1, &vboId[3]);
-        glBindBuffer(GL_ARRAY_BUFFER, vboId[3]);
+        glGenBuffers(1, &mesh->vboId[3]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[3]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(unsigned char)*4*mesh->vertexCount, mesh->colors, drawHint);
         glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
         glEnableVertexAttribArray(3);
@@ -1795,8 +1792,8 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     // Default tangent vertex attribute (shader-location = 4)
     if (mesh->tangents != NULL)
     {
-        glGenBuffers(1, &vboId[4]);
-        glBindBuffer(GL_ARRAY_BUFFER, vboId[4]);
+        glGenBuffers(1, &mesh->vboId[4]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[4]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->tangents, drawHint);
         glVertexAttribPointer(4, 3, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(4);
@@ -1811,8 +1808,8 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     // Default texcoord2 vertex attribute (shader-location = 5)
     if (mesh->texcoords2 != NULL)
     {
-        glGenBuffers(1, &vboId[5]);
-        glBindBuffer(GL_ARRAY_BUFFER, vboId[5]);
+        glGenBuffers(1, &mesh->vboId[5]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[5]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->vertexCount, mesh->texcoords2, drawHint);
         glVertexAttribPointer(5, 2, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(5);
@@ -1826,26 +1823,14 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
 
     if (mesh->indices != NULL)
     {
-        glGenBuffers(1, &vboId[6]);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboId[6]);
+        glGenBuffers(1, &mesh->vboId[6]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vboId[6]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*mesh->triangleCount*3, mesh->indices, GL_STATIC_DRAW);
     }
 
-    mesh->vboId[0] = vboId[0];     // Vertex position VBO
-    mesh->vboId[1] = vboId[1];     // Texcoords VBO
-    mesh->vboId[2] = vboId[2];     // Normals VBO
-    mesh->vboId[3] = vboId[3];     // Colors VBO
-    mesh->vboId[4] = vboId[4];     // Tangents VBO
-    mesh->vboId[5] = vboId[5];     // Texcoords2 VBO
-    mesh->vboId[6] = vboId[6];     // Indices VBO
-
     if (vaoSupported)
     {
-        if (vaoId > 0)
-        {
-            mesh->vaoId = vaoId;
-            TraceLog(LOG_INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
-        }
+        if (mesh->vaoId > 0) TraceLog(LOG_INFO, "[VAO ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
         else TraceLog(LOG_WARNING, "Mesh could not be uploaded to VRAM (GPU)");
     }
     else
@@ -1922,7 +1907,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 {
 #if defined(GRAPHICS_API_OPENGL_11)
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, material.maps[MAP_DIFFUSE].tex.id);
+    glBindTexture(GL_TEXTURE_2D, material.maps[MAP_DIFFUSE].texture.id);
 
     // NOTE: On OpenGL 1.1 we use Vertex Arrays to draw model
     glEnableClientState(GL_VERTEX_ARRAY);                   // Enable vertex array
@@ -1937,7 +1922,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
-        rlColor4ub(material.colDiffuse.r, material.colDiffuse.g, material.colDiffuse.b, material.colDiffuse.a);
+        rlColor4ub(material.maps[MAP_DIFFUSE].color.r, material.maps[MAP_DIFFUSE].color.g, material.maps[MAP_DIFFUSE].color.b, material.maps[MAP_DIFFUSE].color.a);
 
         if (mesh.indices != NULL) glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_SHORT, mesh.indices);
         else glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
@@ -2533,7 +2518,7 @@ void SetMatrixModelview(Matrix view)
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 {
     Texture2D cubemap = { 0 };
-    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)  
     // Get cubemap shader locations
     //int projectionLoc = GetShaderLocation(shader, "projection");      // Already set at SetShaderDefaultLocations()
     //int viewLoc = GetShaderLocation(shader, "view");                  // Already set at SetShaderDefaultLocations()
@@ -2605,7 +2590,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 
     cubemap.width = size;
     cubemap.height = size;
-    
+#endif
     return cubemap;
 }
 
@@ -2613,7 +2598,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D irradiance = { 0 };
-    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get irradiance shader locations
     //int projectionLoc = GetShaderLocation(shader, "projection");  // Already set at SetShaderDefaultLocations()
     //int viewLoc = GetShaderLocation(shader, "view");              // Already set at SetShaderDefaultLocations()
@@ -2680,7 +2665,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 
     irradiance.width = size;
     irradiance.height = size;
-    
+#endif
     return irradiance;
 }
 
@@ -2688,7 +2673,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D prefilter = { 0 };
-    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Get prefilter shader locations
     //int projectionLoc = GetShaderLocation(shader, "projection");  // Already set at SetShaderDefaultLocations()
     //int viewLoc = GetShaderLocation(shader, "view");              // Already set at SetShaderDefaultLocations()
@@ -2772,7 +2757,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 
     prefilter.width = size;
     prefilter.height = size;
-    
+#endif
     return prefilter;
 }
 
@@ -2780,7 +2765,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D brdf = { 0 };
-    
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Generate BRDF convolution texture
     glGenTextures(1, &brdf.id);
     glBindTexture(GL_TEXTURE_2D, brdf.id);
@@ -2812,7 +2797,7 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
    
     brdf.width = size;
     brdf.height = size;
-    
+#endif
     return brdf;
 }
 
