@@ -592,8 +592,6 @@ Model LoadModel(const char *fileName)
     model.mesh = LoadMesh(fileName);
     model.transform = MatrixIdentity();
     model.material = LoadMaterialDefault();
-    
-    rlLoadMesh(&model.mesh, false);   // Upload mesh data to GPU (static)
 
     return model;
 }
@@ -622,7 +620,7 @@ void UnloadModel(Model model)
 }
 
 // Load mesh from file
-// NOTE: Mesh data loaded in CPU, not GPU
+// NOTE: Mesh data loaded in CPU and GPU
 Mesh LoadMesh(const char *fileName)
 {
     Mesh mesh = { 0 };
@@ -634,6 +632,7 @@ Mesh LoadMesh(const char *fileName)
 #endif
 
     if (mesh.vertexCount == 0) TraceLog(LOG_WARNING, "Mesh could not be loaded");
+    else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
 
     // TODO: Initialize default mesh data in case loading fails, maybe a cube?
 
@@ -1268,101 +1267,6 @@ void UnloadMaterial(Material material)
     {
         // NOTE: We already check for (tex.id > 0) inside function
         rlDeleteTextures(material.maps[i].texture.id); 
-    }
-}
-
-// Set material texture
-void SetMaterialTexture(Material *mat, int mapType, Texture2D texture)
-{
-    mat->maps[mapType].texture = texture;
-
-    // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
-    int location = -1;
-    switch (mapType)
-    {
-        case MAP_ALBEDO:
-        {
-            location = GetShaderLocation(mat->shader, "albedo.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
-        } break;
-        case MAP_NORMAL:
-        {
-            location = GetShaderLocation(mat->shader, "normals.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
-        } break;
-        case MAP_METALNESS:
-        {
-            location = GetShaderLocation(mat->shader, "metalness.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
-        } break;
-        case MAP_ROUGHNESS:
-        {
-            location = GetShaderLocation(mat->shader, "roughness.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
-        } break;
-        case MAP_OCCLUSION:
-        {
-            location = GetShaderLocation(mat->shader, "occlusion.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
-        } break;
-        case MAP_EMISSION:
-        {
-            location = GetShaderLocation(mat->shader, "emission.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
-        } break;
-        case MAP_HEIGHT:
-        {
-            location = GetShaderLocation(mat->shader, "height.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 1 }, 1);
-        } break;
-    }
-}
-
-// Unset texture from material and unload it from GPU
-void UnsetMaterialTexture(Material *mat, int mapType)
-{
-    UnloadTexture(mat->maps[mapType].texture);
-    mat->maps[mapType].texture = (Texture2D){ 0 };
-
-    // Update MaterialProperty use sampler state to use texture fetch instead of color attribute
-    int location = -1;
-    switch (mapType)
-    {
-        case MAP_ALBEDO:
-        {
-            location = GetShaderLocation(mat->shader, "albedo.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
-        } break;
-        case MAP_NORMAL:
-        {
-            location = GetShaderLocation(mat->shader, "normals.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
-        } break;
-        case MAP_METALNESS:
-        {
-            location = GetShaderLocation(mat->shader, "metalness.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
-        } break;
-        case MAP_ROUGHNESS:
-        {
-            location = GetShaderLocation(mat->shader, "roughness.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
-        } break;
-        case MAP_OCCLUSION:
-        {
-            location = GetShaderLocation(mat->shader, "occlusion.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
-        } break;
-        case MAP_EMISSION:
-        {
-            location = GetShaderLocation(mat->shader, "emission.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
-        } break;
-        case MAP_HEIGHT:
-        {
-            location = GetShaderLocation(mat->shader, "height.useSampler");
-            SetShaderValuei(mat->shader, location, (int[1]){ 0 }, 1);
-        } break;
     }
 }
 

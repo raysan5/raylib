@@ -111,8 +111,8 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.shader.locs[LOC_MAP_NORMAL] = GetShaderLocation(mat.shader, "normals.sampler");
     mat.shader.locs[LOC_MAP_ROUGHNESS] = GetShaderLocation(mat.shader, "roughness.sampler");
     mat.shader.locs[LOC_MAP_OCCUSION] = GetShaderLocation(mat.shader, "occlusion.sampler");
-    mat.shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
-    mat.shader.locs[LOC_MAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
+    //mat.shader.locs[LOC_MAP_EMISSION] = GetShaderLocation(mat.shader, "emission.sampler");
+    //mat.shader.locs[LOC_MAP_HEIGHT] = GetShaderLocation(mat.shader, "height.sampler");
     mat.shader.locs[LOC_MAP_IRRADIANCE] = GetShaderLocation(mat.shader, "irradianceMap");
     mat.shader.locs[LOC_MAP_PREFILTER] = GetShaderLocation(mat.shader, "prefilterMap");
     mat.shader.locs[LOC_MAP_BRDF] = GetShaderLocation(mat.shader, "brdfLUT");
@@ -122,19 +122,18 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     mat.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(mat.shader, "view");
     mat.shader.locs[LOC_VECTOR_VIEW] = GetShaderLocation(mat.shader, "viewPos");
     
-    // Set PBR standard maps 
-    SetMaterialTexture(&mat, MAP_ALBEDO, LoadTexture("resources/pbr/trooper_albedo.png"));
-    SetMaterialTexture(&mat, MAP_NORMAL, LoadTexture("resources/pbr/trooper_normals.png"));
-    SetMaterialTexture(&mat, MAP_METALNESS, LoadTexture("resources/pbr/trooper_metalness.png"));
-    SetMaterialTexture(&mat, MAP_ROUGHNESS, LoadTexture("resources/pbr/trooper_roughness.png"));
-    SetMaterialTexture(&mat, MAP_OCCLUSION, LoadTexture("resources/pbr/trooper_ao.png"));
+    // Set PBR standard maps
+    mat.maps[MAP_ALBEDO].texture = LoadTexture("resources/pbr/trooper_albedo.png");
+    mat.maps[MAP_NORMAL].texture = LoadTexture("resources/pbr/trooper_normals.png");
+    mat.maps[MAP_METALNESS].texture = LoadTexture("resources/pbr/trooper_metalness.png");
+    mat.maps[MAP_ROUGHNESS].texture = LoadTexture("resources/pbr/trooper_roughness.png");
+    mat.maps[MAP_OCCLUSION].texture = LoadTexture("resources/pbr/trooper_ao.png");
     
     // Set environment maps
     #define     PATH_CUBEMAP_VS         "resources/shaders/cubemap.vs"          // Path to equirectangular to cubemap vertex shader
     #define     PATH_CUBEMAP_FS         "resources/shaders/cubemap.fs"          // Path to equirectangular to cubemap fragment shader
     #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
     #define     PATH_IRRADIANCE_FS      "resources/shaders/irradiance.fs"       // Path to irradiance (GI) calculation fragment shader
-    #define     PATH_SKYBOX_VS          "resources/shaders/skybox.vs"           // Path to skybox vertex shader
     #define     PATH_PREFILTER_FS       "resources/shaders/prefilter.fs"        // Path to reflection prefilter calculation fragment shader
     #define     PATH_BRDF_VS            "resources/shaders/brdf.vs"     // Path to bidirectional reflectance distribution function vertex shader 
     #define     PATH_BRDF_FS            "resources/shaders/brdf.fs"     // Path to bidirectional reflectance distribution function fragment shader
@@ -146,9 +145,9 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
 
     Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
     Texture2D cubemap = GenTextureCubemap(shdrCubemap, texHDR, CUBEMAP_SIZE);
-    SetMaterialTexture(&mat, MAP_IRRADIANCE, GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE));
-    SetMaterialTexture(&mat, MAP_PREFILTER, GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE));
-    SetMaterialTexture(&mat, MAP_BRDF, GenTextureBRDF(shdrBRDF, cubemap, BRDF_SIZE));
+    mat.maps[MAP_IRRADIANCE].texture = GenTextureIrradiance(shdrIrradiance, cubemap, IRRADIANCE_SIZE);
+    mat.maps[MAP_PREFILTER].texture = GenTexturePrefilter(shdrPrefilter, cubemap, PREFILTERED_SIZE);
+    mat.maps[MAP_BRDF].texture = GenTextureBRDF(shdrBRDF, cubemap, BRDF_SIZE);
     UnloadTexture(cubemap);
     UnloadTexture(texHDR);
     
@@ -163,6 +162,13 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     SetTextureFilter(mat.maps[MAP_METALNESS].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_ROUGHNESS].texture, FILTER_BILINEAR);
     SetTextureFilter(mat.maps[MAP_OCCLUSION].texture, FILTER_BILINEAR);
+    
+    // Enable sample usage in shader for assigned textures
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "albedo.useSampler"), (int[1]){ 1 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "normals.useSampler"), (int[1]){ 1 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "metalness.useSampler"), (int[1]){ 1 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "roughness.useSampler"), (int[1]){ 1 }, 1);
+    SetShaderValuei(mat.shader, GetShaderLocation(mat.shader, "occlusion.useSampler"), (int[1]){ 1 }, 1);
     
     int renderModeLoc = GetShaderLocation(mat.shader, "renderMode");
     SetShaderValuei(mat.shader, renderModeLoc, (int[1]){ 0 }, 1);
