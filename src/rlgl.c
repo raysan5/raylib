@@ -2519,10 +2519,9 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 {
     Texture2D cubemap = { 0 };
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)  
-    // Get cubemap shader locations
-    //int projectionLoc = GetShaderLocation(shader, "projection");      // Already set at SetShaderDefaultLocations()
-    //int viewLoc = GetShaderLocation(shader, "view");                  // Already set at SetShaderDefaultLocations()
-    int texmapLoc = GetShaderLocation(shader, "equirectangularMap");
+    // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
+    // TODO: Locations should be taken out of this function... too shader dependant...
+    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
 
     SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);   // Set default active texture to 0
     
@@ -2598,14 +2597,11 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D irradiance = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Get irradiance shader locations
-    //int projectionLoc = GetShaderLocation(shader, "projection");  // Already set at SetShaderDefaultLocations()
-    //int viewLoc = GetShaderLocation(shader, "view");              // Already set at SetShaderDefaultLocations()
-    int texmapLoc = GetShaderLocation(shader, "environmentMap");
     
-    // Set up shaders constant values
-    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
+    // TODO: Locations should be taken out of this function... too shader dependant...
+    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
     
     // Setup framebuffer
     unsigned int fbo, rbo;
@@ -2673,14 +2669,12 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D prefilter = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // Get prefilter shader locations
-    //int projectionLoc = GetShaderLocation(shader, "projection");  // Already set at SetShaderDefaultLocations()
-    //int viewLoc = GetShaderLocation(shader, "view");              // Already set at SetShaderDefaultLocations()
-    int roughnessLoc = GetShaderLocation(shader, "roughness");
-    int texmapLoc = GetShaderLocation(shader, "environmentMap");
     
-    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
+    // TODO: Locations should be taken out of this function... too shader dependant...
+    int roughnessLoc = GetShaderLocation(shader, "roughness");      
+    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
     
     // Setup framebuffer
     unsigned int fbo, rbo;
