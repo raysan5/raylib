@@ -154,6 +154,7 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal);    // Calculate ref
 RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);            // Return min value for each pair of components
 RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);            // Return max value for each pair of components
 RMDEF Vector3 VectorBarycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
+RMDEF float *VectorToFloat(Vector3 vec);                        // Returns Vector3 as float array
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
@@ -177,6 +178,7 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);    // Returns orthographic projection matrix
 RMDEF Matrix MatrixLookAt(Vector3 position, Vector3 target, Vector3 up);  // Returns camera look-at matrix (view matrix)
+RMDEF float *MatrixToFloat(Matrix mat);                         // Returns float array of Matrix data
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
@@ -500,6 +502,18 @@ RMDEF Vector3 VectorBarycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
     result.x = 1.0f - (result.z + result.y);
     
     return result;
+}
+
+// Returns Vector3 as float array
+RMDEF float *VectorToFloat(Vector3 vec)
+{
+    static float buffer[3];
+
+    buffer[0] = vec.x;
+    buffer[1] = vec.y;
+    buffer[2] = vec.z;
+
+    return buffer;
 }
 
 //----------------------------------------------------------------------------------
@@ -941,6 +955,34 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     result.m15 = 1.0f;
 
     return result;
+}
+
+// Returns float array of matrix data
+// NOTE: Returned vector is a transposed version of the Matrix struct,
+// it should be this way because, despite raymath use OpenGL column-major convention,
+// Matrix struct memory alignment and variables naming are not coherent
+RMDEF float *MatrixToFloat(Matrix mat)
+{
+    static float buffer[16];
+
+    buffer[0] = mat.m0;
+    buffer[1] = mat.m4;
+    buffer[2] = mat.m8;
+    buffer[3] = mat.m12;
+    buffer[4] = mat.m1;
+    buffer[5] = mat.m5;
+    buffer[6] = mat.m9;
+    buffer[7] = mat.m13;
+    buffer[8] = mat.m2;
+    buffer[9] = mat.m6;
+    buffer[10] = mat.m10;
+    buffer[11] = mat.m14;
+    buffer[12] = mat.m3;
+    buffer[13] = mat.m7;
+    buffer[14] = mat.m11;
+    buffer[15] = mat.m15;
+
+    return buffer;
 }
 
 //----------------------------------------------------------------------------------

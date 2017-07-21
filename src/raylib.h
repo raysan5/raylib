@@ -742,8 +742,13 @@ RLAPI int GetHexValue(Color color);                               // Returns hex
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 RLAPI float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
-RLAPI float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array
-RLAPI float *MatrixToFloat(Matrix mat);                           // Converts Matrix to float array
+
+// Math useful functions (available from raymath.h)
+RLAPI float *VectorToFloat(Vector3 vec);                          // Returns Vector3 as float array
+RLAPI float *MatrixToFloat(Matrix mat);                           // Returns Matrix as float array
+RLAPI Vector3 VectorZero(void);                                   // Vector with components value 0.0f
+RLAPI Vector3 VectorOne(void);                                    // Vector with components value 1.0f
+RLAPI Matrix MatrixIdentity(void);                                // Returns identity matrix
 
 // Misc. functions
 RLAPI void ShowLogo(void);                                        // Activate raylib logo at startup (can be done with flags)

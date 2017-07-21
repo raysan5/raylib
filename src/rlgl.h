@@ -465,7 +465,6 @@ void BeginVrDrawing(void);                              // Begin VR stereo rende
 void EndVrDrawing(void);                                // End VR stereo rendering
 
 void TraceLog(int msgType, const char *text, ...);      // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
-float *MatrixToFloat(Matrix mat);                       // Converts Matrix to float array
 #endif
 
 #ifdef __cplusplus

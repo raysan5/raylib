@@ -1098,45 +1098,6 @@ float *ColorToFloat(Color color)
     return buffer;
 }
 
-// Converts Vector3 to float array
-float *VectorToFloat(Vector3 vec)
-{
-    static float buffer[3];
-
-    buffer[0] = vec.x;
-    buffer[1] = vec.y;
-    buffer[2] = vec.z;
-
-    return buffer;
-}
-
-// NOTE: Returned vector is a transposed version of the Matrix struct,
-// it should be this way because, despite raymath use OpenGL column-major convention,
-// Matrix struct memory alignment and variables naming are not coherent
-float *MatrixToFloat(Matrix mat)
-{
-    static float buffer[16];
-
-    buffer[0] = mat.m0;
-    buffer[1] = mat.m4;
-    buffer[2] = mat.m8;
-    buffer[3] = mat.m12;
-    buffer[4] = mat.m1;
-    buffer[5] = mat.m5;
-    buffer[6] = mat.m9;
-    buffer[7] = mat.m13;
-    buffer[8] = mat.m2;
-    buffer[9] = mat.m6;
-    buffer[10] = mat.m10;
-    buffer[11] = mat.m14;
-    buffer[12] = mat.m3;
-    buffer[13] = mat.m7;
-    buffer[14] = mat.m11;
-    buffer[15] = mat.m15;
-
-    return buffer;
-}
-
 // Returns a Color struct from hexadecimal value
 Color GetColor(int hexValue)
 {
