@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v1.0 - Math functions to work with Vector3, Matrix and Quaternions
+*   raymath v1.1 - Math functions to work with Vector3, Matrix and Quaternions
 *
 *   CONFIGURATION:
 *
@@ -19,7 +19,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2017 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -405,7 +405,6 @@ RMDEF void VectorNormalize(Vector3 *v)
 }
 
 // Transforms a Vector3 by a given Matrix
-// TODO: Review math (matrix transpose required?)
 RMDEF void VectorTransform(Vector3 *v, Matrix mat)
 {
     float x = v->x;
@@ -415,13 +414,6 @@ RMDEF void VectorTransform(Vector3 *v, Matrix mat)
     v->x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
     v->y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
     v->z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
-    
-    // TODO: Transposed matrix (?)
-    /*
-    v->x = mat.m0*x + mat.m1*y + mat.m2*z + mat.m3;
-    v->y = mat.m4*x + mat.m5*y + mat.m6*z + mat.m7;
-    v->z = mat.m8*x + mat.m9*y + mat.m10*z + mat.m11;
-    */
 };
 
 // Calculate linear interpolation between two vectors
