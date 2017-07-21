@@ -91,7 +91,7 @@ int main(void)
     glfwSwapInterval(1);
     
     // Load OpenGL 3.3 supported extensions
-    rlglLoadExtensions(glfwGetProcAddress);
+    rlLoadExtensions(glfwGetProcAddress);
     //--------------------------------------------------------
     
     // Initialize OpenGL context (states and resources)
@@ -130,7 +130,7 @@ int main(void)
         rlClearScreenBuffers();             // Clear current framebuffer
         
             // Calculate projection matrix (from perspective) and view matrix from camera look at
-            Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
+            Matrix matProj = MatrixPerspective(camera.fovy*DEG2RAD, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             MatrixTranspose(&matProj);
             Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 

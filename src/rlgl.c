@@ -2548,7 +2548,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
     MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -2581,7 +2581,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     // Reset viewport dimensions to default
-    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    glViewport(0, 0, screenWidth, screenHeight);
     //glEnable(GL_CULL_FACE);
 
     cubemap.width = size;
@@ -2620,7 +2620,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
     MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -2653,7 +2653,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     // Reset viewport dimensions to default
-    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    glViewport(0, 0, screenWidth, screenHeight);
 
     irradiance.width = size;
     irradiance.height = size;
@@ -2696,7 +2696,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     
     // Create projection (transposed) and different views for each face
-    Matrix fboProjection = MatrixPerspective(90.0, 1.0, 0.01, 1000.0);
+    Matrix fboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, 0.01, 1000.0);
     MatrixTranspose(&fboProjection);
     Matrix fboViews[6] = {
         MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 1.0f, 0.0f, 0.0f }, (Vector3){ 0.0f, -1.0f, 0.0f }),
@@ -2743,7 +2743,7 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     // Reset viewport dimensions to default
-    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    glViewport(0, 0, screenWidth, screenHeight);
 
     prefilter.width = size;
     prefilter.height = size;
@@ -2783,7 +2783,7 @@ Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     // Reset viewport dimensions to default
-    glViewport(0, 0, GetScreenWidth(), GetScreenHeight());
+    glViewport(0, 0, screenWidth, screenHeight);
    
     brdf.width = size;
     brdf.height = size;
@@ -3985,7 +3985,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
     // Compute camera projection matrices
     float projOffset = 4.0f*lensShift;      // Scaled to projection space coordinates [-1..1]
-    Matrix proj = MatrixPerspective(fovy, aspect, 0.01, 1000.0);
+    Matrix proj = MatrixPerspective(fovy*DEG2RAD, aspect, 0.01, 1000.0);
     vrConfig.eyesProjection[0] = MatrixMultiply(proj, MatrixTranslate(projOffset, 0.0f, 0.0f));
     vrConfig.eyesProjection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 

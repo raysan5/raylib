@@ -435,19 +435,20 @@ void UnloadShader(Shader shader);                       // Unload a custom shade
 Shader GetShaderDefault(void);                          // Get default shader
 Texture2D GetTextureDefault(void);                      // Get default texture
 
+// Shader configuration functions
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
 void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
 void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
-
-void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
-void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
 
 // Texture maps generation (PBR)
-Texture2D GenTextureCubemap(Texture2D skyHDR, int size);            // Generate cubemap texture map from HDR texture
-Texture2D GenTextureIrradiance(Texture2D cubemap, int size);        // Generate irradiance texture map
-Texture2D GenTexturePrefilter(Texture2D cubemap, int size);         // Generate prefilter texture map
-Texture2D GenTextureBRDF(Texture2D cubemap, int size);              // Generate BRDF texture map
+// NOTE: Required shaders should be provided
+Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);     // Generate cubemap texture from HDR texture
+Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size); // Generate irradiance texture using cubemap data
+Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);  // Generate prefilter texture using cubemap data
+Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);       // Generate BRDF texture using cubemap data
 
 // Shading and blending
 void BeginShaderMode(Shader shader);                    // Begin custom shader drawing
