@@ -355,7 +355,7 @@ void rlLoadIdentity(void);                      // Reset current matrix to ident
 void rlTranslatef(float x, float y, float z);   // Multiply the current matrix by a translation matrix
 void rlRotatef(float angleDeg, float x, float y, float z);  // Multiply the current matrix by a rotation matrix
 void rlScalef(float x, float y, float z);       // Multiply the current matrix by a scaling matrix
-void rlMultMatrixf(float *mat);                 // Multiply the current matrix by another matrix
+void rlMultMatrixf(float *matf);                // Multiply the current matrix by another matrix
 void rlFrustum(double left, double right, double bottom, double top, double near, double far);
 void rlOrtho(double left, double right, double bottom, double top, double near, double far);
 void rlViewport(int x, int y, int width, int height); // Set the viewport area

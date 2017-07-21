@@ -706,10 +706,10 @@ RMDEF Matrix MatrixSubstract(Matrix left, Matrix right)
 // Returns translation matrix
 RMDEF Matrix MatrixTranslate(float x, float y, float z)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f, 
-                      0.0f, 1.0f, 0.0f, 0.0f, 
-                      0.0f, 0.0f, 1.0f, 0.0f, 
-                      x, y, z, 1.0f };
+    Matrix result = { 1.0f, 0.0f, 0.0f, x, 
+                      0.0f, 1.0f, 0.0f, y, 
+                      0.0f, 0.0f, 1.0f, z, 
+                      0.0f, 0.0f, 0.0f, 1.0f };
 
     return result;
 }
@@ -834,22 +834,22 @@ RMDEF Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result;
 
-    result.m0 = right.m0*left.m0 + right.m1*left.m4 + right.m2*left.m8 + right.m3*left.m12;
-    result.m1 = right.m0*left.m1 + right.m1*left.m5 + right.m2*left.m9 + right.m3*left.m13;
-    result.m2 = right.m0*left.m2 + right.m1*left.m6 + right.m2*left.m10 + right.m3*left.m14;
-    result.m3 = right.m0*left.m3 + right.m1*left.m7 + right.m2*left.m11 + right.m3*left.m15;
-    result.m4 = right.m4*left.m0 + right.m5*left.m4 + right.m6*left.m8 + right.m7*left.m12;
-    result.m5 = right.m4*left.m1 + right.m5*left.m5 + right.m6*left.m9 + right.m7*left.m13;
-    result.m6 = right.m4*left.m2 + right.m5*left.m6 + right.m6*left.m10 + right.m7*left.m14;
-    result.m7 = right.m4*left.m3 + right.m5*left.m7 + right.m6*left.m11 + right.m7*left.m15;
-    result.m8 = right.m8*left.m0 + right.m9*left.m4 + right.m10*left.m8 + right.m11*left.m12;
-    result.m9 = right.m8*left.m1 + right.m9*left.m5 + right.m10*left.m9 + right.m11*left.m13;
-    result.m10 = right.m8*left.m2 + right.m9*left.m6 + right.m10*left.m10 + right.m11*left.m14;
-    result.m11 = right.m8*left.m3 + right.m9*left.m7 + right.m10*left.m11 + right.m11*left.m15;
-    result.m12 = right.m12*left.m0 + right.m13*left.m4 + right.m14*left.m8 + right.m15*left.m12;
-    result.m13 = right.m12*left.m1 + right.m13*left.m5 + right.m14*left.m9 + right.m15*left.m13;
-    result.m14 = right.m12*left.m2 + right.m13*left.m6 + right.m14*left.m10 + right.m15*left.m14;
-    result.m15 = right.m12*left.m3 + right.m13*left.m7 + right.m14*left.m11 + right.m15*left.m15;
+    result.m0 = left.m0*right.m0 + left.m1*right.m4 + left.m2*right.m8 + left.m3*right.m12;
+    result.m1 = left.m0*right.m1 + left.m1*right.m5 + left.m2*right.m9 + left.m3*right.m13;
+    result.m2 = left.m0*right.m2 + left.m1*right.m6 + left.m2*right.m10 + left.m3*right.m14;
+    result.m3 = left.m0*right.m3 + left.m1*right.m7 + left.m2*right.m11 + left.m3*right.m15;
+    result.m4 = left.m4*right.m0 + left.m5*right.m4 + left.m6*right.m8 + left.m7*right.m12;
+    result.m5 = left.m4*right.m1 + left.m5*right.m5 + left.m6*right.m9 + left.m7*right.m13;
+    result.m6 = left.m4*right.m2 + left.m5*right.m6 + left.m6*right.m10 + left.m7*right.m14;
+    result.m7 = left.m4*right.m3 + left.m5*right.m7 + left.m6*right.m11 + left.m7*right.m15;
+    result.m8 = left.m8*right.m0 + left.m9*right.m4 + left.m10*right.m8 + left.m11*right.m12;
+    result.m9 = left.m8*right.m1 + left.m9*right.m5 + left.m10*right.m9 + left.m11*right.m13;
+    result.m10 = left.m8*right.m2 + left.m9*right.m6 + left.m10*right.m10 + left.m11*right.m14;
+    result.m11 = left.m8*right.m3 + left.m9*right.m7 + left.m10*right.m11 + left.m11*right.m15;
+    result.m12 = left.m12*right.m0 + left.m13*right.m4 + left.m14*right.m8 + left.m15*right.m12;
+    result.m13 = left.m12*right.m1 + left.m13*right.m5 + left.m14*right.m9 + left.m15*right.m13;
+    result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
+    result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
 
     return result;
 }
@@ -936,50 +936,49 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     VectorNormalize(&x);
     Vector3 y = VectorCrossProduct(z, x);
     VectorNormalize(&y);
-
+    
     result.m0 = x.x;
     result.m1 = x.y;
     result.m2 = x.z;
-    result.m3 = -((x.x*eye.x) + (x.y*eye.y) + (x.z*eye.z));
+    result.m3 = 0.0f;
     result.m4 = y.x;
     result.m5 = y.y;
     result.m6 = y.z;
-    result.m7 = -((y.x*eye.x) + (y.y*eye.y) + (y.z*eye.z));
+    result.m7 = 0.0f;
     result.m8 = z.x;
     result.m9 = z.y;
     result.m10 = z.z;
-    result.m11 = -((z.x*eye.x) + (z.y*eye.y) + (z.z*eye.z));
-    result.m12 = 0.0f;
-    result.m13 = 0.0f;
-    result.m14 = 0.0f;
+    result.m11 = 0.0f;
+    result.m12 = eye.x;
+    result.m13 = eye.y;
+    result.m14 = eye.z;
     result.m15 = 1.0f;
+
+    MatrixInvert(&result);
 
     return result;
 }
 
 // Returns float array of matrix data
-// NOTE: Returned vector is a transposed version of the Matrix struct,
-// it should be this way because, despite raymath use OpenGL column-major convention,
-// Matrix struct memory alignment and variables naming are not coherent
 RMDEF float *MatrixToFloat(Matrix mat)
 {
     static float buffer[16];
 
     buffer[0] = mat.m0;
-    buffer[1] = mat.m4;
-    buffer[2] = mat.m8;
-    buffer[3] = mat.m12;
-    buffer[4] = mat.m1;
+    buffer[1] = mat.m1;
+    buffer[2] = mat.m2;
+    buffer[3] = mat.m3;
+    buffer[4] = mat.m4;
     buffer[5] = mat.m5;
-    buffer[6] = mat.m9;
-    buffer[7] = mat.m13;
-    buffer[8] = mat.m2;
-    buffer[9] = mat.m6;
+    buffer[6] = mat.m6;
+    buffer[7] = mat.m7;
+    buffer[8] = mat.m8;
+    buffer[9] = mat.m9;
     buffer[10] = mat.m10;
-    buffer[11] = mat.m14;
-    buffer[12] = mat.m3;
-    buffer[13] = mat.m7;
-    buffer[14] = mat.m11;
+    buffer[11] = mat.m11;
+    buffer[12] = mat.m12;
+    buffer[13] = mat.m13;
+    buffer[14] = mat.m14;
     buffer[15] = mat.m15;
 
     return buffer;

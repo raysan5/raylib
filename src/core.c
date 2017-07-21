@@ -895,8 +895,8 @@ void Begin3dMode(Camera camera)
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
     // Setup Camera view
-    Matrix cameraView = MatrixLookAt(camera.position, camera.target, camera.up);
-    rlMultMatrixf(MatrixToFloat(cameraView));      // Multiply MODELVIEW matrix by view matrix (camera)
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
+    rlMultMatrixf(MatrixToFloat(matView));      // Multiply MODELVIEW matrix by view matrix (camera)
 
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
 }
@@ -991,7 +991,7 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     // For example, if you get view matrix, transpose and inverted and you transform it
     // to a vector, you will get its 3d world position coordinates (camera.position).
     // If you don't transpose, final position will be wrong.
-    MatrixTranspose(&matView);
+    //MatrixTranspose(&matView);
 
 //#define USE_RLGL_UNPROJECT
 #if defined(USE_RLGL_UNPROJECT)     // OPTION 1: Use rlUnproject()
@@ -1037,7 +1037,6 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 
     // Calculate view matrix from camera look at (and transpose it)
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&matView);
 
     // Convert world position vector to quaternion
     Quaternion worldPos = { position.x, position.y, position.z, 1.0f };

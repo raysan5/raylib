@@ -119,10 +119,10 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
 
     rlPushMatrix();
 
-        // NOTE: Be careful! Function order matters (rotate -> scale -> translate)
+        // NOTE: Be careful! Function order matters (scale -> rotate -> translate)
+        rlScalef(1.0f, 3.0f, 1.0f);
+        rlRotatef(45, 0, 1, 0);
         rlTranslatef(position.x, position.y, position.z);
-        //rlScalef(2.0f, 2.0f, 2.0f);
-        //rlRotatef(45, 0, 1, 0);
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -199,8 +199,8 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
 
     rlPushMatrix();
 
-        rlTranslatef(position.x, position.y, position.z);
         //rlRotatef(45, 0, 1, 0);
+        rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -271,10 +271,10 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     rlEnableTexture(texture.id);
 
     //rlPushMatrix();
-        // NOTE: Be careful! Function order matters (scale, translate, rotate)
+        // NOTE: Be careful! Function order matters (scale -> rotate -> translate)
         //rlScalef(2.0f, 2.0f, 2.0f);
-        //rlTranslatef(2.0f, 0.0f, 0.0f);
         //rlRotatef(45, 0, 1, 0);
+        //rlTranslatef(2.0f, 0.0f, 0.0f);
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -330,8 +330,8 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     rlPushMatrix();
-        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -369,8 +369,8 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     rlPushMatrix();
-        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
 
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -496,8 +496,8 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
 {
     // NOTE: Plane is always created on XZ ground
     rlPushMatrix();
-        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(size.x, 1.0f, size.y);
+        rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -567,9 +567,8 @@ void DrawGizmo(Vector3 position)
     float length = 1.0f;
 
     rlPushMatrix();
-        rlTranslatef(position.x, position.y, position.z);
-        //rlRotatef(rotation, 0, 1, 0);
         rlScalef(length, length, length);
+        rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_LINES);
             rlColor3f(1.0f, 0.0f, 0.0f); rlVertex3f(0.0f, 0.0f, 0.0f);
@@ -1347,11 +1346,10 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
     Vector2 sizeRatio = { size, size*(float)sourceRec.height/sourceRec.width };
 
-    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&viewMatrix);
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+    Vector3 right = { matView.m0, matView.m4, matView.m8 };
+    //Vector3 up = { matView.m1, matView.m5, matView.m9 };
 
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
@@ -1660,7 +1658,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 }
 
 // Calculate mesh bounding box limits
-// NOTE: minVertex and maxVertex should be transformed by model transform matrix (position, scale, rotate)
+// NOTE: minVertex and maxVertex should be transformed by model transform matrix
 BoundingBox CalculateBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
