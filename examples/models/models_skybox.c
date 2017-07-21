@@ -35,7 +35,7 @@ int main()
 
     // Load cubemap shader and setup required shader locations
     Shader shdrCubemap = LoadShader("resources/shaders/cubemap.vs", "resources/shaders/cubemap.fs");
-    SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "environmentMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, 1);
     
     Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
     skybox.material.maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, texHDR, 512);

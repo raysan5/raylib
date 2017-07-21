@@ -35,7 +35,7 @@ int main()
     
     Model tower = LoadModel("resources/tower.obj");             // Load OBJ model
     Texture2D texture = LoadTexture("resources/tower.png");     // Load model texture
-    tower.material.texDiffuse = texture;                        // Set model diffuse texture
+    tower.material.maps[MAP_DIFFUSE].texture = texture;         // Set model diffuse texture
     
     Vector3 towerPos = { 0.0f, 0.0f, 0.0f };                    // Set model position
     BoundingBox towerBBox = CalculateBoundingBox(tower.mesh);    
