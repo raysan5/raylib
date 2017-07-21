@@ -142,6 +142,11 @@ static Material LoadMaterialPBR(Color albedo, float metalness, float roughness)
     Shader shdrIrradiance = LoadShader(PATH_SKYBOX_VS, PATH_IRRADIANCE_FS);
     Shader shdrPrefilter = LoadShader(PATH_SKYBOX_VS, PATH_PREFILTER_FS);
     Shader shdrBRDF = LoadShader(PATH_BRDF_VS, PATH_BRDF_FS);
+    
+    // Setup required shader locations
+    SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(shdrIrradiance, GetShaderLocation(shdrIrradiance, "environmentMap"), (int[1]){ 0 }, 1);
+    SetShaderValuei(shdrPrefilter, GetShaderLocation(shdrPrefilter, "environmentMap"), (int[1]){ 0 }, 1);
 
     Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
     Texture2D cubemap = GenTextureCubemap(shdrCubemap, texHDR, CUBEMAP_SIZE);

@@ -597,11 +597,12 @@ Model LoadModel(const char *fileName)
 }
 
 // Load model from generated mesh
-Model LoadModelFromMesh(Mesh mesh, bool dynamic)
+// WARNING: A shallow copy of mesh is generated, passed by value,
+// as long as struct contains pointers to data and some values, we get a copy
+// of mesh pointing to same data as original version... be careful!
+Model LoadModelFromMesh(Mesh mesh)
 {
     Model model = { 0 };
-    
-    rlLoadMesh(&mesh, dynamic);
     
     model.mesh = mesh;
     model.transform = MatrixIdentity();
@@ -646,6 +647,7 @@ void UnloadMesh(Mesh *mesh)
 }
 
 // Generated cuboid mesh
+// NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
@@ -759,11 +761,15 @@ Mesh GenMeshCube(float width, float height, float length)
     
     mesh.vertexCount = 24;
     mesh.triangleCount = 12;
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
 
     return mesh;
 }
 
 // Generate a mesh from heightmap
+// NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
@@ -865,10 +871,15 @@ Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     }
 
     free(pixels);
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);
 
     return mesh;
 }
 
+// Generate a cubes mesh from pixel data
+// NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh = { 0 };
@@ -1219,6 +1230,9 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     free(mapTexcoords);
 
     free(cubicmapPixels);   // Free image pixel data
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
 
     return mesh;
 }

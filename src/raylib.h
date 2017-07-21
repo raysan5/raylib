@@ -409,10 +409,11 @@ typedef struct BoundingBox {
 } BoundingBox;
 
 // Vertex data definning a mesh
+// NOTE: Data stored in CPU memory (and GPU)
 typedef struct Mesh {
     int vertexCount;        // Number of vertices stored in arrays
     int triangleCount;      // Number of triangles stored (indexed or not)
-    
+
     float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
     float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
@@ -981,15 +982,19 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 
 // Model loading/unloading functions
 RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (mesh and material)
-RLAPI Model LoadModelFromMesh(Mesh mesh, bool dynamic);                                                // Load model from generated mesh
+RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
 
 // Mesh loading/unloading functions
 RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
-//RLAPI void UpdateMesh(Mesh *mesh, int type, void *data);                                                // Update mesh data (CPU and GPU)
 RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
 
+//RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                               // Generate plane mesh (with desired subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
+//RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                        // Generate sphere mesh (standard sphere)
+//RLAPI Mesh GenMeshCylinder(float radiusTop, float radiusBottom, float height, int slices);            // Generate cylinder mesh
+//RLAPI Mesh GenMeshTorus(float radius1, float radius2, int radSeg, int sides);                         // Generate torus mesh
+//RLAPI Mesh GenMeshTube(float radius1, float radius2, float height, int sides);                        // Generate tube mesh
 RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
 RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
 
@@ -997,8 +1002,6 @@ RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                   
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
 RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
-RLAPI void SetMaterialTexture(Material *mat, int mapType, Texture2D texture);                           // Set material texture
-RLAPI void UnsetMaterialTexture(Material *mat, int mapType);                                            // Unset texture from material and unload it from GPU
 
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);                           // Draw a model (with texture if set)

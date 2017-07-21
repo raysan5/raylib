@@ -2520,10 +2520,7 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
     Texture2D cubemap = { 0 };
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)  
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
-    // TODO: Locations should be taken out of this function... too shader dependant...
-    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
-
-    SetShaderValuei(shader, texmapLoc, (int[1]){ 0 }, 1);   // Set default active texture to 0
+    // Other locations should be setup externally in shader before calling the function
     
     // Set up depth face culling and cubemap seamless
     glDisable(GL_CULL_FACE);
@@ -2600,8 +2597,7 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
     
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
-    // TODO: Locations should be taken out of this function... too shader dependant...
-    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
+    // Other locations should be setup externally in shader before calling the function
     
     // Setup framebuffer
     unsigned int fbo, rbo;
@@ -2672,9 +2668,9 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
     
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
+    // Other locations should be setup externally in shader before calling the function
     // TODO: Locations should be taken out of this function... too shader dependant...
-    int roughnessLoc = GetShaderLocation(shader, "roughness");      
-    SetShaderValuei(shader, GetShaderLocation(shader, "environmentMap"), (int[1]){ 0 }, 1);
+    int roughnessLoc = GetShaderLocation(shader, "roughness");
     
     // Setup framebuffer
     unsigned int fbo, rbo;

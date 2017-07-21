@@ -24,24 +24,24 @@ int main()
     // Define the camera to look into our 3d world
     Camera camera = {{ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 45.0f };
 
-    // Load skybox model and shader    
+    // Load skybox model   
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
-    Model skybox = LoadModelFromMesh(cube, false);
+    Model skybox = LoadModelFromMesh(cube);
+    
+    // Load skybox shader and set required locations
+    // NOTE: Some locations are automatically set at shader loading
     skybox.material.shader = LoadShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
-
-    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
-    skybox.material.maps[MAP_CUBEMAP].texture = GenTextureCubemap(texHDR, 512);
     SetShaderValuei(skybox.material.shader, GetShaderLocation(skybox.material.shader, "environmentMap"), (int[1]){ MAP_CUBEMAP }, 1);
 
-    // Get skybox shader locations
-    skybox.material.shader.locs[LOC_MATRIX_PROJECTION] = GetShaderLocation(skybox.material.shader, "projection");
-    skybox.material.shader.locs[LOC_MATRIX_VIEW] = GetShaderLocation(skybox.material.shader, "view");
-
-    // Then before rendering, configure the viewport to the actual screen dimensions
-    Matrix proj = MatrixPerspective(60.0, (double)GetScreenWidth()/(double)GetScreenHeight(), 0.01, 1000.0);
-    MatrixTranspose(&proj);
-    SetShaderValueMatrix(skybox.material.shader, skybox.material.shader.locs[LOC_MATRIX_PROJECTION], proj);
-
+    // Load cubemap shader and setup required shader locations
+    Shader shdrCubemap = LoadShader("resources/shaders/cubemap.vs", "resources/shaders/cubemap.fs");
+    SetShaderValuei(shdrCubemap, GetShaderLocation(shdrCubemap, "environmentMap"), (int[1]){ 0 }, 1);
+    
+    Texture2D texHDR = LoadTexture("resources/pinetree.hdr");
+    skybox.material.maps[MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, texHDR, 512);
+    
+    UnloadShader(shdrCubemap);  // Cubemap generation shader not required any more
+    
     SetCameraMode(camera, CAMERA_ORBITAL);  // Set an orbital camera mode
 
     SetTargetFPS(60);                       // Set our game to run at 60 frames-per-second
@@ -53,9 +53,6 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera);              // Update camera
-        
-        Matrix view = MatrixLookAt(camera.position, camera.target, camera.up);
-        SetShaderValueMatrix(skybox.material.shader, skybox.material.shader.locs[LOC_MATRIX_VIEW], view);
         //----------------------------------------------------------------------------------
 
         // Draw
