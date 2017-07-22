@@ -120,8 +120,8 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     rlPushMatrix();
 
         // NOTE: Be careful! Function order matters (scale -> rotate -> translate)
-        rlScalef(1.0f, 3.0f, 1.0f);
-        rlRotatef(45, 0, 1, 0);
+        //rlScalef(1.0f, 3.0f, 1.0f);
+        //rlRotatef(45, 0, 1, 0);
         rlTranslatef(position.x, position.y, position.z);
 
         rlBegin(RL_TRIANGLES);

@@ -3585,7 +3585,7 @@ static void UpdateBuffersDefault(void)
 
 // Draw default internal buffers vertex data
 // NOTE: We draw in this order: lines, triangles, quads
-static void DrawBuffersDefault()
+static void DrawBuffersDefault(void)
 {
     Matrix matProjection = projection;
     Matrix matModelView = modelview;
@@ -3967,9 +3967,9 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
 #endif
 
-    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)*RAD2DEG
+    // Fovy is normally computed with: 2*atan2(hmd.vScreenSize, 2*hmd.eyeToScreenDistance)
     // ...but with lens distortion it is increased (see Oculus SDK Documentation)
-    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance)*RAD2DEG;     // Really need distortionScale?
+    //float fovy = 2.0f*atan2(hmd.vScreenSize*0.5f*distortionScale, hmd.eyeToScreenDistance);     // Really need distortionScale?
     float fovy = 2.0f*(float)atan2(hmd.vScreenSize*0.5f, hmd.eyeToScreenDistance);
 
     // Compute camera projection matrices

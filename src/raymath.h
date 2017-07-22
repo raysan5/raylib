@@ -882,7 +882,7 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 // NOTE: Angle should be provided in radians
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far)
 {
-    double top = near*tan(fovy);
+    double top = near*tan(fovy*0.5); 
     double right = top*aspect;
 
     return MatrixFrustum(-right, right, -top, top, near, far);

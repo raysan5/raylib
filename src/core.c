@@ -885,7 +885,7 @@ void Begin3dMode(Camera camera)
 
     // Setup perspective projection
     float aspect = (float)screenWidth/(float)screenHeight;
-    double top = 0.01*tan(camera.fovy*PI/360.0);
+    double top = 0.01*tan(camera.fovy*0.5*DEG2RAD);
     double right = top*aspect;
 
     // NOTE: zNear and zFar values are important when computing depth buffer values
