@@ -979,44 +979,15 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
 
     TraceLog(LOG_DEBUG, "Device coordinates: (%f, %f, %f)", deviceCoords.x, deviceCoords.y, deviceCoords.z);
 
-    // Calculate projection matrix (from perspective instead of frustum)
+    // Calculate projection matrix from perspective
     Matrix matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)GetScreenWidth()/(double)GetScreenHeight()), 0.01, 1000.0);
 
     // Calculate view matrix from camera look at
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-    // Do I need to transpose it? It seems that yes...
-    // NOTE: matrix order may be incorrect... In OpenGL to get world position from
-    // camera view it just needs to get inverted, but here we need to transpose it too.
-    // For example, if you get view matrix, transpose and inverted and you transform it
-    // to a vector, you will get its 3d world position coordinates (camera.position).
-    // If you don't transpose, final position will be wrong.
-    //MatrixTranspose(&matView);
-
-//#define USE_RLGL_UNPROJECT
-#if defined(USE_RLGL_UNPROJECT)     // OPTION 1: Use rlUnproject()
-
+    // Unproject far/near points
     Vector3 nearPoint = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
     Vector3 farPoint = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
-
-#else   // OPTION 2: Compute unprojection directly here
-
-    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
-    Matrix matProjView = MatrixMultiply(matProj, matView);
-    MatrixInvert(&matProjView);
-
-    // Calculate far and near points
-    Quaternion qNear = { deviceCoords.x, deviceCoords.y, 0.0f, 1.0f };
-    Quaternion qFar = { deviceCoords.x, deviceCoords.y, 1.0f, 1.0f };
-
-    // Multiply points by unproject matrix
-    QuaternionTransform(&qNear, matProjView);
-    QuaternionTransform(&qFar, matProjView);
-
-    // Calculate normalized world points in vectors
-    Vector3 nearPoint = { qNear.x/qNear.w, qNear.y/qNear.w, qNear.z/qNear.w};
-    Vector3 farPoint = { qFar.x/qFar.w, qFar.y/qFar.w, qFar.z/qFar.w};
-#endif
 
     // Calculate normalized direction vector
     Vector3 direction = VectorSubtract(farPoint, nearPoint);

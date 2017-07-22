@@ -1306,15 +1306,15 @@ Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view)
 {
     Vector3 result = { 0.0f, 0.0f, 0.0f };
 
-    // Calculate unproject matrix (multiply projection matrix and view matrix) and invert it
-    Matrix matProjView = MatrixMultiply(proj, view);
-    MatrixInvert(&matProjView);
+    // Calculate unproject matrix (multiply view patrix by projection matrix) and invert it
+    Matrix matViewProj = MatrixMultiply(view, proj);
+    MatrixInvert(&matViewProj);
 
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
     // Multiply quat point by unproject matrix
-    QuaternionTransform(&quat, matProjView);
+    QuaternionTransform(&quat, matViewProj);
 
     // Normalized world points in vectors
     result.x = quat.x/quat.w;
