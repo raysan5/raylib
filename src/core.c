@@ -990,8 +990,8 @@ Ray GetMouseRay(Vector2 mousePosition, Camera camera)
     Vector3 farPoint = rlUnproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
     // Calculate normalized direction vector
-    Vector3 direction = VectorSubtract(farPoint, nearPoint);
-    VectorNormalize(&direction);
+    Vector3 direction = Vector3Subtract(farPoint, nearPoint);
+    Vector3Normalize(&direction);
 
     // Apply calculated vectors to ray
     ray.position = camera.position;

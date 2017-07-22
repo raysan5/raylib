@@ -746,8 +746,8 @@ RLAPI float *ColorToFloat(Color color);                           // Converts Co
 // Math useful functions (available from raymath.h)
 RLAPI float *VectorToFloat(Vector3 vec);                          // Returns Vector3 as float array
 RLAPI float *MatrixToFloat(Matrix mat);                           // Returns Matrix as float array
-RLAPI Vector3 VectorZero(void);                                   // Vector with components value 0.0f
-RLAPI Vector3 VectorOne(void);                                    // Vector with components value 1.0f
+RLAPI Vector3 Vector3Zero(void);                                  // Vector with components value 0.0f
+RLAPI Vector3 Vector3One(void);                                   // Vector with components value 1.0f
 RLAPI Matrix MatrixIdentity(void);                                // Returns identity matrix
 
 // Misc. functions

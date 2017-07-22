@@ -1360,16 +1360,16 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     |       |
     d-------c
 */
-    VectorScale(&right, sizeRatio.x/2);
-    VectorScale(&up, sizeRatio.y/2);
+    Vector3Scale(&right, sizeRatio.x/2);
+    Vector3Scale(&up, sizeRatio.y/2);
 
-    Vector3 p1 = VectorAdd(right, up);
-    Vector3 p2 = VectorSubtract(right, up);
+    Vector3 p1 = Vector3Add(right, up);
+    Vector3 p2 = Vector3Subtract(right, up);
 
-    Vector3 a = VectorSubtract(center, p2);
-    Vector3 b = VectorAdd(center, p1);
-    Vector3 c = VectorAdd(center, p2);
-    Vector3 d = VectorSubtract(center, p1);
+    Vector3 a = Vector3Subtract(center, p2);
+    Vector3 b = Vector3Add(center, p1);
+    Vector3 c = Vector3Add(center, p2);
+    Vector3 d = Vector3Subtract(center, p1);
 
     rlEnableTexture(texture.id);
 
@@ -1468,9 +1468,9 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
 {
     bool collision = false;
 
-    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
-    float distance = VectorLength(raySpherePos);
-    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    Vector3 raySpherePos = Vector3Subtract(spherePosition, ray.position);
+    float distance = Vector3Length(raySpherePos);
+    float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
 
     if (d >= 0.0f) collision = true;
@@ -1483,9 +1483,9 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 {
     bool collision = false;
 
-    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
-    float distance = VectorLength(raySpherePos);
-    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    Vector3 raySpherePos = Vector3Subtract(spherePosition, ray.position);
+    float distance = Vector3Length(raySpherePos);
+    float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
 
     if (d >= 0.0f) collision = true;
@@ -1498,8 +1498,8 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
     if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
     else collisionDistance = vector - sqrtf(d);
 
-    VectorScale(&offset, collisionDistance);
-    Vector3 cPoint = VectorAdd(ray.position, offset);
+    Vector3Scale(&offset, collisionDistance);
+    Vector3 cPoint = Vector3Add(ray.position, offset);
 
     collisionPoint->x = cPoint.x;
     collisionPoint->y = cPoint.y;
@@ -1582,14 +1582,14 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     RayHitInfo result = {0};
 
     // Find vectors for two edges sharing V1
-    edge1 = VectorSubtract(p2, p1);
-    edge2 = VectorSubtract(p3, p1);
+    edge1 = Vector3Subtract(p2, p1);
+    edge2 = Vector3Subtract(p3, p1);
 
     // Begin calculating determinant - also used to calculate u parameter
-    p = VectorCrossProduct(ray.direction, edge2);
+    p = Vector3CrossProduct(ray.direction, edge2);
 
     // If determinant is near zero, ray lies in plane of triangle or ray is parallel to plane of triangle
-    det = VectorDotProduct(edge1, p);
+    det = Vector3DotProduct(edge1, p);
 
     // Avoid culling!
     if ((det > -EPSILON) && (det < EPSILON)) return result;
@@ -1597,24 +1597,24 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     invDet = 1.0f/det;
 
     // Calculate distance from V1 to ray origin
-    tv = VectorSubtract(ray.position, p1);
+    tv = Vector3Subtract(ray.position, p1);
 
     // Calculate u parameter and test bound
-    u = VectorDotProduct(tv, p)*invDet;
+    u = Vector3DotProduct(tv, p)*invDet;
 
     // The intersection lies outside of the triangle
     if ((u < 0.0f) || (u > 1.0f)) return result;
 
     // Prepare to test v parameter
-    q = VectorCrossProduct(tv, edge1);
+    q = Vector3CrossProduct(tv, edge1);
 
     // Calculate V parameter and test bound
-    v = VectorDotProduct(ray.direction, q)*invDet;
+    v = Vector3DotProduct(ray.direction, q)*invDet;
 
     // The intersection lies outside of the triangle
     if ((v < 0.0f) || ((u + v) > 1.0f)) return result;
 
-    t = VectorDotProduct(edge2, q)*invDet;
+    t = Vector3DotProduct(edge2, q)*invDet;
 
     if (t > EPSILON)
     {
@@ -1622,11 +1622,11 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.hit = true;
         result.distance = t;
         result.hit = true;
-        result.normal = VectorCrossProduct(edge1, edge2);
-        VectorNormalize(&result.normal);
+        result.normal = Vector3CrossProduct(edge1, edge2);
+        Vector3Normalize(&result.normal);
         Vector3 rayDir = ray.direction;
-        VectorScale(&rayDir, t);
-        result.position = VectorAdd(ray.position, rayDir);
+        Vector3Scale(&rayDir, t);
+        result.position = Vector3Add(ray.position, rayDir);
     }
 
     return result;
@@ -1646,11 +1646,11 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
         if (t >= 0.0)
         {
             Vector3 rayDir = ray.direction;
-            VectorScale(&rayDir, t);
+            Vector3Scale(&rayDir, t);
             result.hit = true;
             result.distance = t;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.position = VectorAdd(ray.position, rayDir);
+            result.position = Vector3Add(ray.position, rayDir);
         }
     }
 
@@ -1672,8 +1672,8 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
 
         for (int i = 1; i < mesh.vertexCount; i++)
         {
-            minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
-            maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+            minVertex = Vector3Min(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+            maxVertex = Vector3Max(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
         }
     }
 
@@ -1888,8 +1888,8 @@ static Mesh LoadOBJ(const char *fileName)
                 else
                 {
                     // If normals not defined, they are calculated from the 3 vertices [N = (V2 - V1) x (V3 - V1)]
-                    Vector3 norm = VectorCrossProduct(VectorSubtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), VectorSubtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
-                    VectorNormalize(&norm);
+                    Vector3 norm = Vector3CrossProduct(Vector3Subtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), Vector3Subtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
+                    Vector3Normalize(&norm);
 
                     mesh.normals[nCounter] = norm.x;
                     mesh.normals[nCounter + 1] = norm.y;
@@ -1949,8 +1949,8 @@ static Mesh LoadOBJ(const char *fileName)
             Vector2 uv2 = { mesh.texcoords[uvCount + 4], mesh.texcoords[uvCount + 5] };
 
             // Calculate edges of the triangle (position delta)
-            Vector3 deltaPos1 = VectorSubtract(v1, v0);
-            Vector3 deltaPos2 = VectorSubtract(v2, v0);
+            Vector3 deltaPos1 = Vector3Subtract(v1, v0);
+            Vector3 deltaPos2 = Vector3Subtract(v2, v0);
 
             // UV delta
             Vector2 deltaUV1 = { uv1.x - uv0.x, uv1.y - uv0.y };
@@ -1963,8 +1963,8 @@ static Mesh LoadOBJ(const char *fileName)
             // Vector3 b2 = { deltaPos1.x*deltaUV2.x, deltaPos1.y*deltaUV2.x, deltaPos1.z*deltaUV2.x };
 
             // Calculate vertex tangent
-            Vector3 tangent = VectorSubtract(t1, t2);
-            VectorScale(&tangent, r);
+            Vector3 tangent = Vector3Subtract(t1, t2);
+            Vector3Scale(&tangent, r);
 
             // Apply calculated tangents data to mesh struct
             mesh.tangents[vCount + 0] = tangent.x;
@@ -1980,7 +1980,7 @@ static Mesh LoadOBJ(const char *fileName)
             // TODO: add binormals to mesh struct and assign buffers id and locations properly
             /* // Calculate vertex binormal
             Vector3 binormal = VectorSubtract(b1, b2);
-            VectorScale(&binormal, r);
+            Vector3Scale(&binormal, r);
 
             // Apply calculated binormals data to mesh struct
             mesh.binormals[vCount + 0] = binormal.x;
