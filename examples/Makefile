@@ -30,6 +30,26 @@
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
+# determine PLATFORM_OS in case PLATFORM_DESKTOP selected
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
+    ifeq ($(OS),Windows_NT)
+        PLATFORM_OS=WINDOWS
+        LIBPATH=win32
+    else
+        UNAMEOS:=$(shell uname)
+        ifeq ($(UNAMEOS),Linux)
+            PLATFORM_OS=LINUX
+            LIBPATH=linux
+        else
+        ifeq ($(UNAMEOS),Darwin)
+            PLATFORM_OS=OSX
+            LIBPATH=osx
+        endif
+        endif
+    endif
+endif
+
 # define default raylib path for include and library search
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -52,26 +72,6 @@ SHARED_OPENAL ?= NO
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     SHARED_OPENAL = NO
-endif
-
-# determine PLATFORM_OS in case PLATFORM_DESKTOP selected
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
-    ifeq ($(OS),Windows_NT)
-        PLATFORM_OS=WINDOWS
-        LIBPATH=win32
-    else
-        UNAMEOS:=$(shell uname)
-        ifeq ($(UNAMEOS),Linux)
-            PLATFORM_OS=LINUX
-            LIBPATH=linux
-        else
-        ifeq ($(UNAMEOS),Darwin)
-            PLATFORM_OS=OSX
-            LIBPATH=osx
-        endif
-        endif
-    endif
 endif
 
 # define compiler: gcc for C program, define as g++ for C++
