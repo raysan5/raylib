@@ -189,7 +189,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # libraries for Debian GNU/Linux desktop compiling
         # requires the following packages:
         # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+        LIBS = -lraylib -lglfw -lGL -lopenal -lm -lpthread -ldl
         # on XWindow requires also below libraries
         LIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     else
