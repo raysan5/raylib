@@ -136,25 +136,26 @@ RMDEF void Vector2Normalize(Vector2 *v);                        // Normalize pro
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Vector3
 //------------------------------------------------------------------------------------
-RMDEF Vector3 VectorZero(void);                                 // Vector with components value 0.0f
-RMDEF Vector3 VectorOne(void);                                  // Vector with components value 1.0f
-RMDEF Vector3 VectorAdd(Vector3 v1, Vector3 v2);                // Add two vectors
-RMDEF Vector3 VectorSubtract(Vector3 v1, Vector3 v2);           // Substract two vectors
-RMDEF Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2);       // Calculate two vectors cross product
-RMDEF Vector3 VectorPerpendicular(Vector3 v);                   // Calculate one vector perpendicular vector
-RMDEF float VectorLength(const Vector3 v);                      // Calculate vector length
-RMDEF float VectorDotProduct(Vector3 v1, Vector3 v2);           // Calculate two vectors dot product
-RMDEF float VectorDistance(Vector3 v1, Vector3 v2);             // Calculate distance between two points
-RMDEF void VectorScale(Vector3 *v, float scale);                // Scale provided vector
-RMDEF void VectorNegate(Vector3 *v);                            // Negate provided vector (invert direction)
-RMDEF void VectorNormalize(Vector3 *v);                         // Normalize provided vector
-RMDEF void VectorTransform(Vector3 *v, Matrix mat);             // Transforms a Vector3 by a given Matrix
-RMDEF Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount); // Calculate linear interpolation between two vectors
-RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal);    // Calculate reflected vector to normal
-RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2);            // Return min value for each pair of components
-RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2);            // Return max value for each pair of components
-RMDEF Vector3 VectorBarycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
-RMDEF float *VectorToFloat(Vector3 vec);                        // Returns Vector3 as float array
+RMDEF Vector3 Vector3Zero(void);                                 // Vector with components value 0.0f
+RMDEF Vector3 Vector3One(void);                                  // Vector with components value 1.0f
+RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2);                // Add two vectors
+RMDEF Vector3 Vector3Multiply(Vector3 v, float scalar);          // Multiply vector by scalar
+RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2);           // Substract two vectors
+RMDEF Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2);       // Calculate two vectors cross product
+RMDEF Vector3 Vector3Perpendicular(Vector3 v);                   // Calculate one vector perpendicular vector
+RMDEF float Vector3Length(const Vector3 v);                      // Calculate vector length
+RMDEF float Vector3DotProduct(Vector3 v1, Vector3 v2);           // Calculate two vectors dot product
+RMDEF float Vector3Distance(Vector3 v1, Vector3 v2);             // Calculate distance between two points
+RMDEF void Vector3Scale(Vector3 *v, float scale);                // Scale provided vector
+RMDEF void Vector3Negate(Vector3 *v);                            // Negate provided vector (invert direction)
+RMDEF void Vector3Normalize(Vector3 *v);                         // Normalize provided vector
+RMDEF void Vector3Transform(Vector3 *v, Matrix mat);             // Transforms a Vector3 by a given Matrix
+RMDEF Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount); // Calculate linear interpolation between two vectors
+RMDEF Vector3 Vector3Reflect(Vector3 vector, Vector3 normal);    // Calculate reflected vector to normal
+RMDEF Vector3 Vector3Min(Vector3 vec1, Vector3 vec2);            // Return min value for each pair of components
+RMDEF Vector3 Vector3Max(Vector3 vec1, Vector3 vec2);            // Return max value for each pair of components
+RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
+RMDEF float *Vector3ToFloat(Vector3 vec);                        // Returns Vector3 as float array
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
@@ -297,25 +298,35 @@ RMDEF void Vector2Normalize(Vector2 *v)
 //----------------------------------------------------------------------------------
 
 // Vector with components value 0.0f
-RMDEF Vector3 VectorZero(void) { return (Vector3){ 0.0f, 0.0f, 0.0f }; }
+RMDEF Vector3 Vector3Zero(void) { return (Vector3){ 0.0f, 0.0f, 0.0f }; }
 
 // Vector with components value 1.0f
-RMDEF Vector3 VectorOne(void) { return (Vector3){ 1.0f, 1.0f, 1.0f }; }
+RMDEF Vector3 Vector3One(void) { return (Vector3){ 1.0f, 1.0f, 1.0f }; }
 
 // Add two vectors
-RMDEF Vector3 VectorAdd(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
 {
     return (Vector3){ v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
 }
 
 // Substract two vectors
-RMDEF Vector3 VectorSubtract(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
     return (Vector3){ v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
 }
 
+// Multiply vector by scalar
+RMDEF Vector3 Vector3Multiply(Vector3 v, float scalar)
+{	
+    v.x *= scalar;
+    v.y *= scalar;
+    v.z *= scalar;
+
+    return v;
+}
+
 // Calculate two vectors cross product
-RMDEF Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2)
+RMDEF Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2)
 {
     Vector3 result;
 
@@ -327,7 +338,7 @@ RMDEF Vector3 VectorCrossProduct(Vector3 v1, Vector3 v2)
 }
 
 // Calculate one vector perpendicular vector
-RMDEF Vector3 VectorPerpendicular(Vector3 v)
+RMDEF Vector3 Vector3Perpendicular(Vector3 v)
 {
     Vector3 result;
 
@@ -345,25 +356,25 @@ RMDEF Vector3 VectorPerpendicular(Vector3 v)
         cardinalAxis = (Vector3){0.0f, 0.0f, 1.0f};
     }
 
-    result = VectorCrossProduct(v, cardinalAxis);
+    result = Vector3CrossProduct(v, cardinalAxis);
 
     return result;
 }
 
 // Calculate vector length
-RMDEF float VectorLength(const Vector3 v)
+RMDEF float Vector3Length(const Vector3 v)
 {
     return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
 // Calculate two vectors dot product
-RMDEF float VectorDotProduct(Vector3 v1, Vector3 v2)
+RMDEF float Vector3DotProduct(Vector3 v1, Vector3 v2)
 {
     return (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
 }
 
 // Calculate distance between two vectors
-RMDEF float VectorDistance(Vector3 v1, Vector3 v2)
+RMDEF float Vector3Distance(Vector3 v1, Vector3 v2)
 {
     float dx = v2.x - v1.x;
     float dy = v2.y - v1.y;
@@ -373,7 +384,7 @@ RMDEF float VectorDistance(Vector3 v1, Vector3 v2)
 }
 
 // Scale provided vector
-RMDEF void VectorScale(Vector3 *v, float scale)
+RMDEF void Vector3Scale(Vector3 *v, float scale)
 {
     v->x *= scale;
     v->y *= scale;
@@ -381,7 +392,7 @@ RMDEF void VectorScale(Vector3 *v, float scale)
 }
 
 // Negate provided vector (invert direction)
-RMDEF void VectorNegate(Vector3 *v)
+RMDEF void Vector3Negate(Vector3 *v)
 {
     v->x = -v->x;
     v->y = -v->y;
@@ -389,11 +400,11 @@ RMDEF void VectorNegate(Vector3 *v)
 }
 
 // Normalize provided vector
-RMDEF void VectorNormalize(Vector3 *v)
+RMDEF void Vector3Normalize(Vector3 *v)
 {
     float length, ilength;
 
-    length = VectorLength(*v);
+    length = Vector3Length(*v);
 
     if (length == 0.0f) length = 1.0f;
 
@@ -405,7 +416,7 @@ RMDEF void VectorNormalize(Vector3 *v)
 }
 
 // Transforms a Vector3 by a given Matrix
-RMDEF void VectorTransform(Vector3 *v, Matrix mat)
+RMDEF void Vector3Transform(Vector3 *v, Matrix mat)
 {
     float x = v->x;
     float y = v->y;
@@ -417,7 +428,7 @@ RMDEF void VectorTransform(Vector3 *v, Matrix mat)
 };
 
 // Calculate linear interpolation between two vectors
-RMDEF Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount)
+RMDEF Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount)
 {
     Vector3 result;
 
@@ -429,7 +440,7 @@ RMDEF Vector3 VectorLerp(Vector3 v1, Vector3 v2, float amount)
 }
 
 // Calculate reflected vector to normal
-RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
+RMDEF Vector3 Vector3Reflect(Vector3 vector, Vector3 normal)
 {
     // I is the original vector
     // N is the normal of the incident plane
@@ -437,7 +448,7 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
 
     Vector3 result;
 
-    float dotProduct = VectorDotProduct(vector, normal);
+    float dotProduct = Vector3DotProduct(vector, normal);
 
     result.x = vector.x - (2.0f*normal.x)*dotProduct;
     result.y = vector.y - (2.0f*normal.y)*dotProduct;
@@ -447,7 +458,7 @@ RMDEF Vector3 VectorReflect(Vector3 vector, Vector3 normal)
 }
 
 // Return min value for each pair of components
-RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2)
+RMDEF Vector3 Vector3Min(Vector3 vec1, Vector3 vec2)
 {
     Vector3 result;
     
@@ -459,7 +470,7 @@ RMDEF Vector3 VectorMin(Vector3 vec1, Vector3 vec2)
 }
 
 // Return max value for each pair of components
-RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2)
+RMDEF Vector3 Vector3Max(Vector3 vec1, Vector3 vec2)
 {
     Vector3 result;
     
@@ -472,18 +483,18 @@ RMDEF Vector3 VectorMax(Vector3 vec1, Vector3 vec2)
 
 // Compute barycenter coordinates (u, v, w) for point p with respect to triangle (a, b, c)
 // NOTE: Assumes P is on the plane of the triangle
-RMDEF Vector3 VectorBarycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 {
     //Vector v0 = b - a, v1 = c - a, v2 = p - a;
     
-    Vector3 v0 = VectorSubtract(b, a);
-    Vector3 v1 = VectorSubtract(c, a);
-    Vector3 v2 = VectorSubtract(p, a);
-    float d00 = VectorDotProduct(v0, v0);
-    float d01 = VectorDotProduct(v0, v1);
-    float d11 = VectorDotProduct(v1, v1);
-    float d20 = VectorDotProduct(v2, v0);
-    float d21 = VectorDotProduct(v2, v1);
+    Vector3 v0 = Vector3Subtract(b, a);
+    Vector3 v1 = Vector3Subtract(c, a);
+    Vector3 v2 = Vector3Subtract(p, a);
+    float d00 = Vector3DotProduct(v0, v0);
+    float d01 = Vector3DotProduct(v0, v1);
+    float d11 = Vector3DotProduct(v1, v1);
+    float d20 = Vector3DotProduct(v2, v0);
+    float d21 = Vector3DotProduct(v2, v1);
     
     float denom = d00*d11 - d01*d01;
     
@@ -497,7 +508,7 @@ RMDEF Vector3 VectorBarycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 }
 
 // Returns Vector3 as float array
-RMDEF float *VectorToFloat(Vector3 vec)
+RMDEF float *Vector3ToFloat(Vector3 vec)
 {
     static float buffer[3];
 
@@ -922,12 +933,12 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 {
     Matrix result;
 
-    Vector3 z = VectorSubtract(eye, target);
-    VectorNormalize(&z);
-    Vector3 x = VectorCrossProduct(up, z);
-    VectorNormalize(&x);
-    Vector3 y = VectorCrossProduct(z, x);
-    VectorNormalize(&y);
+    Vector3 z = Vector3Subtract(eye, target);
+    Vector3Normalize(&z);
+    Vector3 x = Vector3CrossProduct(up, z);
+    Vector3Normalize(&x);
+    Vector3 y = Vector3CrossProduct(z, x);
+    Vector3Normalize(&y);
     
     result.m0 = x.x;
     result.m1 = x.y;
@@ -1176,11 +1187,11 @@ RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    if (VectorLength(axis) != 0.0f)
+    if (Vector3Length(axis) != 0.0f)
 
     angle *= 0.5f;
 
-    VectorNormalize(&axis);
+    Vector3Normalize(&axis);
     
     float sinres = sinf(angle);
     float cosres = cosf(angle);
