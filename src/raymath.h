@@ -1126,13 +1126,15 @@ RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
     q.x = cross.x;
     q.y = cross.y;
     q.z = cross.y;
-    q.w = 1.0f + cos2Theta;
-
-    QuaternionNormalize(&q);
+    q.w = 1.0f + cos2Theta;     // NOTE: Added QuaternioIdentity()
     
-    Quaternion result = QuaternionNlerp(q, QuaternionIdentity(), 0.5f);
+    // Normalize to essentially nlerp the original and identity to 0.5
+    QuaternionNormalize(&q);    
     
-	return result;
+    // Above lines are equivalent to:
+    //Quaternion result = QuaternionNlerp(q, QuaternionIdentity(), 0.5f);
+    
+	return q;
 }
 
 // Returns a quaternion for a given rotation matrix
