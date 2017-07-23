@@ -184,11 +184,15 @@ RMDEF float *MatrixToFloat(Matrix mat);                         // Returns float
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
 //------------------------------------------------------------------------------------
+RMDEF Quaternion QuaternionIdentity(void);                      // Returns identity quaternion
 RMDEF float QuaternionLength(Quaternion quat);                  // Compute the length of a quaternion
 RMDEF void QuaternionNormalize(Quaternion *q);                  // Normalize provided quaternion
 RMDEF void QuaternionInvert(Quaternion *quat);                  // Invert provided quaternion
 RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
-RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float slerp); // Calculates spherical linear interpolation between two quaternions
+RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount);    // Calculate linear interpolation between two quaternions
+RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount);   // Calculates spherical linear interpolation between two quaternions
+RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount);   // Calculate slerp-optimized interpolation between two quaternions
+RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to);      // Calculate quaternion based on the rotation from one vector to another
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
 RMDEF Matrix QuaternionToMatrix(Quaternion q);                        // Returns a matrix for a given quaternion
 RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns rotation quaternion for an angle and axis
@@ -991,6 +995,12 @@ RMDEF float *MatrixToFloat(Matrix mat)
 // Module Functions Definition - Quaternion math
 //----------------------------------------------------------------------------------
 
+// Returns identity quaternion
+RMDEF Quaternion QuaternionIdentity(void)
+{
+    return (Quaternion){ 0.0f, 0.0f, 0.0f, 1.0f };
+}
+
 // Computes the length of a quaternion
 RMDEF float QuaternionLength(Quaternion quat)
 {
@@ -1047,6 +1057,19 @@ RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
     return result;
 }
 
+// Calculate linear interpolation between two quaternions
+RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount)
+{
+    Quaternion result;
+
+    result.x = q1.x + amount*(q2.x - q1.x);
+    result.y = q1.y + amount*(q2.y - q1.y);
+    result.z = q1.z + amount*(q2.z - q1.z);
+    result.w = q1.w + amount*(q2.w - q1.w);
+
+    return result;
+}
+
 // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
@@ -1055,6 +1078,7 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     float cosHalfTheta =  q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w;
 
     if (fabs(cosHalfTheta) >= 1.0f) result = q1;
+    else if (cosHalfTheta > 0.95f) result = QuaternionNlerp(q1, q2, amount);
     else
     {
         float halfTheta = acos(cosHalfTheta);
@@ -1080,6 +1104,35 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
     }
 
     return result;
+}
+
+// Calculate slerp-optimized interpolation between two quaternions
+RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
+{
+    Quaternion result = QuaternionLerp(q1, q2, amount);
+    QuaternionNormalize(&result);
+    
+    return result;
+}
+
+// Calculate quaternion based on the rotation from one vector to another
+RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
+{
+    Quaternion q = { 0 };
+
+    float cos2Theta = Vector3DotProduct(from, to);
+    Vector3 cross = Vector3CrossProduct(from, to);
+
+    q.x = cross.x;
+    q.y = cross.y;
+    q.z = cross.y;
+    q.w = 1.0f + cos2Theta;
+
+    QuaternionNormalize(&q);
+    
+    Quaternion result = QuaternionNlerp(q, QuaternionIdentity(), 0.5f);
+    
+	return result;
 }
 
 // Returns a quaternion for a given rotation matrix
@@ -1148,18 +1201,21 @@ RMDEF Matrix QuaternionToMatrix(Quaternion q)
     float x2 = x + x;
     float y2 = y + y;
     float z2 = z + z;
+    
+    float length = QuaternionLength(q);
+    float lenghtSquared = length*length;
 
-    float xx = x*x2;
-    float xy = x*y2;
-    float xz = x*z2;
+    float xx = x*x2/lenghtSquared;
+    float xy = x*y2/lenghtSquared;
+    float xz = x*z2/lenghtSquared;
 
-    float yy = y*y2;
-    float yz = y*z2;
-    float zz = z*z2;
+    float yy = y*y2/lenghtSquared;
+    float yz = y*z2/lenghtSquared;
+    float zz = z*z2/lenghtSquared;
 
-    float wx = w*x2;
-    float wy = w*y2;
-    float wz = w*z2;
+    float wx = w*x2/lenghtSquared;
+    float wy = w*y2/lenghtSquared;
+    float wz = w*z2/lenghtSquared;
 
     result.m0 = 1.0f - (yy + zz);
     result.m1 = xy - wz;
@@ -1255,7 +1311,7 @@ RMDEF Quaternion QuaternionFromEuler(float roll, float pitch, float yaw)
 }
 
 // Return the Euler angles equivalent to quaternion (roll, pitch, yaw)
-// NOTE: Angles are returned in a Vector3 struct and in degrees
+// NOTE: Angles are returned in a Vector3 struct in degrees
 RMDEF Vector3 QuaternionToEuler(Quaternion q)
 {
     Vector3 v = { 0 };
