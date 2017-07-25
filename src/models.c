@@ -1979,7 +1979,7 @@ static Mesh LoadOBJ(const char *fileName)
 
             // TODO: add binormals to mesh struct and assign buffers id and locations properly
             /* // Calculate vertex binormal
-            Vector3 binormal = VectorSubtract(b1, b2);
+            Vector3 binormal = Vector3Subtract(b1, b2);
             Vector3Scale(&binormal, r);
 
             // Apply calculated binormals data to mesh struct

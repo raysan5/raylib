@@ -71,7 +71,7 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawModel(model, VectorZero(), 1.0f, WHITE);
+                DrawModel(model, Vector3Zero(), 1.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);
 
