@@ -140,6 +140,7 @@ RMDEF Vector3 Vector3Zero(void);                                 // Vector with 
 RMDEF Vector3 Vector3One(void);                                  // Vector with components value 1.0f
 RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2);                // Add two vectors
 RMDEF Vector3 Vector3Multiply(Vector3 v, float scalar);          // Multiply vector by scalar
+RMDEF Vector3 Vector3MultiplyV(Vector3 v1, Vector3 v2);          // Multiply vector by vector
 RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2);           // Substract two vectors
 RMDEF Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2);       // Calculate two vectors cross product
 RMDEF Vector3 Vector3Perpendicular(Vector3 v);                   // Calculate one vector perpendicular vector
@@ -327,6 +328,18 @@ RMDEF Vector3 Vector3Multiply(Vector3 v, float scalar)
     v.z *= scalar;
 
     return v;
+}
+
+// Multiply vector by vector
+RMDEF Vector3 Vector3MultiplyV(Vector3 v1, Vector3 v2)
+{	
+    Vector3 result;
+
+    result.x = v1.x * v2.x;
+    result.y = v1.y * v2.y;
+    result.z = v1.z * v2.z;
+
+    return result;
 }
 
 // Calculate two vectors cross product
