@@ -2506,16 +2506,20 @@ void SetMatrixModelview(Matrix view)
 }
 
 // Generate cubemap texture from HDR texture
+// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 {
     Texture2D cubemap = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)  
+#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)  
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
     
     // Set up depth face culling and cubemap seamless
     glDisable(GL_CULL_FACE);
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#if defined(GRAPHICS_API_OPENGL_33)
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);     // Flag not supported on OpenGL ES 2.0
+#endif
+    
 
     // Setup framebuffer
     unsigned int fbo, rbo;
@@ -2534,7 +2538,9 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+#if defined(GRAPHICS_API_OPENGL_33)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  // Flag not supported on OpenGL ES 2.0
+#endif
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -2582,11 +2588,12 @@ Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
 }
 
 // Generate irradiance texture using cubemap data
+// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
 Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D irradiance = { 0 };
     
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
     
@@ -2653,11 +2660,12 @@ Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size)
 }
 
 // Generate prefilter texture using cubemap data
+// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
 Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D prefilter = { 0 };
     
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: SetShaderDefaultLocations() already setups locations for projection and view Matrix in shader
     // Other locations should be setup externally in shader before calling the function
     // TODO: Locations should be taken out of this function... too shader dependant...
@@ -2743,10 +2751,11 @@ Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size)
 }
 
 // Generate BRDF texture using cubemap data
+// TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
 Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size)
 {
     Texture2D brdf = { 0 };
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_33) // || defined(GRAPHICS_API_OPENGL_ES2)
     // Generate BRDF convolution texture
     glGenTextures(1, &brdf.id);
     glBindTexture(GL_TEXTURE_2D, brdf.id);
