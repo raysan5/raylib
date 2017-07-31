@@ -252,7 +252,7 @@ PHYSACDEF void ClosePhysics(void);                                              
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-#elif defined(__linux__) || defined(PLATFORM_WEB)
+#elif defined(__linux__) || defined(__APPLE__) || defined(PLATFORM_WEB)
     #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
     //#define _DEFAULT_SOURCE         // Enables BSD function definitions and C99 POSIX compliance
     #include <sys/time.h>           // Required for: timespec
@@ -282,7 +282,7 @@ static pthread_t physicsThreadId;                           // Physics thread id
 static unsigned int usedMemory = 0;                         // Total allocated dynamic memory
 static bool physicsThreadEnabled = false;                   // Physics thread enabled state
 static double currentTime = 0;                              // Current time in milliseconds
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(__linux__) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(__linux__) || defined(__APPLE__) || defined(PLATFORM_WEB)
 static double baseTime = 0;                                 // Android and RPI platforms base time
 #endif
 static double startTime = 0;                                // Start time in milliseconds
@@ -1907,7 +1907,7 @@ static double GetCurrentTime(void)
         time = (double)((double)currentTime/clockFrequency)*1000;
     #endif
 
-    #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(__linux__) || defined(PLATFORM_WEB)
+    #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(__linux__) || defined(__APPLE__) || defined(PLATFORM_WEB)
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
         uint64_t temp = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
