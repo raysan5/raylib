@@ -87,12 +87,12 @@
     #if defined(__APPLE__)
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
     #else
-    #define GLAD_IMPLEMENTATION
-    #if defined(RLGL_STANDALONE)
-        #include "glad.h"           // GLAD extensions loading library, includes OpenGL headers
-    #else
-        #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
-    #endif
+        #define GLAD_IMPLEMENTATION
+        #if defined(RLGL_STANDALONE)
+            #include "glad.h"           // GLAD extensions loading library, includes OpenGL headers
+        #else
+            #include "external/glad.h"  // GLAD extensions loading library, includes OpenGL headers
+        #endif
     #endif
 #endif
 
@@ -1273,7 +1273,11 @@ int rlGetVersion(void)
 #if defined(GRAPHICS_API_OPENGL_11)
     return OPENGL_11;
 #elif defined(GRAPHICS_API_OPENGL_21)
-    return OPENGL_21;
+    #if defined(__APPLE__)
+        return OPENGL_33;   // NOTE: Force OpenGL 3.3 on OSX
+    #else
+        return OPENGL_21;
+    #endif
 #elif defined(GRAPHICS_API_OPENGL_33)
     return OPENGL_33;
 #elif defined(GRAPHICS_API_OPENGL_ES2)
