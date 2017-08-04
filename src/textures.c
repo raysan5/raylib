@@ -1800,9 +1800,9 @@ void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle destRec, V
         rlEnableTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef(-origin.x, -origin.y, 0);
-            rlRotatef(rotation, 0, 0, 1);
             rlTranslatef((float)destRec.x, (float)destRec.y, 0);
+            rlRotatef(rotation, 0, 0, 1);
+            rlTranslatef(-origin.x, -origin.y, 0);
 
             rlBegin(RL_QUADS);
                 rlColor4ub(tint.r, tint.g, tint.b, tint.a);

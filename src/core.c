@@ -912,8 +912,6 @@ void End3dMode(void)
     rlMatrixMode(RL_MODELVIEW);         // Get back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
 
-    //rlTranslatef(0.375, 0.375, 0);      // HACK to ensure pixel-perfect drawing on OpenGL (after exiting 3D mode)
-
     rlDisableDepthTest();               // Disable DEPTH_TEST for 2D
 }
 

@@ -446,7 +446,8 @@ void rlTranslatef(float x, float y, float z)
 {
     Matrix matTranslation = MatrixTranslate(x, y, z);
 
-    *currentMatrix = MatrixMultiply(*currentMatrix, matTranslation);
+    // NOTE: We transpose matrix with multiplication order
+    *currentMatrix = MatrixMultiply(matTranslation, *currentMatrix);
 }
 
 // Multiply the current matrix by a rotation matrix
@@ -458,7 +459,8 @@ void rlRotatef(float angleDeg, float x, float y, float z)
     Vector3Normalize(&axis);
     matRotation = MatrixRotate(axis, angleDeg*DEG2RAD);
 
-    *currentMatrix = MatrixMultiply(*currentMatrix, matRotation);
+    // NOTE: We transpose matrix with multiplication order
+    *currentMatrix = MatrixMultiply(matRotation, *currentMatrix);
 }
 
 // Multiply the current matrix by a scaling matrix
@@ -466,7 +468,8 @@ void rlScalef(float x, float y, float z)
 {
     Matrix matScale = MatrixScale(x, y, z);
 
-    *currentMatrix = MatrixMultiply(*currentMatrix, matScale);
+    // NOTE: We transpose matrix with multiplication order
+    *currentMatrix = MatrixMultiply(matScale, *currentMatrix);
 }
 
 // Multiply the current matrix by another matrix
