@@ -1,4 +1,4 @@
-/* stb_image_resize - v0.94 - public domain image resizing
+/* stb_image_resize - v0.95 - public domain image resizing
    by Jorge L Rodriguez (@VinoBS) - 2014
    http://github.com/nothings/stb
 
@@ -156,8 +156,10 @@
       Jorge L Rodriguez: Implementation
       Sean Barrett: API design, optimizations
       Aras Pranckevicius: bugfix
-         
+      Nathan Reed: warning fixes
+
    REVISIONS
+      0.95 (2017-07-23) fixed warnings
       0.94 (2017-03-18) fixed warnings
       0.93 (2017-03-03) fixed bug with certain combinations of heights
       0.92 (2017-01-02) fix integer overflow on large (>2GB) images
@@ -393,8 +395,9 @@ STBIRDEF int stbir_resize_region(  const void *input_pixels , int input_w , int 
 
 #ifndef STBIR_MALLOC
 #include <stdlib.h>
-#define STBIR_MALLOC(size,c) malloc(size)
-#define STBIR_FREE(ptr,c)    free(ptr)
+// use comma operator to evaluate c, to avoid "unused parameter" warnings
+#define STBIR_MALLOC(size,c) ((void)(c), malloc(size))
+#define STBIR_FREE(ptr,c)    ((void)(c), free(ptr))
 #endif
 
 #ifndef _MSC_VER
@@ -983,7 +986,7 @@ static int stbir__edge_wrap_slow(stbir_edge edge, int n, int max)
 
             return (m);
         }
-        return n;  // NOTREACHED
+        // NOTREACHED
 
     default:
         STBIR_ASSERT(!"Unimplemented edge type");
