@@ -407,7 +407,7 @@ RenderTexture2D LoadRenderTexture(int width, int height)
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
 {
-    free(image.data);
+    if (image.data != NULL) free(image.data);
 
     // NOTE: It becomes anoying every time a texture is loaded
     //TraceLog(LOG_INFO, "Unloaded image data");
@@ -1759,7 +1759,7 @@ void SetTextureWrap(Texture2D texture, int wrapMode)
 // Draw a Texture2D
 void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
 {
-    DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY }, 0, 1.0f, tint);
+    DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY }, 0.0f, 1.0f, tint);
 }
 
 // Draw a Texture2D with position defined as Vector2
