@@ -1,6 +1,6 @@
-﻿/**********************************************************************************************
+/**********************************************************************************************
 *
-*   raylib v1.7.0 
+*   raylib v1.8.0 
 *
 *   A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *
@@ -291,14 +291,17 @@
 #define MAGENTA    CLITERAL{ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL{ 245, 245, 245, 255 }   // My own White (raylib logo)
 
+// Shader and material limits
+#define MAX_SHADER_LOCATIONS        32      // Maximum number of predefined locations stored in shader struct
+#define MAX_MATERIAL_MAPS           12      // Maximum number of texture maps stored in shader struct
+
 //----------------------------------------------------------------------------------
 // Structures Definition
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #if !defined(_STDBOOL_H)
+    #if !defined(_STDBOOL_H) || !defined(__STDBOOL_H)   // CLang uses second form
         typedef enum { false, true } bool;
-        #define _STDBOOL_H
     #endif
 #endif
 
@@ -401,63 +404,46 @@ typedef struct Camera2D {
 
 // Bounding box type
 typedef struct BoundingBox {
-    Vector3 min;            // minimum vertex box-corner
-    Vector3 max;            // maximum vertex box-corner
+    Vector3 min;            // Minimum vertex box-corner
+    Vector3 max;            // Maximum vertex box-corner
 } BoundingBox;
 
 // Vertex data definning a mesh
+// NOTE: Data stored in CPU memory (and GPU)
 typedef struct Mesh {
-    int vertexCount;        // number of vertices stored in arrays
-    int triangleCount;      // number of triangles stored (indexed or not)
-    float *vertices;        // vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-    float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;        // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
-    unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-    unsigned short *indices;// vertex indices (in case vertex data comes indexed)
+    int vertexCount;        // Number of vertices stored in arrays
+    int triangleCount;      // Number of triangles stored (indexed or not)
+
+    float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
+    float *normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+    float *tangents;        // Vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+    unsigned char *colors;  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+    unsigned short *indices;// Vertex indices (in case vertex data comes indexed)
 
     unsigned int vaoId;     // OpenGL Vertex Array Object id
     unsigned int vboId[7];  // OpenGL Vertex Buffer Objects id (7 types of vertex data)
 } Mesh;
 
-// Shader type (generic shader)
+// Shader type (generic)
 typedef struct Shader {
-    unsigned int id;        // Shader program id
-
-    // Vertex attributes locations (default locations)
-    int vertexLoc;          // Vertex attribute location point    (default-location = 0)
-    int texcoordLoc;        // Texcoord attribute location point  (default-location = 1)
-    int texcoord2Loc;       // Texcoord2 attribute location point (default-location = 5)
-    int normalLoc;          // Normal attribute location point    (default-location = 2)
-    int tangentLoc;         // Tangent attribute location point   (default-location = 4)
-    int colorLoc;           // Color attibute location point      (default-location = 3)
-
-    // Uniform locations
-    int mvpLoc;             // ModelView-Projection matrix uniform location point (vertex shader)
-    int colDiffuseLoc;      // Diffuse color uniform location point (fragment shader)
-    int colAmbientLoc;      // Ambient color uniform location point (fragment shader)
-    int colSpecularLoc;     // Specular color uniform location point (fragment shader)
-
-    // Texture map locations (generic for any kind of map)
-    int mapTexture0Loc;     // Map texture uniform location point (default-texture-unit = 0)
-    int mapTexture1Loc;     // Map texture uniform location point (default-texture-unit = 1)
-    int mapTexture2Loc;     // Map texture uniform location point (default-texture-unit = 2)
+    unsigned int id;                // Shader program id
+    int locs[MAX_SHADER_LOCATIONS]; // Shader locations array
 } Shader;
 
-// Material type
+// Material texture map
+typedef struct MaterialMap {
+    Texture2D texture;      // Material map texture
+    Color color;            // Material map color
+    float value;            // Material map value
+} MaterialMap;
+
+// Material type (generic)
 typedef struct Material {
-    Shader shader;          // Standard shader (supports 3 map textures)
-
-    Texture2D texDiffuse;   // Diffuse texture  (binded to shader mapTexture0Loc)
-    Texture2D texNormal;    // Normal texture   (binded to shader mapTexture1Loc)
-    Texture2D texSpecular;  // Specular texture (binded to shader mapTexture2Loc)
-
-    Color colDiffuse;       // Diffuse color
-    Color colAmbient;       // Ambient color
-    Color colSpecular;      // Specular color
-
-    float glossiness;       // Glossiness level (Ranges from 0 to 1000)
+    Shader shader;          // Material shader
+    MaterialMap maps[MAX_MATERIAL_MAPS]; // Material maps
+    float *params;          // Material generic parameters (if required)
 } Material;
 
 // Model type
@@ -534,12 +520,62 @@ typedef struct RRESData *RRES;
 //----------------------------------------------------------------------------------
 // Trace log type
 typedef enum { 
-    INFO = 0,
-    WARNING, 
-    ERROR, 
-    DEBUG, 
-    OTHER 
+    LOG_INFO = 0,
+    LOG_WARNING, 
+    LOG_ERROR, 
+    LOG_DEBUG, 
+    LOG_OTHER 
 } LogType;
+
+// Shader location point type
+typedef enum {
+    LOC_VERTEX_POSITION = 0,
+    LOC_VERTEX_TEXCOORD01,
+    LOC_VERTEX_TEXCOORD02,
+    LOC_VERTEX_NORMAL,
+    LOC_VERTEX_TANGENT,
+    LOC_VERTEX_COLOR,
+    LOC_MATRIX_MVP,
+    LOC_MATRIX_MODEL,
+    LOC_MATRIX_VIEW,
+    LOC_MATRIX_PROJECTION,
+    LOC_VECTOR_VIEW,
+    LOC_COLOR_DIFFUSE,
+    LOC_COLOR_SPECULAR,
+    LOC_COLOR_AMBIENT,
+    LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
+    LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
+    LOC_MAP_NORMAL,
+    LOC_MAP_ROUGHNESS,
+    LOC_MAP_OCCUSION,
+    LOC_MAP_EMISSION,
+    LOC_MAP_HEIGHT,
+    LOC_MAP_CUBEMAP,
+    LOC_MAP_IRRADIANCE,
+    LOC_MAP_PREFILTER,
+    LOC_MAP_BRDF
+} ShaderLocationIndex;
+
+#define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
+#define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
+
+// Material map type
+typedef enum {
+    MAP_ALBEDO    = 0,       // MAP_DIFFUSE
+    MAP_METALNESS = 1,       // MAP_SPECULAR
+    MAP_NORMAL    = 2,
+    MAP_ROUGHNESS = 3,
+    MAP_OCCLUSION,
+    MAP_EMISSION,
+    MAP_HEIGHT,
+    MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+    MAP_BRDF
+} TexmapIndex;
+
+#define MAP_DIFFUSE      MAP_ALBEDO
+#define MAP_SPECULAR     MAP_METALNESS
 
 // Texture formats
 // NOTE: Support depends on OpenGL version and platform
@@ -706,16 +742,20 @@ RLAPI int GetHexValue(Color color);                               // Returns hex
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
 RLAPI float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
-RLAPI float *VectorToFloat(Vector3 vec);                          // Converts Vector3 to float array
-RLAPI float *MatrixToFloat(Matrix mat);                           // Converts Matrix to float array
+
+// Math useful functions (available from raymath.h)
+RLAPI float *VectorToFloat(Vector3 vec);                          // Returns Vector3 as float array
+RLAPI float *MatrixToFloat(Matrix mat);                           // Returns Matrix as float array
+RLAPI Vector3 Vector3Zero(void);                                  // Vector with components value 0.0f
+RLAPI Vector3 Vector3One(void);                                   // Vector with components value 1.0f
+RLAPI Matrix MatrixIdentity(void);                                // Returns identity matrix
 
 // Misc. functions
 RLAPI void ShowLogo(void);                                        // Activate raylib logo at startup (can be done with flags)
 RLAPI void SetConfigFlags(char flags);                            // Setup window configuration flags (view FLAGS)
-RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (INFO, WARNING, ERROR, DEBUG)
+RLAPI void TraceLog(int logType, const char *text, ...);          // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (saved a .png)
 RLAPI int GetRandomValue(int min, int max);                       // Returns a random value between min and max (both included)
-
 
 // Files management functions
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
@@ -836,7 +876,7 @@ RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Ve
 // Texture Loading and Drawing Functions (Module: textures)
 //------------------------------------------------------------------------------------
 
-// Image/Texture2D data loading/unloading functions
+// Image/Texture2D data loading/unloading/saving functions
 RLAPI Image LoadImage(const char *fileName);                                                             // Load image from file into CPU memory (RAM)
 RLAPI Image LoadImageEx(Color *pixels, int width, int height);                                           // Load image from Color array data (RGBA - 32bit)
 RLAPI Image LoadImagePro(void *data, int width, int height, int format);                                 // Load image from raw data with parameters
@@ -850,6 +890,7 @@ RLAPI void UnloadRenderTexture(RenderTexture2D target);                         
 RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data
+RLAPI void SaveImageAs(const char *fileName, Image image);                                               // Save image to a PNG file
 
 // Image manipulation functions
 RLAPI void ImageToPOT(Image *image, Color fillColor);                                                    // Convert image to POT (power-of-two)
@@ -873,6 +914,15 @@ RLAPI void ImageColorInvert(Image *image);                                      
 RLAPI void ImageColorGrayscale(Image *image);                                                            // Modify image color: grayscale
 RLAPI void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
+
+// Image generation functions
+RLAPI Image GenImageGradientV(int width, int height, Color top, Color bottom);                           // Generate image: vertical gradient
+RLAPI Image GenImageGradientH(int width, int height, Color left, Color right);                           // Generate image: horizontal gradient
+RLAPI Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer);      // Generate image: radial gradient
+RLAPI Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2);    // Generate image: checked
+RLAPI Image GenImageWhiteNoise(int width, int height, float factor);                                     // Generate image: white noise
+RLAPI Image GenImagePerlinNoise(int width, int height, float scale);                                     // Generate image: perlin noise
+RLAPI Image GenImageCellular(int width, int height, int tileSize);                                       // Generate image: cellular algorithm. Bigger tileSize means bigger cells
 
 // Texture2D configuration functions
 RLAPI void GenTextureMipmaps(Texture2D *texture);                                                        // Generate GPU mipmaps for a texture
@@ -902,6 +952,7 @@ RLAPI void DrawFPS(int posX, int posY);                                         
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
 RLAPI void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
                 float fontSize, int spacing, Color tint);
+RLAPI void DrawRectangleT(int posX, int posY, int width, int height, Color color);                       // Draw rectangle using text character
 
 // Text misc. functions
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
@@ -936,18 +987,26 @@ RLAPI void DrawGizmo(Vector3 position);                                         
 //------------------------------------------------------------------------------------
 
 // Model loading/unloading functions
-RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
-RLAPI Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData);         // Load mesh from vertex data
-RLAPI Model LoadModel(const char *fileName);                                                            // Load model from file
-RLAPI Model LoadModelFromMesh(Mesh data, bool dynamic);                                                 // Load model from mesh data
-RLAPI Model LoadHeightmap(Image heightmap, Vector3 size);                                               // Load heightmap model from image data
-RLAPI Model LoadCubicmap(Image cubicmap);                                                               // Load cubes-based map model from image data
-RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+RLAPI Model LoadModel(const char *fileName);                                                            // Load model from files (mesh and material)
+RLAPI Model LoadModelFromMesh(Mesh mesh);                                                               // Load model from generated mesh
 RLAPI void UnloadModel(Model model);                                                                    // Unload model from memory (RAM and/or VRAM)
+
+// Mesh loading/unloading functions
+RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
+RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
+
+//RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                               // Generate plane mesh (with desired subdivisions)
+RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
+//RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                        // Generate sphere mesh (standard sphere)
+//RLAPI Mesh GenMeshCylinder(float radiusTop, float radiusBottom, float height, int slices);            // Generate cylinder mesh
+//RLAPI Mesh GenMeshTorus(float radius1, float radius2, int radSeg, int sides);                         // Generate torus mesh
+//RLAPI Mesh GenMeshTube(float radius1, float radius2, float height, int sides);                        // Generate tube mesh
+RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
+RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
 
 // Material loading/unloading functions
 RLAPI Material LoadMaterial(const char *fileName);                                                      // Load material from file
-RLAPI Material LoadDefaultMaterial(void);                                                               // Load default material (uses default models shader)
+RLAPI Material LoadMaterialDefault(void);                                                               // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
 RLAPI void UnloadMaterial(Material material);                                                           // Unload material from GPU memory (VRAM)
 
 // Model drawing functions
@@ -985,8 +1044,8 @@ RLAPI char *LoadText(const char *fileName);                               // Loa
 RLAPI Shader LoadShader(char *vsFileName, char *fsFileName);              // Load shader from files and bind default locations
 RLAPI void UnloadShader(Shader shader);                                   // Unload shader from GPU memory (VRAM)
 
-RLAPI Shader GetDefaultShader(void);                                      // Get default shader
-RLAPI Texture2D GetDefaultTexture(void);                                  // Get default texture
+RLAPI Shader GetShaderDefault(void);                                      // Get default shader
+RLAPI Texture2D GetTextureDefault(void);                                  // Get default texture
 
 // Shader configuration functions
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
@@ -995,6 +1054,13 @@ RLAPI void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+
+// Texture maps generation (PBR)
+// NOTE: Required shaders should be provided
+RLAPI Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
+RLAPI Texture2D GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
+RLAPI Texture2D GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
+RLAPI Texture2D GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
 
 // Shading begin/end functions
 RLAPI void BeginShaderMode(Shader shader);                                // Begin custom shader drawing

@@ -145,6 +145,14 @@ endif
 # default gcc compiler
 CC = gcc
 
+
+# For OS X
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),OSX)
+		CC = clang
+	endif
+endif
+
 # Android toolchain compiler
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM)
@@ -198,7 +206,7 @@ endif
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99
-CFLAGS = -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
@@ -215,7 +223,6 @@ endif
 ifeq ($(SHARED_RAYLIB),YES)
     CFLAGS += -fPIC
     SHAREDFLAG = BUILDING_DLL
-    SHAREDLIBS = -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lgdi32
 else
     SHAREDFLAG = BUILDING_STATIC
 endif
@@ -317,15 +324,21 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "libraylib.bc generated (web version)!"
 else
     ifeq ($(SHARED_RAYLIB),YES)
+        # NOTE: If using OpenAL Soft as static library, all its dependencies must be also linked in the shared library
+        ifeq ($(PLATFORM_OS),WINDOWS)
+			$(CC) -shared -o $(OUTPUT_PATH)/raylib.dll $(OBJS) $(SHAREDLIBS) -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lgdi32 -Wl,--out-implib,$(OUTPUT_PATH)/libraylibdll.a
+			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
+        endif
         ifeq ($(PLATFORM_OS),LINUX)
             # compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
-			@echo "raylib shared library (libraylib.so) generated!"
+			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS) -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+			@echo "raylib shared library generated (libraylib.so)!"
         endif
-        ifeq ($(PLATFORM_OS),WINDOWS)
-			$(CC) -shared -o $(OUTPUT_PATH)/raylib.dll $(OBJS) $(SHAREDLIBS) -Wl,--out-implib,$(OUTPUT_PATH)/libraylibdll.a
-			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
+        ifeq ($(PLATFORM_OS),OSX)
+			$(CC) -dynamiclib -o $(OUTPUT_PATH)/libraylib.dylib $(OBJS) -L/usr/local/Cellar/glfw/3.2.1/lib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+			install_name_tool -id "libraylib.dylib" $(OUTPUT_PATH)/libraylib.dylib
+			@echo "raylib shared library generated (libraylib.dylib)!"
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)

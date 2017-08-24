@@ -48,7 +48,6 @@ int main()
         
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
-            // NOTE: This function is NOT WORKING properly!
             ray = GetMouseRay(GetMousePosition(), camera);
             
             // Check collision between ray and box

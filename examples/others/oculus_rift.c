@@ -40,10 +40,6 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-
-// TraceLog message types
-typedef enum { INFO = 0, ERROR, WARNING, DEBUG, OTHER } TraceLogType;
-
 #if defined(RLGL_OCULUS_SUPPORT)
 // Oculus buffer type
 typedef struct OculusBuffer {
@@ -105,8 +101,6 @@ static void BlitOculusMirror(ovrSession session, OculusMirror mirror);          
 static OculusLayer InitOculusLayer(ovrSession session);                             // Init Oculus layer (similar to photoshop)
 static Matrix FromOvrMatrix(ovrMatrix4f ovrM);  // Convert from Oculus ovrMatrix4f struct to raymath Matrix struct
 #endif
-
-static void TraceLog(int msgType, const char *text, ...);
 
 int main()
 {
@@ -229,19 +223,19 @@ static bool InitOculusDevice(void)
         result = ovr_Create(&session, &luid);
         if (OVR_FAILURE(result))
         {
-            TraceLog(WARNING, "OVR: Could not create Oculus session");
+            TraceLog(LOG_WARNING, "OVR: Could not create Oculus session");
             ovr_Shutdown();
         }
         else
         {
             hmdDesc = ovr_GetHmdDesc(session);
 
-            TraceLog(INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
-            TraceLog(INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
-            TraceLog(INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
-            TraceLog(INFO, "OVR: Product Type: %i", hmdDesc.Type);
-            //TraceLog(INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
-            TraceLog(INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
+            TraceLog(LOG_INFO, "OVR: Product Name: %s", hmdDesc.ProductName);
+            TraceLog(LOG_INFO, "OVR: Manufacturer: %s", hmdDesc.Manufacturer);
+            TraceLog(LOG_INFO, "OVR: Product ID: %i", hmdDesc.ProductId);
+            TraceLog(LOG_INFO, "OVR: Product Type: %i", hmdDesc.Type);
+            //TraceLog(LOG_INFO, "OVR: Serial Number: %s", hmdDesc.SerialNumber);
+            TraceLog(LOG_INFO, "OVR: Resolution: %ix%i", hmdDesc.Resolution.w, hmdDesc.Resolution.h);
 
             // NOTE: Oculus mirror is set to defined screenWidth and screenHeight...
             // ...ideally, it should be (hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2)
@@ -291,7 +285,7 @@ static void UpdateOculusTracking(Camera *camera)
     ovrSessionStatus sessionStatus;
     ovr_GetSessionStatus(session, &sessionStatus);
 
-    if (sessionStatus.ShouldQuit) TraceLog(WARNING, "OVR: Session should quit...");
+    if (sessionStatus.ShouldQuit) TraceLog(LOG_WARNING, "OVR: Session should quit...");
     if (sessionStatus.ShouldRecenter) ovr_RecenterTrackingOrigin(session);
     //if (sessionStatus.HmdPresent)  // HMD is present.
     //if (sessionStatus.DisplayLost) // HMD was unplugged or the display driver was manually disabled or encountered a TDR.
@@ -349,12 +343,12 @@ static OculusBuffer LoadOculusBuffer(ovrSession session, int width, int height)
 
     ovrResult result = ovr_CreateTextureSwapChainGL(session, &desc, &buffer.textureChain);
 
-    if (!OVR_SUCCESS(result)) TraceLog(WARNING, "OVR: Failed to create swap textures buffer");
+    if (!OVR_SUCCESS(result)) TraceLog(LOG_WARNING, "OVR: Failed to create swap textures buffer");
 
     int textureCount = 0;
     ovr_GetTextureSwapChainLength(session, buffer.textureChain, &textureCount);
 
-    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(WARNING, "OVR: Unable to count swap chain textures");
+    if (!OVR_SUCCESS(result) || !textureCount) TraceLog(LOG_WARNING, "OVR: Unable to count swap chain textures");
 
     for (int i = 0; i < textureCount; ++i)
     {
@@ -420,7 +414,7 @@ static OculusMirror LoadOculusMirror(ovrSession session, int width, int height)
     mirrorDesc.Width = mirror.width;
     mirrorDesc.Height = mirror.height;
 
-    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(WARNING, "Could not create mirror texture");
+    if (!OVR_SUCCESS(ovr_CreateMirrorTextureGL(session, &mirrorDesc, &mirror.texture))) TraceLog(LOG_WARNING, "Could not create mirror texture");
 
     glGenFramebuffers(1, &mirror.fboId);
 
@@ -511,28 +505,3 @@ static Matrix FromOvrMatrix(ovrMatrix4f ovrmat)
     return rmat;
 }
 #endif
-
-// Output a trace log message
-// NOTE: Expected msgType: (0)Info, (1)Error, (2)Warning
-static void TraceLog(int msgType, const char *text, ...)
-{
-    va_list args;
-    va_start(args, text);
-
-    switch (msgType)
-    {
-        case INFO: fprintf(stdout, "INFO: "); break;
-        case ERROR: fprintf(stdout, "ERROR: "); break;
-        case WARNING: fprintf(stdout, "WARNING: "); break;
-        case DEBUG: fprintf(stdout, "DEBUG: "); break;
-        default: break;
-    }
-
-    vfprintf(stdout, text, args);
-    fprintf(stdout, "\n");
-
-    va_end(args);
-
-    if (msgType == ERROR) exit(1);
-}
-

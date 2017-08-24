@@ -37,8 +37,8 @@ int main()
     Shader shader = LoadShader("resources/shaders/glsl330/base.vs", 
                                "resources/shaders/glsl330/grayscale.fs");   // Load model shader
 
-    dwarf.material.shader = shader;             // Set shader effect to 3d model
-    dwarf.material.texDiffuse = texture;        // Bind texture to model
+    dwarf.material.shader = shader;                     // Set shader effect to 3d model
+    dwarf.material.maps[MAP_DIFFUSE].texture = texture; // Bind texture to model
     
     Vector3 position = { 0.0f, 0.0f, 0.0f };    // Set model position
     

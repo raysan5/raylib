@@ -62,10 +62,10 @@ int main(void)
     
     if (!glfwInit())
     {
-        TraceLog(WARNING, "GLFW3: Can not initialize GLFW");
+        TraceLog(LOG_WARNING, "GLFW3: Can not initialize GLFW");
         return 1;
     }
-    else TraceLog(INFO, "GLFW3: GLFW initialized successfully");
+    else TraceLog(LOG_INFO, "GLFW3: GLFW initialized successfully");
     
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
@@ -81,7 +81,7 @@ int main(void)
         glfwTerminate();
         return 2;
     }
-    else TraceLog(INFO, "GLFW3: Window created successfully");
+    else TraceLog(LOG_INFO, "GLFW3: Window created successfully");
     
     glfwSetWindowPos(window, 200, 200);
     
@@ -91,7 +91,7 @@ int main(void)
     glfwSwapInterval(1);
     
     // Load OpenGL 3.3 supported extensions
-    rlglLoadExtensions(glfwGetProcAddress);
+    rlLoadExtensions(glfwGetProcAddress);
     //--------------------------------------------------------
     
     // Initialize OpenGL context (states and resources)
@@ -128,14 +128,15 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         rlClearScreenBuffers();             // Clear current framebuffer
-        
+
+            // Draw '3D' elements in the scene
+            //-----------------------------------------------
             // Calculate projection matrix (from perspective) and view matrix from camera look at
-            Matrix matProj = MatrixPerspective(camera.fovy, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
-            MatrixTranspose(&matProj);
+            Matrix matProj = MatrixPerspective(camera.fovy*DEG2RAD, (double)screenWidth/(double)screenHeight, 0.01, 1000.0);
             Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
-            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
+            SetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
+            SetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
 
             DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
             DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, RAYWHITE);
@@ -143,16 +144,17 @@ int main(void)
 
             // NOTE: Internal buffers drawing (3D data)
             rlglDraw();
+            //-----------------------------------------------
             
             // Draw '2D' elements in the scene (GUI)
+            //-----------------------------------------------
 #define RLGL_CREATE_MATRIX_MANUALLY
 #if defined(RLGL_CREATE_MATRIX_MANUALLY)
             matProj = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
-            MatrixTranspose(&matProj);
             matView = MatrixIdentity();
             
-            SetMatrixModelview(matView);    // Replace internal modelview matrix by a custom one
-            SetMatrixProjection(matProj);   // Replace internal projection matrix by a custom one
+            SetMatrixModelview(matView);    // Set internal modelview matrix (default shader)
+            SetMatrixProjection(matProj);   // Set internal projection matrix (default shader)
 
 #else   // Let rlgl generate and multiply matrix internally
 
@@ -166,6 +168,7 @@ int main(void)
 
             // NOTE: Internal buffers drawing (2D data)
             rlglDraw();
+            //-----------------------------------------------
             
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -190,7 +193,7 @@ int main(void)
 // GLFW3: Error callback
 static void ErrorCallback(int error, const char* description)
 {
-    TraceLog(ERROR, description);
+    TraceLog(LOG_ERROR, description);
 }
 
 // GLFW3: Keyboard callback

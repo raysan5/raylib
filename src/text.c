@@ -139,10 +139,10 @@ extern void LoadDefaultFont(void)
         0x04000404, 0x4100203c, 0x00000000, 0x00000800, 0xf7df7df0, 0x514bef85, 0xbefbefbe, 0x04513bef, 0x14414500, 0x494a2885, 0xa28a28aa, 0x04510820,
         0xf44145f0, 0x474a289d, 0xa28a28aa, 0x04510be0, 0x14414510, 0x494a2884, 0xa28a28aa, 0x02910a00, 0xf7df7df0, 0xd14a2f85, 0xbefbe8aa, 0x011f7be0,
         0x00000000, 0x00400804, 0x20080000, 0x00000000, 0x00000000, 0x00600f84, 0x20080000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0xac000000, 0x00000f01, 0x00000000, 0x00000000, 0x24000000, 0x00000901, 0x00000000, 0x06000000, 0x24000000, 0x00000901, 0x00000000, 0x09108000,
-        0x24fa28a2, 0x00000901, 0x00000000, 0x013e0000, 0x2242252a, 0x00000952, 0x00000000, 0x038a8000, 0x2422222a, 0x00000929, 0x00000000, 0x010a8000,
-        0x2412252a, 0x00000901, 0x00000000, 0x010a8000, 0x24fbe8be, 0x00000901, 0x00000000, 0x0ebe8000, 0xac020000, 0x00000f01, 0x00000000, 0x00048000,
-        0x0003e000, 0x00000000, 0x00000000, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000038, 0x8443b80e, 0x00203a03,
+        0xac000000, 0x00000f01, 0x00000000, 0x00000000, 0x24000000, 0x00000f01, 0x00000000, 0x06000000, 0x24000000, 0x00000f01, 0x00000000, 0x09108000,
+        0x24fa28a2, 0x00000f01, 0x00000000, 0x013e0000, 0x2242252a, 0x00000f52, 0x00000000, 0x038a8000, 0x2422222a, 0x00000f29, 0x00000000, 0x010a8000,
+        0x2412252a, 0x00000f01, 0x00000000, 0x010a8000, 0x24fbe8be, 0x00000f01, 0x00000000, 0x0ebe8000, 0xac020000, 0x00000f01, 0x00000000, 0x00048000,
+        0x0003e000, 0x00000f00, 0x00000000, 0x00008000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000038, 0x8443b80e, 0x00203a03,
         0x02bea080, 0xf0000020, 0xc452208a, 0x04202b02, 0xf8029122, 0x07f0003b, 0xe44b388e, 0x02203a02, 0x081e8a1c, 0x0411e92a, 0xf4420be0, 0x01248202,
         0xe8140414, 0x05d104ba, 0xe7c3b880, 0x00893a0a, 0x283c0e1c, 0x04500902, 0xc4400080, 0x00448002, 0xe8208422, 0x04500002, 0x80400000, 0x05200002,
         0x083e8e00, 0x04100002, 0x804003e0, 0x07000042, 0xf8008400, 0x07f00003, 0x80400000, 0x04000022, 0x00000000, 0x00000000, 0x80400000, 0x04000002,
@@ -255,8 +255,8 @@ extern void LoadDefaultFont(void)
     }
 
     defaultFont.baseSize = defaultFont.chars[0].rec.height;
-
-    TraceLog(INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
+    
+    TraceLog(LOG_INFO, "[TEX ID %i] Default font loaded successfully", defaultFont.texture.id);
 }
 
 // Unload raylib default font
@@ -330,7 +330,7 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     if (spriteFont.texture.id == 0)
     {
-        TraceLog(WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
+        TraceLog(LOG_WARNING, "[%s] SpriteFont could not be loaded, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
     else SetTextureFilter(spriteFont.texture, FILTER_POINT);    // By default we set point filter (best performance)
@@ -364,7 +364,7 @@ SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, 
 
     if (spriteFont.texture.id == 0)
     {
-        TraceLog(WARNING, "[%s] SpriteFont could not be generated, using default font", fileName);
+        TraceLog(LOG_WARNING, "[%s] SpriteFont could not be generated, using default font", fileName);
         spriteFont = GetDefaultFont();
     }
 
@@ -380,7 +380,7 @@ void UnloadSpriteFont(SpriteFont spriteFont)
         UnloadTexture(spriteFont.texture);
         free(spriteFont.chars);
 
-        TraceLog(DEBUG, "Unloaded sprite font data");
+        TraceLog(LOG_DEBUG, "Unloaded sprite font data");
     }
 }
 
@@ -455,6 +455,14 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
             else textOffsetX += (int)(spriteFont.chars[index].advanceX*scaleFactor + spacing);
         }
     }
+}
+
+// Draw rectangle using text character (char: 127)
+// NOTE: Useful to avoid changing to default white texture
+void DrawRectangleT(int posX, int posY, int width, int height, Color color)
+{
+    DrawTexturePro(GetDefaultFont().texture, GetDefaultFont().chars[95].rec, 
+                   (Rectangle){ posX, posY, width, height }, (Vector2){ 0, 0 }, 0.0f, color);
 }
 
 // Formatting of text with variables to 'embed'
@@ -632,6 +640,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
         {
             if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
         }
+        
         if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
     }
 
@@ -677,7 +686,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
         xPosToRead = charSpacing;
     }
 
-    TraceLog(DEBUG, "SpriteFont data parsed correctly from image");
+    TraceLog(LOG_DEBUG, "SpriteFont data parsed correctly from image");
 
     // NOTE: We need to remove key color borders from image to avoid weird
     // artifacts on texture scaling when using FILTER_BILINEAR or FILTER_TRILINEAR
@@ -713,7 +722,7 @@ static SpriteFont LoadImageFont(Image image, Color key, int firstChar)
 
     spriteFont.baseSize = spriteFont.chars[0].rec.height;
 
-    TraceLog(INFO, "Image file loaded correctly as SpriteFont");
+    TraceLog(LOG_INFO, "Image file loaded correctly as SpriteFont");
 
     return spriteFont;
 }
@@ -743,7 +752,7 @@ static SpriteFont LoadBMFont(const char *fileName)
 
     if (fntFile == NULL)
     {
-        TraceLog(WARNING, "[%s] FNT file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] FNT file could not be opened", fileName);
         return font;
     }
 
@@ -756,20 +765,20 @@ static SpriteFont LoadBMFont(const char *fileName)
     searchPoint = strstr(buffer, "lineHeight");
     sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i", &fontSize, &base, &texWidth, &texHeight);
 
-    TraceLog(DEBUG, "[%s] Font size: %i", fileName, fontSize);
-    TraceLog(DEBUG, "[%s] Font texture scale: %ix%i", fileName, texWidth, texHeight);
+    TraceLog(LOG_DEBUG, "[%s] Font size: %i", fileName, fontSize);
+    TraceLog(LOG_DEBUG, "[%s] Font texture scale: %ix%i", fileName, texWidth, texHeight);
 
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "file");
     sscanf(searchPoint, "file=\"%128[^\"]\"", texFileName);
 
-    TraceLog(DEBUG, "[%s] Font texture filename: %s", fileName, texFileName);
+    TraceLog(LOG_DEBUG, "[%s] Font texture filename: %s", fileName, texFileName);
 
     fgets(buffer, MAX_BUFFER_SIZE, fntFile);
     searchPoint = strstr(buffer, "count");
     sscanf(searchPoint, "count=%i", &charsCount);
 
-    TraceLog(DEBUG, "[%s] Font num chars: %i", fileName, charsCount);
+    TraceLog(LOG_DEBUG, "[%s] Font num chars: %i", fileName, charsCount);
 
     // Compose correct path using route of .fnt file (fileName) and texFileName
     char *texPath = NULL;
@@ -785,7 +794,7 @@ static SpriteFont LoadBMFont(const char *fileName)
     strncat(texPath, fileName, strlen(fileName) - strlen(lastSlash) + 1);
     strncat(texPath, texFileName, strlen(texFileName));
 
-    TraceLog(DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
+    TraceLog(LOG_DEBUG, "[%s] Font texture loading path: %s", fileName, texPath);
 
     Image imFont = LoadImage(texPath);
 
@@ -832,7 +841,7 @@ static SpriteFont LoadBMFont(const char *fileName)
         UnloadSpriteFont(font);
         font = GetDefaultFont();
     }
-    else TraceLog(INFO, "[%s] SpriteFont loaded successfully", fileName);
+    else TraceLog(LOG_INFO, "[%s] SpriteFont loaded successfully", fileName);
 
     return font;
 }
@@ -853,7 +862,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
     float guessSize = ceilf((float)fontSize*3/4)*ceilf(sqrtf((float)charsCount));
     int textureSize = (int)powf(2, ceilf(logf((float)guessSize)/logf(2)));      // Calculate next POT
 
-    TraceLog(INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
+    TraceLog(LOG_INFO, "TTF spritefont loading: Predicted texture size: %ix%i", textureSize, textureSize);
 
     unsigned char *ttfBuffer = (unsigned char *)malloc(MAX_TTF_SIZE*1024*1024);
     unsigned char *dataBitmap = (unsigned char *)malloc(textureSize*textureSize*sizeof(unsigned char));   // One channel bitmap returned!
@@ -865,22 +874,22 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
 
     if (ttfFile == NULL)
     {
-        TraceLog(WARNING, "[%s] TTF file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] TTF file could not be opened", fileName);
         return font;
     }
 
     // NOTE: We try reading up to 16 MB of elements of 1 byte
     fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
 
-    if (fontChars[0] != 32) TraceLog(WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
+    if (fontChars[0] != 32) TraceLog(LOG_WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
     // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
     // TODO: Replace this function by a proper packing method and support random chars order,
     // we already receive a list (fontChars) with the ordered expected characters
     int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, fontChars[0], charsCount, charData);
 
-    //if (result > 0) TraceLog(INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
-    if (result < 0) TraceLog(WARNING, "TTF spritefont loading: Not all the characters fit in the font");
+    //if (result > 0) TraceLog(LOG_INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
+    if (result < 0) TraceLog(LOG_WARNING, "TTF spritefont loading: Not all the characters fit in the font");
 
     free(ttfBuffer);
 
