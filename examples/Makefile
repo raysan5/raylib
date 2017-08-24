@@ -103,7 +103,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS = -O2 -s -Wall -std=c99
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        CFLAGS = -O2 -s -Wall -std=c99 -D_DEFAULT_SOURCE
+        CFLAGS = -O2 -s -Wall -std=c99 -no-pie -D_DEFAULT_SOURCE
     endif
     ifeq ($(PLATFORM_OS),OSX)
         CFLAGS = -O2 -s -Wall -std=c99
