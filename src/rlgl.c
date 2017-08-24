@@ -3251,12 +3251,12 @@ static Shader LoadShaderDefault(void)
     "out vec2 fragTexCoord;             \n"
     "out vec4 fragColor;                \n"
 #endif
-    "uniform mat4 mvpMatrix;            \n"
+    "uniform mat4 mvp;                  \n"
     "void main()                        \n"
     "{                                  \n"
     "    fragTexCoord = vertexTexCoord; \n"
     "    fragColor = vertexColor;       \n"
-    "    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
+    "    gl_Position = mvp*vec4(vertexPosition, 1.0); \n"
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
@@ -3302,7 +3302,7 @@ static Shader LoadShaderDefault(void)
         shader.locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader.id, "vertexColor");
 
         // Get handles to GLSL uniform locations
-        shader.locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvpMatrix");
+        shader.locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvp");
         shader.locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
         shader.locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
     }
@@ -3332,7 +3332,7 @@ static void SetShaderDefaultLocations(Shader *shader)
     shader->locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader->id, DEFAULT_ATTRIB_COLOR_NAME);
 
     // Get handles to GLSL uniform locations (vertex shader)
-    shader->locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader->id, "mvpMatrix");
+    shader->locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader->id, "mvp");
     shader->locs[LOC_MATRIX_PROJECTION]  = glGetUniformLocation(shader->id, "projection");
     shader->locs[LOC_MATRIX_VIEW]  = glGetUniformLocation(shader->id, "view");
 

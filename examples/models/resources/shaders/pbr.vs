@@ -15,7 +15,7 @@ in vec3 vertexNormal;
 in vec3 vertexTangent;
 
 // Input uniform values
-uniform mat4 mvpMatrix;
+uniform mat4 mvp;
 uniform mat4 mMatrix;
 
 // Output vertex attributes (to fragment shader)
@@ -45,5 +45,5 @@ void main()
     fragBinormal = cross(fragNormal, fragTangent);
 
     // Calculate final vertex position
-    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0);
+    gl_Position = mvp*vec4(vertexPosition, 1.0);
 }
