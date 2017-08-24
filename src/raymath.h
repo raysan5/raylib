@@ -1218,19 +1218,19 @@ RMDEF Matrix QuaternionToMatrix(Quaternion q)
     float z2 = z + z;
     
     float length = QuaternionLength(q);
-    float lenghtSquared = length*length;
+    float lengthSquared = length*length;
 
-    float xx = x*x2/lenghtSquared;
-    float xy = x*y2/lenghtSquared;
-    float xz = x*z2/lenghtSquared;
+    float xx = x*x2/lengthSquared;
+    float xy = x*y2/lengthSquared;
+    float xz = x*z2/lengthSquared;
 
-    float yy = y*y2/lenghtSquared;
-    float yz = y*z2/lenghtSquared;
-    float zz = z*z2/lenghtSquared;
+    float yy = y*y2/lengthSquared;
+    float yz = y*z2/lengthSquared;
+    float zz = z*z2/lengthSquared;
 
-    float wx = w*x2/lenghtSquared;
-    float wy = w*y2/lenghtSquared;
-    float wz = w*z2/lenghtSquared;
+    float wx = w*x2/lengthSquared;
+    float wy = w*y2/lengthSquared;
+    float wz = w*z2/lengthSquared;
 
     result.m0 = 1.0f - (yy + zz);
     result.m1 = xy - wz;
