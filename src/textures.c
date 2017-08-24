@@ -53,6 +53,7 @@
 // Default configuration flags (supported features)
 //-------------------------------------------------
 #define SUPPORT_FILEFORMAT_PNG
+#define SUPPORT_FILEFORMAT_DDS
 #define SUPPORT_FILEFORMAT_HDR
 #define SUPPORT_IMAGE_MANIPULATION
 //-------------------------------------------------
@@ -351,7 +352,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         {
             image.width = width;
             image.height = height;
-            image.mipmaps = 0;
+            image.mipmaps = 1;
             image.format = format;
         }
 
@@ -1881,13 +1882,7 @@ static Image LoadDDS(const char *fileName)
         unsigned int reserved2;
     } DDSHeader;
 
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *ddsFile = fopen(fileName, "rb");
 
@@ -1921,7 +1916,9 @@ static Image LoadDDS(const char *fileName)
 
             image.width = ddsHeader.width;
             image.height = ddsHeader.height;
-            image.mipmaps = 1;  // Default value, could be changed (ddsHeader.mipmapCount)
+            
+            if (ddsHeader.mipmapCount == 0) image.mipmaps = 1;      // Parameter not used
+            else image.mipmaps = ddsHeader.mipmapCount;
 
             if (ddsHeader.ddspf.rgbBitCount == 16)     // 16bit mode, no compressed
             {
@@ -2011,8 +2008,6 @@ static Image LoadDDS(const char *fileName)
 
                 fread(image.data, size, 1, ddsFile);
 
-                image.mipmaps = ddsHeader.mipmapCount;
-
                 switch (ddsHeader.ddspf.fourCC)
                 {
                     case FOURCC_DXT1:
@@ -2067,13 +2062,7 @@ static Image LoadPKM(const char *fileName)
     // NOTE: The extended width and height are the widths rounded up to a multiple of 4.
     // NOTE: ETC is always 4bit per pixel (64 bit for each 4x4 block of pixels)
 
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *pkmFile = fopen(fileName, "rb");
 
@@ -2162,12 +2151,7 @@ static Image LoadKTX(const char *fileName)
 
     // NOTE: Before start of every mipmap data block, we have: unsigned int dataSize
 
-    Image image;
-
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *ktxFile = fopen(fileName, "rb");
 
@@ -2282,13 +2266,7 @@ static Image LoadPVR(const char *fileName)
     } PVRMetadata;
 #endif
 
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *pvrFile = fopen(fileName, "rb");
 
@@ -2406,13 +2384,7 @@ static Image LoadASTC(const char *fileName)
         unsigned char length[3];    // Image Z-size (1 for 2D images)
     } ASTCHeader;
 
-    Image image;
-
-    image.data = NULL;
-    image.width = 0;
-    image.height = 0;
-    image.mipmaps = 0;
-    image.format = 0;
+    Image image = { 0 };
 
     FILE *astcFile = fopen(fileName, "rb");
 
@@ -2437,12 +2409,11 @@ static Image LoadASTC(const char *fileName)
             image.width = 0x00000000 | ((int)astcHeader.width[2] << 16) | ((int)astcHeader.width[1] << 8) | ((int)astcHeader.width[0]);
             image.height = 0x00000000 | ((int)astcHeader.height[2] << 16) | ((int)astcHeader.height[1] << 8) | ((int)astcHeader.height[0]);
 
-            // NOTE: ASTC format only contains one mipmap level
-            image.mipmaps = 1;
-
             TraceLog(LOG_DEBUG, "ASTC image width: %i", image.width);
             TraceLog(LOG_DEBUG, "ASTC image height: %i", image.height);
             TraceLog(LOG_DEBUG, "ASTC image blocks: %ix%i", astcHeader.blockX, astcHeader.blockY);
+            
+            image.mipmaps = 1;      // NOTE: ASTC format only contains one mipmap level
 
             // NOTE: Each block is always stored in 128bit so we can calculate the bpp
             int bpp = 128/(astcHeader.blockX*astcHeader.blockY);
