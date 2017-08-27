@@ -332,7 +332,7 @@ else
         ifeq ($(PLATFORM_OS),LINUX)
             # compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS) -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lm -lpthread -ldl
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM_OS),OSX)
