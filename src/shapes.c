@@ -119,11 +119,11 @@ void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color)
     float d = sqrtf(dx*dx + dy*dy);
     float angle = asinf(dy/d);
     
-    rlEnableTexture(GetDefaultTexture().id);
+    rlEnableTexture(GetTextureDefault().id);
 
     rlPushMatrix();
         rlTranslatef((float)startPos.x, (float)startPos.y, 0);
-        rlRotatef(-RAD2DEG*angle, 0, 0, 1);
+        rlRotatef(RAD2DEG*angle, 0, 0, 1);
         rlTranslatef(0, -thick/2.0f, 0);
 
         rlBegin(RL_QUADS);
@@ -203,7 +203,7 @@ void DrawCircleV(Vector2 center, float radius, Color color)
     }
     else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
-        rlEnableTexture(GetDefaultTexture().id); // Default white texture
+        rlEnableTexture(GetTextureDefault().id); // Default white texture
 
         rlBegin(RL_QUADS);
             for (int i = 0; i < 360; i += 20)
@@ -253,7 +253,7 @@ void DrawRectangleRec(Rectangle rec, Color color)
 
 void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color)
 {
-    rlEnableTexture(GetDefaultTexture().id);
+    rlEnableTexture(GetTextureDefault().id);
 
     rlPushMatrix();
         rlTranslatef((float)rec.x, (float)rec.y, 0);
@@ -309,7 +309,7 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
     }
     else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
-        rlEnableTexture(GetDefaultTexture().id); // Default white texture
+        rlEnableTexture(GetTextureDefault().id); // Default white texture
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -376,7 +376,7 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     }
     else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
     {
-        rlEnableTexture(GetDefaultTexture().id); // Default white texture
+        rlEnableTexture(GetTextureDefault().id); // Default white texture
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);

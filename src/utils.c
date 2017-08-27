@@ -14,10 +14,10 @@
 *
 *   #define SUPPORT_TRACELOG
 *       Show TraceLog() output messages
-*       NOTE: By default DEBUG traces not shown
+*       NOTE: By default LOG_DEBUG traces not shown
 *
 *   #define SUPPORT_TRACELOG_DEBUG
-*       Show TraceLog() DEBUG messages
+*       Show TraceLog() LOG_DEBUG messages
 *
 *   DEPENDENCIES:
 *       stb_image_write - BMP/PNG writting functions
@@ -45,7 +45,7 @@
 **********************************************************************************************/
 
 #define SUPPORT_TRACELOG            // Output tracelog messages
-//#define SUPPORT_TRACELOG_DEBUG     // Avoid DEBUG messages tracing
+//#define SUPPORT_TRACELOG_DEBUG     // Avoid LOG_DEBUG messages tracing
 
 #include "utils.h"
 
@@ -89,7 +89,7 @@ static int android_close(void *cookie);
 // Module Functions Definition - Utilities
 //----------------------------------------------------------------------------------
 
-// Output trace log messages
+// Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 void TraceLog(int msgType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
@@ -102,10 +102,10 @@ void TraceLog(int msgType, const char *text, ...)
 
     switch(msgType)
     {
-        case INFO: strcpy(buffer, "INFO: "); break;
-        case ERROR: strcpy(buffer, "ERROR: "); break;
-        case WARNING: strcpy(buffer, "WARNING: "); break;
-        case DEBUG: strcpy(buffer, "DEBUG: "); break;
+        case LOG_INFO: strcpy(buffer, "INFO: "); break;
+        case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
+        case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
+        case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
         default: break;
     }
 
@@ -118,19 +118,19 @@ void TraceLog(int msgType, const char *text, ...)
 #if defined(PLATFORM_ANDROID)
     switch(msgType)
     {
-        case INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", buffer, args); break;
-        case ERROR: __android_log_vprint(ANDROID_LOG_ERROR, "raylib", buffer, args); break;
-        case WARNING: __android_log_vprint(ANDROID_LOG_WARN, "raylib", buffer, args); break;
-        case DEBUG: if (traceDebugMsgs) __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", buffer, args); break;
+        case LOG_INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", buffer, args); break;
+        case LOG_ERROR: __android_log_vprint(ANDROID_LOG_ERROR, "raylib", buffer, args); break;
+        case LOG_WARNING: __android_log_vprint(ANDROID_LOG_WARN, "raylib", buffer, args); break;
+        case LOG_DEBUG: if (traceDebugMsgs) __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", buffer, args); break;
         default: break;
     }
 #else
-    if ((msgType != DEBUG) || ((msgType == DEBUG) && (traceDebugMsgs))) vprintf(buffer, args);
+    if ((msgType != LOG_DEBUG) || ((msgType == LOG_DEBUG) && (traceDebugMsgs))) vprintf(buffer, args);
 #endif
 
     va_end(args);
 
-    if (msgType == ERROR) exit(1);  // If ERROR message, exit program
+    if (msgType == LOG_ERROR) exit(1);  // If LOG_ERROR message, exit program
     
 #endif  // SUPPORT_TRACELOG
 }
@@ -195,7 +195,7 @@ static int android_read(void *cookie, char *buf, int size)
 
 static int android_write(void *cookie, const char *buf, int size)
 {
-    TraceLog(ERROR, "Can't provide write access to the APK");
+    TraceLog(LOG_ERROR, "Can't provide write access to the APK");
 
     return EACCES;
 }

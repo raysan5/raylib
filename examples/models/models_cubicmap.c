@@ -25,11 +25,13 @@ int main()
 
     Image image = LoadImage("resources/cubicmap.png");      // Load cubicmap image (RAM)
     Texture2D cubicmap = LoadTextureFromImage(image);       // Convert image to texture to display (VRAM)
-    Model map = LoadCubicmap(image);                        // Load cubicmap model (generate model from image)
+    
+    Mesh mesh = GenMeshCubicmap(image, (Vector3){ 1.0f, 1.0f, 1.0f });
+    Model model = LoadModelFromMesh(mesh);
     
     // NOTE: By default each cube is mapped to one part of texture atlas
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
-    map.material.texDiffuse = texture;                      // Set map diffuse texture
+    model.material.maps[MAP_DIFFUSE].texture = texture;                 // Set map diffuse texture
     
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };          // Set model position
 
@@ -56,7 +58,7 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawModel(map, mapPosition, 1.0f, WHITE);
+                DrawModel(model, mapPosition, 1.0f, WHITE);
 
             End3dMode();
             
@@ -76,7 +78,7 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadTexture(cubicmap);    // Unload cubicmap texture
     UnloadTexture(texture);     // Unload map texture
-    UnloadModel(map);           // Unload map model
+    UnloadModel(model);         // Unload map model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

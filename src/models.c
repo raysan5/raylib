@@ -76,9 +76,6 @@ static Mesh LoadOBJ(const char *fileName);      // Load OBJ mesh data
 static Material LoadMTL(const char *fileName);  // Load MTL material data
 #endif
 
-static Mesh GenMeshHeightmap(Image image, Vector3 size);
-static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -121,68 +118,67 @@ void DrawCube(Vector3 position, float width, float height, float length, Color c
     float z = 0.0f;
 
     rlPushMatrix();
-
-        // NOTE: Be careful! Function order matters (rotate -> scale -> translate)
+        // NOTE: Transformation is applied in inverse order (scale -> rotate -> translate)
         rlTranslatef(position.x, position.y, position.z);
-        //rlScalef(2.0f, 2.0f, 2.0f);
         //rlRotatef(45, 0, 1, 0);
+        //rlScalef(1.0f, 1.0f, 1.0f);   // NOTE: Vertices are directly scaled on definition
 
         rlBegin(RL_TRIANGLES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            // Front Face -----------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
+            // Front face
+            rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left
 
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Right
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right
 
-            // Back Face ------------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
+            // Back face
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Left
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right
 
-            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
+            rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left
 
-            // Top Face -------------------------------------------------------
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Bottom Left
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right
+            // Top face
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Bottom Left
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Bottom Right
 
-            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right
+            rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Bottom Right
 
-            // Bottom Face ----------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Left
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
-            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
+            // Bottom face
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Top Left
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right
+            rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left
 
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Right
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Left
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Top Right
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Top Left
 
-            // Right face -----------------------------------------------------
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
-            rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left
+            // Right face
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right
+            rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Left
 
-            rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left
-            rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right
-            rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left
+            rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Left
+            rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right
+            rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Left
 
-            // Left Face ------------------------------------------------------
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
-            rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Right
+            // Left face
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Right
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left
+            rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Right
 
-            rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left
-            rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left
-            rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right
+            rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left
+            rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left
+            rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Right
         rlEnd();
     rlPopMatrix();
 }
@@ -201,9 +197,7 @@ void DrawCubeWires(Vector3 position, float width, float height, float length, Co
     float z = 0.0f;
 
     rlPushMatrix();
-
         rlTranslatef(position.x, position.y, position.z);
-        //rlRotatef(45, 0, 1, 0);
 
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -274,49 +268,49 @@ void DrawCubeTexture(Texture2D texture, Vector3 position, float width, float hei
     rlEnableTexture(texture.id);
 
     //rlPushMatrix();
-        // NOTE: Be careful! Function order matters (scale, translate, rotate)
-        //rlScalef(2.0f, 2.0f, 2.0f);
+        // NOTE: Transformation is applied in inverse order (scale -> rotate -> translate)
         //rlTranslatef(2.0f, 0.0f, 0.0f);
         //rlRotatef(45, 0, 1, 0);
+        //rlScalef(2.0f, 2.0f, 2.0f);
 
         rlBegin(RL_QUADS);
             rlColor4ub(color.r, color.g, color.b, color.a);
             // Front Face
             rlNormal3f(0.0f, 0.0f, 1.0f);                  // Normal Pointing Towards Viewer
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Left Of The Texture and Quad
             // Back Face
-            rlNormal3f(0.0f, 0.0f,-1.0f);                  // Normal Pointing Away From Viewer
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Left Of The Texture and Quad
+            rlNormal3f(0.0f, 0.0f, - 1.0f);                  // Normal Pointing Away From Viewer
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Left Of The Texture and Quad
             // Top Face
             rlNormal3f(0.0f, 1.0f, 0.0f);                  // Normal Pointing Up
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x - width/2, y + height/2, z + length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x + width/2, y + height/2, z + length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right Of The Texture and Quad
             // Bottom Face
-            rlNormal3f(0.0f,-1.0f, 0.0f);                  // Normal Pointing Down
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
+            rlNormal3f(0.0f, - 1.0f, 0.0f);                  // Normal Pointing Down
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x - width/2, y - height/2, z - length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x + width/2, y - height/2, z - length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Right Of The Texture and Quad
             // Right face
             rlNormal3f(1.0f, 0.0f, 0.0f);                  // Normal Pointing Right
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z-length/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z-length/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x+width/2, y+height/2, z+length/2);  // Top Left Of The Texture and Quad
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x+width/2, y-height/2, z+length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z - length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z - length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x + width/2, y + height/2, z + length/2);  // Top Left Of The Texture and Quad
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x + width/2, y - height/2, z + length/2);  // Bottom Left Of The Texture and Quad
             // Left Face
-            rlNormal3f(-1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
-            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z-length/2);  // Bottom Left Of The Texture and Quad
-            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x-width/2, y-height/2, z+length/2);  // Bottom Right Of The Texture and Quad
-            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z+length/2);  // Top Right Of The Texture and Quad
-            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x-width/2, y+height/2, z-length/2);  // Top Left Of The Texture and Quad
+            rlNormal3f( - 1.0f, 0.0f, 0.0f);                  // Normal Pointing Left
+            rlTexCoord2f(0.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z - length/2);  // Bottom Left Of The Texture and Quad
+            rlTexCoord2f(1.0f, 0.0f); rlVertex3f(x - width/2, y - height/2, z + length/2);  // Bottom Right Of The Texture and Quad
+            rlTexCoord2f(1.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z + length/2);  // Top Right Of The Texture and Quad
+            rlTexCoord2f(0.0f, 1.0f); rlVertex3f(x - width/2, y + height/2, z - length/2);  // Top Left Of The Texture and Quad
         rlEnd();
     //rlPopMatrix();
 
@@ -333,6 +327,7 @@ void DrawSphere(Vector3 centerPos, float radius, Color color)
 void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     rlPushMatrix();
+        // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
@@ -372,6 +367,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Color color)
 {
     rlPushMatrix();
+        // NOTE: Transformation is applied in inverse order (scale -> translate)
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
@@ -426,12 +422,12 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 for (int i = 0; i < 360; i += 360/sides)
                 {
                     rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom); //Bottom Right
-                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom); //Bottom Right
+                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
 
                     rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop); //Top Left
                     rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop); //Top Right
+                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop); //Top Right
                 }
 
                 // Draw Cap --------------------------------------------------------------------------------------
@@ -439,7 +435,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
-                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop);
+                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
                 }
             }
             else
@@ -449,7 +445,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
                 {
                     rlVertex3f(0, height, 0);
                     rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                    rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
+                    rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
                 }
             }
 
@@ -457,7 +453,7 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(0, 0, 0);
-                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
                 rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
             }
         rlEnd();
@@ -479,12 +475,12 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
             for (int i = 0; i < 360; i += 360/sides)
             {
                 rlVertex3f(sinf(DEG2RAD*i)*radiusBottom, 0, cosf(DEG2RAD*i)*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
 
-                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i+360/sides))*radiusBottom);
-                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusBottom, 0, cosf(DEG2RAD*(i + 360/sides))*radiusBottom);
+                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
 
-                rlVertex3f(sinf(DEG2RAD*(i+360/sides))*radiusTop, height, cosf(DEG2RAD*(i+360/sides))*radiusTop);
+                rlVertex3f(sinf(DEG2RAD*(i + 360/sides))*radiusTop, height, cosf(DEG2RAD*(i + 360/sides))*radiusTop);
                 rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
 
                 rlVertex3f(sinf(DEG2RAD*i)*radiusTop, height, cosf(DEG2RAD*i)*radiusTop);
@@ -571,7 +567,6 @@ void DrawGizmo(Vector3 position)
 
     rlPushMatrix();
         rlTranslatef(position.x, position.y, position.z);
-        //rlRotatef(rotation, 0, 1, 0);
         rlScalef(length, length, length);
 
         rlBegin(RL_LINES);
@@ -587,108 +582,31 @@ void DrawGizmo(Vector3 position)
     rlPopMatrix();
 }
 
-// Load mesh from file
-Mesh LoadMesh(const char *fileName)
-{
-    Mesh mesh = { 0 };
-
-#if defined(SUPPORT_FILEFORMAT_OBJ)
-    if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
-#else
-    TraceLog(WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
-#endif
-
-    if (mesh.vertexCount == 0) TraceLog(WARNING, "Mesh could not be loaded");
-    else rlglLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
-
-    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
-
-    return mesh;
-}
-
-// Load mesh from vertex data
-// NOTE: All vertex data arrays must be same size: vertexCount
-Mesh LoadMeshEx(int vertexCount, float *vData, float *vtData, float *vnData, Color *cData)
-{
-    Mesh mesh = { 0 };
-
-    mesh.vertexCount = vertexCount;
-    mesh.triangleCount = vertexCount/3;
-    mesh.vertices = vData;
-    mesh.texcoords = vtData;
-    mesh.texcoords2 = NULL;
-    mesh.normals = vnData;
-    mesh.tangents = NULL;
-    mesh.colors = (unsigned char *)cData;
-    mesh.indices = NULL;
-
-    rlglLoadMesh(&mesh, false);     // Upload vertex data to GPU (static mesh)
-
-    return mesh;
-}
-
-// Load model from file
+// Load model from files (mesh and material)
 Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
 
     model.mesh = LoadMesh(fileName);
     model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
+    model.material = LoadMaterialDefault();
 
     return model;
 }
 
-// Load model from mesh data
-Model LoadModelFromMesh(Mesh data, bool dynamic)
+// Load model from generated mesh
+// WARNING: A shallow copy of mesh is generated, passed by value,
+// as long as struct contains pointers to data and some values, we get a copy
+// of mesh pointing to same data as original version... be careful!
+Model LoadModelFromMesh(Mesh mesh)
 {
     Model model = { 0 };
-
-    model.mesh = data;
-
-    rlglLoadMesh(&model.mesh, dynamic);  // Upload vertex data to GPU
-
+    
+    model.mesh = mesh;
     model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
+    model.material = LoadMaterialDefault();
 
     return model;
-}
-
-// Load heightmap model from image data
-// NOTE: model map size is defined in generic units
-Model LoadHeightmap(Image heightmap, Vector3 size)
-{
-    Model model = { 0 };
-
-    model.mesh = GenMeshHeightmap(heightmap, size);
-
-    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
-}
-
-// Load cubes-based map model from image data
-Model LoadCubicmap(Image cubicmap)
-{
-    Model model = { 0 };
-
-    model.mesh = GenMeshCubicmap(cubicmap, (Vector3){ 1.0f, 1.5f, 1.0f });
-
-    rlglLoadMesh(&model.mesh, false);  // Upload vertex data to GPU (static model)
-
-    model.transform = MatrixIdentity();
-    model.material = LoadDefaultMaterial();
-
-    return model;
-}
-
-// Unload mesh from memory (RAM and/or VRAM)
-void UnloadMesh(Mesh *mesh)
-{
-    rlglUnloadMesh(mesh);
 }
 
 // Unload model from memory (RAM and/or VRAM)
@@ -697,52 +615,160 @@ void UnloadModel(Model model)
     UnloadMesh(&model.mesh);
     UnloadMaterial(model.material);
 
-    TraceLog(INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
+    TraceLog(LOG_INFO, "Unloaded model data (mesh and material) from RAM and VRAM");
 }
 
-// Load material data (from file)
-Material LoadMaterial(const char *fileName)
+// Load mesh from file
+// NOTE: Mesh data loaded in CPU and GPU
+Mesh LoadMesh(const char *fileName)
 {
-    Material material = { 0 };
+    Mesh mesh = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_MTL)
-    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
+#if defined(SUPPORT_FILEFORMAT_OBJ)
+    if (IsFileExtension(fileName, ".obj")) mesh = LoadOBJ(fileName);
 #else
-    TraceLog(WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+    TraceLog(LOG_WARNING, "[%s] Mesh fileformat not supported, it can't be loaded", fileName);
 #endif
 
-    return material;
+    if (mesh.vertexCount == 0) TraceLog(LOG_WARNING, "Mesh could not be loaded");
+    else rlLoadMesh(&mesh, false);  // Upload vertex data to GPU (static mesh)
+
+    // TODO: Initialize default mesh data in case loading fails, maybe a cube?
+
+    return mesh;
 }
 
-// Load default material (uses default models shader)
-Material LoadDefaultMaterial(void)
+// Unload mesh from memory (RAM and/or VRAM)
+void UnloadMesh(Mesh *mesh)
 {
-    Material material = { 0 };
-
-    material.shader = GetDefaultShader();
-    material.texDiffuse = GetDefaultTexture();      // White texture (1x1 pixel)
-    //material.texNormal;           // NOTE: By default, not set
-    //material.texSpecular;         // NOTE: By default, not set
-
-    material.colDiffuse = WHITE;    // Diffuse color
-    material.colAmbient = WHITE;    // Ambient color
-    material.colSpecular = WHITE;   // Specular color
-
-    material.glossiness = 100.0f;   // Glossiness level
-
-    return material;
+    rlUnloadMesh(mesh);
 }
 
-// Unload material from memory
-void UnloadMaterial(Material material)
+// Generated cuboid mesh
+// NOTE: Vertex data is uploaded to GPU
+Mesh GenMeshCube(float width, float height, float length)
 {
-    rlDeleteTextures(material.texDiffuse.id);
-    rlDeleteTextures(material.texNormal.id);
-    rlDeleteTextures(material.texSpecular.id);
+    Mesh mesh = { 0 };
+
+    float vertices[] = {
+        -width/2, -height/2, length/2,
+        width/2, -height/2, length/2,
+        width/2, height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, -height/2, -length/2,
+        -width/2, height/2, -length/2,
+        -width/2, height/2, length/2,
+        width/2, height/2, length/2,
+        width/2, height/2, -length/2,
+        -width/2, -height/2, -length/2,
+        width/2, -height/2, -length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, length/2,
+        width/2, -height/2, -length/2,
+        width/2, height/2, -length/2,
+        width/2, height/2, length/2,
+        width/2, -height/2, length/2,
+        -width/2, -height/2, -length/2,
+        -width/2, -height/2, length/2,
+        -width/2, height/2, length/2,
+        -width/2, height/2, -length/2
+    };
+    
+    float texcoords[] = {
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f
+    };
+    
+    float normals[] = {
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 0.0f,-1.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        0.0f,-1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f
+    };
+
+    mesh.vertices = (float *)malloc(24*3*sizeof(float));
+    memcpy(mesh.vertices, vertices, 24*3*sizeof(float));
+    
+    mesh.texcoords = (float *)malloc(24*2*sizeof(float));
+    memcpy(mesh.texcoords, texcoords, 24*2*sizeof(float));
+    
+    mesh.normals = (float *)malloc(24*3*sizeof(float));
+    memcpy(mesh.normals, normals, 24*3*sizeof(float));
+    
+    mesh.indices = (unsigned short *)malloc(36*sizeof(unsigned short));
+    
+    int k = 0;
+
+    // Indices can be initialized right now
+    for (int i = 0; i < 36; i+=6)
+    {
+        mesh.indices[i] = 4*k;
+        mesh.indices[i+1] = 4*k+1;
+        mesh.indices[i+2] = 4*k+2;
+        mesh.indices[i+3] = 4*k;
+        mesh.indices[i+4] = 4*k+2;
+        mesh.indices[i+5] = 4*k+3;
+
+        k++;
+    }
+    
+    mesh.vertexCount = 24;
+    mesh.triangleCount = 12;
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+
+    return mesh;
 }
 
 // Generate a mesh from heightmap
-static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
+// NOTE: Vertex data is uploaded to GPU
+Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
 {
     #define GRAY_VALUE(c) ((c.r+c.g+c.b)/3)
 
@@ -843,11 +869,16 @@ static Mesh GenMeshHeightmap(Image heightmap, Vector3 size)
     }
 
     free(pixels);
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);
 
     return mesh;
 }
 
-static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
+// Generate a cubes mesh from pixel data
+// NOTE: Vertex data is uploaded to GPU
+Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 {
     Mesh mesh = { 0 };
 
@@ -1197,8 +1228,58 @@ static Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     free(mapTexcoords);
 
     free(cubicmapPixels);   // Free image pixel data
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
 
     return mesh;
+}
+
+// Load material data (from file)
+Material LoadMaterial(const char *fileName)
+{
+    Material material = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_MTL)
+    if (IsFileExtension(fileName, ".mtl")) material = LoadMTL(fileName);
+#else
+    TraceLog(LOG_WARNING, "[%s] Material fileformat not supported, it can't be loaded", fileName);
+#endif
+
+    // Our material uses the default shader (DIFFUSE, SPECULAR, NORMAL)
+    material.shader = GetShaderDefault();
+
+    return material;
+}
+
+// Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+Material LoadMaterialDefault(void)
+{
+    Material material = { 0 };
+
+    material.shader = GetShaderDefault();
+    material.maps[MAP_DIFFUSE].texture = GetTextureDefault();   // White texture (1x1 pixel)
+    //material.maps[MAP_NORMAL].texture;         // NOTE: By default, not set
+    //material.maps[MAP_SPECULAR].texture;       // NOTE: By default, not set
+
+    material.maps[MAP_DIFFUSE].color = WHITE;    // Diffuse color
+    material.maps[MAP_SPECULAR].color = WHITE;   // Specular color
+
+    return material;
+}
+
+// Unload material from memory
+void UnloadMaterial(Material material)
+{
+    // Unload material shader
+    UnloadShader(material.shader);
+
+    // Unload loaded texture maps
+    for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
+    {
+        // NOTE: We already check for (tex.id > 0) inside function
+        rlDeleteTextures(material.maps[i].texture.id); 
+    }
 }
 
 // Draw a model (with texture if set)
@@ -1215,8 +1296,8 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 {
     // Calculate transformation matrix from function parameters
     // Get transform matrix (rotation -> scale -> translation)
-    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
     Matrix matScale = MatrixScale(scale.x, scale.y, scale.z);
+    Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle*DEG2RAD);
     Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
     
     Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
@@ -1225,9 +1306,9 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
     //Matrix matModel = MatrixMultiply(model.transform, matTransform);    // Transform to world-space coordinates
 
     model.transform = MatrixMultiply(model.transform, matTransform);
-    model.material.colDiffuse = tint;       // TODO: Multiply tint color by diffuse color?
+    model.material.maps[MAP_DIFFUSE].color = tint;       // TODO: Multiply tint color by diffuse color?
 
-    rlglDrawMesh(model.mesh, model.material, model.transform);
+    rlDrawMesh(model.mesh, model.material, model.transform);
 }
 
 // Draw a model wires (with texture if set)
@@ -1264,11 +1345,10 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     // NOTE: Billboard size will maintain sourceRec aspect ratio, size will represent billboard width
     Vector2 sizeRatio = { size, size*(float)sourceRec.height/sourceRec.width };
 
-    Matrix viewMatrix = MatrixLookAt(camera.position, camera.target, camera.up);
-    MatrixTranspose(&viewMatrix);
+    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
 
-    Vector3 right = { viewMatrix.m0, viewMatrix.m4, viewMatrix.m8 };
-    //Vector3 up = { viewMatrix.m1, viewMatrix.m5, viewMatrix.m9 };
+    Vector3 right = { matView.m0, matView.m4, matView.m8 };
+    //Vector3 up = { matView.m1, matView.m5, matView.m9 };
 
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
@@ -1279,16 +1359,16 @@ void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRec, Vec
     |       |
     d-------c
 */
-    VectorScale(&right, sizeRatio.x/2);
-    VectorScale(&up, sizeRatio.y/2);
+    Vector3Scale(&right, sizeRatio.x/2);
+    Vector3Scale(&up, sizeRatio.y/2);
 
-    Vector3 p1 = VectorAdd(right, up);
-    Vector3 p2 = VectorSubtract(right, up);
+    Vector3 p1 = Vector3Add(right, up);
+    Vector3 p2 = Vector3Subtract(right, up);
 
-    Vector3 a = VectorSubtract(center, p2);
-    Vector3 b = VectorAdd(center, p1);
-    Vector3 c = VectorAdd(center, p2);
-    Vector3 d = VectorSubtract(center, p1);
+    Vector3 a = Vector3Subtract(center, p2);
+    Vector3 b = Vector3Add(center, p1);
+    Vector3 c = Vector3Add(center, p2);
+    Vector3 d = Vector3Subtract(center, p1);
 
     rlEnableTexture(texture.id);
 
@@ -1387,9 +1467,9 @@ bool CheckCollisionRaySphere(Ray ray, Vector3 spherePosition, float sphereRadius
 {
     bool collision = false;
 
-    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
-    float distance = VectorLength(raySpherePos);
-    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    Vector3 raySpherePos = Vector3Subtract(spherePosition, ray.position);
+    float distance = Vector3Length(raySpherePos);
+    float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
 
     if (d >= 0.0f) collision = true;
@@ -1402,9 +1482,9 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
 {
     bool collision = false;
 
-    Vector3 raySpherePos = VectorSubtract(spherePosition, ray.position);
-    float distance = VectorLength(raySpherePos);
-    float vector = VectorDotProduct(raySpherePos, ray.direction);
+    Vector3 raySpherePos = Vector3Subtract(spherePosition, ray.position);
+    float distance = Vector3Length(raySpherePos);
+    float vector = Vector3DotProduct(raySpherePos, ray.direction);
     float d = sphereRadius*sphereRadius - (distance*distance - vector*vector);
 
     if (d >= 0.0f) collision = true;
@@ -1417,8 +1497,8 @@ bool CheckCollisionRaySphereEx(Ray ray, Vector3 spherePosition, float sphereRadi
     if (distance < sphereRadius) collisionDistance = vector + sqrtf(d);
     else collisionDistance = vector - sqrtf(d);
 
-    VectorScale(&offset, collisionDistance);
-    Vector3 cPoint = VectorAdd(ray.position, offset);
+    Vector3Scale(&offset, collisionDistance);
+    Vector3 cPoint = Vector3Add(ray.position, offset);
 
     collisionPoint->x = cPoint.x;
     collisionPoint->y = cPoint.y;
@@ -1501,14 +1581,14 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     RayHitInfo result = {0};
 
     // Find vectors for two edges sharing V1
-    edge1 = VectorSubtract(p2, p1);
-    edge2 = VectorSubtract(p3, p1);
+    edge1 = Vector3Subtract(p2, p1);
+    edge2 = Vector3Subtract(p3, p1);
 
     // Begin calculating determinant - also used to calculate u parameter
-    p = VectorCrossProduct(ray.direction, edge2);
+    p = Vector3CrossProduct(ray.direction, edge2);
 
     // If determinant is near zero, ray lies in plane of triangle or ray is parallel to plane of triangle
-    det = VectorDotProduct(edge1, p);
+    det = Vector3DotProduct(edge1, p);
 
     // Avoid culling!
     if ((det > -EPSILON) && (det < EPSILON)) return result;
@@ -1516,24 +1596,24 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     invDet = 1.0f/det;
 
     // Calculate distance from V1 to ray origin
-    tv = VectorSubtract(ray.position, p1);
+    tv = Vector3Subtract(ray.position, p1);
 
     // Calculate u parameter and test bound
-    u = VectorDotProduct(tv, p)*invDet;
+    u = Vector3DotProduct(tv, p)*invDet;
 
     // The intersection lies outside of the triangle
     if ((u < 0.0f) || (u > 1.0f)) return result;
 
     // Prepare to test v parameter
-    q = VectorCrossProduct(tv, edge1);
+    q = Vector3CrossProduct(tv, edge1);
 
     // Calculate V parameter and test bound
-    v = VectorDotProduct(ray.direction, q)*invDet;
+    v = Vector3DotProduct(ray.direction, q)*invDet;
 
     // The intersection lies outside of the triangle
     if ((v < 0.0f) || ((u + v) > 1.0f)) return result;
 
-    t = VectorDotProduct(edge2, q)*invDet;
+    t = Vector3DotProduct(edge2, q)*invDet;
 
     if (t > EPSILON)
     {
@@ -1541,11 +1621,11 @@ RayHitInfo GetCollisionRayTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
         result.hit = true;
         result.distance = t;
         result.hit = true;
-        result.normal = VectorCrossProduct(edge1, edge2);
-        VectorNormalize(&result.normal);
+        result.normal = Vector3CrossProduct(edge1, edge2);
+        Vector3Normalize(&result.normal);
         Vector3 rayDir = ray.direction;
-        VectorScale(&rayDir, t);
-        result.position = VectorAdd(ray.position, rayDir);
+        Vector3Scale(&rayDir, t);
+        result.position = Vector3Add(ray.position, rayDir);
     }
 
     return result;
@@ -1565,11 +1645,11 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
         if (t >= 0.0)
         {
             Vector3 rayDir = ray.direction;
-            VectorScale(&rayDir, t);
+            Vector3Scale(&rayDir, t);
             result.hit = true;
             result.distance = t;
             result.normal = (Vector3){ 0.0, 1.0, 0.0 };
-            result.position = VectorAdd(ray.position, rayDir);
+            result.position = Vector3Add(ray.position, rayDir);
         }
     }
 
@@ -1577,7 +1657,7 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
 }
 
 // Calculate mesh bounding box limits
-// NOTE: minVertex and maxVertex should be transformed by model transform matrix (position, scale, rotate)
+// NOTE: minVertex and maxVertex should be transformed by model transform matrix
 BoundingBox CalculateBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
@@ -1591,8 +1671,8 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
 
         for (int i = 1; i < mesh.vertexCount; i++)
         {
-            minVertex = VectorMin(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
-            maxVertex = VectorMax(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+            minVertex = Vector3Min(minVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
+            maxVertex = Vector3Max(maxVertex, (Vector3){ mesh.vertices[i*3], mesh.vertices[i*3 + 1], mesh.vertices[i*3 + 2] });
         }
     }
 
@@ -1628,7 +1708,7 @@ static Mesh LoadOBJ(const char *fileName)
 
     if (objFile == NULL)
     {
-        TraceLog(WARNING, "[%s] OBJ file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] OBJ file could not be opened", fileName);
         return mesh;
     }
 
@@ -1637,6 +1717,7 @@ static Mesh LoadOBJ(const char *fileName)
     // NOTE: faces MUST be defined as TRIANGLES (3 vertex per face)
     while (!feof(objFile))
     {
+        dataType = '\0';
         fscanf(objFile, "%c", &dataType);
 
         switch (dataType)
@@ -1679,10 +1760,10 @@ static Mesh LoadOBJ(const char *fileName)
         }
     }
 
-    TraceLog(DEBUG, "[%s] Model vertices: %i", fileName, vertexCount);
-    TraceLog(DEBUG, "[%s] Model texcoords: %i", fileName, texcoordCount);
-    TraceLog(DEBUG, "[%s] Model normals: %i", fileName, normalCount);
-    TraceLog(DEBUG, "[%s] Model triangles: %i", fileName, triangleCount);
+    TraceLog(LOG_DEBUG, "[%s] Model vertices: %i", fileName, vertexCount);
+    TraceLog(LOG_DEBUG, "[%s] Model texcoords: %i", fileName, texcoordCount);
+    TraceLog(LOG_DEBUG, "[%s] Model normals: %i", fileName, normalCount);
+    TraceLog(LOG_DEBUG, "[%s] Model triangles: %i", fileName, triangleCount);
 
     // Once we know the number of vertices to store, we create required arrays
     Vector3 *midVertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
@@ -1756,7 +1837,7 @@ static Mesh LoadOBJ(const char *fileName)
 
     rewind(objFile);        // Return to the beginning of the file, to read again
 
-    if (normalCount == 0) TraceLog(INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
+    if (normalCount == 0) TraceLog(LOG_INFO, "[%s] No normals data on OBJ, normals will be generated from faces data", fileName);
 
     // Third reading pass: Get faces (triangles) data and fill VertexArray
     while (!feof(objFile))
@@ -1806,8 +1887,8 @@ static Mesh LoadOBJ(const char *fileName)
                 else
                 {
                     // If normals not defined, they are calculated from the 3 vertices [N = (V2 - V1) x (V3 - V1)]
-                    Vector3 norm = VectorCrossProduct(VectorSubtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), VectorSubtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
-                    VectorNormalize(&norm);
+                    Vector3 norm = Vector3CrossProduct(Vector3Subtract(midVertices[vCount[1]-1], midVertices[vCount[0]-1]), Vector3Subtract(midVertices[vCount[2]-1], midVertices[vCount[0]-1]));
+                    Vector3Normalize(&norm);
 
                     mesh.normals[nCounter] = norm.x;
                     mesh.normals[nCounter + 1] = norm.y;
@@ -1867,8 +1948,8 @@ static Mesh LoadOBJ(const char *fileName)
             Vector2 uv2 = { mesh.texcoords[uvCount + 4], mesh.texcoords[uvCount + 5] };
 
             // Calculate edges of the triangle (position delta)
-            Vector3 deltaPos1 = VectorSubtract(v1, v0);
-            Vector3 deltaPos2 = VectorSubtract(v2, v0);
+            Vector3 deltaPos1 = Vector3Subtract(v1, v0);
+            Vector3 deltaPos2 = Vector3Subtract(v2, v0);
 
             // UV delta
             Vector2 deltaUV1 = { uv1.x - uv0.x, uv1.y - uv0.y };
@@ -1881,8 +1962,8 @@ static Mesh LoadOBJ(const char *fileName)
             // Vector3 b2 = { deltaPos1.x*deltaUV2.x, deltaPos1.y*deltaUV2.x, deltaPos1.z*deltaUV2.x };
 
             // Calculate vertex tangent
-            Vector3 tangent = VectorSubtract(t1, t2);
-            VectorScale(&tangent, r);
+            Vector3 tangent = Vector3Subtract(t1, t2);
+            Vector3Scale(&tangent, r);
 
             // Apply calculated tangents data to mesh struct
             mesh.tangents[vCount + 0] = tangent.x;
@@ -1897,8 +1978,8 @@ static Mesh LoadOBJ(const char *fileName)
 
             // TODO: add binormals to mesh struct and assign buffers id and locations properly
             /* // Calculate vertex binormal
-            Vector3 binormal = VectorSubtract(b1, b2);
-            VectorScale(&binormal, r);
+            Vector3 binormal = Vector3Subtract(b1, b2);
+            Vector3Scale(&binormal, r);
 
             // Apply calculated binormals data to mesh struct
             mesh.binormals[vCount + 0] = binormal.x;
@@ -1923,7 +2004,7 @@ static Mesh LoadOBJ(const char *fileName)
     free(midTexCoords);
 
     // NOTE: At this point we have all vertex, texcoord, normal data for the model in mesh struct
-    TraceLog(INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
+    TraceLog(LOG_INFO, "[%s] Model loaded successfully in RAM (CPU)", fileName);
 
     return mesh;
 }
@@ -1936,7 +2017,7 @@ static Material LoadMTL(const char *fileName)
 {
     #define MAX_BUFFER_SIZE     128
 
-    Material material = { 0 };  // LoadDefaultMaterial();
+    Material material = { 0 };
 
     char buffer[MAX_BUFFER_SIZE];
     Vector3 color = { 1.0f, 1.0f, 1.0f };
@@ -1949,7 +2030,7 @@ static Material LoadMTL(const char *fileName)
 
     if (mtlFile == NULL)
     {
-        TraceLog(WARNING, "[%s] MTL file could not be opened", fileName);
+        TraceLog(LOG_WARNING, "[%s] MTL file could not be opened", fileName);
         return material;
     }
 
@@ -1964,7 +2045,7 @@ static Material LoadMTL(const char *fileName)
                 // TODO: Support multiple materials in a single .mtl
                 sscanf(buffer, "newmtl %s", mapFileName);
 
-                TraceLog(INFO, "[%s] Loading material...", mapFileName);
+                TraceLog(LOG_INFO, "[%s] Loading material...", mapFileName);
             }
             case 'i':   // illum int        Illumination model
             {
@@ -1979,23 +2060,24 @@ static Material LoadMTL(const char *fileName)
                     case 'a':   // Ka float float float    Ambient color (RGB)
                     {
                         sscanf(buffer, "Ka %f %f %f", &color.x, &color.y, &color.z);
-                        material.colAmbient.r = (unsigned char)(color.x*255);
-                        material.colAmbient.g = (unsigned char)(color.y*255);
-                        material.colAmbient.b = (unsigned char)(color.z*255);
+                        // TODO: Support ambient color
+                        //material.colAmbient.r = (unsigned char)(color.x*255);
+                        //material.colAmbient.g = (unsigned char)(color.y*255);
+                        //material.colAmbient.b = (unsigned char)(color.z*255);
                     } break;
                     case 'd':   // Kd float float float     Diffuse color (RGB)
                     {
                         sscanf(buffer, "Kd %f %f %f", &color.x, &color.y, &color.z);
-                        material.colDiffuse.r = (unsigned char)(color.x*255);
-                        material.colDiffuse.g = (unsigned char)(color.y*255);
-                        material.colDiffuse.b = (unsigned char)(color.z*255);
+                        material.maps[MAP_DIFFUSE].color.r = (unsigned char)(color.x*255);
+                        material.maps[MAP_DIFFUSE].color.g = (unsigned char)(color.y*255);
+                        material.maps[MAP_DIFFUSE].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 's':   // Ks float float float     Specular color (RGB)
                     {
                         sscanf(buffer, "Ks %f %f %f", &color.x, &color.y, &color.z);
-                        material.colSpecular.r = (unsigned char)(color.x*255);
-                        material.colSpecular.g = (unsigned char)(color.y*255);
-                        material.colSpecular.b = (unsigned char)(color.z*255);
+                        material.maps[MAP_SPECULAR].color.r = (unsigned char)(color.x*255);
+                        material.maps[MAP_SPECULAR].color.g = (unsigned char)(color.y*255);
+                        material.maps[MAP_SPECULAR].color.b = (unsigned char)(color.z*255);
                     } break;
                     case 'e':   // Ke float float float     Emmisive color (RGB)
                     {
@@ -2011,7 +2093,7 @@ static Material LoadMTL(const char *fileName)
                     int shininess = 0;
                     sscanf(buffer, "Ns %i", &shininess);
 
-                    material.glossiness = (float)shininess;
+                    //material.params[PARAM_GLOSSINES] = (float)shininess;
                 }
                 else if (buffer[1] == 'i')  // Ni int   Refraction index.
                 {
@@ -2027,12 +2109,12 @@ static Material LoadMTL(const char *fileName)
                         if (buffer[5] == 'd')       // map_Kd string    Diffuse color texture map.
                         {
                             result = sscanf(buffer, "map_Kd %s", mapFileName);
-                            if (result != EOF) material.texDiffuse = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[MAP_DIFFUSE].texture = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 's')  // map_Ks string    Specular color texture map.
                         {
                             result = sscanf(buffer, "map_Ks %s", mapFileName);
-                            if (result != EOF) material.texSpecular = LoadTexture(mapFileName);
+                            if (result != EOF) material.maps[MAP_SPECULAR].texture = LoadTexture(mapFileName);
                         }
                         else if (buffer[5] == 'a')  // map_Ka string    Ambient color texture map.
                         {
@@ -2042,12 +2124,12 @@ static Material LoadMTL(const char *fileName)
                     case 'B':       // map_Bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_Bump %s", mapFileName);
-                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
                     } break;
                     case 'b':       // map_bump string      Bump texture map.
                     {
                         result = sscanf(buffer, "map_bump %s", mapFileName);
-                        if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                        if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
                     } break;
                     case 'd':       // map_d string         Opacity texture map.
                     {
@@ -2062,7 +2144,7 @@ static Material LoadMTL(const char *fileName)
                 {
                     float alpha = 1.0f;
                     sscanf(buffer, "d %f", &alpha);
-                    material.colDiffuse.a = (unsigned char)(alpha*255);
+                    material.maps[MAP_DIFFUSE].color.a = (unsigned char)(alpha*255);
                 }
                 else if (buffer[1] == 'i')  // disp string  Displacement map
                 {
@@ -2072,13 +2154,13 @@ static Material LoadMTL(const char *fileName)
             case 'b':   // bump string      Bump texture map
             {
                 result = sscanf(buffer, "bump %s", mapFileName);
-                if (result != EOF) material.texNormal = LoadTexture(mapFileName);
+                if (result != EOF) material.maps[MAP_NORMAL].texture = LoadTexture(mapFileName);
             } break;
             case 'T':   // Tr float         Transparency Tr (alpha). Tr is inverse of d
             {
                 float ialpha = 0.0f;
                 sscanf(buffer, "Tr %f", &ialpha);
-                material.colDiffuse.a = (unsigned char)((1.0f - ialpha)*255);
+                material.maps[MAP_DIFFUSE].color.a = (unsigned char)((1.0f - ialpha)*255);
 
             } break;
             case 'r':   // refl string      Reflection texture map
@@ -2089,7 +2171,7 @@ static Material LoadMTL(const char *fileName)
     fclose(mtlFile);
 
     // NOTE: At this point we have all material data
-    TraceLog(INFO, "[%s] Material loaded successfully", fileName);
+    TraceLog(LOG_INFO, "[%s] Material loaded successfully", fileName);
 
     return material;
 }

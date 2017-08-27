@@ -421,21 +421,25 @@ void DrawGameplayScreen(void)
     DrawTextEx(font, FormatText("%02i%%", (int)((float)warpCounter/395.0f*100.0f)), (Vector2){754 + 390, 600}, font.baseSize, -2, SKYBLUE);
     
     // Draw wave
-    // NOTE: Old drawing method, replaced by rendertarget      
-    //DrawSamplesMap(samples, totalSamples, currentSample, waveRec, MAROON);
-    //DrawRectangle(waveRec.x + (int)currentSample*1240/totalSamples, waveRec.y, 2, 99, DARKGRAY);
-    //DrawRectangleLines(20, 20, 1240, 140, DARKGRAY);
-    //DrawRectangle(20, 150, (float)currentSample/totalSamples*1240, 10, GRAY);
+    if (waveTarget.texture.id <= 0)     // Render target could not be loaded (OpenGL 1.1)
+    {
+        // Draw wave directly on screen
+        DrawSamplesMap(samples, totalSamples, currentSample, waveRec, MAROON);
+        DrawRectangle(waveRec.x + (int)currentSample*1215/totalSamples, waveRec.y, 2, 99, DARKGRAY);
+    }
+    else
+    {
+        // Draw wave using render target
+        ClearBackground(BLANK);
+        BeginTextureMode(waveTarget);
+            DrawSamplesMap(samples, totalSamples, currentSample, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
+        EndTextureMode();
 
-    // Draw wave using render target
-    ClearBackground(BLANK);
-    BeginTextureMode(waveTarget);
-        DrawSamplesMap(samples, totalSamples, currentSample, (Rectangle){ 0, 0, waveTarget.texture.width, waveTarget.texture.height }, MAROON);
-    EndTextureMode();
-
-    // TODO: Apply antialiasing shader
-    DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 1.0f, WHITE);
-    DrawRectangle(waveRec.x + (int)currentSample*1215/totalSamples, waveRec.y, 2, 99, DARKGRAY);
+        // TODO: Apply antialiasing shader
+        
+        DrawTextureEx(waveTarget.texture, (Vector2){ waveRec.x, waveRec.y }, 0.0f, 1.0f, WHITE);
+        DrawRectangle(waveRec.x + (int)currentSample*1215/totalSamples, waveRec.y, 2, 99, DARKGRAY);
+    }
 }
 
 // Gameplay Screen Unload logic

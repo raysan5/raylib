@@ -69,7 +69,7 @@ static void GetShaderLightsLocations(Shader shader);    // Get shader locations 
 static void SetShaderLightsValues(Shader shader);       // Set shader uniform values for lights
 
 // Vector3 math functions
-static float VectorLength(const Vector3 v);             // Calculate vector lenght
+static float VectorLength(const Vector3 v);             // Calculate vector length
 static void VectorNormalize(Vector3 *v);                // Normalize provided vector
 static Vector3 VectorSubtract(Vector3 v1, Vector3 v2);  // Substract two vectors
 
@@ -444,7 +444,7 @@ static void SetShaderLightsValues(Shader shader)
     }
 }
 
-// Calculate vector lenght
+// Calculate vector length
 float VectorLength(const Vector3 v)
 {
     float length;

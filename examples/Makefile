@@ -30,16 +30,6 @@
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 
-# define raylib directory for include and library
-RAYLIB_PATH ?= C:\raylib\raylib
-
-# define NO to use OpenAL Soft as static library (shared by default)
-SHARED_OPENAL ?= NO
-
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    SHARED_OPENAL = NO
-endif
-
 # determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
@@ -58,6 +48,30 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
         endif
     endif
+endif
+
+# define default raylib path for include and library search
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        RAYLIB_PATH ?= C:\raylib\raylib
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_PATH ?= ..
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        RAYLIB_PATH ?= ..
+    endif
+endif
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH ?= /home/pi/raylib
+endif
+
+# define NO to use OpenAL Soft as static library (shared by default)
+SHARED_OPENAL ?= NO
+
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    SHARED_OPENAL = NO
 endif
 
 # define compiler: gcc for C program, define as g++ for C++
@@ -89,7 +103,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS = -O2 -s -Wall -std=c99
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        CFLAGS = -O2 -s -Wall -std=c99 -D_DEFAULT_SOURCE
+        CFLAGS = -O2 -s -Wall -std=c99 -no-pie -D_DEFAULT_SOURCE
     endif
     ifeq ($(PLATFORM_OS),OSX)
         CFLAGS = -O2 -s -Wall -std=c99
@@ -131,7 +145,7 @@ endif
 INCLUDES = -I. -I$(RAYLIB_RELEASE) -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external 
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDES += -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDES += -I../src -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)

@@ -252,7 +252,7 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
     
     FILE *rresFile = fopen(fileName, "rb");
 
-    if (rresFile == NULL) TraceLog(WARNING, "[%s] rRES raylib resource file could not be opened", fileName);
+    if (rresFile == NULL) TraceLog(LOG_WARNING, "[%s] rRES raylib resource file could not be opened", fileName);
     else
     {
         // Read rres file info header
@@ -266,7 +266,7 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
         // Verify "rRES" identifier
         if ((fileHeader.id[0] != 'r') && (fileHeader.id[1] != 'R') && (fileHeader.id[2] != 'E') && (fileHeader.id[3] != 'S'))
         {
-            TraceLog(WARNING, "[%s] This is not a valid raylib resource file", fileName);
+            TraceLog(LOG_WARNING, "[%s] This is not a valid raylib resource file", fileName);
         }
         else
         {
@@ -305,7 +305,7 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
                         }
                         else rres[k].data = data;
 
-                        if (rres[k].data != NULL) TraceLog(INFO, "[%s][ID %i] Resource data loaded successfully", fileName, (int)infoHeader.id);
+                        if (rres[k].data != NULL) TraceLog(LOG_INFO, "[%s][ID %i] Resource data loaded successfully", fileName, (int)infoHeader.id);
                         
                         // Read next part
                         fread(&infoHeader, sizeof(RRESInfoHeader), 1, rresFile); 
@@ -318,7 +318,7 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
                 }
             }
             
-            if (rres[0].data == NULL) TraceLog(WARNING, "[%s][ID %i] Requested resource could not be found", fileName, (int)rresId);
+            if (rres[0].data == NULL) TraceLog(LOG_WARNING, "[%s][ID %i] Requested resource could not be found", fileName, (int)rresId);
         }
 
         fclose(rresFile);
@@ -349,7 +349,7 @@ static void *DecompressData(const unsigned char *data, unsigned long compSize, i
     // Check correct memory allocation
     if (uncompData == NULL)
     {
-        TraceLog(WARNING, "Out of memory while decompressing data");
+        TraceLog(LOG_WARNING, "Out of memory while decompressing data");
     }
     else
     {
@@ -358,18 +358,18 @@ static void *DecompressData(const unsigned char *data, unsigned long compSize, i
 
         if (tempUncompSize == -1)
         {
-            TraceLog(WARNING, "Data decompression failed");
+            TraceLog(LOG_WARNING, "Data decompression failed");
             RRES_FREE(uncompData);
         }
 
         if (uncompSize != (int)tempUncompSize)
         {
-            TraceLog(WARNING, "Expected uncompressed size do not match, data may be corrupted");
-            TraceLog(WARNING, " -- Expected uncompressed size: %i", uncompSize);
-            TraceLog(WARNING, " -- Returned uncompressed size: %i", tempUncompSize);
+            TraceLog(LOG_WARNING, "Expected uncompressed size do not match, data may be corrupted");
+            TraceLog(LOG_WARNING, " -- Expected uncompressed size: %i", uncompSize);
+            TraceLog(LOG_WARNING, " -- Returned uncompressed size: %i", tempUncompSize);
         }
 
-        TraceLog(INFO, "Data decompressed successfully from %u bytes to %u bytes", (mz_uint32)compSize, (mz_uint32)tempUncompSize);
+        TraceLog(LOG_INFO, "Data decompressed successfully from %u bytes to %u bytes", (mz_uint32)compSize, (mz_uint32)tempUncompSize);
     }
 
     return uncompData;
@@ -377,36 +377,27 @@ static void *DecompressData(const unsigned char *data, unsigned long compSize, i
 
 // Some required functions for rres standalone module version
 #if defined(RRES_STANDALONE)
-// Outputs a trace log message (INFO, ERROR, WARNING)
-// NOTE: If a file has been init, output log is written there
+// Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 void TraceLog(int logType, const char *text, ...)
 {
     va_list args;
-    int traceDebugMsgs = 0;
-
-#ifdef DO_NOT_TRACE_DEBUG_MSGS
-    traceDebugMsgs = 0;
-#endif
+    va_start(args, text);
 
     switch (msgType)
     {
         case LOG_INFO: fprintf(stdout, "INFO: "); break;
         case LOG_ERROR: fprintf(stdout, "ERROR: "); break;
         case LOG_WARNING: fprintf(stdout, "WARNING: "); break;
-        case LOG_DEBUG: if (traceDebugMsgs) fprintf(stdout, "DEBUG: "); break;
+        case LOG_DEBUG: fprintf(stdout, "DEBUG: "); break;
         default: break;
     }
 
-    if ((msgType != LOG_DEBUG) || ((msgType == LOG_DEBUG) && (traceDebugMsgs)))
-    {
-        va_start(args, text);
-        vfprintf(stdout, text, args);
-        va_end(args);
+    vfprintf(stdout, text, args);
+    fprintf(stdout, "\n");
 
-        fprintf(stdout, "\n");
-    }
+    va_end(args);
 
-    if (msgType == ERROR) exit(1);      // If ERROR message, exit program
+    if (msgType == LOG_ERROR) exit(1);
 }
 #endif
 
