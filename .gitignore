@@ -131,3 +131,25 @@ src/libraylib.bc
 
 # Meson build system
 builddir/
+
+# CMake stuff
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+build
+
+# Unignore These makefiles...
+!examples/CMakeLists.txt
+!games/CMakeLists.txt
+
+# binaries made from raylib
+libraylib.a
+libraylib.so
+libraylib.dylib
+libraylib.dll
