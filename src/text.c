@@ -457,14 +457,6 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
     }
 }
 
-// Draw rectangle using text character (char: 127)
-// NOTE: Useful to avoid changing to default white texture
-void DrawRectangleT(int posX, int posY, int width, int height, Color color)
-{
-    DrawTexturePro(GetDefaultFont().texture, GetDefaultFont().chars[95].rec, 
-                   (Rectangle){ posX, posY, width, height }, (Vector2){ 0, 0 }, 0.0f, color);
-}
-
 // Formatting of text with variables to 'embed'
 const char *FormatText(const char *text, ...)
 {
