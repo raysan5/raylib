@@ -51,6 +51,9 @@
 
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
+#define PAR_SHAPES_IMPLEMENTATION
+#include "external/par_shapes.h"
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -650,6 +653,7 @@ Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
 
+    /*
     float vertices[] = {
         -width/2, -height/2, length/2,
         width/2, -height/2, length/2,
@@ -759,12 +763,50 @@ Mesh GenMeshCube(float width, float height, float length)
     
     mesh.vertexCount = 24;
     mesh.triangleCount = 12;
+    */
+    
+    // TODO: Just testing par_shapes mesh generation functions
+    //--------------------------------------------------------
+    par_shapes_mesh *cube = par_shapes_create_cube();   // No normals/texcoords generated!!!
+    par_shapes_scale(cube, width, height, length);
+    par_shapes_compute_normals(cube);
+    
+    mesh.vertices = (float *)malloc(cube->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(cube->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)malloc(cube->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = cube->ntriangles*3;
+    mesh.triangleCount = cube->ntriangles;
+    
+    //for (int i = 0; i < cube->ntriangles*3; i++) printf("%i ", cube->triangles[i]);
+    //for (int i = 0; i < cube->npoints*3; i += 3) printf("\nv%.1f %.1f %.1f ", cube->points[i], cube->points[i + 1], cube->points[i + 2]);
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = cube->points[cube->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = cube->points[cube->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = cube->points[cube->triangles[k]*3 + 2];
+        
+        mesh.normals[k*3] = cube->normals[cube->triangles[k]*3];
+        mesh.normals[k*3 + 1] = cube->normals[cube->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = cube->normals[cube->triangles[k]*3 + 2];
+        
+        mesh.texcoords[k*2] = 0.0f;//cube->tcoords[cube->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = 0.0f;//cube->tcoords[cube->triangles[k]*2 + 1];
+    }
+
+    par_shapes_free_mesh(cube);
     
     // Upload vertex data to GPU (static mesh)
     rlLoadMesh(&mesh, false);  
 
     return mesh;
 }
+
+//RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                        // Generate sphere mesh (standard sphere)
+//RLAPI Mesh GenMeshCylinder(float radiusTop, float radiusBottom, float height, int slices);            // Generate cylinder mesh
+//RLAPI Mesh GenMeshTorus(float radius1, float radius2, int radSeg, int sides);                         // Generate torus mesh
+//RLAPI Mesh GenMeshTube(float radius1, float radius2, float height, int sides);                        // Generate tube mesh
 
 // Generate a mesh from heightmap
 // NOTE: Vertex data is uploaded to GPU
