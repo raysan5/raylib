@@ -659,6 +659,14 @@ void SetWindowIcon(Image image)
 #endif
 }
 
+// Set title for window (only PLATFORM_DESKTOP)
+void SetWindowTitle(const char *title)
+{
+#if defined(PLATFORM_DESKTOP)
+    glfwSetWindowTitle(window, title);
+#endif
+}
+
 // Set window position on screen (windowed mode)
 void SetWindowPosition(int x, int y)
 {
@@ -1150,6 +1158,16 @@ bool IsFileExtension(const char *fileName, const char *ext)
     }
 
     return result;
+}
+
+// Get the extension for a filename
+const char *GetExtension(const char *fileName)
+{
+    const char *dot = strrchr(fileName, '.');
+    
+    if (!dot || dot == fileName) return "";
+    
+    return (dot + 1);
 }
 
 // Get directory for a given fileName (with path)

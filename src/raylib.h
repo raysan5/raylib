@@ -701,6 +701,7 @@ RLAPI bool WindowShouldClose(void);                               // Check if KE
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
+RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
@@ -759,6 +760,7 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 
 // Files management functions
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+RLAPI const char *GetExtension(const char *fileName);             // Get file extension
 RLAPI const char *GetDirectoryPath(const char *fileName);         // Get directory for a given fileName (with path)
 RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory
 RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, returns true if success
