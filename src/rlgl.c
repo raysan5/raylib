@@ -814,6 +814,12 @@ void rlEnableTexture(unsigned int id)
     if (draws[drawsCounter - 1].textureId != id)
     {
         if (draws[drawsCounter - 1].vertexCount > 0) drawsCounter++;
+        
+        if (drawsCounter >= MAX_DRAWS_BY_TEXTURE)
+        {
+            rlglDraw();
+            drawsCounter = 1;
+        }
 
         draws[drawsCounter - 1].textureId = id;
         draws[drawsCounter - 1].vertexCount = 0;
@@ -2941,7 +2947,7 @@ void ToggleVrMode(void)
         
         // Reset viewport and default projection-modelview matrices
         rlViewport(0, 0, screenWidth, screenHeight);
-        projection = MatrixOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);
+        projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
         modelview = MatrixIdentity();
     }
     else vrStereoRender = true;
@@ -3043,7 +3049,7 @@ void EndVrDrawing(void)
 
         // Reset viewport and default projection-modelview matrices
         rlViewport(0, 0, screenWidth, screenHeight);
-        projection = MatrixOrtho(0, screenWidth, screenHeight, 0, 0.0f, 1.0f);
+        projection = MatrixOrtho(0.0, screenWidth, screenHeight, 0.0, 0.0, 1.0);
         modelview = MatrixIdentity();
         
         rlDisableDepthTest();
