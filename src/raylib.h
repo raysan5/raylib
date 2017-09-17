@@ -998,12 +998,14 @@ RLAPI void UnloadModel(Model model);                                            
 RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
 RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
 
-//RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                               // Generate plane mesh (with desired subdivisions)
+// Mesh generation functions
+RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                                 // Generate plane mesh (with subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
-//RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                        // Generate sphere mesh (standard sphere)
-//RLAPI Mesh GenMeshCylinder(float radiusTop, float radiusBottom, float height, int slices);            // Generate cylinder mesh
-//RLAPI Mesh GenMeshTorus(float radius1, float radius2, int radSeg, int sides);                         // Generate torus mesh
-//RLAPI Mesh GenMeshTube(float radius1, float radius2, float height, int sides);                        // Generate tube mesh
+RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                          // Generate sphere mesh (standard sphere)
+RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices);                                      // Generate half-sphere mesh (no bottom cap)
+RLAPI Mesh GenMeshCylinder(float radius, float height, int slices);                                     // Generate cylinder mesh
+RLAPI Mesh GenMeshTorus(float radius, float size, int radSeg, int sides);                               // Generate torus mesh
+RLAPI Mesh GenMeshKnot(float radius, float size, int radSeg, int sides);                                // Generate trefoil knot mesh
 RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
 RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
 

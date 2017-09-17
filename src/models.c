@@ -10,6 +10,10 @@
 *   #define SUPPORT_FILEFORMAT_MTL
 *       Selected desired fileformats to be supported for loading.
 *
+*   #define SUPPORT_MESH_GENERATION
+*       Support procedural mesh generation functions, uses external par_shapes.h library
+*       NOTE: Some generated meshes DO NOT include generated texture coordinates
+*
 *
 *   LICENSE: zlib/libpng
 *
@@ -36,6 +40,7 @@
 //-------------------------------------------------
 #define SUPPORT_FILEFORMAT_OBJ
 #define SUPPORT_FILEFORMAT_MTL
+#define SUPPORT_MESH_GENERATION
 //-------------------------------------------------
 
 #include "raylib.h"
@@ -647,13 +652,142 @@ void UnloadMesh(Mesh *mesh)
     rlUnloadMesh(mesh);
 }
 
+#if defined(SUPPORT_MESH_GENERATION)
+// Generate plane mesh (with subdivisions)
+Mesh GenMeshPlane(float width, float length, int resX, int resZ)
+{
+    Mesh mesh = { 0 };
+
+#define CUSTOM_MESH_GEN_PLANE
+#if defined(CUSTOM_MESH_GEN_PLANE)
+    resX++;
+    resZ++;
+    
+    // Vertices definition
+    int vertexCount = resX*resZ*6;  // 6 vertex by quad
+
+    Vector3 vertices[vertexCount];
+    for (int z = 0; z < resZ; z++)
+    {
+        // [-length/2, length/2]
+        float zPos = ((float)z/(resZ - 1) - 0.5f)*length;
+        for (int x = 0; x < resX; x++)
+        {
+            // [-width/2, width/2]
+            float xPos = ((float)x/(resX - 1) - 0.5f)*width;
+            vertices[x + z*resX] = (Vector3){ xPos, 0.0f, zPos };
+        }
+    }
+
+    // Normals definition
+    Vector3 normals[vertexCount];
+    for (int n = 0; n < vertexCount; n++) normals[n] = (Vector3){ 0.0f, 1.0f, 0.0f };   // Vector3.up;
+
+    // TexCoords definition		
+    Vector2 texcoords[vertexCount];
+    for (int v = 0; v < resZ; v++)
+    {
+        for (int u = 0; u < resX; u++)
+        {
+            texcoords[u + v*resX] = (Vector2){ (float)u/(resX - 1), (float)v/(resZ - 1) };
+        }
+    }
+
+    // Triangles definition (indices)
+    int nbFaces = (resX - 1)*(resZ - 1);
+    int triangles[nbFaces*6];
+    int t = 0;
+    for (int face = 0; face < nbFaces; face++)
+    {
+        // Retrieve lower left corner from face ind
+        int i = face % (resX - 1) + (face/(resZ - 1)*resX);
+
+        triangles[t++] = i + resX;
+        triangles[t++] = i + 1;
+        triangles[t++] = i;
+
+        triangles[t++] = i + resX;	
+        triangles[t++] = i + resX + 1;
+        triangles[t++] = i + 1;
+    }
+
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = nbFaces*2;
+    mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
+    mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+    mesh.indices = (unsigned short *)malloc(mesh.triangleCount*3*sizeof(unsigned short));
+    
+    // Mesh vertices position array
+    for (int i = 0; i < mesh.vertexCount; i++)
+    {
+        mesh.vertices[3*i] = vertices[i].x;
+        mesh.vertices[3*i + 1] = vertices[i].y;
+        mesh.vertices[3*i + 2] = vertices[i].z;
+    }
+    
+    // Mesh texcoords array
+    for (int i = 0; i < mesh.vertexCount; i++)
+    {
+        mesh.texcoords[2*i] = texcoords[i].x;
+        mesh.texcoords[2*i + 1] = texcoords[i].y;
+    }
+    
+    // Mesh normals array
+    for (int i = 0; i < mesh.vertexCount; i++)
+    {
+        mesh.normals[3*i] = normals[i].x;
+        mesh.normals[3*i + 1] = normals[i].y;
+        mesh.normals[3*i + 2] = normals[i].z;
+    }
+    
+    // Mesh indices array initialization
+    for (int i = 0; i < mesh.triangleCount*3; i++) mesh.indices[i] = triangles[i];
+    
+#else       // Use par_shapes library to generate plane mesh
+
+    par_shapes_mesh *plane = par_shapes_create_plane(resX, resZ);   // No normals/texcoords generated!!!
+    par_shapes_scale(plane, width, length, 1.0f);
+    par_shapes_rotate(plane, -PI/2.0f, (float[]){ 1, 0, 0 });
+    par_shapes_translate(plane, -width/2, 0.0f, length/2);
+    
+    mesh.vertices = (float *)malloc(plane->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(plane->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)malloc(plane->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = plane->ntriangles*3;
+    mesh.triangleCount = plane->ntriangles;
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = plane->points[plane->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = plane->points[plane->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = plane->points[plane->triangles[k]*3 + 2];
+        
+        mesh.normals[k*3] = plane->normals[plane->triangles[k]*3];
+        mesh.normals[k*3 + 1] = plane->normals[plane->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = plane->normals[plane->triangles[k]*3 + 2];
+        
+        mesh.texcoords[k*2] = plane->tcoords[plane->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = plane->tcoords[plane->triangles[k]*2 + 1];
+    }
+
+    par_shapes_free_mesh(plane);
+#endif
+
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+
+    return mesh;
+}
+
 // Generated cuboid mesh
-// NOTE: Vertex data is uploaded to GPU
 Mesh GenMeshCube(float width, float height, float length)
 {
     Mesh mesh = { 0 };
 
-    /*
+#define CUSTOM_MESH_GEN_CUBE
+#if defined(CUSTOM_MESH_GEN_CUBE)
     float vertices[] = {
         -width/2, -height/2, length/2,
         width/2, -height/2, length/2,
@@ -763,12 +897,23 @@ Mesh GenMeshCube(float width, float height, float length)
     
     mesh.vertexCount = 24;
     mesh.triangleCount = 12;
-    */
     
-    // TODO: Just testing par_shapes mesh generation functions
-    //--------------------------------------------------------
-    par_shapes_mesh *cube = par_shapes_create_cube();   // No normals/texcoords generated!!!
+#else               // Use par_shapes library to generate cube mesh
+/*
+// Platonic solids:
+par_shapes_mesh* par_shapes_create_tetrahedron();       // 4 sides polyhedron (pyramid)
+par_shapes_mesh* par_shapes_create_cube();              // 6 sides polyhedron (cube)
+par_shapes_mesh* par_shapes_create_octahedron();        // 8 sides polyhedron (dyamond)
+par_shapes_mesh* par_shapes_create_dodecahedron();      // 12 sides polyhedron
+par_shapes_mesh* par_shapes_create_icosahedron();       // 20 sides polyhedron
+*/
+    // Platonic solid generation: cube (6 sides)
+    // NOTE: No normals/texcoords generated by default
+    par_shapes_mesh *cube = par_shapes_create_cube();
+    cube->tcoords = PAR_MALLOC(float, 2*cube->npoints);
+    for (int i = 0; i < 2*cube->npoints; i++) cube->tcoords[i] = 0.0f;    
     par_shapes_scale(cube, width, height, length);
+    par_shapes_translate(cube, -width/2, 0.0f, -length/2);
     par_shapes_compute_normals(cube);
     
     mesh.vertices = (float *)malloc(cube->ntriangles*3*3*sizeof(float));
@@ -777,9 +922,6 @@ Mesh GenMeshCube(float width, float height, float length)
 
     mesh.vertexCount = cube->ntriangles*3;
     mesh.triangleCount = cube->ntriangles;
-    
-    //for (int i = 0; i < cube->ntriangles*3; i++) printf("%i ", cube->triangles[i]);
-    //for (int i = 0; i < cube->npoints*3; i += 3) printf("\nv%.1f %.1f %.1f ", cube->points[i], cube->points[i + 1], cube->points[i + 2]);
 
     for (int k = 0; k < mesh.vertexCount; k++)
     {
@@ -791,11 +933,50 @@ Mesh GenMeshCube(float width, float height, float length)
         mesh.normals[k*3 + 1] = cube->normals[cube->triangles[k]*3 + 1];
         mesh.normals[k*3 + 2] = cube->normals[cube->triangles[k]*3 + 2];
         
-        mesh.texcoords[k*2] = 0.0f;//cube->tcoords[cube->triangles[k]*2];
-        mesh.texcoords[k*2 + 1] = 0.0f;//cube->tcoords[cube->triangles[k]*2 + 1];
+        mesh.texcoords[k*2] = cube->tcoords[cube->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = cube->tcoords[cube->triangles[k]*2 + 1];
     }
 
     par_shapes_free_mesh(cube);
+#endif
+
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+
+    return mesh;
+}
+
+// Generate sphere mesh (standard sphere)
+RLAPI Mesh GenMeshSphere(float radius, int rings, int slices)
+{
+    Mesh mesh = { 0 };
+
+    par_shapes_mesh *sphere = par_shapes_create_parametric_sphere(slices, rings);
+    par_shapes_scale(sphere, radius, radius, radius);
+    // NOTE: Soft normals are computed internally 
+    
+    mesh.vertices = (float *)malloc(sphere->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(sphere->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)malloc(sphere->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = sphere->ntriangles*3;
+    mesh.triangleCount = sphere->ntriangles;
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = sphere->points[sphere->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = sphere->points[sphere->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = sphere->points[sphere->triangles[k]*3 + 2];
+        
+        mesh.normals[k*3] = sphere->normals[sphere->triangles[k]*3];
+        mesh.normals[k*3 + 1] = sphere->normals[sphere->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = sphere->normals[sphere->triangles[k]*3 + 2];
+        
+        mesh.texcoords[k*2] = sphere->tcoords[sphere->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = sphere->tcoords[sphere->triangles[k]*2 + 1];
+    }
+
+    par_shapes_free_mesh(sphere);
     
     // Upload vertex data to GPU (static mesh)
     rlLoadMesh(&mesh, false);  
@@ -803,10 +984,183 @@ Mesh GenMeshCube(float width, float height, float length)
     return mesh;
 }
 
-//RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                        // Generate sphere mesh (standard sphere)
-//RLAPI Mesh GenMeshCylinder(float radiusTop, float radiusBottom, float height, int slices);            // Generate cylinder mesh
-//RLAPI Mesh GenMeshTorus(float radius1, float radius2, int radSeg, int sides);                         // Generate torus mesh
-//RLAPI Mesh GenMeshTube(float radius1, float radius2, float height, int sides);                        // Generate tube mesh
+// Generate hemi-sphere mesh (half sphere, no bottom cap)
+RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices)
+{
+    Mesh mesh = { 0 };
+
+    par_shapes_mesh *sphere = par_shapes_create_hemisphere(slices, rings);
+    par_shapes_scale(sphere, radius, radius, radius);
+    // NOTE: Soft normals are computed internally 
+    
+    mesh.vertices = (float *)malloc(sphere->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(sphere->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)malloc(sphere->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = sphere->ntriangles*3;
+    mesh.triangleCount = sphere->ntriangles;
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = sphere->points[sphere->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = sphere->points[sphere->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = sphere->points[sphere->triangles[k]*3 + 2];
+        
+        mesh.normals[k*3] = sphere->normals[sphere->triangles[k]*3];
+        mesh.normals[k*3 + 1] = sphere->normals[sphere->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = sphere->normals[sphere->triangles[k]*3 + 2];
+        
+        mesh.texcoords[k*2] = sphere->tcoords[sphere->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = sphere->tcoords[sphere->triangles[k]*2 + 1];
+    }
+
+    par_shapes_free_mesh(sphere);
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+
+    return mesh;
+}
+
+// Generate cylinder mesh
+Mesh GenMeshCylinder(float radius, float height, int slices)
+{
+    Mesh mesh = { 0 };
+
+    // Instance a cylinder that sits on the Z=0 plane using the given tessellation
+    // levels across the UV domain.  Think of "slices" like a number of pizza
+    // slices, and "stacks" like a number of stacked rings.  
+    // Height and radius are both 1.0, but they can easily be changed with par_shapes_scale
+    par_shapes_mesh *cylinder = par_shapes_create_cylinder(slices, 8);
+    par_shapes_scale(cylinder, radius, radius, height);
+    par_shapes_rotate(cylinder, -PI/2.0f, (float[]){ 1, 0, 0 });
+
+    // Generate an orientable disk shape (top cap)
+    par_shapes_mesh *capTop = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, 1 });
+    capTop->tcoords = PAR_MALLOC(float, 2*capTop->npoints);
+    for (int i = 0; i < 2*capTop->npoints; i++) capTop->tcoords[i] = 0.0f;
+    par_shapes_rotate(capTop, -PI/2.0f, (float[]){ 1, 0, 0 });
+    par_shapes_translate(capTop, 0, height, 0);
+    
+    // Generate an orientable disk shape (bottom cap)
+    par_shapes_mesh *capBottom = par_shapes_create_disk(radius, slices, (float[]){ 0, 0, 0 }, (float[]){ 0, 0, -1 });
+    capBottom->tcoords = PAR_MALLOC(float, 2*capBottom->npoints);
+    for (int i = 0; i < 2*capBottom->npoints; i++) capBottom->tcoords[i] = 0.95f;
+    par_shapes_rotate(capBottom, PI/2.0f, (float[]){ 1, 0, 0 });
+    
+    par_shapes_merge_and_free(cylinder, capTop);
+    par_shapes_merge_and_free(cylinder, capBottom);
+    
+    mesh.vertices = (float *)malloc(cylinder->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(cylinder->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)malloc(cylinder->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = cylinder->ntriangles*3;
+    mesh.triangleCount = cylinder->ntriangles;
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = cylinder->points[cylinder->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = cylinder->points[cylinder->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = cylinder->points[cylinder->triangles[k]*3 + 2];
+        
+        mesh.normals[k*3] = cylinder->normals[cylinder->triangles[k]*3];
+        mesh.normals[k*3 + 1] = cylinder->normals[cylinder->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = cylinder->normals[cylinder->triangles[k]*3 + 2];
+        
+        mesh.texcoords[k*2] = cylinder->tcoords[cylinder->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = cylinder->tcoords[cylinder->triangles[k]*2 + 1];
+    }
+
+    par_shapes_free_mesh(cylinder);
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+
+    return mesh;
+}
+
+// Generate torus mesh
+Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
+{
+    Mesh mesh = { 0 };
+
+    if (radius > 1.0f) radius = 1.0f;
+    else if (radius < 0.1f) radius = 0.1f;
+    
+    // Create a donut that sits on the Z=0 plane with the specified inner radius
+    // The outer radius can be controlled with par_shapes_scale
+    par_shapes_mesh *torus = par_shapes_create_torus(radSeg, sides, radius);
+    par_shapes_scale(torus, size/2, size/2, size/2);
+
+    mesh.vertices = (float *)malloc(torus->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(torus->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)malloc(torus->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = torus->ntriangles*3;
+    mesh.triangleCount = torus->ntriangles;
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = torus->points[torus->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = torus->points[torus->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = torus->points[torus->triangles[k]*3 + 2];
+        
+        mesh.normals[k*3] = torus->normals[torus->triangles[k]*3];
+        mesh.normals[k*3 + 1] = torus->normals[torus->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = torus->normals[torus->triangles[k]*3 + 2];
+        
+        mesh.texcoords[k*2] = torus->tcoords[torus->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = torus->tcoords[torus->triangles[k]*2 + 1];
+    }
+
+    par_shapes_free_mesh(torus);
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+
+    return mesh;
+}
+
+// Generate trefoil knot mesh
+Mesh GenMeshKnot(float radius, float size, int radSeg, int sides)
+{
+    Mesh mesh = { 0 };
+    
+    if (radius > 3.0f) radius = 3.0f;
+    else if (radius < 0.5f) radius = 0.5f;
+
+    par_shapes_mesh *knot = par_shapes_create_trefoil_knot(radSeg, sides, radius);
+    par_shapes_scale(knot, size, size, size);
+
+    mesh.vertices = (float *)malloc(knot->ntriangles*3*3*sizeof(float));
+    mesh.texcoords = (float *)malloc(knot->ntriangles*3*2*sizeof(float));
+    mesh.normals = (float *)malloc(knot->ntriangles*3*3*sizeof(float));
+
+    mesh.vertexCount = knot->ntriangles*3;
+    mesh.triangleCount = knot->ntriangles;
+
+    for (int k = 0; k < mesh.vertexCount; k++)
+    {
+        mesh.vertices[k*3] = knot->points[knot->triangles[k]*3];
+        mesh.vertices[k*3 + 1] = knot->points[knot->triangles[k]*3 + 1];
+        mesh.vertices[k*3 + 2] = knot->points[knot->triangles[k]*3 + 2];
+        
+        mesh.normals[k*3] = knot->normals[knot->triangles[k]*3];
+        mesh.normals[k*3 + 1] = knot->normals[knot->triangles[k]*3 + 1];
+        mesh.normals[k*3 + 2] = knot->normals[knot->triangles[k]*3 + 2];
+        
+        mesh.texcoords[k*2] = knot->tcoords[knot->triangles[k]*2];
+        mesh.texcoords[k*2 + 1] = knot->tcoords[knot->triangles[k]*2 + 1];
+    }
+
+    par_shapes_free_mesh(knot);
+    
+    // Upload vertex data to GPU (static mesh)
+    rlLoadMesh(&mesh, false);  
+
+    return mesh;
+}
 
 // Generate a mesh from heightmap
 // NOTE: Vertex data is uploaded to GPU
@@ -1276,6 +1630,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     return mesh;
 }
+#endif      // SUPPORT_MESH_GENERATION
 
 // Load material data (from file)
 Material LoadMaterial(const char *fileName)
