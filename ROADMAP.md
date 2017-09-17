@@ -7,12 +7,14 @@ Here it is a wish-list with features and ideas to improve the library.
 Note that [raylib source code](https://github.com/raysan5/raylib/tree/develop/src) has some *TODO* marks around code with pending things to review and improve. Check [GitHub Issues](https://github.com/raysan5/raylib/issues) for further details!
 
 **raylib 1.x**
- - [ ] Improved Materials system with PBR support
  - [ ] Basic GPU stats sytem (memory, draws, time...)
  - [ ] Improved custom file-format (.rres) and packaging tool
- - [ ] Procedural image generation functions (spot, gradient, noise...)
- - [ ] Procedural mesh generation functions (cube, cone, sphere...)
  - [ ] Touch-based camera controls for Android
+ 
+**raylib 1.8**
+ - [x] Improved Materials system with PBR support
+ - [x] Procedural image generation functions (spot, gradient, noise...)
+ - [x] Procedural mesh generation functions (cube, sphere...)
 
 **raylib 1.7**
  - [x] Support configuration flags
