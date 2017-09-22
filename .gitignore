@@ -143,6 +143,7 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 build
+!templates/android_project/Makefile
 
 # Unignore These makefiles...
 !examples/CMakeLists.txt
