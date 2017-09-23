@@ -21,6 +21,9 @@
 #
 #**************************************************************************************************
 
+# Define raylib platform to compile for
+PLATFORM ?= PLATFORM_ANDROID
+
 # Android project name (.apk)  
 PROJECT_NAME = NativeActivity
 PROJECT_DIR = ./
@@ -29,11 +32,8 @@ PROJECT_DIR = ./
 # NOTE: It should match the name defined in the AndroidManifest.xml
 LIBRARY_NAME = raylib_game
 
-KEYSTORE_USER = raylib
+# Generated key pass
 KEYSTORE_PASS = raylib
-
-# define raylib platform to compile for
-PLATFORM ?= PLATFORM_ANDROID
 
 # Required path variables
 # NOTE: JAVA_HOME must be set to JDK
@@ -46,22 +46,21 @@ ANDROID_BUILD_TOOLS = C:/android-sdk/build-tools/25.0.3
 CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
 AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
 
-# define compiler flags
+# Define compiler flags
 CFLAGS = -O2 -s -Wall -std=c99 -DPLATFORM_ANDROID -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
 
-# define any directories containing required header files
+# Define any directories containing required header files
 INCLUDES = -I. -Ijni/include -I$(ANDROID_NDK)/sources/android/native_app_glue
 
-# define library paths containing required libs
-LFLAGS = -L. -Ljni/libs -Ljni
+# Define library paths containing required libs
+LFLAGS = -L. -Ljni/libs -Ljni -Ltemp/lib
 
-# define any libraries to link into executable
+# Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
 LIBS = -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES
 
 # Building APK
-#-----------------
-# typing 'make' will invoke the default target entry called 'all',
+# NOTE: typing 'make' will invoke the default target entry called 'all',
 all: project_dirs \
      native_app_glue \
      project_code \
@@ -73,7 +72,7 @@ all: project_dirs \
      apk_signing \
      apk_zip_align
 
-# create required temp directories for APK building
+# Create required temp directories for APK building
 project_dirs:
 	if not exist temp mkdir temp 
 	if not exist temp\obj mkdir temp\obj
@@ -81,62 +80,62 @@ project_dirs:
 	if not exist temp\lib mkdir temp\lib
 	if not exist temp\bin mkdir temp\bin
      
-# compile native_app_glue static library
-# OUTPUT: $(PROJECT_DIR)/jni/libnative_app_glue.a
+# Compile native_app_glue as static library
+# OUTPUT: $(PROJECT_DIR)/temp/obj/libnative_app_glue.a
 native_app_glue:
-	$(CC) -c $(ANDROID_NDK)/sources/android/native_app_glue/android_native_app_glue.c -o jni/native_app_glue.o $(CFLAGS)
-	$(AR) rcs $(PROJECT_DIR)/jni/libnative_app_glue.a jni/native_app_glue.o
+	$(CC) -c $(ANDROID_NDK)/sources/android/native_app_glue/android_native_app_glue.c -o temp/obj/native_app_glue.o $(CFLAGS)
+	$(AR) rcs $(PROJECT_DIR)/temp/lib/libnative_app_glue.a temp/obj/native_app_glue.o
 
-# compile project code as shared libraries
+# Compile project code as shared libraries
 # OUTPUT: $(PROJECT_DIR)/temp/lib/lib$(LIBRARY_NAME).so 
 project_code:
-	$(CC) -c jni/basic_game.c -o jni/basic_game.o $(INCLUDES) -I$(ANDROID_NDK)/sources/android/native_app_glue $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
-	$(CC) -o temp/lib/lib$(LIBRARY_NAME).so jni/basic_game.o -shared $(INCLUDES) $(LFLAGS) $(LIBS) -lnative_app_glue
+	$(CC) -c jni/basic_game.c -o temp/obj/basic_game.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
+	$(CC) -o temp/lib/lib$(LIBRARY_NAME).so temp/obj/basic_game.o -shared $(INCLUDES) $(LFLAGS) $(LIBS) -lnative_app_glue
 
-# Generate key for APK
+# Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
 gen_keystore: 
-	$(JAVA_HOME)/bin/keytool -genkeypair -validity 1000 -dname "CN=raylib,O=Android,C=JPN" -keystore temp/$(PROJECT_NAME).keystore -storepass $(KEYSTORE_USER) -keypass $(KEYSTORE_PASS) -alias $(PROJECT_NAME)Key -keyalg RSA
+	$(JAVA_HOME)/bin/keytool -genkeypair -validity 1000 -dname "CN=raylib,O=Android,C=JPN" -keystore temp/$(PROJECT_NAME).keystore -storepass $(KEYSTORE_PASS) -keypass $(KEYSTORE_PASS) -alias $(PROJECT_NAME)Key -keyalg RSA
 
-# Creating src/com/example/$(LIBRARY_NAME)/R.java
-# OUTPUT: $(PROJECT_DIR)/temp/src/com/example/$(LIBRARY_NAME)/R.java
+# Create temp/src/com/raylib/$(LIBRARY_NAME)/R.java
+# OUTPUT: $(PROJECT_DIR)/temp/src/com/raylib/$(LIBRARY_NAME)/R.java
 # NOTE: DEPENDS on res/values/strings.xml
 project_package:
 	$(ANDROID_BUILD_TOOLS)/aapt package -f -m -S res -J temp/src -M AndroidManifest.xml -I $(ANDROID_HOME)/platforms/android-16/android.jar
 
-# Creating obj/com/example/$(LIBRARY_NAME)/R.class   
-# OUTPUT: $(PROJECT_DIR)/temp/obj/com/example/$(LIBRARY_NAME)/R.class
+# Create temp/obj/com/raylib/$(LIBRARY_NAME)/R.class   
+# OUTPUT: $(PROJECT_DIR)/temp/obj/com/raylib/$(LIBRARY_NAME)/R.class
 project_class:
 	$(JAVA_HOME)/bin/javac -source 1.7 -target 1.7 -d temp/obj -classpath $(ANDROID_HOME)/platforms/android-16/android.jar -sourcepath temp/src temp/src/com/raylib/game_sample/R.java
 
-# Creating bin/classes/dex
-# OUTPUT $(PROJECT_DIR)/bin/classes.dex
-# NOTE: DEPENDS on obj/com/example/native_activity/R.class
+# Create temp/bin/classes.dex
+# OUTPUT: $(PROJECT_DIR)/bin/classes.dex
+# NOTE: DEPENDS on temp/obj/com/raylib/$(LIBRARY_NAME)/R.class
 project_class_dex:
 	$(ANDROID_BUILD_TOOLS)/dx --dex --output=temp/bin/classes.dex temp/obj
 
-# Creating bin/$(PROJECT_NAME).unsigned.apk
-# NOTE: DEPENDS on bin/classes.dex lib/arm64-v8a/libnative-activity.so
-# Use -A resources to define additional directory in which to find raw asset files
+# Create temp/bin/$(PROJECT_NAME).unsigned.apk
+# NOTE: DEPENDS on temp/bin/classes.dex and temp/lib/lib$(LIBRARY_NAME).so
+# NOTE: Use -A resources to define additional directory in which to find raw asset files
 project_apk:
 	$(ANDROID_BUILD_TOOLS)/aapt package -f -m -M AndroidManifest.xml -S res -A assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F temp/bin/$(PROJECT_NAME).unsigned.apk -J temp/bin
 	$(ANDROID_BUILD_TOOLS)/aapt add $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk temp/lib/lib$(LIBRARY_NAME).so
 
-# Creating bin/$(PROJECT_NAME).signed.apk
+# Create temp/bin/$(PROJECT_NAME).signed.apk
 apk_signing:
-	$(JAVA_HOME)/bin/jarsigner -keystore temp/$(PROJECT_NAME).keystore -storepass $(KEYSTORE_USER) -keypass $(KEYSTORE_PASS) -signedjar $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).signed.apk temp/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_NAME)Key
+	$(JAVA_HOME)/bin/jarsigner -keystore temp/$(PROJECT_NAME).keystore -storepass $(KEYSTORE_PASS) -keypass $(KEYSTORE_PASS) -signedjar $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).signed.apk temp/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_NAME)Key
 
-# Creating bin/$(PROJECT_NAME).apk 
+# Create temp/bin/$(PROJECT_NAME).apk 
 apk_zip_align:
 	$(ANDROID_BUILD_TOOLS)/zipalign -f 4 temp/bin/$(PROJECT_NAME).signed.apk $(PROJECT_NAME).apk
 
-# Deploy to device
+# Deploy $(PROJECT_NAME).apk to device
 deploy:
 	$(ANDROID_HOME)/platform-tools/adb install -r $(PROJECT_NAME).apk
 	$(ANDROID_HOME)/platform-tools/adb logcat -c
 	$(ANDROID_HOME)/platform-tools/adb logcat *:W
 
-# clean everything
+# Clean everything
 clean:
 	del temp\bin\* temp\lib\* temp\obj\* temp\src\* /f/s/q
 	del temp\*.keystore
