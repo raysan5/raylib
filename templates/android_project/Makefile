@@ -40,7 +40,8 @@ KEYSTORE_PASS = raylib
 ANDROID_HOME = C:/android-sdk
 ANDROID_NDK = C:/android-ndk
 ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
-ANDROID_BUILD_TOOLS = C:/android-sdk/build-tools/25.0.3
+ANDROID_BUILD_TOOLS = C:/android-sdk/build-tools/26.0.1
+JAVA_HOME = C:/PROGRA~1/Java/jdk1.8.0_25
 
 # Compilers
 CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
