@@ -1068,7 +1068,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 
     Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
 
-    // NOTE: GetTextureData() not available in OpenGL ES
+    // NOTE: glGetTexImage() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
 
     ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Convert to 32 bit for color tint

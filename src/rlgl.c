@@ -2212,7 +2212,6 @@ void *rlReadTexturePixels(Texture2D texture)
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
 
 #define GET_TEXTURE_FBO_OPTION_1    // It works
-
 #if defined(GET_TEXTURE_FBO_OPTION_1)
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
     glBindTexture(GL_TEXTURE_2D, 0);
