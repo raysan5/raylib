@@ -18,5 +18,5 @@ raylib = library('raylib',
                   source_c,
                   dependencies : [ glfw_dep, gl_dep, openal_dep, m_dep, x11_dep],
                   install : true,
-                  version : '1.7.0')
+                  version : '1.8.0')
 
