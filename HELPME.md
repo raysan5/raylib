@@ -8,12 +8,12 @@ The following help is highly appreciated:
 
 	- C programming - Can you write / review / test / improve the code? 
 	- Documentation / Tutorials / Example writters - Can you write some tutorial / example?
-	- Web Development - Can you help with the web? Can you setup a forum?
+	- Web Development - Can you help with the web? SEO, style, code writting: https://github.com/raysan5/raylib.com
 	- Porting to Linux, OSX, RaspberryPi, consoles... - Can you compile and test raylib on another systems?
 	- Testers of current features and multiple systems - Can you find some bug on raylib?
 
 If you can not help on any of the above points but you still want to contribute in some way... please, consider helping 
-with a small [donation](http://www.raylib.com/helpme.html) or contributing with [raylib patreon](https://www.patreon.com/raysan5). It will really motivate to continue improving this project (and pay some bills… or some coffee).
+with a small [donation](http://www.raylib.com/helpme.html) or contributing with [raylib patreon](https://www.patreon.com/raysan5). It will really motivate to continue improving this project...
 
 raylib philosophy
 ------------------

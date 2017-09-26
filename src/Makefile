@@ -97,14 +97,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android NDK path
-    # NOTE: Required for standalone toolchain generation
-    ANDROID_NDK = $(ANDROID_NDK_HOME)
-    
-    # Android standalone toolchain path
-    # NOTE: This path is also used if toolchain generation
-    #ANDROID_TOOLCHAIN = $(CURDIR)/toolchain
-    ANDROID_TOOLCHAIN = $(RAYLIB_PATH)/android-toolchain
+    # Android required path variables
+    ANDROID_NDK = C:/android-ndk
+    ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
 
     # Android architecture: ARM or ARM64
     ANDROID_ARCH ?= ARM
@@ -215,6 +210,10 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
+endif
+
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes

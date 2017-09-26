@@ -23,6 +23,9 @@
 *       Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
 *       If not defined only three image editing functions supported: ImageFormat(), ImageAlphaMask(), ImageToPOT()
 *
+*   #define SUPPORT_IMAGE_GENERATION
+*       Support proedural image generation functionality (gradient, spot, perlin-noise, cellular)
+*
 *   DEPENDENCIES:
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                          NOTE: stb_image has been slightly modified to support Android platform.
@@ -56,6 +59,7 @@
 #define SUPPORT_FILEFORMAT_DDS
 #define SUPPORT_FILEFORMAT_HDR
 #define SUPPORT_IMAGE_MANIPULATION
+#define SUPPORT_IMAGE_GENERATION
 //-------------------------------------------------
 
 #include "raylib.h"
@@ -1064,7 +1068,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 
     Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
 
-    // NOTE: GetTextureData() not available in OpenGL ES
+    // NOTE: glGetTexImage() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
 
     ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Convert to 32 bit for color tint
@@ -1447,6 +1451,7 @@ void ImageColorBrightness(Image *image, int brightness)
 }
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
+#if defined(SUPPORT_IMAGE_GENERATION)
 // Generate image: vertical gradient
 Image GenImageGradientV(int width, int height, Color top, Color bottom)
 {
@@ -1647,6 +1652,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 
     return image;
 }
+#endif      // SUPPORT_IMAGE_GENERATION
 
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D *texture)

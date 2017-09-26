@@ -34,6 +34,14 @@
 *
 **********************************************************************************************/
 
+/*  
+References:
+    RIFF file-format:  http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html
+    ZIP file-format:   https://en.wikipedia.org/wiki/Zip_(file_format)
+                       http://www.onicos.com/staff/iz/formats/zip.html
+    XNB file-format:   http://xbox.create.msdn.com/en-US/sample/xnb_format
+*/
+
 #ifndef RRES_H
 #define RRES_H
 
@@ -75,6 +83,9 @@
         void *data;                 // Resource data pointer (4 byte)
     } RRESData;
     
+    // RRES type (pointer to RRESData array)
+    typedef struct RRESData *RRES;  // Resource pointer
+    
     // RRESData type
     typedef enum { 
         RRES_TYPE_RAW = 0, 
@@ -83,12 +94,25 @@
         RRES_TYPE_VERTEX, 
         RRES_TYPE_TEXT,
         RRES_TYPE_FONT_IMAGE,
-        RRES_TYPE_FONT_CHARDATA,        // Character { int value, recX, recY, recWidth, recHeight, offsetX, offsetY, xAdvance } 
+        RRES_TYPE_FONT_CHARDATA,    // CharInfo { int value, recX, recY, recWidth, recHeight, offsetX, offsetY, xAdvance } 
         RRES_TYPE_DIRECTORY
     } RRESDataType;
     
-    // RRES type (pointer to RRESData array)
-    typedef struct RRESData *RRES;
+// Parameters information depending on resource type
+
+// RRES_TYPE_RAW params:        <custom>
+// RRES_TYPE_IMAGE params:      width, height, mipmaps, format
+// RRES_TYPE_WAVE params:       sampleCount, sampleRate, sampleSize, channels
+// RRES_TYPE_VERTEX params:     vertexCount, vertexType, vertexFormat           // Use masks instead?
+// RRES_TYPE_TEXT params:       charsCount, cultureCode
+// RRES_TYPE_FONT_IMAGE params: width, height, format, mipmaps;
+// RRES_TYPE_FONT_CHARDATA params:  charsCount, baseSize
+// RRES_TYPE_DIRECTORY params:  fileCount, directoryCount
+
+// SpriteFont = RRES_TYPE_FONT_IMAGE chunk + RRES_TYPE_FONT_DATA chunk
+// Mesh = multiple RRES_TYPE_VERTEX chunks
+    
+
 #endif
 
 //----------------------------------------------------------------------------------
@@ -102,6 +126,54 @@
 //RRESDEF RRESData LoadResourceData(const char *rresFileName, int rresId, int part);
 RRESDEF RRES LoadResource(const char *fileName, int rresId);
 RRESDEF void UnloadResource(RRES rres);
+
+/*
+QUESTION: How to load each type of data from RRES ?
+
+rres->type == RRES_TYPE_RAW
+unsigned char data = (unsigned char *)rres[0]->data;
+
+rres->type == RRES_TYPE_IMAGE
+Image image;
+image.data = rres[0]->data;        // Be careful, duplicate pointer
+image.width = rres[0]->param1;
+image.height = rres[0]->param2;
+image.mipmaps = rres[0]->param3;
+image.format =  rres[0]->format;
+
+rres->type == RRES_TYPE_WAVE
+Wave wave;
+wave.data = rres[0]->data;
+wave.sampleCount = rres[0]->param1;
+wave.sampleRate = rres[0]->param2;
+wave.sampleSize = rres[0]->param3;
+wave.channels = rres[0]->param4;
+
+rres->type == RRES_TYPE_VERTEX (multiple parts)
+Mesh mesh;
+mesh.vertexCount = rres[0]->param1;
+mesh.vertices = (float *)rres[0]->data;
+mesh.texcoords = (float *)rres[1]->data;
+mesh.normals = (float *)rres[2]->data;
+mesh.tangents = (float *)rres[3]->data;
+mesh.tangents = (unsigned char *)rres[4]->data;
+
+rres->type == RRES_TYPE_TEXT
+unsigned char *text = (unsigned char *)rres->data;
+Shader shader = LoadShaderText(text, rres->param1);     Shader LoadShaderText(const char *shdrText, int length);
+
+rres->type == RRES_TYPE_FONT_IMAGE      (multiple parts)
+rres->type == RRES_TYPE_FONT_CHARDATA   
+SpriteFont font;
+font.texture = LoadTextureFromImage(image);     // rres[0]
+font.chars = (CharInfo *)rres[1]->data;
+font.charsCount = rres[1]->param1;
+font.baseSize = rres[1]->param2;
+
+rres->type == RRES_TYPE_DIRECTORY
+unsigned char *fileNames = (unsigned char *)rres[0]->data;  // fileNames separed by \n
+int filesCount = rres[0]->param1;
+*/
 
 #endif // RRES_H
 
@@ -169,6 +241,7 @@ typedef enum {
     // gzip, zopfli, lzo, zstd  // Other compression algorythms...
 } RRESCompressionType;
 
+// Encryption types
 typedef enum {
     RRES_CRYPTO_NONE = 0,       // No data encryption
     RRES_CRYPTO_XOR,            // XOR (128 bit) encryption
@@ -179,6 +252,7 @@ typedef enum {
     // twofish, RC5, RC6        // Other encryption algorythm...
 } RRESEncryptionType;
 
+// Image/Texture data type
 typedef enum {
     RRES_IM_UNCOMP_GRAYSCALE = 1,     // 8 bit per pixel (no alpha)
     RRES_IM_UNCOMP_GRAY_ALPHA,        // 16 bpp (2 channels)
@@ -201,6 +275,7 @@ typedef enum {
     //...
 } RRESImageFormat;
 
+// Vertex data type
 typedef enum {
     RRES_VERT_POSITION,
     RRES_VERT_TEXCOORD1,
@@ -214,6 +289,7 @@ typedef enum {
     //...
 } RRESVertexType;
 
+// Vertex data format type
 typedef enum {
     RRES_VERT_BYTE,
     RRES_VERT_SHORT,
@@ -275,10 +351,10 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
                 // Read resource info and parameters
                 fread(&infoHeader, sizeof(RRESInfoHeader), 1, rresFile);
                 
-                rres = (RRES)malloc(sizeof(RRESData)*infoHeader.partsCount);
-                
                 if (infoHeader.id == rresId)
                 {
+                    rres = (RRES)malloc(sizeof(RRESData)*infoHeader.partsCount);
+                                    
                     // Load all required resources parts
                     for (int k = 0; k < infoHeader.partsCount; k++)
                     {
@@ -327,8 +403,11 @@ RRESDEF RRES LoadResource(const char *fileName, int rresId)
     return rres;
 }
 
+// Unload resource data
 RRESDEF void UnloadResource(RRES rres)
 {
+    // TODO: When you load resource... how many parts conform it? depends on type? --> Not clear...
+    
     if (rres[0].data != NULL) free(rres[0].data);
 }
 
@@ -401,28 +480,4 @@ void TraceLog(int logType, const char *text, ...)
 }
 #endif
 
-#endif // RAYGUI_IMPLEMENTATION
-
-/*
-Mesh LoadMeshEx(int numVertex, float *vData, float *vtData, float *vnData, Color *cData);
-Mesh LoadMeshEx(rres.param1, rres.data, rres.data + offset, rres.data + offset*2, rres.data + offset*3);
-
-Shader LoadShader(const char *vsText, int vsLength);
-Shader LoadShaderV(rres.data, rres.param1);
-
-// Parameters information depending on resource type
-
-// RRES_TYPE_IMAGE params:      imgWidth, imgHeight, format, mipmaps;
-// RRES_TYPE_WAVE params:       sampleCount, sampleRate, sampleSize, channels;
-// RRES_TYPE_FONT_IMAGE params: imgWidth, imgHeight, format, mipmaps;
-// RRES_TYPE_FONT_DATA params:  charsCount, baseSize
-// RRES_TYPE_VERTEX params:     vertexCount, vertexType, vertexFormat        // Use masks instead?
-// RRES_TYPE_TEXT params:       charsCount, cultureCode
-// RRES_TYPE_DIRECTORY params:  fileCount, directoryCount
-
-// SpriteFont = RRES_TYPE_FONT_IMAGE chunk + RRES_TYPE_FONT_DATA chunk
-// Mesh = multiple RRES_TYPE_VERTEX chunks
-
-Ref: RIFF file-format: http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html
-
-*/
+#endif // RRES_IMPLEMENTATION

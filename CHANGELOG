@@ -1,7 +1,88 @@
 changelog
 ---------
 
-Current Release:    raylib 1.7.0 (20 May 2017)
+Current Release:    raylib 1.8.0 (Oct 2017)
+
+-----------------------------------------------
+Release:     raylib 1.8.0 (Oct 2017)
+-----------------------------------------------
+NOTE: 
+  In this release, multiple parts of the library have been reviewed again for consistency and simplification. 
+  It exposes more than 20 new functions in comparison with previous version and it improves overall programming experience.
+  
+BIG CHANGES:
+  - Image generation functions: Gradient, Checked, Noise, Cellular...
+  - Mesh generation functions: Cube, Sphere, Cylinder, Torus, Knot...
+  - New Shaders and Materials systems to support PBR materials
+  - Custom Android toolchain for APK building with simple Makefile
+  - Complete review of raymath functionality (Matrix, Quaternion)
+  - Complete review of rlgl layer functionality
+
+detailed changes:
+[rlgl] RENAMED: rlglLoadTexture() to rlLoadTexture()
+[rlgl] RENAMED: rlglLoadRenderTexture() to rlLoadRenderTexture()
+[rlgl] RENAMED: rlglUpdateTexture() to rlUpdateTexture()
+[rlgl] RENAMED: rlglGenerateMipmaps() to rlGenerateMipmaps()
+[rlgl] RENAMED: rlglReadScreenPixels() to rlReadScreenPixels()
+[rlgl] RENAMED: rlglReadTexturePixels() to rlReadTexturePixels()
+[rlgl] RENAMED: rlglLoadMesh() to rlLoadMesh()
+[rlgl] RENAMED: rlglUpdateMesh() to rlUpdateMesh()
+[rlgl] RENAMED: rlglDrawMesh() to rlDrawMesh()
+[rlgl] RENAMED: rlglUnloadMesh() to rlUnloadMesh()
+[rlgl] RENAMED: rlglUnproject() to rlUnproject()
+[rlgl] RENAMED: LoadCompressedTexture() to LoadTextureCompressed()
+[rlgl] RENAMED: GetDefaultTexture() to GetTextureDefault()
+[rlgl] RENAMED: LoadDefaultShader() to LoadShaderDefault()
+[rlgl] RENAMED: LoadDefaultShaderLocations() to SetShaderDefaultLocations()
+[rlgl] RENAMED: UnloadDefaultShader() to UnLoadShaderDefault()
+// Texture maps generation (PBR)
+[rlgl] ADDED: rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
+[rlgl] ADDED: rlGenMapIrradiance(Texture2D cubemap, int size);          // Generate irradiance texture map
+[rlgl] ADDED: rlGenMapPrefilter(Texture2D cubemap, int size);           // Generate prefilter texture map
+[rlgl] ADDED: rlGenMapBRDF(Texture2D cubemap, int size);                // Generate BRDF texture map
+[core] ADDED: SetWindowTitle()
+[core] ADDED: GetExtension()
+[textures] ADDED: SaveImageAs() 
+? [textures]  ADDED: DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4);       // Draw a gradient-filled rectangle with custom vertex colors
+? [textures]  ADDED: DrawRectangleT(int posX, int posY, int width, int height, Color color);                       // Draw rectangle using text character
+// Image generation functions
+[textures] ADDED: GenImageGradientV(int width, int height, Color top, Color bottom);                           // Generate image: vertical gradient
+[textures] ADDED: GenImageGradientH(int width, int height, Color left, Color right);                           // Generate image: horizontal gradient
+[textures] ADDED: GenImageGradientRadial(int width, int height, float density, Color inner, Color outer);      // Generate image: radial gradient
+[textures] ADDED: GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2);    // Generate image: checked
+[textures] ADDED: GenImageWhiteNoise(int width, int height, float factor);                                     // Generate image: white noise
+[textures] ADDED: GenImagePerlinNoise(int width, int height, float scale);                                     // Generate image: perlin noise
+[textures] ADDED: GenImageCellular(int width, int height, int tileSize);                                       // Generate image: cellular algorithm. Bigger tileSize means bigger cells
+// Texture maps generation (PBR)
+[textures] ADDED: GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
+[textures] ADDED: GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
+[textures] ADDED: GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
+[textures] ADDED: GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
+[models] REMOVED: LoadMeshEx()
+[models] REMOVED: UpdateMesh()
+[models] REMOVED: LoadHeightmap()
+[models] REMOVED: LoadCubicmap()
+[models] RENAMED: LoadDefaultMaterial() to LoadMaterialDefault()
+// Mesh generation functions
+[models] ADDED: GenMeshPlane()
+[models] ADDED: GenMeshCube()
+[models] ADDED: GenMeshSphere()
+[models] ADDED: GenMeshHemiSphere(float radius, int rings, int slices);                                      // Generate half-sphere mesh (no bottom cap)
+[models] ADDED: GenMeshCylinder(float radius, float height, int slices);                                     // Generate cylinder mesh
+[models] ADDED: GenMeshTorus(float radius, float size, int radSeg, int sides);                               // Generate torus mesh
+[models] ADDED: GenMeshKnot(float radius, float size, int radSeg, int sides);                                // Generate trefoil knot mesh
+[models] ADDED: GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
+[models] ADDED: GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
+
+[raymath] Reviewed full Matrix functionality
+[raymath] Renamed Vector3 functions for consistency
+[build] Integrate Android APK building into examples Makefile
+[example] ADDED: 
+[example] ADDED: 
+[example] ADDED: 
+[github] Moved raylib webpage to own repo: github.com/raysan5/raylib.com
+[games] Reviewed game: Koala Seasons
+[*] Updated STB libraries to latest version
 
 -----------------------------------------------
 Release:     raylib 1.7.0 (20 May 2017)
@@ -36,14 +117,14 @@ other changes:
 [rlgl] Removed function: CreateLight(), removed internal lighting system
 [rlgl] Removed function: DestroyLight(), removed internal lighting system
 [rlgl] Removed function: InitVrDevice(), removed VR device render, using simulator
-[rlgl] Removed function:  CloseVrDevice(), removed VR device render, using simulator
+[rlgl] Removed function: CloseVrDevice(), removed VR device render, using simulator
 [rlgl] Removed function: IsVrDeviceReady(), removed VR device render, using simulator
 [rlgl] Removed function: IsVrSimulator(), removed VR device render, using simulator
 [rlgl] Added function: InitVrSimulator(), init VR simulator for selected device
 [rlgl] Added function: CloseVrSimulator(), close VR simulator for current device
 [rlgl] Added function: IsVrSimulatorReady(), detect if VR device is ready
 [rlgl] Added function: BeginVrDrawing(), begin VR simulator stereo rendering
-[rlgl] Added function:  EndVrDrawing(), end VR simulator stereo rendering
+[rlgl] Added function: EndVrDrawing(), end VR simulator stereo rendering
 [rlgl] Renamed function: ReadTextFile() to LoadText() and exposed to API
 [rlgl] Removed internal lighting system and standard shader, moved to example
 [rlgl] Removed Oculus Rift support, moved to oculus_rift example

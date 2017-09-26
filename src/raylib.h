@@ -701,6 +701,7 @@ RLAPI bool WindowShouldClose(void);                               // Check if KE
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
 RLAPI void SetWindowIcon(Image image);                            // Set icon for window (only PLATFORM_DESKTOP)
+RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP)
 RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
 RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
@@ -759,6 +760,7 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 
 // Files management functions
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
+RLAPI const char *GetExtension(const char *fileName);             // Get file extension
 RLAPI const char *GetDirectoryPath(const char *fileName);         // Get directory for a given fileName (with path)
 RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory
 RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, returns true if success
@@ -855,8 +857,10 @@ RLAPI void DrawRectangle(int posX, int posY, int width, int height, Color color)
 RLAPI void DrawRectangleRec(Rectangle rec, Color color);                                                 // Draw a color-filled rectangle
 RLAPI void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color);                 // Draw a color-filled rectangle with pro parameters
 RLAPI void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2); // Draw a gradient-filled rectangle
+RLAPI void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4);       // Draw a gradient-filled rectangle with custom vertex colors
 RLAPI void DrawRectangleV(Vector2 position, Vector2 size, Color color);                                  // Draw a color-filled rectangle (Vector version)
 RLAPI void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
+RLAPI void DrawRectangleT(int posX, int posY, int width, int height, Color color);                       // Draw rectangle using text character
 RLAPI void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle
 RLAPI void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline
 RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a regular polygon (Vector version)
@@ -952,7 +956,6 @@ RLAPI void DrawFPS(int posX, int posY);                                         
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
 RLAPI void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
                 float fontSize, int spacing, Color tint);
-RLAPI void DrawRectangleT(int posX, int posY, int width, int height, Color color);                       // Draw rectangle using text character
 
 // Text misc. functions
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
@@ -995,12 +998,14 @@ RLAPI void UnloadModel(Model model);                                            
 RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
 RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
 
-//RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                               // Generate plane mesh (with desired subdivisions)
+// Mesh generation functions
+RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                                 // Generate plane mesh (with subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
-//RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                        // Generate sphere mesh (standard sphere)
-//RLAPI Mesh GenMeshCylinder(float radiusTop, float radiusBottom, float height, int slices);            // Generate cylinder mesh
-//RLAPI Mesh GenMeshTorus(float radius1, float radius2, int radSeg, int sides);                         // Generate torus mesh
-//RLAPI Mesh GenMeshTube(float radius1, float radius2, float height, int sides);                        // Generate tube mesh
+RLAPI Mesh GenMeshSphere(float radius, int rings, int slices);                                          // Generate sphere mesh (standard sphere)
+RLAPI Mesh GenMeshHemiSphere(float radius, int rings, int slices);                                      // Generate half-sphere mesh (no bottom cap)
+RLAPI Mesh GenMeshCylinder(float radius, float height, int slices);                                     // Generate cylinder mesh
+RLAPI Mesh GenMeshTorus(float radius, float size, int radSeg, int sides);                               // Generate torus mesh
+RLAPI Mesh GenMeshKnot(float radius, float size, int radSeg, int sides);                                // Generate trefoil knot mesh
 RLAPI Mesh GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
 RLAPI Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
 

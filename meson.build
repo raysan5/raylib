@@ -1,4 +1,4 @@
-project('raylib', 'c', version:	'1.7.0',
+project('raylib', 'c', version:	'1.8.0',
 		license: 'zlib',
 		meson_version: '>= 0.39.1',
 		default_options : 'c_std=gnu99')

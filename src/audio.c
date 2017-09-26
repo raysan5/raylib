@@ -69,6 +69,7 @@
 #define SUPPORT_FILEFORMAT_WAV
 #define SUPPORT_FILEFORMAT_OGG
 #define SUPPORT_FILEFORMAT_XM
+#define SUPPORT_FILEFORMAT_MOD
 //-------------------------------------------------
 
 #if defined(AUDIO_STANDALONE)
