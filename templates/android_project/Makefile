@@ -58,7 +58,7 @@ LFLAGS = -L. -Ljni/libs -Ljni -Llib
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LIBS = -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES
+LIBS = -lraylib -llog -landroid -lEGL -lGLESv2 -lOpenSLES
 
 # Building APK
 # NOTE: typing 'make' will invoke the default target entry called 'all',

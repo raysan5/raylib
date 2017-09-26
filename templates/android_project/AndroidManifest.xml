@@ -14,7 +14,7 @@
         android:versionCode="1" 
         android:versionName="1.0" >
 
-    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="16" />
+    <uses-sdk android:minSdkVersion="16" />
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <!--<supports-gl-texture android:name="GL_OES_compressed_ETC1_RGB8_texture" android:required="true"/>-->
     <!-- We do not have Java code. Therefore android:hasCode is set to false. -->
