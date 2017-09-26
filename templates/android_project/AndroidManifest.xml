@@ -2,10 +2,10 @@
 <!--
 *   raylib Android project template
 *
-*   This template has been created using raylib 1.2 (www.raylib.com)
+*   This template has been created using raylib 1.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 -->
 <!-- NOTE: Game package name must be unique for every app/game -->

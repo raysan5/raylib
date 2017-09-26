@@ -25,7 +25,7 @@
 PLATFORM ?= PLATFORM_ANDROID
 
 # Android project name (.apk)  
-PROJECT_NAME = NativeActivity
+PROJECT_NAME = raylibGame
 PROJECT_DIR = ./
 
 # Generated shared library name
@@ -41,7 +41,7 @@ ANDROID_HOME = C:/android-sdk
 ANDROID_NDK = C:/android-ndk
 ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
 ANDROID_BUILD_TOOLS = C:/android-sdk/build-tools/26.0.1
-JAVA_HOME = C:/PROGRA~1/Java/jdk1.8.0_25
+JAVA_HOME = C:/PROGRA~1/Java/jdk1.8.0_144
 
 # Compilers
 CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
@@ -54,7 +54,7 @@ CFLAGS = -O2 -s -Wall -std=c99 -DPLATFORM_ANDROID -march=armv7-a -mfloat-abi=sof
 INCLUDES = -I. -Ijni/include -I$(ANDROID_NDK)/sources/android/native_app_glue
 
 # Define library paths containing required libs
-LFLAGS = -L. -Ljni/libs -Ljni -Ltemp/lib
+LFLAGS = -L. -Ljni/libs -Ljni -Llib
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
@@ -78,20 +78,20 @@ project_dirs:
 	if not exist temp mkdir temp 
 	if not exist temp\obj mkdir temp\obj
 	if not exist temp\src mkdir temp\src
-	if not exist temp\lib mkdir temp\lib
+	if not exist lib mkdir lib
 	if not exist temp\bin mkdir temp\bin
      
 # Compile native_app_glue as static library
 # OUTPUT: $(PROJECT_DIR)/temp/obj/libnative_app_glue.a
 native_app_glue:
 	$(CC) -c $(ANDROID_NDK)/sources/android/native_app_glue/android_native_app_glue.c -o temp/obj/native_app_glue.o $(CFLAGS)
-	$(AR) rcs $(PROJECT_DIR)/temp/lib/libnative_app_glue.a temp/obj/native_app_glue.o
+	$(AR) rcs $(PROJECT_DIR)/lib/libnative_app_glue.a temp/obj/native_app_glue.o
 
 # Compile project code as shared libraries
-# OUTPUT: $(PROJECT_DIR)/temp/lib/lib$(LIBRARY_NAME).so 
+# OUTPUT: $(PROJECT_DIR)/lib/lib$(LIBRARY_NAME).so 
 project_code:
 	$(CC) -c jni/basic_game.c -o temp/obj/basic_game.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
-	$(CC) -o temp/lib/lib$(LIBRARY_NAME).so temp/obj/basic_game.o -shared $(INCLUDES) $(LFLAGS) $(LIBS) -lnative_app_glue
+	$(CC) -o lib/lib$(LIBRARY_NAME).so temp/obj/basic_game.o -shared $(INCLUDES) $(LFLAGS) $(LIBS) -lnative_app_glue
 
 # Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
@@ -116,11 +116,11 @@ project_class_dex:
 	$(ANDROID_BUILD_TOOLS)/dx --dex --output=temp/bin/classes.dex temp/obj
 
 # Create temp/bin/$(PROJECT_NAME).unsigned.apk
-# NOTE: DEPENDS on temp/bin/classes.dex and temp/lib/lib$(LIBRARY_NAME).so
+# NOTE: DEPENDS on temp/bin/classes.dex and lib/lib$(LIBRARY_NAME).so
 # NOTE: Use -A resources to define additional directory in which to find raw asset files
 project_apk:
 	$(ANDROID_BUILD_TOOLS)/aapt package -f -m -M AndroidManifest.xml -S res -A assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F temp/bin/$(PROJECT_NAME).unsigned.apk -J temp/bin
-	$(ANDROID_BUILD_TOOLS)/aapt add $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk temp/lib/lib$(LIBRARY_NAME).so
+	$(ANDROID_BUILD_TOOLS)/aapt add $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/lib$(LIBRARY_NAME).so
 
 # Create temp/bin/$(PROJECT_NAME).signed.apk
 apk_signing:
@@ -138,7 +138,7 @@ deploy:
 
 # Clean everything
 clean:
-	del temp\bin\* temp\lib\* temp\obj\* temp\src\* /f/s/q
+	del temp\bin\* lib\* temp\obj\* temp\src\* /f/s/q
 	del temp\*.keystore
 	rmdir temp /s /q
 	@echo Cleaning done
