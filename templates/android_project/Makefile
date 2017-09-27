@@ -48,7 +48,7 @@ CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
 AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
 
 # Define compiler flags
-CFLAGS = -O2 -s -Wall -std=c99 -DPLATFORM_ANDROID -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+CFLAGS = -Wall -std=c99 -DPLATFORM_ANDROID -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
 
 # Define any directories containing required header files
 INCLUDES = -I. -Ijni/include -I$(ANDROID_NDK)/sources/android/native_app_glue
@@ -79,6 +79,7 @@ project_dirs:
 	if not exist temp\obj mkdir temp\obj
 	if not exist temp\src mkdir temp\src
 	if not exist lib mkdir lib
+	if not exist lib\armeabi-v7a mkdir lib\armeabi-v7a
 	if not exist temp\bin mkdir temp\bin
      
 # Compile native_app_glue as static library
@@ -91,7 +92,7 @@ native_app_glue:
 # OUTPUT: $(PROJECT_DIR)/lib/lib$(LIBRARY_NAME).so 
 project_code:
 	$(CC) -c jni/basic_game.c -o temp/obj/basic_game.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
-	$(CC) -o lib/lib$(LIBRARY_NAME).so temp/obj/basic_game.o -shared $(INCLUDES) $(LFLAGS) $(LIBS) -lnative_app_glue
+	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/basic_game.o -shared $(INCLUDES) $(LFLAGS) $(LIBS) -lnative_app_glue -u ANativeActivity_onCreate
 
 # Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
@@ -102,25 +103,26 @@ gen_keystore:
 # OUTPUT: $(PROJECT_DIR)/temp/src/com/raylib/$(LIBRARY_NAME)/R.java
 # NOTE: DEPENDS on res/values/strings.xml
 project_package:
-	$(ANDROID_BUILD_TOOLS)/aapt package -f -m -S res -J temp/src -M AndroidManifest.xml -I $(ANDROID_HOME)/platforms/android-16/android.jar
+	$(ANDROID_BUILD_TOOLS)/aapt package -v -f -m -S res -J temp/src -M AndroidManifest.xml -I $(ANDROID_HOME)/platforms/android-16/android.jar
 
 # Create temp/obj/com/raylib/$(LIBRARY_NAME)/R.class   
 # OUTPUT: $(PROJECT_DIR)/temp/obj/com/raylib/$(LIBRARY_NAME)/R.class
 project_class:
-	$(JAVA_HOME)/bin/javac -source 1.7 -target 1.7 -d temp/obj -classpath $(ANDROID_HOME)/platforms/android-16/android.jar -sourcepath temp/src temp/src/com/raylib/game_sample/R.java
+	$(JAVA_HOME)/bin/javac -verbose -source 1.7 -target 1.7 -d temp/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar;temp/obj -sourcepath temp/src temp/src/com/raylib/game_sample/R.java
+#$(JAVA_HOME)/bin/javac -source 1.7 -target 1.7 -d temp/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar -sourcepath temp/src temp/src/com/raylib/game_sample/R.java
 
 # Create temp/bin/classes.dex
 # OUTPUT: $(PROJECT_DIR)/bin/classes.dex
 # NOTE: DEPENDS on temp/obj/com/raylib/$(LIBRARY_NAME)/R.class
 project_class_dex:
-	$(ANDROID_BUILD_TOOLS)/dx --dex --output=temp/bin/classes.dex temp/obj
+	$(ANDROID_BUILD_TOOLS)/dx --verbose --dex --output=temp/bin/classes.dex temp/obj
 
 # Create temp/bin/$(PROJECT_NAME).unsigned.apk
 # NOTE: DEPENDS on temp/bin/classes.dex and lib/lib$(LIBRARY_NAME).so
 # NOTE: Use -A resources to define additional directory in which to find raw asset files
 project_apk:
-	$(ANDROID_BUILD_TOOLS)/aapt package -f -m -M AndroidManifest.xml -S res -A assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F temp/bin/$(PROJECT_NAME).unsigned.apk -J temp/bin
-	$(ANDROID_BUILD_TOOLS)/aapt add $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/lib$(LIBRARY_NAME).so
+	$(ANDROID_BUILD_TOOLS)/aapt package -v -f -M AndroidManifest.xml -S res -A assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F temp/bin/$(PROJECT_NAME).unsigned.apk temp/bin
+	$(ANDROID_BUILD_TOOLS)/aapt add -v $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/armeabi-v7a/lib$(LIBRARY_NAME).so
 
 # Create temp/bin/$(PROJECT_NAME).signed.apk
 apk_signing:
@@ -135,6 +137,9 @@ deploy:
 	$(ANDROID_HOME)/platform-tools/adb install -r $(PROJECT_NAME).apk
 	$(ANDROID_HOME)/platform-tools/adb logcat -c
 	$(ANDROID_HOME)/platform-tools/adb logcat *:W
+	
+#$(ANDROID_HOME)/platform-tools/adb logcat *:W
+#$(ANDROID_HOME)/platform-tools/adb -d logcat raylib:V *:S
 
 # Clean everything
 clean:
