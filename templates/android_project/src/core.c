@@ -1494,7 +1494,7 @@ bool IsMouseButtonPressed(int button)
     bool pressed = false;
 
 #if defined(PLATFORM_ANDROID)
-    if (IsGestureDetected(GESTURE_TAP)) pressed = true;
+    //if (IsGestureDetected(GESTURE_TAP)) pressed = true;   // TODO: review
 #else
     if ((currentMouseState[button] != previousMouseState[button]) && (currentMouseState[button] == 1)) pressed = true;
 #endif
@@ -1508,7 +1508,7 @@ bool IsMouseButtonDown(int button)
     bool down = false;
 
 #if defined(PLATFORM_ANDROID)
-    if (IsGestureDetected(GESTURE_HOLD)) down = true;
+    //if (IsGestureDetected(GESTURE_HOLD)) down = true;     // TODO: review
 #else
     if (GetMouseButtonStatus(button) == 1) down = true;
 #endif
@@ -3364,6 +3364,7 @@ static void *GamepadThread(void *arg)
 // Plays raylib logo appearing animation
 static void LogoAnimation(void)
 {
+/* // TODO: review
 #if !defined(PLATFORM_WEB)
     int logoPositionX = screenWidth/2 - 128;
     int logoPositionY = screenHeight/2 - 128;
@@ -3471,6 +3472,6 @@ static void LogoAnimation(void)
         //----------------------------------------------------------------------------------
     }
 #endif
-
+*/
     showLogo = false;  // Prevent for repeating when reloading window (Android)
 }
