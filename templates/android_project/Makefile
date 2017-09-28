@@ -44,7 +44,7 @@ ANDROID_BUILD_TOOLS = C:/android-sdk/build-tools/26.0.1
 JAVA_HOME = C:/PROGRA~1/Java/jdk1.8.0_144
 
 # Compilers
-CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
+CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
 AR = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-ar
 
 # Define compiler flags
@@ -54,11 +54,11 @@ CFLAGS = -Wall -std=c99 -DPLATFORM_ANDROID -march=armv7-a -mfloat-abi=softfp -mf
 INCLUDES = -I. -Ijni/include -I$(ANDROID_NDK)/sources/android/native_app_glue
 
 # Define library paths containing required libs
-LFLAGS = -L. -Ljni/libs -Ljni -Llib
+LFLAGS = -L. -Ljni -Llib -Ljni/libs
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LIBS = -lraylib -llog -landroid -lEGL -lGLESv2 -lOpenSLES
+LIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES
 
 # Building APK
 # NOTE: typing 'make' will invoke the default target entry called 'all',
@@ -91,8 +91,11 @@ native_app_glue:
 # Compile project code as shared libraries
 # OUTPUT: $(PROJECT_DIR)/lib/lib$(LIBRARY_NAME).so 
 project_code:
-	$(CC) -c jni/basic_game.c -o temp/obj/basic_game.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
-	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/basic_game.o -shared $(INCLUDES) $(LFLAGS) $(LIBS) -lnative_app_glue -u ANativeActivity_onCreate
+	$(CC) -c src/core.c -o temp/obj/core.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
+	$(CC) -c src/rlgl.c -o temp/obj/rlgl.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC -DGRAPHICS_API_OPENGL_ES2
+	$(CC) -c src/utils.c -o temp/obj/utils.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
+	$(CC) -c src/game_crash.c -o temp/obj/game_crash.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -fPIC 
+	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_crash.o temp/obj/core.o temp/obj/rlgl.o temp/obj/utils.o -shared $(INCLUDES) $(LFLAGS) -lnative_app_glue $(LIBS) -u ANativeActivity_onCreate
 
 # Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
@@ -137,7 +140,7 @@ deploy:
 	$(ANDROID_HOME)/platform-tools/adb install -r $(PROJECT_NAME).apk
 	$(ANDROID_HOME)/platform-tools/adb logcat -c
 	$(ANDROID_HOME)/platform-tools/adb logcat *:W
-	
+
 #$(ANDROID_HOME)/platform-tools/adb logcat *:W
 #$(ANDROID_HOME)/platform-tools/adb -d logcat raylib:V *:S
 
