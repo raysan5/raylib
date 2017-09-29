@@ -47,6 +47,7 @@
 #define SUPPORT_TRACELOG            // Output tracelog messages
 //#define SUPPORT_TRACELOG_DEBUG     // Avoid LOG_DEBUG messages tracing
 
+#include "raylib.h"                 // WARNING: Required for: LogType enum
 #include "utils.h"
 
 #if defined(PLATFORM_ANDROID)

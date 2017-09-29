@@ -314,9 +314,7 @@ static Vector2 mousePosition;               // Mouse position on screen
 static bool toggleCursorLock = false;       // Ask for cursor pointer lock on next click
 #endif
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
 static Vector2 touchPosition[MAX_TOUCH_POINTS]; // Touch position on screen
-#endif
 
 #if defined(PLATFORM_DESKTOP)
 static char **dropFilesPath;                // Store dropped files paths as strings
@@ -476,8 +474,6 @@ void InitWindow(int width, int height, const char *title)
 void InitWindow(int width, int height, void *state)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
-
-    app_dummy();
 
     screenWidth = width;
     screenHeight = height;
@@ -1495,6 +1491,7 @@ bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
 
+// TODO: Review, gestures could be not supported despite being on Android platform!
 #if defined(PLATFORM_ANDROID)
     if (IsGestureDetected(GESTURE_TAP)) pressed = true;
 #else
@@ -2748,6 +2745,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     int32_t action = AMotionEvent_getAction(event);
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
 
+#if defined(SUPPORT_GESTURES_SYSTEM)
     GestureEvent gestureEvent;
 
     // Register touch actions
@@ -2776,8 +2774,13 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
+#else
+    
+    // TODO: Support only simple touch position
+    
+#endif
 
-    return 0;   // return 1;
+    return 0;
 }
 #endif
 
