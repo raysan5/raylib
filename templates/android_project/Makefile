@@ -140,7 +140,7 @@ project_class_dex:
 # NOTE: Use -A resources to define additional directory in which to find raw asset files
 project_apk:
 	$(ANDROID_BUILD_TOOLS)/aapt package -v -f -M AndroidManifest.xml -S res -A assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F temp/bin/$(PROJECT_NAME).unsigned.apk temp/bin
-	$(ANDROID_BUILD_TOOLS)/aapt add -v $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/armeabi-v7a/lib$(LIBRARY_NAME).so lib/armeabi-v7a/libopenal.so
+	$(ANDROID_BUILD_TOOLS)/aapt add -v $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/armeabi-v7a/lib$(LIBRARY_NAME).so
 
 # Create temp/bin/$(PROJECT_NAME).signed.apk
 apk_signing:
