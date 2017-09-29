@@ -58,9 +58,6 @@ SHARED_OPENAL ?= NO
 ifeq ($(PLATFORM),PLATFORM_WEB)
     SHARED_OPENAL = YES
 endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    SHARED_OPENAL = YES
-endif
 
 # determine if the file has root access (only for installing raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root
@@ -201,7 +198,7 @@ endif
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+CFLAGS += -O1 -s -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
