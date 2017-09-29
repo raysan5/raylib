@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Plane rotations (pitch, roll, yaw)
+*   raylib [models] example - Plane rotations (yaw, pitch, roll)
 *
 *   This example has been created using raylib 1.8 (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
@@ -28,7 +28,7 @@ int main()
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - plane rotations (pitch, roll, yaw)");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - plane rotations (yaw, pitch, roll)");
 
     Texture2D texAngleGauge = LoadTexture("resources/angle_gauge.png"); 
     Texture2D texBackground = LoadTexture("resources/background.png");
@@ -71,6 +71,15 @@ int main()
             else if (roll < 0.0f) roll += 0.5f;
         }
         
+        // Plane yaw (y-axis) controls
+        if (IsKeyDown(KEY_S)) yaw += 1.0f;
+        else if (IsKeyDown(KEY_A)) yaw -= 1.0f;
+        else
+        {
+            if (yaw > 0.0f) yaw -= 0.5f;
+            else if (yaw < 0.0f) yaw += 0.5f;
+        }
+        
         // Plane pitch (z-axis) controls
         if (IsKeyDown(KEY_DOWN)) pitch += 0.6f;
         else if (IsKeyDown(KEY_UP)) pitch -= 0.6f;
@@ -85,15 +94,6 @@ int main()
         while (pitchOffset > 180) pitchOffset -= 360;
         while (pitchOffset < -180) pitchOffset += 360;
         pitchOffset *= 10;
-        
-        // Plane yaw (y-axis) controls
-        if (IsKeyDown(KEY_S)) yaw += 1.0f;
-        else if (IsKeyDown(KEY_A)) yaw -= 1.0f;
-        else
-        {
-            if (yaw > 0.0f) yaw -= 0.5f;
-            else if (yaw < 0.0f) yaw += 0.5f;
-        }
 
         Matrix transform = MatrixIdentity();
     
