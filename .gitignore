@@ -120,8 +120,6 @@ docs/examples/web/*/*.html
 !docs/examples/web/models/loader.html
 
 # raylib release libs
-src/libraylib.a
-src/libraylib.bc
 !release/android/armeabi-v7a/libraylib.a
 !release/android/armeabi-v7a/libraylib.so
 !release/linux/libraylib.a
@@ -150,7 +148,6 @@ build
 !games/CMakeLists.txt
 
 # binaries made from raylib
-libraylib.a
 libraylib.so
 libraylib.dylib
 libraylib.dll
