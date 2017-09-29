@@ -213,7 +213,14 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    # Compiler flags for arquitecture
     CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
+    # Compilation functions attributes options
+    CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
+    # Compiler options for the linker
+    CFLAGS += -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical-prefixes
+    # Preprocessor macro definitions
+    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
 endif
 
 #CFLAGSEXTRA = -Wextra -Wmissing-prototypes -Wstrict-prototypes
