@@ -274,22 +274,22 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
     rlDisableTexture();
 }
 
-// Draw a gradient-filled rectangle
+// Draw a vertical-gradient-filled rectangle
 // NOTE: Gradient goes from bottom (color1) to top (color2)
-void DrawRectangleGradient(int posX, int posY, int width, int height, Color color1, Color color2)
+void DrawRectangleGradientV(int posX, int posY, int width, int height, Color color1, Color color2)
 {
-    rlBegin(RL_TRIANGLES);
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX, posY);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX, posY + height);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX + width, posY + height);
+    DrawRectangleGradientEx((Rectangle){ posX, posY, width, height }, color1, color2, color2, color1);
+}
 
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX, posY);
-        rlColor4ub(color2.r, color2.g, color2.b, color2.a); rlVertex2i(posX + width, posY + height);
-        rlColor4ub(color1.r, color1.g, color1.b, color1.a); rlVertex2i(posX + width, posY);
-    rlEnd();
+// Draw a horizontal-gradient-filled rectangle
+// NOTE: Gradient goes from bottom (color1) to top (color2)
+void DrawRectangleGradientH(int posX, int posY, int width, int height, Color color1, Color color2)
+{
+    DrawRectangleGradientEx((Rectangle){ posX, posY, width, height }, color1, color1, color2, color2);
 }
 
 // Draw a gradient-filled rectangle
+// NOTE: Colors refer to corners, starting at top-lef corner and counter-clockwise
 void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
     rlEnableTexture(GetTextureDefault().id);    // Default white texture
