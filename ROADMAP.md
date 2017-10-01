@@ -10,11 +10,13 @@ Note that [raylib source code](https://github.com/raysan5/raylib/tree/develop/sr
  - [ ] Basic GPU stats sytem (memory, draws, time...)
  - [ ] Improved custom file-format (.rres) and packaging tool
  - [ ] Touch-based camera controls for Android
+ - [ ] Quaternions-based camera system
  
 **raylib 1.8**
  - [x] Improved Materials system with PBR support
  - [x] Procedural image generation functions (spot, gradient, noise...)
  - [x] Procedural mesh generation functions (cube, sphere...)
+ - [x] Custom Android APK build pipeline (default Makefile)
 
 **raylib 1.7**
  - [x] Support configuration flags
