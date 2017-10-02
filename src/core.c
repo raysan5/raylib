@@ -105,8 +105,8 @@
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-    #define GIF_IMPLEMENTATION
-    #include "external/gif.h"   // Support GIF recording
+    #define RGIF_IMPLEMENTATION
+    #include "external/rgif.h"   // Support GIF recording
 #endif
 
 #if defined(__linux__) || defined(PLATFORM_WEB)

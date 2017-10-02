@@ -1,7 +1,7 @@
 /**********************************************************************************************
 *
-*   gif.h by Charlie Tangora [ctangora -at- gmail -dot- com]
-*   adapted to C99 and reformatted by Ramon Santamaria (@raysan5)
+*   rgif.h original implementation by Charlie Tangora [ctangora -at- gmail -dot- com]
+*   adapted to C99, reformatted and renamed by Ramon Santamaria (@raysan5)
 *
 *   This file offers a simple, very limited way to create animated GIFs directly in code.
 *
@@ -17,7 +17,7 @@
 *
 *   CONFIGURATION:
 *
-*   #define GIF_IMPLEMENTATION
+*   #define RGIF_IMPLEMENTATION
 *       Generates the implementation of the library into the included file.
 *       If not defined, the library is in header only mode and can be included in other headers
 *       or source files without problems. But only ONE file should hold the implementation.
@@ -56,14 +56,14 @@
 
 #include <stdio.h>          // Required for: FILE
 
-//#define GIF_STATIC
-#ifdef GIF_STATIC
-    #define GIFDEF static              // Functions just visible to module including this file
+//#define RGIF_STATIC
+#ifdef RGIF_STATIC
+    #define RGIFDEF static              // Functions just visible to module including this file
 #else
     #ifdef __cplusplus
-        #define GIFDEF extern "C"      // Functions visible from other files (no name mangling of functions in C++)
+        #define RGIFDEF extern "C"      // Functions visible from other files (no name mangling of functions in C++)
     #else
-        #define GIFDEF extern          // Functions visible from other files
+        #define RGIFDEF extern          // Functions visible from other files
     #endif
 #endif
 
@@ -72,9 +72,9 @@
 //----------------------------------------------------------------------------------
 
 // NOTE: By default use bitDepth = 8, dither = false
-GIFDEF bool GifBegin(const char *filename, unsigned int width, unsigned int height, unsigned int delay, unsigned int bitDepth, bool dither);
-GIFDEF bool GifWriteFrame(const unsigned char *image, unsigned int width, unsigned int height, unsigned int delay, int bitDepth, bool dither);
-GIFDEF bool GifEnd();
+RGIFDEF bool GifBegin(const char *filename, unsigned int width, unsigned int height, unsigned int delay, unsigned int bitDepth, bool dither);
+RGIFDEF bool GifWriteFrame(const unsigned char *image, unsigned int width, unsigned int height, unsigned int delay, int bitDepth, bool dither);
+RGIFDEF bool GifEnd();
 
 #endif // GIF_H
 
@@ -85,7 +85,7 @@ GIFDEF bool GifEnd();
 *
 ************************************************************************************/
 
-#if defined(GIF_IMPLEMENTATION)
+#if defined(RGIF_IMPLEMENTATION)
 
 #include <stdio.h>          // Required for: FILE, fopen(), fclose()
 #include <string.h>         // Required for: memcpy()
@@ -186,7 +186,7 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
 // Creates a gif file
 // NOTE: Initializes internal file pointer (only one gif recording at a time)
 // The delay value is the time between frames in hundredths of a second - note that not all viewers pay much attention to this value.
-GIFDEF bool GifBegin(const char *filename, unsigned int width, unsigned int height, unsigned int delay, unsigned int bitDepth, bool dither)
+RGIFDEF bool GifBegin(const char *filename, unsigned int width, unsigned int height, unsigned int delay, unsigned int bitDepth, bool dither)
 {
 #if _MSC_VER >= 1400
 	gifFile = 0;
@@ -248,7 +248,7 @@ GIFDEF bool GifBegin(const char *filename, unsigned int width, unsigned int heig
 // NOTE: gifFile should have been initialized with GifBegin()
 // AFAIK, it is legal to use different bit depths for different frames of an image -
 // this may be handy to save bits in animations that don't change much.
-GIFDEF bool GifWriteFrame(const unsigned char *image, unsigned int width, unsigned int height, unsigned int delay, int bitDepth, bool dither)
+RGIFDEF bool GifWriteFrame(const unsigned char *image, unsigned int width, unsigned int height, unsigned int delay, int bitDepth, bool dither)
 {
     if (!gifFile) return false;
     
@@ -268,7 +268,7 @@ GIFDEF bool GifWriteFrame(const unsigned char *image, unsigned int width, unsign
 // Writes the EOF code, closes the file handle, and frees temp memory used by a GIF.
 // Many if not most viewers will still display a GIF properly if the EOF code is missing,
 // but it's still a good idea to write it out.
-GIFDEF bool GifEnd()
+RGIFDEF bool GifEnd()
 {
     if (!gifFile) return false;
     
@@ -910,4 +910,4 @@ static void GifWriteLzwImage(FILE *f, unsigned char *image, unsigned int left, u
     GIF_TEMP_FREE(codetree);
 }
 
-#endif // GIF_IMPLEMENTATION
+#endif // RGIF_IMPLEMENTATION
