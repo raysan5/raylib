@@ -74,14 +74,17 @@
 //#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
 
 // Security check in case no PLATFORM_* defined
-#if !defined(PLATFORM_DESKTOP) && !defined(PLATFORM_ANDROID) && !defined(PLATFORM_RPI) && !defined(PLATFORM_WEB)
-    #define PLATFORM_DESKTOP
+#if !defined(PLATFORM_DESKTOP) && \
+    !defined(PLATFORM_ANDROID) && \
+    !defined(PLATFORM_RPI) && \
+    !defined(PLATFORM_WEB)
+        #define PLATFORM_DESKTOP
 #endif
 
-#if defined(_WIN32) && defined(BUILDING_DLL)
-    #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 DLL
-#elif defined(_WIN32) && defined(RAYLIB_DLL)
-    #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 DLL
+#if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
+    #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
+#elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
+    #define RLAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
 #else
     #define RLAPI   // We are building or using raylib as a static library (or Linux shared library)
 #endif

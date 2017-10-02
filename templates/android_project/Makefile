@@ -60,16 +60,16 @@ CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
 INCLUDES = -I. -Isrc/include -I$(ANDROID_NDK)/sources/android/native_app_glue
 
 # Linker options
-LFLAGS = -Wl,-soname,lib$(LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
-LFLAGS = -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
+LDFLAGS = -Wl,-soname,lib$(LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
+LDFLAGS = -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
 # Force linking of library module to define symbol
-LFLAGS = -u ANativeActivity_onCreate
+LDFLAGS = -u ANativeActivity_onCreate
 # Library paths containing required libs
-LFLAGS += -L. -Lsrc -Llib -Lsrc/libs
+LDFLAGS += -L. -Lsrc -Llib -Lsrc/libs
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LIBS = -lnative_app_glue -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
+LDLIBS = -lnative_app_glue -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 
 # Building APK
 # NOTE: typing 'make' will invoke the default target entry called 'all',
@@ -103,14 +103,14 @@ native_app_glue:
 # OUTPUT: $(PROJECT_DIR)/lib/lib$(LIBRARY_NAME).so 
 project_code_ok:
 	$(CC) -c src/game_basic.c -o temp/obj/game_basic.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot 
-	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_basic.o -shared $(INCLUDES) $(LFLAGS) $(LIBS)
+	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_basic.o -shared $(INCLUDES) $(LDFLAGS) $(LDLIBS)
 
 project_code:
 	$(CC) -c src/core.c -o temp/obj/core.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
 	$(CC) -c src/rlgl.c -o temp/obj/rlgl.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -DGRAPHICS_API_OPENGL_ES2
 	$(CC) -c src/utils.c -o temp/obj/utils.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
 	$(CC) -c src/game_crash.c -o temp/obj/game_crash.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
-	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_crash.o temp/obj/core.o temp/obj/rlgl.o temp/obj/utils.o -shared $(INCLUDES) $(LFLAGS) $(LIBS)
+	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_crash.o temp/obj/core.o temp/obj/rlgl.o temp/obj/utils.o -shared $(INCLUDES) $(LDFLAGS) $(LDLIBS)
     
 # Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
