@@ -45,11 +45,11 @@
 PLATFORM ?= PLATFORM_DESKTOP
 
 # define raylib library type: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
+RAYLIB_LIBTYPE ?= SHARED
 
 # define OpenAL Soft library type: STATIC (.a) or SHARED (.so/.dll)
 # NOTE: OpenAL Soft library should be provided in the selected form
-OPENAL_LIBTYPE ?= STATIC
+OPENAL_LIBTYPE ?= SHARED
 
 # on PLATFORM_WEB force OpenAL Soft shared library
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -153,10 +153,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
     # NOTE: gcc compiler is being deprecated at Android NDK r16
     ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-gcc
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-gcc
     endif
 endif
 
@@ -184,7 +184,7 @@ endif
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99
-CFLAGS += -O1 -s -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
 
 # additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -219,7 +219,7 @@ endif
 # NOTE: ALLIBS flag only required for raylib Win32 SHARED library building
 ifeq ($(OPENAL_LIBTYPE),STATIC)
     ALLIBS = -lopenal32 -lwinmm
-    ALFLAGS = AL_LIBTYPE_STATIC
+    ALFLAGS = -DAL_LIBTYPE_STATIC
 else
     ALLIBS = -lopenal32dll
 endif
@@ -252,6 +252,18 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Include android_native_app_glue.h
     INCLUDE_PATHS += -Iexternal/android/native_app_glue
     #INCLUDE_PATHS += -I$(ANDROID_NDK)/sources/android/native_app_glue
+endif
+
+# Linker options
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    LDFLAGS = -Wl,-soname,libraylib.so -Wl,--exclude-libs,libatomic.a 
+    LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
+    # Force linking of library module to define symbol
+    LDFLAGS += -u ANativeActivity_onCreate
+    # Library paths containing required libs
+    LDFLAGS += -L. -Lsrc -L$(OUTPUT_PATH)
+
+    LDLIBS = -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 endif
 
 # define output directory for compiled library
@@ -328,7 +340,7 @@ else
 			@echo "raylib shared library generated (libraylib.dylib)!"
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
-			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS)
+			$(CC) -shared -o $(OUTPUT_PATH)/libraylib.so $(OBJS) $(LDFLAGS) $(LDLIBS)
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
     else
@@ -371,10 +383,10 @@ models.o : models.c raylib.h rlgl.h raymath.h
 
 # compile audio module
 audio.o : audio.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(ALFLAGS)
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(ALFLAGS)
 
 # compile stb_vorbis library
-external/stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
+stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # compile utils module

@@ -24,13 +24,25 @@
 # Define raylib platform to compile for
 PLATFORM ?= PLATFORM_ANDROID
 
-# Android project name (.apk)  
+# Android project name (.apk)
 PROJECT_NAME = raylibGame
 PROJECT_DIR = ./
 
 # Generated shared library name
 # NOTE: It should match the name defined in the AndroidManifest.xml
 LIBRARY_NAME = raylib_game
+
+# define libtype for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
+RAYLIB_LIBTYPE ?= STATIC
+OPENAL_LIBTYPE ?= STATIC
+
+# add shared libs to APK if required
+ifeq ($(RAYLIB_LIBTYPE),SHARED)
+    PROJECT_SHARED_LIBS = lib/armeabi-v7a/libraylib.so 
+endif
+ifeq ($(OPENAL_LIBTYPE),SHARED)
+    PROJECT_SHARED_LIBS += lib/armeabi-v7a/libopenal.so
+endif
 
 # Generated key pass
 KEYSTORE_PASS = raylib
@@ -57,19 +69,19 @@ CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical
 CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
 
 # Paths containing required header files
-INCLUDES = -I. -Isrc/include -I$(ANDROID_NDK)/sources/android/native_app_glue
+INCLUDE_PATHS = -I. -Isrc/include -I$(ANDROID_NDK)/sources/android/native_app_glue
 
 # Linker options
 LDFLAGS = -Wl,-soname,lib$(LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
-LDFLAGS = -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
+LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
 # Force linking of library module to define symbol
-LDFLAGS = -u ANativeActivity_onCreate
+LDFLAGS += -u ANativeActivity_onCreate
 # Library paths containing required libs
 LDFLAGS += -L. -Lsrc -Llib -Lsrc/libs
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LDLIBS = -lnative_app_glue -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
+LDLIBS = -lnative_app_glue -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
 
 # Building APK
 # NOTE: typing 'make' will invoke the default target entry called 'all',
@@ -102,15 +114,15 @@ native_app_glue:
 # Compile project code as shared libraries
 # OUTPUT: $(PROJECT_DIR)/lib/lib$(LIBRARY_NAME).so 
 project_code_ok:
-	$(CC) -c src/game_basic.c -o temp/obj/game_basic.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot 
-	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_basic.o -shared $(INCLUDES) $(LDFLAGS) $(LDLIBS)
+	$(CC) -c src/game_basic.c -o temp/obj/game_basic.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot 
+	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_basic.o -shared $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS)
 
 project_code:
-	$(CC) -c src/core.c -o temp/obj/core.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
-	$(CC) -c src/rlgl.c -o temp/obj/rlgl.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -DGRAPHICS_API_OPENGL_ES2
-	$(CC) -c src/utils.c -o temp/obj/utils.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
-	$(CC) -c src/game_crash.c -o temp/obj/game_crash.o $(INCLUDES) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
-	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_crash.o temp/obj/core.o temp/obj/rlgl.o temp/obj/utils.o -shared $(INCLUDES) $(LDFLAGS) $(LDLIBS)
+	$(CC) -c src/core.c -o temp/obj/core.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+	$(CC) -c src/rlgl.c -o temp/obj/rlgl.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -DGRAPHICS_API_OPENGL_ES2
+	$(CC) -c src/utils.c -o temp/obj/utils.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+	$(CC) -c src/game_crash.c -o temp/obj/game_crash.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_crash.o temp/obj/core.o temp/obj/rlgl.o temp/obj/utils.o -shared $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS)
     
 # Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
@@ -140,7 +152,7 @@ project_class_dex:
 # NOTE: Use -A resources to define additional directory in which to find raw asset files
 project_apk:
 	$(ANDROID_BUILD_TOOLS)/aapt package -v -f -M AndroidManifest.xml -S res -A assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F temp/bin/$(PROJECT_NAME).unsigned.apk temp/bin
-	$(ANDROID_BUILD_TOOLS)/aapt add -v $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/armeabi-v7a/lib$(LIBRARY_NAME).so
+	$(ANDROID_BUILD_TOOLS)/aapt add -v $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/armeabi-v7a/lib$(LIBRARY_NAME).so $(PROJECT_SHARED_LIBS)
 
 # Create temp/bin/$(PROJECT_NAME).signed.apk
 apk_signing:
