@@ -33,8 +33,8 @@ PROJECT_DIR = ./
 LIBRARY_NAME = raylib_game
 
 # define libtype for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
+RAYLIB_LIBTYPE ?= SHARED
+OPENAL_LIBTYPE ?= SHARED
 
 # add shared libs to APK if required
 ifeq ($(RAYLIB_LIBTYPE),SHARED)

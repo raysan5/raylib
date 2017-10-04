@@ -261,7 +261,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
     # Library paths containing required libs
-    LDFLAGS += -L. -Lsrc -L$(OUTPUT_PATH)
+    LDFLAGS += -L. -Lsrc -L$(OUTPUT_PATH) -Lexternal/openal_soft/lib/android
 
     LDLIBS = -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 endif
