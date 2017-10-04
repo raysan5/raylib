@@ -291,7 +291,6 @@ static bool texCompASTCSupported = false;   // ASTC texture compression support
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // VR global variables
-static VrDeviceInfo hmd;                // Current VR device info
 static VrStereoConfig vrConfig;         // VR stereo configuration for simulator
 static bool vrSimulatorReady = false;   // VR simulator ready flag
 static bool vrStereoRender = false;     // VR stereo rendering enabled/disabled flag
@@ -1947,7 +1946,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     // Matrices and other values required by shader
     //-----------------------------------------------------
     // Calculate and send to shader model matrix (used by PBR shader)
-    SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
+    if (material.shader.locs[LOC_MATRIX_MODEL] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_MODEL], transform);
     
     // Upload to shader material.colDiffuse
     if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
@@ -2830,10 +2829,12 @@ void EndBlendMode(void)
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // Init VR simulator for selected device
-// NOTE: It modifies the global variable: VrDeviceInfo hmd
+// NOTE: It modifies the global variable: VrStereoConfig vrConfig
 void InitVrSimulator(int vrDevice)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    VrDeviceInfo hmd;                // Current VR device info
+    
     if (vrDevice == HMD_OCULUS_RIFT_DK2)
     {
         // Oculus Rift DK2 parameters
@@ -3345,8 +3346,6 @@ static void SetShaderDefaultLocations(Shader *shader)
     shader->locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader->id, "texture0");
     shader->locs[LOC_MAP_NORMAL] = glGetUniformLocation(shader->id, "texture1");
     shader->locs[LOC_MAP_SPECULAR] = glGetUniformLocation(shader->id, "texture2");
-
-    // TODO: Try to find all expected/recognized shader locations (predefined names, must be documented)
 }
 
 // Unload default shader
@@ -3941,6 +3940,7 @@ static void GenDrawCube(void)
 
 #if defined(SUPPORT_VR_SIMULATOR)
 // Configure stereo rendering (including distortion shader) with HMD device parameters
+// NOTE: It modifies the global variable: VrStereoConfig vrConfig
 static void SetStereoConfig(VrDeviceInfo hmd)
 {
     // Compute aspect ratio
