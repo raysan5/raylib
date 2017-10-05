@@ -33,8 +33,8 @@ PROJECT_DIR = ./
 LIBRARY_NAME = raylib_game
 
 # define libtype for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= SHARED
-OPENAL_LIBTYPE ?= SHARED
+RAYLIB_LIBTYPE ?= STATIC
+OPENAL_LIBTYPE ?= STATIC
 
 # add shared libs to APK if required
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
@@ -52,7 +52,8 @@ KEYSTORE_PASS = raylib
 ANDROID_HOME = C:/android-sdk
 ANDROID_NDK = C:/android-ndk
 ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
-ANDROID_BUILD_TOOLS = C:/android-sdk/build-tools/26.0.1
+ANDROID_BUILD_TOOLS = $(ANDROID_HOME)/build-tools/26.0.1
+ANDROID_PLATFORM_TOOLS = $(ANDROID_HOME)/platform-tools
 JAVA_HOME = C:/PROGRA~1/Java/jdk1.8.0_144
 
 # Compilers
@@ -81,23 +82,24 @@ LDFLAGS += -L. -Lsrc -Llib -Lsrc/libs
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LDLIBS = -lnative_app_glue -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
+LDLIBS = -lraylib -lnative_app_glue -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
 
 # Building APK
 # NOTE: typing 'make' will invoke the default target entry called 'all',
-all: project_dirs \
-     native_app_glue \
-     project_code_ok \
-     gen_keystore \
-     project_package \
-     project_class \
-     project_class_dex \
-     project_apk \
-     apk_signing \
-     apk_zip_align
+all: create_temp_project_dirs \
+     compile_native_app_glue \
+     compile_project_code \
+     copy_project_shared_libs \
+     config_project_package \
+     compile_project_class \
+     compile_project_class_dex \
+     create_project_apk_package \
+     generate_apk_keystore \
+     sign_project_apk_package \
+     zipalign_project_apk_package
 
 # Create required temp directories for APK building
-project_dirs:
+create_temp_project_dirs:
 	if not exist temp mkdir temp 
 	if not exist temp\obj mkdir temp\obj
 	if not exist temp\src mkdir temp\src
@@ -107,69 +109,84 @@ project_dirs:
      
 # Compile native_app_glue as static library
 # OUTPUT: $(PROJECT_DIR)/temp/obj/libnative_app_glue.a
-native_app_glue:
+compile_native_app_glue:
 	$(CC) -c $(ANDROID_NDK)/sources/android/native_app_glue/android_native_app_glue.c -o temp/obj/native_app_glue.o $(CFLAGS)
 	$(AR) rcs $(PROJECT_DIR)/lib/libnative_app_glue.a temp/obj/native_app_glue.o
 
 # Compile project code as shared libraries
 # OUTPUT: $(PROJECT_DIR)/lib/lib$(LIBRARY_NAME).so 
-project_code_ok:
+compile_project_code:
 	$(CC) -c src/game_basic.c -o temp/obj/game_basic.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot 
 	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_basic.o -shared $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS)
 
-project_code:
-	$(CC) -c src/core.c -o temp/obj/core.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
-	$(CC) -c src/rlgl.c -o temp/obj/rlgl.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -DGRAPHICS_API_OPENGL_ES2
-	$(CC) -c src/utils.c -o temp/obj/utils.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
-	$(CC) -c src/game_crash.c -o temp/obj/game_crash.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
-	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_crash.o temp/obj/core.o temp/obj/rlgl.o temp/obj/utils.o -shared $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS)
+compile_project_code_raylib_stripped:
+	$(CC) -c src/raylib_stripped/core.c -o temp/obj/core.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+	$(CC) -c src/raylib_stripped/rlgl.c -o temp/obj/rlgl.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot -DGRAPHICS_API_OPENGL_ES2
+	$(CC) -c src/raylib_stripped/utils.c -o temp/obj/utils.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+	$(CC) -c src/game_raylib_stripped.c -o temp/obj/game_raylib_stripped.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so temp/obj/game_raylib_stripped.o temp/obj/core.o temp/obj/rlgl.o temp/obj/utils.o -shared $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS)
+    
+copy_project_shared_libs:
+ifeq ($(RAYLIB_LIBTYPE),SHARED)
+	copy /Y src\libs_shared\libraylib.so lib\armeabi-v7a\libraylib.so 
+endif
+ifeq ($(OPENAL_LIBTYPE),SHARED)
+	copy /Y src\libs_shared\libopenal.so lib\armeabi-v7a\libopenal.so
+endif
     
 # Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
-gen_keystore: 
+generate_apk_keystore: 
 	$(JAVA_HOME)/bin/keytool -genkeypair -validity 1000 -dname "CN=raylib,O=Android,C=JPN" -keystore temp/$(PROJECT_NAME).keystore -storepass $(KEYSTORE_PASS) -keypass $(KEYSTORE_PASS) -alias $(PROJECT_NAME)Key -keyalg RSA
 
 # Create temp/src/com/raylib/$(LIBRARY_NAME)/R.java
 # OUTPUT: $(PROJECT_DIR)/temp/src/com/raylib/$(LIBRARY_NAME)/R.java
 # NOTE: DEPENDS on res/values/strings.xml
-project_package:
+config_project_package:
 	$(ANDROID_BUILD_TOOLS)/aapt package -v -f -m -S res -J temp/src -M AndroidManifest.xml -I $(ANDROID_HOME)/platforms/android-16/android.jar
 
 # Create temp/obj/com/raylib/$(LIBRARY_NAME)/R.class   
 # OUTPUT: $(PROJECT_DIR)/temp/obj/com/raylib/$(LIBRARY_NAME)/R.class
-project_class:
+compile_project_class:
 	$(JAVA_HOME)/bin/javac -verbose -source 1.7 -target 1.7 -d temp/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar;temp/obj -sourcepath temp/src temp/src/com/raylib/game_sample/R.java
 #$(JAVA_HOME)/bin/javac -source 1.7 -target 1.7 -d temp/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar -sourcepath temp/src temp/src/com/raylib/game_sample/R.java
 
 # Create temp/bin/classes.dex
 # OUTPUT: $(PROJECT_DIR)/bin/classes.dex
 # NOTE: DEPENDS on temp/obj/com/raylib/$(LIBRARY_NAME)/R.class
-project_class_dex:
+compile_project_class_dex:
 	$(ANDROID_BUILD_TOOLS)/dx --verbose --dex --output=temp/bin/classes.dex temp/obj
 
 # Create temp/bin/$(PROJECT_NAME).unsigned.apk
 # NOTE: DEPENDS on temp/bin/classes.dex and lib/lib$(LIBRARY_NAME).so
 # NOTE: Use -A resources to define additional directory in which to find raw asset files
-project_apk:
+create_project_apk_package:
 	$(ANDROID_BUILD_TOOLS)/aapt package -v -f -M AndroidManifest.xml -S res -A assets -I $(ANDROID_HOME)/platforms/android-16/android.jar -F temp/bin/$(PROJECT_NAME).unsigned.apk temp/bin
 	$(ANDROID_BUILD_TOOLS)/aapt add -v $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).unsigned.apk lib/armeabi-v7a/lib$(LIBRARY_NAME).so $(PROJECT_SHARED_LIBS)
 
 # Create temp/bin/$(PROJECT_NAME).signed.apk
-apk_signing:
+sign_project_apk_package:
 	$(JAVA_HOME)/bin/jarsigner -keystore temp/$(PROJECT_NAME).keystore -storepass $(KEYSTORE_PASS) -keypass $(KEYSTORE_PASS) -signedjar $(PROJECT_DIR)/temp/bin/$(PROJECT_NAME).signed.apk temp/bin/$(PROJECT_NAME).unsigned.apk $(PROJECT_NAME)Key
 
 # Create temp/bin/$(PROJECT_NAME).apk 
-apk_zip_align:
+zipalign_project_apk_package:
 	$(ANDROID_BUILD_TOOLS)/zipalign -f 4 temp/bin/$(PROJECT_NAME).signed.apk $(PROJECT_NAME).apk
 
 # Deploy $(PROJECT_NAME).apk to device
+install_project_apk_package:
+	$(ANDROID_PLATFORM_TOOLS)/adb install -r $(PROJECT_NAME).apk
+    
+logcat_project_apk_package:
+	$(ANDROID_PLATFORM_TOOLS)/adb logcat -c
+	$(ANDROID_PLATFORM_TOOLS)/adb logcat raylib:V *:S
+    
 deploy:
-	$(ANDROID_HOME)/platform-tools/adb install -r $(PROJECT_NAME).apk
-	$(ANDROID_HOME)/platform-tools/adb logcat -c
-	$(ANDROID_HOME)/platform-tools/adb -d logcat raylib:V *:S
+	$(ANDROID_PLATFORM_TOOLS)/adb install -r $(PROJECT_NAME).apk
+	$(ANDROID_PLATFORM_TOOLS)/adb logcat -c
+	$(ANDROID_PLATFORM_TOOLS)/adb logcat raylib:V *:S
 
-#$(ANDROID_HOME)/platform-tools/adb logcat *:W
-#$(ANDROID_HOME)/platform-tools/adb -d logcat raylib:V *:S
+#$(ANDROID_PLATFORM_TOOLS)/adb logcat *:W
+#$(ANDROID_PLATFORM_TOOLS)/adb -d logcat raylib:V *:S
 
 # Clean everything
 clean:
