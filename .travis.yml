@@ -1,0 +1,50 @@
+language: c
+sudo: required
+dist: trusty
+
+git:
+  depth: 3
+
+os:
+  - osx
+  - linux
+
+env:
+  global:
+    - VERBOSE=1
+  matrix:
+    - CFLAGS=-m64
+    - CFLAGS=-m32
+
+before_script:
+  - export CFLAGS="-std=gnu99 $CFLAGS"
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      sudo apt-get install -y gcc-multilib
+                              libopenal-dev
+                              libxcursor-dev libxinerama-dev
+                              mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev libglew-dev;
+      wget 'https://github.com/a3f/GLFW-3.2.1-Debian-binary-package/releases/download/v3.2.1/GLFW-3.2.1-Linux.deb' && sudo dpkg -i GLFW-3.2.1-Linux.deb;
+    fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install glfw; fi
+  - "$CC --version"
+
+script:
+  - mkdir build
+  - cd build
+  - cmake -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
+  - make
+#  - make package
+#  - sudo make install
+#
+#deploy:
+#  provider: releases
+#  api_key:
+#    secure: XXX
+#  file_glob: true
+#  file: raylib-*.tar.gz
+#  skip_cleanup: true
+#  on:
+#    branch: master
+#    tags: true
