@@ -23,36 +23,32 @@
 
 # Define raylib platform to compile for
 PLATFORM ?= PLATFORM_ANDROID
+RAYLIB_PATH ?= C:\Github\raylib
 
-# Android project name (.apk)
-PROJECT_NAME = raylib_game
-OUTPUT_PATH = output
-SOURCE_PATH = src
-
-# Generated shared library name
-# NOTE: It should match the name defined in the AndroidManifest.xml
-LIBRARY_NAME = raylib_game
+# Android project configuration variables
+# Generated shared library name should match the name defined in the AndroidManifest.xml
+PROJECT_NAME ?= raylib_game
+LIBRARY_NAME ?= raylib_game
+OUTPUT_PATH ?= output
+SOURCE_PATH ?= src
 
 # define libtype for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
+RAYLIB_LIBTYPE ?= SHARED
+OPENAL_LIBTYPE ?= SHARED
 
-LIBS_PATH = libs\static
-
-# add shared libs to APK if required
-ifeq ($(RAYLIB_LIBTYPE),SHARED)
-    LIBS_PATH = libs\shared
-    NATIVE_LOADER = NativeLoader.java
-    PROJECT_SHARED_LIBS = lib/armeabi-v7a/libraylib.so 
-endif
-ifeq ($(OPENAL_LIBTYPE),SHARED)
-    LIBS_PATH = libs\shared
-    NATIVE_LOADER = NativeLoader.java
-    PROJECT_SHARED_LIBS += lib/armeabi-v7a/libopenal.so
-endif
+RAYLIB_LIB_PATH = $(RAYLIB_PATH)\release\libs\android\armeabi-v7a
+OPENAL_LIB_PATH = $(RAYLIB_PATH)\release\libs\android\armeabi-v7a
 
 # Generated key pass
 KEYSTORE_PASS = raylib
+
+# add shared libs to APK if required
+ifeq ($(RAYLIB_LIBTYPE),SHARED)
+    PROJECT_SHARED_LIBS = lib/armeabi-v7a/libraylib.so 
+endif
+ifeq ($(OPENAL_LIBTYPE),SHARED)
+    PROJECT_SHARED_LIBS += lib/armeabi-v7a/libopenal.so
+endif
 
 # Required path variables
 # NOTE: JAVA_HOME must be set to JDK
@@ -77,7 +73,7 @@ CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical
 CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
 
 # Paths containing required header files
-INCLUDE_PATHS = -I. -Iinclude -I$(ANDROID_NDK)/sources/android/native_app_glue
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/release/include -I$(ANDROID_NDK)/sources/android/native_app_glue
 
 # Linker options
 LDFLAGS = -Wl,-soname,lib$(LIBRARY_NAME).so -Wl,--exclude-libs,libatomic.a 
@@ -85,7 +81,7 @@ LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl
 # Force linking of library module to define symbol
 LDFLAGS += -u ANativeActivity_onCreate
 # Library paths containing required libs
-LDFLAGS += -L. -L$(SOURCE_PATH) -L$(LIBS_PATH) -L$(OUTPUT_PATH)/obj
+LDFLAGS += -L. -L$(SOURCE_PATH) -L$(OUTPUT_PATH)/obj -L$(OUTPUT_PATH)/lib/armeabi-v7a
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
@@ -94,9 +90,10 @@ LDLIBS = -lraylib -lnative_app_glue -lopenal -llog -landroid -lEGL -lGLESv2 -lOp
 # Building APK
 # NOTE: typing 'make' will invoke the default target entry called 'all',
 all: create_temp_project_dirs \
+     copy_project_required_libs \
      compile_native_app_glue \
      compile_project_code \
-     copy_project_shared_libs \
+     generate_loader_script \
      copy_project_resources \
      config_project_package \
      compile_project_class \
@@ -136,26 +133,39 @@ compile_project_code_raylib_stripped:
 	$(CC) -c $(SOURCE_PATH)/game_raylib_stripped.c -o $(OUTPUT_PATH)/obj/game_raylib_stripped.o $(INCLUDE_PATHS) $(CFLAGS) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
 	$(CC) -o lib/armeabi-v7a/lib$(LIBRARY_NAME).so $(OUTPUT_PATH)/obj/game_raylib_stripped.o $(OUTPUT_PATH)/obj/core.o $(OUTPUT_PATH)/obj/rlgl.o $(OUTPUT_PATH)/obj/utils.o -shared $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS)
     
-copy_project_shared_libs:
+copy_project_required_libs:
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
-	copy /Y $(LIBS_PATH)\libraylib.so $(OUTPUT_PATH)\lib\armeabi-v7a\libraylib.so 
+	copy /Y $(RAYLIB_LIB_PATH)\libraylib.so $(OUTPUT_PATH)\lib\armeabi-v7a\libraylib.so 
 endif
 ifeq ($(OPENAL_LIBTYPE),SHARED)
-	copy /Y $(LIBS_PATH)\libopenal.so $(OUTPUT_PATH)\lib\armeabi-v7a\libopenal.so
+	copy /Y $(OPENAL_LIB_PATH)\libopenal.so $(OUTPUT_PATH)\lib\armeabi-v7a\libopenal.so
+endif
+ifeq ($(RAYLIB_LIBTYPE),STATIC)
+	copy /Y $(RAYLIB_LIB_PATH)\libraylib.a $(OUTPUT_PATH)\lib\armeabi-v7a\libraylib.a 
+endif
+ifeq ($(OPENAL_LIBTYPE),STATIC)
+	copy /Y $(OPENAL_LIB_PATH)\libopenal.a $(OUTPUT_PATH)\lib\armeabi-v7a\libopenal.a
 endif
 
 copy_project_resources:
 	xcopy res $(OUTPUT_PATH)\res /Y /E /F
 	xcopy src\resources $(OUTPUT_PATH)\assets /Y /E /F
-ifeq ($(RAYLIB_LIBTYPE),SHARED)
-	xcopy AndroidManifest_shared.xml $(OUTPUT_PATH)\AndroidManifest.xml* /Y /F
-endif
-ifeq ($(RAYLIB_LIBTYPE),STATIC)
-	xcopy AndroidManifest_static.xml $(OUTPUT_PATH)\AndroidManifest.xml* /Y /F
-endif
+	xcopy AndroidManifest.xml $(OUTPUT_PATH)\AndroidManifest.xml* /Y /F
 
 generate_loader_script:
-	@echo "package com.raylib.game_sample; public class NativeLoader extends android.app.NativeActivity { static { System.loadLibrary("openal"); System.loadLibrary("raylib"); System.loadLibrary("raylib_game"); }}" > $(OUTPUT_PATH)/obj/NativeLoader.java
+	@echo package com.raylib.game_sample; > $(OUTPUT_PATH)/obj/NativeLoader.java
+	@echo. >> $(OUTPUT_PATH)/obj/NativeLoader.java
+	@echo public class NativeLoader extends android.app.NativeActivity { >> $(OUTPUT_PATH)/obj/NativeLoader.java
+	@echo     static { >> $(OUTPUT_PATH)/obj/NativeLoader.java
+ifeq ($(OPENAL_LIBTYPE),SHARED)
+	@echo         System.loadLibrary("openal"); >> $(OUTPUT_PATH)/obj/NativeLoader.java
+endif
+ifeq ($(RAYLIB_LIBTYPE),SHARED)
+	@echo         System.loadLibrary("raylib"); >> $(OUTPUT_PATH)/obj/NativeLoader.java
+endif
+	@echo         System.loadLibrary("raylib_game"); >> $(OUTPUT_PATH)/obj/NativeLoader.java 
+	@echo     } >> $(OUTPUT_PATH)/obj/NativeLoader.java
+	@echo } >> $(OUTPUT_PATH)/obj/NativeLoader.java
 
 # Generate key for APK signing
 # OUTPUT: $(PROJECT_DIR)/temp/$(PROJECT_NAME).keystore
@@ -171,7 +181,7 @@ config_project_package:
 # Create temp/obj/com/raylib/$(LIBRARY_NAME)/R.class   
 # OUTPUT: $(PROJECT_DIR)/temp/obj/com/raylib/$(LIBRARY_NAME)/R.class
 compile_project_class:
-	$(JAVA_HOME)/bin/javac -verbose -source 1.7 -target 1.7 -d $(OUTPUT_PATH)/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar;$(OUTPUT_PATH)/obj -sourcepath $(OUTPUT_PATH)/src $(OUTPUT_PATH)/src/com/raylib/game_sample/R.java $(NATIVE_LOADER)
+	$(JAVA_HOME)/bin/javac -verbose -source 1.7 -target 1.7 -d $(OUTPUT_PATH)/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar;$(OUTPUT_PATH)/obj -sourcepath $(OUTPUT_PATH)/src $(OUTPUT_PATH)/src/com/raylib/game_sample/R.java $(OUTPUT_PATH)/obj/NativeLoader.java
 #$(JAVA_HOME)/bin/javac -source 1.7 -target 1.7 -d temp/obj -bootclasspath $(JAVA_HOME)/jre/lib/rt.jar -classpath $(ANDROID_HOME)/platforms/android-16/android.jar -sourcepath temp/src temp/src/com/raylib/game_sample/R.java
 
 # Create temp/bin/classes.dex
@@ -206,7 +216,7 @@ logcat_project_apk_package:
 deploy:
 	$(ANDROID_PLATFORM_TOOLS)/adb install -r $(PROJECT_NAME).apk
 	$(ANDROID_PLATFORM_TOOLS)/adb logcat -c
-	$(ANDROID_PLATFORM_TOOLS)/adb logcat *:W
+	$(ANDROID_PLATFORM_TOOLS)/adb logcat raylib:V *:S
 
 #$(ANDROID_PLATFORM_TOOLS)/adb logcat *:W
 #$(ANDROID_PLATFORM_TOOLS)/adb -d logcat raylib:V *:S
