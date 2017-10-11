@@ -6,13 +6,6 @@
 *.swo
 *~
 
-# Ignore Android generated files and folders
-src_android/obj/
-templates/android_project/bin/
-templates/android_project/obj/
-templates/android_project/libs/
-local.properties
-
 # Ignore thumbnails created by windows
 Thumbs.db
 
@@ -42,7 +35,7 @@ Thumbs.db
 *.sbr
 *.sdf
 obj/
-[Rr]elease/
+[R]elease/
 [Rr]elease.win32/
 _ReSharper*/
 [Tt]est[Rr]esult*
@@ -119,14 +112,6 @@ docs/examples/web/*/*.html
 !docs/examples/web/shaders/loader.html
 !docs/examples/web/models/loader.html
 
-# raylib release libs
-!release/android/armeabi-v7a/libraylib.a
-!release/android/armeabi-v7a/libraylib.so
-!release/linux/libraylib.a
-!release/linux/libraylib.so
-!release/rpi/libraylib.a
-!release/win32/mingw32/raylib.dll
-
 # Meson build system
 builddir/
 
@@ -147,7 +132,5 @@ build
 !examples/CMakeLists.txt
 !games/CMakeLists.txt
 
-# binaries made from raylib
-libraylib.so
-libraylib.dylib
-libraylib.dll
+# Ignore Android generated files and folders
+templates/android_project/output
