@@ -302,10 +302,7 @@
 // Structures Definition
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
-// Boolean type
-    #if !defined(_STDBOOL_H) || !defined(__STDBOOL_H)   // CLang uses second form
-        typedef enum { false, true } bool;
-    #endif
+    #include <stdbool.h>
 #endif
 
 // Vector2 type
