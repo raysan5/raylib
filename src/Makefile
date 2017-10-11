@@ -269,27 +269,27 @@ endif
 # define output directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        OUTPUT_PATH = ../release/win32/mingw32
+        OUTPUT_PATH = ../release/libs/win32/mingw32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        OUTPUT_PATH = ../release/linux
+        OUTPUT_PATH = ../release/libs/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        OUTPUT_PATH = ../release/osx
+        OUTPUT_PATH = ../release/libs/osx
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    OUTPUT_PATH = ../release/rpi
+    OUTPUT_PATH = ../release/libs/rpi
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    OUTPUT_PATH = ../release/html5
+    OUTPUT_PATH = ../release/libs/html5
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM)
-        OUTPUT_PATH = ../release/android/armeabi-v7a
+        OUTPUT_PATH = ../release/libs/android/armeabi-v7a
     endif
     ifeq ($(ANDROID_ARCH),ARM64)
-        OUTPUT_PATH = ../release/android/arm64-v8a
+        OUTPUT_PATH = ../release/libs/android/arm64-v8a
     endif
 endif
 
