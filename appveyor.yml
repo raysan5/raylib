@@ -37,7 +37,7 @@ before_build:
   - cd build
 
 build_script:
-  - cmake -G %GENERATOR% -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
+  - cmake -G %GENERATOR% -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=OFF  -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
   - cmake --build . --target install
 
 after_build:

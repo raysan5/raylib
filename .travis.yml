@@ -13,9 +13,9 @@ env:
   global:
     - VERBOSE=1
   matrix:
-    - CFLAGS=-m64
-    - CFLAGS=-m32
-
+    - CFLAGS=-m64 SHARED=ON
+    - CFLAGS=-m32 SHARED=OFF
+# We don't install x11 32-bit libraries, so skip shared libraries on -m32
 before_script:
   - export CFLAGS="-std=gnu99 $CFLAGS"
 
@@ -32,7 +32,7 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
+  - cmake -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=$SHARED -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
   - make
 #  - make package
 #  - sudo make install
