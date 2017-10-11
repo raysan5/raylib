@@ -82,7 +82,6 @@ xcschememanagement.plist
 ._.*
 xcuserdata/
 DerivedData/
-*.dll
 
 # external libraries DLLs
 !src/external/glfw3/lib/win32/glfw3.dll
