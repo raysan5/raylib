@@ -1,8 +1,8 @@
-## raylib release library
+## raylib release
 
-raylib library pre-compiled and ready-to-use for different platforms is provided in thsi folder, together with additional raylib required libraries for different platforms that sometimes users need to compile by themselfs.
+In this folder you can find raylib library pre-compiled and ready-to-use for different platforms. 
 
-Depending on target platform some libraries can be just downloaded from their repos using some package manager software provided by the OS, very tipical in Linux (`apt-get`) and OSX.
+It also includes additional raylib required libraries for different platforms that sometimes users need to compile by themselfs.Depending on target platform some libraries can be just downloaded from their repos using some package manager software provided by the OS, very tipical in Linux (`apt-get`) and OSX.
 
 **Provided libraries you will find in this folder are:**
 
