@@ -1,8 +1,6 @@
 #**************************************************************************************************
 #
-#   raylib makefile for desktop platforms, Raspberry Pi and HTML5 (emscripten)
-#
-#   NOTE: By default examples are compiled using raylib static library and OpenAL Soft shared library
+#   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
 #
 #   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
 #
@@ -25,19 +23,34 @@
 
 .PHONY: all clean
 
-# define raylib platform to compile for
-# possible platforms: PLATFORM_DESKTOP PLATFORM_RPI PLATFORM_WEB
+# Define required raylib variables
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
+RAYLIB_PATH ?= ..
+PROJECT_NAME ?= raylib_example
 
-# determine PLATFORM_OS in case PLATFORM_DESKTOP selected
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH ?= /home/pi/raylib
+endif
+
+# Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
+# NOTE: Libraries should be provided in the selected form
+RAYLIB_LIBTYPE ?= STATIC
+OPENAL_LIBTYPE ?= STATIC
+
+# On PLATFORM_WEB force OpenAL Soft shared library
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    OPENAL_LIBTYPE = SHARED
+endif
+
+# Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS=WINDOWS
         LIBPATH=win32
     else
-        UNAMEOS:=$(shell uname)
+        UNAMEOS=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
             PLATFORM_OS=LINUX
             LIBPATH=linux
@@ -49,32 +62,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
-
-# define OpenAL Soft library type: STATIC (.a) or SHARED (.so/.dll)
-# NOTE: OpenAL Soft library should be provided in the selected form
-OPENAL_LIBTYPE ?= STATIC
-
-# on PLATFORM_WEB force OpenAL Soft shared library
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    OPENAL_LIBTYPE = SHARED
-endif
-
-# define default raylib path for include and library search
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_PATH ?= C:\raylib\raylib
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_PATH ?= ..
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_PATH ?= ..
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH ?= /home/pi/raylib
-endif
-
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # RPI cross-compiler
@@ -91,16 +78,27 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
     EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android required path variables
-    ANDROID_NDK = C:/android-ndk
-    ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
 
-    # Android architecture: ARM or ARM64
-    ANDROID_ARCH ?= ARM
+# Define raylib release directory for compiled library
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/win32/mingw32
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/linux
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/osx
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/html5
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/rpi
 endif
 
-# default C compiler: gcc
+# Define default C compiler: gcc
 CC = gcc
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -119,18 +117,17 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # HTML5 emscripten compiler
     CC = emcc
 endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android toolchain (must be provided for desired architecture and compiler)
-    # NOTE: gcc compiler is being deprecated at Android NDK r16
-    ifeq ($(ANDROID_ARCH),ARM)
-        CC = $(ANDROID_TOOLCHAIN)/bin/arm-linux-androideabi-clang
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/aarch64-linux-android-clang
-    endif
+
+# Define default make program: Mingw32-make
+MAKE = mingw32-make
+
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),LINUX)
+        MAKE = make
+	endif
 endif
 
-# define compiler flags:
+# Define compiler flags:
 #  -O1                  defines optimization level
 #  -Og                  enable debugging
 #  -s                   strip unnecessary data from build
@@ -139,10 +136,10 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99
-CFLAGS += -O1 -s -Wall -std=c99
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
+CFLAGS += -O1 -s -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
 
-# additional flags for compiler (if desired)
+# Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -155,154 +152,85 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    CFLAGS += -std=gnu99 -fgnu89-inline
+    CFLAGS += -std=gnu99
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # -O2                         # if used, also set --memory-init-file 0
-    # --memory-init-file 0        # to avoid an external memory initialization code file (.mem)
-    # -s ALLOW_MEMORY_GROWTH=1    # to allow memory resizing
-    # -s TOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB)
-    # --preload-file file.res     # embbed file.res resource into .data file
-    CFLAGS += -D_DEFAULT_SOURCE -s USE_GLFW=3 -s ASSERTIONS=1 --profiling
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Compiler flags for arquitecture
-    CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
-    # Compilation functions attributes options
-    CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
-    # Compiler options for the linker
-    CFLAGS += -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical-prefixes
-    # Preprocessor macro definitions
-    CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
+    # -O2                        # if used, also set --memory-init-file 0
+    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
+    # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
+    # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
+    # -s USE_PTHREADS=1          # multithreading support
+    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling TOTAL_MEMORY=16777216 --preload-file resources
 endif
 
-# define raylib release directory for compiled library
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/win32/mingw32
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/linux
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/osx
-    endif
-endif
+# Define include paths for required headers
+# NOTE: Several external required libraries (stb and others)
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
+
+# Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/rpi
-endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/html5
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    ifeq ($(ANDROID_ARCH),ARM)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/android/armeabi-v7a
-    endif
-    ifeq ($(ANDROID_ARCH),ARM64)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/android/arm64-v8a
-    endif
-endif
-
-# define any directories containing required header files
-INCLUDE_PATHS = -I. -I$(RAYLIB_RELEASE) -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external 
-
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        # external libraries headers (GLFW3 and OpenAL Soft)
-        INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/external/glfw3/include
-        INCLUDE_PATHS += -I$(RAYLIB_PATH)/src/external/openal_soft/include
-    endif
-    ifeq ($(PLATFORM_OS),LINUX)
-        # you may optionally create this directory and install raylib 
-        # and related headers there. Edit ../src/Makefile appropriately.
-        INCLUDE_PATHS += -I/usr/local/include/raylib
-    endif
-    ifeq ($(PLATFORM_OS),OSX)
-        # additional directories for MacOS
-    endif
-endif
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    INCLUDE_PATHS += -I../src -I/opt/vc/include 
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux 
+    # RPI requried libraries
+    INCLUDE_PATHS += -I/opt/vc/include
+    INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux
     INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    # GLFW3 library
-    INCLUDE_PATHS += -Iexternal/glfw3/include
-endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android required libraries
-    INCLUDE_PATHS += -I$(ANDROID_TOOLCHAIN)/sysroot/usr/include
-    # Include android_native_app_glue.h
-    INCLUDE_PATHS += -Iexternal/android/native_app_glue
-    #INCLUDE_PATHS += -I$(ANDROID_NDK)/sources/android/native_app_glue
-endif
 
-# define library paths containing required libs
+# Define library paths containing required libs
 LDFLAGS = -L. -L$(RAYLIB_RELEASE) -L$(RAYLIB_PATH)/src 
 
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # add standard directories for GNU/Linux
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        # external libraries to link with (GLFW3 and OpenAL Soft)
-        LDFLAGS += -L$(RAYLIB_PATH)/src/external/glfw3/lib/$(LIBPATH)
-        LDFLAGS += -L$(RAYLIB_PATH)/src/external/openal_soft/lib/$(LIBPATH)
-    endif
-endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
 endif
 
-# define any libraries to link into executable
+# Define any libraries required on linking
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        # libraries for Windows desktop compiling
+        # Libraries for Windows desktop compiling
         # NOTE: GLFW3 and OpenAL Soft libraries should be installed
         LDLIBS = -lraylib -lglfw3 -lopengl32 -lgdi32
-        # if static OpenAL Soft required, define the corresponding libs
+
+        # Define required flags and libs for OpenAL Soft STATIC/SHARED usage
+        # NOTE: ALLIBS flag only required for raylib Win32 SHARED library building
         ifeq ($(OPENAL_LIBTYPE),STATIC)
             LDLIBS += -lopenal32 -lwinmm
-            CFLAGS += -Wl,-allow-multiple-definition
+            CFLAGS += -DAL_LIBTYPE_STATIC -Wl,-allow-multiple-definition
         else
             LDLIBS += -lopenal32dll
         endif
         PHYSAC_LIBS = -static -lpthread
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        # libraries for Debian GNU/Linux desktop compiling
-        # requires the following packages:
-        # libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -lglfw -lGL -lopenal -lm -lpthread -ldl
-        # on XWindow requires also below libraries
+        # Libraries for Debian GNU/Linux desktop compiling
+        # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
+        LDLIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+        
+        # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        # libraries for OS X 10.9 desktop compiling
-        # required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
+        # Libraries for OSX 10.9 desktop compiling
+        # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
         LDLIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    # libraries for Raspberry Pi compiling
-    # NOTE: OpenAL Soft library should be installed (libopenal1 package)
+    # Libraries for Raspberry Pi compiling
+    # NOTE: Required packages: libopenal1
     LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    # NOTE: Set the correct path to libraylib.bc
+    # Libraries for web (HTML5) compiling
     LDLIBS = $(RAYLIB_RELEASE)/libraylib.bc
 endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # libraries for Android shared library compilation
-    LDLIBS = -lnative_app_glue -lraylib -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
-endif
 
+# Define output extension to generate a .html file using provided shell
 ifeq ($(PLATFORM),PLATFORM_WEB)
     EXT = .html
     WEB_SHELL = --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
 endif
 
-# define all object files required
+# Define all object files required
 EXAMPLES = \
     core/core_basic_window \
     core/core_input_keys \
@@ -365,15 +293,16 @@ EXAMPLES = \
     physac/physics_shatter \
     fix_dylib \
 
+CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
-# typing 'make' will invoke the default target entry
+# Default target entry
 all: examples
 
-# generic compilation pattern
+# Generic compilation pattern
 %: %.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-# compile all examples
+# Compile all examples
 examples: $(EXAMPLES)
 
 # compile [core] example - basic window
@@ -635,7 +564,7 @@ ifeq ($(PLATFORM_OS),OSX)
 	find . -type f -perm +ugo+x -print0 | xargs -t -0 -R 1 -I file install_name_tool -change libglfw.3.0.dylib ../external/glfw3/lib/osx/libglfw.3.0.dylib file
 endif
 
-# clean everything
+# Clean everything
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -656,9 +585,5 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-	del temp\bin\* lib\* temp\obj\* temp\src\* /f/s/q
-	del temp\*.keystore
-	rmdir temp /s /q
-endif
 	@echo Cleaning done
+
