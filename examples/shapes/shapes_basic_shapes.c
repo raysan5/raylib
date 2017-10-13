@@ -46,7 +46,7 @@ int main()
             DrawCircleLines(screenWidth/4, 340, 80, DARKBLUE);
 
             DrawRectangle(screenWidth/4*2 - 60, 100, 120, 60, RED);
-            DrawRectangleGradient(screenWidth/4*2 - 90, 170, 180, 130, MAROON, GOLD);
+            DrawRectangleGradientH(screenWidth/4*2 - 90, 170, 180, 130, MAROON, GOLD);
             DrawRectangleLines(screenWidth/4*2 - 40, 320, 80, 60, ORANGE);
 
             DrawTriangle((Vector2){screenWidth/4*3, 80},
