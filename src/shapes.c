@@ -682,6 +682,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 // NOTE: Required for DrawLineBezier()
 static float EaseCubicInOut(float t, float b, float c, float d) 
 { 
-    if ((t/=d/2) < 1) return (c/2*t*t*t + b);
-    return (c/2*((t-2)*t*t + 2) + b);
+    if ((t /= 0.5*d) < 1)
+        return 0.5*c*t*t*t + b;
+    t -= 2;
+    return 0.5*c*(t*t*t + 2) + b;
 }
