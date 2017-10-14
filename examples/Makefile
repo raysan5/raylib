@@ -105,7 +105,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
-	endif
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(RPI_CROSS_COMPILE),YES)
@@ -124,7 +124,7 @@ MAKE = mingw32-make
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         MAKE = make
-	endif
+    endif
 endif
 
 # Define compiler flags:
