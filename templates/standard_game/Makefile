@@ -78,20 +78,20 @@ endif
 # Define raylib release directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/win32/mingw32
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/win32/mingw32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/linux
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/osx
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/osx
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/html5
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/html5
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/rpi
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/rpi
 endif
 
 # Define default C compiler: gcc
@@ -101,7 +101,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
-	endif
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(RPI_CROSS_COMPILE),YES)
@@ -120,7 +120,7 @@ MAKE = mingw32-make
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         MAKE = make
-	endif
+    endif
 endif
 
 # Define compiler flags:
@@ -151,7 +151,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling TOTAL_MEMORY=16777216 --preload-file resources
+    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling -s TOTAL_MEMORY=16777216 --preload-file resources
 endif
 
 # Define include paths for required headers
@@ -227,29 +227,30 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     WEB_SHELL = --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
 endif
 
-# Define all object files required
-PROJECT_SOURCE_FILES = standard_game.c\
-                       screens/screen_logo.c \
-                       screens/screen_title.c \
-                       screens/screen_options.c \
-                       screens/screen_gameplay.c \
-                       screens/screen_ending.c
-               
+# Define all source files required
+PROJECT_SOURCE_FILES ?= standard_game.c \
+                        screens/screen_logo.c \
+                        screens/screen_title.c \
+                        screens/screen_options.c \
+                        screens/screen_gameplay.c \
+                        screens/screen_ending.c
+
+# Define all object files from source files
 OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
 
-CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
-
+# For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    CURRENT_MAKEFILE = Makefile.Android 
+    MAKEFILE_PARAMS = -f Makefile.Android 
     export PROJECT_NAME
     export PROJECT_SOURCE_FILES
 else
-    CURRENT_MAKEFILE += -n $(PROJECT_NAME)
+    MAKEFILE_PARAMS = $(PROJECT_NAME)
 endif
 
 # Default target entry
-all: 
-	$(MAKE) -f $(CURRENT_MAKEFILE)
+# NOTE: We call this Makefile target or Makefile.Android target
+all:
+	$(MAKE) $(MAKEFILE_PARAMS)
 
 # Project target defined by PROJECT_NAME
 $(PROJECT_NAME): $(OBJS)

@@ -8,7 +8,7 @@
 *   This game has been created using raylib (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   raylib - Copyright (c) 2014 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -28,8 +28,8 @@ void android_main(struct android_app *app)
 int main(void)
 #endif
 {
-	// Initialization
-	//---------------------------------------------------------
+    // Initialization
+    //---------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
@@ -45,8 +45,8 @@ int main(void)
     currentScreen = LOGO;   // NOTE: currentScreen is defined in screens.h as a global variable
     InitLogoScreen();
     
-	SetTargetFPS(60);
-	//----------------------------------------------------------
+    SetTargetFPS(60);
+    //----------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key

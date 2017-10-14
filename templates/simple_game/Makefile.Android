@@ -144,7 +144,7 @@ create_temp_project_dirs:
 	$(foreach dir, $(PROJECT_SOURCE_DIRS), $(call create_dir, $(dir)))
 
 define create_dir
-	if not exist $(PROJECT_BUILD_PATH)\obj\$(1) mkdir $(PROJECT_BUILD_PATH)\obj\$(1)
+    if not exist $(PROJECT_BUILD_PATH)\obj\$(1) mkdir $(PROJECT_BUILD_PATH)\obj\$(1)
 endef
     
 # Copy required shared libs for integration into APK
