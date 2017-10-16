@@ -237,6 +237,11 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
 
+# Define required compilation flags for OpenAL Soft STATIC lib
+ifeq ($(OPENAL_LIBTYPE),STATIC)
+    ALFLAGS = -DAL_LIBTYPE_STATIC -Wl,-allow-multiple-definition
+endif
+
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
 INCLUDE_PATHS = -I. -Iexternal -Iexternal/include
@@ -263,7 +268,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
     # Library paths containing required libs
-    LDFLAGS += -L. -Lsrc -L$(RAYLIB_RELEASE_PATH) -Lexternal/openal_soft/lib/android
+    LDFLAGS += -L. -Lsrc -L$(RAYLIB_RELEASE_PATH)
 
     LDLIBS = -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 endif
