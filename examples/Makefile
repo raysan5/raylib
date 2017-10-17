@@ -82,20 +82,20 @@ endif
 # Define raylib release directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/win32/mingw32
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/win32/mingw32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/linux
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/osx
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/osx
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/html5
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/html5
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/rpi
+    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/rpi
 endif
 
 # Define default C compiler: gcc
@@ -263,6 +263,7 @@ EXAMPLES = \
     textures/textures_particles_blending \
     textures/textures_image_processing \
     textures/textures_image_drawing \
+    textures/textures_image_generation \
     text/text_sprite_fonts \
     text/text_bmfont_ttf \
     text/text_raylib_fonts \
@@ -278,6 +279,10 @@ EXAMPLES = \
     models/models_heightmap \
     models/models_cubicmap \
     models/models_mesh_picking \
+    models/models_mesh_generation \
+    models/models_yaw_pitch_roll \
+    models/models_material_pbr \
+    models/models_skybox \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
