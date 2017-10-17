@@ -27,7 +27,7 @@
 *   #define SUPPORT_VR_SIMULATION / SUPPORT_STEREO_RENDERING
 *       Support VR simulation functionality (stereo rendering)
 *
-*   #define SUPPORT_SHADER_DISTORTION
+*   #define SUPPORT_DISTORTION_SHADER
 *       Include stereo rendering distortion shader (shader_distortion.h)
 *
 *   DEPENDENCIES:
@@ -269,6 +269,20 @@ typedef unsigned char byte;
         float fovy;             // Camera field-of-view apperture in Y (degrees)
     } Camera;
     
+    // Head-Mounted-Display device parameters
+    typedef struct VrDeviceInfo {
+        int hResolution;                // HMD horizontal resolution in pixels
+        int vResolution;                // HMD vertical resolution in pixels
+        float hScreenSize;              // HMD horizontal size in meters
+        float vScreenSize;              // HMD vertical size in meters
+        float vScreenCenter;            // HMD screen center in meters
+        float eyeToScreenDistance;      // HMD distance between eye and display in meters
+        float lensSeparationDistance;   // HMD lens separation distance in meters
+        float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
+        float lensDistortionValues[4];  // HMD lens distortion constant parameters
+        float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
+    } VrDeviceInfo;
+    
     // TraceLog message types
     typedef enum { 
         LOG_INFO = 0, 
@@ -332,12 +346,9 @@ typedef unsigned char byte;
         HMD_DEFAULT_DEVICE = 0,
         HMD_OCULUS_RIFT_DK2,
         HMD_OCULUS_RIFT_CV1,
+        HMD_OCULUS_GO,
         HMD_VALVE_HTC_VIVE,
-        HMD_SAMSUNG_GEAR_VR,
-        HMD_GOOGLE_CARDBOARD,
-        HMD_SONY_PLAYSTATION_VR,
-        HMD_RAZER_OSVR,
-        HMD_FOVE_VR,
+        HMD_SONY_PSVR
     } VrDevice;
 #endif
 
@@ -457,7 +468,8 @@ void BeginBlendMode(int mode);                          // Begin blending mode (
 void EndBlendMode(void);                                // End blending mode (reset to default: alpha blending)
 
 // VR simulator functionality
-void InitVrSimulator(int vrDevice);                     // Init VR simulator for selected device
+VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);         // Get VR device information for some standard devices
+void InitVrSimulator(VrDeviceInfo info);                // Init VR simulator for selected device parameters
 void CloseVrSimulator(void);                            // Close VR simulator for current device
 void UpdateVrTracking(Camera *camera);                  // Update VR tracking (position and orientation) and camera
 void ToggleVrMode(void);                                // Enable/Disable VR experience (device or simulator)

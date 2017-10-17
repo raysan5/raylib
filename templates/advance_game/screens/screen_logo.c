@@ -34,6 +34,8 @@
 static int framesCounter;
 static int finishScreen;
 
+static Texture2D logo;
+
 //----------------------------------------------------------------------------------
 // Logo Screen Functions Definition
 //----------------------------------------------------------------------------------
@@ -44,6 +46,8 @@ void InitLogoScreen(void)
     // TODO: Initialize LOGO screen variables here!
     framesCounter = 0;
     finishScreen = 0;
+    
+    logo = LoadTexture("resources/raylib_logo.png");
 }
 
 // Logo Screen Update logic
@@ -64,14 +68,18 @@ void UpdateLogoScreen(void)
 void DrawLogoScreen(void)
 {
     // TODO: Draw LOGO screen here!
-    DrawText("LOGO SCREEN", 20, 20, 40, LIGHTGRAY);
-    DrawText("WAIT for 2 SECONDS...", 290, 220, 20, GRAY);
+    DrawTextEx(font, "LOGO SCREEN", (Vector2){ 20, 10 }, font.baseSize*3, 4, GRAY);
+    DrawText("WAIT for 2 SECONDS...", 290, 400, 20, GRAY);
+    
+    DrawTexture(logo, GetScreenWidth()/2 - logo.width/2, 100, WHITE);
 }
 
 // Logo Screen Unload logic
 void UnloadLogoScreen(void)
 {
     // TODO: Unload LOGO screen variables here!
+    
+    UnloadTexture(logo);
 }
 
 // Logo Screen should finish?

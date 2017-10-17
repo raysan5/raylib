@@ -52,7 +52,7 @@ void UpdateEndingScreen(void)
     // TODO: Update ENDING screen variables here!
 
     // Press enter to return to TITLE screen
-    if (IsKeyPressed(KEY_ENTER))
+    if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
     {
         finishScreen = 1;
     }
@@ -64,7 +64,7 @@ void DrawEndingScreen(void)
     // TODO: Draw ENDING screen here!
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
     DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
-    DrawText("PRESS ENTER to RETURN to TITLE SCREEN", 160, 220, 20, DARKBLUE);
+    DrawText("PRESS ENTER to RETURN to TITLE SCREEN", 120, 220, 20, DARKBLUE);
 }
 
 // Ending Screen Unload logic

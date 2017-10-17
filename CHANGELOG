@@ -7,16 +7,16 @@ Current Release:    raylib 1.8.0 (Oct 2017)
 Release:     raylib 1.8.0 (Oct 2017)
 -----------------------------------------------
 NOTE: 
-  In this release, multiple parts of the library have been reviewed again for consistency and simplification. 
-  It exposes more than 20 new functions in comparison with previous version and it improves overall programming experience.
+  In this release, multiple parts of the library have been reviewed (again) for consistency and simplification. 
+  It exposes more than 30 new functions in comparison with previous version and it improves overall programming experience.
   
 BIG CHANGES:
-  - Image generation functions: Gradient, Checked, Noise, Cellular...
-  - Mesh generation functions: Cube, Sphere, Cylinder, Torus, Knot...
+  - New Image generation functions: Gradient, Checked, Noise, Cellular...
+  - New Mesh generation functions: Cube, Sphere, Cylinder, Torus, Knot...
   - New Shaders and Materials systems to support PBR materials
-  - Custom Android toolchain for APK building with simple Makefile
-  - Complete review of raymath functionality (Matrix, Quaternion)
+  - Custom Android APK build pipeline with simple Makefile
   - Complete review of rlgl layer functionality
+  - Complete review of raymath functionality
 
 detailed changes:
 [rlgl] RENAMED: rlglLoadTexture() to rlLoadTexture()
@@ -35,54 +35,63 @@ detailed changes:
 [rlgl] RENAMED: LoadDefaultShader() to LoadShaderDefault()
 [rlgl] RENAMED: LoadDefaultShaderLocations() to SetShaderDefaultLocations()
 [rlgl] RENAMED: UnloadDefaultShader() to UnLoadShaderDefault()
-// Texture maps generation (PBR)
-[rlgl] ADDED: rlGenMapCubemap(Texture2D skyHDR, int size);              // Generate cubemap texture map from HDR texture
-[rlgl] ADDED: rlGenMapIrradiance(Texture2D cubemap, int size);          // Generate irradiance texture map
-[rlgl] ADDED: rlGenMapPrefilter(Texture2D cubemap, int size);           // Generate prefilter texture map
-[rlgl] ADDED: rlGenMapBRDF(Texture2D cubemap, int size);                // Generate BRDF texture map
-[core] ADDED: SetWindowTitle()
-[core] ADDED: GetExtension()
-[textures] ADDED: SaveImageAs() 
-? [textures]  ADDED: DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4);       // Draw a gradient-filled rectangle with custom vertex colors
-? [textures]  ADDED: DrawRectangleT(int posX, int posY, int width, int height, Color color);                       // Draw rectangle using text character
-// Image generation functions
-[textures] ADDED: GenImageGradientV(int width, int height, Color top, Color bottom);                           // Generate image: vertical gradient
-[textures] ADDED: GenImageGradientH(int width, int height, Color left, Color right);                           // Generate image: horizontal gradient
-[textures] ADDED: GenImageGradientRadial(int width, int height, float density, Color inner, Color outer);      // Generate image: radial gradient
-[textures] ADDED: GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2);    // Generate image: checked
-[textures] ADDED: GenImageWhiteNoise(int width, int height, float factor);                                     // Generate image: white noise
-[textures] ADDED: GenImagePerlinNoise(int width, int height, float scale);                                     // Generate image: perlin noise
-[textures] ADDED: GenImageCellular(int width, int height, int tileSize);                                       // Generate image: cellular algorithm. Bigger tileSize means bigger cells
-// Texture maps generation (PBR)
-[textures] ADDED: GenTextureCubemap(Shader shader, Texture2D skyHDR, int size);       // Generate cubemap texture from HDR texture
-[textures] ADDED: GenTextureIrradiance(Shader shader, Texture2D cubemap, int size);   // Generate irradiance texture using cubemap data
-[textures] ADDED: GenTexturePrefilter(Shader shader, Texture2D cubemap, int size);    // Generate prefilter texture using cubemap data
-[textures] ADDED: GenTextureBRDF(Shader shader, Texture2D cubemap, int size);         // Generate BRDF texture using cubemap data
-[models] REMOVED: LoadMeshEx()
-[models] REMOVED: UpdateMesh()
-[models] REMOVED: LoadHeightmap()
-[models] REMOVED: LoadCubicmap()
+[rlgl] ADDED: rlGenMapCubemap(), Generate cubemap texture map from HDR texture
+[rlgl] ADDED: rlGenMapIrradiance(), Generate irradiance texture map
+[rlgl] ADDED: rlGenMapPrefilter(), Generate prefilter texture map
+[rlgl] ADDED: rlGenMapBRDF(), Generate BRDF texture map
+[rlgl] ADDED: GetVrDeviceInfo(), Get VR device information for some standard devices
+[rlgl] REVIEWED: InitVrSimulator(), to accept device parameters as input
+[core] ADDED: SetWindowTitle(), Set title for window (only PLATFORM_DESKTOP)
+[core] ADDED: GetExtension(), Get file extension
+[shapes] REMOVED: DrawRectangleGradient(), replaced by DrawRectangleGradientV() and DrawRectangleGradientH()
+[shapes] ADDED: DrawRectangleGradientV(), Draw a vertical-gradient-filled rectangle
+[shapes] ADDED: DrawRectangleGradientH(), Draw a horizontal-gradient-filled rectangle
+[shapes] ADDED: DrawRectangleGradientEx(), Draw a gradient-filled rectangle with custom vertex colors
+[shapes] ADDED: DrawRectangleT(), Draw rectangle using text character
+[textures] ADDED: SaveImageAs(), Save image as PNG file
+[textures] ADDED: GenImageGradientV(), Generate image: vertical gradient
+[textures] ADDED: GenImageGradientH(), Generate image: horizontal gradient
+[textures] ADDED: GenImageGradientRadial(), Generate image: radial gradient
+[textures] ADDED: GenImageChecked(), Generate image: checked
+[textures] ADDED: GenImageWhiteNoise(), Generate image: white noise
+[textures] ADDED: GenImagePerlinNoise(), Generate image: perlin noise
+[textures] ADDED: GenImageCellular(), Generate image: cellular algorithm. Bigger tileSize means bigger cells
+[textures] ADDED: GenTextureCubemap(), Generate cubemap texture from HDR texture
+[textures] ADDED: GenTextureIrradiance(), Generate irradiance texture using cubemap data
+[textures] ADDED: GenTexturePrefilter(), Generate prefilter texture using cubemap data
+[textures] ADDED: GenTextureBRDF(), Generate BRDF texture using cubemap data
+[models] REMOVED: LoadMeshEx(), Mesh struct variables can be directly accessed
+[models] REMOVED: UpdateMesh(), very ineficient
+[models] REMOVED: LoadHeightmap(), use GenMeshHeightmap() and LoadModelFromMesh()
+[models] REMOVED: LoadCubicmap(), use GenMeshCubicmap() and LoadModelFromMesh()
 [models] RENAMED: LoadDefaultMaterial() to LoadMaterialDefault()
-// Mesh generation functions
-[models] ADDED: GenMeshPlane()
-[models] ADDED: GenMeshCube()
-[models] ADDED: GenMeshSphere()
-[models] ADDED: GenMeshHemiSphere(float radius, int rings, int slices);                                      // Generate half-sphere mesh (no bottom cap)
-[models] ADDED: GenMeshCylinder(float radius, float height, int slices);                                     // Generate cylinder mesh
-[models] ADDED: GenMeshTorus(float radius, float size, int radSeg, int sides);                               // Generate torus mesh
-[models] ADDED: GenMeshKnot(float radius, float size, int radSeg, int sides);                                // Generate trefoil knot mesh
-[models] ADDED: GenMeshHeightmap(Image heightmap, Vector3 size);                                             // Generate heightmap mesh from image data
-[models] ADDED: GenMeshCubicmap(Image cubicmap, Vector3 cubeSize);                                           // Generate cubes-based map mesh from image data
-
-[raymath] Reviewed full Matrix functionality
-[raymath] Renamed Vector3 functions for consistency
+[models] ADDED: GenMeshPlane(), Generate plane mesh (with subdivisions)
+[models] ADDED: GenMeshCube(), Generate cuboid mesh
+[models] ADDED: GenMeshSphere(), Generate sphere mesh (standard sphere)
+[models] ADDED: GenMeshHemiSphere(), Generate half-sphere mesh (no bottom cap)
+[models] ADDED: GenMeshCylinder(), Generate cylinder mesh
+[models] ADDED: GenMeshTorus(), Generate torus mesh
+[models] ADDED: GenMeshKnot(), Generate trefoil knot mesh
+[models] ADDED: GenMeshHeightmap(), Generate heightmap mesh from image data
+[models] ADDED: GenMeshCubicmap(), Generate cubes-based map mesh from image data
+[raymath] REVIEWED: full Matrix functionality to align with GLM in usage
+[raymath] RENAMED: Vector3 functions for consistency: Vector*() renamed to Vector3*()
 [build] Integrate Android APK building into examples Makefile
-[example] ADDED: 
-[example] ADDED: 
-[example] ADDED: 
+[build] Integrate Android APK building into templates Makefiles
+[build] Improved Visual Studio 2015 project, folders, references...
+[templates] Reviewed the full pack to support Android building
+[examples] Reviewed full collection to adapt to raylib changes
+[examples] [textures] ADDED: textures_image_generation
+[examples] [models] ADDED: models_mesh_generation
+[examples] [models] ADDED: models_material_pbr
+[examples] [models] ADDED: models_skybox
+[examples] [models] ADDED: models_yaw_pitch_roll
+[examples] [others] REVIEWED: rlgl_standalone
+[examples] [others] REVIEWED: audio_standalone
 [github] Moved raylib webpage to own repo: github.com/raysan5/raylib.com
 [games] Reviewed game: Koala Seasons
 [*] Updated STB libraries to latest version
+[*] Multiple bugs corrected (check github issues)
 
 -----------------------------------------------
 Release:     raylib 1.7.0 (20 May 2017)

@@ -182,3 +182,23 @@ Some other features: Gamepad support on HTML5, RPI touch screen support, 32bit a
 
 And here it is another version of **raylib, a simple and easy-to-use library to learn videogames programming**. Enjoy it.
 
+notes on raylib 1.8
+-------------------
+
+October 2017, around 5 months after latest raylib version, another release is published: raylib 1.8. Again, several modules of the library have been reviewed and some new functionality added. Main changes of this new release are:
+
+[Procedural image generation](https://github.com/raysan5/raylib/blob/develop/examples/textures/textures_image_generation.c) function, a set of new functions have been added to generate gradients, checked, noise and cellular images from scratch. Image generation could be useful for certain textures or learning pourpouses.
+
+[Parametric mesh generation](https://github.com/raysan5/raylib/blob/develop/examples/models/models_mesh_generation.c) functions, create 3d meshes from scratch just defining a set of parameters, meshes like cube, sphere, cylinder, torus, knot and more can be very useful for prototyping or for lighting and texture testing.
+
+PBR Materials support, a completely redesigned shaders and material system allows advance materials definition and usage, with fully customizable shaders. Some new functions have been added to generate the environment textures required for PBR shading and a a new complete [PBR material example](https://github.com/raysan5/raylib/blob/develop/examples/models/models_material_pbr.c) is also provided for reference.
+
+Custom Android APK build pipeline with [simple Makefile](https://github.com/raysan5/raylib/blob/develop/templates/simple_game/Makefile). Actually, full code building mechanism based on plain Makefile has been completely reviewed and Android building has been added for sources and also for examples and templates building into final APK package. This way, raylib Android building has been greatly simplified and integrated seamlessly into standard build scripts.
+
+[rlgl](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) module has been completely reviewed and most of the functions renamed for consistency. This way, standalone usage of rlgl is promoted, with a [complete example provided](https://github.com/raysan5/raylib/blob/develop/examples/others/rlgl_standalone.c). rlgl offers a pseudo-OpenGL 1.1 immediate-mode programming-style layer, with backends to multiple OpenGL versions.
+
+[raymath](https://github.com/raysan5/raylib/blob/develop/src/rlgl.c) library has been also reviewed to align with other advance math libraries like [GLM](https://github.com/g-truc/glm). Matrix math has been improved and simplified, some new Quaternion functions have been added and Vector3 functions have been renamed all around the library for consistency with new Vector2 functionality.
+
+Additionally, as always, examples and templates have been reviewed to work with new version (some new examples have been added), all external libraries have been updated to latest stable version and latest Notepad++ and MinGW have been configured to work with new raylib. For a full list of changes, just check [CHANGELOG](CHANGELOG).
+
+New installer provided, web updated, examples re-builded, documentation reviewed... **new raylib 1.8 published**. Enjoy coding games. 

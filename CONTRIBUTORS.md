@@ -12,7 +12,7 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  - Daniel Moreno for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - Daniel Gomez for testing and using raylib on a real product ([Koala Seasons](http://www.koalaseasons.com))
  - [Sergio Martinez](https://github.com/anidealgift) for helping on raygui development and tools development (raygui_styler).
- - [Victor Fisac](https://github.com/victorfisac) for developing physics raylib module (physac) and implementing materials and lighting systems... among multiple other improvements and multiple tools and games. 
+ - [Victor Fisac](https://github.com/victorfisac) for developing physics raylib module (physac) and implementing PBR materials and lighting systems... among multiple other improvements and multiple tools and games. 
  - Albert Martos for helping on raygui and porting examples and game-templates to Android and HTML5.
  - Ian Eito for helping on raygui and porting examples and game-templates to Android and HTML5.
  - [procedural](https://github.com/procedural) for testing raylib on Linux, correcting some bugs and adding several mouse functions.
@@ -28,7 +28,8 @@ contributing (in some way or another) to make raylib project better. Huge thanks
  - [Joel Davis](https://github.com/joeld42) for adding raycast picking utilities and a [great example](https://github.com/raysan5/raylib/blob/master/examples/models/models_mesh_picking.c)
  - [Richard Goodwin](https://github.com/AudioMorphology) for adding RPI touchscreen support
  - [Milan Nikolic](https://github.com/gen2brain) for adding Android build support with custom standalone toolchain
- 
- ** TODO **
+ - [Michael Vetter](https://github.com/jubalh) for improvements on build system and adding meson support for Linux
+ - [Wilhem Barbier](https://github.com/nounoursheureux) for adding Image generation functions and some fixes
+ - [Benjamin Summerton](https://github.com/define-private-public) for improving OSX building and his amazing work on CMake build sytem
  
 Please, if I forget someone in this list, excuse me and write me an email to remind me to add you!

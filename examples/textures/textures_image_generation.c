@@ -11,7 +11,7 @@
 
 #include "raylib.h"
 
-#define TEXTURES_NUM 7      // for now we have 7 generation algorithms
+#define NUM_TEXTURES  7      // Currently we have 7 generation algorithms
 
 int main()
 {
@@ -30,7 +30,7 @@ int main()
     Image perlinNoise = GenImagePerlinNoise(screenWidth, screenHeight, 8.f);
     Image cellular = GenImageCellular(screenWidth, screenHeight, 32);
 
-    Texture2D textures[TEXTURES_NUM];
+    Texture2D textures[NUM_TEXTURES];
     textures[0] = LoadTextureFromImage(verticalGradient);
     textures[1] = LoadTextureFromImage(horizontalGradient);
     textures[2] = LoadTextureFromImage(radialGradient);
@@ -38,6 +38,15 @@ int main()
     textures[4] = LoadTextureFromImage(whiteNoise);
     textures[5] = LoadTextureFromImage(perlinNoise);
     textures[6] = LoadTextureFromImage(cellular);
+    
+    // Unload image data (CPU RAM)
+    UnloadImage(verticalGradient);
+    UnloadImage(horizontalGradient);
+    UnloadImage(radialGradient);
+    UnloadImage(checked);
+    UnloadImage(whiteNoise);
+    UnloadImage(perlinNoise);
+    UnloadImage(cellular);
 
     int currentTexture = 0;
     
@@ -51,7 +60,7 @@ int main()
         //----------------------------------------------------------------------------------
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
-            currentTexture = (currentTexture + 1) % TEXTURES_NUM; // cycle between the 5 textures
+            currentTexture = (currentTexture + 1)%NUM_TEXTURES; // Cycle between the textures
         }
         //----------------------------------------------------------------------------------
 
@@ -63,24 +72,31 @@ int main()
             
             DrawTexture(textures[currentTexture], 0, 0, WHITE);
             
+            DrawRectangle(30, 400, 325, 30, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines(30, 400, 325, 30, Fade(WHITE, 0.5f));
+            DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL TEXTURES", 40, 410, 10, WHITE);
+            
+            switch(currentTexture)
+            {
+                case 0: DrawText("VERTICAL GRADIENT", 560, 10, 20, RAYWHITE); break;
+                case 1: DrawText("HORIZONTAL GRADIENT", 540, 10, 20, RAYWHITE); break;
+                case 2: DrawText("RADIAL GRADIENT", 580, 10, 20, LIGHTGRAY); break;
+                case 3: DrawText("CHECKED", 680, 10, 20, RAYWHITE); break;
+                case 4: DrawText("WHITE NOISE", 640, 10, 20, RED); break;
+                case 5: DrawText("PERLIN NOISE", 630, 10, 20, RAYWHITE); break;
+                case 6: DrawText("CELLULAR", 670, 10, 20, RAYWHITE); break;
+                default: break;
+            }
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    
-    // Unload image data (CPU RAM)
-    UnloadImage(verticalGradient);
-    UnloadImage(horizontalGradient);
-    UnloadImage(radialGradient);
-    UnloadImage(checked);
-    UnloadImage(whiteNoise);
-    UnloadImage(perlinNoise);
-    UnloadImage(cellular);
-    
+       
     // Unload textures data (GPU VRAM)
-    for (int i = 0; i < TEXTURES_NUM; i++) UnloadTexture(textures[i]);
+    for (int i = 0; i < NUM_TEXTURES; i++) UnloadTexture(textures[i]);
     
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

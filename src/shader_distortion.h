@@ -20,12 +20,12 @@ static const char vDistortionShaderStr[] =
 "out vec2 fragTexCoord;             \n"
 "out vec4 fragColor;                \n"
 #endif
-"uniform mat4 mvpMatrix;            \n"
+"uniform mat4 mvp;            \n"
 "void main()                        \n"
 "{                                  \n"
 "    fragTexCoord = vertexTexCoord; \n"
 "    fragColor = vertexColor;       \n"
-"    gl_Position = mvpMatrix*vec4(vertexPosition, 1.0); \n"
+"    gl_Position = mvp*vec4(vertexPosition, 1.0); \n"
 "}                                  \n";
 
 // Fragment shader definition to embed, no external file required

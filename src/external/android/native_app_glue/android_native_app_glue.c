@@ -420,8 +420,9 @@ static void onInputQueueDestroyed(ANativeActivity* activity, AInputQueue* queue)
     android_app_set_input((struct android_app*)activity->instance, NULL);
 }
 
-void ANativeActivity_onCreate(ANativeActivity* activity,
-        void* savedState, size_t savedStateSize) {
+JNIEXPORT
+void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState,
+                              size_t savedStateSize) {
     LOGV("Creating: %p\n", activity);
     activity->callbacks->onDestroy = onDestroy;
     activity->callbacks->onStart = onStart;
