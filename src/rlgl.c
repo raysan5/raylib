@@ -223,20 +223,6 @@ typedef struct DrawCall {
 } DrawCall;
 
 #if defined(SUPPORT_VR_SIMULATOR)
-// Head-Mounted-Display device parameters
-typedef struct VrDeviceInfo {
-    int hResolution;                // HMD horizontal resolution in pixels
-    int vResolution;                // HMD vertical resolution in pixels
-    float hScreenSize;              // HMD horizontal size in meters
-    float vScreenSize;              // HMD vertical size in meters
-    float vScreenCenter;            // HMD screen center in meters
-    float eyeToScreenDistance;      // HMD distance between eye and display in meters
-    float lensSeparationDistance;   // HMD lens separation distance in meters
-    float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
-    float distortionK[4];           // HMD lens distortion constant parameters
-    float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
-} VrDeviceInfo;
-
 // VR Stereo rendering configuration for simulator
 typedef struct VrStereoConfig {
     RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
@@ -2829,70 +2815,88 @@ void EndBlendMode(void)
 }
 
 #if defined(SUPPORT_VR_SIMULATOR)
-// Init VR simulator for selected device
+// Get VR device information for some standard devices
+VrDeviceInfo GetVrDeviceInfo(int vrDeviceType)
+{
+    VrDeviceInfo hmd = { 0 };                // Current VR device info
+    
+    switch (vrDeviceType)
+    {
+        case HMD_DEFAULT_DEVICE:
+        case HMD_OCULUS_RIFT_CV1:
+        {
+            // Oculus Rift CV1 parameters
+            // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
+            // new Fresnel-hybrid-asymmetric lenses have been added and, consequently,
+            // previous parameters (DK2) and distortion shader (DK2) doesn't work any more.
+            // I just defined a set of parameters for simulator that approximate to CV1 stereo rendering
+            // but result is not the same obtained with Oculus PC SDK.
+            hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
+            hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
+            hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
+            hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
+            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
+            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
+            hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
+            hmd.interpupillaryDistance = 0.07f;     // HMD IPD (distance between pupils) in meters
+            hmd.lensDistortionValues[0] = 1.0f;     // HMD lens distortion constant parameter 0
+            hmd.lensDistortionValues[1] = 0.22f;    // HMD lens distortion constant parameter 1
+            hmd.lensDistortionValues[2] = 0.24f;    // HMD lens distortion constant parameter 2
+            hmd.lensDistortionValues[3] = 0.0f;     // HMD lens distortion constant parameter 3
+            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
+            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
+            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
+            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
+            
+            TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift CV1)");
+        } break;
+        case HMD_OCULUS_RIFT_DK2:
+        {
+            // Oculus Rift DK2 parameters
+            hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
+            hmd.vResolution = 800;                  // HMD vertical resolution in pixels
+            hmd.hScreenSize = 0.14976f;             // HMD horizontal size in meters
+            hmd.vScreenSize = 0.09356f;             // HMD vertical size in meters
+            hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
+            hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
+            hmd.lensSeparationDistance = 0.0635f;   // HMD lens separation distance in meters
+            hmd.interpupillaryDistance = 0.064f;    // HMD IPD (distance between pupils) in meters
+            hmd.lensDistortionValues[0] = 1.0f;     // HMD lens distortion constant parameter 0
+            hmd.lensDistortionValues[1] = 0.22f;    // HMD lens distortion constant parameter 1
+            hmd.lensDistortionValues[2] = 0.24f;    // HMD lens distortion constant parameter 2
+            hmd.lensDistortionValues[3] = 0.0f;     // HMD lens distortion constant parameter 3
+            hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
+            hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
+            hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
+            hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
+            
+            TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift DK2)");
+        } break; 
+        case HMD_OCULUS_GO:
+        {
+            // TODO: Provide device display and lens parameters
+        }
+        case HMD_VALVE_HTC_VIVE:
+        {
+            // TODO: Provide device display and lens parameters
+        }
+        case HMD_SONY_PSVR:
+        {
+            // TODO: Provide device display and lens parameters
+        }
+        default: break;
+    }
+    
+    return hmd;
+}
+
+// Init VR simulator for selected device parameters
 // NOTE: It modifies the global variable: VrStereoConfig vrConfig
-void InitVrSimulator(int vrDevice)
+void InitVrSimulator(VrDeviceInfo info)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    VrDeviceInfo hmd;                // Current VR device info
-    
-    if (vrDevice == HMD_OCULUS_RIFT_DK2)
-    {
-        // Oculus Rift DK2 parameters
-        hmd.hResolution = 1280;                 // HMD horizontal resolution in pixels
-        hmd.vResolution = 800;                  // HMD vertical resolution in pixels
-        hmd.hScreenSize = 0.14976f;             // HMD horizontal size in meters
-        hmd.vScreenSize = 0.09356f;             // HMD vertical size in meters
-        hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
-        hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
-        hmd.lensSeparationDistance = 0.0635f;   // HMD lens separation distance in meters
-        hmd.interpupillaryDistance = 0.064f;    // HMD IPD (distance between pupils) in meters
-        hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
-        hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
-        hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
-        hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
-        hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
-        hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
-        hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
-        hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-        
-        TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift DK2)");
-    }
-    else if ((vrDevice == HMD_DEFAULT_DEVICE) || (vrDevice == HMD_OCULUS_RIFT_CV1))
-    {
-        // Oculus Rift CV1 parameters
-        // NOTE: CV1 represents a complete HMD redesign compared to previous versions,
-        // new Fresnel-hybrid-asymmetric lenses have been added and, consequently,
-        // previous parameters (DK2) and distortion shader (DK2) doesn't work any more.
-        // I just defined a set of parameters for simulator that approximate to CV1 stereo rendering
-        // but result is not the same obtained with Oculus PC SDK.
-        hmd.hResolution = 2160;                 // HMD horizontal resolution in pixels
-        hmd.vResolution = 1200;                 // HMD vertical resolution in pixels
-        hmd.hScreenSize = 0.133793f;            // HMD horizontal size in meters
-        hmd.vScreenSize = 0.0669f;              // HMD vertical size in meters
-        hmd.vScreenCenter = 0.04678f;           // HMD screen center in meters
-        hmd.eyeToScreenDistance = 0.041f;       // HMD distance between eye and display in meters
-        hmd.lensSeparationDistance = 0.07f;     // HMD lens separation distance in meters
-        hmd.interpupillaryDistance = 0.07f;     // HMD IPD (distance between pupils) in meters
-        hmd.distortionK[0] = 1.0f;              // HMD lens distortion constant parameter 0
-        hmd.distortionK[1] = 0.22f;             // HMD lens distortion constant parameter 1
-        hmd.distortionK[2] = 0.24f;             // HMD lens distortion constant parameter 2
-        hmd.distortionK[3] = 0.0f;              // HMD lens distortion constant parameter 3
-        hmd.chromaAbCorrection[0] = 0.996f;     // HMD chromatic aberration correction parameter 0
-        hmd.chromaAbCorrection[1] = -0.004f;    // HMD chromatic aberration correction parameter 1
-        hmd.chromaAbCorrection[2] = 1.014f;     // HMD chromatic aberration correction parameter 2
-        hmd.chromaAbCorrection[3] = 0.0f;       // HMD chromatic aberration correction parameter 3
-        
-        TraceLog(LOG_INFO, "Initializing VR Simulator (Oculus Rift CV1)");
-    }
-    else 
-    {
-        TraceLog(LOG_WARNING, "VR Simulator doesn't support selected device parameters,");
-        TraceLog(LOG_WARNING, "using default VR Simulator parameters");
-    }
-
     // Initialize framebuffer and textures for stereo rendering
-    // NOTE: screen size should match HMD aspect ratio
+    // NOTE: Screen size should match HMD aspect ratio
     vrConfig.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight);
     
 #if defined(SUPPORT_DISTORTION_SHADER)
@@ -2901,7 +2905,7 @@ void InitVrSimulator(int vrDevice)
     if (vrConfig.distortionShader.id > 0) SetShaderDefaultLocations(&vrConfig.distortionShader);
 #endif
 
-    SetStereoConfig(hmd);
+    SetStereoConfig(info);
 
     vrSimulatorReady = true;
 #endif
@@ -2924,6 +2928,18 @@ void CloseVrSimulator(void)
     }
 #endif
 }
+
+// TODO: Review VR system to be more flexible, 
+// move distortion shader to user side,
+// SetStereoConfig() must be reviewed...
+/*
+// Set VR view distortion shader
+void SetVrDistortionShader(Shader shader)
+{
+    vrConfig.distortionShader = shader;
+    SetStereoConfig(info);
+}
+*/
 
 // Detect if VR simulator is running
 bool IsVrSimulatorReady(void)
@@ -3958,10 +3974,10 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     // NOTE: To get lens max radius, lensShift must be normalized to [-1..1]
     float lensRadius = fabsf(-1.0f - 4.0f*lensShift);
     float lensRadiusSq = lensRadius*lensRadius;
-    float distortionScale = hmd.distortionK[0] +
-                            hmd.distortionK[1]*lensRadiusSq +
-                            hmd.distortionK[2]*lensRadiusSq*lensRadiusSq +
-                            hmd.distortionK[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
+    float distortionScale = hmd.lensDistortionValues[0] +
+                            hmd.lensDistortionValues[1]*lensRadiusSq +
+                            hmd.lensDistortionValues[2]*lensRadiusSq*lensRadiusSq +
+                            hmd.lensDistortionValues[3]*lensRadiusSq*lensRadiusSq*lensRadiusSq;
 
     TraceLog(LOG_DEBUG, "VR: Distortion Scale: %f", distortionScale);
 
@@ -3984,7 +4000,7 @@ static void SetStereoConfig(VrDeviceInfo hmd)
 
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scale"), scale, 2);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "scaleIn"), scaleIn, 2);
-    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.distortionK, 4);
+    SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "hmdWarpParam"), hmd.lensDistortionValues, 4);
     SetShaderValue(vrConfig.distortionShader, GetShaderLocation(vrConfig.distortionShader, "chromaAbParam"), hmd.chromaAbCorrection, 4);
 #endif
 
@@ -4023,6 +4039,7 @@ static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView)
     // Apply view offset to modelview matrix
     eyeModelView = MatrixMultiply(matModelView, vrConfig.eyesViewOffset[eye]);
 
+    // Set current eye projection matrix
     eyeProjection = vrConfig.eyesProjection[eye];
 
     SetMatrixModelview(eyeModelView);
