@@ -39,6 +39,8 @@ detailed changes:
 [rlgl] ADDED: rlGenMapIrradiance(), Generate irradiance texture map
 [rlgl] ADDED: rlGenMapPrefilter(), Generate prefilter texture map
 [rlgl] ADDED: rlGenMapBRDF(), Generate BRDF texture map
+[rlgl] ADDED: GetVrDeviceInfo(), Get VR device information for some standard devices
+[rlgl] REVIEWED: InitVrSimulator(), to accept device parameters as input
 [core] ADDED: SetWindowTitle(), Set title for window (only PLATFORM_DESKTOP)
 [core] ADDED: GetExtension(), Get file extension
 [shapes] REMOVED: DrawRectangleGradient(), replaced by DrawRectangleGradientV() and DrawRectangleGradientH()
@@ -72,19 +74,20 @@ detailed changes:
 [models] ADDED: GenMeshKnot(), Generate trefoil knot mesh
 [models] ADDED: GenMeshHeightmap(), Generate heightmap mesh from image data
 [models] ADDED: GenMeshCubicmap(), Generate cubes-based map mesh from image data
-[raymath] REVIEW: full Matrix functionality to align with GLM in usage
-[raymath] RENAME: Vector3 functions for consistency: Vector*() renamed to Vector3*()
+[raymath] REVIEWED: full Matrix functionality to align with GLM in usage
+[raymath] RENAMED: Vector3 functions for consistency: Vector*() renamed to Vector3*()
 [build] Integrate Android APK building into examples Makefile
 [build] Integrate Android APK building into templates Makefiles
 [build] Improved Visual Studio 2015 project, folders, references...
+[templates] Reviewed the full pack to support Android building
 [examples] Reviewed full collection to adapt to raylib changes
 [examples] [textures] ADDED: textures_image_generation
 [examples] [models] ADDED: models_mesh_generation
 [examples] [models] ADDED: models_material_pbr
 [examples] [models] ADDED: models_skybox
 [examples] [models] ADDED: models_yaw_pitch_roll
-[examples] [others] REVIEW: rlgl_standalone
-[examples] [others] REVIEW: audio_standalone
+[examples] [others] REVIEWED: rlgl_standalone
+[examples] [others] REVIEWED: audio_standalone
 [github] Moved raylib webpage to own repo: github.com/raysan5/raylib.com
 [games] Reviewed game: Koala Seasons
 [*] Updated STB libraries to latest version
