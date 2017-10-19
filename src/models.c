@@ -666,7 +666,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     // Vertices definition
     int vertexCount = resX*resZ*6;  // 6 vertex by quad
 
-    Vector3 vertices[vertexCount];
+    Vector3 *vertices = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
     for (int z = 0; z < resZ; z++)
     {
         // [-length/2, length/2]
@@ -680,11 +680,11 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     }
 
     // Normals definition
-    Vector3 normals[vertexCount];
+    Vector3 *normals = (Vector3 *)malloc(vertexCount*sizeof(Vector3));
     for (int n = 0; n < vertexCount; n++) normals[n] = (Vector3){ 0.0f, 1.0f, 0.0f };   // Vector3.up;
 
     // TexCoords definition		
-    Vector2 texcoords[vertexCount];
+    Vector2 *texcoords = (Vector2 *)malloc(vertexCount*sizeof(Vector2));
     for (int v = 0; v < resZ; v++)
     {
         for (int u = 0; u < resX; u++)
@@ -694,10 +694,10 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     }
 
     // Triangles definition (indices)
-    int nbFaces = (resX - 1)*(resZ - 1);
-    int triangles[nbFaces*6];
+    int numFaces = (resX - 1)*(resZ - 1);
+    int *triangles = (int *)malloc(numFaces*6*sizeof(int));
     int t = 0;
-    for (int face = 0; face < nbFaces; face++)
+    for (int face = 0; face < numFaces; face++)
     {
         // Retrieve lower left corner from face ind
         int i = face % (resX - 1) + (face/(resZ - 1)*resX);
@@ -712,7 +712,7 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     }
 
     mesh.vertexCount = vertexCount;
-    mesh.triangleCount = nbFaces*2;
+    mesh.triangleCount = numFaces*2;
     mesh.vertices = (float *)malloc(mesh.vertexCount*3*sizeof(float));
     mesh.texcoords = (float *)malloc(mesh.vertexCount*2*sizeof(float));
     mesh.normals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
@@ -743,6 +743,11 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
     
     // Mesh indices array initialization
     for (int i = 0; i < mesh.triangleCount*3; i++) mesh.indices[i] = triangles[i];
+    
+    free(vertices);
+    free(normals);
+    free(texcoords);
+    free(triangles);
     
 #else       // Use par_shapes library to generate plane mesh
 
