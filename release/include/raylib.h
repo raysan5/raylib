@@ -5,21 +5,22 @@
 *   A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *
 *   FEATURES:
-*       - Library written in plain C code (C99)
-*       - Multiple platforms supported: Windows, Linux, Mac, Android, Raspberry Pi, HTML5.
+*       - Written in plain C code (C99) in PascalCase/camelCase notation
+*       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi and HTML5
 *       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
 *       - Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
-*       - Multiple textures support, including compressed formats and mipmaps generation
-*       - Basic 3d support for Shapes, Models, Billboards, Heightmaps and Cubicmaps
+*       - Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
+*       - Basic 3d support for Geometrics, Models, Billboards, Heightmaps and Cubicmaps
+*       - Flexible Materials system, supporting classic maps and PBR maps
+*       - Shaders support, including Model shaders and Postprocessing shaders
 *       - Powerful math module for Vector2, Vector3, Matrix and Quaternion operations: [raymath]
 *       - Audio loading and playing with streaming support and mixing channels: [audio]
 *       - VR stereo rendering support with configurable HMD device parameters
 *       - Minimal external dependencies (GLFW3, OpenGL, OpenAL)
-*       - Complete bindings for Lua, Go and Pascal
+*       - Complete bindings to LUA (raylib-lua) and Go (raylib-go)
 *
 *   NOTES:
-*       32bit Colors - Any defined Color is always RGBA (4 byte)
 *       One custom font is loaded by default when InitWindow() [core]
 *       If using OpenGL 3.3 or ES2, one default shader is loaded automatically (internally defined) [rlgl]
 *       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
@@ -31,12 +32,16 @@
 *
 *   OPTIONAL DEPENDENCIES:
 *       stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA) [textures]
+*       stb_image_resize (Sean Barret) for image resizing algorythms [textures]
 *       stb_image_write (Sean Barret) for image writting (PNG) [utils]
 *       stb_truetype (Sean Barret) for ttf fonts loading [text]
 *       stb_vorbis (Sean Barret) for ogg audio loading [audio]
+*       stb_perlin (Sean Barret) for Perlin noise image generation [textures]
+*       par_shapes (Philip Rideout) for parametric 3d shapes generation [models]
 *       jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
 *       jar_mod (Joshua Reisenauer) for MOD audio module loading [audio]
 *       dr_flac (David Reid) for FLAC audio file loading [audio]
+*       rgif (Charlie Tangora, Ramon Santamaria) for GIF recording [core]
 *       tinfl for data decompression (DEFLATE algorithm) [rres]
 *
 *
@@ -303,7 +308,7 @@
 //----------------------------------------------------------------------------------
 #ifndef __cplusplus
 // Boolean type
-    #if !defined(_STDBOOL_H) || !defined(__STDBOOL_H)   // CLang uses second form
+    #ifndef bool
         typedef enum { false, true } bool;
     #endif
 #endif
@@ -518,6 +523,20 @@ typedef struct RRESData {
 // RRES type (pointer to RRESData array)
 typedef struct RRESData *RRES;
 
+// Head-Mounted-Display device parameters
+typedef struct VrDeviceInfo {
+    int hResolution;                // HMD horizontal resolution in pixels
+    int vResolution;                // HMD vertical resolution in pixels
+    float hScreenSize;              // HMD horizontal size in meters
+    float vScreenSize;              // HMD vertical size in meters
+    float vScreenCenter;            // HMD screen center in meters
+    float eyeToScreenDistance;      // HMD distance between eye and display in meters
+    float lensSeparationDistance;   // HMD lens separation distance in meters
+    float interpupillaryDistance;   // HMD IPD (distance between pupils) in meters
+    float lensDistortionValues[4];  // HMD lens distortion constant parameters
+    float chromaAbCorrection[4];    // HMD chromatic aberration correction parameters
+} VrDeviceInfo;
+
 //----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
@@ -660,13 +679,10 @@ typedef enum {
     HMD_DEFAULT_DEVICE = 0,
     HMD_OCULUS_RIFT_DK2,
     HMD_OCULUS_RIFT_CV1,
+    HMD_OCULUS_GO,
     HMD_VALVE_HTC_VIVE,
-    HMD_SAMSUNG_GEAR_VR,
-    HMD_GOOGLE_CARDBOARD,
-    HMD_SONY_PLAYSTATION_VR,
-    HMD_RAZER_OSVR,
-    HMD_FOVE_VR,
-} VrDevice;
+    HMD_SONY_PSVR
+} VrDeviceType;
 
 // RRESData type
 typedef enum { 
@@ -1078,7 +1094,8 @@ RLAPI void BeginBlendMode(int mode);                                      // Beg
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
 // VR control functions
-RLAPI void InitVrSimulator(int vrDevice);           // Init VR simulator for selected device
+VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);     // Get VR device information for some standard devices
+void InitVrSimulator(VrDeviceInfo info);            // Init VR simulator for selected device parameters
 RLAPI void CloseVrSimulator(void);                  // Close VR simulator for current device
 RLAPI bool IsVrSimulatorReady(void);                // Detect if VR simulator is ready
 RLAPI void UpdateVrTracking(Camera *camera);        // Update VR tracking (position and orientation) and camera

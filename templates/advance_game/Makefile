@@ -67,8 +67,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH = C:/emsdk
-    EMSCRIPTEN_VERSION = 1.37.9
-    CLANG_VERSION=e1.37.9_64bit
+    EMSCRIPTEN_VERSION = 1.37.21
+    CLANG_VERSION=e1.37.21_64bit
     PYTHON_VERSION=2.7.5.3_64bit
     NODE_VERSION=4.1.1_64bit
     export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -218,7 +218,7 @@ endif
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains raylib icon for windows .exe
     # -Wl,--subsystem,windows hides the console window
-    WINFLAGS = $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
+    CFLAGS += $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
 endif
 
 # Define output extension to generate a .html file using provided shell
@@ -254,7 +254,7 @@ all:
 
 # Project target defined by PROJECT_NAME
 $(PROJECT_NAME): $(OBJS)
-	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) $(WINFLAGS)
+	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile source files
 # NOTE: This pattern will compile every module defined on $(OBJS)

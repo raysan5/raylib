@@ -54,6 +54,13 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     OPENAL_LIBTYPE = SHARED
 endif
 
+# Use cross-compiler for PLATFORM_RPI
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RPI_CROSS_COMPILE ?= YES
+    RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
+    RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
+endif
+
 # Determine if the file has root access (only for installing raylib)
 # "whoami" prints the name of the user that calls him (so, if it is the root
 # user, "whoami" prints "root").
@@ -77,11 +84,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # RPI cross-compiler
-    RPI_CROSS_COMPILE ?= NO
-endif
-
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH = C:/emsdk
@@ -92,6 +94,17 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
     EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
+
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    # Android required path variables
+    ANDROID_NDK = C:/android-ndk
+    ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
+
+    # Android architecture: ARM or ARM64
+    ANDROID_ARCH ?= ARM
+endif
+
+RAYLIB_RELEASE_PATH ?= $(RAYLIB_PATH)/release/libs
 
 # Define output directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -118,15 +131,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),ARM64)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/android/arm64-v8a
     endif
-endif
-
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    # Android required path variables
-    ANDROID_NDK = C:/android-ndk
-    ANDROID_TOOLCHAIN = C:/android_toolchain_arm_api16
-
-    # Android architecture: ARM or ARM64
-    ANDROID_ARCH ?= ARM
 endif
 
 # Define raylib graphics api depending on selected platform
@@ -164,8 +168,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(RPI_CROSS_COMPILE),YES)
-        # RPI cross-compiler
-        CC = armv6j-hardfloat-linux-gnueabi-gcc
+        # Define RPI cross-compiler
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -185,6 +190,14 @@ endif
 
 # Default archiver program to pack libraries
 AR = ar
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    ifeq ($(RPI_CROSS_COMPILE),YES)
+        # Define RPI cross-archiver
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        AR = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-ar
+    endif
+endif
 
 # Android archiver (also depends on desired architecture)
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -249,9 +262,10 @@ INCLUDE_PATHS = -I. -Iexternal -Iexternal/include
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # RPI requried libraries
-    INCLUDE_PATHS += -I/opt/vc/include
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android required libraries
@@ -304,8 +318,9 @@ else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         # NOTE: If using OpenAL Soft as static library, all its dependencies must be also linked in the shared library
         ifeq ($(PLATFORM_OS),WINDOWS)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) $(ALLIBS) -Lexternal/glfw3/lib/win32 -Lexternal/openal_soft/lib/win32 -lglfw3 -lgdi32 -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -lglfw3 -lgdi32 -lopenal32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
 			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
+            @echo "expected OpenAL Soft static library linking"
         endif
         ifeq ($(PLATFORM_OS),LINUX)
             # Compile raylib to shared library version for GNU/Linux.
@@ -323,7 +338,8 @@ else
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
     else
-        # Compile raylib static library.
+        # Compile raylib static library
+		@echo raylib library release path is $(RAYLIB_RELEASE_PATH)
 		$(AR) rcs $(RAYLIB_RELEASE_PATH)/libraylib.a $(OBJS)
 		@echo "raylib static library generated (libraylib.a)!"
         ifeq ($(OPENAL_LIBTYPE),STATIC)
