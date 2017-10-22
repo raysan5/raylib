@@ -46,12 +46,19 @@ RAYLIB_PATH ?= ..
 
 # Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
 # NOTE: OpenAL Soft library should be provided in the selected form
-RAYLIB_LIBTYPE ?= SHARED
+RAYLIB_LIBTYPE ?= STATIC
 OPENAL_LIBTYPE ?= STATIC
 
 # On PLATFORM_WEB force OpenAL Soft shared library
 ifeq ($(PLATFORM),PLATFORM_WEB)
     OPENAL_LIBTYPE = SHARED
+endif
+
+# Use cross-compiler for PLATFORM_RPI
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RPI_CROSS_COMPILE ?= YES
+    RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
+    RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
 endif
 
 # Determine if the file has root access (only for installing raylib)
@@ -75,11 +82,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
         endif
     endif
-endif
-
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # RPI cross-compiler
-    RPI_CROSS_COMPILE ?= NO
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -166,8 +168,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(RPI_CROSS_COMPILE),YES)
-        # RPI cross-compiler
-        CC = armv6j-hardfloat-linux-gnueabi-gcc
+        # Define RPI cross-compiler
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -187,6 +190,14 @@ endif
 
 # Default archiver program to pack libraries
 AR = ar
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    ifeq ($(RPI_CROSS_COMPILE),YES)
+        # Define RPI cross-archiver
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        AR = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-ar
+    endif
+endif
 
 # Android archiver (also depends on desired architecture)
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -251,9 +262,10 @@ INCLUDE_PATHS = -I. -Iexternal -Iexternal/include
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # RPI requried libraries
-    INCLUDE_PATHS += -I/opt/vc/include
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux
-    INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
+    INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android required libraries
@@ -326,7 +338,7 @@ else
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
     else
-        # Compile raylib static library.
+        # Compile raylib static library
 		@echo raylib library release path is $(RAYLIB_RELEASE_PATH)
 		$(AR) rcs $(RAYLIB_RELEASE_PATH)/libraylib.a $(OBJS)
 		@echo "raylib static library generated (libraylib.a)!"
