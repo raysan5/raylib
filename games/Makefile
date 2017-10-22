@@ -27,7 +27,7 @@
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
 RAYLIB_PATH ?= ..
-PROJECT_NAME ?= advance_game
+PROJECT_NAME ?= sample_game
 
 # Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
 # NOTE: Libraries should be provided in the selected form
