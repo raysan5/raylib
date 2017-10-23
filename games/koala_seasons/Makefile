@@ -151,7 +151,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling -s TOTAL_MEMORY=16777216 --preload-file resources
+    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling -s ALLOW_MEMORY_GROWTH=1 --preload-file resources
 endif
 
 # Define include paths for required headers
@@ -218,7 +218,7 @@ endif
 ifeq ($(PLATFORM_OS),WINDOWS)
     # resources file contains raylib icon for windows .exe
     # -Wl,--subsystem,windows hides the console window
-    CFLAGS += $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
+    LDLIBS += $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
 endif
 
 # Define output extension to generate a .html file using provided shell
@@ -253,7 +253,7 @@ all:
 
 # Project target defined by PROJECT_NAME
 $(PROJECT_NAME): $(OBJS)
-	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) $(WEB_SHELL)
 
 # Compile source files
 # NOTE: This pattern will compile every module defined on $(OBJS)
