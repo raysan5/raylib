@@ -940,6 +940,7 @@ RLAPI void ImageColorContrast(Image *image, float contrast);                    
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 
 // Image generation functions
+RLAPI Image GenImageColor(int width, int height, Color color);                                           // Generate image: plain color
 RLAPI Image GenImageGradientV(int width, int height, Color top, Color bottom);                           // Generate image: vertical gradient
 RLAPI Image GenImageGradientH(int width, int height, Color left, Color right);                           // Generate image: horizontal gradient
 RLAPI Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer);      // Generate image: radial gradient

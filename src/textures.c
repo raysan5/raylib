@@ -1032,6 +1032,7 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec)
             dstCol.r = ((srcCol.a*(srcCol.r - dstCol.r)) >> 8) + dstCol.r;
             dstCol.g = ((srcCol.a*(srcCol.g - dstCol.g)) >> 8) + dstCol.g;
             dstCol.b = ((srcCol.a*(srcCol.b - dstCol.b)) >> 8) + dstCol.b;
+            dstCol.a = ((srcCol.a*(srcCol.a - dstCol.a)) >> 8) + dstCol.a;
 
             dstPixels[j*dst->width + i] = dstCol;
 
@@ -1067,6 +1068,8 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     int posX = 0;
 
     Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
+    
+    TraceLog(LOG_WARNING, "Text Image size: %f, %f", imSize.x, imSize.y);
 
     // NOTE: glGetTexImage() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
@@ -1074,30 +1077,20 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Convert to 32 bit for color tint
     ImageColorTint(&imFont, tint);                  // Apply color tint to font
 
-    Color *fontPixels = GetImageData(imFont);
-
     // Create image to store text
-    // NOTE: Pixels are initialized to BLANK color (0, 0, 0, 0)
-    Color *pixels = (Color *)calloc((int)imSize.x*(int)imSize.y, sizeof(Color));
+    Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
 
     for (int i = 0; i < length; i++)
     {
-        Rectangle letterRec = font.chars[(int)text[i] - 32].rec;
+        CharInfo letter = font.chars[(int)text[i] - 32];
+        
+        ImageDraw(&imText, imFont, letter.rec, (Rectangle){ posX + letter.offsetX, 
+                  letter.offsetY, letter.rec.width, letter.rec.height });
 
-        for (int y = letterRec.y; y < (letterRec.y + letterRec.height); y++)
-        {
-            for (int x = posX; x < (posX + letterRec.width); x++)
-            {
-                pixels[(y - letterRec.y)*(int)imSize.x + x] = fontPixels[y*font.texture.width + (x - posX + letterRec.x)];
-            }
-        }
-
-        posX += letterRec.width + spacing;
+        posX += letter.advanceX + spacing;
     }
 
     UnloadImage(imFont);
-
-    Image imText = LoadImageEx(pixels, (int)imSize.x, (int)imSize.y);
 
     // Scale image depending on text size
     if (fontSize > imSize.y)
@@ -1109,9 +1102,6 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
         if (font.texture.id == GetDefaultFont().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
-
-    free(pixels);
-    free(fontPixels);
 
     return imText;
 }
@@ -1452,6 +1442,20 @@ void ImageColorBrightness(Image *image, int brightness)
 #endif      // SUPPORT_IMAGE_MANIPULATION
 
 #if defined(SUPPORT_IMAGE_GENERATION)
+// Generate image: plain color
+Image GenImageColor(int width, int height, Color color)
+{
+    Color *pixels = (Color *)calloc(width*height, sizeof(Color));
+    
+    for (int i = 0; i < width*height; i++) pixels[i] = color;
+    
+    Image image = LoadImageEx(pixels, width, height);
+    
+    free(pixels);
+    
+    return image;
+}
+
 // Generate image: vertical gradient
 Image GenImageGradientV(int width, int height, Color top, Color bottom)
 {
