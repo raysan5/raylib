@@ -872,14 +872,26 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
 
     // NOTE: We try reading up to 16 MB of elements of 1 byte
     fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
+    
+    // Find font baseline (vertical origin of the font)
+    // NOTE: This value is required because y-offset depends on it!
+    stbtt_fontinfo fontInfo;
+    int ascent, baseline;
+    float scale;
 
+    stbtt_InitFont(&fontInfo, ttfBuffer, 0);
+    scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
+    stbtt_GetFontVMetrics(&fontInfo, &ascent, 0, 0);
+    baseline = (int)(ascent*scale);
+
+    
     if (fontChars[0] != 32) TraceLog(LOG_WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
     // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
     // TODO: Replace this function by a proper packing method and support random chars order,
     // we already receive a list (fontChars) with the ordered expected characters
     int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, fontChars[0], charsCount, charData);
-
+    
     //if (result > 0) TraceLog(LOG_INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
     if (result < 0) TraceLog(LOG_WARNING, "TTF spritefont loading: Not all the characters fit in the font");
 
@@ -924,7 +936,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
         font.chars[i].rec.height = (int)charData[i].y1 - (int)charData[i].y0;
 
         font.chars[i].offsetX = charData[i].xoff;
-        font.chars[i].offsetY = charData[i].yoff;
+        font.chars[i].offsetY = baseline + charData[i].yoff;
         font.chars[i].advanceX = (int)charData[i].xadvance;
     }
 
