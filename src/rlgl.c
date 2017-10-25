@@ -2222,32 +2222,30 @@ void *rlReadTexturePixels(Texture2D texture)
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepthf(1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, width, height);
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-    rlOrtho(0.0, width, height, 0.0, 0.0, 1.0);
-    //glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
     //glDisable(GL_TEXTURE_2D);
-    //glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+    //glDisable(GL_BLEND);
+    
+    glViewport(0, 0, width, height);
+    rlOrtho(0.0, width, height, 0.0, 0.0, 1.0);
 
-    Model quad;
-    //quad.mesh = GenMeshQuad(width, height);
-    quad.transform = MatrixIdentity();
-    quad.shader = defaultShader;
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(GetShaderDefault().id);
+    glBindTexture(GL_TEXTURE_2D, texture.id);
+    GenDrawQuad();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
+    
+    pixels = (unsigned char *)malloc(texture.width*texture.height*4*sizeof(unsigned char));
 
-    DrawModel(quad, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, WHITE);
-
-    pixels = (unsigned char *)malloc(texture.width*texture.height*3*sizeof(unsigned char));
-
-    glReadPixels(0, 0, texture.width, texture.height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    glReadPixels(0, 0, texture.width, texture.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Bind framebuffer 0, which means render to back buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    UnloadModel(quad);
+    
+    // Reset viewport dimensions to default
+    glViewport(0, 0, screenWidth, screenHeight);
+    
 #endif // GET_TEXTURE_FBO_OPTION
 
     // Clean up temporal fbo
