@@ -6,6 +6,7 @@
 #    PLATFORM_DESKTOP:  Windows (win32/Win64)
 #    PLATFORM_DESKTOP:  Linux
 #    PLATFORM_DESKTOP:  OSX (Mac)
+#    PLATFORM_DESKTOP:  FreeBSD
 #    PLATFORM_ANDROID:  Android (ARM or ARM64)
 #    PLATFORM_RPI:      Raspberry Pi (Raspbian)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
@@ -76,10 +77,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         UNAMEOS=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
             PLATFORM_OS=LINUX
-        else
+        endif
+        ifeq ($(UNAMEOS),FreeBSD)
+            PLATFORM_OS=FREEBSD
+        endif
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS=OSX
-        endif
         endif
     endif
 endif
@@ -116,6 +119,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
     ifeq ($(PLATFORM_OS),OSX)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/osx
+    endif
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/freebsd
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -163,6 +169,10 @@ CC = gcc
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
+        CC = clang
+    endif
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        # FreeBSD default compiler
         CC = clang
     endif
 endif
@@ -259,6 +269,13 @@ endif
 # NOTE: Several external required libraries (stb and others)
 INCLUDE_PATHS = -I. -Iexternal -Iexternal/include
 
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        INCLUDE_PATHS += -I/usr/local/include
+        LDFLAGS += -L. -Lsrc -L/usr/local/lib -L$(RAYLIB_RELEASE_PATH)
+    endif
+endif
+
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # RPI requried libraries
@@ -332,6 +349,11 @@ else
 			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.dylib $(OBJS) -L/usr/local/Cellar/glfw/3.2.1/lib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
 			install_name_tool -id "libraylib.dylib" $(RAYLIB_RELEASE_PATH)/libraylib.dylib
 			@echo "raylib shared library generated (libraylib.dylib)!"
+        endif
+        ifeq ($(PLATFORM_OS),FREEBSD)
+        # WARNING: you should type "gmake clean" before doing this target
+                        $(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lpthread
+                        @echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) $(LDFLAGS) $(LDLIBS)
