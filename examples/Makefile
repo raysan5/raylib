@@ -54,11 +54,15 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         ifeq ($(UNAMEOS),Linux)
             PLATFORM_OS=LINUX
             LIBPATH=linux
-        else
+        endif
+        UNAMEOS=$(shell uname)
+        ifeq ($(UNAMEOS),FreeBSD)
+            PLATFORM_OS=FREEBSD
+            LIBPATH=linux
+        endif
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS=OSX
             LIBPATH=osx
-        endif
         endif
     endif
 endif
@@ -90,6 +94,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/osx
     endif
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/freebsd
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/html5
@@ -104,6 +111,10 @@ CC = gcc
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
+        CC = clang
+    endif
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        # FreeBSD default compiler
         CC = clang
     endif
 endif
@@ -150,6 +161,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         CFLAGS += -no-pie -D_DEFAULT_SOURCE
     endif
+    #ifeq ($(PLATFORM_OS),FREEBSD)
+    #    CFLAGS += -D_DEFAULT_SOURCE
+    #endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS += -std=gnu99
@@ -177,6 +191,13 @@ endif
 
 # Define library paths containing required libs
 LDFLAGS = -L. -L$(RAYLIB_RELEASE) -L$(RAYLIB_PATH)/src 
+
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        INCLUDE_PATHS += -I/usr/local/include
+        LDFLAGS += -L. -Lsrc -L/usr/local/lib
+    endif
+endif
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
     LDFLAGS += -L/opt/vc/lib
@@ -214,6 +235,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
         LDLIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+    endif
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        # Libraries for FreeBSD desktop compiling
+        # NOTE: Required packages: glfw openal-soft mesa-libs
+        LDLIBS = -lraylib -lglfw -lGL -lopenal -lpthread -lm
+
+        # On XWindow requires also below libraries
+        LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)

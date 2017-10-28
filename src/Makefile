@@ -172,7 +172,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CC = clang
     endif
     ifeq ($(PLATFORM_OS),FREEBSD)
-        #  default compiler
+        # FreeBSD default compiler
         CC = clang
     endif
 endif
@@ -351,8 +351,7 @@ else
 			@echo "raylib shared library generated (libraylib.dylib)!"
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
-            # Compile raylib to shared library version for FreeBSD
-            # WARNING: you should type "make clean" before doing this target
+        # WARNING: you should type "gmake clean" before doing this target
                         $(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lpthread
                         @echo "raylib shared library generated (libraylib.so)!"
         endif
