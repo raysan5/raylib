@@ -161,9 +161,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
         CFLAGS += -no-pie -D_DEFAULT_SOURCE
     endif
-    #ifeq ($(PLATFORM_OS),FREEBSD)
-    #    CFLAGS += -D_DEFAULT_SOURCE
-    #endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     CFLAGS += -std=gnu99
