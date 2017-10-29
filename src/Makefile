@@ -3,11 +3,11 @@
 #  raylib makefile
 #
 #  Platforms supported: 
-#    PLATFORM_DESKTOP:  Windows (win32/Win64)
+#    PLATFORM_DESKTOP:  Windows (Win32, Win64)
 #    PLATFORM_DESKTOP:  Linux
-#    PLATFORM_DESKTOP:  OSX (Mac)
+#    PLATFORM_DESKTOP:  OSX/macOS
 #    PLATFORM_DESKTOP:  FreeBSD
-#    PLATFORM_ANDROID:  Android (ARM or ARM64)
+#    PLATFORM_ANDROID:  Android (ARM, ARM64)
 #    PLATFORM_RPI:      Raspberry Pi (Raspbian)
 #    PLATFORM_WEB:      HTML5 (Chrome, Firefox)
 #
@@ -57,9 +57,12 @@ endif
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RPI_CROSS_COMPILE ?= YES
-    RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
-    RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
+    RPI_CROSS_COMPILE ?= NO
+    
+    ifeq ($(RPI_CROSS_COMPILE),YES)
+        RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
+        RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
+    endif
 endif
 
 # Determine if the file has root access (only for installing raylib)
@@ -352,8 +355,8 @@ else
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
         # WARNING: you should type "gmake clean" before doing this target
-                        $(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lpthread
-                        @echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lpthread
+			@echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
 			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) $(LDFLAGS) $(LDLIBS)

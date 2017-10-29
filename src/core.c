@@ -3,17 +3,18 @@
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
 *   PLATFORMS SUPPORTED: 
-*       - Windows (win32/Win64)
+*       - Windows (Win32, Win64)
 *       - Linux (tested on Ubuntu)
-*       - OSX (Mac)
-*       - Android (ARM or ARM64) 
+*       - FreeBSD
+*       - OSX/macOS
+*       - Android (ARM, ARM64) 
 *       - Raspberry Pi (Raspbian)
 *       - HTML5 (Chrome, Firefox)
 *
 *   CONFIGURATION:
 *
 *   #define PLATFORM_DESKTOP
-*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX (managed by GLFW3 library)
+*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD (managed by GLFW3 library)
 *       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
 *
 *   #define PLATFORM_ANDROID
