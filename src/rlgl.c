@@ -2226,8 +2226,8 @@ void *rlReadTexturePixels(Texture2D texture)
     glEnable(GL_DEPTH_TEST);
     //glDisable(GL_BLEND);
     
-    glViewport(0, 0, width, height);
-    rlOrtho(0.0, width, height, 0.0, 0.0, 1.0);
+    glViewport(0, 0, texture.width, texture.height);
+    rlOrtho(0.0, texture.width, texture.height, 0.0, 0.0, 1.0);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(GetShaderDefault().id);

@@ -267,7 +267,6 @@ EXAMPLES = \
     core/core_input_gamepad \
     core/core_random_values \
     core/core_color_select \
-    core/core_drop_files \
     core/core_storage_values \
     core/core_gestures_detection \
     core/core_3d_mode \
@@ -326,6 +325,10 @@ EXAMPLES = \
     physac/physics_restitution \
     physac/physics_shatter \
     fix_dylib \
+    
+ifneq ($(PLATFORM),PLATFORM_RPI)
+    EXAMPLES += core/core_drop_files
+endif
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 

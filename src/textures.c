@@ -536,14 +536,13 @@ Image GetTextureData(Texture2D texture)
         {
             image.width = texture.width;
             image.height = texture.height;
+            image.format = texture.format;
             image.mipmaps = 1;
             
-            if (rlGetVersion() == OPENGL_ES_20)
-            {
-                // NOTE: Data retrieved on OpenGL ES 2.0 comes as RGBA (from framebuffer)
-                image.format = UNCOMPRESSED_R8G8B8A8;
-            }
-            else image.format = texture.format;
+            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA
+            // coming from FBO color buffer, but it seems original
+            // texture format is retrieved on RPI... weird...
+            //image.format = UNCOMPRESSED_R8G8B8A8;
 
             TraceLog(LOG_INFO, "Texture pixel data obtained successfully");
         }
@@ -622,9 +621,9 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[k].r*31/255));
-                        g = (unsigned char)(round((float)pixels[k].g*63/255));
-                        b = (unsigned char)(round((float)pixels[k].b*31/255));
+                        r = (unsigned char)(round((float)pixels[i].r*31.0f/255));
+                        g = (unsigned char)(round((float)pixels[i].g*63.0f/255));
+                        b = (unsigned char)(round((float)pixels[i].b*31.0f/255));
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 5 | (unsigned short)b;
                     }
@@ -655,9 +654,9 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[i].r*31/255));
-                        g = (unsigned char)(round((float)pixels[i].g*31/255));
-                        b = (unsigned char)(round((float)pixels[i].b*31/255));
+                        r = (unsigned char)(round((float)pixels[i].r*31.0f/255));
+                        g = (unsigned char)(round((float)pixels[i].g*31.0f/255));
+                        b = (unsigned char)(round((float)pixels[i].b*31.0f/255));
                         a = (pixels[i].a > ALPHA_THRESHOLD) ? 1 : 0;
 
                         ((unsigned short *)image->data)[i] = (unsigned short)r << 11 | (unsigned short)g << 6 | (unsigned short)b << 1 | (unsigned short)a;
@@ -675,12 +674,12 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        r = (unsigned char)(round((float)pixels[i].r*15/255));
-                        g = (unsigned char)(round((float)pixels[i].g*15/255));
-                        b = (unsigned char)(round((float)pixels[i].b*15/255));
-                        a = (unsigned char)(round((float)pixels[i].a*15/255));
-
-                        ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8| (unsigned short)b << 4| (unsigned short)a;
+                        r = (unsigned char)(round((float)pixels[i].r*15.0f/255));
+                        g = (unsigned char)(round((float)pixels[i].g*15.0f/255));
+                        b = (unsigned char)(round((float)pixels[i].b*15.0f/255));
+                        a = (unsigned char)(round((float)pixels[i].a*15.0f/255));
+                        
+                        ((unsigned short *)image->data)[i] = (unsigned short)r << 12 | (unsigned short)g << 8 | (unsigned short)b << 4 | (unsigned short)a;
                     }
 
                 } break;
@@ -801,7 +800,7 @@ void ImageToPOT(Image *image, Color fillColor)
 // Copy an image to a new image
 Image ImageCopy(Image image)
 {
-    Image newImage;
+    Image newImage = { 0 };
 
     int byteSize = image.width*image.height;
 
