@@ -292,6 +292,7 @@ EXAMPLES = \
     textures/textures_image_processing \
     textures/textures_image_drawing \
     textures/textures_image_generation \
+    textures/textures_image_text \
     text/text_sprite_fonts \
     text/text_bmfont_ttf \
     text/text_raylib_fonts \
@@ -368,4 +369,3 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
-
