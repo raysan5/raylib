@@ -81,7 +81,7 @@
 #define SUPPORT_DEFAULT_FONT
 #define SUPPORT_MOUSE_GESTURES
 #define SUPPORT_CAMERA_SYSTEM
-#define SUPPORT_GESTURES_SYSTEM
+//#define SUPPORT_GESTURES_SYSTEM
 #define SUPPORT_BUSY_WAIT_LOOP
 #define SUPPORT_GIF_RECORDING
 //-------------------------------------------------
@@ -2526,6 +2526,8 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
     rlClearScreenBuffers();                     // Clear screen buffers (color and depth)
 
     // Window size must be updated to be used on 3D mode to get new aspect ratio (Begin3dMode())
+    // NOTE: Be careful! GLFW3 will choose the closest fullscreen resolution supported by current monitor,
+    // for example, if reescaling back to 800x450 (desired), it could set 720x480 (closest fullscreen supported)
     screenWidth = width;
     screenHeight = height;
     renderWidth = width;
@@ -2777,8 +2779,16 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
     ProcessGestureEvent(gestureEvent);
 #else
     
-    // TODO: Support only simple touch position
-    
+    // Support only simple touch position
+    if (flags == AMOTION_EVENT_ACTION_DOWN)
+    {
+        // Get first touch position
+        touchPosition[0].x = AMotionEvent_getX(event, 0);
+        touchPosition[0].y = AMotionEvent_getY(event, 0);
+        
+        touchPosition[0].x /= (float)GetScreenWidth();
+        touchPosition[0].y /= (float)GetScreenHeight();
+    }
 #endif
 
     return 0;

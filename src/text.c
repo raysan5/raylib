@@ -883,11 +883,10 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
     scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
     stbtt_GetFontVMetrics(&fontInfo, &ascent, 0, 0);
     baseline = (int)(ascent*scale);
-
     
     if (fontChars[0] != 32) TraceLog(LOG_WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
-    // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
+    // NOTE: Using stb_truetype crappy packing method, no guarantee the font fits the image...
     // TODO: Replace this function by a proper packing method and support random chars order,
     // we already receive a list (fontChars) with the ordered expected characters
     int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, fontChars[0], charsCount, charData);
