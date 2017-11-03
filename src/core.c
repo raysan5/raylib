@@ -81,7 +81,7 @@
 #define SUPPORT_DEFAULT_FONT
 #define SUPPORT_MOUSE_GESTURES
 #define SUPPORT_CAMERA_SYSTEM
-//#define SUPPORT_GESTURES_SYSTEM
+#define SUPPORT_GESTURES_SYSTEM
 #define SUPPORT_BUSY_WAIT_LOOP
 #define SUPPORT_GIF_RECORDING
 //-------------------------------------------------
@@ -1109,9 +1109,7 @@ Color Fade(Color color, float alpha)
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
 
-    float colorAlpha = (float)color.a*alpha;
-
-    return (Color){color.r, color.g, color.b, (unsigned char)colorAlpha};
+    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
 }
 
 // Activate raylib logo at startup (can be done with flags)
