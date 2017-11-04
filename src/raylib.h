@@ -764,7 +764,7 @@ RLAPI Color Fade(Color color, float alpha);                       // Color fade-
 RLAPI float *ColorToFloat(Color color);                           // Converts Color to float array and normalizes
 
 // Math useful functions (available from raymath.h)
-RLAPI float *VectorToFloat(Vector3 vec);                          // Returns Vector3 as float array
+RLAPI float *Vector3ToFloat(Vector3 vec);                         // Returns Vector3 as float array
 RLAPI float *MatrixToFloat(Matrix mat);                           // Returns Matrix as float array
 RLAPI Vector3 Vector3Zero(void);                                  // Vector with components value 0.0f
 RLAPI Vector3 Vector3One(void);                                   // Vector with components value 1.0f
