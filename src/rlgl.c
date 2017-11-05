@@ -2452,7 +2452,7 @@ int GetShaderLocation(Shader shader, const char *uniformName)
 }
 
 // Set shader uniform value (float)
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
+void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
@@ -2468,7 +2468,7 @@ void SetShaderValue(Shader shader, int uniformLoc, float *value, int size)
 }
 
 // Set shader uniform value (int)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size)
+void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     glUseProgram(shader.id);
