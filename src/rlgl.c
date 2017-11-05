@@ -170,6 +170,11 @@
     #define GL_UNSIGNED_SHORT_4_4_4_4           0x8033
 #endif
 
+#if defined(GRAPHICS_API_OPENGL_21)
+    #define GL_LUMINANCE                        0x1909
+    #define GL_LUMINANCE_ALPHA                  0x190A
+#endif
+
 #if defined(GRAPHICS_API_OPENGL_ES2)
     #define glClearDepth                glClearDepthf
     #define GL_READ_FRAMEBUFFER         GL_FRAMEBUFFER
