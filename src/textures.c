@@ -1088,7 +1088,8 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
         ImageDraw(&imText, imFont, letter.rec, (Rectangle){ posX + letter.offsetX, 
                   letter.offsetY, letter.rec.width, letter.rec.height });
 
-        posX += letter.advanceX + spacing;
+        if (letter.advanceX == 0) posX += letter.rec.width + spacing;
+        else posX += letter.advanceX + spacing;
     }
 
     UnloadImage(imFont);
