@@ -1586,10 +1586,10 @@ RenderTexture2D rlLoadRenderTexture(int width, int height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-#if defined(GRAPHICS_API_OPENGL_33)
-    #define USE_DEPTH_TEXTURE
-#else
+#if defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
     #define USE_DEPTH_RENDERBUFFER
+#else
+    #define USE_DEPTH_TEXTURE
 #endif
 
 #if defined(USE_DEPTH_RENDERBUFFER)
