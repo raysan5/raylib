@@ -93,10 +93,9 @@ project/vs2015/*.opendb
 !project/vs2015/raylib.sln
 !project/vs2015/raylib/*.vcxproj
 !project/vs2015/examples/*.vcxproj
-!project/vs2015/external/glfw3/lib/win32/glfw3.dll
-!project/vs2015/external/openal_soft/lib/win32/OpenAL32.dll
-!project/vs2015/external/openal_soft/lib/win64/OpenAL32.dll
-!project/vs2015/external/lua/lib/win32/lua53.dll
+!project/vs2017/raylib.sln
+!project/vs2017/raylib/*.vcxproj
+!project/vs2017/examples/*.vcxproj
 
 # Web examples 
 docs/examples/web/*.html
