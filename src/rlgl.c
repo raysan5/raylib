@@ -1948,17 +1948,17 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
     
     // Upload to shader material.colDiffuse
     if (material.shader.locs[LOC_COLOR_DIFFUSE] != -1)
-        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255, 
-                                                           (float)material.maps[MAP_DIFFUSE].color.g/255, 
-                                                           (float)material.maps[MAP_DIFFUSE].color.b/255, 
-                                                           (float)material.maps[MAP_DIFFUSE].color.a/255);
+        glUniform4f(material.shader.locs[LOC_COLOR_DIFFUSE], (float)material.maps[MAP_DIFFUSE].color.r/255.0f, 
+                                                           (float)material.maps[MAP_DIFFUSE].color.g/255.0f, 
+                                                           (float)material.maps[MAP_DIFFUSE].color.b/255.0f, 
+                                                           (float)material.maps[MAP_DIFFUSE].color.a/255.0f);
 
     // Upload to shader material.colSpecular (if available)
     if (material.shader.locs[LOC_COLOR_SPECULAR] != -1) 
-        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255, 
-                                                               (float)material.maps[MAP_SPECULAR].color.g/255, 
-                                                               (float)material.maps[MAP_SPECULAR].color.b/255, 
-                                                               (float)material.maps[MAP_SPECULAR].color.a/255);
+        glUniform4f(material.shader.locs[LOC_COLOR_SPECULAR], (float)material.maps[MAP_SPECULAR].color.r/255.0f, 
+                                                               (float)material.maps[MAP_SPECULAR].color.g/255.0f, 
+                                                               (float)material.maps[MAP_SPECULAR].color.b/255.0f, 
+                                                               (float)material.maps[MAP_SPECULAR].color.a/255.0f);
                                                                
     if (material.shader.locs[LOC_MATRIX_VIEW] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_VIEW], modelview);
     if (material.shader.locs[LOC_MATRIX_PROJECTION] != -1) SetShaderValueMatrix(material.shader, material.shader.locs[LOC_MATRIX_PROJECTION], projection);
@@ -2354,6 +2354,9 @@ char *LoadText(const char *fileName)
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
     Shader shader = { 0 };
+    
+    // NOTE: All locations must be reseted to -1 (no location)
+    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Shaders loading from external text file
@@ -3259,7 +3262,10 @@ static unsigned int LoadShaderProgram(const char *vShaderStr, const char *fShade
 // NOTE: This shader program is used for batch buffers (lines, triangles, quads)
 static Shader LoadShaderDefault(void)
 {
-    Shader shader;
+    Shader shader = { 0 };
+    
+    // NOTE: All locations must be reseted to -1 (no location)
+    for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
     char vDefaultShaderStr[] =
@@ -3325,17 +3331,20 @@ static Shader LoadShaderDefault(void)
     if (shader.id > 0) 
     {
         TraceLog(LOG_INFO, "[SHDR ID %i] Default shader loaded successfully", shader.id);
-        
-        // Set default shader locations
-        // Get handles to GLSL input attibute locations
+
+        // Set default shader locations: attributes locations
         shader.locs[LOC_VERTEX_POSITION] = glGetAttribLocation(shader.id, "vertexPosition");
         shader.locs[LOC_VERTEX_TEXCOORD01] = glGetAttribLocation(shader.id, "vertexTexCoord");
         shader.locs[LOC_VERTEX_COLOR] = glGetAttribLocation(shader.id, "vertexColor");
 
-        // Get handles to GLSL uniform locations
+        // Set default shader locations: uniform locations
         shader.locs[LOC_MATRIX_MVP]  = glGetUniformLocation(shader.id, "mvp");
         shader.locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader.id, "colDiffuse");
         shader.locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader.id, "texture0");
+        
+        // NOTE: We could also use below function but in case DEFAULT_ATTRIB_* points are
+        // changed for external custom shaders, we just use direct bindings above
+        //SetShaderDefaultLocations(&shader);
     }
     else TraceLog(LOG_WARNING, "[SHDR ID %i] Default shader could not be loaded", shader.id);
 
