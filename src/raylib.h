@@ -72,20 +72,6 @@
 #ifndef RAYLIB_H
 #define RAYLIB_H
 
-// Choose your platform here or just define it at compile time: -DPLATFORM_DESKTOP
-//#define PLATFORM_DESKTOP      // Windows, Linux or OSX
-//#define PLATFORM_ANDROID      // Android device
-//#define PLATFORM_RPI          // Raspberry Pi
-//#define PLATFORM_WEB          // HTML5 (emscripten, asm.js)
-
-// Security check in case no PLATFORM_* defined
-#if !defined(PLATFORM_DESKTOP) && \
-    !defined(PLATFORM_ANDROID) && \
-    !defined(PLATFORM_RPI) && \
-    !defined(PLATFORM_WEB)
-        #define PLATFORM_DESKTOP
-#endif
-
 #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
     #define RLAPI __declspec(dllexport)         // We are building raylib as a Win32 shared library (.dll)
 #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
@@ -179,13 +165,11 @@
 #define KEY_Y                89
 #define KEY_Z                90
 
-#if defined(PLATFORM_ANDROID)
-    // Android Physical Buttons
-    #define KEY_BACK              4
-    #define KEY_MENU             82
-    #define KEY_VOLUME_UP        24
-    #define KEY_VOLUME_DOWN      25
-#endif
+// Android Physical Buttons
+#define KEY_BACK              4
+#define KEY_MENU             82
+#define KEY_VOLUME_UP        24
+#define KEY_VOLUME_DOWN      25
 
 // Mouse Buttons
 #define MOUSE_LEFT_BUTTON     0
@@ -710,11 +694,7 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 
 // Window-related functions
-#if defined(PLATFORM_ANDROID)
-RLAPI void InitWindow(int width, int height, void *state);        // Initialize Android activity
-#elif defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-RLAPI void InitWindow(int width, int height, const char *title);  // Initialize window and OpenGL context
-#endif
+RLAPI void InitWindow(int width, int height, void *data);         // Initialize window and OpenGL context
 RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
 RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)

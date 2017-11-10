@@ -96,6 +96,8 @@ project/vs2015/*.opendb
 !project/vs2017/raylib.sln
 !project/vs2017/raylib/*.vcxproj
 !project/vs2017/examples/*.vcxproj
+!project/vs2015.UWP/raylib/*.vcxproj
+!project/vs2015.UWP/raylib.App.UWP/*.vcxproj
 
 # Web examples 
 docs/examples/web/*.html
