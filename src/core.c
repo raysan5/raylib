@@ -279,10 +279,11 @@ static int renderOffsetY = 0;               // Offset Y from render area (must b
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
-static const char *windowTitle;             // Window text title...
-static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static bool cursorHidden = false;           // Track if cursor is hidden
+
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+static const char *windowTitle = NULL;      // Window text title...
+static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static int screenshotCounter = 0;           // Screenshots counter
 
 // Register mouse states
@@ -409,12 +410,13 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Initialize window and OpenGL context
-void InitWindow(int width, int height, const char *title)
+// NOTE: data parameter could be used to pass any kind of required data to the initialization
+void InitWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
 
-    // Store window title (could be useful...)
-    windowTitle = title;
+    // Input data is window title char data
+    windowTitle = (char *)data;
 
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
@@ -471,15 +473,17 @@ void InitWindow(int width, int height, const char *title)
 #endif
 
 #if defined(PLATFORM_ANDROID)
-// Initialize Android activity
-void InitWindow(int width, int height, void *state)
+// Initialize window and OpenGL context (and Android activity)
+// NOTE: data parameter could be used to pass any kind of required data to the initialization
+void InitWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
 
     screenWidth = width;
     screenHeight = height;
 
-    app = (struct android_app *)state;
+    // Input data is android app pointer
+    app = (struct android_app *)data;
     internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
@@ -508,7 +512,6 @@ void InitWindow(int width, int height, void *state)
     //AConfiguration_getScreenSize(app->config);
     //AConfiguration_getScreenLong(app->config);
 
-    //state->userData = &engine;
     app->onAppCmd = AndroidCommandCallback;
     app->onInputEvent = AndroidInputCallback;
 
@@ -709,7 +712,6 @@ int GetScreenHeight(void)
     return screenHeight;
 }
 
-#if !defined(PLATFORM_ANDROID)
 // Show mouse cursor
 void ShowCursor()
 {
@@ -772,7 +774,6 @@ void DisableCursor()
 #endif
     cursorHidden = true;
 }
-#endif  // !defined(PLATFORM_ANDROID)
 
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
