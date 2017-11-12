@@ -1283,7 +1283,7 @@ void UnloadMusicStream(Music music)
 void PlayMusicStream(Music music)
 {
 #if USE_MINI_AL
-    //InternalMusic* internalMusic = 
+    PlayAudioStream(music->stream);
 #else
     alSourcePlay(music->stream.source);
 #endif
@@ -1292,12 +1292,19 @@ void PlayMusicStream(Music music)
 // Pause music playing
 void PauseMusicStream(Music music)
 {
+#if USE_MINI_AL
+    PauseAudioStream(music->stream);
+#else
     alSourcePause(music->stream.source);
+#endif
 }
 
 // Resume music playing
 void ResumeMusicStream(Music music)
 {
+#if USE_MINI_AL
+    ResumeAudioStream(music->stream);
+#else
     ALenum state;
     alGetSourcei(music->stream.source, AL_SOURCE_STATE, &state);
 
@@ -1306,12 +1313,16 @@ void ResumeMusicStream(Music music)
         TraceLog(LOG_INFO, "[AUD ID %i] Resume music stream playing", music->stream.source);
         alSourcePlay(music->stream.source);
     }
+#endif
 }
 
 // Stop music playing (close stream)
 // TODO: To clear a buffer, make sure they have been already processed!
 void StopMusicStream(Music music)
 {
+#if USE_MINI_AL
+    StopAudioStream(music->stream);
+#else
     alSourceStop(music->stream.source);
     
     /*
@@ -1327,6 +1338,7 @@ void StopMusicStream(Music music)
 
     free(pcm);
     */
+#endif
     
     // Restart music context
     switch (music->ctxType)
@@ -1351,6 +1363,77 @@ void StopMusicStream(Music music)
 // TODO: Make sure buffers are ready for update... check music state
 void UpdateMusicStream(Music music)
 {
+#if USE_MINI_AL
+    bool streamEnding = false;
+
+    // NOTE: Using dynamic allocation because it could require more than 16KB
+    void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
+
+    int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, individual L or R for ogg shorts
+
+    while (IsAudioBufferProcessed(music->stream))
+    {
+        if (music->samplesLeft >= AUDIO_BUFFER_SIZE) samplesCount = AUDIO_BUFFER_SIZE;
+        else samplesCount = music->samplesLeft;
+
+        // TODO: Really don't like ctxType thingy...
+        switch (music->ctxType)
+        {
+            case MUSIC_AUDIO_OGG:
+            {
+                // NOTE: Returns the number of samples to process (be careful! we ask for number of shorts!)
+                int numSamplesOgg = stb_vorbis_get_samples_short_interleaved(music->ctxOgg, music->stream.channels, (short *)pcm, samplesCount*music->stream.channels);
+
+            } break;
+        #if defined(SUPPORT_FILEFORMAT_FLAC)
+            case MUSIC_AUDIO_FLAC:
+            {
+                // NOTE: Returns the number of samples to process
+                unsigned int numSamplesFlac = (unsigned int)drflac_read_s16(music->ctxFlac, samplesCount*music->stream.channels, (short *)pcm);
+
+            } break;
+        #endif
+        #if defined(SUPPORT_FILEFORMAT_XM)
+            case MUSIC_MODULE_XM: jar_xm_generate_samples_16bit(music->ctxXm, pcm, samplesCount); break;
+        #endif
+        #if defined(SUPPORT_FILEFORMAT_MOD)
+            case MUSIC_MODULE_MOD: jar_mod_fillbuffer(&music->ctxMod, pcm, samplesCount, 0); break;
+        #endif
+            default: break;
+        }
+
+        UpdateAudioStream(music->stream, pcm, samplesCount);
+        music->samplesLeft -= samplesCount;
+
+        if (music->samplesLeft <= 0)
+        {
+            streamEnding = true;
+            break;
+        }
+    }
+
+    // Free allocated pcm data
+    free(pcm);
+
+    // Reset audio stream for looping
+    if (streamEnding)
+    {
+        StopMusicStream(music);        // Stop music (and reset)
+            
+        // Decrease loopCount to stop when required
+        if (music->loopCount > 0)
+        {
+            music->loopCount--;        // Decrease loop count
+            PlayMusicStream(music);    // Play again
+        }
+    }
+    else
+    {
+        // NOTE: In case window is minimized, music stream is stopped,
+        // just make sure to play again on window restore
+        if (IsMusicPlaying(music)) PlayMusicStream(music);
+    }
+#else
     ALenum state;
     ALint processed = 0;
 
@@ -1431,11 +1514,15 @@ void UpdateMusicStream(Music music)
             if (state != AL_PLAYING) PlayMusicStream(music);
         }
     }
+#endif
 }
 
 // Check if any music is playing
 bool IsMusicPlaying(Music music)
 {
+#if USE_MINI_AL
+    return IsAudioStreamPlaying(music->stream);
+#else
     bool playing = false;
     ALint state;
 
@@ -1444,6 +1531,7 @@ bool IsMusicPlaying(Music music)
     if (state == AL_PLAYING) playing = true;
 
     return playing;
+#endif
 }
 
 // Set volume for music
@@ -1460,7 +1548,7 @@ void SetMusicPitch(Music music, float pitch)
 
 // Set music loop count (loop repeats)
 // NOTE: If set to -1, means infinite loop
-void SetMusicLoopCount(Music music, float count)
+void SetMusicLoopCount(Music music, int count)
 {
     music->loopCount = count;
 }
@@ -1828,6 +1916,30 @@ void ResumeAudioStream(AudioStream stream)
     alGetSourcei(stream.source, AL_SOURCE_STATE, &state);
 
     if (state == AL_PAUSED) alSourcePlay(stream.source);
+#endif
+}
+
+// Check if audio stream is playing.
+bool IsAudioStreamPlaying(AudioStream stream)
+{
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return false;
+    }
+
+    return internalData->playing;
+#else
+    bool playing = false;
+    ALint state;
+
+    alGetSourcei(stream.source, AL_SOURCE_STATE, &state);
+
+    if (state == AL_PLAYING) playing = true;
+
+    return playing;
 #endif
 }
 
