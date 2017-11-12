@@ -486,7 +486,7 @@ typedef struct Wave {
 
 // Sound source type
 typedef struct Sound {
-    void* handle;           // A pointer to internal data used by the sound system.
+    void* handle;           // A pointer to internal data used by the audio system.
 
     unsigned int source;    // OpenAL audio source id
     unsigned int buffer;    // OpenAL audio buffer id

@@ -211,8 +211,8 @@ void TraceLog(int msgType, const char *text, ...);              // Show trace lo
 #define DEVICE_CHANNELS     2
 #define DEVICE_SAMPLE_RATE  44100
 
-typedef struct SoundInternal SoundInternal;
-struct SoundInternal
+typedef struct SoundData SoundData;
+struct SoundData
 {
     mal_format format;
     mal_uint32 channels;
@@ -224,8 +224,8 @@ struct SoundInternal
     bool playing;
     bool paused;
     bool looping;
-    SoundInternal* next;
-    SoundInternal* prev;
+    SoundData* next;
+    SoundData* prev;
     mal_uint8 data[1];          // Raw audio data.
 };
 
@@ -234,10 +234,10 @@ static mal_device device;
 static mal_bool32 isAudioInitialized = MAL_FALSE;
 static float masterVolume = 1;
 static mal_mutex soundLock;
-static SoundInternal* firstSound;   // Sounds are tracked in a linked list.
-static SoundInternal* lastSound;
+static SoundData* firstSound;   // Sounds are tracked in a linked list.
+static SoundData* lastSound;
 
-static void AppendSound(SoundInternal* internalSound)
+static void AppendSound(SoundData* internalSound)
 {
     mal_mutex_lock(&context, &soundLock);
     {
@@ -253,7 +253,7 @@ static void AppendSound(SoundInternal* internalSound)
     mal_mutex_unlock(&context, &soundLock);
 }
 
-static void RemoveSound(SoundInternal* internalSound)
+static void RemoveSound(SoundData* internalSound)
 {
     mal_mutex_lock(&context, &soundLock);
     {
@@ -294,7 +294,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
         float* pFramesOutF = (float*)pFramesOut;    // <-- Just for convenience.
 
         // Sounds.
-        for (SoundInternal* internalSound = firstSound; internalSound != NULL; internalSound = internalSound->next)
+        for (SoundData* internalSound = firstSound; internalSound != NULL; internalSound = internalSound->next)
         {
             // Ignore stopped or paused sounds.
             if (!internalSound->playing || internalSound->paused) {
@@ -583,7 +583,7 @@ Sound LoadSoundFromWave(Wave wave)
             TraceLog(LOG_ERROR, "LoadSoundFromWave() : Failed to get frame count for format conversion.");
         }
 
-        SoundInternal* internalSound = (SoundInternal*)calloc(sizeof(*internalSound) + (frameCount*DEVICE_CHANNELS*4), 1);  // <-- Make sure this is initialized to zero for safety.
+        SoundData* internalSound = (SoundData*)calloc(sizeof(*internalSound) + (frameCount*DEVICE_CHANNELS*4), 1);  // <-- Make sure this is initialized to zero for safety.
         if (internalSound == NULL) {
             TraceLog(LOG_ERROR, "LoadSoundFromWave() : Failed to allocate memory for internal buffer");
         }
@@ -678,7 +678,7 @@ void UnloadWave(Wave wave)
 void UnloadSound(Sound sound)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     RemoveSound(internalSound);
     free(internalSound);
 #else
@@ -696,7 +696,7 @@ void UnloadSound(Sound sound)
 void UpdateSound(Sound sound, const void *data, int samplesCount)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "UpdateSound() : Invalid sound");
@@ -739,7 +739,7 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
 void PlaySound(Sound sound)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "PlaySound() : Invalid sound");
@@ -773,7 +773,7 @@ void PlaySound(Sound sound)
 void PauseSound(Sound sound)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "PauseSound() : Invalid sound");
@@ -790,7 +790,7 @@ void PauseSound(Sound sound)
 void ResumeSound(Sound sound)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "ResumeSound() : Invalid sound");
@@ -811,7 +811,7 @@ void ResumeSound(Sound sound)
 void StopSound(Sound sound)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "StopSound() : Invalid sound");
@@ -829,7 +829,7 @@ void StopSound(Sound sound)
 bool IsSoundPlaying(Sound sound)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "IsSoundPlaying() : Invalid sound");
@@ -852,7 +852,7 @@ bool IsSoundPlaying(Sound sound)
 void SetSoundVolume(Sound sound, float volume)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "SetSoundVolume() : Invalid sound");
@@ -869,7 +869,7 @@ void SetSoundVolume(Sound sound, float volume)
 void SetSoundPitch(Sound sound, float pitch)
 {
 #if USE_MINI_AL
-    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    SoundData* internalSound = (SoundData*)sound.handle;
     if (internalSound == NULL)
     {
         TraceLog(LOG_ERROR, "SetSoundPitch() : Invalid sound");
@@ -1173,7 +1173,11 @@ void UnloadMusicStream(Music music)
 // Start music playing (open stream)
 void PlayMusicStream(Music music)
 {
+#if USE_MINI_AL
+    //InternalMusic* internalMusic = 
+#else
     alSourcePlay(music->stream.source);
+#endif
 }
 
 // Pause music playing
