@@ -176,6 +176,22 @@ typedef struct MusicData {
     unsigned int samplesLeft;           // Number of samples left to end
 } MusicData;
 
+// AudioStreamData
+typedef struct AudioStreamData AudioStreamData;
+struct AudioStreamData {
+    mal_dsp dsp;    // AudioStream data needs to flow through a persistent conversion pipeline. Not doing this will result in glitches between buffer updates.
+    float volume;
+    float pitch;
+    bool playing;
+    bool paused;
+    bool isSubBufferProcessed[2];
+    unsigned int frameCursorPos;
+    unsigned int bufferSizeInFrames;
+    AudioStreamData* next;
+    AudioStreamData* prev;
+    unsigned char buffer[1];
+};
+
 #if defined(AUDIO_STANDALONE)
 typedef enum { LOG_INFO = 0, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_OTHER } TraceLogType;
 #endif
@@ -236,6 +252,8 @@ static float masterVolume = 1;
 static mal_mutex soundLock;
 static SoundData* firstSound;   // Sounds are tracked in a linked list.
 static SoundData* lastSound;
+static AudioStreamData* firstAudioStream;
+static AudioStreamData* lastAudioStream;
 
 static void AppendSound(SoundData* internalSound)
 {
@@ -271,6 +289,42 @@ static void RemoveSound(SoundData* internalSound)
     }
     mal_mutex_unlock(&context, &soundLock);
 }
+
+static void AppendAudioStream(AudioStreamData* internalAudioStream)
+{
+    mal_mutex_lock(&context, &soundLock);
+    {
+        if (firstAudioStream == NULL) {
+            firstAudioStream = internalAudioStream;
+        } else {
+            lastAudioStream->next = internalAudioStream;
+            internalAudioStream->prev = lastAudioStream;
+        }
+
+        lastAudioStream = internalAudioStream;
+    }
+    mal_mutex_unlock(&context, &soundLock);
+}
+
+static void RemoveAudioStream(AudioStreamData* internalAudioStream)
+{
+    mal_mutex_lock(&context, &soundLock);
+    {
+        if (internalAudioStream->prev == NULL) {
+            firstAudioStream = internalAudioStream->next;
+        } else {
+            internalAudioStream->prev->next = internalAudioStream->next;
+        }
+
+        if (internalAudioStream->next == NULL) {
+            lastAudioStream = internalAudioStream->prev;
+        } else {
+            internalAudioStream->next->prev = internalAudioStream->prev;
+        }
+    }
+    mal_mutex_unlock(&context, &soundLock);
+}
+
 
 static void OnLog_MAL(mal_context* pContext, mal_device* pDevice, const char* message)
 {
@@ -342,8 +396,63 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
             }
         }
 
-        // Music.
-        // TODO: Implement me.
+        // AudioStreams. These are handling slightly differently to sounds because we do data conversion at mixing time rather than
+        // load time.
+        for (AudioStreamData* internalData = firstAudioStream; internalData != NULL; internalData = internalData->next)
+        {
+            // Ignore stopped or paused streams.
+            if (!internalData->playing || internalData->paused) {
+                continue;
+            }
+
+            mal_uint32 framesRead = 0;
+            for (;;) {
+                if (framesRead > frameCount) {
+                    TraceLog(LOG_DEBUG, "Mixed too many frames from sound");
+                    break;
+                }
+                if (framesRead == frameCount) {
+                    break;
+                }
+
+                // Just read as much data we can from the stream.
+                mal_uint32 framesToRead = (frameCount - framesRead);
+                while (framesToRead > 0) {
+                    float tempBuffer[1024]; // 512 frames for stereo.
+
+                    mal_uint32 framesToReadRightNow = framesToRead;
+                    if (framesToReadRightNow > sizeof(tempBuffer)/DEVICE_CHANNELS) {
+                        framesToReadRightNow = sizeof(tempBuffer)/DEVICE_CHANNELS;
+                    }
+
+                    mal_uint32 framesJustRead = mal_dsp_read_frames(&internalData->dsp, framesToReadRightNow, tempBuffer);
+                    if (framesJustRead > 0) {
+                        // This is where the real mixing takes place. This can be optimized. This assumes the device and sound are of the same format.
+                        //
+                        // TODO: Implement pitching.
+                        for (mal_uint32 iFrame = 0; iFrame < framesToRead; ++iFrame) {
+                            float* pFrameOut = pFramesOutF + ((framesRead+iFrame) * device.channels);
+                            float* pFrameIn  = tempBuffer + (iFrame * device.channels);
+
+                            for (mal_uint32 iChannel = 0; iChannel < device.channels; ++iChannel) {
+                                pFrameOut[iChannel] += pFrameIn[iChannel] * masterVolume * internalData->volume;
+                            }
+                        }
+
+                        framesToRead -= framesJustRead;
+                        framesRead += framesJustRead;
+                    } else {
+                        break;  // Avoid an infinite loop.
+                    }
+                }
+
+                // If for some reason we weren't able to read every frame we'll need to break from the loop. Not doing this could
+                // theoretically put us into an infinite loop.
+                if (framesToRead > 0) {
+                    break;
+                }
+            }
+        }
     }
     mal_mutex_unlock(&context, &soundLock);
 
@@ -1375,6 +1484,65 @@ float GetMusicTimePlayed(Music music)
     return secondsPlayed;
 }
 
+
+static mal_uint32 UpdateAudioStream_OnDSPRead(mal_uint32 frameCount, void* pFramesOut, void* pUserData)
+{
+    AudioStreamData* internalData = (AudioStreamData*)pUserData;
+
+    mal_uint32 subBufferSizeInFrames = AUDIO_BUFFER_SIZE;
+    mal_uint32 currentSubBufferIndex = internalData->frameCursorPos / subBufferSizeInFrames;
+    if (currentSubBufferIndex > 1) {
+        TraceLog(LOG_DEBUG, "Frame cursor position moved too far forward in audio stream");
+        return 0;
+    }
+
+    // Another thread can update the processed state of buffers so we just take a copy here to try and avoid potential synchronization problems.
+    bool isSubBufferProcessed[2];
+    isSubBufferProcessed[0] = internalData->isSubBufferProcessed[0];
+    isSubBufferProcessed[1] = internalData->isSubBufferProcessed[1];
+
+    mal_uint32 channels = internalData->dsp.config.channelsIn;
+    mal_uint32 sampleSizeInBytes = mal_get_sample_size_in_bytes(internalData->dsp.config.formatIn);
+    mal_uint32 frameSizeInBytes = sampleSizeInBytes*channels;
+
+    // Fill out every frame until we find a buffer that's marked as processed. Then fill the remainder with 0.
+    mal_uint32 framesRead = 0;
+    while (!isSubBufferProcessed[currentSubBufferIndex])
+    {
+        mal_uint32 totalFramesRemaining = (frameCount - framesRead);
+        if (totalFramesRemaining == 0) {
+            break;
+        }
+
+        mal_uint32 firstFrameIndexOfThisSubBuffer = subBufferSizeInFrames * currentSubBufferIndex;
+        mal_uint32 framesRemainingInThisSubBuffer = subBufferSizeInFrames - (internalData->frameCursorPos - firstFrameIndexOfThisSubBuffer);
+
+        mal_uint32 framesToRead = totalFramesRemaining;
+        if (framesToRead > framesRemainingInThisSubBuffer) {
+            framesToRead = framesRemainingInThisSubBuffer;
+        }
+
+        memcpy((unsigned char*)pFramesOut + (framesRead*frameSizeInBytes), internalData->buffer + (internalData->frameCursorPos*frameSizeInBytes), framesToRead*frameSizeInBytes);
+
+        framesRead += framesToRead;
+        internalData->frameCursorPos = (internalData->frameCursorPos + framesToRead) % internalData->bufferSizeInFrames;
+
+        // If we've read to the end of the buffer, mark it as processed.
+        if (framesToRead == framesRemainingInThisSubBuffer) {
+            internalData->isSubBufferProcessed[currentSubBufferIndex] = true;
+            currentSubBufferIndex = (currentSubBufferIndex + 1) % 2;
+        }
+    }
+
+    // Zero-fill excess.
+    mal_uint32 totalFramesRemaining = (frameCount - framesRead);
+    if (totalFramesRemaining > 0) {
+        memset((unsigned char*)pFramesOut + (framesRead*frameSizeInBytes), 0, totalFramesRemaining*frameSizeInBytes);
+    }
+
+    return frameCount;
+}
+
 // Init audio stream (to stream audio pcm data)
 AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels)
 {
@@ -1391,6 +1559,41 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
         stream.channels = 1;  // Fallback to mono channel
     }
 
+
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)calloc(1, sizeof(*internalData) + (AUDIO_BUFFER_SIZE*2 * stream.channels*(stream.sampleSize/8)));
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Failed to allocate buffer for audio stream");
+        return stream;
+    }
+
+    mal_dsp_config config;
+    memset(&config, 0, sizeof(config));
+    config.formatIn = ((stream.sampleSize == 8) ? mal_format_u8 : ((stream.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+    config.channelsIn = stream.channels;
+    config.sampleRateIn = stream.sampleRate;
+    config.formatOut = DEVICE_FORMAT;
+    config.channelsOut = DEVICE_CHANNELS;
+    config.sampleRateOut = DEVICE_SAMPLE_RATE;
+    mal_result result = mal_dsp_init(&config, UpdateAudioStream_OnDSPRead, internalData, &internalData->dsp);
+    if (result != MAL_SUCCESS)
+    {
+        TraceLog(LOG_ERROR, "InitAudioStream() : Failed to initialize data conversion pipeline");
+        free(internalData);
+        return stream;
+    }
+
+    // Buffers should be marked as processed by default so that a call to UpdateAudioStream() immediately after initialization works correctly.
+    internalData->isSubBufferProcessed[0] = true;
+    internalData->isSubBufferProcessed[1] = true;
+    internalData->bufferSizeInFrames = AUDIO_BUFFER_SIZE*2;
+    internalData->volume = 1;
+    internalData->pitch = 1;
+    AppendAudioStream(internalData);
+
+    stream.handle = internalData;
+#else
     // Setup OpenAL format
     if (stream.channels == 1)
     {
@@ -1435,6 +1638,7 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     free(pcm);
 
     alSourceQueueBuffers(stream.source, MAX_STREAM_BUFFERS, stream.buffers);
+#endif
 
     TraceLog(LOG_INFO, "[AUD ID %i] Audio stream loaded successfully (%i Hz, %i bit, %s)", stream.source, stream.sampleRate, stream.sampleSize, (stream.channels == 1) ? "Mono" : "Stereo");
 
@@ -1444,6 +1648,11 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 // Close audio stream and free memory
 void CloseAudioStream(AudioStream stream)
 {
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    RemoveAudioStream(internalData);
+    free(internalData);
+#else
     // Stop playing channel
     alSourceStop(stream.source);
 
@@ -1462,7 +1671,8 @@ void CloseAudioStream(AudioStream stream)
     // Delete source and buffers
     alDeleteSources(1, &stream.source);
     alDeleteBuffers(MAX_STREAM_BUFFERS, stream.buffers);
-
+#endif
+    
     TraceLog(LOG_INFO, "[AUD ID %i] Unloaded audio stream data", stream.source);
 }
 
@@ -1471,6 +1681,67 @@ void CloseAudioStream(AudioStream stream)
 // NOTE 2: To unqueue a buffer it needs to be processed: IsAudioBufferProcessed()
 void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
 {
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return;
+    }
+
+    // We need to determine which half of the buffer needs updating. If the stream is not started and the cursor position is
+    // at the front of the buffer, update the first subbuffer.
+    if (internalData->isSubBufferProcessed[0] || internalData->isSubBufferProcessed[1])
+    {
+        mal_uint32 subBufferToUpdate;
+        if (internalData->isSubBufferProcessed[0] && internalData->isSubBufferProcessed[1])
+        {
+            // Both buffers are available for updating. Update the first one and make sure the cursor is moved back to the front.
+            subBufferToUpdate = 0;
+            internalData->frameCursorPos = 0;
+        }
+        else
+        {
+            // Just update whichever sub-buffer is processed.
+            subBufferToUpdate = (internalData->isSubBufferProcessed[0]) ? 0 : 1;
+        }
+
+        mal_uint32 subBufferSizeInFrames = AUDIO_BUFFER_SIZE;
+        unsigned char *subBuffer = internalData->buffer + ((subBufferSizeInFrames * stream.channels * (stream.sampleSize/8)) * subBufferToUpdate);
+
+        // Does this API expect a whole buffer to be updated in one go? Assuming so, but if not will need to change this logic.
+        if (subBufferSizeInFrames >= (mal_uint32)samplesCount)
+        {
+            mal_uint32 framesToWrite = subBufferSizeInFrames;
+            if (framesToWrite > (mal_uint32)samplesCount) {
+                framesToWrite = (mal_uint32)samplesCount;
+            }
+
+            mal_uint32 bytesToWrite = framesToWrite * stream.channels * (stream.sampleSize/8);
+            memcpy(subBuffer, data, bytesToWrite);
+
+            // Any leftover frames should be filled with zeros.
+            mal_uint32 leftoverFrameCount = subBufferSizeInFrames - framesToWrite;
+            if (leftoverFrameCount > 0) {
+                memset(subBuffer + bytesToWrite, 0, leftoverFrameCount * stream.channels * (stream.sampleSize/8));
+            }
+
+            internalData->isSubBufferProcessed[subBufferToUpdate] = false;
+        }
+        else
+        {
+            TraceLog(LOG_ERROR, "[AUD ID %i] UpdateAudioStream() : Attempting to write too many frames to buffer");
+            return;
+        }
+    }
+    else
+    {
+        TraceLog(LOG_ERROR, "[AUD ID %i] Audio buffer not available for updating");
+        return;
+    }
+
+    
+#else
     ALuint buffer = 0;
     alSourceUnqueueBuffers(stream.source, 1, &buffer);
 
@@ -1481,44 +1752,104 @@ void UpdateAudioStream(AudioStream stream, const void *data, int samplesCount)
         alSourceQueueBuffers(stream.source, 1, &buffer);
     }
     else TraceLog(LOG_WARNING, "[AUD ID %i] Audio buffer not available for unqueuing", stream.source);
+#endif
 }
 
 // Check if any audio stream buffers requires refill
 bool IsAudioBufferProcessed(AudioStream stream)
 {
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return false;
+    }
+
+    return internalData->isSubBufferProcessed[0] || internalData->isSubBufferProcessed[1];
+#else
     ALint processed = 0;
 
     // Determine if music stream is ready to be written
     alGetSourcei(stream.source, AL_BUFFERS_PROCESSED, &processed);
 
     return (processed > 0);
+#endif
 }
 
 // Play audio stream
 void PlayAudioStream(AudioStream stream)
 {
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return;
+    }
+
+    internalData->playing = true;
+#else
     alSourcePlay(stream.source);
+#endif
 }
 
 // Play audio stream
 void PauseAudioStream(AudioStream stream)
 {
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return;
+    }
+
+    internalData->paused = true;
+#else
     alSourcePause(stream.source);
+#endif
 }
 
 // Resume audio stream playing
 void ResumeAudioStream(AudioStream stream)
 {
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return;
+    }
+
+    internalData->paused = false;
+#else
     ALenum state;
     alGetSourcei(stream.source, AL_SOURCE_STATE, &state);
 
     if (state == AL_PAUSED) alSourcePlay(stream.source);
+#endif
 }
 
 // Stop audio stream
 void StopAudioStream(AudioStream stream)
 {
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return;
+    }
+
+    internalData->playing = 0;
+    internalData->paused = 0;
+    internalData->frameCursorPos = 0;
+    internalData->isSubBufferProcessed[0] = true;
+    internalData->isSubBufferProcessed[1] = true;
+#else
     alSourceStop(stream.source);
+#endif
 }
 
 //----------------------------------------------------------------------------------
