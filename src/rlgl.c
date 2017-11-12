@@ -268,10 +268,8 @@ static int tempBufferCount = 0;
 static bool useTempBuffer = false;
 
 // Shaders
-static unsigned int defaultVertexShader;
-static unsigned int defaultFragmentShader;
-
-// Shader Programs
+static unsigned int defaultVShaderId;       // Default vertex shader id (used by default shader program)
+static unsigned int defaultFShaderId;       // Default fragment shader Id (used by default shader program)
 static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
 static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
 
@@ -328,8 +326,9 @@ static int screenHeight;    // Default framebuffer height
 //----------------------------------------------------------------------------------
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static void LoadTextureCompressed(unsigned char *data, int width, int height, int compressedFormat, int mipmapCount);
-static unsigned int LoadShaderPartial(const char *shaderStr, int type);                 // Load custom shader and return shader id
-static unsigned int LoadShaderProgram(unsigned int vertexShader, unsigned int fragmentShader);  // Load custom shader strings and return program id
+
+static unsigned int CompileShader(const char *shaderStr, int type);     // Compile custom shader and return shader id
+static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId);  // Load custom shader program
 
 static Shader LoadShaderDefault(void);      // Load default shader (just vertex positioning and texture coloring)
 static void SetShaderDefaultLocations(Shader *shader); // Bind default shader locations (attributes and uniforms)
@@ -2356,6 +2355,7 @@ char *LoadText(const char *fileName)
 }
 
 // Load shader from files and bind default locations
+// NOTE: If shader string is NULL, using default vertex/fragment shaders
 Shader LoadShader(char *vsFileName, char *fsFileName)
 {
     Shader shader = { 0 };
@@ -2365,31 +2365,28 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
-    unsigned int vertexShader, fragmentShader;
+    unsigned int vertexShaderId, fragmentShaderId;
 
-    if (vsFileName == NULL) {
-        vertexShader = defaultVertexShader;
-    } else {
+    if (vsFileName == NULL) vertexShaderId = defaultVShaderId;
+    else 
+    {
         char *vShaderStr = LoadText(vsFileName);
-        vertexShader = LoadShaderPartial(vShaderStr, GL_VERTEX_SHADER);
+        vertexShaderId = CompileShader(vShaderStr, GL_VERTEX_SHADER);
         free(vShaderStr);
     }
 
-    if (fsFileName == NULL) {
-        fragmentShader = defaultVertexShader;
-    } else {
+    if (fsFileName == NULL) fragmentShaderId = defaultVShaderId;
+    else 
+    {
         char* fShaderStr = LoadText(fsFileName);
-        fragmentShader = LoadShaderPartial(fShaderStr, GL_FRAGMENT_SHADER);
+        fragmentShaderId = CompileShader(fShaderStr, GL_FRAGMENT_SHADER);
         free(fShaderStr);
     }
 
-    shader.id = LoadShaderProgram(vertexShader, fragmentShader);
+    shader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
 
-    // After shader loading, we TRY to set default location names
-    if (shader.id > 0) SetShaderDefaultLocations(&shader);
-
-    if (vertexShader != defaultVertexShader) glDeleteShader(vertexShader);
-    if (fragmentShader != defaultFragmentShader) glDeleteShader(fragmentShader);
+    if (vertexShaderId != defaultVShaderId) glDeleteShader(vertexShaderId);
+    if (fragmentShaderId != defaultFShaderId) glDeleteShader(fragmentShaderId);
 
     if (shader.id == 0)
     {
@@ -2397,6 +2394,8 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
         shader = defaultShader;
     }
     
+    // After shader loading, we TRY to set default location names
+    if (shader.id > 0) SetShaderDefaultLocations(&shader);
     
     // Get available shader uniforms
     // NOTE: This information is useful for debug...
@@ -2421,7 +2420,6 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
         
         TraceLog(LOG_DEBUG, "[SHDR ID %i] Active uniform [%s] set at location: %i", shader.id, name, location);
     }
-    
 #endif
 
     return shader;
@@ -2929,7 +2927,10 @@ void InitVrSimulator(VrDeviceInfo info)
     
 #if defined(SUPPORT_DISTORTION_SHADER)
     // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
-    vrConfig.distortionShader.id = LoadShaderProgram(vDistortionShaderStr, fDistortionShaderStr);
+    unsigned int vertexShaderId = CompileShader(distortionVShaderStr, GL_VERTEX_SHADER);
+    unsigned int fragmentShaderId = CompileShader(distortionFShaderStr, GL_FRAGMENT_SHADER);
+    
+    vrConfig.distortionShader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
     if (vrConfig.distortionShader.id > 0) SetShaderDefaultLocations(&vrConfig.distortionShader);
 #endif
 
@@ -3143,7 +3144,8 @@ static void LoadTextureCompressed(unsigned char *data, int width, int height, in
     }
 }
 
-static unsigned int LoadShaderPartial(const char *shaderStr, int type)
+// Compile custom shader and return shader id
+static unsigned int CompileShader(const char *shaderStr, int type)
 {
     unsigned int shader = glCreateShader(type);
     glShaderSource(shader, 1, &shaderStr, NULL);
@@ -3154,7 +3156,7 @@ static unsigned int LoadShaderPartial(const char *shaderStr, int type)
 
     if (success != GL_TRUE)
     {
-        TraceLog(LOG_WARNING, "[VSHDR ID %i] Failed to compile shader...", shader);
+        TraceLog(LOG_WARNING, "[SHDR ID %i] Failed to compile shader...", shader);
         int maxLength = 0;
         int length;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
@@ -3172,13 +3174,13 @@ static unsigned int LoadShaderPartial(const char *shaderStr, int type)
         free(log);
 #endif
     }
-    else TraceLog(LOG_INFO, "[VSHDR ID %i] Shader compiled successfully", shader);
+    else TraceLog(LOG_INFO, "[SHDR ID %i] Shader compiled successfully", shader);
 
     return shader;
 }
 
 // Load custom shader strings and return program id
-static unsigned int LoadShaderProgram(unsigned int vertexShader, unsigned int fragmentShader)
+static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
 {
     unsigned int program = 0;
 
@@ -3187,8 +3189,8 @@ static unsigned int LoadShaderProgram(unsigned int vertexShader, unsigned int fr
     GLint success = 0;
     program = glCreateProgram();
 
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
+    glAttachShader(program, vShaderId);
+    glAttachShader(program, fShaderId);
 
     // NOTE: Default attribute shader locations must be binded before linking
     glBindAttribLocation(program, 0, DEFAULT_ATTRIB_POSITION_NAME);
@@ -3247,7 +3249,7 @@ static Shader LoadShaderDefault(void)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
     // Vertex shader directly defined, no external file required
-    char vDefaultShaderStr[] =
+    char defaultVShaderStr[] =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -3276,7 +3278,7 @@ static Shader LoadShaderDefault(void)
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
-    char fDefaultShaderStr[] =
+    char defaultFShaderStr[] =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
@@ -3305,9 +3307,11 @@ static Shader LoadShaderDefault(void)
 #endif
     "}                                  \n";
 
-    defaultVertexShader = LoadShaderPartial(vDefaultShaderStr, GL_VERTEX_SHADER);
-    defaultFragmentShader = LoadShaderPartial(fDefaultShaderStr, GL_FRAGMENT_SHADER);
-    shader.id = LoadShaderProgram(defaultVertexShader, defaultFragmentShader);
+    // NOTE: Compiled vertex/fragment shaders are kept for re-use
+    defaultVShaderId = CompileShader(defaultVShaderStr, GL_VERTEX_SHADER);     // Compile default vertex shader
+    defaultFShaderId = CompileShader(defaultFShaderStr, GL_FRAGMENT_SHADER);   // Compile default fragment shader
+    
+    shader.id = LoadShaderProgram(defaultVShaderId, defaultFShaderId);
 
     if (shader.id > 0) 
     {
@@ -3369,12 +3373,10 @@ static void UnloadShaderDefault(void)
 {
     glUseProgram(0);
 
-    glDeleteShader(defaultVertexShader);
-    glDeleteShader(defaultFragmentShader);
-    //glDetachShader(defaultShader, vertexShader);
-    //glDetachShader(defaultShader, fragmentShader);
-    //glDeleteShader(vertexShader);     // Already deleted on shader compilation
-    //glDeleteShader(fragmentShader);   // Already deleted on shader compilation
+    glDetachShader(defaultShader.id, defaultVShaderId);
+    glDetachShader(defaultShader.id, defaultFShaderId);
+    glDeleteShader(defaultVShaderId);
+    glDeleteShader(defaultFShaderId);
     glDeleteProgram(defaultShader.id);
 }
 
