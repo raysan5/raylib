@@ -396,7 +396,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
             }
         }
 
-        // AudioStreams. These are handling slightly differently to sounds because we do data conversion at mixing time rather than
+        // AudioStreams. These are handled slightly differently to sounds because we do data conversion at mixing time rather than
         // load time.
         for (AudioStreamData* internalData = firstAudioStream; internalData != NULL; internalData = internalData->next)
         {
