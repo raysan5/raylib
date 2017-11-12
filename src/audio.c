@@ -72,6 +72,8 @@
 #define SUPPORT_FILEFORMAT_MOD
 //-------------------------------------------------
 
+#define USE_MINI_AL 1           // Set to 1 to use mini_al; 0 to use OpenAL.
+
 #if defined(AUDIO_STANDALONE)
     #include "audio.h"
     #include <stdarg.h>         // Required for: va_list, va_start(), vfprintf(), va_end()
@@ -80,17 +82,21 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-#if defined(__APPLE__)
-    #include "OpenAL/al.h"          // OpenAL basic header
-    #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
-#else
-    #include "AL/al.h"              // OpenAL basic header
-    #include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
-    //#include "AL/alext.h"         // OpenAL extensions header, required for AL_EXT_FLOAT32 and AL_EXT_MCFORMATS
-#endif
+//#if USE_MINI_AL
+    #include "external/mini_al.h"   // Implemented in mini_al.c. Cannot implement this here because it conflicts with Win32 APIs such as CloseWindow(), etc.
+//#else
+    #if defined(__APPLE__)
+        #include "OpenAL/al.h"          // OpenAL basic header
+        #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+    #else
+        #include "AL/al.h"              // OpenAL basic header
+        #include "AL/alc.h"             // OpenAL context header (like OpenGL, OpenAL requires a context to work)
+        //#include "AL/alext.h"         // OpenAL extensions header, required for AL_EXT_FLOAT32 and AL_EXT_MCFORMATS
+    #endif
 
-// OpenAL extension: AL_EXT_FLOAT32 - Support for 32bit float samples
-// OpenAL extension: AL_EXT_MCFORMATS - Support for multi-channel formats (Quad, 5.1, 6.1, 7.1)
+    // OpenAL extension: AL_EXT_FLOAT32 - Support for 32bit float samples
+    // OpenAL extension: AL_EXT_MCFORMATS - Support for multi-channel formats (Quad, 5.1, 6.1, 7.1)
+//#endif
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strcmp(), strncmp()
@@ -200,10 +206,195 @@ void TraceLog(int msgType, const char *text, ...);              // Show trace lo
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
+#if USE_MINI_AL
+#define DEVICE_FORMAT       mal_format_f32
+#define DEVICE_CHANNELS     2
+#define DEVICE_SAMPLE_RATE  44100
+
+typedef struct SoundInternal SoundInternal;
+struct SoundInternal
+{
+    mal_format format;
+    mal_uint32 channels;
+    mal_uint32 sampleRate;
+    mal_uint32 frameCount;
+    mal_uint32 frameCursorPos;  // Keeps track of the next frame to read when mixing
+    float volume;
+    float pitch;
+    bool playing;
+    bool paused;
+    bool looping;
+    SoundInternal* next;
+    SoundInternal* prev;
+    mal_uint8 data[1];          // Raw audio data.
+};
+
+static mal_context context;
+static mal_device device;
+static mal_bool32 isAudioInitialized = MAL_FALSE;
+static float masterVolume = 1;
+static mal_mutex soundLock;
+static SoundInternal* firstSound;   // Sounds are tracked in a linked list.
+static SoundInternal* lastSound;
+
+static void AppendSound(SoundInternal* internalSound)
+{
+    mal_mutex_lock(&context, &soundLock);
+    {
+        if (firstSound == NULL) {
+            firstSound = internalSound;
+        } else {
+            lastSound->next = internalSound;
+            internalSound->prev = lastSound;
+        }
+
+        lastSound = internalSound;
+    }
+    mal_mutex_unlock(&context, &soundLock);
+}
+
+static void RemoveSound(SoundInternal* internalSound)
+{
+    mal_mutex_lock(&context, &soundLock);
+    {
+        if (internalSound->prev == NULL) {
+            firstSound = internalSound->next;
+        } else {
+            internalSound->prev->next = internalSound->next;
+        }
+
+        if (internalSound->next == NULL) {
+            lastSound = internalSound->prev;
+        } else {
+            internalSound->next->prev = internalSound->prev;
+        }
+    }
+    mal_mutex_unlock(&context, &soundLock);
+}
+
+static void OnLog_MAL(mal_context* pContext, mal_device* pDevice, const char* message)
+{
+    (void)pContext;
+    (void)pDevice;
+    TraceLog(LOG_ERROR, message);   // All log messages from mini_al are errors.
+}
+
+static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameCount, void* pFramesOut)
+{
+    // This is where all of the mixing takes place.
+    (void)pDevice;
+
+    // Mixing is basically just an accumulation. We need to initialize the output buffer to 0.
+    memset(pFramesOut, 0, frameCount*pDevice->channels*mal_get_sample_size_in_bytes(pDevice->format));
+
+    // Using a mutex here for thread-safety which makes things not real-time. This is unlikely to be necessary for this project, but may
+    // want to consider how you might want to avoid this.
+    mal_mutex_lock(&context, &soundLock);
+    {
+        float* pFramesOutF = (float*)pFramesOut;    // <-- Just for convenience.
+
+        // Sounds.
+        for (SoundInternal* internalSound = firstSound; internalSound != NULL; internalSound = internalSound->next)
+        {
+            // Ignore stopped or paused sounds.
+            if (!internalSound->playing || internalSound->paused) {
+                continue;
+            }
+
+            mal_uint32 framesRead = 0;
+            for (;;) {
+                if (framesRead > frameCount) {
+                    TraceLog(LOG_DEBUG, "Mixed too many frames from sound");
+                    break;
+                }
+                if (framesRead == frameCount) {
+                    break;
+                }
+
+                // Keep reading until the end of the buffer, or we've already read as much as is allowed.
+                mal_uint32 framesToRead = (frameCount - framesRead);
+                mal_uint32 framesRemaining = (internalSound->frameCount - internalSound->frameCursorPos);
+                if (framesToRead > framesRemaining) {
+                    framesToRead = framesRemaining;
+                }
+
+                // This is where the real mixing takes place. This can be optimized. This assumes the device and sound are of the same format.
+                //
+                // TODO: Implement pitching.
+                for (mal_uint32 iFrame = 0; iFrame < framesToRead; ++iFrame) {
+                    float* pFrameOut = pFramesOutF + ((framesRead+iFrame) * device.channels);
+                    float* pFrameIn  = ((float*)internalSound->data) + ((internalSound->frameCursorPos+iFrame) * device.channels);
+
+                    for (mal_uint32 iChannel = 0; iChannel < device.channels; ++iChannel) {
+                        pFrameOut[iChannel] += pFrameIn[iChannel] * masterVolume * internalSound->volume;
+                    }
+                }
+
+                framesRead += framesToRead;
+                internalSound->frameCursorPos += framesToRead;
+
+                // If we've reached the end of the sound's internal buffer we do one of two things: loop back to the start, or just stop.
+                if (framesToRead == framesRemaining) {
+                    if (!internalSound->looping) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Music.
+        // TODO: Implement me.
+    }
+    mal_mutex_unlock(&context, &soundLock);
+
+    return frameCount;  // We always output the same number of frames that were originally requested.
+}
+#endif
 
 // Initialize audio device
 void InitAudioDevice(void)
 {
+#if USE_MINI_AL
+    // Context.
+    mal_context_config contextConfig = mal_context_config_init(OnLog_MAL);
+    mal_result result = mal_context_init(NULL, 0, &contextConfig, &context);
+    if (result != MAL_SUCCESS)
+    {
+        return;
+    }
+
+    // Device. Using the default device. Format is floating point because it simplifies mixing.
+    mal_device_config deviceConfig = mal_device_config_init(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, OnSendAudioDataToDevice);
+    result = mal_device_init(&context, mal_device_type_playback, NULL, &deviceConfig, NULL, &device);
+    if (result != MAL_SUCCESS)
+    {
+        mal_context_uninit(&context);
+        return;
+    }
+
+    // Keep the device running the whole time. May want to consider doing something a bit smarter and only have the device running
+    // while there's at least one sound being played.
+    result = mal_device_start(&device);
+    if (result != MAL_SUCCESS)
+    {
+        mal_device_uninit(&device);
+        mal_context_uninit(&context);
+        return;
+    }
+
+    // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
+    // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
+    if (!mal_mutex_create(&context, &soundLock))
+    {
+        TraceLog(LOG_ERROR, "Failed to create mutex for audio mixing");
+        mal_device_uninit(&device);
+        mal_context_uninit(&context);
+        return;
+    }
+
+
+    isAudioInitialized = MAL_TRUE;
+#else
     // Open and initialize a device with default settings
     ALCdevice *device = alcOpenDevice(NULL);
 
@@ -230,13 +421,30 @@ void InitAudioDevice(void)
             alListener3f(AL_ORIENTATION, 0.0f, 0.0f, -1.0f);
             
             alListenerf(AL_GAIN, 1.0f);
+
+            if (alIsExtensionPresent("AL_EXT_float32")) {
+                TraceLog(LOG_INFO, "AL_EXT_float32 supported");
+            } else {
+                TraceLog(LOG_INFO, "AL_EXT_float32 not supported");
+            }
         }
     }
+#endif
 }
 
 // Close the audio device for all contexts
 void CloseAudioDevice(void)
 {
+#if USE_MINI_AL
+    if (!isAudioInitialized) {
+        TraceLog(LOG_WARNING, "Could not close audio device because it is not currently initialized");
+        return;
+    }
+
+    mal_mutex_delete(&context, &soundLock);
+    mal_device_uninit(&device);
+    mal_context_uninit(&context);
+#else
     ALCdevice *device;
     ALCcontext *context = alcGetCurrentContext();
 
@@ -247,6 +455,7 @@ void CloseAudioDevice(void)
     alcMakeContextCurrent(NULL);
     alcDestroyContext(context);
     alcCloseDevice(device);
+#endif
 
     TraceLog(LOG_INFO, "Audio device closed successfully");
 }
@@ -254,6 +463,9 @@ void CloseAudioDevice(void)
 // Check if device has been initialized successfully
 bool IsAudioDeviceReady(void)
 {
+#if USE_MINI_AL
+    return isAudioInitialized;
+#else
     ALCcontext *context = alcGetCurrentContext();
 
     if (context == NULL) return false;
@@ -264,6 +476,7 @@ bool IsAudioDeviceReady(void)
         if (device == NULL) return false;
         else return true;
     }
+#endif
 }
 
 // Set master volume (listener)
@@ -271,8 +484,12 @@ void SetMasterVolume(float volume)
 {
     if (volume < 0.0f) volume = 0.0f;
     else if (volume > 1.0f) volume = 1.0f;
-    
+ 
+#if USE_MINI_AL
+    masterVolume = 1;
+#else
     alListenerf(AL_GAIN, volume);
+#endif
 }
 
 //----------------------------------------------------------------------------------
@@ -349,6 +566,47 @@ Sound LoadSoundFromWave(Wave wave)
 
     if (wave.data != NULL)
     {
+#if USE_MINI_AL
+        // When using mini_al we need to do our own mixing. To simplify this we need convert the format of each sound to be consistent with
+        // the format used to open the playback device. We can do this two ways:
+        // 
+        //   1) Convert the whole sound in one go at load time (here).
+        //   2) Convert the audio data in chunks at mixing time.
+        //
+        // I have decided on the first option because it offloads work required for the format conversion to the to the loading stage. The
+        // downside to this is that it uses more memory if the original sound is u8 or s16.
+        mal_format formatIn  = ((wave.sampleSize == 8) ? mal_format_u8 : ((wave.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+        mal_uint32 frameCountIn = wave.sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
+
+        mal_uint32 frameCount = mal_convert_frames(NULL, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, formatIn, wave.channels, wave.sampleRate, frameCountIn);
+        if (frameCount == 0) {
+            TraceLog(LOG_ERROR, "LoadSoundFromWave() : Failed to get frame count for format conversion.");
+        }
+
+        SoundInternal* internalSound = (SoundInternal*)calloc(sizeof(*internalSound) + (frameCount*DEVICE_CHANNELS*4), 1);  // <-- Make sure this is initialized to zero for safety.
+        if (internalSound == NULL) {
+            TraceLog(LOG_ERROR, "LoadSoundFromWave() : Failed to allocate memory for internal buffer");
+        }
+
+        frameCount = mal_convert_frames(internalSound->data, DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, wave.data, formatIn, wave.channels, wave.sampleRate, frameCountIn);
+        if (frameCount == 0) {
+            TraceLog(LOG_ERROR, "LoadSoundFromWave() : Format conversion failed.");
+        }
+
+        internalSound->format = DEVICE_FORMAT;
+        internalSound->channels = DEVICE_CHANNELS;
+        internalSound->sampleRate = DEVICE_SAMPLE_RATE;
+        internalSound->frameCount = frameCount;
+        internalSound->frameCursorPos = 0;
+        internalSound->volume = 1;
+        internalSound->pitch = 1;
+        internalSound->playing = 0;
+        internalSound->paused = 0;
+        internalSound->looping = 0;
+        AppendSound(internalSound);
+
+        sound.handle = (void*)internalSound;
+#else
         ALenum format = 0;
 
         // The OpenAL format is worked out by looking at the number of channels and the sample size (bits per sample)
@@ -402,6 +660,7 @@ Sound LoadSoundFromWave(Wave wave)
         sound.source = source;
         sound.buffer = buffer;
         sound.format = format;
+#endif
     }
 
     return sound;
@@ -418,10 +677,16 @@ void UnloadWave(Wave wave)
 // Unload sound
 void UnloadSound(Sound sound)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    RemoveSound(internalSound);
+    free(internalSound);
+#else
     alSourceStop(sound.source);
 
     alDeleteSources(1, &sound.source);
     alDeleteBuffers(1, &sound.buffer);
+#endif
 
     TraceLog(LOG_INFO, "[SND ID %i][BUFR ID %i] Unloaded sound data from RAM", sound.source, sound.buffer);
 }
@@ -430,6 +695,22 @@ void UnloadSound(Sound sound)
 // NOTE: data must match sound.format
 void UpdateSound(Sound sound, const void *data, int samplesCount)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "UpdateSound() : Invalid sound");
+        return;
+    }
+
+    internalSound->playing = false;
+    internalSound->paused = false;
+    internalSound->frameCursorPos = 0;
+
+    // TODO: May want to lock/unlock this since this data buffer is read at mixing time. However, this puts a mutex in
+    // in the mixing code which makes it no longer real-time. This is likely not a critical issue for this project, though.
+    memcpy(internalSound->data, data, samplesCount*internalSound->channels*mal_get_sample_size_in_bytes(internalSound->format));
+#else
     ALint sampleRate, sampleSize, channels;
     alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
     alGetBufferi(sound.buffer, AL_BITS, &sampleSize);           // It could also be retrieved from sound.format
@@ -451,12 +732,26 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
 
     // Attach sound buffer to source again
     alSourcei(sound.source, AL_BUFFER, sound.buffer);
+#endif
 }
 
 // Play a sound
 void PlaySound(Sound sound)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "PlaySound() : Invalid sound");
+        return;
+    }
+
+    internalSound->playing = 1;
+    internalSound->paused = 0;
+    internalSound->frameCursorPos = 0;
+#else
     alSourcePlay(sound.source);        // Play the sound
+#endif
 
     //TraceLog(LOG_INFO, "Playing sound");
 
@@ -477,28 +772,72 @@ void PlaySound(Sound sound)
 // Pause a sound
 void PauseSound(Sound sound)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "PauseSound() : Invalid sound");
+        return;
+    }
+
+    internalSound->paused = true;
+#else
     alSourcePause(sound.source);
+#endif
 }
 
 // Resume a paused sound
 void ResumeSound(Sound sound)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "ResumeSound() : Invalid sound");
+        return;
+    }
+
+    internalSound->paused = false;
+#else
     ALenum state;
 
     alGetSourcei(sound.source, AL_SOURCE_STATE, &state);
 
     if (state == AL_PAUSED) alSourcePlay(sound.source);
+#endif
 }
 
 // Stop reproducing a sound
 void StopSound(Sound sound)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "StopSound() : Invalid sound");
+        return;
+    }
+
+    internalSound->playing = false;
+    internalSound->paused = false;
+#else
     alSourceStop(sound.source);
+#endif
 }
 
 // Check if a sound is playing
 bool IsSoundPlaying(Sound sound)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "IsSoundPlaying() : Invalid sound");
+        return false;
+    }
+
+    return internalSound->playing && !internalSound->paused;
+#else
     bool playing = false;
     ALint state;
 
@@ -506,23 +845,73 @@ bool IsSoundPlaying(Sound sound)
     if (state == AL_PLAYING) playing = true;
 
     return playing;
+#endif
 }
 
 // Set volume for a sound
 void SetSoundVolume(Sound sound, float volume)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "SetSoundVolume() : Invalid sound");
+        return;
+    }
+
+    internalSound->volume = volume;
+#else
     alSourcef(sound.source, AL_GAIN, volume);
+#endif
 }
 
 // Set pitch for a sound
 void SetSoundPitch(Sound sound, float pitch)
 {
+#if USE_MINI_AL
+    SoundInternal* internalSound = (SoundInternal*)sound.handle;
+    if (internalSound == NULL)
+    {
+        TraceLog(LOG_ERROR, "SetSoundPitch() : Invalid sound");
+        return;
+    }
+
+    internalSound->pitch = pitch;
+#else
     alSourcef(sound.source, AL_PITCH, pitch);
+#endif
 }
 
 // Convert wave data to desired format
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
+    mal_format formatIn  = ((wave->sampleSize == 8) ? mal_format_u8 : ((wave->sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+    mal_format formatOut = ((      sampleSize == 8) ? mal_format_u8 : ((      sampleSize == 16) ? mal_format_s16 : mal_format_f32));
+
+    mal_uint32 frameCountIn = wave->sampleCount;  // Is wave->sampleCount actually the frame count? That terminology needs to change, if so.
+
+    mal_uint32 frameCount = mal_convert_frames(NULL, formatOut, channels, sampleRate, NULL, formatIn, wave->channels, wave->sampleRate, frameCountIn);
+    if (frameCount == 0) {
+        TraceLog(LOG_ERROR, "WaveFormat() : Failed to get frame count for format conversion.");
+        return;
+    }
+
+    void* data = malloc(frameCount * channels * (sampleSize/8));
+
+    frameCount = mal_convert_frames(data, formatOut, channels, sampleRate, wave->data, formatIn, wave->channels, wave->sampleRate, frameCountIn);
+    if (frameCount == 0) {
+        TraceLog(LOG_ERROR, "WaveFormat() : Format conversion failed.");
+        return;
+    }
+
+    wave->sampleCount = frameCount;
+    wave->sampleSize = sampleSize;
+    wave->sampleRate = sampleRate;
+    wave->channels = channels;
+    free(wave->data);
+    wave->data = data;
+
+#if 0
     // Format sample rate
     // NOTE: Only supported 22050 <--> 44100
     if (wave->sampleRate != sampleRate)
@@ -601,6 +990,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
         free(wave->data);
         wave->data = data;
     }
+#endif
 }
 
 // Copy a wave to a new wave
