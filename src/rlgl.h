@@ -145,56 +145,6 @@ typedef unsigned char byte;
     // Boolean type
     typedef enum { false, true } bool;
     #endif
-    
-    // Shader location point type
-    typedef enum {
-        LOC_VERTEX_POSITION = 0,
-        LOC_VERTEX_TEXCOORD01,
-        LOC_VERTEX_TEXCOORD02,
-        LOC_VERTEX_NORMAL,
-        LOC_VERTEX_TANGENT,
-        LOC_VERTEX_COLOR,
-        LOC_MATRIX_MVP,
-        LOC_MATRIX_MODEL,
-        LOC_MATRIX_VIEW,
-        LOC_MATRIX_PROJECTION,
-        LOC_VECTOR_VIEW,
-        LOC_COLOR_DIFFUSE,
-        LOC_COLOR_SPECULAR,
-        LOC_COLOR_AMBIENT,
-        LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
-        LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
-        LOC_MAP_NORMAL,
-        LOC_MAP_ROUGHNESS,
-        LOC_MAP_OCCUSION,
-        LOC_MAP_EMISSION,
-        LOC_MAP_HEIGHT,
-        LOC_MAP_CUBEMAP,
-        LOC_MAP_IRRADIANCE,
-        LOC_MAP_PREFILTER,
-        LOC_MAP_BRDF
-    } ShaderLocationIndex;
-
-    #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
-    #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
-
-    // Material map type
-    typedef enum {
-        MAP_ALBEDO    = 0,       // MAP_DIFFUSE
-        MAP_METALNESS = 1,       // MAP_SPECULAR
-        MAP_NORMAL    = 2,
-        MAP_ROUGHNESS = 3,
-        MAP_OCCLUSION,
-        MAP_EMISSION,
-        MAP_HEIGHT,
-        MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_BRDF
-    } TexmapIndex;
-
-    #define MAP_DIFFUSE      MAP_ALBEDO
-    #define MAP_SPECULAR     MAP_METALNESS
 
     // Color type, RGBA (32bit)
     typedef struct Color {
@@ -203,6 +153,14 @@ typedef unsigned char byte;
         unsigned char b;
         unsigned char a;
     } Color;
+    
+    // Rectangle type
+    typedef struct Rectangle {
+        int x;
+        int y;
+        int width;
+        int height;
+    } Rectangle;
     
     // Texture2D type
     // NOTE: Data stored in GPU memory
@@ -340,6 +298,56 @@ typedef unsigned char byte;
         BLEND_ADDITIVE, 
         BLEND_MULTIPLIED 
     } BlendMode;
+
+    // Shader location point type
+    typedef enum {
+        LOC_VERTEX_POSITION = 0,
+        LOC_VERTEX_TEXCOORD01,
+        LOC_VERTEX_TEXCOORD02,
+        LOC_VERTEX_NORMAL,
+        LOC_VERTEX_TANGENT,
+        LOC_VERTEX_COLOR,
+        LOC_MATRIX_MVP,
+        LOC_MATRIX_MODEL,
+        LOC_MATRIX_VIEW,
+        LOC_MATRIX_PROJECTION,
+        LOC_VECTOR_VIEW,
+        LOC_COLOR_DIFFUSE,
+        LOC_COLOR_SPECULAR,
+        LOC_COLOR_AMBIENT,
+        LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
+        LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
+        LOC_MAP_NORMAL,
+        LOC_MAP_ROUGHNESS,
+        LOC_MAP_OCCUSION,
+        LOC_MAP_EMISSION,
+        LOC_MAP_HEIGHT,
+        LOC_MAP_CUBEMAP,
+        LOC_MAP_IRRADIANCE,
+        LOC_MAP_PREFILTER,
+        LOC_MAP_BRDF
+    } ShaderLocationIndex;
+
+    #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
+    #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
+
+    // Material map type
+    typedef enum {
+        MAP_ALBEDO    = 0,       // MAP_DIFFUSE
+        MAP_METALNESS = 1,       // MAP_SPECULAR
+        MAP_NORMAL    = 2,
+        MAP_ROUGHNESS = 3,
+        MAP_OCCLUSION,
+        MAP_EMISSION,
+        MAP_HEIGHT,
+        MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_BRDF
+    } TexmapIndex;
+
+    #define MAP_DIFFUSE      MAP_ALBEDO
+    #define MAP_SPECULAR     MAP_METALNESS
 
     // VR Head Mounted Display devices
     typedef enum {

@@ -1095,14 +1095,15 @@ RLAPI void BeginBlendMode(int mode);                                      // Beg
 RLAPI void EndBlendMode(void);                                            // End blending mode (reset to default: alpha blending)
 
 // VR control functions
-VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);     // Get VR device information for some standard devices
-void InitVrSimulator(VrDeviceInfo info);            // Init VR simulator for selected device parameters
-RLAPI void CloseVrSimulator(void);                  // Close VR simulator for current device
-RLAPI bool IsVrSimulatorReady(void);                // Detect if VR simulator is ready
-RLAPI void UpdateVrTracking(Camera *camera);        // Update VR tracking (position and orientation) and camera
-RLAPI void ToggleVrMode(void);                      // Enable/Disable VR experience
-RLAPI void BeginVrDrawing(void);                    // Begin VR simulator stereo rendering
-RLAPI void EndVrDrawing(void);                      // End VR simulator stereo rendering
+RLAPI VrDeviceInfo GetVrDeviceInfo(int vrDeviceType);   // Get VR device information for some standard devices
+RLAPI void InitVrSimulator(VrDeviceInfo info);          // Init VR simulator for selected device parameters
+RLAPI void CloseVrSimulator(void);                      // Close VR simulator for current device
+RLAPI bool IsVrSimulatorReady(void);                    // Detect if VR simulator is ready
+RLAPI void SetVrDistortionShader(Shader shader);        // Set VR distortion shader for stereoscopic rendering
+RLAPI void UpdateVrTracking(Camera *camera);            // Update VR tracking (position and orientation) and camera
+RLAPI void ToggleVrMode(void);                          // Enable/Disable VR experience
+RLAPI void BeginVrDrawing(void);                        // Begin VR simulator stereo rendering
+RLAPI void EndVrDrawing(void);                          // End VR simulator stereo rendering
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

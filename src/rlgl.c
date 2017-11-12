@@ -232,7 +232,7 @@ typedef struct DrawCall {
 typedef struct VrStereoConfig {
     RenderTexture2D stereoFbo;      // VR stereo rendering framebuffer
     Shader distortionShader;        // VR stereo rendering distortion shader
-    //Rectangle eyesViewport[2];      // VR stereo rendering eyes viewports
+    Rectangle eyesViewport[2];      // VR stereo rendering eyes viewports
     Matrix eyesProjection[2];       // VR stereo rendering eyes projection matrices
     Matrix eyesViewOffset[2];       // VR stereo rendering eyes view offset matrices
 } VrStereoConfig;
@@ -2926,7 +2926,7 @@ void InitVrSimulator(VrDeviceInfo info)
     vrConfig.stereoFbo = rlLoadRenderTexture(screenWidth, screenHeight);
     
 #if defined(SUPPORT_DISTORTION_SHADER)
-    // Load distortion shader (initialized by default with Oculus Rift CV1 parameters)
+    // Load distortion shader
     unsigned int vertexShaderId = CompileShader(distortionVShaderStr, GL_VERTEX_SHADER);
     unsigned int fragmentShaderId = CompileShader(distortionFShaderStr, GL_FRAGMENT_SHADER);
     
@@ -2934,6 +2934,7 @@ void InitVrSimulator(VrDeviceInfo info)
     if (vrConfig.distortionShader.id > 0) SetShaderDefaultLocations(&vrConfig.distortionShader);
 #endif
 
+    // Set VR configutarion parameters, including distortion shader
     SetStereoConfig(info);
 
     vrSimulatorReady = true;
@@ -2958,18 +2959,6 @@ void CloseVrSimulator(void)
 #endif
 }
 
-// TODO: Review VR system to be more flexible, 
-// move distortion shader to user side,
-// SetStereoConfig() must be reviewed...
-/*
-// Set VR view distortion shader
-void SetVrDistortionShader(Shader shader)
-{
-    vrConfig.distortionShader = shader;
-    SetStereoConfig(info);
-}
-*/
-
 // Detect if VR simulator is running
 bool IsVrSimulatorReady(void)
 {
@@ -2978,6 +2967,15 @@ bool IsVrSimulatorReady(void)
 #else
     return false;
 #endif
+}
+
+// Set VR distortion shader for stereoscopic rendering
+// TODO: Review VR system to be more flexible, move distortion shader to user side
+void SetVrDistortionShader(Shader shader)
+{
+    vrConfig.distortionShader = shader;
+
+    //SetStereoConfig(info);  // TODO: Must be reviewed to set new distortion shader uniform values...
 }
 
 // Enable/Disable VR experience (device or simulator)
@@ -4026,8 +4024,8 @@ static void SetStereoConfig(VrDeviceInfo hmd)
     vrConfig.eyesViewOffset[1] = MatrixTranslate(hmd.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
     // Compute eyes Viewports
-    //vrConfig.eyesViewport[0] = (Rectangle){ 0, 0, hmd.hResolution/2, hmd.vResolution };
-    //vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
+    vrConfig.eyesViewport[0] = (Rectangle){ 0, 0, hmd.hResolution/2, hmd.vResolution };
+    vrConfig.eyesViewport[1] = (Rectangle){ hmd.hResolution/2, 0, hmd.hResolution/2, hmd.vResolution };
 }
 
 // Set internal projection and modelview matrix depending on eyes tracking data
