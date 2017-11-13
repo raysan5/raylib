@@ -90,6 +90,8 @@ DerivedData/
 # Visual Studio project
 project/vs2015/*.db
 project/vs2015/*.opendb
+project/vs2015.UWP/packages
+project/vs2015.UWP/*.db
 !project/vs2015/raylib.sln
 !project/vs2015/raylib/*.vcxproj
 !project/vs2015/examples/*.vcxproj
@@ -97,6 +99,7 @@ project/vs2015/*.opendb
 !project/vs2017/raylib/*.vcxproj
 !project/vs2017/examples/*.vcxproj
 !project/vs2015.UWP/raylib/*.vcxproj
+!project/vs2015.UWP/*.sln
 !project/vs2015.UWP/raylib.App.UWP/*.vcxproj
 
 # Web examples 
