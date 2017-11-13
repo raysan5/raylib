@@ -257,7 +257,7 @@ static AudioStreamData* lastAudioStream;
 
 static void AppendSound(SoundData* internalSound)
 {
-    mal_mutex_lock(&context, &soundLock);
+    mal_mutex_lock(&soundLock);
     {
         if (firstSound == NULL) {
             firstSound = internalSound;
@@ -268,12 +268,12 @@ static void AppendSound(SoundData* internalSound)
 
         lastSound = internalSound;
     }
-    mal_mutex_unlock(&context, &soundLock);
+    mal_mutex_unlock(&soundLock);
 }
 
 static void RemoveSound(SoundData* internalSound)
 {
-    mal_mutex_lock(&context, &soundLock);
+    mal_mutex_lock(&soundLock);
     {
         if (internalSound->prev == NULL) {
             firstSound = internalSound->next;
@@ -287,12 +287,12 @@ static void RemoveSound(SoundData* internalSound)
             internalSound->next->prev = internalSound->prev;
         }
     }
-    mal_mutex_unlock(&context, &soundLock);
+    mal_mutex_unlock(&soundLock);
 }
 
 static void AppendAudioStream(AudioStreamData* internalAudioStream)
 {
-    mal_mutex_lock(&context, &soundLock);
+    mal_mutex_lock(&soundLock);
     {
         if (firstAudioStream == NULL) {
             firstAudioStream = internalAudioStream;
@@ -303,12 +303,12 @@ static void AppendAudioStream(AudioStreamData* internalAudioStream)
 
         lastAudioStream = internalAudioStream;
     }
-    mal_mutex_unlock(&context, &soundLock);
+    mal_mutex_unlock(&soundLock);
 }
 
 static void RemoveAudioStream(AudioStreamData* internalAudioStream)
 {
-    mal_mutex_lock(&context, &soundLock);
+    mal_mutex_lock(&soundLock);
     {
         if (internalAudioStream->prev == NULL) {
             firstAudioStream = internalAudioStream->next;
@@ -322,7 +322,7 @@ static void RemoveAudioStream(AudioStreamData* internalAudioStream)
             internalAudioStream->next->prev = internalAudioStream->prev;
         }
     }
-    mal_mutex_unlock(&context, &soundLock);
+    mal_mutex_unlock(&soundLock);
 }
 
 
@@ -343,7 +343,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
 
     // Using a mutex here for thread-safety which makes things not real-time. This is unlikely to be necessary for this project, but may
     // want to consider how you might want to avoid this.
-    mal_mutex_lock(&context, &soundLock);
+    mal_mutex_lock(&soundLock);
     {
         float* pFramesOutF = (float*)pFramesOut;    // <-- Just for convenience.
 
@@ -454,7 +454,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
             }
         }
     }
-    mal_mutex_unlock(&context, &soundLock);
+    mal_mutex_unlock(&soundLock);
 
     return frameCount;  // We always output the same number of frames that were originally requested.
 }
@@ -493,7 +493,7 @@ void InitAudioDevice(void)
 
     // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
-    if (!mal_mutex_create(&context, &soundLock))
+    if (mal_mutex_init(&context, &soundLock) != MAL_SUCCESS)
     {
         TraceLog(LOG_ERROR, "Failed to create mutex for audio mixing");
         mal_device_uninit(&device);
@@ -550,7 +550,7 @@ void CloseAudioDevice(void)
         return;
     }
 
-    mal_mutex_delete(&context, &soundLock);
+    mal_mutex_uninit(&soundLock);
     mal_device_uninit(&device);
     mal_context_uninit(&context);
 #else
@@ -1573,7 +1573,7 @@ float GetMusicTimePlayed(Music music)
 }
 
 
-static mal_uint32 UpdateAudioStream_OnDSPRead(mal_uint32 frameCount, void* pFramesOut, void* pUserData)
+static mal_uint32 UpdateAudioStream_OnDSPRead(mal_dsp* pDSP, mal_uint32 frameCount, void* pFramesOut, void* pUserData)
 {
     AudioStreamData* internalData = (AudioStreamData*)pUserData;
 
