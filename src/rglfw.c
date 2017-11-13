@@ -26,6 +26,19 @@
 *
 **********************************************************************************************/
 
+#ifdef _WIN32
+    #define _GLFW_WIN32
+#endif
+#ifdef __linux__
+    #define _GLFW_X11
+#endif
+#ifdef __APPLE__
+    #define _GLFW_COCOA
+    #define _GLFW_USE_CHDIR
+    #define _GLFW_USE_MENUBAR
+    #define _GLFW_USE_RETINA
+#endif
+
 #include "external/glfw/src/context.c"
 #include "external/glfw/src/init.c"
 #include "external/glfw/src/input.c"
