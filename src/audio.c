@@ -82,9 +82,9 @@
     #include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
-//#if USE_MINI_AL
-    #include "external/mini_al.h"   // Implemented in mini_al.c. Cannot implement this here because it conflicts with Win32 APIs such as CloseWindow(), etc.
-//#else
+#include "external/mini_al.h"   // Implemented in mini_al.c. Cannot implement this here because it conflicts with Win32 APIs such as CloseWindow(), etc.
+
+#if !defined(USE_MINI_AL) || USE_MINI_AL == 0
     #if defined(__APPLE__)
         #include "OpenAL/al.h"          // OpenAL basic header
         #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
@@ -96,7 +96,7 @@
 
     // OpenAL extension: AL_EXT_FLOAT32 - Support for 32bit float samples
     // OpenAL extension: AL_EXT_MCFORMATS - Support for multi-channel formats (Quad, 5.1, 6.1, 7.1)
-//#endif
+#endif
 
 #include <stdlib.h>             // Required for: malloc(), free()
 #include <string.h>             // Required for: strcmp(), strncmp()
@@ -176,22 +176,6 @@ typedef struct MusicData {
     unsigned int samplesLeft;           // Number of samples left to end
 } MusicData;
 
-// AudioStreamData
-typedef struct AudioStreamData AudioStreamData;
-struct AudioStreamData {
-    mal_dsp dsp;    // AudioStream data needs to flow through a persistent conversion pipeline. Not doing this will result in glitches between buffer updates.
-    float volume;
-    float pitch;
-    bool playing;
-    bool paused;
-    bool isSubBufferProcessed[2];
-    unsigned int frameCursorPos;
-    unsigned int bufferSizeInFrames;
-    AudioStreamData* next;
-    AudioStreamData* prev;
-    unsigned char buffer[1];
-};
-
 #if defined(AUDIO_STANDALONE)
 typedef enum { LOG_INFO = 0, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_OTHER } TraceLogType;
 #endif
@@ -243,6 +227,22 @@ struct SoundData
     SoundData* next;
     SoundData* prev;
     mal_uint8 data[1];          // Raw audio data.
+};
+
+// AudioStreamData
+typedef struct AudioStreamData AudioStreamData;
+struct AudioStreamData {
+    mal_dsp dsp;    // AudioStream data needs to flow through a persistent conversion pipeline. Not doing this will result in glitches between buffer updates.
+    float volume;
+    float pitch;
+    bool playing;
+    bool paused;
+    bool isSubBufferProcessed[2];
+    unsigned int frameCursorPos;
+    unsigned int bufferSizeInFrames;
+    AudioStreamData* next;
+    AudioStreamData* prev;
+    unsigned char buffer[1];
 };
 
 static mal_context context;
@@ -1594,7 +1594,7 @@ float GetMusicTimePlayed(Music music)
     return secondsPlayed;
 }
 
-
+#if USE_MINI_AL
 static mal_uint32 UpdateAudioStream_OnDSPRead(mal_dsp* pDSP, mal_uint32 frameCount, void* pFramesOut, void* pUserData)
 {
     AudioStreamData* internalData = (AudioStreamData*)pUserData;
@@ -1652,6 +1652,7 @@ static mal_uint32 UpdateAudioStream_OnDSPRead(mal_dsp* pDSP, mal_uint32 frameCou
 
     return frameCount;
 }
+#endif
 
 // Init audio stream (to stream audio pcm data)
 AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels)
