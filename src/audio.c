@@ -1426,6 +1426,13 @@ void UpdateMusicStream(Music music)
             music->loopCount--;        // Decrease loop count
             PlayMusicStream(music);    // Play again
         }
+        else
+        {
+            if (music->loopCount == -1)
+            {
+                PlayMusicStream(music);
+            }
+        }
     }
     else
     {
@@ -1506,6 +1513,13 @@ void UpdateMusicStream(Music music)
                 music->loopCount--;        // Decrease loop count
                 PlayMusicStream(music);    // Play again
             }
+            else
+            {
+                if (music->loopCount == -1)
+                {
+                    PlayMusicStream(music);
+                }
+            }
         }
         else
         {
@@ -1537,13 +1551,21 @@ bool IsMusicPlaying(Music music)
 // Set volume for music
 void SetMusicVolume(Music music, float volume)
 {
+#if USE_MINI_AL
+    SetAudioStreamVolume(music->stream, volume);
+#else
     alSourcef(music->stream.source, AL_GAIN, volume);
+#endif
 }
 
 // Set pitch for music
 void SetMusicPitch(Music music, float pitch)
 {
+#if USE_MINI_AL
+    SetAudioStreamPitch(music->stream, pitch);
+#else
     alSourcef(music->stream.source, AL_PITCH, pitch);
+#endif
 }
 
 // Set music loop count (loop repeats)
@@ -1961,6 +1983,38 @@ void StopAudioStream(AudioStream stream)
     internalData->isSubBufferProcessed[1] = true;
 #else
     alSourceStop(stream.source);
+#endif
+}
+
+void SetAudioStreamVolume(AudioStream stream, float volume)
+{
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return;
+    }
+
+    internalData->volume = volume;
+#else
+    alSourcef(stream.source, AL_GAIN, volume);
+#endif
+}
+
+void SetAudioStreamPitch(AudioStream stream, float pitch)
+{
+#if USE_MINI_AL
+    AudioStreamData* internalData = (AudioStreamData*)stream.handle;
+    if (internalData == NULL)
+    {
+        TraceLog(LOG_ERROR, "Invalid audio stream");
+        return;
+    }
+
+    internalData->pitch = pitch;
+#else
+    alSourcef(stream.source, AL_PITCH, pitch);
 #endif
 }
 

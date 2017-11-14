@@ -1165,6 +1165,8 @@ RLAPI void PauseAudioStream(AudioStream stream);                      // Pause a
 RLAPI void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
 RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audio stream is playing
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
+RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);     // Set volume for audio stream (1.0 is max level)
+RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);       // Set pitch for audio stream (1.0 is base level)
 
 #ifdef __cplusplus
 }

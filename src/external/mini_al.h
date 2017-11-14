@@ -1358,6 +1358,13 @@ mal_result mal_src_init(mal_src_config* pConfig, mal_src_read_proc onRead, void*
 // Returns the number of frames actually read.
 mal_uint32 mal_src_read_frames(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut);
 
+// The same mal_src_read_frames() with extra control over whether or not the internal buffers should be flushed at the end.
+//
+// Internally there exists a buffer that keeps track of the previous and next samples for sample rate conversion. The simple
+// version of this function does _not_ flush this buffer because otherwise it causes clitches for streaming based conversion
+// pipelines. The problem, however, is that sometimes you need those last few samples (such as if you're doing a bulk conversion
+// of a static file). Enabling flushing will fix this for you.
+mal_uint32 mal_src_read_frames_ex(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush);
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1370,7 +1377,15 @@ mal_uint32 mal_src_read_frames(mal_src* pSRC, mal_uint32 frameCount, void* pFram
 mal_result mal_dsp_init(mal_dsp_config* pConfig, mal_dsp_read_proc onRead, void* pUserData, mal_dsp* pDSP);
 
 // Reads a number of frames and runs them through the DSP processor.
+//
+// This this _not_ flush the internal buffers which means you may end up with a few less frames than you may expect. Look at
+// mal_dsp_read_frames_ex() if you want to flush the buffers at the end of the read.
 mal_uint32 mal_dsp_read_frames(mal_dsp* pDSP, mal_uint32 frameCount, void* pFramesOut);
+
+// The same mal_dsp_read_frames() with extra control over whether or not the internal buffers should be flushed at the end.
+//
+// See documentation for mal_src_read_frames_ex() for an explanation on flushing.
+mal_uint32 mal_dsp_read_frames_ex(mal_dsp* pDSP, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush);
 
 // High-level helper for doing a full format conversion in one go. Returns the number of output frames. Call this with pOut set to NULL to
 // determine the required size of the output buffer.
@@ -9283,8 +9298,8 @@ mal_uint32 mal_src_cache_read_frames(mal_src_cache* pCache, mal_uint32 frameCoun
 }
 
 
-mal_uint32 mal_src_read_frames_passthrough(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut);
-mal_uint32 mal_src_read_frames_linear(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut);
+mal_uint32 mal_src_read_frames_passthrough(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush);
+mal_uint32 mal_src_read_frames_linear(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush);
 
 mal_result mal_src_init(mal_src_config* pConfig, mal_src_read_proc onRead, void* pUserData, mal_src* pSRC)
 {
@@ -9315,22 +9330,29 @@ mal_result mal_src_init(mal_src_config* pConfig, mal_src_read_proc onRead, void*
 
 mal_uint32 mal_src_read_frames(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut)
 {
+    return mal_src_read_frames_ex(pSRC, frameCount, pFramesOut, MAL_FALSE);
+}
+
+mal_uint32 mal_src_read_frames_ex(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush)
+{
     if (pSRC == NULL || frameCount == 0 || pFramesOut == NULL) return 0;
 
     // Could just use a function pointer instead of a switch for this...
     switch (pSRC->config.algorithm)
     {
-        case mal_src_algorithm_none:   return mal_src_read_frames_passthrough(pSRC, frameCount, pFramesOut);
-        case mal_src_algorithm_linear: return mal_src_read_frames_linear(pSRC, frameCount, pFramesOut);
+        case mal_src_algorithm_none:   return mal_src_read_frames_passthrough(pSRC, frameCount, pFramesOut, flush);
+        case mal_src_algorithm_linear: return mal_src_read_frames_linear(pSRC, frameCount, pFramesOut, flush);
         default: return 0;
     }
 }
 
-mal_uint32 mal_src_read_frames_passthrough(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut)
+mal_uint32 mal_src_read_frames_passthrough(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush)
 {
     mal_assert(pSRC != NULL);
     mal_assert(frameCount > 0);
     mal_assert(pFramesOut != NULL);
+
+    (void)flush;    // Passthrough need not care about flushing.
 
     // Fast path. No need for data conversion - just pass right through.
     if (pSRC->config.formatIn == pSRC->config.formatOut) {
@@ -9362,7 +9384,7 @@ mal_uint32 mal_src_read_frames_passthrough(mal_src* pSRC, mal_uint32 frameCount,
     return totalFramesRead;
 }
 
-mal_uint32 mal_src_read_frames_linear(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut)
+mal_uint32 mal_src_read_frames_linear(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush)
 {
     mal_assert(pSRC != NULL);
     mal_assert(frameCount > 0);
@@ -9414,7 +9436,14 @@ mal_uint32 mal_src_read_frames_linear(mal_src* pSRC, mal_uint32 frameCount, void
                     pNextFrame[j] = 0;
                 }
 
-                pSRC->linear.isNextFramesLoaded = MAL_FALSE;
+                if (pSRC->linear.isNextFramesLoaded) {
+                    pSRC->linear.isNextFramesLoaded = MAL_FALSE;
+                } else {
+                    if (flush) {
+                        pSRC->linear.isPrevFramesLoaded = MAL_FALSE;
+                    }
+                }
+                
                 break;
             }
         }
@@ -9426,7 +9455,7 @@ mal_uint32 mal_src_read_frames_linear(mal_src* pSRC, mal_uint32 frameCount, void
         totalFramesRead += 1;
 
         // If there's no frames available we need to get out of this loop.
-        if (!pSRC->linear.isNextFramesLoaded) {
+        if (!pSRC->linear.isNextFramesLoaded && (!flush || !pSRC->linear.isPrevFramesLoaded)) {
             break;
         }
     }
@@ -9968,6 +9997,11 @@ mal_result mal_dsp_init(mal_dsp_config* pConfig, mal_dsp_read_proc onRead, void*
 
 mal_uint32 mal_dsp_read_frames(mal_dsp* pDSP, mal_uint32 frameCount, void* pFramesOut)
 {
+    return mal_dsp_read_frames_ex(pDSP, frameCount, pFramesOut, MAL_FALSE);
+}
+
+mal_uint32 mal_dsp_read_frames_ex(mal_dsp* pDSP, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush)
+{
     if (pDSP == NULL || pFramesOut == NULL) return 0;
 
     // Fast path.
@@ -9993,7 +10027,7 @@ mal_uint32 mal_dsp_read_frames(mal_dsp* pDSP, mal_uint32 frameCount, void* pFram
         // The initial filling of sample data depends on whether or not we are using SRC.
         mal_uint32 framesRead = 0;
         if (pDSP->isSRCRequired) {
-            framesRead = mal_src_read_frames(&pDSP->src, framesToRead, pFrames[iFrames]);
+            framesRead = mal_src_read_frames_ex(&pDSP->src, framesToRead, pFrames[iFrames], flush);
             pFramesFormat[iFrames] = pDSP->src.config.formatOut;  // Should always be f32.
         } else {
             framesRead = pDSP->onRead(pDSP, framesToRead, pFrames[iFrames], pDSP->pUserDataForOnRead);
@@ -10116,7 +10150,7 @@ mal_uint32 mal_convert_frames(void* pOut, mal_format formatOut, mal_uint32 chann
         return 0;
     }
 
-    return mal_dsp_read_frames(&dsp, frameCountOut, pOut);
+    return mal_dsp_read_frames_ex(&dsp, frameCountOut, pOut, MAL_TRUE);
 }
 
 
