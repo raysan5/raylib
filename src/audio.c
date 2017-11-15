@@ -72,7 +72,9 @@
 #define SUPPORT_FILEFORMAT_MOD
 //-------------------------------------------------
 
+#ifndef USE_MINI_AL
 #define USE_MINI_AL 1           // Set to 1 to use mini_al; 0 to use OpenAL.
+#endif
 
 #if defined(AUDIO_STANDALONE)
     #include "audio.h"
@@ -214,25 +216,24 @@ void TraceLog(int msgType, const char *text, ...);              // Show trace lo
 typedef struct SoundData SoundData;
 struct SoundData
 {
-    mal_format format;
-    mal_uint32 channels;
-    mal_uint32 sampleRate;
-    mal_uint32 frameCount;
-    mal_uint32 frameCursorPos;  // Keeps track of the next frame to read when mixing
+    mal_dsp dsp;                        // Necessary for pitch shift. This is an optimized passthrough when the pitch == 1.
     float volume;
     float pitch;
     bool playing;
     bool paused;
     bool looping;
+    unsigned int frameCursorPos;        // Keeps track of the next frame to read when mixing
+    unsigned int bufferSizeInFrames;
     SoundData* next;
     SoundData* prev;
-    mal_uint8 data[1];          // Raw audio data.
+    unsigned char data[1];              // Raw audio data.
 };
 
 // AudioStreamData
 typedef struct AudioStreamData AudioStreamData;
-struct AudioStreamData {
-    mal_dsp dsp;    // AudioStream data needs to flow through a persistent conversion pipeline. Not doing this will result in glitches between buffer updates.
+struct AudioStreamData
+{
+    mal_dsp dsp;                        // AudioStream data needs to flow through a persistent conversion pipeline. Not doing this will result in glitches between buffer updates.
     float volume;
     float pitch;
     bool playing;
@@ -250,7 +251,7 @@ static mal_device device;
 static mal_bool32 isAudioInitialized = MAL_FALSE;
 static float masterVolume = 1;
 static mal_mutex soundLock;
-static SoundData* firstSound;   // Sounds are tracked in a linked list.
+static SoundData* firstSound;           // Sounds are tracked in a linked list.
 static SoundData* lastSound;
 static AudioStreamData* firstAudioStream;
 static AudioStreamData* lastAudioStream;
@@ -286,6 +287,9 @@ static void RemoveSound(SoundData* internalSound)
         } else {
             internalSound->next->prev = internalSound->prev;
         }
+
+        internalSound->prev = NULL;
+        internalSound->next = NULL;
     }
     mal_mutex_unlock(&soundLock);
 }
@@ -321,6 +325,9 @@ static void RemoveAudioStream(AudioStreamData* internalAudioStream)
         } else {
             internalAudioStream->next->prev = internalAudioStream->prev;
         }
+
+        internalAudioStream->prev = NULL;
+        internalAudioStream->next = NULL;
     }
     mal_mutex_unlock(&soundLock);
 }
@@ -331,6 +338,21 @@ static void OnLog_MAL(mal_context* pContext, mal_device* pDevice, const char* me
     (void)pContext;
     (void)pDevice;
     TraceLog(LOG_ERROR, message);   // All log messages from mini_al are errors.
+}
+
+// This is the main mixing function. Mixing is pretty simple in this project - it's just an accumulation.
+//
+// framesOut is both an input and an output. It will be initially filled with zeros outside of this function.
+static void MixFrames(float* framesOut, const float* framesIn, mal_uint32 frameCount, float localVolume)
+{
+    for (mal_uint32 iFrame = 0; iFrame < frameCount; ++iFrame) {
+        for (mal_uint32 iChannel = 0; iChannel < device.channels; ++iChannel) {
+            float* frameOut = framesOut + (iFrame * device.channels);
+            float* frameIn  = framesIn  + (iFrame * device.channels);
+
+            frameOut[iChannel] += frameIn[iChannel] * masterVolume * localVolume;
+        }
+    }
 }
 
 static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameCount, void* pFramesOut)
@@ -345,7 +367,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
     // want to consider how you might want to avoid this.
     mal_mutex_lock(&soundLock);
     {
-        float* pFramesOutF = (float*)pFramesOut;    // <-- Just for convenience.
+        float* framesOutF = (float*)pFramesOut;    // <-- Just for convenience.
 
         // Sounds.
         for (SoundData* internalSound = firstSound; internalSound != NULL; internalSound = internalSound->next)
@@ -365,33 +387,48 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
                     break;
                 }
 
-                // Keep reading until the end of the buffer, or we've already read as much as is allowed.
+                // Just read as much data we can from the stream.
                 mal_uint32 framesToRead = (frameCount - framesRead);
-                mal_uint32 framesRemaining = (internalSound->frameCount - internalSound->frameCursorPos);
-                if (framesToRead > framesRemaining) {
-                    framesToRead = framesRemaining;
-                }
+                while (framesToRead > 0) {
+                    float tempBuffer[1024]; // 512 frames for stereo.
 
-                // This is where the real mixing takes place. This can be optimized. This assumes the device and sound are of the same format.
-                //
-                // TODO: Implement pitching.
-                for (mal_uint32 iFrame = 0; iFrame < framesToRead; ++iFrame) {
-                    float* pFrameOut = pFramesOutF + ((framesRead+iFrame) * device.channels);
-                    float* pFrameIn  = ((float*)internalSound->data) + ((internalSound->frameCursorPos+iFrame) * device.channels);
+                    mal_uint32 framesToReadRightNow = framesToRead;
+                    if (framesToReadRightNow > sizeof(tempBuffer)/DEVICE_CHANNELS) {
+                        framesToReadRightNow = sizeof(tempBuffer)/DEVICE_CHANNELS;
+                    }
 
-                    for (mal_uint32 iChannel = 0; iChannel < device.channels; ++iChannel) {
-                        pFrameOut[iChannel] += pFrameIn[iChannel] * masterVolume * internalSound->volume;
+                    // If we're not looping, we need to make sure we flush the internal buffers of the DSP pipeline to ensure we get the
+                    // last few samples.
+                    mal_bool32 flushDSP = !internalSound->looping;
+
+                    mal_uint32 framesJustRead = mal_dsp_read_frames_ex(&internalSound->dsp, framesToReadRightNow, tempBuffer, flushDSP);
+                    if (framesJustRead > 0) {
+                        float* framesOut = framesOutF + (framesRead * device.channels);
+                        float* framesIn  = tempBuffer;
+                        MixFrames(framesOut, framesIn, framesJustRead, internalSound->volume);
+
+                        framesToRead -= framesJustRead;
+                        framesRead += framesJustRead;
+                    }
+
+                    // If we weren't able to read all the frames we requested, break.
+                    if (framesJustRead < framesToReadRightNow) {
+                        if (!internalSound->looping) {
+                            internalSound->playing = MAL_FALSE;
+                            internalSound->frameCursorPos = 0;
+                            break;
+                        } else {
+                            // Should never get here, but just for safety, move the cursor position back to the start and continue the loop.
+                            internalSound->frameCursorPos = 0;
+                            continue;
+                        }
                     }
                 }
 
-                framesRead += framesToRead;
-                internalSound->frameCursorPos += framesToRead;
-
-                // If we've reached the end of the sound's internal buffer we do one of two things: loop back to the start, or just stop.
-                if (framesToRead == framesRemaining) {
-                    if (!internalSound->looping) {
-                        break;
-                    }
+                // If for some reason we weren't able to read every frame we'll need to break from the loop. Not doing this could
+                // theoretically put us into an infinite loop.
+                if (framesToRead > 0) {
+                    break;
                 }
             }
         }
@@ -427,17 +464,9 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
 
                     mal_uint32 framesJustRead = mal_dsp_read_frames(&internalData->dsp, framesToReadRightNow, tempBuffer);
                     if (framesJustRead > 0) {
-                        // This is where the real mixing takes place. This can be optimized. This assumes the device and sound are of the same format.
-                        //
-                        // TODO: Implement pitching.
-                        for (mal_uint32 iFrame = 0; iFrame < framesToRead; ++iFrame) {
-                            float* pFrameOut = pFramesOutF + ((framesRead+iFrame) * device.channels);
-                            float* pFrameIn  = tempBuffer + (iFrame * device.channels);
-
-                            for (mal_uint32 iChannel = 0; iChannel < device.channels; ++iChannel) {
-                                pFrameOut[iChannel] += pFrameIn[iChannel] * masterVolume * internalData->volume;
-                            }
-                        }
+                        float* framesOut = framesOutF + (framesRead * device.channels);
+                        float* framesIn  = tempBuffer;
+                        MixFrames(framesOut, framesIn, framesJustRead, internalData->volume);
 
                         framesToRead -= framesJustRead;
                         framesRead += framesJustRead;
@@ -667,6 +696,39 @@ Sound LoadSound(const char *fileName)
     return sound;
 }
 
+#if USE_MINI_AL
+static mal_uint32 Sound_OnDSPRead(mal_dsp* pDSP, mal_uint32 frameCount, void* pFramesOut, void* pUserData)
+{
+    SoundData* internalData = (SoundData*)pUserData;
+
+    mal_uint32 frameSizeInBytes = mal_get_sample_size_in_bytes(internalData->dsp.config.formatIn)*internalData->dsp.config.channelsIn;
+
+    // Just keep reading as much as we can. Do not zero fill excess data in the output buffer.
+    mal_uint32 framesRead = 0;
+    while (framesRead < frameCount)
+    {
+        mal_uint32 framesRemaining = internalData->bufferSizeInFrames - internalData->frameCursorPos;
+        mal_uint32 framesToRead = (frameCount - framesRead);
+        if (framesToRead > framesRemaining) {
+            framesToRead = framesRemaining;
+        }
+
+        memcpy((unsigned char*)pFramesOut + (framesRead*frameSizeInBytes), internalData->data + (internalData->frameCursorPos*frameSizeInBytes), framesToRead*frameSizeInBytes);
+        internalData->frameCursorPos += framesToRead;
+        framesRead += framesToRead;
+
+        // If we've reached the end of the buffer but we're not looping, return.
+        if (framesToRead == framesRemaining) {
+            if (!internalData->looping) {
+                break;
+            }
+        }
+    }
+
+    return framesRead;
+}
+#endif
+
 // Load sound from wave data
 // NOTE: Wave data must be unallocated manually
 Sound LoadSoundFromWave(Wave wave)
@@ -702,16 +764,28 @@ Sound LoadSoundFromWave(Wave wave)
             TraceLog(LOG_ERROR, "LoadSoundFromWave() : Format conversion failed.");
         }
 
-        internalSound->format = DEVICE_FORMAT;
-        internalSound->channels = DEVICE_CHANNELS;
-        internalSound->sampleRate = DEVICE_SAMPLE_RATE;
-        internalSound->frameCount = frameCount;
-        internalSound->frameCursorPos = 0;
+        // We run audio data through a sample rate converter in order to support pitch shift. By default this will use an optimized passthrough
+        // algorithm, but when the application changes the pitch it will change to a less optimal linear SRC.
+        mal_dsp_config dspConfig;
+        memset(&dspConfig, 0, sizeof(dspConfig));
+        dspConfig.formatIn = DEVICE_FORMAT;
+        dspConfig.formatOut = DEVICE_FORMAT;
+        dspConfig.channelsIn = DEVICE_CHANNELS;
+        dspConfig.channelsOut = DEVICE_CHANNELS;
+        dspConfig.sampleRateIn = DEVICE_SAMPLE_RATE;
+        dspConfig.sampleRateOut = DEVICE_SAMPLE_RATE;
+        mal_result resultMAL = mal_dsp_init(&dspConfig, Sound_OnDSPRead, internalSound, &internalSound->dsp);
+        if (resultMAL != MAL_SUCCESS) {
+            TraceLog(LOG_ERROR, "LoadSoundFromWave() : Failed to create data conversion pipeline");
+        }
+
         internalSound->volume = 1;
         internalSound->pitch = 1;
         internalSound->playing = 0;
         internalSound->paused = 0;
         internalSound->looping = 0;
+        internalSound->bufferSizeInFrames = frameCount;
+        internalSound->frameCursorPos = 0;
         AppendSound(internalSound);
 
         sound.handle = (void*)internalSound;
@@ -816,9 +890,8 @@ void UpdateSound(Sound sound, const void *data, int samplesCount)
     internalSound->paused = false;
     internalSound->frameCursorPos = 0;
 
-    // TODO: May want to lock/unlock this since this data buffer is read at mixing time. However, this puts a mutex in
-    // in the mixing code which makes it no longer real-time. This is likely not a critical issue for this project, though.
-    memcpy(internalSound->data, data, samplesCount*internalSound->channels*mal_get_sample_size_in_bytes(internalSound->format));
+    // TODO: May want to lock/unlock this since this data buffer is read at mixing time.
+    memcpy(internalSound->data, data, samplesCount*internalSound->dsp.config.channelsIn*mal_get_sample_size_in_bytes(internalSound->dsp.config.formatIn));
 #else
     ALint sampleRate, sampleSize, channels;
     alGetBufferi(sound.buffer, AL_FREQUENCY, &sampleRate);
@@ -986,6 +1059,11 @@ void SetSoundPitch(Sound sound, float pitch)
     }
 
     internalSound->pitch = pitch;
+
+    // Pitching is just an adjustment of the sample rate. Note that this changes the duration of the sound - higher pitches
+    // will make the sound faster; lower pitches make it slower.
+    mal_uint32 newOutputSampleRate = (mal_uint32)((((float)internalSound->dsp.config.sampleRateOut / (float)internalSound->dsp.config.sampleRateIn) / pitch) * internalSound->dsp.config.sampleRateIn);
+    mal_dsp_set_output_sample_rate(&internalSound->dsp, newOutputSampleRate);
 #else
     alSourcef(sound.source, AL_PITCH, pitch);
 #endif
@@ -2013,7 +2091,18 @@ void SetAudioStreamPitch(AudioStream stream, float pitch)
         return;
     }
 
+    if (pitch == 0)
+    {
+        TraceLog(LOG_ERROR, "Attempting to set pitch to 0");
+        return;
+    }
+
     internalData->pitch = pitch;
+
+    // Pitching is just an adjustment of the sample rate. Note that this changes the duration of the sound - higher pitches
+    // will make the sound faster; lower pitches make it slower.
+    mal_uint32 newOutputSampleRate = (mal_uint32)((((float)internalData->dsp.config.sampleRateOut / (float)internalData->dsp.config.sampleRateIn) / pitch) * internalData->dsp.config.sampleRateIn);
+    mal_dsp_set_output_sample_rate(&internalData->dsp, newOutputSampleRate);
 #else
     alSourcef(stream.source, AL_PITCH, pitch);
 #endif

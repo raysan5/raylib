@@ -570,7 +570,6 @@ struct mal_src
     mal_src_config config;
     mal_src_read_proc onRead;
     void* pUserData;
-    float ratio;
     float bin[256];
     mal_src_cache cache;    // <-- For simplifying and optimizing client -> memory reading.
 
@@ -1353,6 +1352,12 @@ static inline mal_device_config mal_device_config_init_playback(mal_format forma
 // Initializes a sample rate conversion object.
 mal_result mal_src_init(mal_src_config* pConfig, mal_src_read_proc onRead, void* pUserData, mal_src* pSRC);
 
+// Dynamically adjusts the output sample rate.
+//
+// This is useful for dynamically adjust pitch. Keep in mind, however, that this will speed up or slow down the sound. If this
+// is not acceptable you will need to use your own algorithm.
+mal_result mal_src_set_output_sample_rate(mal_src* pSRC, mal_uint32 sampleRateOut);
+
 // Reads a number of frames.
 //
 // Returns the number of frames actually read.
@@ -1375,6 +1380,12 @@ mal_uint32 mal_src_read_frames_ex(mal_src* pSRC, mal_uint32 frameCount, void* pF
 
 // Initializes a DSP object.
 mal_result mal_dsp_init(mal_dsp_config* pConfig, mal_dsp_read_proc onRead, void* pUserData, mal_dsp* pDSP);
+
+// Dynamically adjusts the output sample rate.
+//
+// This is useful for dynamically adjust pitch. Keep in mind, however, that this will speed up or slow down the sound. If this
+// is not acceptable you will need to use your own algorithm.
+mal_result mal_dsp_set_output_sample_rate(mal_dsp* pDSP, mal_uint32 sampleRateOut);
 
 // Reads a number of frames and runs them through the DSP processor.
 //
@@ -9313,18 +9324,24 @@ mal_result mal_src_init(mal_src_config* pConfig, mal_src_read_proc onRead, void*
     pSRC->onRead = onRead;
     pSRC->pUserData = pUserData;
 
-    // If the in and out sample rates are the same, fall back to the passthrough algorithm.
-    if (pSRC->config.sampleRateIn == pSRC->config.sampleRateOut) {
-        pSRC->config.algorithm = mal_src_algorithm_none;
-    }
-
     if (pSRC->config.cacheSizeInFrames > MAL_SRC_CACHE_SIZE_IN_FRAMES || pSRC->config.cacheSizeInFrames == 0) {
         pSRC->config.cacheSizeInFrames = MAL_SRC_CACHE_SIZE_IN_FRAMES;
     }
 
-    pSRC->ratio = (float)pSRC->config.sampleRateIn / pSRC->config.sampleRateOut;
-
     mal_src_cache_init(pSRC, &pSRC->cache);
+    return MAL_SUCCESS;
+}
+
+mal_result mal_src_set_output_sample_rate(mal_src* pSRC, mal_uint32 sampleRateOut)
+{
+    if (pSRC == NULL) return MAL_INVALID_ARGS;
+
+    // Must have a sample rate of > 0.
+    if (sampleRateOut == 0) {
+        return MAL_INVALID_ARGS;
+    }
+
+    pSRC->config.sampleRateOut = sampleRateOut;
     return MAL_SUCCESS;
 }
 
@@ -9336,6 +9353,13 @@ mal_uint32 mal_src_read_frames(mal_src* pSRC, mal_uint32 frameCount, void* pFram
 mal_uint32 mal_src_read_frames_ex(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush)
 {
     if (pSRC == NULL || frameCount == 0 || pFramesOut == NULL) return 0;
+
+    mal_src_algorithm algorithm = pSRC->config.algorithm;
+
+    // Always use passthrough if the sample rates are the same.
+    if (pSRC->config.sampleRateIn == pSRC->config.sampleRateOut) {
+        algorithm = mal_src_algorithm_none;
+    }
 
     // Could just use a function pointer instead of a switch for this...
     switch (pSRC->config.algorithm)
@@ -9408,7 +9432,7 @@ mal_uint32 mal_src_read_frames_linear(mal_src* pSRC, mal_uint32 frameCount, void
         pSRC->linear.isNextFramesLoaded = MAL_TRUE;
     }
 
-    float factor = pSRC->ratio;
+    float factor = (float)pSRC->config.sampleRateIn / pSRC->config.sampleRateOut;
 
     mal_uint32 totalFramesRead = 0;
     while (frameCount > 0) {
@@ -9987,6 +10011,57 @@ mal_result mal_dsp_init(mal_dsp_config* pConfig, mal_dsp_read_proc onRead, void*
     }
 
     if (pConfig->formatIn == pConfig->formatOut && pConfig->channelsIn == pConfig->channelsOut && pConfig->sampleRateIn == pConfig->sampleRateOut && !pDSP->isChannelMappingRequired) {
+        pDSP->isPassthrough = MAL_TRUE;
+    } else {
+        pDSP->isPassthrough = MAL_FALSE;
+    }
+
+    return MAL_SUCCESS;
+}
+
+mal_result mal_dsp_set_output_sample_rate(mal_dsp* pDSP, mal_uint32 sampleRateOut)
+{
+    if (pDSP == NULL) return MAL_INVALID_ARGS;
+
+    // Must have a sample rate of > 0.
+    if (sampleRateOut == 0) {
+        return MAL_INVALID_ARGS;
+    }
+
+    pDSP->config.sampleRateOut = sampleRateOut;
+
+    // If we already have an SRC pipeline initialized we do _not_ want to re-create it. Instead we adjust it. If we didn't previously
+    // have an SRC pipeline in place we'll need to initialize it.
+    if (pDSP->isSRCRequired) {
+        if (pDSP->config.sampleRateIn != pDSP->config.sampleRateOut) {
+            mal_src_set_output_sample_rate(&pDSP->src, sampleRateOut);
+        } else {
+            pDSP->isSRCRequired = MAL_FALSE;
+        }
+    } else {
+        // We may need a new SRC pipeline.
+        if (pDSP->config.sampleRateIn != pDSP->config.sampleRateOut) {
+            pDSP->isSRCRequired = MAL_TRUE;
+
+            mal_src_config srcConfig;
+            srcConfig.sampleRateIn      = pDSP->config.sampleRateIn;
+            srcConfig.sampleRateOut     = pDSP->config.sampleRateOut;
+            srcConfig.formatIn          = pDSP->config.formatIn;
+            srcConfig.formatOut         = mal_format_f32;
+            srcConfig.channels          = pDSP->config.channelsIn;
+            srcConfig.algorithm         = mal_src_algorithm_linear;
+            srcConfig.cacheSizeInFrames = pDSP->config.cacheSizeInFrames;
+            mal_result result = mal_src_init(&srcConfig, mal_dsp__src_on_read, pDSP, &pDSP->src);
+            if (result != MAL_SUCCESS) {
+                return result;
+            }
+        } else {
+            pDSP->isSRCRequired = MAL_FALSE;
+        }
+    }
+
+    // Update whether or not the pipeline is a passthrough.
+    if (pDSP->config.formatIn == pDSP->config.formatOut && pDSP->config.channelsIn == pDSP->config.channelsOut && pDSP->config.sampleRateIn == pDSP->config.sampleRateOut && !pDSP->isChannelMappingRequired) {
         pDSP->isPassthrough = MAL_TRUE;
     } else {
         pDSP->isPassthrough = MAL_FALSE;
