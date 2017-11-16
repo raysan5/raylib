@@ -1,9 +1,9 @@
 /**********************************************************************************************
 *
-*   raylib GLFW single file compilation
+*   rglfw - raylib GLFW single file compilation
 *
-*   This file includes GLFW sources to be compiled together with raylib for all supported
-*   platforms, this way, no external dependencies are required.
+*   This file includes latest GLFW sources (https://github.com/glfw/glfw) to be compiled together 
+*   with raylib for all supported platforms, this way, no external dependencies are required.
 *
 *   LICENSE: zlib/libpng
 *
@@ -26,6 +26,10 @@
 *
 **********************************************************************************************/
 
+
+//#define _GLFW_BUILD_DLL           // To build shared version
+//http://www.glfw.org/docs/latest/compile.html#compile_manual
+
 #ifdef _WIN32
     #define _GLFW_WIN32
 #endif
@@ -34,10 +38,12 @@
 #endif
 #ifdef __APPLE__
     #define _GLFW_COCOA
-    #define _GLFW_USE_CHDIR
-    #define _GLFW_USE_MENUBAR
-    #define _GLFW_USE_RETINA
+    #define _GLFW_USE_CHDIR         // To chdir to the Resources subdirectory of the application bundle during glfwInit
+    #define _GLFW_USE_MENUBAR       // To create and populate the menu bar when the first window is created
+    #define _GLFW_USE_RETINA        // To have windows use the full resolution of Retina displays
 #endif
+
+// NOTE: _GLFW_WAYLAND and _GLFW_MIR experimental platforms not supported at this moment
 
 #include "external/glfw/src/context.c"
 #include "external/glfw/src/init.c"
@@ -46,42 +52,39 @@
 #include "external/glfw/src/vulkan.c"
 #include "external/glfw/src/window.c"
 
-// Required compilation defines: -D_GLFW_WIN32
 #ifdef _WIN32
-#include "external/glfw/src/win32_init.c"
-#include "external/glfw/src/win32_joystick.c"
-#include "external/glfw/src/win32_monitor.c"
-#include "external/glfw/src/win32_time.c"
-#include "external/glfw/src/win32_thread.c"
-#include "external/glfw/src/win32_window.c"
-#include "external/glfw/src/wgl_context.c"
-#include "external/glfw/src/egl_context.c"
-#include "external/glfw/src/osmesa_context.c"
+    #include "external/glfw/src/win32_init.c"
+    #include "external/glfw/src/win32_joystick.c"
+    #include "external/glfw/src/win32_monitor.c"
+    #include "external/glfw/src/win32_time.c"
+    #include "external/glfw/src/win32_thread.c"
+    #include "external/glfw/src/win32_window.c"
+    #include "external/glfw/src/wgl_context.c"
+    #include "external/glfw/src/egl_context.c"
+    #include "external/glfw/src/osmesa_context.c"
 #endif
 
-// Required compilation defines: -D_GLFW_X11
 #ifdef __linux__
-#include "external/glfw/src/x11_init.c"
-#include "external/glfw/src/x11_monitor.c"
-#include "external/glfw/src/x11_window.c"
-#include "external/glfw/src/xkb_unicode.c"
-#include "external/glfw/src/linux_joystick.c"
-#include "external/glfw/src/posix_time.c"
-#include "external/glfw/src/posix_thread.c"
-#include "external/glfw/src/glx_context.c"
-#include "external/glfw/src/egl_context.c"
-#include "external/glfw/src/osmesa_context.c"
+    #include "external/glfw/src/x11_init.c"
+    #include "external/glfw/src/x11_monitor.c"
+    #include "external/glfw/src/x11_window.c"
+    #include "external/glfw/src/xkb_unicode.c"
+    #include "external/glfw/src/linux_joystick.c"
+    #include "external/glfw/src/posix_time.c"
+    #include "external/glfw/src/posix_thread.c"
+    #include "external/glfw/src/glx_context.c"
+    #include "external/glfw/src/egl_context.c"
+    #include "external/glfw/src/osmesa_context.c"
 #endif
 
-// Required compilation defines: -D_GLFW_COCOA -D_GLFW_USE_CHDIR -D_GLFW_USE_MENUBAR -D_GLFW_USE_RETINA
 #ifdef __APPLE__
-#include "external/glfw/src/cocoa_init.m"
-#include "external/glfw/src/cocoa_joystick.m"
-#include "external/glfw/src/cocoa_monitor.m"
-#include "external/glfw/src/cocoa_window.m"
-#include "external/glfw/src/cocoa_time.c"
-#include "external/glfw/src/posix_thread.c"
-#include "external/glfw/src/nsgl_context.m" 
-#include "external/glfw/src/egl_context.c" 
-#include "external/glfw/src/osmesa_context.c.m"
+    #include "external/glfw/src/cocoa_init.m"
+    #include "external/glfw/src/cocoa_joystick.m"
+    #include "external/glfw/src/cocoa_monitor.m"
+    #include "external/glfw/src/cocoa_window.m"
+    #include "external/glfw/src/cocoa_time.c"
+    #include "external/glfw/src/posix_thread.c"
+    #include "external/glfw/src/nsgl_context.m" 
+    #include "external/glfw/src/egl_context.c" 
+    #include "external/glfw/src/osmesa_context.c.m"
 #endif
