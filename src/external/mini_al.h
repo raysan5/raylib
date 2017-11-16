@@ -2534,10 +2534,12 @@ static inline mal_uint32 mal_device__get_state(mal_device* pDevice)
 
 
 #ifdef MAL_WIN32
-static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_PCM        = {0x00000001, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
-static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
-//static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_ALAW       = {0x00000006, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
-//static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_MULAW      = {0x00000007, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+    #if !defined(MAL_NO_WASAPI) || !defined(MAL_NO_DSOUND)
+    static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_PCM        = {0x00000001, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+    static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+    //static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_ALAW       = {0x00000006, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+    //static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_MULAW      = {0x00000007, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+    #endif
 #endif
 
 
@@ -8735,7 +8737,7 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     pDevice->onSend = config.onSendCallback;
     pDevice->onRecv = config.onRecvCallback;
 
-    if (((mal_uint64)pDevice % sizeof(pDevice)) != 0) {
+    if (((size_t)pDevice % sizeof(pDevice)) != 0) {
         if (pContext->config.onLog) {
             pContext->config.onLog(pContext, pDevice, "WARNING: mal_device_init() called for a device that is not properly aligned. Thread safety is not supported.");
         }
@@ -9362,7 +9364,7 @@ mal_uint32 mal_src_read_frames_ex(mal_src* pSRC, mal_uint32 frameCount, void* pF
     }
 
     // Could just use a function pointer instead of a switch for this...
-    switch (pSRC->config.algorithm)
+    switch (algorithm)
     {
         case mal_src_algorithm_none:   return mal_src_read_frames_passthrough(pSRC, frameCount, pFramesOut, flush);
         case mal_src_algorithm_linear: return mal_src_read_frames_linear(pSRC, frameCount, pFramesOut, flush);
@@ -10271,9 +10273,6 @@ void mal_blend_f32(float* pOut, float* pInA, float* pInB, float factor, mal_uint
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 0
-#include "tools/malgen/bin/malgen_test0.c"
-#else
 void mal_pcm_u8_to_s16(short* pOut, const unsigned char* pIn, unsigned int count)
 {
     int r;
@@ -10440,10 +10439,10 @@ void mal_pcm_s32_to_f32(float* pOut, const int* pIn, unsigned int count)
     float r;
     for (unsigned int i = 0; i < count; ++i) {
         int x = pIn[i];
-        int s;
-        s = ((*((int*)&x)) & 0x80000000) >> 31;
-        s = s + 2147483647;
-        r = x / (float)(unsigned int)s;
+        double t;
+        t = (double)(x + 2147483648);
+        t = t * 0.0000000004656612873077392578125;
+        r = (float)(t - 1);
         pOut[i] = (float)r;
     }
 }
@@ -10454,12 +10453,9 @@ void mal_pcm_f32_to_u8(unsigned char* pOut, const float* pIn, unsigned int count
     for (unsigned int i = 0; i < count; ++i) {
         float x = pIn[i];
         float c;
-        int s;
         c = ((x < -1) ? -1 : ((x > 1) ? 1 : x));
-        s = ((*((int*)&x)) & 0x80000000) >> 31;
-        s = s + 127;
-        r = (int)(c * s);
-        r = r + 128;
+        c = c + 1;
+        r = (int)(c * 127.5f);
         pOut[i] = (unsigned char)r;
     }
 }
@@ -10470,11 +10466,10 @@ void mal_pcm_f32_to_s16(short* pOut, const float* pIn, unsigned int count)
     for (unsigned int i = 0; i < count; ++i) {
         float x = pIn[i];
         float c;
-        int s;
         c = ((x < -1) ? -1 : ((x > 1) ? 1 : x));
-        s = ((*((int*)&x)) & 0x80000000) >> 31;
-        s = s + 32767;
-        r = (int)(c * s);
+        c = c + 1;
+        r = (int)(c * 32767.5f);
+        r = r - 32768;
         pOut[i] = (short)r;
     }
 }
@@ -10485,11 +10480,10 @@ void mal_pcm_f32_to_s24(void* pOut, const float* pIn, unsigned int count)
     for (unsigned int i = 0; i < count; ++i) {
         float x = pIn[i];
         float c;
-        int s;
         c = ((x < -1) ? -1 : ((x > 1) ? 1 : x));
-        s = ((*((int*)&x)) & 0x80000000) >> 31;
-        s = s + 8388607;
-        r = (int)(c * s);
+        c = c + 1;
+        r = (int)(c * 8388607.5f);
+        r = r - 8388608;
         ((unsigned char*)pOut)[(i*3)+0] = (unsigned char)(r & 0xFF); ((unsigned char*)pOut)[(i*3)+1] = (unsigned char)((r & 0xFF00) >> 8); ((unsigned char*)pOut)[(i*3)+2] = (unsigned char)((r & 0xFF0000) >> 16);
     }
 }
@@ -10500,15 +10494,14 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
     for (unsigned int i = 0; i < count; ++i) {
         float x = pIn[i];
         float c;
-        mal_int64 s;
+        mal_int64 t;
         c = ((x < -1) ? -1 : ((x > 1) ? 1 : x));
-        s = ((*((int*)&x)) & 0x80000000) >> 31;
-        s = s + 2147483647;
-        r = (int)(c * s);
+        c = c + 1;
+        t = (mal_int64)(c * 2147483647.5);
+        r = (int)(t - 2147483648);
         pOut[i] = (int)r;
     }
 }
-#endif
 
 #endif
 
@@ -10523,6 +10516,8 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 //   - API CHANGE: Improvements to event and thread APIs. These changes make these APIs more consistent.
 //   - Add mal_convert_frames(). This is a high-level helper API for performing a one-time, bulk conversion of
 //     audio data to a different format.
+//   - Improvements to f32 -> u8/s16/s24/s32 conversion routines.
+//   - Warning fixes.
 //
 // v0.5 - 2017-11-11
 //   - API CHANGE: The mal_context_init() function now takes a pointer to a mal_context_config object for
