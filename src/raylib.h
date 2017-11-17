@@ -486,7 +486,7 @@ typedef struct Wave {
 
 // Sound source type
 typedef struct Sound {
-    void* handle;           // A pointer to internal data used by the audio system.
+    void* audioBuffer;      // A pointer to internal data used by the audio system.
 
     unsigned int source;    // OpenAL audio source id
     unsigned int buffer;    // OpenAL audio buffer id
@@ -504,7 +504,7 @@ typedef struct AudioStream {
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo)
 
-    void* handle;               // A pointer to internal data used by the audio system.
+    void* audioBuffer;          // A pointer to internal data used by the audio system.
 
     int format;                 // OpenAL audio format specifier
     unsigned int source;        // OpenAL audio source id
