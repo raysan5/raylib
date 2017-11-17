@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rgif.h original implementation by Charlie Tangora [ctangora -at- gmail -dot- com]
+*   rgif.h original implementation (gif.h) by Charlie Tangora [ctangora -at- gmail -dot- com]
 *   adapted to C99, reformatted and renamed by Ramon Santamaria (@raysan5)
 *
 *   This file offers a simple, very limited way to create animated GIFs directly in code.
@@ -28,7 +28,32 @@
 *       3) Finally, call GifEnd() to close the file handle and free memory.
 *
 *
-*   LICENSE: public domain (www.unlicense.org)
+*   LICENSE: This software is available under 2 licenses -- choose whichever you prefer
+*
+*   ALTERNATIVE A - MIT License
+*
+*   Copyright (c) 2017 Ramon Santamaria
+*
+*   Permission is hereby granted, free of charge, to any person obtaining a copy of 
+*   this software and associated documentation files (the "Software"), to deal in 
+*   the Software without restriction, including without limitation the rights to 
+*   use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+*   of the Software, and to permit persons to whom the Software is furnished to do 
+*   so, subject to the following conditions:
+*
+*   The above copyright notice and this permission notice shall be included in all 
+*   copies or substantial portions of the Software.
+*
+*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+*   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+*   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+*   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+*   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+*   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*
+*   ------------------------------------------------------------------------------
+*
+*   ALTERNATIVE B - public domain (www.unlicense.org)
 *
 *   This is free and unencumbered software released into the public domain.
 *   Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
