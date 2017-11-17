@@ -1525,6 +1525,52 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 #endif
 
 
+// Check if we have the necessary development packages for each backend at the top so we can use this to determine whether or not
+// certain unused functions and variables can be excluded from the build to avoid warnings.
+#ifdef MAL_ENABLE_WASAPI
+    #define MAL_HAS_WASAPI
+    #ifdef __has_include
+        #if !__has_include(<audioclient.h>)
+            #undef MAL_HAS_WASAPI
+        #endif
+    #endif
+#endif
+#ifdef MAL_ENABLE_DSOUND
+    #define MAL_HAS_DSOUND
+    #ifdef __has_include
+        #if !__has_include(<dsound.h>)
+            #undef MAL_HAS_DSOUND
+        #endif
+    #endif
+#endif
+#ifdef MAL_ENABLE_WINMM
+    #define MAL_HAS_WINMM   // Every compiler I'm aware of supports WinMM.
+#endif
+#ifdef MAL_ENABLE_ALSA
+    #define MAL_HAS_ALSA
+    #ifdef __has_include
+        #if !__has_include(<alsa/asoundlib.h>)
+            #undef MAL_HAS_ALSA
+        #endif
+    #endif
+#endif
+#ifdef MAL_ENABLE_COREAUDIO
+    #define MAL_HAS_COREAUDIO
+#endif
+#ifdef MAL_ENABLE_OSS
+    #define MAL_HAS_OSS     // OSS is the only supported backend for Unix and BSD, so it must be present else this library is useless.
+#endif
+#ifdef MAL_ENABLE_OPENSL
+    #define MAL_HAS_OPENSL  // Like OSS, OpenSL is the only supported backend for Android. It must be present.
+#endif
+#ifdef MAL_ENABLE_OPENAL
+    #define MAL_HAS_OPENAL  // mini_al inlines the necessary OpenAL stuff.
+#endif
+#ifdef MAL_ENABLE_NULL
+    #define MAL_HAS_NULL    // Everything supports the null backend.
+#endif
+
+
 #ifdef MAL_WIN32
     #define MAL_THREADCALL WINAPI
     typedef unsigned long mal_thread_result;
@@ -2534,7 +2580,7 @@ static inline mal_uint32 mal_device__get_state(mal_device* pDevice)
 
 
 #ifdef MAL_WIN32
-    #if !defined(MAL_NO_WASAPI) || !defined(MAL_NO_DSOUND)
+    #if defined(MAL_HAS_WASAPI) || defined(MAL_HAS_DSOUND)
     static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_PCM        = {0x00000001, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
     static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
     //static GUID MAL_GUID_KSDATAFORMAT_SUBTYPE_ALAW       = {0x00000006, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
@@ -2549,7 +2595,7 @@ static inline mal_uint32 mal_device__get_state(mal_device* pDevice)
 // Null Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_NULL
+#ifdef MAL_HAS_NULL
 mal_result mal_context_init__null(mal_context* pContext)
 {
     mal_assert(pContext != NULL);
@@ -2777,7 +2823,7 @@ static mal_result mal_device__main_loop__null(mal_device* pDevice)
 #endif
 #endif
 
-#if defined(MAL_ENABLE_WASAPI) || defined(MAL_ENABLE_DSOUND)
+#if defined(MAL_HAS_WASAPI) || defined(MAL_HAS_DSOUND)
 #include <mmreg.h>
 
 #ifndef SPEAKER_FRONT_LEFT
@@ -2916,7 +2962,7 @@ static void mal_channel_mask_to_channel_map__win32(DWORD dwChannelMask, mal_uint
 // WASAPI Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_WASAPI
+#ifdef MAL_HAS_WASAPI
 #if defined(_MSC_VER)
     #pragma warning(push)
     #pragma warning(disable:4091)   // 'typedef ': ignored on left of '' when no variable is declared
@@ -3863,7 +3909,7 @@ static mal_result mal_device__main_loop__wasapi(mal_device* pDevice)
 // DirectSound Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_DSOUND
+#ifdef MAL_HAS_DSOUND
 #include <dsound.h>
 
 #if 0   // MAL_GUID_NULL is not currently used, but leaving it here in case I need to add it back again. 
@@ -4467,7 +4513,7 @@ static mal_result mal_device__main_loop__dsound(mal_device* pDevice)
 // WinMM Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_WINMM
+#ifdef MAL_HAS_WINMM
 #include <mmsystem.h>
 
 #if !defined(MAXULONG_PTR)
@@ -5207,7 +5253,7 @@ static mal_result mal_device__main_loop__winmm(mal_device* pDevice)
 // ALSA Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_ALSA
+#ifdef MAL_HAS_ALSA
 #include <alsa/asoundlib.h>
 
 typedef int               (* mal_snd_pcm_open_proc)                          (snd_pcm_t **pcm, const char *name, snd_pcm_stream_t stream, int mode);
@@ -6338,7 +6384,7 @@ static mal_result mal_device__main_loop__alsa(mal_device* pDevice)
 // OSS Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_OSS
+#ifdef MAL_HAS_OSS
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -6686,7 +6732,7 @@ static mal_result mal_device__main_loop__oss(mal_device* pDevice)
 // OpenSL|ES Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_OPENSL
+#ifdef MAL_HAS_OPENSL
 #include <SLES/OpenSLES.h>
 #ifdef MAL_ANDROID
 #include <SLES/OpenSLES_Android.h>
@@ -7389,7 +7435,7 @@ static mal_result mal_device__stop_backend__opensl(mal_device* pDevice)
 // OpenAL Backend
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef MAL_ENABLE_OPENAL
+#ifdef MAL_HAS_OPENAL
 #ifdef MAL_WIN32
 #define MAL_AL_APIENTRY __cdecl
 #else
@@ -8129,37 +8175,37 @@ static mal_result mal_device__start_backend(mal_device* pDevice)
     mal_assert(pDevice != NULL);
 
     mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_ENABLE_WASAPI
+#ifdef MAL_HAS_WASAPI
     if (pDevice->pContext->backend == mal_backend_wasapi) {
         result = mal_device__start_backend__wasapi(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_DSOUND
+#ifdef MAL_HAS_DSOUND
     if (pDevice->pContext->backend == mal_backend_dsound) {
         result = mal_device__start_backend__dsound(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_WINMM
+#ifdef MAL_HAS_WINMM
     if (pDevice->pContext->backend == mal_backend_winmm) {
         result = mal_device__start_backend__winmm(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_ALSA
+#ifdef MAL_HAS_ALSA
     if (pDevice->pContext->backend == mal_backend_alsa) {
         result = mal_device__start_backend__alsa(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_OSS
+#ifdef MAL_HAS_OSS
 	if (pDevice->pContext->backend == mal_backend_oss) {
 		result = mal_device__start_backend__oss(pDevice);
 	}
 #endif
-#ifdef MAL_ENABLE_OPENAL
+#ifdef MAL_HAS_OPENAL
     if (pDevice->pContext->backend == mal_backend_openal) {
         result = mal_device__start_backend__openal(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_NULL
+#ifdef MAL_HAS_NULL
     if (pDevice->pContext->backend == mal_backend_null) {
         result = mal_device__start_backend__null(pDevice);
     }
@@ -8173,37 +8219,37 @@ static mal_result mal_device__stop_backend(mal_device* pDevice)
     mal_assert(pDevice != NULL);
 
     mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_ENABLE_WASAPI
+#ifdef MAL_HAS_WASAPI
     if (pDevice->pContext->backend == mal_backend_wasapi) {
         result = mal_device__stop_backend__wasapi(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_DSOUND
+#ifdef MAL_HAS_DSOUND
     if (pDevice->pContext->backend == mal_backend_dsound) {
         result = mal_device__stop_backend__dsound(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_WINMM
+#ifdef MAL_HAS_WINMM
     if (pDevice->pContext->backend == mal_backend_winmm) {
         result = mal_device__stop_backend__winmm(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_ALSA
+#ifdef MAL_HAS_ALSA
     if (pDevice->pContext->backend == mal_backend_alsa) {
         result = mal_device__stop_backend__alsa(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_OSS
+#ifdef MAL_HAS_OSS
 	if (pDevice->pContext->backend == mal_backend_oss) {
 		result = mal_device__stop_backend__oss(pDevice);
 	}
 #endif
-#ifdef MAL_ENABLE_OPENAL
+#ifdef MAL_HAS_OPENAL
     if (pDevice->pContext->backend == mal_backend_openal) {
         result = mal_device__stop_backend__openal(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_NULL
+#ifdef MAL_HAS_NULL
     if (pDevice->pContext->backend == mal_backend_null) {
         result = mal_device__stop_backend__null(pDevice);
     }
@@ -8217,37 +8263,37 @@ static mal_result mal_device__break_main_loop(mal_device* pDevice)
     mal_assert(pDevice != NULL);
 
     mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_ENABLE_WASAPI
+#ifdef MAL_HAS_WASAPI
     if (pDevice->pContext->backend == mal_backend_wasapi) {
         result = mal_device__break_main_loop__wasapi(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_DSOUND
+#ifdef MAL_HAS_DSOUND
     if (pDevice->pContext->backend == mal_backend_dsound) {
         result = mal_device__break_main_loop__dsound(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_WINMM
+#ifdef MAL_HAS_WINMM
     if (pDevice->pContext->backend == mal_backend_winmm) {
         result = mal_device__break_main_loop__winmm(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_ALSA
+#ifdef MAL_HAS_ALSA
     if (pDevice->pContext->backend == mal_backend_alsa) {
         result = mal_device__break_main_loop__alsa(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_OSS
+#ifdef MAL_HAS_OSS
 	if (pDevice->pContext->backend == mal_backend_oss) {
 		result = mal_device__break_main_loop__oss(pDevice);
 	}
 #endif
-#ifdef MAL_ENABLE_OPENAL
+#ifdef MAL_HAS_OPENAL
     if (pDevice->pContext->backend == mal_backend_openal) {
         result = mal_device__break_main_loop__openal(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_NULL
+#ifdef MAL_HAS_NULL
     if (pDevice->pContext->backend == mal_backend_null) {
         result = mal_device__break_main_loop__null(pDevice);
     }
@@ -8261,37 +8307,37 @@ static mal_result mal_device__main_loop(mal_device* pDevice)
     mal_assert(pDevice != NULL);
 
     mal_result result = MAL_NO_BACKEND;
-#ifdef MAL_ENABLE_WASAPI
+#ifdef MAL_HAS_WASAPI
     if (pDevice->pContext->backend == mal_backend_wasapi) {
         result = mal_device__main_loop__wasapi(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_DSOUND
+#ifdef MAL_HAS_DSOUND
     if (pDevice->pContext->backend == mal_backend_dsound) {
         result = mal_device__main_loop__dsound(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_WINMM
+#ifdef MAL_HAS_WINMM
     if (pDevice->pContext->backend == mal_backend_winmm) {
         result = mal_device__main_loop__winmm(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_ALSA
+#ifdef MAL_HAS_ALSA
     if (pDevice->pContext->backend == mal_backend_alsa) {
         result = mal_device__main_loop__alsa(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_OSS
+#ifdef MAL_HAS_OSS
 	if (pDevice->pContext->backend == mal_backend_oss) {
 		result = mal_device__main_loop__oss(pDevice);
 	}
 #endif
-#ifdef MAL_ENABLE_OPENAL
+#ifdef MAL_HAS_OPENAL
     if (pDevice->pContext->backend == mal_backend_openal) {
         result = mal_device__main_loop__openal(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_NULL
+#ifdef MAL_HAS_NULL
     if (pDevice->pContext->backend == mal_backend_null) {
         result = mal_device__main_loop__null(pDevice);
     }
@@ -8527,49 +8573,49 @@ mal_result mal_context_init(mal_backend backends[], mal_uint32 backendCount, con
 
         result = MAL_NO_BACKEND;
         switch (backend) {
-        #ifdef MAL_ENABLE_WASAPI
+        #ifdef MAL_HAS_WASAPI
             case mal_backend_wasapi:
             {
                 result = mal_context_init__wasapi(pContext);
             } break;
         #endif
-        #ifdef MAL_ENABLE_DSOUND
+        #ifdef MAL_HAS_DSOUND
             case mal_backend_dsound:
             {
                 result = mal_context_init__dsound(pContext);
             } break;
         #endif
-        #ifdef MAL_ENABLE_WINMM
+        #ifdef MAL_HAS_WINMM
             case mal_backend_winmm:
             {
                 result = mal_context_init__winmm(pContext);
             } break;
         #endif
-        #ifdef MAL_ENABLE_ALSA
+        #ifdef MAL_HAS_ALSA
             case mal_backend_alsa:
             {
                 result = mal_context_init__alsa(pContext);
             } break;
         #endif
-		#ifdef MAL_ENABLE_OSS
+		#ifdef MAL_HAS_OSS
 			case mal_backend_oss:
 			{
 				result = mal_context_init__oss(pContext);
 			} break;
 		#endif
-        #ifdef MAL_ENABLE_OPENSL
+        #ifdef MAL_HAS_OPENSL
             case mal_backend_opensl:
             {
                 result = mal_context_init__opensl(pContext);
             } break;
         #endif
-        #ifdef MAL_ENABLE_OPENAL
+        #ifdef MAL_HAS_OPENAL
             case mal_backend_openal:
             {
                 result = mal_context_init__openal(pContext);
             } break;
         #endif
-        #ifdef MAL_ENABLE_NULL
+        #ifdef MAL_HAS_NULL
             case mal_backend_null:
             {
                 result = mal_context_init__null(pContext);
@@ -8595,49 +8641,49 @@ mal_result mal_context_uninit(mal_context* pContext)
     if (pContext == NULL) return MAL_INVALID_ARGS;
     
     switch (pContext->backend) {
-    #ifdef MAL_ENABLE_WASAPI
+    #ifdef MAL_HAS_WASAPI
         case mal_backend_wasapi:
         {
             return mal_context_uninit__wasapi(pContext);
         } break;
     #endif
-    #ifdef MAL_ENABLE_DSOUND
+    #ifdef MAL_HAS_DSOUND
         case mal_backend_dsound:
         {
             return mal_context_uninit__dsound(pContext);
         } break;
     #endif
-    #ifdef MAL_ENABLE_WINMM
+    #ifdef MAL_HAS_WINMM
         case mal_backend_winmm:
         {
             return mal_context_uninit__winmm(pContext);
         } break;
     #endif
-    #ifdef MAL_ENABLE_ALSA
+    #ifdef MAL_HAS_ALSA
         case mal_backend_alsa:
         {
             return mal_context_uninit__alsa(pContext);
         } break;
     #endif
-	#ifdef MAL_ENABLE_OSS
+	#ifdef MAL_HAS_OSS
 		case mal_backend_oss:
 		{
 			return mal_context_uninit__oss(pContext);
 		} break;
 	#endif
-    #ifdef MAL_ENABLE_OPENSL
+    #ifdef MAL_HAS_OPENSL
         case mal_backend_opensl:
         {
             return mal_context_uninit__opensl(pContext);
         } break;
     #endif
-    #ifdef MAL_ENABLE_OPENAL
+    #ifdef MAL_HAS_OPENAL
         case mal_backend_openal:
         {
             return mal_context_uninit__openal(pContext);
         } break;
     #endif
-    #ifdef MAL_ENABLE_NULL
+    #ifdef MAL_HAS_NULL
         case mal_backend_null:
         {
             return mal_context_uninit__null(pContext);
@@ -8660,49 +8706,49 @@ mal_result mal_enumerate_devices(mal_context* pContext, mal_device_type type, ma
 
     switch (pContext->backend)
     {
-    #ifdef MAL_ENABLE_WASAPI
+    #ifdef MAL_HAS_WASAPI
         case mal_backend_wasapi:
         {
             return mal_enumerate_devices__wasapi(pContext, type, pCount, pInfo);
         } break;
     #endif
-    #ifdef MAL_ENABLE_DSOUND
+    #ifdef MAL_HAS_DSOUND
         case mal_backend_dsound:
         {
             return mal_enumerate_devices__dsound(pContext, type, pCount, pInfo);
         } break;
     #endif
-    #ifdef MAL_ENABLE_WINMM
+    #ifdef MAL_HAS_WINMM
         case mal_backend_winmm:
         {
             return mal_enumerate_devices__winmm(pContext, type, pCount, pInfo);
         } break;
     #endif
-    #ifdef MAL_ENABLE_ALSA
+    #ifdef MAL_HAS_ALSA
         case mal_backend_alsa:
         {
             return mal_enumerate_devices__alsa(pContext, type, pCount, pInfo);
         } break;
     #endif
-	#ifdef MAL_ENABLE_OSS
+	#ifdef MAL_HAS_OSS
 		case mal_backend_oss:
 		{
 			return mal_enumerate_devices__oss(pContext, type, pCount, pInfo);
 		} break;
 	#endif
-    #ifdef MAL_ENABLE_OPENSL
+    #ifdef MAL_HAS_OPENSL
         case mal_backend_opensl:
         {
             return mal_enumerate_devices__opensl(pContext, type, pCount, pInfo);
         } break;
     #endif
-    #ifdef MAL_ENABLE_OPENAL
+    #ifdef MAL_HAS_OPENAL
         case mal_backend_openal:
         {
             return mal_enumerate_devices__openal(pContext, type, pCount, pInfo);
         } break;
     #endif
-    #ifdef MAL_ENABLE_NULL
+    #ifdef MAL_HAS_NULL
         case mal_backend_null:
         {
             return mal_enumerate_devices__null(pContext, type, pCount, pInfo);
@@ -8819,49 +8865,49 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
     mal_result result = MAL_NO_BACKEND;
     switch (pContext->backend)
     {
-    #ifdef MAL_ENABLE_WASAPI
+    #ifdef MAL_HAS_WASAPI
         case mal_backend_wasapi:
         {
             result = mal_device_init__wasapi(pContext, type, pDeviceID, &config, pDevice);
         } break;
     #endif
-    #ifdef MAL_ENABLE_DSOUND
+    #ifdef MAL_HAS_DSOUND
         case mal_backend_dsound:
         {
             result = mal_device_init__dsound(pContext, type, pDeviceID, &config, pDevice);
         } break;
     #endif
-    #ifdef MAL_ENABLE_WINMM
+    #ifdef MAL_HAS_WINMM
         case mal_backend_winmm:
         {
             result = mal_device_init__winmm(pContext, type, pDeviceID, &config, pDevice);
         } break;
     #endif
-    #ifdef MAL_ENABLE_ALSA
+    #ifdef MAL_HAS_ALSA
         case mal_backend_alsa:
         {
             result = mal_device_init__alsa(pContext, type, pDeviceID, &config, pDevice);
         } break;
     #endif
-	#ifdef MAL_ENABLE_OSS
+	#ifdef MAL_HAS_OSS
 		case mal_backend_oss:
 		{
 			result = mal_device_init__oss(pContext, type, pDeviceID, &config, pDevice);
 		} break;
 	#endif
-    #ifdef MAL_ENABLE_OPENSL
+    #ifdef MAL_HAS_OPENSL
         case mal_backend_opensl:
         {
             result = mal_device_init__opensl(pContext, type, pDeviceID, &config, pDevice);
         } break;
     #endif
-    #ifdef MAL_ENABLE_OPENAL
+    #ifdef MAL_HAS_OPENAL
         case mal_backend_openal:
         {
             result = mal_device_init__openal(pContext, type, pDeviceID, &config, pDevice);
         } break;
     #endif
-    #ifdef MAL_ENABLE_NULL
+    #ifdef MAL_HAS_NULL
         case mal_backend_null:
         {
             result = mal_device_init__null(pContext, type, pDeviceID, &config, pDevice);
@@ -8949,42 +8995,42 @@ void mal_device_uninit(mal_device* pDevice)
     mal_event_uninit(&pDevice->wakeupEvent);
     mal_mutex_uninit(&pDevice->lock);
 
-#ifdef MAL_ENABLE_WASAPI
+#ifdef MAL_HAS_WASAPI
     if (pDevice->pContext->backend == mal_backend_wasapi) {
         mal_device_uninit__wasapi(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_DSOUND
+#ifdef MAL_HAS_DSOUND
     if (pDevice->pContext->backend == mal_backend_dsound) {
         mal_device_uninit__dsound(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_WINMM
+#ifdef MAL_HAS_WINMM
     if (pDevice->pContext->backend == mal_backend_winmm) {
         mal_device_uninit__winmm(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_ALSA
+#ifdef MAL_HAS_ALSA
     if (pDevice->pContext->backend == mal_backend_alsa) {
         mal_device_uninit__alsa(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_OSS
+#ifdef MAL_HAS_OSS
 	if (pDevice->pContext->backend == mal_backend_oss) {
 		mal_device_uninit__oss(pDevice);
 	}
 #endif
-#ifdef MAL_ENABLE_OPENSL
+#ifdef MAL_HAS_OPENSL
     if (pDevice->pContext->backend == mal_backend_opensl) {
         mal_device_uninit__opensl(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_OPENAL
+#ifdef MAL_HAS_OPENAL
     if (pDevice->pContext->backend == mal_backend_openal) {
         mal_device_uninit__openal(pDevice);
     }
 #endif
-#ifdef MAL_ENABLE_NULL
+#ifdef MAL_HAS_NULL
     if (pDevice->pContext->backend == mal_backend_null) {
         mal_device_uninit__null(pDevice);
     }
@@ -9039,7 +9085,7 @@ mal_result mal_device_start(mal_device* pDevice)
         mal_device__set_state(pDevice, MAL_STATE_STARTING);
 
         // Asynchronous backends need to be handled differently.
-#ifdef MAL_ENABLE_OPENSL
+#ifdef MAL_HAS_OPENSL
         if (pDevice->pContext->backend == mal_backend_opensl) {
             mal_device__start_backend__opensl(pDevice);
             mal_device__set_state(pDevice, MAL_STATE_STARTED);
@@ -9090,7 +9136,7 @@ mal_result mal_device_stop(mal_device* pDevice)
         // There's no need to wake up the thread like we do when starting.
 
         // Asynchronous backends need to be handled differently.
-#ifdef MAL_ENABLE_OPENSL
+#ifdef MAL_HAS_OPENSL
         if (pDevice->pContext->backend == mal_backend_opensl) {
             mal_device__stop_backend__opensl(pDevice);
         } else
@@ -10514,6 +10560,9 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 //     need to update.
 //   - API CHANGE: SRC and DSP callbacks now take a pointer to a mal_src and mal_dsp object respectively.
 //   - API CHANGE: Improvements to event and thread APIs. These changes make these APIs more consistent.
+//   - Simplify the build system further for when development packages for various backends are not installed.
+//     With this change, when the compiler supports __has_include, backends without the relevant development
+//     packages installed will be ignored. This fixes the build for old versions of MinGW.
 //   - Add mal_convert_frames(). This is a high-level helper API for performing a one-time, bulk conversion of
 //     audio data to a different format.
 //   - Improvements to f32 -> u8/s16/s24/s32 conversion routines.
