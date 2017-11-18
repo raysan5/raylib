@@ -1579,6 +1579,11 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
     #define MAL_HAS_NULL    // Everything supports the null backend.
 #endif
 
+// Disable run-time linking on certain backends.
+#if defined(MAL_ANDROID) || defined(MAL_EMSCRIPTED)
+#define MAL_NO_RUNTIME_LINKING
+#endif
+
 
 #ifdef MAL_WIN32
     #define MAL_THREADCALL WINAPI
@@ -6802,7 +6807,7 @@ static SLuint32 mal_channel_id_to_opensl(mal_uint8 id)
 }
 
 // Converts a channel mapping to an OpenSL-style channel mask.
-static SLuint32 mal_channel_map_to_channel_mask__opensl(mal_uint8 channelMap[MAL_MAX_CHANNELS], mal_uint32 channels)
+static SLuint32 mal_channel_map_to_channel_mask__opensl(const mal_uint8 channelMap[MAL_MAX_CHANNELS], mal_uint32 channels)
 {
     SLuint32 channelMask = 0;
     for (mal_uint32 iChannel = 0; iChannel < channels; ++iChannel) {
@@ -8485,6 +8490,7 @@ mal_result mal_context_uninit_backend_apis__nix(mal_context* pContext)
 mal_result mal_context_init_backend_apis__nix(mal_context* pContext)
 {
     // pthread
+#if !defined(MAL_NO_RUNTIME_LINKING)
     const char* libpthreadFileNames[] = {
         "libpthread.so",
         "libpthread.so.0",
@@ -8512,6 +8518,18 @@ mal_result mal_context_init_backend_apis__nix(mal_context* pContext)
     pContext->posix.pthread_cond_destroy  = (mal_proc)mal_dlsym(pContext->posix.pthreadSO, "pthread_cond_destroy");
     pContext->posix.pthread_cond_wait     = (mal_proc)mal_dlsym(pContext->posix.pthreadSO, "pthread_cond_wait");
     pContext->posix.pthread_cond_signal   = (mal_proc)mal_dlsym(pContext->posix.pthreadSO, "pthread_cond_signal");
+#else
+    pContext->posix.pthread_create        = (mal_proc)pthread_create;
+    pContext->posix.pthread_join          = (mal_proc)pthread_join;
+    pContext->posix.pthread_mutex_init    = (mal_proc)pthread_mutex_init;
+    pContext->posix.pthread_mutex_destroy = (mal_proc)pthread_mutex_destroy;
+    pContext->posix.pthread_mutex_lock    = (mal_proc)pthread_mutex_lock;
+    pContext->posix.pthread_mutex_unlock  = (mal_proc)pthread_mutex_unlock;
+    pContext->posix.pthread_cond_init     = (mal_proc)pthread_cond_init;
+    pContext->posix.pthread_cond_destroy  = (mal_proc)pthread_cond_destroy;
+    pContext->posix.pthread_cond_wait     = (mal_proc)pthread_cond_wait;
+    pContext->posix.pthread_cond_signal   = (mal_proc)pthread_cond_signal;
+#endif
 
     return MAL_SUCCESS;
 }
@@ -10528,7 +10546,7 @@ void mal_pcm_s32_to_f32(float* pOut, const int* pIn, unsigned int count)
     for (unsigned int i = 0; i < count; ++i) {
         int x = pIn[i];
         double t;
-        t = (double)(x + 2147483648);
+        t = (double)(x + 2147483648LL);
         t = t * 0.0000000004656612873077392578125;
         r = (float)(t - 1);
         pOut[i] = (float)r;
@@ -10586,7 +10604,7 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
         c = ((x < -1) ? -1 : ((x > 1) ? 1 : x));
         c = c + 1;
         t = (mal_int64)(c * 2147483647.5);
-        r = (int)(t - 2147483648);
+        r = (int)(t - 2147483648LL);
         pOut[i] = (int)r;
     }
 }
@@ -10605,6 +10623,7 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 //   - Simplify the build system further for when development packages for various backends are not installed.
 //     With this change, when the compiler supports __has_include, backends without the relevant development
 //     packages installed will be ignored. This fixes the build for old versions of MinGW.
+//   - Fixes to the Android build.
 //   - Add mal_convert_frames(). This is a high-level helper API for performing a one-time, bulk conversion of
 //     audio data to a different format.
 //   - Improvements to f32 -> u8/s16/s24/s32 conversion routines.
