@@ -195,6 +195,9 @@ extern "C" {
     #ifdef __ANDROID__
         #define MAL_ANDROID
     #endif
+    #ifdef __EMSCRIPTEN__
+        #define MAL_EMSCRIPTEN
+    #endif
 #endif
 
 // Some backends are only supported on certain platforms.
@@ -226,7 +229,7 @@ extern "C" {
 	#if defined(MAL_ANDROID)
 		#define MAL_SUPPORT_OPENSL
 	#endif
-	#if !defined(MAL_LINUX) && !defined(MAL_APPLE) && !defined(MAL_ANDROID)
+	#if !defined(MAL_LINUX) && !defined(MAL_APPLE) && !defined(MAL_ANDROID) && !defined(MAL_EMSCRIPTEN)
 		#define MAL_SUPPORT_OSS
 	#endif
 #endif
@@ -1434,6 +1437,12 @@ void mal_mutex_unlock(mal_mutex* pMutex);
 // Miscellaneous Helpers
 //
 ///////////////////////////////////////////////////////////////////////////////
+
+// Retrieves a friendly name for a backend.
+const char* mal_get_backend_name(mal_backend backend);
+
+// Retrieves a friendly name for a format.
+const char* mal_get_format_name(mal_format format);
 
 // Blends two frames in floating point format.
 void mal_blend_f32(float* pOut, float* pInA, float* pInB, float factor, mal_uint32 channels);
@@ -10286,6 +10295,39 @@ mal_uint32 mal_convert_frames(void* pOut, mal_format formatOut, mal_uint32 chann
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const char* mal_get_backend_name(mal_backend backend)
+{
+    switch (backend)
+    {
+        case mal_backend_null:      return "Null";
+        case mal_backend_wasapi:    return "WASAPI";
+        case mal_backend_dsound:    return "DirectSound";
+        case mal_backend_winmm:     return "WinMM";
+        case mal_backend_alsa:      return "ALSA";
+        //case mal_backend_pulse:     return "PulseAudio";
+        //case mal_backend_jack:      return "JACK";
+        //case mal_backend_coreaudio: return "Core Audio";
+        case mal_backend_oss:       return "OSS";
+        case mal_backend_opensl:    return "OpenSL|ES";
+        case mal_backend_openal:    return "OpenAL";
+        default:                    return "Unknown";
+    }
+}
+
+const char* mal_get_format_name(mal_format format)
+{
+    switch (format)
+    {
+        case mal_format_unknown: return "Unknown";
+        case mal_format_u8:      return "8-bit Unsigned Integer";
+        case mal_format_s16:     return "16-bit Signed Integer";
+        case mal_format_s24:     return "24-bit Signed Integer (Tightly Packed)";
+        case mal_format_s32:     return "32-bit Signed Integer";
+        case mal_format_f32:     return "32-bit IEEE Floating Point";
+        default:                 return "Invalid";
+    }
+}
 
 void mal_blend_f32(float* pOut, float* pInA, float* pInB, float factor, mal_uint32 channels)
 {

@@ -425,6 +425,11 @@ void InitAudioDevice(void)
         return;
     }
 
+    TraceLog(LOG_INFO, "Audio device initialized successfully");
+    TraceLog(LOG_INFO, "Audio backend: %s", mal_get_backend_name(context.backend));
+    TraceLog(LOG_INFO, "Audio format: %s", mal_get_format_name(device.format));
+    TraceLog(LOG_INFO, "Audio channels: %d", device.channels);
+    TraceLog(LOG_INFO, "Audio sample rate: %d", device.sampleRate);
 
     isAudioInitialized = MAL_TRUE;
 #else
