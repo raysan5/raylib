@@ -240,13 +240,13 @@ static mal_context context;
 static mal_device device;
 static mal_bool32 isAudioInitialized = MAL_FALSE;
 static float masterVolume = 1;
-static mal_mutex soundLock;
+static mal_mutex audioLock;
 static AudioBuffer* firstAudioBuffer = NULL;   // Audio buffers are tracked in a linked list.
 static AudioBuffer* lastAudioBuffer = NULL;
 
 static void TrackAudioBuffer(AudioBuffer* audioBuffer)
 {
-    mal_mutex_lock(&soundLock);
+    mal_mutex_lock(&audioLock);
     {
         if (firstAudioBuffer == NULL) {
             firstAudioBuffer = audioBuffer;
@@ -257,12 +257,12 @@ static void TrackAudioBuffer(AudioBuffer* audioBuffer)
 
         lastAudioBuffer = audioBuffer;
     }
-    mal_mutex_unlock(&soundLock);
+    mal_mutex_unlock(&audioLock);
 }
 
 static void UntrackAudioBuffer(AudioBuffer* audioBuffer)
 {
-    mal_mutex_lock(&soundLock);
+    mal_mutex_lock(&audioLock);
     {
         if (audioBuffer->prev == NULL) {
             firstAudioBuffer = audioBuffer->next;
@@ -279,7 +279,7 @@ static void UntrackAudioBuffer(AudioBuffer* audioBuffer)
         audioBuffer->prev = NULL;
         audioBuffer->next = NULL;
     }
-    mal_mutex_unlock(&soundLock);
+    mal_mutex_unlock(&audioLock);
 }
 
 static void OnLog_MAL(mal_context* pContext, mal_device* pDevice, const char* message)
@@ -314,7 +314,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
 
     // Using a mutex here for thread-safety which makes things not real-time. This is unlikely to be necessary for this project, but may
     // want to consider how you might want to avoid this.
-    mal_mutex_lock(&soundLock);
+    mal_mutex_lock(&audioLock);
     {
         for (AudioBuffer* audioBuffer = firstAudioBuffer; audioBuffer != NULL; audioBuffer = audioBuffer->next)
         {
@@ -378,7 +378,7 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
             }
         }
     }
-    mal_mutex_unlock(&soundLock);
+    mal_mutex_unlock(&audioLock);
 
     return frameCount;  // We always output the same number of frames that were originally requested.
 }
@@ -417,7 +417,7 @@ void InitAudioDevice(void)
 
     // Mixing happens on a seperate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
     // want to look at something a bit smarter later on to keep everything real-time, if that's necessary.
-    if (mal_mutex_init(&context, &soundLock) != MAL_SUCCESS)
+    if (mal_mutex_init(&context, &audioLock) != MAL_SUCCESS)
     {
         TraceLog(LOG_ERROR, "Failed to create mutex for audio mixing");
         mal_device_uninit(&device);
@@ -479,7 +479,7 @@ void CloseAudioDevice(void)
         return;
     }
 
-    mal_mutex_uninit(&soundLock);
+    mal_mutex_uninit(&audioLock);
     mal_device_uninit(&device);
     mal_context_uninit(&context);
 #else
