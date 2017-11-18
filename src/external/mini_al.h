@@ -233,8 +233,14 @@ extern "C" {
 		#define MAL_SUPPORT_OSS
 	#endif
 #endif
-#define MAL_SUPPORT_OPENAL	// All platforms support OpenAL (at least for now).
-#define MAL_SUPPORT_NULL	// All platforms support the null device.
+
+// Explicitly disable OpenAL for Emscripten - prefer SDL for this.
+#if !defined(MAL_EMSCRIPTEN)
+#define MAL_SUPPORT_OPENAL
+#endif
+
+#define MAL_SUPPORT_SDL     // All platforms support SDL.
+#define MAL_SUPPORT_NULL	// All platforms support the null backend.
 
 
 #if !defined(MAL_NO_WASAPI) && defined(MAL_SUPPORT_WASAPI)
@@ -260,6 +266,9 @@ extern "C" {
 #endif
 #if !defined(MAL_NO_OPENAL) && defined(MAL_SUPPORT_OPENAL)
     #define MAL_ENABLE_OPENAL
+#endif
+#if !defined(MAL_NO_SDL) && defined(MAL_SUPPORT_SDL)
+    #define MAL_ENABLE_SDL
 #endif
 #if !defined(MAL_NO_NULL) && defined(MAL_SUPPORT_NULL)
     #define MAL_ENABLE_NULL
@@ -469,7 +478,8 @@ typedef enum
     mal_backend_alsa,
     mal_backend_oss,
     mal_backend_opensl,
-    mal_backend_openal
+    mal_backend_openal,
+    mal_backend_sdl
 } mal_backend;
 
 typedef enum
@@ -521,6 +531,9 @@ typedef union
 #endif
 #ifdef MAL_SUPPORT_OPENAL
     char openal[256];               // OpenAL seems to use human-readable device names as the ID.
+#endif
+#ifdef MAL_SUPPORT_SDL
+    int sdl;                        // 
 #endif
 #ifdef MAL_SUPPORT_NULL
 	int nullbackend;		        // Always 0.
@@ -844,11 +857,17 @@ struct mal_context
             mal_uint32 isMCFormatsSupported : 1;
         } openal;
 #endif
+#ifdef MAL_SUPPORT_SDL
+        struct
+        {
+            int _unused;
+        } sdl;
+#endif
 #ifdef MAL_SUPPORT_NULL
         struct
         {
             int _unused;
-        } null_device;
+        } null_backend;
 #endif
     };
 
@@ -1016,6 +1035,12 @@ struct mal_device
             mal_uint32 iNextBuffer;             // The next buffer to unenqueue and then re-enqueue as new data is read.
             mal_bool32 breakFromMainLoop;
         } openal;
+#endif
+#ifdef MAL_SUPPORT_SDL
+        struct
+        {
+            mal_uint32 deviceID;
+        } sdl;
 #endif
 #ifdef MAL_SUPPORT_NULL
         struct
@@ -1575,12 +1600,26 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 #ifdef MAL_ENABLE_OPENAL
     #define MAL_HAS_OPENAL  // mini_al inlines the necessary OpenAL stuff.
 #endif
+#ifdef MAL_ENABLE_SDL
+    #define MAL_HAS_SDL
+    #ifdef __has_include
+        #ifdef MAL_EMSCRIPTEN
+            #if !__has_include(<SDL/SDL_audio.h>)
+                #undef MAL_HAS_SDL
+            #endif
+        #else
+            #if !__has_include(<SDL2/SDL_audio.h>)
+                #undef MAL_HAS_SDL
+            #endif
+        #endif
+    #endif
+#endif
 #ifdef MAL_ENABLE_NULL
     #define MAL_HAS_NULL    // Everything supports the null backend.
 #endif
 
 // Disable run-time linking on certain backends.
-#if defined(MAL_ANDROID) || defined(MAL_EMSCRIPTED)
+#if defined(MAL_ANDROID) || defined(MAL_EMSCRIPTEN)
 #define MAL_NO_RUNTIME_LINKING
 #endif
 
@@ -7768,7 +7807,7 @@ mal_result mal_enumerate_devices__openal(mal_context* pContext, mal_device_type 
     return MAL_SUCCESS;
 }
 
-static void mal_device_uninit__openal(mal_device* pDevice)
+void mal_device_uninit__openal(mal_device* pDevice)
 {
     mal_assert(pDevice != NULL);
 
@@ -7784,7 +7823,7 @@ static void mal_device_uninit__openal(mal_device* pDevice)
     mal_free(pDevice->openal.pIntermediaryBuffer);
 }
 
-static mal_result mal_device_init__openal(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+mal_result mal_device_init__openal(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
 {
     if (pDevice->periods > MAL_MAX_PERIODS_OPENAL) {
         pDevice->periods = MAL_MAX_PERIODS_OPENAL;
@@ -8165,6 +8204,196 @@ static mal_result mal_device__main_loop__openal(mal_device* pDevice)
     return MAL_SUCCESS;
 }
 #endif  // OpenAL
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// SDL Backend
+//
+///////////////////////////////////////////////////////////////////////////////
+#ifdef MAL_HAS_SDL
+#define SDL_MAIN_HANDLED
+#ifdef MAL_EMSCRIPTEN
+#include <SDL/SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
+
+SDL_AudioFormat mal_format_to_sdl(mal_format format)
+{
+    switch (format)
+    {
+    case mal_format_unknown: return 0;
+    case mal_format_u8:      return AUDIO_U8;
+    case mal_format_s16:     return AUDIO_S16;
+    case mal_format_s24:     return AUDIO_S32;  // Closest match.
+    case mal_format_s32:     return AUDIO_S32;
+    default:                 return 0;
+    }
+}
+
+mal_format mal_format_from_sdl(SDL_AudioFormat format)
+{
+    switch (format)
+    {
+        case AUDIO_U8:  return mal_format_u8;
+        case AUDIO_S16: return mal_format_s16;
+        case AUDIO_S32: return mal_format_s32;
+        case AUDIO_F32: return mal_format_f32;
+        default:        return mal_format_unknown;
+    }
+}
+
+
+mal_result mal_context_init__sdl(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+
+    int resultSDL = SDL_InitSubSystem(SDL_INIT_AUDIO);
+    if (resultSDL != 0) {
+        return MAL_ERROR;
+    }
+    
+    return MAL_SUCCESS;
+}
+
+mal_result mal_context_uninit__sdl(mal_context* pContext)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pContext->backend == mal_backend_sdl);
+
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    return MAL_SUCCESS;
+}
+
+mal_result mal_enumerate_devices__sdl(mal_context* pContext, mal_device_type type, mal_uint32* pCount, mal_device_info* pInfo)
+{
+    (void)pContext;
+
+
+    mal_uint32 infoSize = *pCount;
+    *pCount = 0;
+
+    // For now I'm restricting the SDL backend to default devices.
+    if (pInfo != NULL) {
+        if (infoSize > 0) {
+            if (type == mal_device_type_playback) {
+                pInfo->id.sdl = 0;
+                mal_strncpy_s(pInfo->name, sizeof(pInfo->name), "Default Playback Device", (size_t)-1);
+            } else {
+                pInfo->id.sdl = 0;
+                mal_strncpy_s(pInfo->name, sizeof(pInfo->name), "Default Capture Device", (size_t)-1);
+            }
+
+            pInfo += 1;
+            *pCount += 1;
+        }
+    } else {
+        *pCount += 1;
+    }
+
+    return MAL_SUCCESS;
+}
+
+void mal_device_uninit__sdl(mal_device* pDevice)
+{
+    mal_assert(pDevice != NULL);
+
+#if 1
+    SDL_CloseAudioDevice(pDevice->sdl.deviceID);
+#else
+    SDL_CloseAudio();
+#endif
+}
+
+
+static void mal_audio_callback__sdl(void *pUserData, Uint8 *pBuffer, int bufferSizeInBytes)
+{
+    mal_device* pDevice = (mal_device*)pUserData;
+    mal_assert(pDevice != NULL);
+
+    mal_uint32 bufferSizeInFrames = (mal_uint32)bufferSizeInBytes / mal_get_sample_size_in_bytes(pDevice->format) / pDevice->channels;
+
+    if (pDevice->type == mal_device_type_playback) {
+        mal_device__read_frames_from_client(pDevice, bufferSizeInFrames, pBuffer);
+    } else {
+        mal_device__send_frames_to_client(pDevice, bufferSizeInFrames, pBuffer);
+    }
+}
+
+mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, mal_device_id* pDeviceID, const mal_device_config* pConfig, mal_device* pDevice)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pConfig != NULL);
+    mal_assert(pDevice != NULL);
+
+    SDL_AudioSpec desiredSpec, obtainedSpec;
+    mal_zero_memory(&desiredSpec, sizeof(desiredSpec));
+    desiredSpec.freq     = (int)pConfig->sampleRate;
+    desiredSpec.format   = mal_format_to_sdl(pConfig->format);
+    desiredSpec.channels = (Uint8)pConfig->channels;
+    desiredSpec.samples  = (Uint16)mal_next_power_of_2(pConfig->bufferSizeInFrames * pConfig->periods * pConfig->channels);
+    desiredSpec.callback = mal_audio_callback__sdl;
+    desiredSpec.userdata = pDevice;
+
+    // Fall back to f32 if we don't have an appropriate mapping between mini_al and SDL.
+    if (desiredSpec.format == 0) {
+        desiredSpec.format = AUDIO_F32;
+    }
+
+    // For now, only using the default device.
+    (void)pDeviceID;
+
+#if 1
+    pDevice->sdl.deviceID = SDL_OpenAudioDevice(NULL, (type == mal_device_type_playback) ? 0 : 1, &desiredSpec, &obtainedSpec, 0);
+    if (pDevice->sdl.deviceID == 0) {
+        return mal_post_error(pDevice, "Failed to open SDL device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+#else
+    pDevice->sdl.deviceID = SDL_OpenAudio(&desiredSpec, &obtainedSpec);
+    if (pDevice->sdl.deviceID != 0) {
+        return mal_post_error(pDevice, "Failed to open SDL device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
+    }
+#endif
+
+    pDevice->internalFormat     = mal_format_from_sdl(obtainedSpec.format);
+    pDevice->internalChannels   = obtainedSpec.channels;
+    pDevice->internalSampleRate = (mal_uint32)obtainedSpec.freq;
+    pDevice->bufferSizeInFrames = obtainedSpec.samples / obtainedSpec.channels;
+    pDevice->periods            = 1;    // SDL doesn't seem to tell us what the period count is. Just set this 1.
+
+    return MAL_SUCCESS;
+}
+
+static mal_result mal_device__start_backend__sdl(mal_device* pDevice)
+{
+    mal_assert(pDevice != NULL);
+
+#if 1
+    SDL_PauseAudioDevice(pDevice->sdl.deviceID, 0);
+#else
+    SDL_PauseAudio(0);
+#endif
+
+    return MAL_SUCCESS;
+}
+
+static mal_result mal_device__stop_backend__sdl(mal_device* pDevice)
+{
+    mal_assert(pDevice != NULL);
+
+#if 1
+    SDL_PauseAudioDevice(pDevice->sdl.deviceID, 1);
+#else
+    SDL_PauseAudio(1);
+#endif
+
+    return MAL_SUCCESS;
+}
+#endif  // SDL
+
+
 
 
 mal_bool32 mal__is_channel_map_valid(const mal_channel* channelMap, mal_uint32 channels)
@@ -8585,6 +8814,7 @@ mal_result mal_context_init(mal_backend backends[], mal_uint32 backendCount, con
         mal_backend_oss,
         mal_backend_opensl,
         mal_backend_openal,
+        mal_backend_sdl,
         mal_backend_null
     };
 
@@ -8640,6 +8870,12 @@ mal_result mal_context_init(mal_backend backends[], mal_uint32 backendCount, con
             case mal_backend_openal:
             {
                 result = mal_context_init__openal(pContext);
+            } break;
+        #endif
+        #ifdef MAL_HAS_SDL
+            case mal_backend_sdl:
+            {
+                result = mal_context_init__sdl(pContext);
             } break;
         #endif
         #ifdef MAL_HAS_NULL
@@ -8710,6 +8946,12 @@ mal_result mal_context_uninit(mal_context* pContext)
             return mal_context_uninit__openal(pContext);
         } break;
     #endif
+    #ifdef MAL_HAS_SDL
+        case mal_backend_sdl:
+        {
+            return mal_context_uninit__sdl(pContext);
+        } break;
+    #endif
     #ifdef MAL_HAS_NULL
         case mal_backend_null:
         {
@@ -8773,6 +9015,12 @@ mal_result mal_enumerate_devices(mal_context* pContext, mal_device_type type, ma
         case mal_backend_openal:
         {
             return mal_enumerate_devices__openal(pContext, type, pCount, pInfo);
+        } break;
+    #endif
+    #ifdef MAL_HAS_SDL
+        case mal_backend_sdl:
+        {
+            return mal_enumerate_devices__sdl(pContext, type, pCount, pInfo);
         } break;
     #endif
     #ifdef MAL_HAS_NULL
@@ -8934,6 +9182,12 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
             result = mal_device_init__openal(pContext, type, pDeviceID, &config, pDevice);
         } break;
     #endif
+    #ifdef MAL_HAS_SDL
+        case mal_backend_sdl:
+        {
+            result = mal_device_init__sdl(pContext, type, pDeviceID, &config, pDevice);
+        } break;
+    #endif
     #ifdef MAL_HAS_NULL
         case mal_backend_null:
         {
@@ -8979,7 +9233,7 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
 
 
     // Some backends don't require the worker thread.
-    if (pContext->backend != mal_backend_opensl) {
+    if (pContext->backend != mal_backend_opensl && pContext->backend != mal_backend_sdl) {
         // The worker thread.
         if (mal_thread_create(pContext, &pDevice->thread, mal_worker_thread, pDevice) != MAL_SUCCESS) {
             mal_device_uninit(pDevice);
@@ -9012,7 +9266,7 @@ void mal_device_uninit(mal_device* pDevice)
     mal_device__set_state(pDevice, MAL_STATE_UNINITIALIZED);
 
     // Wake up the worker thread and wait for it to properly terminate.
-    if (pDevice->pContext->backend != mal_backend_opensl) {
+    if (pDevice->pContext->backend != mal_backend_opensl && pDevice->pContext->backend != mal_backend_sdl) {
         mal_event_signal(&pDevice->wakeupEvent);
         mal_thread_wait(&pDevice->thread);
     }
@@ -9055,6 +9309,11 @@ void mal_device_uninit(mal_device* pDevice)
 #ifdef MAL_HAS_OPENAL
     if (pDevice->pContext->backend == mal_backend_openal) {
         mal_device_uninit__openal(pDevice);
+    }
+#endif
+#ifdef MAL_HAS_SDL
+    if (pDevice->pContext->backend == mal_backend_sdl) {
+        mal_device_uninit__sdl(pDevice);
     }
 #endif
 #ifdef MAL_HAS_NULL
@@ -9118,6 +9377,12 @@ mal_result mal_device_start(mal_device* pDevice)
             mal_device__set_state(pDevice, MAL_STATE_STARTED);
         } else
 #endif
+#ifdef MAL_HAS_SDL
+        if (pDevice->pContext->backend == mal_backend_sdl) {
+            mal_device__start_backend__sdl(pDevice);
+            mal_device__set_state(pDevice, MAL_STATE_STARTED);
+        } else
+#endif
         // Synchronous backends.
         {
             mal_event_signal(&pDevice->wakeupEvent);
@@ -9166,6 +9431,11 @@ mal_result mal_device_stop(mal_device* pDevice)
 #ifdef MAL_HAS_OPENSL
         if (pDevice->pContext->backend == mal_backend_opensl) {
             mal_device__stop_backend__opensl(pDevice);
+        } else
+#endif
+#ifdef MAL_HAS_SDL
+        if (pDevice->pContext->backend == mal_backend_sdl) {
+            mal_device__stop_backend__sdl(pDevice);
         } else
 #endif
         // Synchronous backends.
