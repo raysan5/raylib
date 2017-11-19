@@ -1,4 +1,4 @@
-// Mini audio library. Public domain. See "unlicense" statement at the end of this file.
+// Audio playback and capture library. Public domain. See "unlicense" statement at the end of this file.
 // mini_al - v0.x - 2017-xx-xx
 //
 // David Reid - davidreidsoftware@gmail.com
@@ -872,13 +872,13 @@ struct mal_context
             mal_handle hSDL;    // SDL
             mal_proc SDL_InitSubSystem;
             mal_proc SDL_QuitSubSystem;
+            mal_proc SDL_CloseAudio;
+            mal_proc SDL_OpenAudio;
+            mal_proc SDL_PauseAudio;
             mal_proc SDL_GetNumAudioDevices;
             mal_proc SDL_GetAudioDeviceName;
-            mal_proc SDL_CloseAudio;
             mal_proc SDL_CloseAudioDevice;
-            mal_proc SDL_OpenAudio;
             mal_proc SDL_OpenAudioDevice;
-            mal_proc SDL_PauseAudio;
             mal_proc SDL_PauseAudioDevice;
 
             mal_bool32 usingSDL1;
@@ -944,6 +944,7 @@ struct mal_device
     mal_send_proc onSend;
     mal_stop_proc onStop;
     void* pUserData;        // Application defined data.
+    char name[256];
     mal_mutex lock;
     mal_event wakeupEvent;
     mal_event startEvent;
@@ -1095,6 +1096,7 @@ struct mal_device
 //   - OSS
 //   - OpenSL|ES
 //   - OpenAL
+//   - SDL
 //   - Null
 //
 // The onLog callback is used for posting log messages back to the client for diagnostics, debugging,
@@ -1156,8 +1158,8 @@ mal_result mal_enumerate_devices(mal_context* pContext, mal_device_type type, ma
 // data. It's tied to the buffer size, so as an example, if your buffer size is equivalent to 10
 // milliseconds and you have 2 periods, the CPU will wake up approximately every 5 milliseconds.
 //
-// Consider using mal_device_config_init(), mal_device_config_init_playback(), etc. to make it easier
-// to initialize a mal_device_config object.
+// Use mal_device_config_init(), mal_device_config_init_playback(), etc. to initialize a
+// mal_device_config object.
 //
 // When compiling for UWP you must ensure you call this function on the main UI thread because the
 // operating system may need to present the user with a message asking for permissions. Please refer
@@ -1630,6 +1632,8 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 #endif
 #ifdef MAL_ENABLE_SDL
     #define MAL_HAS_SDL
+
+    // SDL headers are necessary if using compile-time linking.
     #ifdef MAL_NO_RUNTIME_LINKING
         #ifdef __has_include
             #ifdef MAL_EMSCRIPTEN
@@ -2666,6 +2670,140 @@ static inline mal_uint32 mal_device__get_state(mal_device* pDevice)
     #endif
 #endif
 
+
+// Generic function for retrieving the name of a device by it's ID.
+//
+// This function simply enumerates every device and then retrieves the name of the first device that has the same ID.
+static mal_result mal_context__try_get_device_name_by_id(mal_context* pContext, mal_device_type type, const mal_device_id* pDeviceID, char* pName, size_t nameBufferSize)
+{
+    mal_assert(pContext != NULL);
+    mal_assert(pName != NULL);
+
+    if (pDeviceID == NULL) {
+        return MAL_NO_DEVICE;
+    }
+
+    mal_uint32 deviceCount;
+    mal_result result = mal_enumerate_devices(pContext, type, &deviceCount, NULL);
+    if (result != MAL_SUCCESS) {
+        return result;
+    }
+
+    mal_device_info* pInfos = (mal_device_info*)mal_malloc(sizeof(*pInfos) * deviceCount);
+    if (pInfos == NULL) {
+        return MAL_OUT_OF_MEMORY;
+    }
+
+    result = mal_enumerate_devices(pContext, type, &deviceCount, pInfos);
+    if (result != MAL_SUCCESS) {
+        mal_free(pInfos);
+        return result;
+    }
+
+    mal_bool32 found = MAL_FALSE;
+    for (mal_uint32 iDevice = 0; iDevice < deviceCount; ++iDevice) {
+        // Prefer backend specific comparisons for efficiency and accuracy, but fall back to a generic method if a backend-specific comparison
+        // is not implemented.
+        switch (pContext->backend)
+        {
+        #ifdef MAL_HAS_WASAPI
+            case mal_backend_wasapi:
+            {
+                if (memcmp(pDeviceID->wasapi, &pInfos[iDevice].id.wasapi, sizeof(pDeviceID->wasapi)) == 0) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_DSOUND
+            case mal_backend_dsound:
+            {
+                if (memcmp(pDeviceID->dsound, &pInfos[iDevice].id.dsound, sizeof(pDeviceID->dsound)) == 0) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_WINMM
+            case mal_backend_winmm:
+            {
+                if (pInfos[iDevice].id.winmm == pDeviceID->winmm) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_ALSA
+            case mal_backend_alsa:
+            {
+                if (mal_strcmp(pInfos[iDevice].id.alsa, pDeviceID->alsa) == 0) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_COREAUDIO
+            case mal_backend_coreaudio
+            {
+	            // TODO: Implement me.
+            } break;
+        #endif
+        #ifdef MAL_HAS_OSS
+            case mal_backend_oss:
+            {
+                if (mal_strcmp(pInfos[iDevice].id.oss, pDeviceID->oss) == 0) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_OPENSL
+            case mal_backend_opensl:
+            {
+                if (pInfos[iDevice].id.opensl == pDeviceID->opensl) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_OPENAL
+            case mal_backend_openal:
+            {
+                if (mal_strcmp(pInfos[iDevice].id.openal, pDeviceID->openal) == 0) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_SDL
+            case mal_backend_sdl:
+            {
+                if (pInfos[iDevice].id.sdl == pDeviceID->sdl) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+        #ifdef MAL_HAS_NULL
+            case mal_backend_null:
+            {
+                if (pInfos[iDevice].id.nullbackend == pDeviceID->nullbackend) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        #endif
+
+            // Fall back to a generic memory comparison.
+            default:
+            {
+                if (memcmp(pDeviceID, &pInfos[iDevice].id, sizeof(*pDeviceID)) == 0) {
+                    found = MAL_TRUE;
+                }
+            } break;
+        }
+
+        if (found) {
+            mal_strncpy_s(pName, nameBufferSize, pInfos[iDevice].name, (size_t)-1);
+            result = MAL_SUCCESS;
+            break;
+        }
+    }
+
+    mal_free(pInfos);
+    return result;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -9181,6 +9319,11 @@ mal_result mal_enumerate_devices(mal_context* pContext, mal_device_type type, ma
 {
     if (pCount == NULL) return mal_post_error(NULL, "mal_enumerate_devices() called with invalid arguments (pCount == 0).", MAL_INVALID_ARGS);
 
+    // The output buffer needs to be initialized to zero.
+    if (pInfo != NULL) {
+        mal_zero_memory(pInfo, (*pCount) * sizeof(*pInfo));
+    }
+
     switch (pContext->backend)
     {
     #ifdef MAL_HAS_WASAPI
@@ -9408,6 +9551,27 @@ mal_result mal_device_init(mal_context* pContext, mal_device_type type, mal_devi
 
     if (result != MAL_SUCCESS) {
         return MAL_NO_BACKEND;  // The error message will have been posted with mal_post_error() by the source of the error so don't bother calling it here.
+    }
+    
+
+    // If the backend did not fill out a name for the device, try a generic method.
+    if (pDevice->name[0] == '\0') {
+        if (mal_context__try_get_device_name_by_id(pContext, type, pDeviceID, pDevice->name, sizeof(pDevice->name)) != MAL_SUCCESS) {
+            // We failed to get the device name, so fall back to some generic names.
+            if (pDeviceID == NULL) {
+                if (type == mal_device_type_playback) {
+                    mal_strncpy_s(pDevice->name, sizeof(pDevice->name), "Default Playback Device", (size_t)-1);
+                } else {
+                    mal_strncpy_s(pDevice->name, sizeof(pDevice->name), "Default Capture Device", (size_t)-1);
+                }
+            } else {
+                if (type == mal_device_type_playback) {
+                    mal_strncpy_s(pDevice->name, sizeof(pDevice->name), "Playback Device", (size_t)-1);
+                } else {
+                    mal_strncpy_s(pDevice->name, sizeof(pDevice->name), "Capture Device", (size_t)-1);
+                }
+            }
+        }
     }
 
 
