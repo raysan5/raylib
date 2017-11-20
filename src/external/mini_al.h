@@ -8682,6 +8682,11 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, mal
             return MAL_NO_DEVICE;
         }
 
+        // SDL1 does not support floating point formats.
+        if (desiredSpec.format == MAL_AUDIO_F32) {
+            desiredSpec.format  = MAL_AUDIO_S16;
+        }
+
         pDevice->sdl.deviceID = ((MAL_PFN_SDL_OpenAudio)pDevice->pContext->sdl.SDL_OpenAudio)(&desiredSpec, &obtainedSpec);
         if (pDevice->sdl.deviceID != 0) {
             return mal_post_error(pDevice, "Failed to open SDL device.", MAL_FAILED_TO_OPEN_BACKEND_DEVICE);
