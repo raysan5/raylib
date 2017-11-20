@@ -9750,14 +9750,18 @@ mal_result mal_device_start(mal_device* pDevice)
         // Asynchronous backends need to be handled differently.
 #ifdef MAL_HAS_OPENSL
         if (pDevice->pContext->backend == mal_backend_opensl) {
-            mal_device__start_backend__opensl(pDevice);
-            mal_device__set_state(pDevice, MAL_STATE_STARTED);
+            result = mal_device__start_backend__opensl(pDevice);
+            if (result == MAL_SUCCESS) {
+                mal_device__set_state(pDevice, MAL_STATE_STARTED);
+            }
         } else
 #endif
 #ifdef MAL_HAS_SDL
         if (pDevice->pContext->backend == mal_backend_sdl) {
-            mal_device__start_backend__sdl(pDevice);
-            mal_device__set_state(pDevice, MAL_STATE_STARTED);
+            result = mal_device__start_backend__sdl(pDevice);
+            if (result == MAL_SUCCESS) {
+                mal_device__set_state(pDevice, MAL_STATE_STARTED);
+            }
         } else
 #endif
         // Synchronous backends.
@@ -11275,6 +11279,7 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 //   - Add mal_convert_frames(). This is a high-level helper API for performing a one-time, bulk conversion of
 //     audio data to a different format.
 //   - Improvements to f32 -> u8/s16/s24/s32 conversion routines.
+//   - Fix a bug where the wrong value is returned from mal_device_start() for the OpenSL and SDL backends.
 //   - Warning fixes.
 //
 // v0.5 - 2017-11-11
