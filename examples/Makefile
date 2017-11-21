@@ -363,6 +363,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     endif
+    ifeq ($(PLATFORM_OS),FREEBSD)
+		find . -type f -perm +ugo+x -delete
+		rm -f *.o
+    endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	find . -type f -executable -delete
