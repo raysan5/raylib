@@ -235,6 +235,22 @@ PHYSACDEF void ClosePhysics(void);                                              
 
 #if defined(PHYSAC_IMPLEMENTATION)
 
+#if defined(_WIN32)
+    // Functions required to query time on Windows
+    int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
+    int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
+#elif (defined(__linux__) || defined(__APPLE__) || defined(PLATFORM_WEB))
+    #if _POSIX_C_SOURCE < 199309L
+        #undef _POSIX_C_SOURCE
+        #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+    #endif
+    //#define _DEFAULT_SOURCE         // Enables BSD function definitions and C99 POSIX compliance
+    #include <sys/time.h>           // Required for: timespec
+    #include <time.h>               // Required for: clock_gettime()
+    #include <stdint.h>
+#endif
+
+
 #if !defined(PHYSAC_NO_THREADS)
     #include <pthread.h>            // Required for: pthread_t, pthread_create()
 #endif
@@ -247,18 +263,6 @@ PHYSACDEF void ClosePhysics(void);                                              
 #include <math.h>                   // Required for: cosf(), sinf(), fabs(), sqrtf()
 
 #include "raymath.h"                // Required for: Vector2Add(), Vector2Subtract()
-
-#if defined(_WIN32)
-    // Functions required to query time on Windows
-    int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
-    int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-#elif defined(__linux__) || defined(__APPLE__) || defined(PLATFORM_WEB)
-    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
-    //#define _DEFAULT_SOURCE         // Enables BSD function definitions and C99 POSIX compliance
-    #include <sys/time.h>           // Required for: timespec
-    #include <time.h>               // Required for: clock_gettime()
-    #include <stdint.h>
-#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
