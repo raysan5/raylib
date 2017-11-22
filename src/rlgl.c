@@ -3362,8 +3362,8 @@ static void SetShaderDefaultLocations(Shader *shader)
     // Get handles to GLSL uniform locations (fragment shader)
     shader->locs[LOC_COLOR_DIFFUSE] = glGetUniformLocation(shader->id, "colDiffuse");
     shader->locs[LOC_MAP_DIFFUSE] = glGetUniformLocation(shader->id, "texture0");
-    shader->locs[LOC_MAP_NORMAL] = glGetUniformLocation(shader->id, "texture1");
-    shader->locs[LOC_MAP_SPECULAR] = glGetUniformLocation(shader->id, "texture2");
+    shader->locs[LOC_MAP_SPECULAR] = glGetUniformLocation(shader->id, "texture1");
+    shader->locs[LOC_MAP_NORMAL] = glGetUniformLocation(shader->id, "texture2");
 }
 
 // Unload default shader
