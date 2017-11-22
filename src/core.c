@@ -88,6 +88,11 @@
 
 #include "raylib.h"
 
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_S_SOURCE < 199309L
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
+
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 #include "utils.h"          // Required for: fopen() Android mapping
 
@@ -108,10 +113,6 @@
 #if defined(SUPPORT_GIF_RECORDING)
     #define RGIF_IMPLEMENTATION
     #include "external/rgif.h"   // Support GIF recording
-#endif
-
-#if defined(__linux__) || defined(PLATFORM_WEB)
-    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
 
 #include <stdio.h>          // Standard input / output lib

@@ -25,9 +25,8 @@ before_install:
                               libopenal-dev
                               libxcursor-dev libxinerama-dev
                               mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev libglew-dev;
-      wget 'https://github.com/a3f/GLFW-3.2.1-Debian-binary-package/releases/download/v3.2.1/GLFW-3.2.1-Linux.deb' && sudo dpkg -i GLFW-3.2.1-Linux.deb;
     fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install glfw; export CC=clang; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install glfw; fi
   - "$CC --version"
 
 script:

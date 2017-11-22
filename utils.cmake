@@ -6,10 +6,6 @@ if(UNIX AND NOT APPLE)
   set(LINUX TRUE)
 endif()
 
-# Need GLFW 3.2.1
-find_package(glfw3 3.2.1 REQUIRED)
-
-
 # Linking for OS X -framework options
 # Will do nothing on other OSes
 function(link_os_x_frameworks binary)
@@ -40,9 +36,6 @@ function(link_libraries_to_executable executable)
     # TODO windows
   endif()
   
-  # Add in GLFW as a linking target
-  target_link_libraries(${executable} glfw)
-
   # And raylib
   target_link_libraries(${executable} raylib)
 endfunction()
