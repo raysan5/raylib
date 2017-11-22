@@ -21,6 +21,7 @@ set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
 ### Config options ###
 
 include_directories(external/glfw/include)
+include_directories(external/openal/include) # For use with AppVeyor on Windows
 
 # Translate the config options to what raylib wants
 if(${PLATFORM} MATCHES "Desktop")

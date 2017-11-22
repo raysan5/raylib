@@ -1,0 +1,65 @@
+#os: Visual Studio 2015
+
+clone_depth: 5
+
+cache:
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+
+init:
+  - cmake -E remove c:\programdata\chocolatey\bin\cpack.exe
+  - set PATH=%PATH:C:\Program Files (x86)\Git\usr\bin;=%
+  - set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+  - set PATH=%prefix_dir%\bin;%PATH%
+
+environment:
+  matrix:
+    - compiler: MinGW-w64
+      bits: 32
+      prefix_dir: C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32
+    - compiler: MinGW-w64
+      bits: 64
+      prefix_dir: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64
+    - compiler: MSVC15
+      bits: 32
+    - compiler: MSVC15
+      bits: 64
+
+before_build:
+  - appveyor DownloadFile http://openal-soft.org/openal-binaries/openal-soft-1.17.2-bin.zip
+  - 7z x openal-soft-1.17.2-bin.zip
+  - move openal-soft-1.17.2-bin src\external\openal
+  - if [%COMPILER%]==[MinGW-w64] set CFLAGS=-m%BITS% & set LDFLAGS=-m%BITS% & set GENERATOR="MinGW Makefiles"
+  - if [%COMPILER%]==[MSVC15] if [%BITS%]==[32] set GENERATOR="Visual Studio 14 2015"
+  - if [%COMPILER%]==[MSVC15] if [%BITS%]==[64] set GENERATOR="Visual Studio 14 2015 Win64"
+  - set VERBOSE=1
+  - mkdir build
+  - cd build
+
+build_script:
+  - cmake -G %GENERATOR% -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
+  - cmake --build . --target install
+
+after_build:
+#  - cmake --build . --target package
+
+before_test:
+
+test_script:
+
+#artifacts:
+#  - path: 'build\*.zip'
+#
+#deploy:
+#  description: 'Automatic build by CI'
+#  provider: GitHub
+#  auth_token:
+#    secure: XXX
+#  artifact: /.*\.zip/
+#  draft: false
+#  prerelease: false
+#  force_update: true
+#  on:
+#    branch: master
+#    appveyor_repo_tag: true        # deploy on tag push only
+#
