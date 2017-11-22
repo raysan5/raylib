@@ -20,6 +20,7 @@ set(OPENGL_VERSION "3.3" CACHE STRING "OpenGL Version to build raylib with")
 set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
 ### Config options ###
 
+include_directories(external/glfw/include)
 
 # Translate the config options to what raylib wants
 if(${PLATFORM} MATCHES "Desktop")
@@ -40,6 +41,8 @@ if(${PLATFORM} MATCHES "Desktop")
   # See: https://github.com/raysan5/raylib/issues/341
   if(APPLE)
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
+    set_source_files_properties(rglfw.c PROPERTIES COMPILE_FLAGS "-x objective-c")
+    link_libraries("-framework CoreFoundation -framework Cocoa -framework IOKit -framework CoreVideo")
   endif()
 elseif(${PLATFORM} MATCHES "Web")
   set(PLATFORM "PLATFORM_WEB")
@@ -92,9 +95,6 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     target_link_libraries(${RAYLIB} openal)
     target_link_libraries(${RAYLIB} GL)
   endif()
-  
-  # Add in GLFW as a linking target
-  target_link_libraries(${RAYLIB} glfw)
   
   # Library file & Header
   set_target_properties(${RAYLIB} PROPERTIES PUBLIC_HEADER "raylib.h")

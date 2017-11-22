@@ -140,9 +140,6 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 
 #if defined(GESTURES_IMPLEMENTATION)
 
-#include <math.h>               // Required for: atan2(), sqrt()
-#include <stdint.h>             // Required for: uint64_t
-
 #if defined(_WIN32)
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
@@ -154,6 +151,9 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
     #endif
     #include <sys/time.h>           // Required for: timespec
     #include <time.h>               // Required for: clock_gettime()
+
+    #include <math.h>               // Required for: atan2(), sqrt()
+    #include <stdint.h>             // Required for: uint64_t
 #endif
 
 //----------------------------------------------------------------------------------

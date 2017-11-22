@@ -86,5 +86,5 @@
     #include "external/glfw/src/posix_thread.c"
     #include "external/glfw/src/nsgl_context.m" 
     #include "external/glfw/src/egl_context.c" 
-    #include "external/glfw/src/osmesa_context.c.m"
+    #include "external/glfw/src/osmesa_context.c"
 #endif
