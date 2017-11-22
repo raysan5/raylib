@@ -339,8 +339,8 @@ static mal_uint32 OnSendAudioDataToDevice(mal_device* pDevice, mal_uint32 frameC
                     float tempBuffer[1024]; // 512 frames for stereo.
 
                     mal_uint32 framesToReadRightNow = framesToRead;
-                    if (framesToReadRightNow > sizeof(tempBuffer)/DEVICE_CHANNELS) {
-                        framesToReadRightNow = sizeof(tempBuffer)/DEVICE_CHANNELS;
+                    if (framesToReadRightNow > sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS) {
+                        framesToReadRightNow = sizeof(tempBuffer)/sizeof(tempBuffer[0])/DEVICE_CHANNELS;
                     }
 
                     // If we're not looping, we need to make sure we flush the internal buffers of the DSP pipeline to ensure we get the
