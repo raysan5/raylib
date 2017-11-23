@@ -11,7 +11,7 @@ no fancy interface, no visual helpers, no auto-debugging... just coding in the m
 pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](http://www.raylib.com/examples.html)
 
 [![Build Status](https://travis-ci.org/raysan5/raylib.svg?branch=develop)](https://travis-ci.org/raysan5/raylib)
-<!-- add AppVeyor badge here -->
+![https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true](https://ci.appveyor.com/api/projects/status/github/raysan5/raylib?svg=true)
 
 features
 --------
