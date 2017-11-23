@@ -21,6 +21,7 @@ set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
 ### Config options ###
 
 include_directories(external/glfw/include)
+include_directories(external/openal/include) # For use with AppVeyor on Windows
 
 # Translate the config options to what raylib wants
 if(${PLATFORM} MATCHES "Desktop")
@@ -43,6 +44,8 @@ if(${PLATFORM} MATCHES "Desktop")
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
     set_source_files_properties(rglfw.c PROPERTIES COMPILE_FLAGS "-x objective-c")
     link_libraries("-framework CoreFoundation -framework Cocoa -framework IOKit -framework CoreVideo")
+  elseif(WIN32)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   endif()
 elseif(${PLATFORM} MATCHES "Web")
   set(PLATFORM "PLATFORM_WEB")
