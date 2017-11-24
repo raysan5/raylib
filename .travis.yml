@@ -55,3 +55,4 @@ deploy:
   on:
     repo: raysan5/raylib
     branch: develop
+    tags: true
