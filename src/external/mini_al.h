@@ -8634,7 +8634,7 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, mal
 
     // SDL wants the buffer size to be a power of 2. The SDL_AudioSpec property for this is only a Uint16, so we need
     // to explicitly clamp this because it will be easy to overflow.
-    mal_uint32 bufferSize = pConfig->bufferSizeInFrames * pConfig->periods * pConfig->channels;
+    mal_uint32 bufferSize = pConfig->bufferSizeInFrames;
     if (bufferSize > 32768) {
         bufferSize = 32768;
     } else {
@@ -8696,7 +8696,7 @@ mal_result mal_device_init__sdl(mal_context* pContext, mal_device_type type, mal
     pDevice->internalFormat     = mal_format_from_sdl(obtainedSpec.format);
     pDevice->internalChannels   = obtainedSpec.channels;
     pDevice->internalSampleRate = (mal_uint32)obtainedSpec.freq;
-    pDevice->bufferSizeInFrames = obtainedSpec.samples / obtainedSpec.channels;
+    pDevice->bufferSizeInFrames = obtainedSpec.samples;
     pDevice->periods            = 1;    // SDL doesn't seem to tell us what the period count is. Just set this 1.
 
 #if 0
@@ -10980,6 +10980,7 @@ const char* mal_get_backend_name(mal_backend backend)
         case mal_backend_oss:       return "OSS";
         case mal_backend_opensl:    return "OpenSL|ES";
         case mal_backend_openal:    return "OpenAL";
+        case mal_backend_sdl:       return "SDL";
         default:                    return "Unknown";
     }
 }
@@ -11197,7 +11198,8 @@ void mal_pcm_s32_to_f32(float* pOut, const int* pIn, unsigned int count)
     for (unsigned int i = 0; i < count; ++i) {
         int x = pIn[i];
         double t;
-        t = (double)(x + 2147483648LL);
+        t = (double)(x + 2147483647);
+        t = t + 1;
         t = t * 0.0000000004656612873077392578125;
         r = (float)(t - 1);
         pOut[i] = (float)r;
@@ -11255,7 +11257,8 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
         c = ((x < -1) ? -1 : ((x > 1) ? 1 : x));
         c = c + 1;
         t = (mal_int64)(c * 2147483647.5);
-        r = (int)(t - 2147483648LL);
+        t = t - 2147483647;
+        r = (int)(t - 1);
         pOut[i] = (int)r;
     }
 }

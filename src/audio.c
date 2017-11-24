@@ -393,14 +393,23 @@ void InitAudioDevice(void)
     mal_result result = mal_context_init(NULL, 0, &contextConfig, &context);
     if (result != MAL_SUCCESS)
     {
+        TraceLog(LOG_ERROR, "Failed to initialize audio context");
         return;
     }
 
     // Device. Using the default device. Format is floating point because it simplifies mixing.
     mal_device_config deviceConfig = mal_device_config_init(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, OnSendAudioDataToDevice);
+
+    // Special case for PLATFORM_RPI.
+#if defined(PLATFORM_RPI)
+    deviceConfig.alsa.noMMap = MAL_TRUE;
+    deviceConfig.bufferSizeInFrames = 2048;
+#endif
+
     result = mal_device_init(&context, mal_device_type_playback, NULL, &deviceConfig, NULL, &device);
     if (result != MAL_SUCCESS)
     {
+        TraceLog(LOG_ERROR, "Failed to initialize audio playback device");
         mal_context_uninit(&context);
         return;
     }
@@ -410,6 +419,7 @@ void InitAudioDevice(void)
     result = mal_device_start(&device);
     if (result != MAL_SUCCESS)
     {
+        TraceLog(LOG_ERROR, "Failed to start audio playback device");
         mal_device_uninit(&device);
         mal_context_uninit(&context);
         return;
