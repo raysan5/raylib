@@ -1,5 +1,5 @@
 # All sorts of things that we need cross project
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8.0)
 
 # Detect linux
 if(UNIX AND NOT APPLE)
@@ -8,33 +8,27 @@ endif()
 
 # Linking for OS X -framework options
 # Will do nothing on other OSes
-function(link_os_x_frameworks binary)
-  if(APPLE)
-    find_library(OPENGL_LIBRARY OpenGL)
-    find_library(OPENAL_LIBRARY OpenAL)
-    find_library(COCOA_LIBRARY Cocoa)
+if(APPLE)
+  find_library(OPENGL_LIBRARY OpenGL)
+  find_library(OPENAL_LIBRARY OpenAL)
+  find_library(COCOA_LIBRARY Cocoa)
 
-    set(OSX_FRAMEWORKS ${OPENGL_LIBRARY} ${OPENAL_LIBRARY} ${COCOA_LIBRARY})
-    target_link_libraries(${binary} ${OSX_FRAMEWORKS})
-  endif()
-endfunction()
-
+  set(LIBS_PRIVATE ${OPENGL_LIBRARY} ${OPENAL_LIBRARY} ${COCOA_LIBRARY})
+elseif(LINUX)
+  # Elsewhere (such as Linux), need `-lopenal -lGL`, etc...
+  set(LIBS_PRIVATE
+      m pthread dl
+      openal
+      GL
+      X11 Xrandr Xinerama Xi Xxf86vm Xcursor)  # X11 stuff
+else()
+  # TODO Windows
+endif()
 
 # Do the linking for executables that are meant to link raylib
 function(link_libraries_to_executable executable)
   # Link the libraries
-  if(APPLE)
-    # OS X, we use frameworks
-    link_os_x_frameworks(${executable})
-  elseif(LINUX)
-    # Elsewhere (such as Linux), need `-lopenal -lGL`, etc...
-    target_link_libraries(${executable} m pthread dl)
-    target_link_libraries(${executable} openal)
-    target_link_libraries(${executable} GL)
-    target_link_libraries(${executable} X11 Xrandr Xinerama Xi Xxf86vm Xcursor)  # X11 stuff
-  else()
-    # TODO windows
-  endif()
+  target_link_libraries(${executable} ${LIBS_PRIVATE})
   
   # And raylib
   target_link_libraries(${executable} raylib)
