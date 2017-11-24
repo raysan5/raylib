@@ -31,7 +31,7 @@ features
    *  Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
    *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi** and **HTML5**
    *  VR stereo rendering support with configurable HMD device parameters
-   *  Minimal external dependencies (GLFW3, OpenGL, OpenAL)
+   *  Minimal external dependencies (OpenGL, OpenAL)
    *  Complete bindings to LUA ([raylib-lua](https://github.com/raysan5/raylib-lua)) and Go ([raylib-go](https://github.com/gen2brain/raylib-go))
 
 raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option I found for 
@@ -44,10 +44,12 @@ to accomodate to Android, Raspberry Pi and HTML5.
 
 *On Raspberry Pi, Videocore API and EGL libraries are used for window/context management and raw inputs reading.*
 
-building
---------
+build and installation
+----------------------
 
-For detailed building instructions, check [raylib Wiki](https://github.com/raysan5/raylib/wiki).
+Binary releases for Windows, Linux and macOS are available at the [Github Releases](https://github.com/raysan5/raylib/releases) page.
+
+To build raylib yourself, check out the [raylib Wiki](https://github.com/raysan5/raylib/wiki) for detailed instructions.
 
 raylib has been developed using exclusively two tools: 
 
