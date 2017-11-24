@@ -52,16 +52,13 @@ artifacts:
   - path: 'build\*.zip'
 
 deploy:
-  description: 'Automatic build by CI'
-  provider: GitHub
-  auth_token:
-    secure: lqkfPGZPK828Mmopbicrng08QaaQXAshp0a9E3bMXt8+hpA8vCfDAT3jgU8kaSsW
-  artifact: /.*\.zip/
-  draft: false
-  prerelease: false
-  force_update: true
-  on:
-    branch: 
-      - master
-      - develop
-    appveyor_repo_tag: true        # deploy on tag push only
+  - provider: GitHub
+    auth_token:
+      secure: lqkfPGZPK828Mmopbicrng08QaaQXAshp0a9E3bMXt8+hpA8vCfDAT3jgU8kaSsW
+    artifact: /.*\.zip/
+    draft: false
+    prerelease: false
+    force_update: true
+    on:
+      branch: develop
+      appveyor_repo_tag: true        # deploy on tag push only
