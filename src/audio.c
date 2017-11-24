@@ -426,10 +426,11 @@ void InitAudioDevice(void)
     }
 
     TraceLog(LOG_INFO, "Audio device initialized successfully: %s", device.name);
-    TraceLog(LOG_INFO, "Audio backend: %s", mal_get_backend_name(context.backend));
-    TraceLog(LOG_INFO, "Audio format: %s", mal_get_format_name(device.format));
-    TraceLog(LOG_INFO, "Audio channels: %d", device.channels);
-    TraceLog(LOG_INFO, "Audio sample rate: %d", device.sampleRate);
+    TraceLog(LOG_INFO, "Audio backend: mini_al / %s", mal_get_backend_name(context.backend));
+    TraceLog(LOG_INFO, "Audio format: %s -> %s", mal_get_format_name(device.format), mal_get_format_name(device.internalFormat));
+    TraceLog(LOG_INFO, "Audio channels: %d -> %d", device.channels, device.internalChannels);
+    TraceLog(LOG_INFO, "Audio sample rate: %d -> %d", device.sampleRate, device.internalSampleRate);
+    TraceLog(LOG_INFO, "Audio buffer size: %d", device.bufferSizeInFrames);
 
     isAudioInitialized = MAL_TRUE;
 #else
@@ -1501,14 +1502,16 @@ void UpdateMusicStream(Music music)
 #if USE_MINI_AL
     bool streamEnding = false;
 
+    unsigned int subBufferSizeInFrames = ((AudioBuffer*)music->stream.audioBuffer)->bufferSizeInFrames / 2;
+
     // NOTE: Using dynamic allocation because it could require more than 16KB
-    void *pcm = calloc(AUDIO_BUFFER_SIZE*music->stream.sampleSize/8*music->stream.channels, 1);
+    void *pcm = calloc(subBufferSizeInFrames*music->stream.sampleSize/8*music->stream.channels, 1);
 
     int samplesCount = 0;    // Total size of data steamed in L+R samples for xm floats, individual L or R for ogg shorts
 
     while (IsAudioBufferProcessed(music->stream))
     {
-        if (music->samplesLeft >= AUDIO_BUFFER_SIZE) samplesCount = AUDIO_BUFFER_SIZE;
+        if (music->samplesLeft >= subBufferSizeInFrames) samplesCount = subBufferSizeInFrames;
         else samplesCount = music->samplesLeft;
 
         // TODO: Really don't like ctxType thingy...
@@ -1750,7 +1753,14 @@ AudioStream InitAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
 #if USE_MINI_AL
     mal_format formatIn = ((stream.sampleSize == 8) ? mal_format_u8 : ((stream.sampleSize == 16) ? mal_format_s16 : mal_format_f32));
 
-    AudioBuffer* audioBuffer = CreateAudioBuffer(formatIn, stream.channels, stream.sampleRate, AUDIO_BUFFER_SIZE*2, AUDIO_BUFFER_USAGE_STREAM);
+    // The size of a streaming buffer must be at least double the size of a period.
+    unsigned int periodSize = device.bufferSizeInFrames / device.periods;
+    unsigned int subBufferSize = AUDIO_BUFFER_SIZE;
+    if (subBufferSize < periodSize) {
+        subBufferSize = periodSize;
+    }
+
+    AudioBuffer* audioBuffer = CreateAudioBuffer(formatIn, stream.channels, stream.sampleRate, subBufferSize*2, AUDIO_BUFFER_USAGE_STREAM);
     if (audioBuffer == NULL)
     {
         TraceLog(LOG_ERROR, "InitAudioStream() : Failed to create audio buffer");
