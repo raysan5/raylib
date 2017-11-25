@@ -132,3 +132,8 @@ build
 
 # Ignore Android generated files and folders
 templates/android_project/output
+
+# Ignore GNU global tags
+GPATH
+GRTAGS
+GTAGS

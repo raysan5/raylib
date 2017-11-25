@@ -12,8 +12,12 @@ if(APPLE)
   find_library(OPENGL_LIBRARY OpenGL)
   find_library(OPENAL_LIBRARY OpenAL)
   find_library(COCOA_LIBRARY Cocoa)
+  find_library(IOKIT_LIBRARY IOKit)
+  find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+  find_library(COREVIDEO_LIBRARY CoreVideo)
 
-  set(LIBS_PRIVATE ${OPENGL_LIBRARY} ${OPENAL_LIBRARY} ${COCOA_LIBRARY})
+  set(LIBS_PRIVATE ${OPENGL_LIBRARY} ${OPENAL_LIBRARY} ${COCOA_LIBRARY}
+                   ${IOKIT_LIBRARY} ${COREFOUNDATION_LIBRARY} ${COREVIDEO_LIBRARY})
 elseif(LINUX)
   # Elsewhere (such as Linux), need `-lopenal -lGL`, etc...
   set(LIBS_PRIVATE
@@ -27,10 +31,10 @@ endif()
 
 # Do the linking for executables that are meant to link raylib
 function(link_libraries_to_executable executable)
-  # Link the libraries
-  target_link_libraries(${executable} ${LIBS_PRIVATE})
-  
   # And raylib
   target_link_libraries(${executable} raylib)
+
+  # Link the libraries
+  target_link_libraries(${executable} ${LIBS_PRIVATE})
 endfunction()
 

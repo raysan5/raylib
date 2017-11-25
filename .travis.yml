@@ -41,7 +41,7 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=$SHARED -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
+  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=$SHARED ..
   - make
   - make package
 
