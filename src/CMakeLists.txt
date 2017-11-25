@@ -2,7 +2,7 @@
 project(raylib)
 include("../utils.cmake")
 
-set(PROJECT_VERSION 1.9.0dev)
+set(PROJECT_VERSION 1.9.1-dev)
 set(RAYLIB raylib)    # Name of the generated library
 
 
