@@ -47,7 +47,9 @@ to accomodate to Android, Raspberry Pi and HTML5.
 build and installation
 ----------------------
 
-Binary releases for Windows, Linux and macOS are available at the [Github Releases](https://github.com/raysan5/raylib/releases) page.
+Binary releases for Windows, Linux and macOS are available at the [Github Releases](https://github.com/raysan5/raylib/releases) page. Raylib is also available via following package managers:
+
+   * Homebrew: `brew install raylib`
 
 To build raylib yourself, check out the [raylib Wiki](https://github.com/raysan5/raylib/wiki) for detailed instructions.
 
