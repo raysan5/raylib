@@ -156,6 +156,11 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
     #include <stdint.h>             // Required for: uint64_t
 #endif
 
+#if defined(__APPLE__)              // macOS also defines __MACH__
+    #include <mach/clock.h>         // Required for: clock_get_time()
+    #include <mach/mach.h>          // Required for: mach_timespec_t
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -530,6 +535,22 @@ static double GetCurrentTime(void)
     uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time in nanoseconds
     
     time = ((double)nowTime/1000000.0);     // Time in miliseconds
+#endif
+
+#if defined(__APPLE__)
+    //#define CLOCK_REALTIME  CALENDAR_CLOCK
+    //#define CLOCK_MONOTONIC SYSTEM_CLOCK
+    
+    clock_serv_t cclock;
+    mach_timespec_t now;
+    host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+    
+    // NOTE: OS X does not have clock_gettime(), using clock_get_time()
+    clock_get_time(cclock, &now);
+    mach_port_deallocate(mach_task_self(), cclock);
+    uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time in nanoseconds
+
+    time = ((double)nowTime/1000000.0);     // Time in miliseconds    
 #endif
 
     return time;
