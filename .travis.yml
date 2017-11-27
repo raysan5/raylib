@@ -1,28 +1,24 @@
 language: c
-sudo: required
 dist: trusty
 
 git:
   depth: 3
 
-os:
-  - osx
-  - linux
+# TODO we could use a 32 bit Docker container for running true 32-bit tests
+# services: - docker
 
-env:
-  global:
-    - VERBOSE=1
-  matrix: # We don't install x11 32-bit libraries, so skip shared libraries on -m32
-    - ARCH=i386 SHARED=OFF
-    - ARCH=amd64 SHARED=ON
-
-matrix:
-  exclude: # This is already covered by building universal (fat) libraries by default
-  - os: osx
-    env: ARCH=i386 SHARED=OFF
+matrix: # We don't install x11 32-bit libraries, so skip shared libraries on -m32
+  include:
+    - os: linux
+      env: ARCH=i386 SHARED=OFF EXAMPLES=OFF
+      sudo: required
+    - os: linux
+      env: ARCH=amd64 SHARED=ON EXAMPLES=ON
+      sudo: required
+    - os: osx
+      env: ARCH=amd64 SHARED=ON EXAMPLES=ON
 
 before_script:
-  - export CFLAGS="-std=gnu99"
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
@@ -32,8 +28,8 @@ before_install:
                               mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev
                               libgl1-mesa-dev libglu1-mesa-dev libglew-dev;
       export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
-      if [ "$ARCH" == "i386" ]; then export CFLAGS="$CFLAGS -m32"; fi;
-      if [ "$ARCH" == "amd64" ]; then export CFLAGS="$CFLAGS -m64"; fi;
+      if [ "$ARCH" == "i386" ]; then export CFLAGS="-m32"; fi;
+      if [ "$ARCH" == "amd64" ]; then export CFLAGS="-m64"; fi;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export RAYLIB_PACKAGE_SUFFIX="-macOS"; fi
   - "$CC --version"
@@ -41,8 +37,8 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=$SHARED ..
-  - make
+  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=$SHARED -DBUILD_EXAMPLES=$EXAMPLES -DBUILD_GAMES=$EXAMPLES ..
+  - make VERBOSE=1
   - make package
 
 deploy:
