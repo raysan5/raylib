@@ -24,14 +24,8 @@ set_property(CACHE PLATFORM PROPERTY STRINGS "Desktop" "Web" "Android" "Raspberr
 # OpenGL version
 set(OPENGL_VERSION "3.3" CACHE STRING "OpenGL Version to build raylib with")
 set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
+
 ### Config options ###
-
-if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
-  find_package(OpenGL REQUIRED)
-  find_package(OpenAL REQUIRED)
-  include_directories(${OPENGL_INCLUDE_DIR} ${OPENAL_INCLUDE_DIR})
-endif()
-
 include_directories(external/glfw/include)
 include_directories(external/include) # For use with AppVeyor on Windows
 
@@ -110,7 +104,7 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
   endif()
 
   if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
-    foreach(L OpenGL OpenAL)
+    foreach(L ${LIBS_PRIVATE})
     	set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -l${L}")
     endforeach(L)
   endif()
