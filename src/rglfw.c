@@ -36,6 +36,9 @@
 #ifdef __linux__
     #define _GLFW_X11
 #endif
+#ifdef __FreeBSD__
+    #define _GLFW_X11
+#endif
 #ifdef __APPLE__
     #define _GLFW_COCOA
     #define _GLFW_USE_CHDIR         // To chdir to the Resources subdirectory of the application bundle during glfwInit
@@ -70,6 +73,20 @@
     #include "external/glfw/src/x11_window.c"
     #include "external/glfw/src/xkb_unicode.c"
     #include "external/glfw/src/linux_joystick.c"
+    #include "external/glfw/src/posix_time.c"
+    #include "external/glfw/src/posix_thread.c"
+    #include "external/glfw/src/glx_context.c"
+    #include "external/glfw/src/egl_context.c"
+    #include "external/glfw/src/osmesa_context.c"
+#endif
+
+#ifdef __FreeBSD__
+    #include "external/glfw/src/x11_init.c"
+    #include "external/glfw/src/x11_monitor.c"
+    #include "external/glfw/src/x11_window.c"
+    #include "external/glfw/src/xkb_unicode.c"
+    // TODO: Joistick implementation
+    #include "external/glfw/src/null_joystick.c"
     #include "external/glfw/src/posix_time.c"
     #include "external/glfw/src/posix_thread.c"
     #include "external/glfw/src/glx_context.c"
