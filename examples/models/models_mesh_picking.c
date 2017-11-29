@@ -89,7 +89,7 @@ int main()
             cursorColor = PURPLE;
             hitObjectName = "Triangle";
 
-            bary = Vector3Barycenter(nearestHit.position, ta, tb, tc);
+            bary = (nearestHit.position, ta, tb, tc);
             hitTriangle = true;
         } 
         else hitTriangle = false;
