@@ -89,6 +89,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    UNAMEOS=$(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS=LINUX
+    endif
+endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
@@ -224,7 +230,7 @@ endif
 
 # Define compiler flags:
 #  -O1                  defines optimization level
-#  -Og                  enable debugging
+#  -g                   enable debugging
 #  -s                   strip unnecessary data from build
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
@@ -270,7 +276,7 @@ endif
 
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -Iexternal -Iexternal/include
+INCLUDE_PATHS = -I. -Iexternal -Iexternal/include -Iexternal/glfw/include
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),FREEBSD)
@@ -310,8 +316,23 @@ endif
 # Define all object files required with a wildcard
 # The wildcard takes all files that finish with ".c",
 # and replaces extentions with ".o", that are the object files
-OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
-OBJS += stb_vorbis.o
+# NOTE: Some objects depend on the PLATFORM to be added or not!
+# OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
+
+# Define object required on compilation
+OBJS = core.o \
+       rlgl.o \
+       shapes.o \
+       textures.o \
+       text.o \
+       models.o \
+       audio.o \
+       stb_vorbis.o \
+       utils.o
+       
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    OBJS += rglfw.o
+endif
 
 # Default target entry
 all: raylib
@@ -338,24 +359,24 @@ else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
         # NOTE: If using OpenAL Soft as static library, all its dependencies must be also linked in the shared library
         ifeq ($(PLATFORM_OS),WINDOWS)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -lglfw3 -lgdi32 -lopenal32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -lgdi32 -lopenal32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
 			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
             @echo "expected OpenAL Soft static library linking"
         endif
         ifeq ($(PLATFORM_OS),LINUX)
             # Compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lm -lpthread -ldl
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lopenal -lm -lpthread -ldl
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM_OS),OSX)
-			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.dylib $(OBJS) -L/usr/local/Cellar/glfw/3.2.1/lib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.dylib $(OBJS) -L/usr/local/Cellar/glfw/3.2.1/lib -framework OpenGL -framework OpenAL -framework Cocoa
 			install_name_tool -id "libraylib.dylib" $(RAYLIB_RELEASE_PATH)/libraylib.dylib
 			@echo "raylib shared library generated (libraylib.dylib)!"
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
         # WARNING: you should type "gmake clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lpthread
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lopenal -lpthread
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -379,6 +400,10 @@ endif
 
 # Compile core module
 core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+    
+# Compile rglfw module
+rglfw.o : rglfw.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile rlgl module
