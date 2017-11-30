@@ -5,7 +5,6 @@ include("../utils.cmake")
 set(PROJECT_VERSION 1.9.1-dev)
 set(RAYLIB raylib)    # Name of the generated library
 
-
 ### Config options ###
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
 set(WITH_PIC      OFF CACHE BOOL "Compile static library as position-independent code" OFF)
@@ -18,7 +17,6 @@ if(NOT (STATIC_RAYLIB OR SHARED_RAYLIB))
   message(FATAL_ERROR "Nothing to do if both -DSHARED_RAYLIB=OFF and -DSTATIC_RAYLIB=OFF...")
 endif()
 
-
 # Platform
 set(PLATFORM "Desktop" CACHE STRING "Platform to build for.")
 set_property(CACHE PLATFORM PROPERTY STRINGS "Desktop" "Web" "Android" "Raspberry Pi")
@@ -26,8 +24,8 @@ set_property(CACHE PLATFORM PROPERTY STRINGS "Desktop" "Web" "Android" "Raspberr
 # OpenGL version
 set(OPENGL_VERSION "3.3" CACHE STRING "OpenGL Version to build raylib with")
 set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
-### Config options ###
 
+### Config options ###
 include_directories(external/glfw/include)
 include_directories(external/openal/include) # For use with AppVeyor on Windows
 
@@ -55,6 +53,7 @@ if(${PLATFORM} MATCHES "Desktop")
   elseif(WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   endif()
+
 elseif(${PLATFORM} MATCHES "Web")
   set(PLATFORM "PLATFORM_WEB")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
@@ -94,14 +93,20 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     foreach(L ${LIBS_PRIVATE})
       set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -l${L}")
     endforeach(L)
+  endif()
 
-  elseif(APPLE)
+  if(APPLE)
     # TODO extract framework location and name from ${LIBS_PRIVATE}
     # and specify them as -F and -framework instead of hardcoding
     foreach(F OpenGL OpenAL Cocoa)
       set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -framework ${F}")
     endforeach(F)
+  endif()
 
+  if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
+    foreach(L ${LIBS_PRIVATE})
+    	set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -l${L}")
+    endforeach(L)
   endif()
 
   if(${SHARED_RAYLIB})
