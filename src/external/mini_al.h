@@ -244,12 +244,13 @@ extern "C" {
 	#endif
 #endif
 
+#define MAL_SUPPORT_SDL     // All platforms support SDL.
+
 // Explicitly disable OpenAL and Null backends for Emscripten because they both use a background thread which is not properly supported right now.
 #if !defined(MAL_EMSCRIPTEN)
 #define MAL_SUPPORT_OPENAL
 #define MAL_SUPPORT_NULL    // All platforms support the null backend.
 #endif
-#define MAL_SUPPORT_SDL     // All platforms support SDL.
 
 
 #if !defined(MAL_NO_WASAPI) && defined(MAL_SUPPORT_WASAPI)
@@ -758,6 +759,9 @@ struct mal_context
             mal_proc snd_pcm_avail;
             mal_proc snd_pcm_avail_update;
             mal_proc snd_pcm_wait;
+            mal_proc snd_pcm_info;
+            mal_proc snd_pcm_info_sizeof;
+            mal_proc snd_pcm_info_get_name;
         } alsa;
 #endif
 #ifdef MAL_SUPPORT_COREAUDIO
@@ -862,8 +866,9 @@ struct mal_context
             mal_proc alGetBuffer3i;
             mal_proc alGetBufferiv;
 
-            mal_uint32 isFloat32Supported   : 1;
-            mal_uint32 isMCFormatsSupported : 1;
+            mal_bool32 isEnumerationSupported : 1;
+            mal_bool32 isFloat32Supported   : 1;
+            mal_bool32 isMCFormatsSupported : 1;
         } openal;
 #endif
 #ifdef MAL_SUPPORT_SDL
@@ -1457,6 +1462,8 @@ mal_uint32 mal_dsp_read_frames_ex(mal_dsp* pDSP, mal_uint32 frameCount, void* pF
 // This function is useful for one-off bulk conversions, but if you're streaming data you should use the DSP APIs instead.
 mal_uint32 mal_convert_frames(void* pOut, mal_format formatOut, mal_uint32 channelsOut, mal_uint32 sampleRateOut, const void* pIn, mal_format formatIn, mal_uint32 channelsIn, mal_uint32 sampleRateIn, mal_uint32 frameCountIn);
 
+// Helper for initializing a mal_dsp_config object.
+mal_dsp_config mal_dsp_config_init(mal_format formatIn, mal_uint32 channelsIn, mal_uint32 sampleRateIn, mal_format formatOut, mal_uint32 channelsOut, mal_uint32 sampleRateOut);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1583,7 +1590,7 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 
 
 // Disable run-time linking on certain backends.
-#ifndef MAL_NO_RUNTIME_LINLING
+#ifndef MAL_NO_RUNTIME_LINKING
     #if defined(MAL_ANDROID) || defined(MAL_EMSCRIPTEN)
         #define MAL_NO_RUNTIME_LINKING
     #endif
@@ -5472,6 +5479,33 @@ static mal_result mal_device__main_loop__winmm(mal_device* pDevice)
 #ifdef MAL_HAS_ALSA
 #include <alsa/asoundlib.h>
 
+// This array allows mini_al to control device-specific default buffer sizes. This uses a scaling factor. Order is important. If
+// any part of the string is present in the device's name, the associated scale will be used.
+struct
+{
+    const char* name;
+    float scale;
+} g_malDefaultBufferSizeScalesALSA[] = {
+    {"bcm2835 IEC958/HDMI", 32},
+    {"bcm2835 ALSA",        32}
+};
+
+static float mal_find_default_buffer_size_scale__alsa(const char* deviceName)
+{
+    if (deviceName == NULL) {
+        return 1;
+    }
+
+    for (size_t i = 0; i < mal_countof(g_malDefaultBufferSizeScalesALSA); ++i) {
+        if (strstr(g_malDefaultBufferSizeScalesALSA[i].name, deviceName) != NULL) {
+            return g_malDefaultBufferSizeScalesALSA[i].scale;
+        }
+    }
+
+    return 1;
+}
+
+
 typedef int               (* mal_snd_pcm_open_proc)                          (snd_pcm_t **pcm, const char *name, snd_pcm_stream_t stream, int mode);
 typedef int               (* mal_snd_pcm_close_proc)                         (snd_pcm_t *pcm);
 typedef size_t            (* mal_snd_pcm_hw_params_sizeof_proc)              (void);
@@ -5515,6 +5549,9 @@ typedef snd_pcm_sframes_t (* mal_snd_pcm_writei_proc)                        (sn
 typedef snd_pcm_sframes_t (* mal_snd_pcm_avail_proc)                         (snd_pcm_t *pcm);
 typedef snd_pcm_sframes_t (* mal_snd_pcm_avail_update_proc)                  (snd_pcm_t *pcm);
 typedef int               (* mal_snd_pcm_wait_proc)                          (snd_pcm_t *pcm, int timeout);
+typedef int               (* mal_snd_pcm_info)                               (snd_pcm_t *pcm, snd_pcm_info_t* info);
+typedef size_t            (* mal_snd_pcm_info_sizeof)                        ();
+typedef const char*       (* mal_snd_pcm_info_get_name)                      (const snd_pcm_info_t* info);
 
 static snd_pcm_format_t g_mal_ALSAFormats[] = {
     SND_PCM_FORMAT_UNKNOWN,     // mal_format_unknown
@@ -5630,6 +5667,9 @@ mal_result mal_context_init__alsa(mal_context* pContext)
     pContext->alsa.snd_pcm_avail                          = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_avail");
     pContext->alsa.snd_pcm_avail_update                   = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_avail_update");
     pContext->alsa.snd_pcm_wait                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_wait");
+    pContext->alsa.snd_pcm_info                           = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info");
+    pContext->alsa.snd_pcm_info_sizeof                    = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info_sizeof");
+    pContext->alsa.snd_pcm_info_get_name                  = (mal_proc)mal_dlsym(pContext->alsa.asoundSO, "snd_pcm_info_get_name");
 
     return MAL_SUCCESS;
 }
@@ -6297,6 +6337,57 @@ static mal_result mal_device_init__alsa(mal_context* pContext, mal_device_type t
         if (!isDeviceOpen) {
             mal_device_uninit__alsa(pDevice);
             return mal_post_error(pDevice, "[ALSA] snd_pcm_open() failed.", MAL_ALSA_FAILED_TO_OPEN_DEVICE);
+        }
+    }
+
+    // We may need to scale the size of the buffer depending on the device.
+    if (pDevice->usingDefaultBufferSize) {
+        float bufferSizeScale = 1;
+        
+        snd_pcm_info_t* pInfo = (snd_pcm_info_t*)alloca(((mal_snd_pcm_info_sizeof)pContext->alsa.snd_pcm_info_sizeof)());
+        mal_zero_memory(pInfo, ((mal_snd_pcm_info_sizeof)pContext->alsa.snd_pcm_info_sizeof)());
+
+        if (((mal_snd_pcm_info)pContext->alsa.snd_pcm_info)((snd_pcm_t*)pDevice->alsa.pPCM, pInfo) == 0) {
+            const char* deviceName = ((mal_snd_pcm_info_get_name)pContext->alsa.snd_pcm_info_get_name)(pInfo);
+            if (deviceName != NULL) {
+                if (strcmp(deviceName, "default") == 0) {
+                    // It's the default device. We need to use DESC from snd_device_name_hint().
+                    char** ppDeviceHints;
+                    if (((mal_snd_device_name_hint_proc)pContext->alsa.snd_device_name_hint)(-1, "pcm", (void***)&ppDeviceHints) < 0) {
+                        return MAL_NO_BACKEND;
+                    }
+
+                    char** ppNextDeviceHint = ppDeviceHints;
+                    while (*ppNextDeviceHint != NULL) {
+                        char* NAME = ((mal_snd_device_name_get_hint_proc)pContext->alsa.snd_device_name_get_hint)(*ppNextDeviceHint, "NAME");
+                        char* DESC = ((mal_snd_device_name_get_hint_proc)pContext->alsa.snd_device_name_get_hint)(*ppNextDeviceHint, "DESC");
+                        char* IOID = ((mal_snd_device_name_get_hint_proc)pContext->alsa.snd_device_name_get_hint)(*ppNextDeviceHint, "IOID");
+
+                        mal_bool32 foundDevice = MAL_FALSE;
+                        if ((type == mal_device_type_playback && (IOID == NULL || strcmp(IOID, "Output") == 0)) ||
+                            (type == mal_device_type_capture  && (IOID != NULL && strcmp(IOID, "Input" ) == 0))) {
+                            if (strcmp(NAME, deviceName) == 0) {
+                                bufferSizeScale = mal_find_default_buffer_size_scale__alsa(DESC);
+                                foundDevice = MAL_TRUE;
+                            }
+                        }
+
+                        free(NAME);
+                        free(DESC);
+                        free(IOID);
+
+                        if (foundDevice) {
+                            break;
+                        }
+                    }
+
+                    ((mal_snd_device_name_free_hint_proc)pContext->alsa.snd_device_name_free_hint)((void**)ppDeviceHints);
+                } else {
+                    bufferSizeScale = mal_find_default_buffer_size_scale__alsa(deviceName);
+                }
+            }
+
+            pDevice->bufferSizeInFrames = (mal_uint32)(pDevice->bufferSizeInFrames * bufferSizeScale);
         }
     }
 
@@ -7658,6 +7749,16 @@ static mal_result mal_device__stop_backend__opensl(mal_device* pDevice)
 #define MAL_AL_APIENTRY
 #endif
 
+#ifdef MAL_NO_RUNTIME_LINKING
+    #if defined(MAL_APPLE)
+        #include <OpenAL/al.h>
+        #include <OpenAL/alc.h>
+    #else
+        #include <AL/al.h>
+        #include <AL/alc.h>
+    #endif
+#endif
+
 typedef struct mal_ALCdevice_struct  mal_ALCdevice;
 typedef struct mal_ALCcontext_struct mal_ALCcontext;
 typedef char                         mal_ALCboolean;
@@ -7804,6 +7905,7 @@ mal_result mal_context_init__openal(mal_context* pContext)
 {
     mal_assert(pContext != NULL);
 
+#ifndef MAL_NO_RUNTIME_LINKING
     const char* libName = NULL;
 #ifdef MAL_WIN32
     libName = "OpenAL32.dll";
@@ -7910,13 +8012,89 @@ mal_result mal_context_init__openal(mal_context* pContext)
     pContext->openal.alGetBufferi           = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferi");
     pContext->openal.alGetBuffer3i          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBuffer3i");
     pContext->openal.alGetBufferiv          = (mal_proc)mal_dlsym(pContext->openal.hOpenAL, "alGetBufferiv");
+#else
+    pContext->openal.alcCreateContext       = (mal_proc)alcCreateContext;
+    pContext->openal.alcMakeContextCurrent  = (mal_proc)alcMakeContextCurrent;
+    pContext->openal.alcProcessContext      = (mal_proc)alcProcessContext;
+    pContext->openal.alcSuspendContext      = (mal_proc)alcSuspendContext;
+    pContext->openal.alcDestroyContext      = (mal_proc)alcDestroyContext;
+    pContext->openal.alcGetCurrentContext   = (mal_proc)alcGetCurrentContext;
+    pContext->openal.alcGetContextsDevice   = (mal_proc)alcGetContextsDevice;
+    pContext->openal.alcOpenDevice          = (mal_proc)alcOpenDevice;
+    pContext->openal.alcCloseDevice         = (mal_proc)alcCloseDevice;
+    pContext->openal.alcGetError            = (mal_proc)alcGetError;
+    pContext->openal.alcIsExtensionPresent  = (mal_proc)alcIsExtensionPresent;
+    pContext->openal.alcGetProcAddress      = (mal_proc)alcGetProcAddress;
+    pContext->openal.alcGetEnumValue        = (mal_proc)alcGetEnumValue;
+    pContext->openal.alcGetString           = (mal_proc)alcGetString;
+    pContext->openal.alcGetIntegerv         = (mal_proc)alcGetIntegerv;
+    pContext->openal.alcCaptureOpenDevice   = (mal_proc)alcCaptureOpenDevice;
+    pContext->openal.alcCaptureCloseDevice  = (mal_proc)alcCaptureCloseDevice;
+    pContext->openal.alcCaptureStart        = (mal_proc)alcCaptureStart;
+    pContext->openal.alcCaptureStop         = (mal_proc)alcCaptureStop;
+    pContext->openal.alcCaptureSamples      = (mal_proc)alcCaptureSamples;
 
-    // We depend on the ALC_ENUMERATION_EXT extension.
-    if (!((MAL_LPALCISEXTENSIONPRESENT)pContext->openal.alcIsExtensionPresent)(NULL, "ALC_ENUMERATION_EXT")) {
-        mal_dlclose(pContext->openal.hOpenAL);
-        return MAL_FAILED_TO_INIT_BACKEND;
-    }
+    pContext->openal.alEnable               = (mal_proc)alEnable;
+    pContext->openal.alDisable              = (mal_proc)alDisable;
+    pContext->openal.alIsEnabled            = (mal_proc)alIsEnabled;
+    pContext->openal.alGetString            = (mal_proc)alGetString;
+    pContext->openal.alGetBooleanv          = (mal_proc)alGetBooleanv;
+    pContext->openal.alGetIntegerv          = (mal_proc)alGetIntegerv;
+    pContext->openal.alGetFloatv            = (mal_proc)alGetFloatv;
+    pContext->openal.alGetDoublev           = (mal_proc)alGetDoublev;
+    pContext->openal.alGetBoolean           = (mal_proc)alGetBoolean;
+    pContext->openal.alGetInteger           = (mal_proc)alGetInteger;
+    pContext->openal.alGetFloat             = (mal_proc)alGetFloat;
+    pContext->openal.alGetDouble            = (mal_proc)alGetDouble;
+    pContext->openal.alGetError             = (mal_proc)alGetError;
+    pContext->openal.alIsExtensionPresent   = (mal_proc)alIsExtensionPresent;
+    pContext->openal.alGetProcAddress       = (mal_proc)alGetProcAddress;
+    pContext->openal.alGetEnumValue         = (mal_proc)alGetEnumValue;
+    pContext->openal.alGenSources           = (mal_proc)alGenSources;
+    pContext->openal.alDeleteSources        = (mal_proc)alDeleteSources;
+    pContext->openal.alIsSource             = (mal_proc)alIsSource;
+    pContext->openal.alSourcef              = (mal_proc)alSourcef;
+    pContext->openal.alSource3f             = (mal_proc)alSource3f;
+    pContext->openal.alSourcefv             = (mal_proc)alSourcefv;
+    pContext->openal.alSourcei              = (mal_proc)alSourcei;
+    pContext->openal.alSource3i             = (mal_proc)alSource3i;
+    pContext->openal.alSourceiv             = (mal_proc)alSourceiv;
+    pContext->openal.alGetSourcef           = (mal_proc)alGetSourcef;
+    pContext->openal.alGetSource3f          = (mal_proc)alGetSource3f;
+    pContext->openal.alGetSourcefv          = (mal_proc)alGetSourcefv;
+    pContext->openal.alGetSourcei           = (mal_proc)alGetSourcei;
+    pContext->openal.alGetSource3i          = (mal_proc)alGetSource3i;
+    pContext->openal.alGetSourceiv          = (mal_proc)alGetSourceiv;
+    pContext->openal.alSourcePlayv          = (mal_proc)alSourcePlayv;
+    pContext->openal.alSourceStopv          = (mal_proc)alSourceStopv;
+    pContext->openal.alSourceRewindv        = (mal_proc)alSourceRewindv;
+    pContext->openal.alSourcePausev         = (mal_proc)alSourcePausev;
+    pContext->openal.alSourcePlay           = (mal_proc)alSourcePlay;
+    pContext->openal.alSourceStop           = (mal_proc)alSourceStop;
+    pContext->openal.alSourceRewind         = (mal_proc)alSourceRewind;
+    pContext->openal.alSourcePause          = (mal_proc)alSourcePause;
+    pContext->openal.alSourceQueueBuffers   = (mal_proc)alSourceQueueBuffers;
+    pContext->openal.alSourceUnqueueBuffers = (mal_proc)alSourceUnqueueBuffers;
+    pContext->openal.alGenBuffers           = (mal_proc)alGenBuffers;
+    pContext->openal.alDeleteBuffers        = (mal_proc)alDeleteBuffers;
+    pContext->openal.alIsBuffer             = (mal_proc)alIsBuffer;
+    pContext->openal.alBufferData           = (mal_proc)alBufferData;
+    pContext->openal.alBufferf              = (mal_proc)alBufferf;
+    pContext->openal.alBuffer3f             = (mal_proc)alBuffer3f;
+    pContext->openal.alBufferfv             = (mal_proc)alBufferfv;
+    pContext->openal.alBufferi              = (mal_proc)alBufferi;
+    pContext->openal.alBuffer3i             = (mal_proc)alBuffer3i;
+    pContext->openal.alBufferiv             = (mal_proc)alBufferiv;
+    pContext->openal.alGetBufferf           = (mal_proc)alGetBufferf;
+    pContext->openal.alGetBuffer3f          = (mal_proc)alGetBuffer3f;
+    pContext->openal.alGetBufferfv          = (mal_proc)alGetBufferfv;
+    pContext->openal.alGetBufferi           = (mal_proc)alGetBufferi;
+    pContext->openal.alGetBuffer3i          = (mal_proc)alGetBuffer3i;
+    pContext->openal.alGetBufferiv          = (mal_proc)alGetBufferiv;
+#endif
 
+    // We depend on the ALC_ENUMERATION_EXT extension for enumeration. If this is not supported we fall back to default devices.
+    pContext->openal.isEnumerationSupported = ((MAL_LPALCISEXTENSIONPRESENT)pContext->openal.alcIsExtensionPresent)(NULL, "ALC_ENUMERATION_EXT");
     pContext->openal.isFloat32Supported = ((MAL_LPALISEXTENSIONPRESENT)pContext->openal.alIsExtensionPresent)("AL_EXT_float32");
     pContext->openal.isMCFormatsSupported = ((MAL_LPALISEXTENSIONPRESENT)pContext->openal.alIsExtensionPresent)("AL_EXT_MCFORMATS");
     
@@ -7928,7 +8106,10 @@ mal_result mal_context_uninit__openal(mal_context* pContext)
     mal_assert(pContext != NULL);
     mal_assert(pContext->backend == mal_backend_openal);
 
+#ifndef MAL_NO_RUNTIME_LINKING
     mal_dlclose(pContext->openal.hOpenAL);
+#endif
+
     return MAL_SUCCESS;
 }
 
@@ -7937,35 +8118,55 @@ mal_result mal_enumerate_devices__openal(mal_context* pContext, mal_device_type 
     mal_uint32 infoSize = *pCount;
     *pCount = 0;
 
-    const mal_ALCchar* pDeviceNames = ((MAL_LPALCGETSTRING)pContext->openal.alcGetString)(NULL, (type == mal_device_type_playback) ? MAL_ALC_DEVICE_SPECIFIER : MAL_ALC_CAPTURE_DEVICE_SPECIFIER);
-    if (pDeviceNames == NULL) {
-        return MAL_NO_DEVICE;
-    }
+    if (pContext->openal.isEnumerationSupported) {
+        const mal_ALCchar* pDeviceNames = ((MAL_LPALCGETSTRING)pContext->openal.alcGetString)(NULL, (type == mal_device_type_playback) ? MAL_ALC_DEVICE_SPECIFIER : MAL_ALC_CAPTURE_DEVICE_SPECIFIER);
+        if (pDeviceNames == NULL) {
+            return MAL_NO_DEVICE;
+        }
     
-    // Each device is stored in pDeviceNames, separated by a null-terminator. The string itself is double-null-terminated.
-    const mal_ALCchar* pNextDeviceName = pDeviceNames;
-    while (pNextDeviceName[0] != '\0') {
+        // Each device is stored in pDeviceNames, separated by a null-terminator. The string itself is double-null-terminated.
+        const mal_ALCchar* pNextDeviceName = pDeviceNames;
+        while (pNextDeviceName[0] != '\0') {
+            if (pInfo != NULL) {
+                if (infoSize > 0) {
+                    mal_strncpy_s(pInfo->id.openal, sizeof(pInfo->id.openal), (const char*)pNextDeviceName, (size_t)-1);
+                    mal_strncpy_s(pInfo->name,      sizeof(pInfo->name),      (const char*)pNextDeviceName, (size_t)-1);
+
+                    pInfo += 1;
+                    infoSize -= 1;
+                    *pCount += 1;
+                }
+            } else {
+                *pCount += 1;
+            }
+
+            // Move to the next device name.
+            while (*pNextDeviceName != '\0') {
+                pNextDeviceName += 1;
+            }
+
+            // Skip past the null terminator.
+            pNextDeviceName += 1;
+        };
+    } else {
+        // Enumeration is not supported. Use default devices.
         if (pInfo != NULL) {
             if (infoSize > 0) {
-                mal_strncpy_s(pInfo->id.openal, sizeof(pInfo->id.openal), (const char*)pNextDeviceName, (size_t)-1);
-                mal_strncpy_s(pInfo->name,      sizeof(pInfo->name),      (const char*)pNextDeviceName, (size_t)-1);
+                if (type == mal_device_type_playback) {
+                    pInfo->id.sdl = 0;
+                    mal_strncpy_s(pInfo->name, sizeof(pInfo->name), "Default Playback Device", (size_t)-1);
+                } else {
+                    pInfo->id.sdl = 0;
+                    mal_strncpy_s(pInfo->name, sizeof(pInfo->name), "Default Capture Device", (size_t)-1);
+                }
 
                 pInfo += 1;
-                infoSize -= 1;
                 *pCount += 1;
             }
         } else {
             *pCount += 1;
         }
-
-        // Move to the next device name.
-        while (*pNextDeviceName != '\0') {
-            pNextDeviceName += 1;
-        }
-
-        // Skip past the null terminator.
-        pNextDeviceName += 1;
-    };
+    }
 
     return MAL_SUCCESS;
 }
@@ -8043,7 +8244,7 @@ mal_result mal_device_init__openal(mal_context* pContext, mal_device_type type, 
     }
 
     if (formatAL == 0) {
-        return MAL_FORMAT_NOT_SUPPORTED;
+        return mal_context_post_error(pContext, NULL, "[OpenAL] Format not supported.", MAL_FORMAT_NOT_SUPPORTED);
     }
 
     bufferSizeInSamplesAL *= channelsAL;
@@ -10952,6 +11153,20 @@ mal_uint32 mal_convert_frames(void* pOut, mal_format formatOut, mal_uint32 chann
     }
 
     return mal_dsp_read_frames_ex(&dsp, frameCountOut, pOut, MAL_TRUE);
+}
+
+mal_dsp_config mal_dsp_config_init(mal_format formatIn, mal_uint32 channelsIn, mal_uint32 sampleRateIn, mal_format formatOut, mal_uint32 channelsOut, mal_uint32 sampleRateOut)
+{
+    mal_dsp_config config;
+    mal_zero_object(&config);
+    config.formatIn = formatIn;
+    config.channelsIn = channelsIn;
+    config.sampleRateIn = sampleRateIn;
+    config.formatOut = formatOut;
+    config.channelsOut = channelsOut;
+    config.sampleRateOut = sampleRateOut;
+
+    return config;
 }
 
 

@@ -401,10 +401,10 @@ void InitAudioDevice(void)
     mal_device_config deviceConfig = mal_device_config_init(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, OnSendAudioDataToDevice);
 
     // Special case for PLATFORM_RPI.
-#if defined(PLATFORM_RPI)
-    deviceConfig.alsa.noMMap = MAL_TRUE;
-    deviceConfig.bufferSizeInFrames = 2048;
-#endif
+//#if defined(PLATFORM_RPI)
+//    deviceConfig.alsa.noMMap = MAL_TRUE;
+//    deviceConfig.bufferSizeInFrames = 2048;
+//#endif
 
     result = mal_device_init(&context, mal_device_type_playback, NULL, &deviceConfig, NULL, &device);
     if (result != MAL_SUCCESS)
