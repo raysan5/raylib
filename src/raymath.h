@@ -191,8 +191,8 @@ RMDEF void QuaternionNormalize(Quaternion *q);                  // Normalize pro
 RMDEF void QuaternionInvert(Quaternion *quat);                  // Invert provided quaternion
 RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
 RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount);    // Calculate linear interpolation between two quaternions
-RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount);   // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount);   // Calculate slerp-optimized interpolation between two quaternions
+RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount);   // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to);      // Calculate quaternion based on the rotation from one vector to another
 RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
 RMDEF Matrix QuaternionToMatrix(Quaternion q);                        // Returns a matrix for a given quaternion
@@ -1083,6 +1083,15 @@ RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount)
     return result;
 }
 
+// Calculate slerp-optimized interpolation between two quaternions
+RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
+{
+    Quaternion result = QuaternionLerp(q1, q2, amount);
+    QuaternionNormalize(&result);
+    
+    return result;
+}
+
 // Calculates spherical linear interpolation between two quaternions
 RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
 {
@@ -1116,15 +1125,6 @@ RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount)
         }
     }
 
-    return result;
-}
-
-// Calculate slerp-optimized interpolation between two quaternions
-RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
-{
-    Quaternion result = QuaternionLerp(q1, q2, amount);
-    QuaternionNormalize(&result);
-    
     return result;
 }
 
