@@ -2,19 +2,20 @@
 *
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
-*   PLATFORMS SUPPORTED: 
-*       - Windows (Win32, Win64)
-*       - Linux (tested on Ubuntu)
-*       - FreeBSD
-*       - OSX/macOS
-*       - Android (ARM, ARM64) 
-*       - Raspberry Pi (Raspbian)
-*       - HTML5 (Chrome, Firefox)
+*   PLATFORMS SUPPORTED:
+*       PLATFORM_DESKTOP:  Windows (Win32, Win64)
+*       PLATFORM_DESKTOP:  Linux (32 and 64 bit)
+*       PLATFORM_DESKTOP:  OSX/macOS
+*       PLATFORM_DESKTOP:  FreeBSD
+*       PLATFORM_ANDROID:  Android (ARM, ARM64)
+*       PLATFORM_RPI:      Raspberry Pi (Raspbian)
+*       PLATFORM_WEB:      HTML5 (Chrome, Firefox)
+*       PLATFORM_UWP:      Universal Windows Platform
 *
 *   CONFIGURATION:
 *
 *   #define PLATFORM_DESKTOP
-*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD (managed by GLFW3 library)
+*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD
 *       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
 *
 *   #define PLATFORM_ANDROID
@@ -22,8 +23,8 @@
 *       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
 *
 *   #define PLATFORM_RPI
-*       Windowing and input system configured for Raspberry Pi (tested on Raspbian), graphic device is managed by EGL 
-*       and inputs are processed is raw mode, reading from /dev/input/
+*       Windowing and input system configured for Raspberry Pi i native mode (no X.org required, tested on Raspbian), 
+*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
@@ -49,15 +50,15 @@
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
 *   DEPENDENCIES:
-*       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
-*       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
+*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD)
+*       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -152,7 +153,6 @@
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
     
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
-    // NOTE: Those functions require linking with winmm library
     __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
     __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
     #endif

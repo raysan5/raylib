@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Desktop platforms, Raspberry Pi, Android and HTML5
 #
-#   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2018 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -33,15 +33,8 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     RAYLIB_PATH ?= /home/pi/raylib
 endif
 
-# Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
-# NOTE: Libraries should be provided in the selected form
+# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
-
-# On PLATFORM_WEB force OpenAL Soft shared library
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    OPENAL_LIBTYPE = SHARED
-endif
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -64,6 +57,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
             PLATFORM_OS=OSX
             LIBPATH=osx
         endif
+    endif
+endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    UNAMEOS=$(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS=LINUX
     endif
 endif
 
@@ -140,7 +139,7 @@ endif
 
 # Define compiler flags:
 #  -O1                  defines optimization level
-#  -Og                  enable debugging
+#  -g                   enable debugging
 #  -s                   strip unnecessary data from build
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
@@ -148,7 +147,7 @@ endif
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -O1 -s -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
 
 # Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -176,7 +175,7 @@ endif
 
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -205,38 +204,28 @@ endif
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compiling
-        # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LDLIBS = -lraylib -lglfw3 -lopengl32 -lgdi32
-
-        # Define required flags and libs for OpenAL Soft STATIC/SHARED usage
-        # NOTE: ALLIBS flag only required for raylib Win32 SHARED library building
-        ifeq ($(OPENAL_LIBTYPE),STATIC)
-            LDLIBS += -lopenal32 -lwinmm
-            CFLAGS += -DAL_LIBTYPE_STATIC -Wl,-allow-multiple-definition
-        else
-            LDLIBS += -lopenal32dll
-        endif
+        LDLIBS = -lraylib -lopengl32 -lgdi32
         
         # Required for physac examples
         LDLIBS += -static -lpthread
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compiling
-        # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = -lraylib -lGL -lm -lpthread -ldl
         
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
-        # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+        # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
+        LDLIBS = -lraylib -framework OpenGL -framework OpenAL -framework Cocoa
     endif
     ifeq ($(PLATFORM_OS),FREEBSD)
         # Libraries for FreeBSD desktop compiling
-        # NOTE: Required packages: glfw openal-soft mesa-libs
-        LDLIBS = -lraylib -lglfw -lGL -lopenal -lpthread -lm
+        # NOTE: Required packages: mesa-libs
+        LDLIBS = -lraylib -lGL -lpthread -lm
 
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
@@ -244,8 +233,8 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # Libraries for Raspberry Pi compiling
-    # NOTE: Required packages: libopenal1
-    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -lopenal
+    # NOTE: Required packages: libasound2-dev (ALSA)
+    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
@@ -360,10 +349,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 		find -type f -executable | xargs file -i | grep -E 'x-object|x-archive|x-sharedlib|x-executable' | rev | cut -d ':' -f 2- | rev | xargs rm -f
     endif
     ifeq ($(PLATFORM_OS),OSX)
-		find . -type f -perm +ugo+x -delete
-		rm -f *.o
-    endif
-    ifeq ($(PLATFORM_OS),FREEBSD)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
     endif

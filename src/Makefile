@@ -4,7 +4,7 @@
 #
 #  Platforms supported: 
 #    PLATFORM_DESKTOP:  Windows (Win32, Win64)
-#    PLATFORM_DESKTOP:  Linux
+#    PLATFORM_DESKTOP:  Linux (32 and 64 bit)
 #    PLATFORM_DESKTOP:  OSX/macOS
 #    PLATFORM_DESKTOP:  FreeBSD
 #    PLATFORM_ANDROID:  Android (ARM, ARM64)
@@ -14,7 +14,7 @@
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
-#  Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+#  Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 #
 #  This software is provided "as-is", without any express or implied warranty.
 #  In no event will the authors be held liable for any damages arising from
@@ -43,17 +43,10 @@
 
 # Define required raylib variables
 PLATFORM ?= PLATFORM_DESKTOP
-RAYLIB_PATH ?= ..
+RAYLIB_PATH = ..
 
-# Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
-# NOTE: OpenAL Soft library should be provided in the selected form
+# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
-
-# On PLATFORM_WEB force OpenAL Soft shared library
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    OPENAL_LIBTYPE = SHARED
-endif
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -269,14 +262,9 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
 
-# Define required compilation flags for OpenAL Soft STATIC lib
-ifeq ($(OPENAL_LIBTYPE),STATIC)
-    ALFLAGS = -DAL_LIBTYPE_STATIC -Wl,-allow-multiple-definition
-endif
-
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -Iexternal -Iexternal/include -Iexternal/glfw/include
+INCLUDE_PATHS = -I. -Iexternal -Iexternal/glfw/include
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),FREEBSD)
@@ -310,7 +298,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Library paths containing required libs
     LDFLAGS += -L. -Lsrc -L$(RAYLIB_RELEASE_PATH)
 
-    LDLIBS = -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
+    LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 endif
 
 # Define all object files required with a wildcard
@@ -327,6 +315,7 @@ OBJS = core.o \
        text.o \
        models.o \
        audio.o \
+       mini_al.o \
        stb_vorbis.o \
        utils.o
        
@@ -357,16 +346,14 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "raylib library generated (libraylib.bc)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
-        # NOTE: If using OpenAL Soft as static library, all its dependencies must be also linked in the shared library
         ifeq ($(PLATFORM_OS),WINDOWS)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -lgdi32 -lopenal32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
 			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
-            @echo "expected OpenAL Soft static library linking"
         endif
         ifeq ($(PLATFORM_OS),LINUX)
             # Compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lopenal -lm -lpthread -ldl
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lm -lpthread -ldl
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM_OS),OSX)
@@ -376,7 +363,7 @@ else
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
         # WARNING: you should type "gmake clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lopenal -lpthread
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lpthread
 			@echo "raylib shared library generated (libraylib.so)!"
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -388,11 +375,6 @@ else
 		@echo raylib library release path is $(RAYLIB_RELEASE_PATH)
 		$(AR) rcs $(RAYLIB_RELEASE_PATH)/libraylib.a $(OBJS)
 		@echo "raylib static library generated (libraylib.a)!"
-        ifeq ($(OPENAL_LIBTYPE),STATIC)
-			@echo "expected OpenAL Soft static library linking"
-        else
-			@echo "expected OpenAL Soft shared library linking"
-        endif
     endif
 endif
 
@@ -428,7 +410,11 @@ models.o : models.c raylib.h rlgl.h raymath.h
 
 # Compile audio module
 audio.o : audio.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(ALFLAGS)
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+    
+# Compile mini_al audio library
+mini_al.o : external/mini_al.c external/mini_al.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) 
 
 # Compile stb_vorbis library
 stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h

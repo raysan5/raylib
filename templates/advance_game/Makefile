@@ -26,18 +26,12 @@
 # Define required raylib variables
 # WARNING: To compile to HTML5, code must be redesigned to use emscripten.h and emscripten_set_main_loop()
 PLATFORM ?= PLATFORM_DESKTOP
-RAYLIB_PATH ?= ..\..
+RAYLIB_PATH = ..\..
 PROJECT_NAME ?= advance_game
 
 # Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
 # NOTE: Libraries should be provided in the selected form
 RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
-
-# On PLATFORM_WEB force OpenAL Soft shared library
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    OPENAL_LIBTYPE = SHARED
-endif
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -125,7 +119,7 @@ endif
 
 # Define compiler flags:
 #  -O1                  defines optimization level
-#  -Og                  enable debugging
+#  -g                   enable debugging
 #  -s                   strip unnecessary data from build
 #  -Wall                turns on most, but not all, compiler warnings
 #  -std=c99             defines C language mode (standard C from 1999 revision)
@@ -177,37 +171,27 @@ endif
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        # Libraries for Windows desktop compiling
-        # NOTE: GLFW3 and OpenAL Soft libraries should be installed
-        LDLIBS = -lraylib -lglfw3 -lopengl32 -lgdi32
-
-        # Define required flags and libs for OpenAL Soft STATIC/SHARED usage
-        # NOTE: ALLIBS flag only required for raylib Win32 SHARED library building
-        ifeq ($(OPENAL_LIBTYPE),STATIC)
-            LDLIBS += -lopenal32 -lwinmm
-            CFLAGS += -DAL_LIBTYPE_STATIC -Wl,-allow-multiple-definition
-        else
-            LDLIBS += -lopenal32dll
-        endif
+        # Libraries for Windows desktop compilation
+        LDLIBS = -lraylib -lopengl32 -lgdi32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compiling
-        # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -lglfw3 -lGL -lopenal -lm -lpthread -ldl
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = -lraylib -lGL -lm -lpthread -ldl
         
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
-        # NOTE: Required packages: libglfw3-dev libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+        # NOTE: Required packages: libegl1-mesa-dev
+        LDLIBS = -lraylib -framework OpenGL -framework OpenAL -framework Cocoa
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # Libraries for Raspberry Pi compiling
-    # NOTE: Required packages: libopenal1
-    LDLIBS = -lraylib -lGLESv2 -lEGL -lpthread -lrt -lm -lbcm_host -lopenal
+    # NOTE: Required packages: libasound2-dev (ALSA)
+    LDLIBS = -lraylib -lbrcmGLESv2 -lbrcmEGL -lpthread -lrt -lm -lbcm_host -ldl
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling

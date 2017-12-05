@@ -85,7 +85,7 @@
     #include "external/glfw/src/x11_monitor.c"
     #include "external/glfw/src/x11_window.c"
     #include "external/glfw/src/xkb_unicode.c"
-    // TODO: Joistick implementation
+    // TODO: Joystick implementation
     #include "external/glfw/src/null_joystick.c"
     #include "external/glfw/src/posix_time.c"
     #include "external/glfw/src/posix_thread.c"
