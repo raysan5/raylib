@@ -6,18 +6,18 @@
 *
 *   FEATURES:
 *       - Written in plain C code (C99) in PascalCase/camelCase notation
-*       - Multiple platforms support: Windows, Linux, Mac, Android, Raspberry Pi and HTML5
-*       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES 2.0)
+*       - Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
 *       - Unique OpenGL abstraction layer (usable as standalone module): [rlgl]
-*       - Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
-*       - Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
-*       - Basic 3d support for Geometrics, Models, Billboards, Heightmaps and Cubicmaps
+*       - Powerful fonts module with SpriteFonts support (XNA fonts, AngelCode fonts, TTF)
+*       - Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
+*       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
 *       - Flexible Materials system, supporting classic maps and PBR maps
 *       - Shaders support, including Model shaders and Postprocessing shaders
-*       - Powerful math module for Vector2, Vector3, Matrix and Quaternion operations: [raymath]
-*       - Audio loading and playing with streaming support and mixing channels: [audio]
-*       - VR stereo rendering support with configurable HMD device parameters
-*       - Minimal external dependencies (GLFW3, OpenGL, OpenAL)
+*       - Powerful math module for Vector, Matrix and Quaternion operations: [raymath]
+*       - Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
+*       - Multiple platforms support: Windows, Linux, FreeBSD, MacOS, UWP, Android, Raspberry Pi, HTML5.
+*       - VR stereo rendering with configurable HMD device parameters
+*       - NO external dependencies, all required libraries included with raylib
 *       - Complete bindings to LUA (raylib-lua) and Go (raylib-go)
 *
 *   NOTES:
@@ -25,17 +25,17 @@
 *       If using OpenGL 3.3 or ES2, one default shader is loaded automatically (internally defined) [rlgl]
 *       If using OpenGL 3.3 or ES2, several vertex buffers (VAO/VBO) are created to manage lines-triangles-quads
 *
-*   DEPENDENCIES:
-*       GLFW3 (www.glfw.org) for window/context management and input [core]
-*       GLAD for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP) [rlgl]
-*       OpenAL Soft for audio device/context management [audio]
+*   DEPENDENCIES (included):
+*       rglfw (github.com/glfw/glfw) for window/context management and input (only PLATFORM_DESKTOP) [core]
+*       glad (github.com/Dav1dde/glad) for OpenGL extensions loading (3.3 Core profile, only PLATFORM_DESKTOP) [rlgl]
+*       mini_al (github.com/dr-soft/mini_al) for audio device/context management [audio]
 *
-*   OPTIONAL DEPENDENCIES:
-*       stb_image (Sean Barret) for images loading (JPEG, PNG, BMP, TGA) [textures]
+*   OPTIONAL DEPENDENCIES (included):
+*       stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...) [textures]
 *       stb_image_resize (Sean Barret) for image resizing algorythms [textures]
 *       stb_image_write (Sean Barret) for image writting (PNG) [utils]
 *       stb_truetype (Sean Barret) for ttf fonts loading [text]
-*       stb_vorbis (Sean Barret) for ogg audio loading [audio]
+*       stb_vorbis (Sean Barret) for OGG audio loading [audio]
 *       stb_perlin (Sean Barret) for Perlin noise image generation [textures]
 *       par_shapes (Philip Rideout) for parametric 3d shapes generation [models]
 *       jar_xm (Joshua Reisenauer) for XM audio module loading [audio]
@@ -50,7 +50,7 @@
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2013-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

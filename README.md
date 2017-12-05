@@ -18,20 +18,20 @@ pure spartan-programmers way. Are you ready to learn? Jump to [code examples!](h
 
 features
 --------
- 
+
    *  Written in plain C code (C99) in PascalCase/camelCase notation
-   *  Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2)
+   *  Hardware accelerated with OpenGL (1.1, 2.1, 3.3 or ES2 - choose at compile)
    *  Unique OpenGL abstraction layer (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.c)
-   *  Powerful fonts module with SpriteFonts support (XNA bitmap fonts, AngelCode fonts, TTF)
-   *  Outstanding texture formats support, including compressed formats (DXT, ETC, PVRT, ASTC)
-   *  Basic 3d support for Geometrics, Models, Billboards, Heightmaps and Cubicmaps
+   *  Powerful fonts module with SpriteFonts support (XNA fonts, AngelCode fonts, TTF)
+   *  Outstanding texture formats support, including compressed formats (DXT, ETC, ASTC)
+   *  Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
    *  Flexible Materials system, supporting classic maps and PBR maps
    *  Shaders support, including Model shaders and Postprocessing shaders
    *  Powerful math module for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
    *  Audio loading and playing with streaming support (WAV, OGG, FLAC, XM, MOD)
-   *  Multiple platforms support: Windows, Linux, Mac, **Android**, **Raspberry Pi** and **HTML5**
-   *  VR stereo rendering support with configurable HMD device parameters
-   *  Minimal external dependencies (OpenGL, OpenAL)
+   *  Multiple platforms support: Windows, Linux, FreeBSD, MacOS, UWP, Android, Raspberry Pi, HTML5.
+   *  VR stereo rendering with configurable HMD device parameters
+   *  NO external dependencies, all required libraries included with raylib
    *  Complete bindings to LUA ([raylib-lua](https://github.com/raysan5/raylib-lua)) and Go ([raylib-go](https://github.com/gen2brain/raylib-go))
 
 raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option I found for 
