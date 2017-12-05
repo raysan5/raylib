@@ -470,6 +470,8 @@ typedef struct Wave {
 
 // Sound source type
 typedef struct Sound {
+    void* audioBuffer;      // A pointer to internal data used by the audio system.
+
     unsigned int source;    // OpenAL audio source id
     unsigned int buffer;    // OpenAL audio buffer id
     int format;             // OpenAL audio format specifier
@@ -485,6 +487,8 @@ typedef struct AudioStream {
     unsigned int sampleRate;    // Frequency (samples per second)
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo)
+
+    void* audioBuffer;          // A pointer to internal data used by the audio system.
 
     int format;                 // OpenAL audio format specifier
     unsigned int source;        // OpenAL audio source id
@@ -1126,7 +1130,7 @@ RLAPI void ResumeMusicStream(Music music);                            // Resume 
 RLAPI bool IsMusicPlaying(Music music);                               // Check if music is playing
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
 RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
-RLAPI void SetMusicLoopCount(Music music, float count);               // Set music loop count (loop repeats)
+RLAPI void SetMusicLoopCount(Music music, int count);                 // Set music loop count (loop repeats)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
@@ -1139,7 +1143,10 @@ RLAPI bool IsAudioBufferProcessed(AudioStream stream);                // Check i
 RLAPI void PlayAudioStream(AudioStream stream);                       // Play audio stream
 RLAPI void PauseAudioStream(AudioStream stream);                      // Pause audio stream
 RLAPI void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
+RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audio stream is playing
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
+RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);     // Set volume for audio stream (1.0 is max level)
+RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);       // Set pitch for audio stream (1.0 is base level)
 
 #ifdef __cplusplus
 }
