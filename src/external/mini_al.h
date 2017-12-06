@@ -2746,10 +2746,10 @@ static mal_result mal_context__try_get_device_name_by_id(mal_context* pContext, 
             } break;
         #endif
         #ifdef MAL_HAS_COREAUDIO
-            case mal_backend_coreaudio
-            {
-                // TODO: Implement me.
-            } break;
+            //case mal_backend_coreaudio:
+            //{
+            //    // TODO: Implement me.
+            //} break;
         #endif
         #ifdef MAL_HAS_OSS
             case mal_backend_oss:
