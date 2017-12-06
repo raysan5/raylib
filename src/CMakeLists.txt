@@ -83,8 +83,7 @@ endif()
 # Get the sources together
 file(GLOB raylib_sources *.c)
 file(GLOB stb_vorbis external/stb_vorbis.c)
-file(GLOB mini_al external/mini_al.c)
-set(sources ${raylib_sources} ${stb_vorbis})
+file(GLOB mini_al external/mini_al.c ${stb_vorbis})
 set(sources ${raylib_sources} ${mini_al})
 
 # Which platform?

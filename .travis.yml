@@ -23,7 +23,7 @@ before_script:
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       sudo apt-get install -y gcc-multilib
-                              libopenal-dev
+                              libasound2-dev
                               libxcursor-dev libxinerama-dev
                               mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev
                               libgl1-mesa-dev libglu1-mesa-dev libglew-dev;

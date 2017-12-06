@@ -23,7 +23,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Linux)
   # Elsewhere (such as Linux), need `-lopenal -lGL`, etc...
   set(LIBS_PRIVATE
       m pthread dl
-      openal
       GL
       X11 Xrandr Xinerama Xi Xxf86vm Xcursor)  # X11 stuff
 endif()
