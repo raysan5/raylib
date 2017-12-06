@@ -28,9 +28,6 @@ environment:
       bits: 64
 
 before_build:
-  - appveyor DownloadFile http://openal-soft.org/openal-binaries/openal-soft-1.17.2-bin.zip
-  - 7z x openal-soft-1.17.2-bin.zip
-  - move openal-soft-1.17.2-bin src\external\openal
   - if [%compiler%]==[mingw] set CFLAGS=-m%BITS% & set LDFLAGS=-m%BITS% & set GENERATOR="MinGW Makefiles"
   - if [%COMPILER%]==[msvc15] if [%BITS%]==[32] set GENERATOR="Visual Studio 14 2015"
   - if [%COMPILER%]==[msvc15] if [%BITS%]==[64] set GENERATOR="Visual Studio 14 2015 Win64"
