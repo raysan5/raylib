@@ -493,17 +493,37 @@ extern "C" {
  *  @{ */
 
 /*! @brief If this bit is set one or more Shift keys were held down.
+ *
+ *  If this bit is set one or more Shift keys were held down.
  */
 #define GLFW_MOD_SHIFT           0x0001
 /*! @brief If this bit is set one or more Control keys were held down.
+ *
+ *  If this bit is set one or more Control keys were held down.
  */
 #define GLFW_MOD_CONTROL         0x0002
 /*! @brief If this bit is set one or more Alt keys were held down.
+ *
+ *  If this bit is set one or more Alt keys were held down.
  */
 #define GLFW_MOD_ALT             0x0004
 /*! @brief If this bit is set one or more Super keys were held down.
+ *
+ *  If this bit is set one or more Super keys were held down.
  */
 #define GLFW_MOD_SUPER           0x0008
+/*! @brief If this bit is set the Caps Lock key is enabled.
+ *
+ *  If this bit is set the Caps Lock key is enabled and the @ref
+ *  GLFW_LOCK_KEY_MODS input mode is set.
+ */
+#define GLFW_MOD_CAPS_LOCK       0x0010
+/*! @brief If this bit is set the Num Lock key is enabled.
+ *
+ *  If this bit is set the Num Lock key is enabled and the @ref
+ *  GLFW_LOCK_KEY_MODS input mode is set.
+ */
+#define GLFW_MOD_NUM_LOCK        0x0020
 
 /*! @} */
 
@@ -789,10 +809,11 @@ extern "C" {
 #define GLFW_CENTER_CURSOR          0x00020009
 /*! @brief Window framebuffer transparency hint and attribute
  *
- *  Window framebuffer transparency [window hint](@ref GLFW_TRANSPARENT_hint)
- *  and [window attribute](@ref GLFW_TRANSPARENT_attrib).
+ *  Window framebuffer transparency
+ *  [window hint](@ref GLFW_TRANSPARENT_FRAMEBUFFER_hint) and
+ *  [window attribute](@ref GLFW_TRANSPARENT_FRAMEBUFFER_attrib).
  */
-#define GLFW_TRANSPARENT            0x0002000A
+#define GLFW_TRANSPARENT_FRAMEBUFFER 0x0002000A
 
 /*! @brief Framebuffer bit depth hint.
  *
@@ -962,6 +983,7 @@ extern "C" {
 #define GLFW_CURSOR                 0x00033001
 #define GLFW_STICKY_KEYS            0x00033002
 #define GLFW_STICKY_MOUSE_BUTTONS   0x00033003
+#define GLFW_LOCK_KEY_MODS          0x00033004
 
 #define GLFW_CURSOR_NORMAL          0x00034001
 #define GLFW_CURSOR_HIDDEN          0x00034002
@@ -1382,6 +1404,8 @@ typedef void (* GLFWcharfun)(GLFWwindow*,unsigned int);
  *
  *  @sa @ref input_char
  *  @sa @ref glfwSetCharModsCallback
+ *
+ *  @deprecated Scheduled for removal in version 4.0.
  *
  *  @since Added in version 3.1.
  *
@@ -2086,8 +2110,8 @@ GLFWAPI const GLFWvidmode* glfwGetVideoMode(GLFWmonitor* monitor);
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED, @ref
  *  GLFW_INVALID_VALUE and @ref GLFW_PLATFORM_ERROR.
  *
- *  @remark @wayland Gamma handling is currently unavailable, this function will
- *  always emit @ref GLFW_PLATFORM_ERROR.
+ *  @remark @wayland Gamma handling is a priviledged protocol, this function
+ *  will thus never be implemented and emits @ref GLFW_PLATFORM_ERROR.
  *
  *  @thread_safety This function must only be called from the main thread.
  *
@@ -2110,8 +2134,9 @@ GLFWAPI void glfwSetGamma(GLFWmonitor* monitor, float gamma);
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
  *  GLFW_PLATFORM_ERROR.
  *
- *  @remark @wayland Gamma handling is currently unavailable, this function will
- *  always return `NULL` and emit @ref GLFW_PLATFORM_ERROR.
+ *  @remark @wayland Gamma handling is a priviledged protocol, this function
+ *  will thus never be implemented and emits @ref GLFW_PLATFORM_ERROR while
+ *  returning `NULL`.
  *
  *  @pointer_lifetime The returned structure and its arrays are allocated and
  *  freed by GLFW.  You should not free them yourself.  They are valid until the
@@ -2153,8 +2178,8 @@ GLFWAPI const GLFWgammaramp* glfwGetGammaRamp(GLFWmonitor* monitor);
  *
  *  @remark @win32 The gamma ramp size must be 256.
  *
- *  @remark @wayland Gamma handling is currently unavailable, this function will
- *  always emit @ref GLFW_PLATFORM_ERROR.
+ *  @remark @wayland Gamma handling is a priviledged protocol, this function
+ *  will thus never be implemented and emits @ref GLFW_PLATFORM_ERROR.
  *
  *  @pointer_lifetime The specified gamma ramp is copied before this function
  *  returns.
@@ -2288,8 +2313,8 @@ GLFWAPI void glfwWindowHint(int hint, int value);
  *
  *  @remark @win32 If the executable has an icon resource named `GLFW_ICON,` it
  *  will be set as the initial icon for the window.  If no such icon is present,
- *  the `IDI_WINLOGO` icon will be used instead.  To set a different icon, see
- *  @ref glfwSetWindowIcon.
+ *  the `IDI_APPLICATION` icon will be used instead.  To set a different icon,
+ *  see @ref glfwSetWindowIcon.
  *
  *  @remark @win32 The context to share resources with must not be current on
  *  any other thread.
@@ -2354,7 +2379,8 @@ GLFWAPI void glfwWindowHint(int hint, int value);
  *  icons, the window will inherit the one defined in the application's
  *  desktop file, so this function emits @ref GLFW_PLATFORM_ERROR.
  *
- *  @remark @wayland Screensaver inhibition is currently unimplemented.
+ *  @remark @wayland Screensaver inhibition requires the idle-inhibit protocol
+ *  to be implemented in the user's compositor.
  *
  *  @thread_safety This function must only be called from the main thread.
  *
@@ -2833,6 +2859,62 @@ GLFWAPI void glfwGetWindowFrameSize(GLFWwindow* window, int* left, int* top, int
  *  @ingroup window
  */
 GLFWAPI void glfwGetWindowContentScale(GLFWwindow* window, float* xscale, float* yscale);
+
+/*! @brief Returns the opacity of the whole window.
+ *
+ *  This function returns the opacity of the window, including any decorations.
+ *
+ *  The opacity (or alpha) value is a positive finite number between zero and
+ *  one, where zero is fully transparent and one is fully opaque.  If the system
+ *  does not support whole window transparency, this function always returns one.
+ *
+ *  The initial opacity value for newly created windows is one.
+ *
+ *  @param[in] window The window to query.
+ *  @return The opacity value of the specified window.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
+ *  GLFW_PLATFORM_ERROR.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @sa @ref window_transparency
+ *  @sa @ref glfwSetWindowOpacity
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup window
+ */
+GLFWAPI float glfwGetWindowOpacity(GLFWwindow* window);
+
+/*! @brief Sets the opacity of the whole window.
+ *
+ *  This function sets the opacity of the window, including any decorations.
+ *
+ *  The opacity (or alpha) value is a positive finite number between zero and
+ *  one, where zero is fully transparent and one is fully opaque.
+ *
+ *  The initial opacity value for newly created windows is one.
+ *
+ *  A window created with framebuffer transparency may not use whole window
+ *  transparency.  The results of doing this are undefined.
+ *
+ *  @param[in] window The window to set the opacity for.
+ *  @param[in] opacity The desired opacity of the specified window.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
+ *  GLFW_PLATFORM_ERROR.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @sa @ref window_transparency
+ *  @sa @ref glfwGetWindowOpacity
+ *
+ *  @since Added in version 3.3.
+ *
+ *  @ingroup window
+ */
+GLFWAPI void glfwSetWindowOpacity(GLFWwindow* window, float opacity);
 
 /*! @brief Iconifies the specified window.
  *
@@ -3596,12 +3678,12 @@ GLFWAPI void glfwPostEmptyEvent(void);
 /*! @brief Returns the value of an input option for the specified window.
  *
  *  This function returns the value of an input option for the specified window.
- *  The mode must be one of @ref GLFW_CURSOR, @ref GLFW_STICKY_KEYS or
- *  @ref GLFW_STICKY_MOUSE_BUTTONS.
+ *  The mode must be one of @ref GLFW_CURSOR, @ref GLFW_STICKY_KEYS,
+ *  @ref GLFW_STICKY_MOUSE_BUTTONS or @ref GLFW_LOCK_KEY_MODS.
  *
  *  @param[in] window The window to query.
- *  @param[in] mode One of `GLFW_CURSOR`, `GLFW_STICKY_KEYS` or
- *  `GLFW_STICKY_MOUSE_BUTTONS`.
+ *  @param[in] mode One of `GLFW_CURSOR`, `GLFW_STICKY_KEYS`,
+ *  `GLFW_STICKY_MOUSE_BUTTONS` or `GLFW_LOCK_KEY_MODS`.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
  *  GLFW_INVALID_ENUM.
@@ -3619,8 +3701,8 @@ GLFWAPI int glfwGetInputMode(GLFWwindow* window, int mode);
 /*! @brief Sets an input option for the specified window.
  *
  *  This function sets an input mode option for the specified window.  The mode
- *  must be one of @ref GLFW_CURSOR, @ref GLFW_STICKY_KEYS or
- *  @ref GLFW_STICKY_MOUSE_BUTTONS.
+ *  must be one of @ref GLFW_CURSOR, @ref GLFW_STICKY_KEYS,
+ *  @ref GLFW_STICKY_MOUSE_BUTTONS or @ref GLFW_LOCK_KEY_MODS.
  *
  *  If the mode is `GLFW_CURSOR`, the value must be one of the following cursor
  *  modes:
@@ -3646,9 +3728,15 @@ GLFWAPI int glfwGetInputMode(GLFWwindow* window, int mode);
  *  you are only interested in whether mouse buttons have been pressed but not
  *  when or in which order.
  *
+ *  If the mode is `GLFW_LOCK_KEY_MODS`, the value must be either `GLFW_TRUE` to
+ *  enable lock key modifier bits, or `GLFW_FALSE` to disable them.  If enabled,
+ *  callbacks that receive modifier bits will also have the @ref
+ *  GLFW_MOD_CAPS_LOCK bit set when the event was generated with Caps Lock on,
+ *  and the @ref GLFW_MOD_NUM_LOCK bit when Num Lock was on.
+ *
  *  @param[in] window The window whose input mode to set.
- *  @param[in] mode One of `GLFW_CURSOR`, `GLFW_STICKY_KEYS` or
- *  `GLFW_STICKY_MOUSE_BUTTONS`.
+ *  @param[in] mode One of `GLFW_CURSOR`, `GLFW_STICKY_KEYS`,
+ *  `GLFW_STICKY_MOUSE_BUTTONS` or `GLFW_LOCK_KEY_MODS`.
  *  @param[in] value The new value of the specified input mode.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED, @ref
@@ -4117,6 +4205,8 @@ GLFWAPI GLFWcharfun glfwSetCharCallback(GLFWwindow* window, GLFWcharfun cbfun);
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or an
  *  [error](@ref error_handling) occurred.
+ *
+ *  @deprecated Scheduled for removal in version 4.0.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4655,7 +4745,7 @@ GLFWAPI int glfwGetGamepadState(int jid, GLFWgamepadstate* state);
  *  This function sets the system clipboard to the specified, UTF-8 encoded
  *  string.
  *
- *  @param[in] window The window that will own the clipboard contents.
+ *  @param[in] window Deprecated.  Any valid window or `NULL`.
  *  @param[in] string A UTF-8 encoded string.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
@@ -4684,7 +4774,7 @@ GLFWAPI void glfwSetClipboardString(GLFWwindow* window, const char* string);
  *  if its contents cannot be converted, `NULL` is returned and a @ref
  *  GLFW_FORMAT_UNAVAILABLE error is generated.
  *
- *  @param[in] window The window that will request the clipboard contents.
+ *  @param[in] window Deprecated.  Any valid window or `NULL`.
  *  @return The contents of the clipboard as a UTF-8 encoded string, or `NULL`
  *  if an [error](@ref error_handling) occurred.
  *
@@ -4809,9 +4899,12 @@ GLFWAPI uint64_t glfwGetTimerFrequency(void);
  *  thread.
  *
  *  This function makes the OpenGL or OpenGL ES context of the specified window
- *  current on the calling thread.  A context can only be made current on
+ *  current on the calling thread.  A context must only be made current on
  *  a single thread at a time and each thread can have only a single current
  *  context at a time.
+ *
+ *  When moving a context between threads, you must make it non-current on the
+ *  old thread before making it current on the new one.
  *
  *  By default, making a context non-current implicitly forces a pipeline flush.
  *  On machines that support `GL_KHR_context_flush_control`, you can control
@@ -4903,12 +4996,11 @@ GLFWAPI void glfwSwapBuffers(GLFWwindow* window);
  *  is sometimes called _vertical synchronization_, _vertical retrace
  *  synchronization_ or just _vsync_.
  *
- *  Contexts that support either of the `WGL_EXT_swap_control_tear` and
- *  `GLX_EXT_swap_control_tear` extensions also accept negative swap intervals,
- *  which allow the driver to swap even if a frame arrives a little bit late.
- *  You can check for the presence of these extensions using @ref
- *  glfwExtensionSupported.  For more information about swap tearing, see the
- *  extension specifications.
+ *  A context that supports either of the `WGL_EXT_swap_control_tear` and
+ *  `GLX_EXT_swap_control_tear` extensions also accepts _negative_ swap
+ *  intervals, which allows the driver to swap immediately even if a frame
+ *  arrives a little bit late.  You can check for these extensions with @ref
+ *  glfwExtensionSupported.
  *
  *  A context must be current on the calling thread.  Calling this function
  *  without a current context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.

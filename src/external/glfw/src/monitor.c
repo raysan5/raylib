@@ -113,9 +113,11 @@ void _glfwInputMonitor(_GLFWmonitor* monitor, int action, int placement)
         {
             if (window->monitor == monitor)
             {
-                int width, height;
+                int width, height, xoff, yoff;
                 _glfwPlatformGetWindowSize(window, &width, &height);
                 _glfwPlatformSetWindowMonitor(window, NULL, 0, 0, width, height, 0);
+                _glfwPlatformGetWindowFrameSize(window, &xoff, &yoff, NULL, NULL);
+                _glfwPlatformSetWindowPos(window, xoff, yoff);
             }
         }
 

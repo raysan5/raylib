@@ -182,6 +182,15 @@ void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
 {
 }
 
+float _glfwPlatformGetWindowOpacity(_GLFWwindow* window)
+{
+    return 1.f;
+}
+
+void _glfwPlatformSetWindowOpacity(_GLFWwindow* window, float opacity)
+{
+}
+
 void _glfwPlatformShowWindow(_GLFWwindow* window)
 {
 }
@@ -266,11 +275,11 @@ void _glfwPlatformSetCursor(_GLFWwindow* window, _GLFWcursor* cursor)
 {
 }
 
-void _glfwPlatformSetClipboardString(_GLFWwindow* window, const char* string)
+void _glfwPlatformSetClipboardString(const char* string)
 {
 }
 
-const char* _glfwPlatformGetClipboardString(_GLFWwindow* window)
+const char* _glfwPlatformGetClipboardString(void)
 {
     return NULL;
 }

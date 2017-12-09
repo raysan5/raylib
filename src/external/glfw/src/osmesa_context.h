@@ -37,7 +37,7 @@
 #define OSMESA_CONTEXT_MINOR_VERSION 0x37
 
 typedef void* OSMesaContext;
-typedef void (*OSMESAproc)();
+typedef void (*OSMESAproc)(void);
 
 typedef OSMesaContext (GLAPIENTRY * PFN_OSMesaCreateContextExt)(GLenum,GLint,GLint,GLint,OSMesaContext);
 typedef OSMesaContext (GLAPIENTRY * PFN_OSMesaCreateContextAttribs)(const int*,OSMesaContext);

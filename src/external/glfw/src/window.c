@@ -316,7 +316,7 @@ GLFWAPI void glfwWindowHint(int hint, int value)
         case GLFW_DOUBLEBUFFER:
             _glfw.hints.framebuffer.doublebuffer = value ? GLFW_TRUE : GLFW_FALSE;
             return;
-        case GLFW_TRANSPARENT:
+        case GLFW_TRANSPARENT_FRAMEBUFFER:
             _glfw.hints.framebuffer.transparent = value ? GLFW_TRUE : GLFW_FALSE;
             return;
         case GLFW_SAMPLES:
@@ -648,6 +648,34 @@ GLFWAPI void glfwGetWindowContentScale(GLFWwindow* handle,
     _glfwPlatformGetWindowContentScale(window, xscale, yscale);
 }
 
+GLFWAPI float glfwGetWindowOpacity(GLFWwindow* handle)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT_OR_RETURN(1.f);
+    return _glfwPlatformGetWindowOpacity(window);
+}
+
+GLFWAPI void glfwSetWindowOpacity(GLFWwindow* handle, float opacity)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+    assert(opacity == opacity);
+    assert(opacity >= 0.f);
+    assert(opacity <= 1.f);
+
+    _GLFW_REQUIRE_INIT();
+
+    if (opacity != opacity || opacity < 0.f || opacity > 1.f)
+    {
+        _glfwInputError(GLFW_INVALID_VALUE, "Invalid window opacity %f", opacity);
+        return;
+    }
+
+    _glfwPlatformSetWindowOpacity(window, opacity);
+}
+
 GLFWAPI void glfwIconifyWindow(GLFWwindow* handle)
 {
     _GLFWwindow* window = (_GLFWwindow*) handle;
@@ -743,7 +771,7 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
             return _glfwPlatformWindowVisible(window);
         case GLFW_MAXIMIZED:
             return _glfwPlatformWindowMaximized(window);
-        case GLFW_TRANSPARENT:
+        case GLFW_TRANSPARENT_FRAMEBUFFER:
             return _glfwPlatformFramebufferTransparent(window);
         case GLFW_RESIZABLE:
             return window->resizable;

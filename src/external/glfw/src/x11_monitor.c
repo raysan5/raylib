@@ -203,8 +203,7 @@ void _glfwPollMonitorsX11(void)
 
         free(disconnected);
     }
-
-    if (!_glfw.monitorCount)
+    else
     {
         const int widthMM = DisplayWidthMM(_glfw.x11.display, _glfw.x11.screen);
         const int heightMM = DisplayHeightMM(_glfw.x11.display, _glfw.x11.screen);

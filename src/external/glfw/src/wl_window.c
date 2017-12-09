@@ -189,6 +189,24 @@ static void setOpaqueRegion(_GLFWwindow* window)
     wl_region_destroy(region);
 }
 
+static void setIdleInhibitor(_GLFWwindow* window, GLFWbool enable)
+{
+    if (enable && !window->wl.idleInhibitor && _glfw.wl.idleInhibitManager)
+    {
+        window->wl.idleInhibitor =
+            zwp_idle_inhibit_manager_v1_create_inhibitor(
+                _glfw.wl.idleInhibitManager, window->wl.surface);
+        if (!window->wl.idleInhibitor)
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "Wayland: Idle inhibitor creation failed");
+    }
+    else if (!enable && window->wl.idleInhibitor)
+    {
+        zwp_idle_inhibitor_v1_destroy(window->wl.idleInhibitor);
+        window->wl.idleInhibitor = NULL;
+    }
+}
+
 static GLFWbool createSurface(_GLFWwindow* window,
                               const _GLFWwndconfig* wndconfig)
 {
@@ -239,14 +257,17 @@ static GLFWbool createShellSurface(_GLFWwindow* window)
             WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
             0,
             window->monitor->wl.output);
+        setIdleInhibitor(window, GLFW_TRUE);
     }
     else if (window->wl.maximized)
     {
         wl_shell_surface_set_maximized(window->wl.shellSurface, NULL);
+        setIdleInhibitor(window, GLFW_FALSE);
     }
     else
     {
         wl_shell_surface_set_toplevel(window->wl.shellSurface);
+        setIdleInhibitor(window, GLFW_FALSE);
     }
 
     wl_surface_commit(window->wl.surface);
@@ -452,6 +473,9 @@ void _glfwPlatformDestroyWindow(_GLFWwindow* window)
         _glfwInputWindowFocus(window, GLFW_FALSE);
     }
 
+    if (window->wl.idleInhibitor)
+        zwp_idle_inhibitor_v1_destroy(window->wl.idleInhibitor);
+
     if (window->context.destroy)
         window->context.destroy(window);
 
@@ -637,10 +661,12 @@ void _glfwPlatformSetWindowMonitor(_GLFWwindow* window,
             WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT,
             refreshRate * 1000, // Convert Hz to mHz.
             monitor->wl.output);
+        setIdleInhibitor(window, GLFW_TRUE);
     }
     else
     {
         wl_shell_surface_set_toplevel(window->wl.shellSurface);
+        setIdleInhibitor(window, GLFW_FALSE);
     }
     _glfwInputWindowMonitor(window, monitor);
 }
@@ -690,6 +716,15 @@ void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
     // TODO
     _glfwInputError(GLFW_PLATFORM_ERROR,
                     "Wayland: Window attribute setting not implemented yet");
+}
+
+float _glfwPlatformGetWindowOpacity(_GLFWwindow* window)
+{
+    return 1.f;
+}
+
+void _glfwPlatformSetWindowOpacity(_GLFWwindow* window, float opacity)
+{
 }
 
 void _glfwPlatformPollEvents(void)
@@ -1008,14 +1043,14 @@ void _glfwPlatformSetCursor(_GLFWwindow* window, _GLFWcursor* cursor)
     }
 }
 
-void _glfwPlatformSetClipboardString(_GLFWwindow* window, const char* string)
+void _glfwPlatformSetClipboardString(const char* string)
 {
     // TODO
     _glfwInputError(GLFW_PLATFORM_ERROR,
                     "Wayland: Clipboard setting not implemented yet");
 }
 
-const char* _glfwPlatformGetClipboardString(_GLFWwindow* window)
+const char* _glfwPlatformGetClipboardString(void)
 {
     // TODO
     _glfwInputError(GLFW_PLATFORM_ERROR,

@@ -634,7 +634,7 @@ GLFWbool _glfwCreateContextGLX(_GLFWwindow* window,
 // Returns the Visual and depth of the chosen GLXFBConfig
 //
 GLFWbool _glfwChooseVisualGLX(const _GLFWwndconfig* wndconfig,
-                  const _GLFWctxconfig* ctxconfig,
+                              const _GLFWctxconfig* ctxconfig,
                               const _GLFWfbconfig* fbconfig,
                               Visual** visual, int* depth)
 {

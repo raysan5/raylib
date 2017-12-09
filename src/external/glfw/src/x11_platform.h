@@ -257,6 +257,8 @@ typedef struct _GLFWlibraryX11
     Atom            NET_WM_STATE_DEMANDS_ATTENTION;
     Atom            NET_WM_BYPASS_COMPOSITOR;
     Atom            NET_WM_FULLSCREEN_MONITORS;
+    Atom            NET_WM_WINDOW_OPACITY;
+    Atom            NET_WM_CM_Sx;
     Atom            NET_ACTIVE_WINDOW;
     Atom            NET_FRAME_EXTENTS;
     Atom            NET_REQUEST_FRAME_EXTENTS;

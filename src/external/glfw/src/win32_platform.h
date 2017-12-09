@@ -105,12 +105,11 @@
 #endif
 
 #if WINVER < 0x0601
-typedef struct tagCHANGEFILTERSTRUCT
+typedef struct
 {
     DWORD cbSize;
     DWORD ExtStatus;
-
-} CHANGEFILTERSTRUCT, *PCHANGEFILTERSTRUCT;
+} CHANGEFILTERSTRUCT;
 #ifndef MSGFLT_ALLOW
  #define MSGFLT_ALLOW 1
 #endif
@@ -129,13 +128,13 @@ typedef struct
 #endif /*Windows Vista*/
 
 #ifndef DPI_ENUMS_DECLARED
-typedef enum PROCESS_DPI_AWARENESS
+typedef enum
 {
     PROCESS_DPI_UNAWARE = 0,
     PROCESS_SYSTEM_DPI_AWARE = 1,
     PROCESS_PER_MONITOR_DPI_AWARE = 2
 } PROCESS_DPI_AWARENESS;
-typedef enum MONITOR_DPI_TYPE
+typedef enum
 {
     MDT_EFFECTIVE_DPI = 0,
     MDT_ANGULAR_DPI = 1,
@@ -209,7 +208,7 @@ typedef HRESULT (WINAPI * PFN_DirectInput8Create)(HINSTANCE,DWORD,REFIID,LPVOID*
 
 // user32.dll function pointer typedefs
 typedef BOOL (WINAPI * PFN_SetProcessDPIAware)(void);
-typedef BOOL (WINAPI * PFN_ChangeWindowMessageFilterEx)(HWND,UINT,DWORD,PCHANGEFILTERSTRUCT);
+typedef BOOL (WINAPI * PFN_ChangeWindowMessageFilterEx)(HWND,UINT,DWORD,CHANGEFILTERSTRUCT*);
 #define SetProcessDPIAware _glfw.win32.user32.SetProcessDPIAware_
 #define ChangeWindowMessageFilterEx _glfw.win32.user32.ChangeWindowMessageFilterEx_
 
@@ -348,8 +347,8 @@ typedef struct _GLFWmonitorWin32
     // This size matches the static size of DISPLAY_DEVICE.DeviceName
     WCHAR               adapterName[32];
     WCHAR               displayName[32];
-    char                publicAdapterName[64];
-    char                publicDisplayName[64];
+    char                publicAdapterName[32];
+    char                publicDisplayName[32];
     GLFWbool            modesPruned;
     GLFWbool            modeChanged;
 

@@ -737,8 +737,17 @@ static GLFWbool initExtensions(void)
         XInternAtom(_glfw.x11.display, "_NET_WM_ICON_NAME", False);
     _glfw.x11.NET_WM_BYPASS_COMPOSITOR =
         XInternAtom(_glfw.x11.display, "_NET_WM_BYPASS_COMPOSITOR", False);
+    _glfw.x11.NET_WM_WINDOW_OPACITY =
+        XInternAtom(_glfw.x11.display, "_NET_WM_WINDOW_OPACITY", False);
     _glfw.x11.MOTIF_WM_HINTS =
         XInternAtom(_glfw.x11.display, "_MOTIF_WM_HINTS", False);
+
+    // The compositing manager selection name contains the screen number
+    {
+        char name[32];
+        snprintf(name, sizeof(name), "_NET_WM_CM_S%u", _glfw.x11.screen);
+        _glfw.x11.NET_WM_CM_Sx = XInternAtom(_glfw.x11.display, name, False);
+    }
 
     return GLFW_TRUE;
 }
@@ -985,8 +994,6 @@ void _glfwPlatformTerminate(void)
         _glfw.x11.im = NULL;
     }
 
-    _glfwTerminateEGL();
-
     if (_glfw.x11.display)
     {
         XCloseDisplay(_glfw.x11.display);
@@ -1017,8 +1024,9 @@ void _glfwPlatformTerminate(void)
         _glfw.x11.xinerama.handle = NULL;
     }
 
-    // NOTE: This needs to be done after XCloseDisplay, as libGL registers
-    //       cleanup callbacks that get called by it
+    // NOTE: These need to be unloaded after XCloseDisplay, as they register
+    //       cleanup callbacks that get called by that function
+    _glfwTerminateEGL();
     _glfwTerminateGLX();
 
 #if defined(__linux__)

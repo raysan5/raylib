@@ -55,3 +55,6 @@
 // Define this to 1 to force use of high-performance GPU on hybrid systems
 #cmakedefine _GLFW_USE_HYBRID_HPG
 
+// Define this to 1 if xkbcommon supports the compose key
+#cmakedefine HAVE_XKBCOMMON_COMPOSE_H
+

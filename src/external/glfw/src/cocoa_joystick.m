@@ -247,9 +247,9 @@ static void matchCallback(void* context,
                       compareElements, NULL);
 
     js = _glfwAllocJoystick(name, guid,
-                            CFArrayGetCount(axes),
-                            CFArrayGetCount(buttons),
-                            CFArrayGetCount(hats));
+                            (int) CFArrayGetCount(axes),
+                            (int) CFArrayGetCount(buttons),
+                            (int) CFArrayGetCount(hats));
 
     js->ns.device  = device;
     js->ns.axes    = axes;
@@ -399,11 +399,11 @@ int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode)
 
             const long delta = axis->maximum - axis->minimum;
             if (delta == 0)
-                _glfwInputJoystickAxis(js, i, 0.f);
+                _glfwInputJoystickAxis(js, (int) i, 0.f);
             else
             {
                 const float value = (2.f * (raw - axis->minimum) / delta) - 1.f;
-                _glfwInputJoystickAxis(js, i, value);
+                _glfwInputJoystickAxis(js, (int) i, value);
             }
         }
     }
@@ -417,7 +417,7 @@ int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode)
             _GLFWjoyelementNS* button = (_GLFWjoyelementNS*)
                 CFArrayGetValueAtIndex(js->ns.buttons, i);
             const char value = getElementValue(js, button) - button->minimum;
-            _glfwInputJoystickButton(js, i, value);
+            _glfwInputJoystickButton(js, (int) i, value);
         }
 
         for (i = 0;  i < CFArrayGetCount(js->ns.hats);  i++)
@@ -441,7 +441,7 @@ int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode)
             if (state < 0 || state > 8)
                 state = 8;
 
-            _glfwInputJoystickHat(js, i, states[state]);
+            _glfwInputJoystickHat(js, (int) i, states[state]);
         }
     }
 
