@@ -42,6 +42,8 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
+VERSION     = 1.9.2
+API_VERSION = 1
 PLATFORM ?= PLATFORM_DESKTOP
 RAYLIB_PATH = ..
 
@@ -172,6 +174,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
+        GLFW_CFLAGS = -x objective-c
     endif
     ifeq ($(PLATFORM_OS),FREEBSD)
         # FreeBSD default compiler
@@ -291,7 +294,7 @@ endif
 
 # Define linker options
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    LDFLAGS = -Wl,-soname,libraylib.so -Wl,--exclude-libs,libatomic.a 
+    LDFLAGS = -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a 
     LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
@@ -353,22 +356,30 @@ else
         ifeq ($(PLATFORM_OS),LINUX)
             # Compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lm -lpthread -ldl -lrt
-			@echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so $(OBJS) -Wl,-soname,libraylib.$(API_VERSION).so -lGL -lm -lpthread -ldl -lrt
+			@echo "raylib shared library generated (libraylib.$(VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.$(API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.so
         endif
         ifeq ($(PLATFORM_OS),OSX)
-			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.dylib $(OBJS) -L/usr/local/Cellar/glfw/3.2.1/lib -framework OpenGL -framework OpenAL -framework Cocoa
-			install_name_tool -id "libraylib.dylib" $(RAYLIB_RELEASE_PATH)/libraylib.dylib
-			@echo "raylib shared library generated (libraylib.dylib)!"
+			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).dylib $(OBJS) -compatibility_version $(API_VERSION) -current_version $(VERSION) -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa
+			install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).dylib
+			@echo "raylib shared library generated (libraylib.$(VERSION).dylib)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).dylib libraylib.$(API_VERSION).dylib
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).dylib libraylib.dylib
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
         # WARNING: you should type "gmake clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lGL -lpthread
-			@echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so $(OBJS) -Wl,-soname,libraylib.$(API_VERSION).so -lGL -lpthread
+			@echo "raylib shared library generated (libraylib.$(VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.$(API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.so
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) $(LDFLAGS) $(LDLIBS)
-			@echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
+			@echo "raylib shared library generated (libraylib.$(VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.$(API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.so
         endif
     else
         # Compile raylib static library
@@ -386,7 +397,7 @@ core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
     
 # Compile rglfw module
 rglfw.o : rglfw.c
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+	$(CC) $(GLFW_CFLAGS) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile rlgl module
 rlgl.o : rlgl.c rlgl.h raymath.h
@@ -434,6 +445,8 @@ ifeq ($(ROOT),root)
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
+			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so /usr/local/lib/libraylib.$(VERSION).so
+			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(API_VERSION).so /usr/local/lib/libraylib.$(API_VERSION).so
 			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.so /usr/local/lib/libraylib.so
         else
 			cp --update raylib.h /usr/local/include/raylib.h
@@ -455,6 +468,8 @@ ifeq ($(ROOT),root)
 			rm --force /usr/local/include/raylib.h
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
 			rm --force /usr/local/lib/libraylib.so
+			rm --force /usr/local/lib/libraylib.$(API_VERSION).so
+			rm --force /usr/local/lib/libraylib.$(VERSION).so
         else
 			rm --force /usr/local/lib/libraylib.a
         endif
@@ -471,7 +486,7 @@ clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
 	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
 else
-	rm -f *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
+	rm -f *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so $(RAYLIB_RELEASE_PATH)/libraylib.$(API_VERSION).so $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so external/stb_vorbis.o
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN)

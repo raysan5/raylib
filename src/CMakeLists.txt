@@ -2,7 +2,8 @@
 project(raylib)
 include("../utils.cmake")
 
-set(PROJECT_VERSION 1.9.1-dev)
+set(PROJECT_VERSION 1.9.2)
+set(API_VERSION 1)
 set(RAYLIB raylib)    # Name of the generated library
 
 ### Config options ###
@@ -123,7 +124,11 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
     set(CMAKE_MACOSX_RPATH ON)
 
     target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
-    set_target_properties(${RAYLIB}_shared PROPERTIES PUBLIC_HEADER "raylib.h")
+    set_target_properties(${RAYLIB}_shared PROPERTIES
+        VERSION   ${PROJECT_VERSION}
+        SOVERSION ${API_VERSION}
+        PUBLIC_HEADER "raylib.h"
+    )
     if(WIN32)
       install(
         TARGETS ${RAYLIB}_shared
