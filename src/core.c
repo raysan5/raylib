@@ -89,7 +89,7 @@
 
 #include "raylib.h"
 
-#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_S_SOURCE < 199309L
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
