@@ -66,9 +66,6 @@
     #include "external/stb_image_write.h"    // Required for: stbi_write_bmp(), stbi_write_png()
 #endif
 
-#define RRES_IMPLEMENTATION
-#include "rres.h"
-
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------

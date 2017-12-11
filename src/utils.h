@@ -32,8 +32,6 @@
     #include <android/asset_manager.h>      // Required for: AAssetManager
 #endif
 
-#include "rres.h"
-
 #define SUPPORT_SAVE_PNG
 
 //----------------------------------------------------------------------------------

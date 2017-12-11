@@ -813,19 +813,6 @@ Wave LoadWave(const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_FLAC)
     else if (IsFileExtension(fileName, ".flac")) wave = LoadFLAC(fileName);
 #endif
-#if !defined(AUDIO_STANDALONE)
-    else if (IsFileExtension(fileName, ".rres"))
-    {
-        RRES rres = LoadResource(fileName, 0);
-
-        // NOTE: Parameters for RRES_TYPE_WAVE are: sampleCount, sampleRate, sampleSize, channels
-
-        if (rres[0].type == RRES_TYPE_WAVE) wave = LoadWaveEx(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3, rres[0].param4);
-        else TraceLog(LOG_WARNING, "[%s] Resource file does not contain wave data", fileName);
-
-        UnloadResource(rres);
-    }
-#endif
     else TraceLog(LOG_WARNING, "[%s] Audio fileformat not supported, it can't be loaded", fileName);
 
     return wave;

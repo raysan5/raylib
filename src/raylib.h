@@ -495,22 +495,6 @@ typedef struct AudioStream {
     unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
 } AudioStream;
 
-// rRES data returned when reading a resource, 
-// it contains all required data for user (24 byte)
-typedef struct RRESData {
-    unsigned int type;          // Resource type (4 byte)
-
-    unsigned int param1;        // Resouce parameter 1 (4 byte)
-    unsigned int param2;        // Resouce parameter 2 (4 byte)
-    unsigned int param3;        // Resouce parameter 3 (4 byte)
-    unsigned int param4;        // Resouce parameter 4 (4 byte)
-
-    void *data;                 // Resource data pointer (4 byte)
-} RRESData;
-
-// RRES type (pointer to RRESData array)
-typedef struct RRESData *RRES;
-
 // Head-Mounted-Display device parameters
 typedef struct VrDeviceInfo {
     int hResolution;                // HMD horizontal resolution in pixels

@@ -167,18 +167,7 @@ Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
 
-    if (IsFileExtension(fileName, ".rres"))
-    {
-        RRES rres = LoadResource(fileName, 0);
-
-        // NOTE: Parameters for RRES_TYPE_IMAGE are: width, height, format, mipmaps
-
-        if (rres[0].type == RRES_TYPE_IMAGE) image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
-        else TraceLog(LOG_WARNING, "[%s] Resource file does not contain image data", fileName);
-
-        UnloadResource(rres);
-    }
-    else if ((IsFileExtension(fileName, ".png"))
+    if ((IsFileExtension(fileName, ".png"))
 #if defined(SUPPORT_FILEFORMAT_BMP)
         || (IsFileExtension(fileName, ".bmp"))
 #endif
