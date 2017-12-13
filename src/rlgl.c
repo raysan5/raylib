@@ -2365,37 +2365,48 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 
-    unsigned int vertexShaderId, fragmentShaderId;
+    unsigned int vertexShaderId = defaultVShaderId;
+    unsigned int fragmentShaderId = defaultFShaderId;
 
-    if (vsFileName == NULL) vertexShaderId = defaultVShaderId;
-    else 
+    if (vsFileName != NULL)
     {
         char *vShaderStr = LoadText(vsFileName);
-        vertexShaderId = CompileShader(vShaderStr, GL_VERTEX_SHADER);
-        free(vShaderStr);
+        
+        if (vShaderStr != NULL)
+        {
+            vertexShaderId = CompileShader(vShaderStr, GL_VERTEX_SHADER);
+            free(vShaderStr);
+        }
     }
 
-    if (fsFileName == NULL) fragmentShaderId = defaultVShaderId;
-    else 
+    if (fsFileName != NULL)
     {
         char* fShaderStr = LoadText(fsFileName);
-        fragmentShaderId = CompileShader(fShaderStr, GL_FRAGMENT_SHADER);
-        free(fShaderStr);
+        
+        if (fShaderStr != NULL)
+        {
+            fragmentShaderId = CompileShader(fShaderStr, GL_FRAGMENT_SHADER);
+            free(fShaderStr);
+        }
     }
 
-    shader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
-
-    if (vertexShaderId != defaultVShaderId) glDeleteShader(vertexShaderId);
-    if (fragmentShaderId != defaultFShaderId) glDeleteShader(fragmentShaderId);
-
-    if (shader.id == 0)
+    if ((vertexShaderId == defaultVShaderId) && (fragmentShaderId == defaultFShaderId)) shader = defaultShader;
+    else 
     {
-        TraceLog(LOG_WARNING, "Custom shader could not be loaded");
-        shader = defaultShader;
+        shader.id = LoadShaderProgram(vertexShaderId, fragmentShaderId);
+
+        if (vertexShaderId != defaultVShaderId) glDeleteShader(vertexShaderId);
+        if (fragmentShaderId != defaultFShaderId) glDeleteShader(fragmentShaderId);
+
+        if (shader.id == 0)
+        {
+            TraceLog(LOG_WARNING, "Custom shader could not be loaded");
+            shader = defaultShader;
+        }
+        
+        // After shader loading, we TRY to set default location names
+        if (shader.id > 0) SetShaderDefaultLocations(&shader);
     }
-    
-    // After shader loading, we TRY to set default location names
-    if (shader.id > 0) SetShaderDefaultLocations(&shader);
     
     // Get available shader uniforms
     // NOTE: This information is useful for debug...
