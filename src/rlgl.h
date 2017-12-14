@@ -461,6 +461,8 @@ void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+Matrix GetMatrixModelview();
+
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided

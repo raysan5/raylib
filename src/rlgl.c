@@ -2539,6 +2539,12 @@ void SetMatrixModelview(Matrix view)
 #endif
 }
 
+Matrix GetMatrixModelview() {
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    return modelview;
+#endif
+}
+
 // Generate cubemap texture from HDR texture
 // TODO: OpenGL ES 2.0 does not support GL_RGB16F texture format, neither GL_DEPTH_COMPONENT24
 Texture2D GenTextureCubemap(Shader shader, Texture2D skyHDR, int size)
