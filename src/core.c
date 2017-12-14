@@ -1134,7 +1134,7 @@ void SetConfigFlags(char flags)
 // Takes a screenshot of current screen (saved a .png)
 void TakeScreenshot(const char *fileName)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)) && defined(SUPPORT_SAVE_PNG)
     unsigned char *imgData = rlReadScreenPixels(renderWidth, renderHeight);
     SavePNG(fileName, imgData, renderWidth, renderHeight, 4); // Save image as PNG
     free(imgData);
