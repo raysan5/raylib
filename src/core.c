@@ -153,8 +153,9 @@
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
     
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
-    __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
-    __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
+    // NOTE: Those functions require linking with winmm library
+    unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+    unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #endif
 #endif
 
