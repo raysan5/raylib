@@ -413,7 +413,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
+void InitRLWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -477,7 +477,7 @@ void InitWindow(int width, int height, void *data)
 #if defined(PLATFORM_ANDROID)
 // Initialize window and OpenGL context (and Android activity)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
+void InitRLWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -538,7 +538,7 @@ void InitWindow(int width, int height, void *data)
 #endif
 
 // Close window and unload OpenGL context
-void CloseWindow(void)
+void CloseRLWindow(void)
 {
 #if defined(SUPPORT_GIF_RECORDING)
     if (gifRecording)
@@ -715,7 +715,7 @@ int GetScreenHeight(void)
 }
 
 // Show mouse cursor
-void ShowCursor()
+void ShowRLCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #if defined(__linux__)
@@ -728,7 +728,7 @@ void ShowCursor()
 }
 
 // Hides mouse cursor
-void HideCursor()
+void HideRLCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #if defined(__linux__)

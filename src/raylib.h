@@ -682,8 +682,8 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 
 // Window-related functions
-RLAPI void InitWindow(int width, int height, void *data);         // Initialize window and OpenGL context
-RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
+RLAPI void InitRLWindow(int width, int height, void *data);       // Initialize window and OpenGL context
+RLAPI void CloseRLWindow(void);                                   // Close window and unload OpenGL context
 RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
@@ -696,8 +696,8 @@ RLAPI int GetScreenWidth(void);                                   // Get current
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
 // Cursor-related functions
-RLAPI void ShowCursor(void);                                      // Shows cursor
-RLAPI void HideCursor(void);                                      // Hides cursor
+RLAPI void ShowRLCursor(void);                                    // Shows cursor
+RLAPI void HideRLCursor(void);                                    // Hides cursor
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
