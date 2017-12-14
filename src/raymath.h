@@ -759,8 +759,6 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
 {
     Matrix result;
 
-    Matrix mat = MatrixIdentity();
-
     float x = axis.x, y = axis.y, z = axis.z;
 
     float length = sqrtf(x*x + y*y + z*z);
@@ -777,33 +775,25 @@ RMDEF Matrix MatrixRotate(Vector3 axis, float angle)
     float cosres = cosf(angle);
     float t = 1.0f - cosres;
 
-    // Cache some matrix values (speed optimization)
-    float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
-    float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
-    float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
+    result.m0  = x*x*t + cosres;
+    result.m1  = y*x*t + z*sinres;
+    result.m2  = z*x*t - y*sinres;
+    result.m3  = 0.0f;
 
-    // Construct the elements of the rotation matrix
-    float b00 = x*x*t + cosres, b01 = y*x*t + z*sinres, b02 = z*x*t - y*sinres;
-    float b10 = x*y*t - z*sinres, b11 = y*y*t + cosres, b12 = z*y*t + x*sinres;
-    float b20 = x*z*t + y*sinres, b21 = y*z*t - x*sinres, b22 = z*z*t + cosres;
-
-    // Perform rotation-specific matrix multiplication
-    result.m0 = a00*b00 + a10*b01 + a20*b02;
-    result.m1 = a01*b00 + a11*b01 + a21*b02;
-    result.m2 = a02*b00 + a12*b01 + a22*b02;
-    result.m3 = a03*b00 + a13*b01 + a23*b02;
-    result.m4 = a00*b10 + a10*b11 + a20*b12;
-    result.m5 = a01*b10 + a11*b11 + a21*b12;
-    result.m6 = a02*b10 + a12*b11 + a22*b12;
-    result.m7 = a03*b10 + a13*b11 + a23*b12;
-    result.m8 = a00*b20 + a10*b21 + a20*b22;
-    result.m9 = a01*b20 + a11*b21 + a21*b22;
-    result.m10 = a02*b20 + a12*b21 + a22*b22;
-    result.m11 = a03*b20 + a13*b21 + a23*b22;
-    result.m12 = mat.m12;
-    result.m13 = mat.m13;
-    result.m14 = mat.m14;
-    result.m15 = mat.m15;
+    result.m4  = x*y*t - z*sinres;
+    result.m5  = y*y*t + cosres;
+    result.m6  = z*y*t + x*sinres;
+    result.m7  = 0.0f;
+    
+    result.m8  = x*z*t + y*sinres;
+    result.m9  = y*z*t - x*sinres;
+    result.m10 = z*z*t + cosres;
+    result.m11 = 0.0f;
+    
+    result.m12 = 0.0f;
+    result.m13 = 0.0f;
+    result.m14 = 0.0f;
+    result.m15 = 1.0f;
 
     return result;
 }
