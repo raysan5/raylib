@@ -7,26 +7,26 @@ git:
 # TODO we could use a 32 bit Docker container for running true 32-bit tests
 # services: - docker
 
-matrix: # We don't install x11 32-bit libraries, so skip shared libraries on -m32
+matrix:
   include:
     - os: linux
-      env: ARCH=i386 SHARED=OFF EXAMPLES=OFF
+      env: ARCH=i386
       sudo: required
     - os: linux
-      env: ARCH=amd64 SHARED=ON EXAMPLES=ON
+      env: ARCH=amd64
       sudo: required
     - os: osx
-      env: ARCH=amd64 SHARED=ON EXAMPLES=ON
+      env: ARCH=amd64
 
 before_script:
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       sudo apt-get install -y gcc-multilib
-                              libasound2-dev
-                              libxcursor-dev libxinerama-dev
-                              mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev
-                              libgl1-mesa-dev libglu1-mesa-dev libglew-dev;
+                              libasound2-dev:$ARCH
+                              libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
+                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxi-dev:$ARCH
+                              libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH libglew-dev:$ARCH;
       export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
       if [ "$ARCH" == "i386" ]; then export CFLAGS="-m32"; fi;
       if [ "$ARCH" == "amd64" ]; then export CFLAGS="-m64"; fi;
@@ -37,7 +37,7 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=$SHARED -DBUILD_EXAMPLES=$EXAMPLES -DBUILD_GAMES=$EXAMPLES ..
+  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON ..
   - make VERBOSE=1
   - make package
 
