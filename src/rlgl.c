@@ -4226,3 +4226,8 @@ void TraceLog(int msgType, const char *text, ...)
     if (msgType == LOG_ERROR) exit(1);
 }
 #endif
+
+void rlSetMarker(const char *text) {
+    if(debugMarkerSupported)
+        glInsertEventMarkerEXT(0, text);            //0 terminated string
+}
