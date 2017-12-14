@@ -414,7 +414,7 @@ void rlPushMatrix(void)
     }
 
     stack[stackCounter] = *currentMatrix;
-    rlLoadIdentity();
+//    rlLoadIdentity();
     stackCounter++;
 
     if (currentMatrixMode == RL_MODELVIEW) useTempBuffer = true;
