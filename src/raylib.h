@@ -723,6 +723,9 @@ RLAPI void SetTargetFPS(int fps);                                 // Set target 
 RLAPI int GetFPS(void);                                           // Returns current FPS
 RLAPI float GetFrameTime(void);                                   // Returns time in seconds for last frame drawn
 
+RLAPI double GetTime(void);                                       // Return time in seconds
+
+
 // Color-related functions
 RLAPI int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value

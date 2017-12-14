@@ -352,7 +352,7 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
-static double GetTime(void);                            // Returns time since InitTimer() was run
+       double GetTime(void);                            // Returns time since InitTimer() was run
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
@@ -2120,7 +2120,7 @@ static void InitTimer(void)
 }
 
 // Get current time measure (in seconds) since InitTimer()
-static double GetTime(void)
+double GetTime(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetTime();
