@@ -227,21 +227,29 @@ RMDEF float Clamp(float value, float min, float max)
 //----------------------------------------------------------------------------------
 
 // Vector with components value 0.0f
-RMDEF Vector2 Vector2Zero(void) { return (Vector2){ 0.0f, 0.0f }; }
+RMDEF Vector2 Vector2Zero(void) { 
+    Vector2 tmp = {0.0f, 0.0f};
+    return tmp;
+}
 
 // Vector with components value 1.0f
-RMDEF Vector2 Vector2One(void) { return (Vector2){ 1.0f, 1.0f }; }
+RMDEF Vector2 Vector2One(void) { 
+    Vector2 tmp = {1.0f, 1.0f};
+    return tmp;
+}
 
 // Add two vectors (v1 + v2)
 RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2)
 {
-    return (Vector2){ v1.x + v2.x, v1.y + v2.y };
+    Vector2 tmp = { v1.x + v2.x, v1.y + v2.y };
+    return tmp;
 }
 
 // Subtract two vectors (v1 - v2)
 RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2)
 {
-    return (Vector2){ v1.x - v2.x, v1.y - v2.y };
+    Vector2 tmp = { v1.x - v2.x, v1.y - v2.y };
+    return tmp;
 }
 
 // Calculate vector length
@@ -289,7 +297,8 @@ RMDEF void Vector2Negate(Vector2 *v)
 // Divide vector by a float value
 RMDEF void Vector2Divide(Vector2 *v, float div)
 {
-    *v = (Vector2){v->x/div, v->y/div};
+    Vector2 tmp = {v->x/div, v->y/div};
+    *v = tmp;
 }
 
 // Normalize provided vector
@@ -303,21 +312,29 @@ RMDEF void Vector2Normalize(Vector2 *v)
 //----------------------------------------------------------------------------------
 
 // Vector with components value 0.0f
-RMDEF Vector3 Vector3Zero(void) { return (Vector3){ 0.0f, 0.0f, 0.0f }; }
+RMDEF Vector3 Vector3Zero(void) { 
+    Vector3 tmp = { 0.0f, 0.0f, 0.0f };
+    return tmp; 
+}
 
 // Vector with components value 1.0f
-RMDEF Vector3 Vector3One(void) { return (Vector3){ 1.0f, 1.0f, 1.0f }; }
+RMDEF Vector3 Vector3One(void) { 
+    Vector3 tmp = { 1.0f, 1.0f, 1.0f };
+    return tmp; 
+}
 
 // Add two vectors
 RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2)
 {
-    return (Vector3){ v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+    Vector3 tmp = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+    return tmp; 
 }
 
 // Substract two vectors
 RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2)
 {
-    return (Vector3){ v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+    Vector3 tmp = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+    return tmp; 
 }
 
 // Multiply vector by scalar
@@ -365,12 +382,14 @@ RMDEF Vector3 Vector3Perpendicular(Vector3 v)
     if (fabsf(v.y) < min)
     {
         min = fabsf(v.y);
-        cardinalAxis = (Vector3){0.0f, 1.0f, 0.0f};
+        Vector3 tmp = {0.0f, 1.0f, 0.0f};
+        cardinalAxis = tmp;
     }
 
     if (fabsf(v.z) < min)
     {
-        cardinalAxis = (Vector3){0.0f, 0.0f, 1.0f};
+        Vector3 tmp = {0.0f, 0.0f, 1.0f};
+        cardinalAxis = tmp;
     }
 
     result = Vector3CrossProduct(v, cardinalAxis);
@@ -1011,7 +1030,8 @@ RMDEF float *MatrixToFloat(Matrix mat)
 // Returns identity quaternion
 RMDEF Quaternion QuaternionIdentity(void)
 {
-    return (Quaternion){ 0.0f, 0.0f, 0.0f, 1.0f };
+    Quaternion q = { 0.0f, 0.0f, 0.0f, 1.0f };
+    return q;
 }
 
 // Computes the length of a quaternion
