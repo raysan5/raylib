@@ -440,6 +440,9 @@ void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update ve
 void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
 void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
+// Debug Marker for Analysis
+void rlSetMarker(const char *text);
+
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
 

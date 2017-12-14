@@ -307,6 +307,8 @@ static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays;
 //static PFNGLISVERTEXARRAYOESPROC glIsVertexArray;        // NOTE: Fails in WebGL, omitted
 #endif
 
+static bool debugMarkerSupported = false;
+
 // Compressed textures support flags
 static bool texCompDXTSupported = false;    // DDS texture compression support
 static bool texNPOTSupported = false;       // NPOT textures full support
@@ -1135,6 +1137,10 @@ void rlglInit(int width, int height)
             glGetFloatv(0x84FF, &maxAnisotropicLevel);   // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
         }
 
+        if(strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) {
+            debugMarkerSupported = true;
+        }
+
         // Clamp mirror wrap mode supported
         if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texClampMirrorSupported = true;
     }
@@ -1159,6 +1165,8 @@ void rlglInit(int width, int height)
 
     if (texAnisotropicFilterSupported) TraceLog(LOG_INFO, "[EXTENSION] Anisotropic textures filtering supported (max: %.0fX)", maxAnisotropicLevel);
     if (texClampMirrorSupported) TraceLog(LOG_INFO, "[EXTENSION] Clamp mirror wrap texture mode supported");
+
+    if (debugMarkerSupported) TraceLog(LOG_INFO, "[EXTENSION] Debug Marker supported");
 
     // Initialize buffers, default shaders and default textures
     //----------------------------------------------------------
