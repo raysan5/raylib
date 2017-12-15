@@ -227,13 +227,15 @@ RMDEF float Clamp(float value, float min, float max)
 //----------------------------------------------------------------------------------
 
 // Vector with components value 0.0f
-RMDEF Vector2 Vector2Zero(void) { 
+RMDEF Vector2 Vector2Zero(void) 
+{ 
     Vector2 tmp = {0.0f, 0.0f};
     return tmp;
 }
 
 // Vector with components value 1.0f
-RMDEF Vector2 Vector2One(void) { 
+RMDEF Vector2 Vector2One(void) 
+{ 
     Vector2 tmp = {1.0f, 1.0f};
     return tmp;
 }
@@ -312,13 +314,15 @@ RMDEF void Vector2Normalize(Vector2 *v)
 //----------------------------------------------------------------------------------
 
 // Vector with components value 0.0f
-RMDEF Vector3 Vector3Zero(void) { 
+RMDEF Vector3 Vector3Zero(void) 
+{ 
     Vector3 tmp = { 0.0f, 0.0f, 0.0f };
     return tmp; 
 }
 
 // Vector with components value 1.0f
-RMDEF Vector3 Vector3One(void) { 
+RMDEF Vector3 Vector3One(void) 
+{ 
     Vector3 tmp = { 1.0f, 1.0f, 1.0f };
     return tmp; 
 }

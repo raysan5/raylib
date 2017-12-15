@@ -1293,6 +1293,12 @@ int rlGetVersion(void)
 #endif
 }
 
+// Set debug marker
+void rlSetDebugMarker(const char *text)
+{
+    if(debugMarkerSupported) glInsertEventMarkerEXT(0, text);   // 0 terminated string
+}
+
 // Load OpenGL extensions
 // NOTE: External loader function could be passed as a pointer
 void rlLoadExtensions(void *loader)

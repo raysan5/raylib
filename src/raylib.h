@@ -682,8 +682,8 @@ extern "C" {            // Prevents name mangling of functions
 //------------------------------------------------------------------------------------
 
 // Window-related functions
-RLAPI void InitRLWindow(int width, int height, void *data);       // Initialize window and OpenGL context
-RLAPI void CloseRLWindow(void);                                   // Close window and unload OpenGL context
+RLAPI void InitWindow(int width, int height, void *data);         // Initialize window and OpenGL context
+RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
 RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
 RLAPI bool IsWindowMinimized(void);                               // Check if window has been minimized (or lost focus)
 RLAPI void ToggleFullscreen(void);                                // Toggle fullscreen mode (only PLATFORM_DESKTOP)
@@ -696,8 +696,8 @@ RLAPI int GetScreenWidth(void);                                   // Get current
 RLAPI int GetScreenHeight(void);                                  // Get current screen height
 
 // Cursor-related functions
-RLAPI void ShowRLCursor(void);                                    // Shows cursor
-RLAPI void HideRLCursor(void);                                    // Hides cursor
+RLAPI void ShowCursor(void);                                      // Shows cursor
+RLAPI void HideCursor(void);                                      // Hides cursor
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
 RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
@@ -722,9 +722,7 @@ RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns cam
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 RLAPI int GetFPS(void);                                           // Returns current FPS
 RLAPI float GetFrameTime(void);                                   // Returns time in seconds for last frame drawn
-
-RLAPI double GetTime(void);                                       // Return time in seconds
-
+//RLAPI double GetCurrentTime(void);                                // Return current time in seconds
 
 // Color-related functions
 RLAPI int GetHexValue(Color color);                               // Returns hexadecimal value for a Color
@@ -1049,7 +1047,7 @@ RLAPI void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int 
 RLAPI void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 RLAPI void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 RLAPI void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
-RLAPI Matrix GetMatrixModelview();
+RLAPI Matrix GetMatrixModelview();                                        // Get internal modelview matrix
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
