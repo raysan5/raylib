@@ -153,8 +153,9 @@
     //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
     
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
-    __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
-    __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
+    // NOTE: Those functions require linking with winmm library
+    unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+    unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #endif
 #endif
 
@@ -351,7 +352,7 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
-static double GetTime(void);                            // Returns time since InitTimer() was run
+       double GetTime(void);                            // Returns time since InitTimer() was run
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
@@ -412,7 +413,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
+void InitRLWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -476,7 +477,7 @@ void InitWindow(int width, int height, void *data)
 #if defined(PLATFORM_ANDROID)
 // Initialize window and OpenGL context (and Android activity)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
+void InitRLWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -537,7 +538,7 @@ void InitWindow(int width, int height, void *data)
 #endif
 
 // Close window and unload OpenGL context
-void CloseWindow(void)
+void CloseRLWindow(void)
 {
 #if defined(SUPPORT_GIF_RECORDING)
     if (gifRecording)
@@ -714,7 +715,7 @@ int GetScreenHeight(void)
 }
 
 // Show mouse cursor
-void ShowCursor()
+void ShowRLCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #if defined(__linux__)
@@ -727,7 +728,7 @@ void ShowCursor()
 }
 
 // Hides mouse cursor
-void HideCursor()
+void HideRLCursor()
 {
 #if defined(PLATFORM_DESKTOP)
     #if defined(__linux__)
@@ -1134,7 +1135,7 @@ void SetConfigFlags(char flags)
 // Takes a screenshot of current screen (saved a .png)
 void TakeScreenshot(const char *fileName)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
+#if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)) && defined(SUPPORT_SAVE_PNG)
     unsigned char *imgData = rlReadScreenPixels(renderWidth, renderHeight);
     SavePNG(fileName, imgData, renderWidth, renderHeight, 4); // Save image as PNG
     free(imgData);
@@ -2119,7 +2120,7 @@ static void InitTimer(void)
 }
 
 // Get current time measure (in seconds) since InitTimer()
-static double GetTime(void)
+double GetTime(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     return glfwGetTime();

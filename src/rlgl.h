@@ -440,6 +440,9 @@ void rlUpdateMesh(Mesh mesh, int buffer, int numVertex);            // Update ve
 void rlDrawMesh(Mesh mesh, Material material, Matrix transform);    // Draw a 3d mesh with material and transform
 void rlUnloadMesh(Mesh *mesh);                                      // Unload mesh data from CPU and GPU
 
+// Debug Marker for Analysis
+void rlSetMarker(const char *text);
+
 // NOTE: There is a set of shader related functions that are available to end user,
 // to avoid creating function wrappers through core module, they have been directly declared in raylib.h
 
@@ -456,11 +459,13 @@ Texture2D GetTextureDefault(void);                      // Get default texture
 
 // Shader configuration functions
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
+void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
 void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
 void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+Matrix GetMatrixModelview();
+
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided

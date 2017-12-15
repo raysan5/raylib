@@ -290,11 +290,12 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
-    else if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
-#endif
+    if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
     else
+#endif
     {
         Image image = LoadImage(fileName);
         if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);
