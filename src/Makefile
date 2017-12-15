@@ -47,6 +47,10 @@ API_VERSION = 1
 PLATFORM ?= PLATFORM_DESKTOP
 RAYLIB_PATH = ..
 
+# Included raylib audio module on compilation
+# NOTE: Some programs like tools could not require audio support
+INCLUDE_AUDIO_MODULE ?= YES
+
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE ?= STATIC
 
@@ -317,13 +321,16 @@ OBJS = core.o \
        textures.o \
        text.o \
        models.o \
-       audio.o \
-       mini_al.o \
-       stb_vorbis.o \
        utils.o
        
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     OBJS += rglfw.o
+endif
+
+ifeq ($(INCLUDE_AUDIO_MODULE),YES)
+    OBJS += audio.o
+    OBJS += mini_al.o
+    OBJS += stb_vorbis.o
 endif
 
 # Default target entry
