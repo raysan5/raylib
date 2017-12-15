@@ -1,5 +1,5 @@
 // Audio playback and capture library. Public domain. See "unlicense" statement at the end of this file.
-// mini_al - v0.x - 2017-xx-xx
+// mini_al - v0.x - xxxx-xx-xx
 //
 // David Reid - davidreidsoftware@gmail.com
 
@@ -1422,10 +1422,11 @@ mal_uint32 mal_src_read_frames(mal_src* pSRC, mal_uint32 frameCount, void* pFram
 // The same mal_src_read_frames() with extra control over whether or not the internal buffers should be flushed at the end.
 //
 // Internally there exists a buffer that keeps track of the previous and next samples for sample rate conversion. The simple
-// version of this function does _not_ flush this buffer because otherwise it causes clitches for streaming based conversion
+// version of this function does _not_ flush this buffer because otherwise it causes glitches for streaming based conversion
 // pipelines. The problem, however, is that sometimes you need those last few samples (such as if you're doing a bulk conversion
 // of a static file). Enabling flushing will fix this for you.
 mal_uint32 mal_src_read_frames_ex(mal_src* pSRC, mal_uint32 frameCount, void* pFramesOut, mal_bool32 flush);
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1464,6 +1465,8 @@ mal_uint32 mal_convert_frames(void* pOut, mal_format formatOut, mal_uint32 chann
 
 // Helper for initializing a mal_dsp_config object.
 mal_dsp_config mal_dsp_config_init(mal_format formatIn, mal_uint32 channelsIn, mal_uint32 sampleRateIn, mal_format formatOut, mal_uint32 channelsOut, mal_uint32 sampleRateOut);
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1635,7 +1638,14 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
     #define MAL_HAS_OPENSL  // Like OSS, OpenSL is the only supported backend for Android. It must be present.
 #endif
 #ifdef MAL_ENABLE_OPENAL
-    #define MAL_HAS_OPENAL  // mini_al inlines the necessary OpenAL stuff.
+    #define MAL_HAS_OPENAL
+    #ifdef MAL_NO_RUNTIME_LINKING
+        #ifdef __has_include
+            #if !__has_include(<AL/al.h>)
+                #undef MAL_HAS_OPENAL
+            #endif
+        #endif
+    #endif
 #endif
 #ifdef MAL_ENABLE_SDL
     #define MAL_HAS_SDL
@@ -2745,13 +2755,11 @@ static mal_result mal_context__try_get_device_name_by_id(mal_context* pContext, 
                 }
             } break;
         #endif
-        #if 0
         #ifdef MAL_HAS_COREAUDIO
-            case mal_backend_coreaudio:
-            {
-                // TODO: Implement me.
-            } break;
-        #endif
+            //case mal_backend_coreaudio:
+            //{
+            //    // TODO: Implement me.
+            //} break;
         #endif
         #ifdef MAL_HAS_OSS
             case mal_backend_oss:
@@ -5488,8 +5496,8 @@ struct
     const char* name;
     float scale;
 } g_malDefaultBufferSizeScalesALSA[] = {
-    {"bcm2835 IEC958/HDMI", 32},
-    {"bcm2835 ALSA",        32}
+    {"bcm2835 IEC958/HDMI", 20},
+    {"bcm2835 ALSA",        20}
 };
 
 static float mal_find_default_buffer_size_scale__alsa(const char* deviceName)
@@ -11486,7 +11494,11 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 // REVISION HISTORY
 // ================
 //
-// v0.x - 2017-xx-xx
+// v0.x - xxxx-xx-xx
+//   - Improvements to the build system for the OpenAL backend.
+//   - Documentation fixes.
+//
+// v0.6 - 2017-12-08
 //   - API CHANGE: Expose and improve mutex APIs. If you were using the mutex APIs before this version you'll
 //     need to update.
 //   - API CHANGE: SRC and DSP callbacks now take a pointer to a mal_src and mal_dsp object respectively.
@@ -11499,7 +11511,7 @@ void mal_pcm_f32_to_s32(int* pOut, const float* pIn, unsigned int count)
 //   - Add mal_convert_frames(). This is a high-level helper API for performing a one-time, bulk conversion of
 //     audio data to a different format.
 //   - Improvements to f32 -> u8/s16/s24/s32 conversion routines.
-//   - Fix a bug where the wrong value is returned from mal_device_start() for the OpenSL and SDL backends.
+//   - Fix a bug where the wrong value is returned from mal_device_start() for the OpenSL backend.
 //   - Fixes and improvements for Raspberry Pi.
 //   - Warning fixes.
 //
