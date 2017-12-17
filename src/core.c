@@ -263,12 +263,12 @@ static char gamepadName[64];                    // Gamepad name holder
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-static EGLDisplay display;              // Native display device (physical screen connection)
-static EGLSurface surface;              // Surface to draw on, framebuffers (connected to context)
-static EGLContext context;              // Graphic context, mode in which drawing can be done
-static EGLConfig config;                // Graphic config
-static uint64_t baseTime;               // Base time measure for hi-res timer
-static bool windowShouldClose = false;  // Flag to set window for closing
+static EGLDisplay display;                  // Native display device (physical screen connection)
+static EGLSurface surface;                  // Surface to draw on, framebuffers (connected to context)
+static EGLContext context;                  // Graphic context, mode in which drawing can be done
+static EGLConfig config;                    // Graphic config
+static uint64_t baseTime;                   // Base time measure for hi-res timer
+static bool windowShouldClose = false;      // Flag to set window for closing
 #endif
 
 // Display size-related data
@@ -2118,11 +2118,11 @@ static void InitTimer(void)
     previousTime = GetTime();       // Get time as double
 }
 
-// Get current time measure (in seconds) since InitTimer()
+// Get elapsed time measure (in seconds)
 static double GetTime(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetTime();
+    return glfwGetTime();                   // Elapsed time since glfwInit()
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
@@ -2130,7 +2130,7 @@ static double GetTime(void)
     clock_gettime(CLOCK_MONOTONIC, &ts);
     uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
 
-    return (double)(time - baseTime)*1e-9;
+    return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
 #endif
 }
 
