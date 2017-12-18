@@ -79,7 +79,6 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  - [raylib Nim binding](https://gitlab.com/define-private-public/raylib-Nim)
  - [raylib Crystal binding](https://gitlab.com/Zatherz/cray) 
  - [raylib Perl wrapper](https://metacpan.org/pod/Graphics::Raylib) 
- - [raylib Perl frontend](https://github.com/athreef/Alien-raylib)
  - raylib Pascal binding with custom IDE (closed-source)
  
 Usually, raylib bindings follow the convention: `raylib-{language}`
