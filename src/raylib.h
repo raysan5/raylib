@@ -722,7 +722,7 @@ RLAPI Matrix GetCameraMatrix(Camera camera);                      // Returns cam
 RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
 RLAPI int GetFPS(void);                                           // Returns current FPS
 RLAPI float GetFrameTime(void);                                   // Returns time in seconds for last frame drawn
-//RLAPI double GetCurrentTime(void);                                // Return current time in seconds
+RLAPI double GetTime(void);                                       // Returns elapsed time in seconds since InitWindow()
 
 // Color-related functions
 RLAPI int GetHexValue(Color color);                               // Returns hexadecimal value for a Color

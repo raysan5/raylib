@@ -150,11 +150,11 @@
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
     #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
-    //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
-    
+
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
-    __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
-    __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
+    // NOTE: Those functions require linking with winmm library
+    unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+    unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #endif
 #endif
 
@@ -351,7 +351,6 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
-static double GetTime(void);                            // Returns time since InitTimer() was run
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
@@ -421,15 +420,15 @@ void InitWindow(int width, int height, void *data)
 
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
+    
+    // Init hi-res timer
+    InitTimer();
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
 #endif
-
-    // Init hi-res timer
-    InitTimer();
 
 #if defined(PLATFORM_RPI)
     // Init raw input system
@@ -786,7 +785,7 @@ void ClearBackground(Color color)
 // Setup canvas (framebuffer) to start drawing
 void BeginDrawing(void)
 {
-    currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
+    currentTime = GetTime();            // Number of elapsed seconds since InitTimer()
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
@@ -1058,6 +1057,24 @@ float GetFrameTime(void)
 {
     // NOTE: We round value to milliseconds
     return (float)frameTime;
+}
+
+// Get elapsed time measure in seconds since InitTimer()
+// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
+// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
+double GetTime(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetTime();                   // Elapsed time since glfwInit()
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+
+    return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
+#endif
 }
 
 // Converts Color to float array and normalizes
@@ -2118,22 +2135,6 @@ static void InitTimer(void)
     previousTime = GetTime();       // Get time as double
 }
 
-// Get elapsed time measure (in seconds)
-static double GetTime(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetTime();                   // Elapsed time since glfwInit()
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
-
-    return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
-#endif
-}
-
 // Wait for some milliseconds (stop program execution)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
 // take longer than expected... for that reason we use the busy wait loop
@@ -2602,6 +2603,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 {
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
+                    
+                    // Init hi-res timer
+                    InitTimer();
 
                     #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
@@ -2623,9 +2627,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                         }
                     }
                     */
-
-                    // Init hi-res timer
-                    InitTimer();
 
                     // raylib logo appearing animation (if enabled)
                     if (showLogo)
