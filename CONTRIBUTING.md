@@ -11,7 +11,7 @@ Use your best judgement, and feel free to propose changes to this document in a 
  - raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or is not clearly useful, better not to include it.
  - raylib is open source and free; educators and institutions can use this tool to TEACH videogames programming completely by free.
  - raylib is collaborative; contribution of tutorials / code-examples / bugs-solving / code-comments are highly appreciated.
- - raylib's license (and it's external libs respective licenses) allow using it for commercial products.
+ - raylib's license (and its external libs respective licenses) allow using it for commercial products.
 
 ### Some interesting reads to start with
 
