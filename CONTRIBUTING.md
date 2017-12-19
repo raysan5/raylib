@@ -37,7 +37,7 @@ Source code is extensively commented for that purpose, raylib primary learning m
 
 ### Using raylib develop branch
 
-raylib [master branch](https://github.com/raysan5/raylib) contains latest raylib release but all 
+raylib [master branch](https://github.com/raysan5/raylib) contains the latest raylib release but all 
 the future work is always done on [develop branch](https://github.com/raysan5/raylib/tree/develop), 
 it's far ahead of master and I try to keep it always stable with latest library changes.
 
@@ -50,7 +50,7 @@ For detailed information on building raylib and examples, please check [raylib W
 
 ### Opening new Issues
 
-To open new issue for raylib (bug, enhacement, discussion...), just try to follow these rules:
+To open new issue for raylib (bug, enhancement, discussion...), just try to follow these rules:
 
  - Make sure the issue has not already been reported before by searching on GitHub under Issues.
  - If you're unable to find an open issue addressing the problem, open a new one. Be sure to include a 
