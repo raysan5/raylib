@@ -101,7 +101,7 @@ Thank you very much for your time! :)
 ----
 
 Here is a list of raylib contributors, these people have invested part of their time 
-contributing (in some way or another) to make raylib project better. Huge thanks to all of them!
+contributing (in some way or another) to make the raylib project better. Huge thanks to all of them!
 
  - [Zopokx](https://github.com/Zopokx) for testing the web.
  - [Elendow](http://www.elendow.com) for testing and helping on web development.
