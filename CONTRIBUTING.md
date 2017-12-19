@@ -8,7 +8,7 @@ Use your best judgement, and feel free to propose changes to this document in a 
 ### raylib philosophy
 
  - raylib is a tool to LEARN videogames programming, every single function in raylib should be a tutorial on itself.
- - raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or has not a clear usefulness, better not to include it.
+ - raylib is SIMPLE and EASY-TO-USE, I tried to keep it compact with a small set of functions, if a function is too complex or is not clearly useful, better not to include it.
  - raylib is open source and free; educators and institutions can use this tool to TEACH videogames programming completely by free.
  - raylib is collaborative; contribution of tutorials / code-examples / bugs-solving / code-comments are highly appreciated.
  - raylib's license (and its external libs respective licenses) allow using it for commercial products.
@@ -23,6 +23,18 @@ Use your best judgement, and feel free to propose changes to this document in a 
 [raylib Wiki](https://github.com/raysan5/raylib/wiki) contains some information about the library and is open to anyone for edit. 
 Feel free to review it if required, just take care not to break anything.
 
+### raylib C coding conventions
+
+Despite being written in C, raylib does not follow the standard Hungarian notation for C, 
+it [follows Pascal-case/camel-case notation](https://github.com/raysan5/raylib/wiki/raylib-coding-conventions), 
+more common on C# language. All code formatting decisions have been carefully taken
+to make it easier for students to read, write and understand code. 
+
+Source code is extensively commented for that purpose, raylib primary learning method is:
+
+ > learn by reading code and examples
+
+
 ### Using raylib develop branch
 
 raylib [master branch](https://github.com/raysan5/raylib) contains latest raylib release but all 
@@ -36,21 +48,9 @@ use provided [Makefile](https://github.com/raysan5/raylib/blob/develop/src/Makef
 
 For detailed information on building raylib and examples, please check [raylib Wiki](https://github.com/raysan5/raylib/wiki).
 
-### raylib C coding conventions
-
-Despite being written in C, raylib does not follow the standard hungarian notation for C, 
-it [follows Pascal-case/camel-case notation](https://github.com/raysan5/raylib/wiki/raylib-coding-conventions), 
-more common on C# language. All code formatting decisions have been carefully taken
-to make it easier for students to read, write and understand code. 
-
-Source code is extensively commented for that pourpose, raylib primary learning method is:
-
- > learn by reading code and examples
-
-
 ### Opening new Issues
 
-To open new issue for raylib (bug, enhacement, discussion...), just try to follow this rules:
+To open new issue for raylib (bug, enhacement, discussion...), just try to follow these rules:
 
  - Make sure the issue has not already been reported before by searching on GitHub under Issues.
  - If you're unable to find an open issue addressing the problem, open a new one. Be sure to include a 
@@ -62,16 +62,16 @@ To open new issue for raylib (bug, enhacement, discussion...), just try to follo
 
 ### Sending a Pull-Request
 
-To send a pull-request, first of all, make sure you're sending it to **develop-branch**. Here are some other rules:
+To send a pull-request, first of all, make sure you're sending it to [develop branch](https://github.com/raysan5/raylib/tree/develop). Here are some other rules:
 
- - Make sure thee PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
+ - Make sure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
  - Don't send big pull-requests (lots of changelists), they are difficult to review. It's better to send small pull-request, one at a time.
  - Verify that changes don't break the build (at least on Windows platform). As many platforms where you can test it, the better, but don't worry
- if you can not test all the platforms.
+ if you cannot test all the platforms.
 
 ### raylib bindings
 
-Some people ported raylib to other languages in form of bindings or wrappers to the library, here it is a list with the ones I'm aware:
+Some people ported raylib to other languages in form of bindings or wrappers to the library, here is a list with the ones I'm aware of:
 
  - [raylib C/C++ version (default)](https://github.com/raysan5/raylib)
  - [raylib Lua binding](https://github.com/raysan5/raylib-lua)
@@ -83,12 +83,12 @@ Some people ported raylib to other languages in form of bindings or wrappers to 
  
 Usually, raylib bindings follow the convention: `raylib-{language}`
 
-Let me know if you're writting a new binding for raylib, I will list it here and I usually 
+Let me know if you're writing a new binding for raylib, I will list it here and I usually 
 provide the icon/logo for that new language binding.
 
-### contact information
+### Contact information
 
-If you have any doubt, don't hessitate to [contact me](mailto:ray@raylib.com)!.
+If you have any doubt, don't hesitate to [contact me](mailto:ray@raylib.com)!.
 You can write me a direct mail but you can also contact me on the following networks:
 
  - [raylib forum](http://forum.raylib.com/) - A good place for discussions or to ask for help.
@@ -100,8 +100,8 @@ Thank you very much for your time! :)
 
 ----
 
-Here it is a list of raylib contributors, this people has invested part of their time 
-contributing (in some way or another) to make raylib project better. Huge thanks to all of them!
+Here is a list of raylib contributors, these people have invested part of their time 
+contributing (in some way or another) to make the raylib project better. Huge thanks to all of them!
 
  - [Zopokx](https://github.com/Zopokx) for testing the web.
  - [Elendow](http://www.elendow.com) for testing and helping on web development.
