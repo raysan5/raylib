@@ -470,11 +470,11 @@ typedef struct Wave {
 
 // Sound source type
 typedef struct Sound {
-    void* audioBuffer;      // A pointer to internal data used by the audio system.
+    void *audioBuffer;      // Pointer to internal data used by the audio system
 
-    unsigned int source;    // OpenAL audio source id
-    unsigned int buffer;    // OpenAL audio buffer id
-    int format;             // OpenAL audio format specifier
+    unsigned int source;    // Audio source id
+    unsigned int buffer;    // Audio buffer id
+    int format;             // Audio format specifier
 } Sound;
 
 // Music type (file streaming from memory)
@@ -488,11 +488,11 @@ typedef struct AudioStream {
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo)
 
-    void* audioBuffer;          // A pointer to internal data used by the audio system.
+    void *audioBuffer;          // Pointer to internal data used by the audio system.
 
-    int format;                 // OpenAL audio format specifier
-    unsigned int source;        // OpenAL audio source id
-    unsigned int buffers[2];    // OpenAL audio buffers (double buffering)
+    int format;                 // Audio format specifier
+    unsigned int source;        // Audio source id
+    unsigned int buffers[2];    // Audio buffers (double buffering)
 } AudioStream;
 
 // Head-Mounted-Display device parameters
@@ -655,18 +655,6 @@ typedef enum {
     HMD_VALVE_HTC_VIVE,
     HMD_SONY_PSVR
 } VrDeviceType;
-
-// RRESData type
-typedef enum { 
-    RRES_TYPE_RAW = 0, 
-    RRES_TYPE_IMAGE, 
-    RRES_TYPE_WAVE, 
-    RRES_TYPE_VERTEX, 
-    RRES_TYPE_TEXT,
-    RRES_TYPE_FONT_IMAGE,
-    RRES_TYPE_FONT_CHARDATA,    // CharInfo data array
-    RRES_TYPE_DIRECTORY
-} RRESDataType;
 
 #ifdef __cplusplus
 extern "C" {            // Prevents name mangling of functions
@@ -1131,8 +1119,8 @@ RLAPI void PauseAudioStream(AudioStream stream);                      // Pause a
 RLAPI void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
 RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audio stream is playing
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
-RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);     // Set volume for audio stream (1.0 is max level)
-RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);       // Set pitch for audio stream (1.0 is base level)
+RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
+RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 
 #ifdef __cplusplus
 }

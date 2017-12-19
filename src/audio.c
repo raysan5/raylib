@@ -153,7 +153,12 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
-typedef enum { MUSIC_AUDIO_OGG = 0, MUSIC_AUDIO_FLAC, MUSIC_MODULE_XM, MUSIC_MODULE_MOD } MusicContextType;
+typedef enum { 
+    MUSIC_AUDIO_OGG = 0, 
+    MUSIC_AUDIO_FLAC, 
+    MUSIC_MODULE_XM, 
+    MUSIC_MODULE_MOD 
+} MusicContextType;
 
 // Music type (file streaming from memory)
 typedef struct MusicData {
@@ -179,7 +184,13 @@ typedef struct MusicData {
 } MusicData;
 
 #if defined(AUDIO_STANDALONE)
-typedef enum { LOG_INFO = 0, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_OTHER } TraceLogType;
+typedef enum { 
+    LOG_INFO = 0, 
+    LOG_ERROR, 
+    LOG_WARNING, 
+    LOG_DEBUG, 
+    LOG_OTHER 
+} TraceLogType;
 #endif
 
 //----------------------------------------------------------------------------------
@@ -215,9 +226,8 @@ void TraceLog(int msgType, const char *text, ...);              // Show trace lo
 
 typedef enum { AUDIO_BUFFER_USAGE_STATIC = 0, AUDIO_BUFFER_USAGE_STREAM } AudioBufferUsage;
 
-typedef struct AudioBuffer AudioBuffer;
-struct AudioBuffer
-{
+// Audio buffer structure
+typedef struct AudioBuffer {
     mal_dsp dsp;                        // For format conversion.
     float volume;
     float pitch;
@@ -231,10 +241,9 @@ struct AudioBuffer
     AudioBuffer* next;
     AudioBuffer* prev;
     unsigned char buffer[1];
-};
+} AudioBuffer;
 
-void StopAudioBuffer(AudioBuffer* audioBuffer);
-
+void StopAudioBuffer(AudioBuffer *audioBuffer);
 
 static mal_context context;
 static mal_device device;
@@ -399,12 +408,6 @@ void InitAudioDevice(void)
 
     // Device. Using the default device. Format is floating point because it simplifies mixing.
     mal_device_config deviceConfig = mal_device_config_init(DEVICE_FORMAT, DEVICE_CHANNELS, DEVICE_SAMPLE_RATE, NULL, OnSendAudioDataToDevice);
-
-    // Special case for PLATFORM_RPI.
-//#if defined(PLATFORM_RPI)
-//    deviceConfig.alsa.noMMap = MAL_TRUE;
-//    deviceConfig.bufferSizeInFrames = 2048;
-//#endif
 
     result = mal_device_init(&context, mal_device_type_playback, NULL, &deviceConfig, NULL, &device);
     if (result != MAL_SUCCESS)
