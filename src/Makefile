@@ -47,12 +47,20 @@ API_VERSION = 1
 PLATFORM ?= PLATFORM_DESKTOP
 RAYLIB_PATH = ..
 
+# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
+RAYLIB_LIBTYPE ?= STATIC
+
 # Included raylib audio module on compilation
 # NOTE: Some programs like tools could not require audio support
 INCLUDE_AUDIO_MODULE ?= YES
 
-# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
+# Force OpenAL Soft backend for audio
+FORCE_OPENAL_BACKEND ?= FALSE
+
+# OpenAL Soft audio backend forced on HTML5 and OSX (see below)
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    FORCE_OPENAL_BACKEND = TRUE
+endif
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -93,6 +101,13 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS=LINUX
     endif
+endif
+
+# Force OpenAL Soft audio backend for OSX platform
+# NOTE 1: mini_al library does not support CoreAudio yet
+# NOTE 2: Required OpenAL libraries should be available on OSX
+ifeq ($(PLATFORM_OS),OSX)
+    FORCE_OPENAL_BACKEND = TRUE
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -269,6 +284,10 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
 
+ifeq ($(FORCE_OPENAL_BACKEND),TRUE)
+    CFLAGS += -DFORCE_OPENAL_BACKEND
+endif
+
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
 INCLUDE_PATHS = -I. -Iexternal -Iexternal/glfw/include
@@ -329,8 +348,10 @@ endif
 
 ifeq ($(INCLUDE_AUDIO_MODULE),YES)
     OBJS += audio.o
-    OBJS += mini_al.o
     OBJS += stb_vorbis.o
+ifeq ($(FORCE_OPENAL_BACKEND),FALSE)
+    OBJS += mini_al.o
+endif
 endif
 
 # Default target entry

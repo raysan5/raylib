@@ -10,19 +10,24 @@
 *       - Manage mixing channels
 *       - Manage raw audio context
 *
-*   LIMITATIONS:
+*   LIMITATIONS (only OpenAL Soft):
 *       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
 *       Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
 *
 *   DEPENDENCIES:
-*       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
+*       mini_al     - Audio device/context management (https://github.com/dr-soft/mini_al)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
-*       jar_xm      - XM module file loading (#define SUPPORT_FILEFORMAT_XM)
-*       jar_mod     - MOD audio file loading (#define SUPPORT_FILEFORMAT_MOD)
-*       dr_flac     - FLAC audio file loading (#define SUPPORT_FILEFORMAT_FLAC)
+*       jar_xm      - XM module file loading
+*       jar_mod     - MOD audio file loading
+*       dr_flac     - FLAC audio file loading
+*
+*      *OpenAL Soft - Audio device management, still used on HTML5 and OSX platforms
 *
 *   CONTRIBUTORS:
-*       Joshua Reisenauer (github: @kd7tck):
+*       David Reid (github: @mackron) (Nov. 2017):
+*           - Complete port to mini_al library
+*
+*       Joshua Reisenauer (github: @kd7tck) (2015)
 *           - XM audio module support (jar_xm)
 *           - MOD audio module support (jar_mod)
 *           - Mixing channels support
@@ -31,7 +36,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.

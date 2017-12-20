@@ -16,6 +16,9 @@
 *       Define to use the module as standalone library (independently of raylib).
 *       Required types and functions are defined in the same module.
 *
+*   #define FORCE_OPENAL_BACKEND
+*       Force OpenAL Soft audio backend usage
+*
 *   #define SUPPORT_FILEFORMAT_WAV
 *   #define SUPPORT_FILEFORMAT_OGG
 *   #define SUPPORT_FILEFORMAT_XM
@@ -24,19 +27,24 @@
 *       Selected desired fileformats to be supported for loading. Some of those formats are 
 *       supported by default, to remove support, just comment unrequired #define in this module
 *
-*   LIMITATIONS:
+*   LIMITATIONS (only OpenAL Soft):
 *       Only up to two channels supported: MONO and STEREO (for additional channels, use AL_EXT_MCFORMATS)
 *       Only the following sample sizes supported: 8bit PCM, 16bit PCM, 32-bit float PCM (using AL_EXT_FLOAT32)
 *
 *   DEPENDENCIES:
-*       OpenAL Soft - Audio device management (http://kcat.strangesoft.net/openal.html)
+*       mini_al     - Audio device/context management (https://github.com/dr-soft/mini_al)
 *       stb_vorbis  - OGG audio files loading (http://www.nothings.org/stb_vorbis/)
 *       jar_xm      - XM module file loading
 *       jar_mod     - MOD audio file loading
 *       dr_flac     - FLAC audio file loading
 *
+*      *OpenAL Soft - Audio device management, still used on HTML5 and OSX platforms
+*
 *   CONTRIBUTORS:
-*       Joshua Reisenauer (github: @kd7tck):
+*       David Reid (github: @mackron) (Nov. 2017):
+*           - Complete port to mini_al library
+*
+*       Joshua Reisenauer (github: @kd7tck) (2015)
 *           - XM audio module support (jar_xm)
 *           - MOD audio module support (jar_mod)
 *           - Mixing channels support
@@ -45,7 +53,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -72,8 +80,8 @@
 #define SUPPORT_FILEFORMAT_MOD
 //-------------------------------------------------
 
-#ifndef USE_MINI_AL
-#define USE_MINI_AL 1           // Set to 1 to use mini_al; 0 to use OpenAL.
+#if !defined(FORCE_OPENAL_BACKEND)
+    #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
 #endif
 
 #if defined(AUDIO_STANDALONE)
@@ -86,7 +94,7 @@
 
 #include "external/mini_al.h"   // Implemented in mini_al.c. Cannot implement this here because it conflicts with Win32 APIs such as CloseWindow(), etc.
 
-#if !defined(USE_MINI_AL) || USE_MINI_AL == 0
+#if !defined(USE_MINI_AL) || (USE_MINI_AL == 0)
     #if defined(__APPLE__)
         #include "OpenAL/al.h"          // OpenAL basic header
         #include "OpenAL/alc.h"         // OpenAL context header (like OpenGL, OpenAL requires a context to work)
@@ -480,11 +488,8 @@ void InitAudioDevice(void)
             
             alListenerf(AL_GAIN, 1.0f);
 
-            if (alIsExtensionPresent("AL_EXT_float32")) {
-                TraceLog(LOG_INFO, "AL_EXT_float32 supported");
-            } else {
-                TraceLog(LOG_INFO, "AL_EXT_float32 not supported");
-            }
+            if (alIsExtensionPresent("AL_EXT_float32")) TraceLog(LOG_INFO, "[EXTENSION] AL_EXT_float32 supported");
+            else TraceLog(LOG_INFO, "[EXTENSION] AL_EXT_float32 not supported");
         }
     }
 #endif
