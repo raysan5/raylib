@@ -35,7 +35,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -1137,9 +1137,8 @@ void rlglInit(int width, int height)
             glGetFloatv(0x84FF, &maxAnisotropicLevel);   // GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
         }
 
-        if(strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) {
-            debugMarkerSupported = true;
-        }
+        // Debug marker support
+        if(strcmp(extList[i], (const char *)"GL_EXT_debug_marker") == 0) debugMarkerSupported = true;
 
         // Clamp mirror wrap mode supported
         if (strcmp(extList[i], (const char *)"GL_EXT_texture_mirror_clamp") == 0) texClampMirrorSupported = true;
@@ -1296,7 +1295,9 @@ int rlGetVersion(void)
 // Set debug marker
 void rlSetDebugMarker(const char *text)
 {
-    if(debugMarkerSupported) glInsertEventMarkerEXT(0, text);   // 0 terminated string
+#if defined(GRAPHICS_API_OPENGL_33)
+    if (debugMarkerSupported) glInsertEventMarkerEXT(0, text);
+#endif
 }
 
 // Load OpenGL extensions
@@ -4232,8 +4233,3 @@ void TraceLog(int msgType, const char *text, ...)
     if (msgType == LOG_ERROR) exit(1);
 }
 #endif
-
-void rlSetMarker(const char *text) {
-    if(debugMarkerSupported)
-        glInsertEventMarkerEXT(0, text);            //0 terminated string
-}
