@@ -34,7 +34,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -552,14 +552,16 @@ void UpdateTexture(Texture2D texture, const void *pixels)
 }
 
 // Save image to a PNG file
-void SaveImageAs(const char* fileName, Image image)
+void SaveImageAs(const char *fileName, Image image)
 {
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
     // NOTE: Getting Color array as RGBA unsigned char values
-    unsigned char* imgData = (unsigned char*)GetImageData(image);
+    unsigned char *imgData = (unsigned char *)GetImageData(image);
     SavePNG(fileName, imgData, image.width, image.height, 4);
     free(imgData);
 
     TraceLog(LOG_INFO, "Image saved: %s", fileName);
+#endif
 }
 
 // Convert image data to desired format
