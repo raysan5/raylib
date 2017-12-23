@@ -51,7 +51,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         UNAMEOS=$(shell uname)
         ifeq ($(UNAMEOS),FreeBSD)
             PLATFORM_OS=FREEBSD
-            LIBPATH=linux
+            LIBPATH=freebsd
         endif
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS=OSX
