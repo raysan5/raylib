@@ -7,7 +7,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -26,29 +26,28 @@
 *
 **********************************************************************************************/
 
-
 //#define _GLFW_BUILD_DLL           // To build shared version
 //http://www.glfw.org/docs/latest/compile.html#compile_manual
 
-#ifdef _WIN32
+#if defined(_WIN32)
     #define _GLFW_WIN32
 #endif
-#ifdef __linux__
-    #ifndef _GLFW_WAYLAND           // Required for Wayland windowing
+#if defined(__linux__)
+    #if !defined(_GLFW_WAYLAND)     // Required for Wayland windowing
         #define _GLFW_X11
     #endif
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined( __NetBSD__)
     #define _GLFW_X11
 #endif
-#ifdef __APPLE__
+#if defined(__APPLE__)
     #define _GLFW_COCOA
     #define _GLFW_USE_CHDIR         // To chdir to the Resources subdirectory of the application bundle during glfwInit
     #define _GLFW_USE_MENUBAR       // To create and populate the menu bar when the first window is created
     #define _GLFW_USE_RETINA        // To have windows use the full resolution of Retina displays
 #endif
 
-// NOTE: _GLFW_WAYLAND and _GLFW_MIR experimental platforms not supported at this moment
+// NOTE: _GLFW_MIR experimental platform not supported at this moment
 
 #include "external/glfw/src/context.c"
 #include "external/glfw/src/init.c"
@@ -57,7 +56,7 @@
 #include "external/glfw/src/vulkan.c"
 #include "external/glfw/src/window.c"
 
-#ifdef _WIN32
+#if defined(_WIN32)
     #include "external/glfw/src/win32_init.c"
     #include "external/glfw/src/win32_joystick.c"
     #include "external/glfw/src/win32_monitor.c"
@@ -69,15 +68,15 @@
     #include "external/glfw/src/osmesa_context.c"
 #endif
 
-#ifdef __linux__
-    #ifdef _GLFW_WAYLAND
+#if defined(__linux__)
+    #if defined(_GLFW_WAYLAND)
         #include "external/glfw/src/wl_init.c"
         #include "external/glfw/src/wl_monitor.c"
         #include "external/glfw/src/wl_window.c"
         #include "external/glfw/src/wayland-pointer-constraints-unstable-v1-client-protocol.c"
         #include "external/glfw/src/wayland-relative-pointer-unstable-v1-client-protocol.c"
         #endif
-    #ifdef _GLFW_X11
+    #if defined(_GLFW_X11)
         #include "external/glfw/src/x11_init.c"
         #include "external/glfw/src/x11_monitor.c"
         #include "external/glfw/src/x11_window.c"
@@ -106,7 +105,7 @@
     #include "external/glfw/src/osmesa_context.c"
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
     #include "external/glfw/src/cocoa_init.m"
     #include "external/glfw/src/cocoa_joystick.m"
     #include "external/glfw/src/cocoa_monitor.m"

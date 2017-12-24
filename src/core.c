@@ -124,7 +124,7 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#ifdef _WIN32
+#if defined(_WIN32)
     #include <direct.h>             // Required for: _getch(), _chdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
