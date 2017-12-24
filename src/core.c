@@ -329,7 +329,7 @@ static double updateTime, drawTime;         // Time measures for update and draw
 static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
-static char configFlags = 0;                // Configuration flags (bit based)
+static unsigned char configFlags = 0;       // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -1138,7 +1138,7 @@ void ShowLogo(void)
 }
 
 // Setup window configuration flags (view FLAGS)
-void SetConfigFlags(char flags)
+void SetConfigFlags(unsigned char flags)
 {
     configFlags = flags;
 
