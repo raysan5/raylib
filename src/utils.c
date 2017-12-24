@@ -88,7 +88,7 @@ static int android_close(void *cookie);
 //----------------------------------------------------------------------------------
 
 // Enable trace log message types (bit flags based)
-void SetTraceLogTypes(unsigned char types)
+void SetTraceLog(unsigned char types)
 {
     logTypeFlags = types;
 }
