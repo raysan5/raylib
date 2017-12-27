@@ -3,7 +3,8 @@ project(raylib)
 include("../utils.cmake")
 
 set(raylib_VERSION_MAJOR 1)
-set(raylib_VERSION_MINOR 8)
+set(raylib_VERSION_MINOR 9)
+set(raylib_VERSION_PATCH 1)
 set(RAYLIB raylib)    # Name of the generated library
 
 
