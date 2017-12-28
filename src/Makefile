@@ -54,11 +54,15 @@ RAYLIB_LIBTYPE ?= STATIC
 # NOTE: Some programs like tools could not require audio support
 INCLUDE_AUDIO_MODULE ?= TRUE
 
-# Force OpenAL Soft backend for audio
+# Use OpenAL Soft backend for audio
 USE_OPENAL_BACKEND ?= FALSE
 
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW ?= FALSE
+
+# Use Wayland display server protocol on Linux desktop
+# by default it uses X11 windowing system
+USE_WAYLAND_DISPLAY ?= FALSE
 
 # OpenAL Soft audio backend forced on HTML5 and OSX (see below)
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -287,8 +291,18 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
 
+# Use OpenAL Soft backend instead of mini_al
 ifeq ($(USE_OPENAL_BACKEND),TRUE)
     CFLAGS += -DUSE_OPENAL_BACKEND
+endif
+
+# Use Wayland display on Linux desktop
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS), LINUX)
+        ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
+            CFLAGS += -D_GLFW_WAYLAND
+        endif
+    endif
 endif
 
 # Define include paths for required headers

@@ -29,15 +29,19 @@ PLATFORM ?= PLATFORM_DESKTOP
 RAYLIB_PATH ?= ..
 PROJECT_NAME ?= raylib_example
 
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH ?= /home/pi/raylib
-endif
+# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
+RAYLIB_LIBTYPE ?= STATIC
 
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW ?= FALSE
 
-# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
+# Use Wayland display server protocol on Linux desktop
+# by default it uses X11 windowing system
+USE_WAYLAND_DISPLAY ?= FALSE
+
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH ?= /home/pi/raylib
+endif
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -223,7 +227,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
         
         # On Wayland windowing system, additional libraries requires
-        #LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon   
+        ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
+            LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
+        endif
     endif
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
