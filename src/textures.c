@@ -1681,7 +1681,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D *texture)
 {
-#if PLATFORM_WEB
+#if defined(PLATFORM_WEB)
     // Calculate next power-of-two values
     int potWidth = (int)powf(2, ceilf(logf((float)texture->width)/logf(2)));
     int potHeight = (int)powf(2, ceilf(logf((float)texture->height)/logf(2)));

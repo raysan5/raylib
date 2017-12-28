@@ -45,9 +45,7 @@
 
 #include "raylib.h"
 
-#if defined(PLATFORM_ANDROID)
-    #include "utils.h"      // Android fopen function map
-#endif
+#include "utils.h"          // Required for: fopen() Android mapping
 
 #include <stdio.h>          // Required for: FILE, fopen(), fclose(), fscanf(), feof(), rewind(), fgets()
 #include <stdlib.h>         // Required for: malloc(), free()
@@ -57,7 +55,7 @@
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
 #define PAR_SHAPES_IMPLEMENTATION
-#include "external/par_shapes.h"
+#include "external/par_shapes.h"    // Shapes 3d parametric generation
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
