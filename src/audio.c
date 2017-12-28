@@ -16,8 +16,8 @@
 *       Define to use the module as standalone library (independently of raylib).
 *       Required types and functions are defined in the same module.
 *
-*   #define FORCE_OPENAL_BACKEND
-*       Force OpenAL Soft audio backend usage
+*   #define USE_OPENAL_BACKEND
+*       Use OpenAL Soft audio backend usage
 *
 *   #define SUPPORT_FILEFORMAT_WAV
 *   #define SUPPORT_FILEFORMAT_OGG
@@ -80,7 +80,7 @@
 #define SUPPORT_FILEFORMAT_MOD
 //-------------------------------------------------
 
-#if !defined(FORCE_OPENAL_BACKEND)
+#if !defined(USE_OPENAL_BACKEND)
     #define USE_MINI_AL 1       // Set to 1 to use mini_al; 0 to use OpenAL.
 #endif
 

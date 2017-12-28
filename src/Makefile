@@ -52,21 +52,24 @@ RAYLIB_LIBTYPE ?= STATIC
 
 # Included raylib audio module on compilation
 # NOTE: Some programs like tools could not require audio support
-INCLUDE_AUDIO_MODULE ?= YES
+INCLUDE_AUDIO_MODULE ?= TRUE
 
 # Force OpenAL Soft backend for audio
-FORCE_OPENAL_BACKEND ?= FALSE
+USE_OPENAL_BACKEND ?= FALSE
+
+# Use external GLFW library instead of rglfw module
+USE_EXTERNAL_GLFW ?= FALSE
 
 # OpenAL Soft audio backend forced on HTML5 and OSX (see below)
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    FORCE_OPENAL_BACKEND = TRUE
+    USE_OPENAL_BACKEND = TRUE
 endif
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RPI_CROSS_COMPILE ?= NO
+    USE_RPI_CROSS_COMPILER ?= FALSE
     
-    ifeq ($(RPI_CROSS_COMPILE),YES)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
         RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
     endif
@@ -107,7 +110,7 @@ endif
 # NOTE 1: mini_al library does not support CoreAudio yet
 # NOTE 2: Required OpenAL libraries should be available on OSX
 ifeq ($(PLATFORM_OS),OSX)
-    FORCE_OPENAL_BACKEND = TRUE
+    USE_OPENAL_BACKEND = TRUE
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -201,7 +204,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(RPI_CROSS_COMPILE),YES)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         # Define RPI cross-compiler
         #CC = armv6j-hardfloat-linux-gnueabi-gcc
         CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
@@ -226,7 +229,7 @@ endif
 AR = ar
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(RPI_CROSS_COMPILE),YES)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         # Define RPI cross-archiver
         #CC = armv6j-hardfloat-linux-gnueabi-gcc
         AR = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-ar
@@ -284,8 +287,8 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
 
-ifeq ($(FORCE_OPENAL_BACKEND),TRUE)
-    CFLAGS += -DFORCE_OPENAL_BACKEND
+ifeq ($(USE_OPENAL_BACKEND),TRUE)
+    CFLAGS += -DUSE_OPENAL_BACKEND
 endif
 
 # Define include paths for required headers
@@ -296,6 +299,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),FREEBSD)
         INCLUDE_PATHS += -I/usr/local/include
         LDFLAGS += -L. -Lsrc -L/usr/local/lib -L$(RAYLIB_RELEASE_PATH)
+    endif
+    ifeq ($(USE_EXTERNAL_GLFW),TRUE)
+        LDFLAGS += -lglfw
     endif
 endif
 
@@ -343,15 +349,17 @@ OBJS = core.o \
        utils.o
        
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    OBJS += rglfw.o
+    ifeq ($(USE_EXTERNAL_GLFW),FALSE)
+        OBJS += rglfw.o
+    endif
 endif
 
-ifeq ($(INCLUDE_AUDIO_MODULE),YES)
+ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
     OBJS += audio.o
     OBJS += stb_vorbis.o
-ifeq ($(FORCE_OPENAL_BACKEND),FALSE)
-    OBJS += mini_al.o
-endif
+    ifeq ($(USE_OPENAL_BACKEND),FALSE)
+        OBJS += mini_al.o
+    endif
 endif
 
 # Default target entry

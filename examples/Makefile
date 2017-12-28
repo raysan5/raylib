@@ -33,6 +33,9 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     RAYLIB_PATH ?= /home/pi/raylib
 endif
 
+# Use external GLFW library instead of rglfw module
+USE_EXTERNAL_GLFW ?= FALSE
+
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE ?= STATIC
 
@@ -234,6 +237,9 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
 
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
+    endif
+    ifeq ($(USE_EXTERNAL_GLFW),TRUE)
+        LDLIBS += -lglfw
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
