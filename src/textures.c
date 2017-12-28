@@ -227,10 +227,11 @@ Image LoadImage(const char *fileName)
         image.mipmaps = 1;
         
         if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+        else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
         else 
         {
             // TODO: Support different number of channels at 32 bit float
-            TraceLog(LOG_WARNING, "[%s] Image fileformat not supported (only 3 channel 32 bit floats)", fileName);
+            TraceLog(LOG_WARNING, "[%s] Image fileformat not supported", fileName);
             UnloadImage(image);
         }
     }
@@ -329,6 +330,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             case UNCOMPRESSED_R4G4B4A4: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (4 bit alpha)
             case UNCOMPRESSED_R8G8B8A8: image.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
             case UNCOMPRESSED_R32G32B32: image.data = (float *)malloc(size*12); size *= 12; break;        // 4 byte per channel (12 byte)
+            case UNCOMPRESSED_R32G32B32A32: image.data = (float *)malloc(size*16); size *= 16; break;     // 4 byte per channel (16 byte)
             default: TraceLog(LOG_WARNING, "Image format not suported"); break;
         }
 
@@ -679,12 +681,37 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
 
-                    for (int i = 0; i < image->width*image->height*4; i += 4)
+                    for (int i = 0; i < image->width*image->height*3; i += 3)
                     {
                         ((unsigned char *)image->data)[i] = pixels[k].r;
                         ((unsigned char *)image->data)[i + 1] = pixels[k].g;
                         ((unsigned char *)image->data)[i + 2] = pixels[k].b;
                         ((unsigned char *)image->data)[i + 3] = pixels[k].a;
+                        k++;
+                    }
+                } break;
+                case UNCOMPRESSED_R32G32B32:
+                {
+                    image->data = (float *)malloc(image->width*image->height*3*sizeof(float));
+
+                    for (int i = 0; i < image->width*image->height*3; i += 3)
+                    {
+                        ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
+                        ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
+                        ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
+                        k++;
+                    }
+                } break;
+                case UNCOMPRESSED_R32G32B32A32:
+                {
+                    image->data = (float *)malloc(image->width*image->height*4*sizeof(float));
+
+                    for (int i = 0; i < image->width*image->height*4; i += 4)
+                    {
+                        ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
+                        ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
+                        ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
+                        ((float *)image->data)[i + 3] = (float)pixels[k].a/255.0f;
                         k++;
                     }
                 } break;
@@ -806,6 +833,7 @@ Image ImageCopy(Image image)
         case UNCOMPRESSED_R8G8B8: byteSize *= 3; break;     // 24 bpp (3 bytes)
         case UNCOMPRESSED_R8G8B8A8: byteSize *= 4; break;   // 32 bpp (4 bytes)
         case UNCOMPRESSED_R32G32B32: byteSize *= 12; break; // 4 byte per channel (12 bytes)
+        case UNCOMPRESSED_R32G32B32A32: byteSize *= 16; break; // 4 byte per channel (16 bytes)
         case COMPRESSED_DXT3_RGBA:
         case COMPRESSED_DXT5_RGBA:
         case COMPRESSED_ETC2_EAC_RGBA:

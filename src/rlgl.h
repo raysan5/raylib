@@ -260,6 +260,7 @@ typedef unsigned char byte;
         UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
         UNCOMPRESSED_R8G8B8A8,          // 32 bpp
         UNCOMPRESSED_R32G32B32,         // 32 bit per channel (float) - HDR
+        UNCOMPRESSED_R32G32B32A32,      // 32 bit per channel (float) - HDR
         COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
         COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
         COMPRESSED_DXT3_RGBA,           // 8 bpp

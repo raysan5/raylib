@@ -1421,6 +1421,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     #endif
     #if defined(GRAPHICS_API_OPENGL_ES2)
         case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;  // NOTE: Requires extension OES_texture_float
+        case UNCOMPRESSED_R32G32B32A32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;  // NOTE: Requires extension OES_texture_float
         case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mipmapCount); break;
         case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipmapCount); break;
         case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mipmapCount); break;      // NOTE: Not supported by WebGL
@@ -1468,13 +1469,14 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
             GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
             glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
         } break;
-
+        // Supported texture formats: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
         case UNCOMPRESSED_R5G6B5: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
         case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
         case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
         case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
         case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;
+        case UNCOMPRESSED_R32G32B32A32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGB, GL_FLOAT, (float *)data); break;
         case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mipmapCount); break;
         case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipmapCount); break;
         case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) LoadTextureCompressed((unsigned char *)data, width, height, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mipmapCount); break;
