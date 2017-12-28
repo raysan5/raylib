@@ -23,14 +23,23 @@ using namespace raylibUWP;
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
 #define MAX_GAMEPAD_AXIS          8         // Max number of axis supported (per gamepad)
-
 static bool gamepadReady[MAX_GAMEPADS] = { false };             // Flag to know if gamepad is ready
 static float gamepadAxisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];  // Gamepad axis state
 static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
 static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
 
+//#define MAX_KEYS 512
+static char previousKeyState[512] = { 0 };  // Contains previous frame keyboard state
+static char currentKeyState[512] = { 0 };   // Contains current frame keyboard state
+
 void UWP_PollInput()
 {
+	// Register previous keyboard state
+	for (int k = 0; k < 512; k++) previousKeyState[k] = currentKeyState[k];
+	// NOTE: Since UWP updates key state while our game is processing, the current key state really is the CURRENT, most up to date key state - not the key state from last frame.
+	// If we register the current key state as the last key state right before processing the frame, prev and current keyboard states will nearly always be identical.
+	// In the future, we should either create a third cache for windows to write key changes into, or better yet, just poll the keyboard using CoreWindow's GetKeyState https://docs.microsoft.com/en-us/uwp/api/windows.ui.core.corewindow#Windows_UI_Core_CoreWindow_GetKeyState_Windows_System_VirtualKey_
+			
 	// Check if gamepads are ready
 	for (int i = 0; i < MAX_GAMEPADS; i++)
 	{
@@ -77,9 +86,138 @@ void UWP_PollInput()
 			gamepadAxisState[i][GAMEPAD_XBOX_AXIS_RT] = reading.RightTrigger;
 		}
 	}
+
 }
 
-/* OTHER CODE*/
+// Stand-ins for "core.c" variables
+
+											// NOTE(sam): We could also poll for all keys every frame using CoreWindow's GetKeyState https://docs.microsoft.com/en-us/uwp/api/windows.ui.core.corewindow#Windows_UI_Core_CoreWindow_GetKeyState_Windows_System_VirtualKey_
+											// Helper to process key events
+inline void ProcessKeyEvent(Windows::System::VirtualKey key, int action)
+{
+	using Windows::System::VirtualKey;
+	switch (key)
+	{
+	case VirtualKey::Space: currentKeyState[KEY_SPACE] = action; break;
+	case VirtualKey::Escape: currentKeyState[KEY_ESCAPE] = action; break;
+	case VirtualKey::Enter: currentKeyState[KEY_ENTER] = action; break;
+	case VirtualKey::Delete: currentKeyState[KEY_BACKSPACE] = action; break;
+	case VirtualKey::Right: currentKeyState[KEY_RIGHT] = action; break;
+	case VirtualKey::Left: currentKeyState[KEY_LEFT] = action; break;
+	case VirtualKey::Down: currentKeyState[KEY_DOWN] = action; break;
+	case VirtualKey::Up: currentKeyState[KEY_UP] = action; break;
+	case VirtualKey::F1: currentKeyState[KEY_F1] = action; break;
+	case VirtualKey::F2: currentKeyState[KEY_F2] = action; break;
+	case VirtualKey::F3: currentKeyState[KEY_F4] = action; break;
+	case VirtualKey::F4: currentKeyState[KEY_F5] = action; break;
+	case VirtualKey::F5: currentKeyState[KEY_F6] = action; break;
+	case VirtualKey::F6: currentKeyState[KEY_F7] = action; break;
+	case VirtualKey::F7: currentKeyState[KEY_F8] = action; break;
+	case VirtualKey::F8: currentKeyState[KEY_F9] = action; break;
+	case VirtualKey::F9: currentKeyState[KEY_F10] = action; break;
+	case VirtualKey::F10: currentKeyState[KEY_F11] = action; break;
+	case VirtualKey::F11: currentKeyState[KEY_F12] = action; break;
+	case VirtualKey::LeftShift: currentKeyState[KEY_LEFT_SHIFT] = action; break;
+	case VirtualKey::LeftControl: currentKeyState[KEY_LEFT_CONTROL] = action; break;
+	case VirtualKey::LeftMenu: currentKeyState[KEY_LEFT_ALT] = action; break; // NOTE: Potential UWP bug with Alt key: https://social.msdn.microsoft.com/Forums/windowsapps/en-US/9bebfb0a-7637-400e-8bda-e55620091407/unexpected-behavior-in-windowscoreuicorephysicalkeystatusismenukeydown
+	case VirtualKey::RightShift: currentKeyState[KEY_RIGHT_SHIFT] = action; break;
+	case VirtualKey::RightControl: currentKeyState[KEY_RIGHT_CONTROL] = action; break;
+	case VirtualKey::RightMenu: currentKeyState[KEY_RIGHT_ALT] = action; break;
+	case VirtualKey::Number0: currentKeyState[KEY_ZERO] = action; break;
+	case VirtualKey::Number1: currentKeyState[KEY_ONE] = action; break;
+	case VirtualKey::Number2: currentKeyState[KEY_TWO] = action; break;
+	case VirtualKey::Number3: currentKeyState[KEY_THREE] = action; break;
+	case VirtualKey::Number4: currentKeyState[KEY_FOUR] = action; break;
+	case VirtualKey::Number5: currentKeyState[KEY_FIVE] = action; break;
+	case VirtualKey::Number6: currentKeyState[KEY_SIX] = action; break;
+	case VirtualKey::Number7: currentKeyState[KEY_SEVEN] = action; break;
+	case VirtualKey::Number8: currentKeyState[KEY_EIGHT] = action; break;
+	case VirtualKey::Number9: currentKeyState[KEY_NINE] = action; break;
+	case VirtualKey::A: currentKeyState[KEY_A] = action; break;
+	case VirtualKey::B: currentKeyState[KEY_B] = action; break;
+	case VirtualKey::C: currentKeyState[KEY_C] = action; break;
+	case VirtualKey::D: currentKeyState[KEY_D] = action; break;
+	case VirtualKey::E: currentKeyState[KEY_E] = action; break;
+	case VirtualKey::F: currentKeyState[KEY_F] = action; break;
+	case VirtualKey::G: currentKeyState[KEY_G] = action; break;
+	case VirtualKey::H: currentKeyState[KEY_H] = action; break;
+	case VirtualKey::I: currentKeyState[KEY_I] = action; break;
+	case VirtualKey::J: currentKeyState[KEY_J] = action; break;
+	case VirtualKey::K: currentKeyState[KEY_K] = action; break;
+	case VirtualKey::L: currentKeyState[KEY_L] = action; break;
+	case VirtualKey::M: currentKeyState[KEY_M] = action; break;
+	case VirtualKey::N: currentKeyState[KEY_N] = action; break;
+	case VirtualKey::O: currentKeyState[KEY_O] = action; break;
+	case VirtualKey::P: currentKeyState[KEY_P] = action; break;
+	case VirtualKey::Q: currentKeyState[KEY_Q] = action; break;
+	case VirtualKey::R: currentKeyState[KEY_R] = action; break;
+	case VirtualKey::S: currentKeyState[KEY_S] = action; break;
+	case VirtualKey::T: currentKeyState[KEY_T] = action; break;
+	case VirtualKey::U: currentKeyState[KEY_U] = action; break;
+	case VirtualKey::V: currentKeyState[KEY_V] = action; break;
+	case VirtualKey::W: currentKeyState[KEY_W] = action; break;
+	case VirtualKey::X: currentKeyState[KEY_X] = action; break;
+	case VirtualKey::Y: currentKeyState[KEY_Y] = action; break;
+	case VirtualKey::Z: currentKeyState[KEY_Z] = action; break;
+
+	}
+}
+
+void App::OnKeyDown(CoreWindow ^ sender, KeyEventArgs ^ args)
+{
+	ProcessKeyEvent(args->VirtualKey, 1);
+}
+
+void App::OnKeyUp(CoreWindow ^ sender, KeyEventArgs ^ args)
+{
+	ProcessKeyEvent(args->VirtualKey, 0);
+}
+
+// The following functions were reimplemented for UWP from core.c
+static bool GetKeyStatus(int key)
+{
+	return currentKeyState[key];
+}
+
+// The following functions were ripped from core.c
+// Detect if a key has been pressed once
+bool UWPIsKeyPressed(int key)
+{
+	bool pressed = false;
+	
+	if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 1))
+		pressed = true;
+	else pressed = false;
+
+	return pressed;
+}
+
+// Detect if a key is being pressed (key held down)
+bool UWPIsKeyDown(int key)
+{
+	if (GetKeyStatus(key) == 1) return true;
+	else return false;
+}
+
+// Detect if a key has been released once
+bool UWPIsKeyReleased(int key)
+{
+	bool released = false;
+
+	if ((currentKeyState[key] != previousKeyState[key]) && (currentKeyState[key] == 0)) released = true;
+	else released = false;
+
+	return released;
+}
+
+// Detect if a key is NOT being pressed (key not held down)
+bool UWPIsKeyUp(int key)
+{
+	if (GetKeyStatus(key) == 0) return true;
+	else return false;
+}
+
+/* OTHER CODE */
 
 // Helper to convert a length in device-independent pixels (DIPs) to a length in physical pixels.
 inline float ConvertDipsToPixels(float dips, float dpi)
@@ -139,6 +277,8 @@ void App::SetWindow(CoreWindow^ window)
 	currentDisplayInformation->DpiChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &App::OnDpiChanged);
 	currentDisplayInformation->OrientationChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &App::OnOrientationChanged);
 
+	window->KeyDown += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &App::OnKeyDown);
+	window->KeyUp += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &App::OnKeyUp);
 
     // The CoreWindow has been created, so EGL can be initialized.
 	InitWindow(800, 450, (EGLNativeWindowType)window);
@@ -150,6 +290,8 @@ void App::Load(Platform::String^ entryPoint)
     // InitWindow() --> rlglInit()
 }
 
+static int posX = 100;
+static int posY = 100;
 // This method is called after the window becomes active.
 void App::Run()
 {
@@ -157,18 +299,33 @@ void App::Run()
     {
         if (mWindowVisible)
         {
-			// Update
-
+			
 			// Draw
 			BeginDrawing();
 
 				ClearBackground(RAYWHITE);
-
-				DrawRectangle(100, 100, 400, 100, RED);
+				
+				
+				posX += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_X] * 5;
+				posY += gamepadAxisState[GAMEPAD_PLAYER1][GAMEPAD_XBOX_AXIS_LEFT_Y] * -5;
+				DrawRectangle(posX, posY, 400, 100, RED);
 
 				DrawLine(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
 
+
+				if(UWPIsKeyDown(KEY_S))
+				{
+					DrawCircle(100, 100, 100, BLUE);
+				}
+
+				if(UWPIsKeyPressed(KEY_A))
+				{
+					posX -= 50;
+				}
+
 		    EndDrawing();
+			// Update
+			UWP_PollInput(); // TODO: Move to beginning of frame - currently at end of frame to accomodate keyboard callback
 
 			CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
         }
