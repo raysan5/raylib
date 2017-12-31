@@ -2432,7 +2432,9 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     else
     {
         currentKeyState[key] = action;
-        if (action == GLFW_PRESS) lastKeyPressed = key;
+        
+        // NOTE: lastKeyPressed already registered on CharCallback()
+        //if (action == GLFW_PRESS) lastKeyPressed = key;
     }
 }
 
@@ -2498,12 +2500,15 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 #endif
 }
 
-// GLFW3 Char Key Callback, runs on key pressed (get char value)
+// GLFW3 Char Key Callback, runs on key down (get unicode char value)
 static void CharCallback(GLFWwindow *window, unsigned int key)
-{
+{  
+    // NOTE: Registers any key down considering OS keyboard layout but
+    // do not detects action events, those should be managed by user...
+    // https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // http://www.glfw.org/docs/latest/input_guide.html#input_char
+    
     lastKeyPressed = key;
-
-    //TraceLog(LOG_INFO, "Char Callback Key pressed: %i\n", key);
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
