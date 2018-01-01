@@ -10,6 +10,10 @@
 *   #define SUPPORT_TRIANGLES_ONLY
 *       Draw shapes using only TRIANGLES, vertex are accumulated in TRIANGLES arrays
 *
+*   #define USE_DEFAULT_FONT_TEXTURE
+*       Draw rectangle shapes using font texture white character instead of default white texture
+*       Allows drawing rectangles and text with a single draw call, very useful for GUI systems!
+*
 *
 *   LICENSE: zlib/libpng
 *
@@ -245,6 +249,78 @@ void DrawRectangle(int posX, int posY, int width, int height, Color color)
     DrawRectangleV(position, size, color);
 }
 
+// Draw a color-filled rectangle (Vector version)
+// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
+void DrawRectangleV(Vector2 position, Vector2 size, Color color)
+{
+    if (rlGetVersion() == OPENGL_11)
+    {
+        rlBegin(RL_TRIANGLES);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+
+            rlVertex2i(position.x, position.y);
+            rlVertex2i(position.x, position.y + size.y);
+            rlVertex2i(position.x + size.x, position.y + size.y);
+
+            rlVertex2i(position.x, position.y);
+            rlVertex2i(position.x + size.x, position.y + size.y);
+            rlVertex2i(position.x + size.x, position.y);
+        rlEnd();
+    }
+    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
+    {
+#if defined(USE_DEFAULT_FONT_TEXTURE)
+        // Draw rectangle using font texture white character
+        rlEnableTexture(GetDefaultFont().texture.id);
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            // NOTE: Default raylib font character 95 is a white square
+            rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                         (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+            rlVertex2f(rec.x, rec.y);
+            
+            rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                         (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+            rlVertex2f(rec.x, rec.y + rec.height);
+            
+            rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                         (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+            rlVertex2f(rec.x + rec.width, rec.y + rec.height);
+            
+            rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                         (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+            rlVertex2f(rec.x + rec.width, rec.y);
+        rlEnd();
+        
+        rlDisableTexture();
+#else
+        rlEnableTexture(GetTextureDefault().id); // Default white texture
+
+        rlBegin(RL_QUADS);
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlNormal3f(0.0f, 0.0f, 1.0f);
+
+            rlTexCoord2f(0.0f, 0.0f);
+            rlVertex2f(position.x, position.y);
+
+            rlTexCoord2f(0.0f, 1.0f);
+            rlVertex2f(position.x, position.y + size.y);
+
+            rlTexCoord2f(1.0f, 1.0f);
+            rlVertex2f(position.x + size.x, position.y + size.y);
+
+            rlTexCoord2f(1.0f, 0.0f);
+            rlVertex2f(position.x + size.x, position.y);
+        rlEnd();
+
+        rlDisableTexture();
+#endif
+    }
+}
+
 // Draw a color-filled rectangle
 void DrawRectangleRec(Rectangle rec, Color color)
 {
@@ -292,6 +368,37 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color col
 // NOTE: Colors refer to corners, starting at top-lef corner and counter-clockwise
 void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
+#if defined(USE_DEFAULT_FONT_TEXTURE)
+    // Draw rectangle using font texture white character
+    rlEnableTexture(GetDefaultFont().texture.id);
+
+    rlBegin(RL_QUADS);
+        rlNormal3f(0.0f, 0.0f, 1.0f);
+
+        // NOTE: Default raylib font character 95 is a white square
+        rlColor4ub(col1.r, col1.g, col1.b, col1.a);
+        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x, rec.y);
+        
+        rlColor4ub(col2.r, col2.g, col2.b, col2.a);
+        rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
+                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x, rec.y + rec.height);
+        
+        rlColor4ub(col3.r, col3.g, col3.b, col3.a);
+        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                     (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x + rec.width, rec.y + rec.height);
+        
+        rlColor4ub(col4.r, col4.g, col4.b, col4.a);
+        rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
+                     (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
+        rlVertex2f(rec.x + rec.width, rec.y);
+    rlEnd();
+    
+    rlDisableTexture();
+#else
     rlEnableTexture(GetTextureDefault().id);    // Default white texture
 
     rlBegin(RL_QUADS);
@@ -313,70 +420,9 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
         rlTexCoord2f(1.0f, 0.0f);
         rlVertex2f(rec.x + rec.width, rec.y);
     rlEnd();
-    
-    // Draw rectangle using font texture white character
-    /*
-    rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                 (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
-    rlVertex2f(rec.x, rec.y);
-    
-    rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
-                 (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
-    rlVertex2f(rec.x, rec.y + rec.height);
-    
-    rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                 (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
-    rlVertex2f(rec.x + rec.width, rec.y + rec.height);
-    
-    rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
-                 (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
-    rlVertex2f(rec.x + rec.width, rec.y);
-    */
-                
+
     rlDisableTexture();
-}
-
-// Draw a color-filled rectangle (Vector version)
-// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues (view rlglDraw)
-void DrawRectangleV(Vector2 position, Vector2 size, Color color)
-{
-    if (rlGetVersion() == OPENGL_11)
-    {
-        rlBegin(RL_TRIANGLES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-
-            rlVertex2i(position.x, position.y);
-            rlVertex2i(position.x, position.y + size.y);
-            rlVertex2i(position.x + size.x, position.y + size.y);
-
-            rlVertex2i(position.x, position.y);
-            rlVertex2i(position.x + size.x, position.y + size.y);
-            rlVertex2i(position.x + size.x, position.y);
-        rlEnd();
-    }
-    else if ((rlGetVersion() == OPENGL_21) || (rlGetVersion() == OPENGL_33) || (rlGetVersion() == OPENGL_ES_20))
-    {
-        rlEnableTexture(GetTextureDefault().id); // Default white texture
-
-        rlBegin(RL_QUADS);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);
-
-            rlTexCoord2f(0.0f, 0.0f);
-            rlVertex2f(position.x, position.y);
-
-            rlTexCoord2f(0.0f, 1.0f);
-            rlVertex2f(position.x, position.y + size.y);
-
-            rlTexCoord2f(1.0f, 1.0f);
-            rlVertex2f(position.x + size.x, position.y + size.y);
-
-            rlTexCoord2f(1.0f, 0.0f);
-            rlVertex2f(position.x + size.x, position.y);
-        rlEnd();
-
-        rlDisableTexture();
-    }
+#endif
 }
 
 // Draw rectangle outline
@@ -407,14 +453,6 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
         DrawRectangle(posX, posY + height - 1, width, 1, color);
         DrawRectangle(posX, posY + 1, 1, height - 2, color);
     }
-}
-
-// Draw rectangle using text character (char: 127)
-// NOTE: Useful to avoid changing to default white texture
-void DrawRectangleT(int posX, int posY, int width, int height, Color color)
-{
-    DrawTexturePro(GetDefaultFont().texture, GetDefaultFont().chars[95].rec, 
-                   (Rectangle){ posX, posY, width, height }, (Vector2){ 0, 0 }, 0.0f, color);
 }
 
 // Draw a triangle
