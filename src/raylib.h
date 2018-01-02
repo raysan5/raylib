@@ -736,9 +736,10 @@ RLAPI int GetRandomValue(int min, int max);                       // Returns a r
 
 // Files management functions
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);// Check file extension
-RLAPI const char *GetExtension(const char *fileName);             // Get file extension
-RLAPI const char *GetDirectoryPath(const char *fileName);         // Get directory for a given fileName (with path)
-RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory
+RLAPI const char *GetExtension(const char *fileName);             // Get pointer to extension for a filename string
+RLAPI const char *GetFileName(const char *filePath);              // Get pointer to filename for a path string
+RLAPI const char *GetDirectoryPath(const char *fileName);         // Get full path for a given fileName (uses static string)
+RLAPI const char *GetWorkingDirectory(void);                      // Get current working directory (uses static string)
 RLAPI bool ChangeDirectory(const char *dir);                      // Change working directory, returns true if success
 RLAPI bool IsFileDropped(void);                                   // Check if a file has been dropped into window
 RLAPI char **GetDroppedFiles(int *count);                         // Get dropped files names

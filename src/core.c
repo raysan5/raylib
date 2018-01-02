@@ -1174,7 +1174,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
     return result;
 }
 
-// Get the extension for a filename
+// Get pointer to extension for a filename string
 const char *GetExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
@@ -1183,6 +1183,17 @@ const char *GetExtension(const char *fileName)
     
     return (dot + 1);
 }
+
+// Get pointer to filename for a path string
+const char *GetFileName(const char *filePath)
+{
+    const char *fileName = strrchr(filePath, '\\');
+    
+    if (!fileName || fileName == filePath) return filePath;
+
+    return fileName + 1;
+}
+
 
 // Get directory for a given fileName (with path)
 const char *GetDirectoryPath(const char *fileName)
