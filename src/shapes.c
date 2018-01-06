@@ -36,6 +36,8 @@
 *
 **********************************************************************************************/
 
+#define USE_DEFAULT_FONT_TEXTURE
+
 #include "raylib.h"
 
 #include "rlgl.h"       // raylib OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
@@ -280,19 +282,19 @@ void DrawRectangleV(Vector2 position, Vector2 size, Color color)
             // NOTE: Default raylib font character 95 is a white square
             rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
                          (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
-            rlVertex2f(rec.x, rec.y);
+            rlVertex2f(position.x, position.y);
             
             rlTexCoord2f((float)GetDefaultFont().chars[95].rec.x/GetDefaultFont().texture.width, 
                          (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
-            rlVertex2f(rec.x, rec.y + rec.height);
+            rlVertex2f(position.x, position.y + size.y);
             
             rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
                          (float)(GetDefaultFont().chars[95].rec.y + GetDefaultFont().chars[95].rec.height)/GetDefaultFont().texture.height);
-            rlVertex2f(rec.x + rec.width, rec.y + rec.height);
+            rlVertex2f(position.x + size.x, position.y + size.y);
             
             rlTexCoord2f((float)(GetDefaultFont().chars[95].rec.x + GetDefaultFont().chars[95].rec.width)/GetDefaultFont().texture.width, 
                          (float)GetDefaultFont().chars[95].rec.y/GetDefaultFont().texture.height);
-            rlVertex2f(rec.x + rec.width, rec.y);
+            rlVertex2f(position.x + size.x, position.y);
         rlEnd();
         
         rlDisableTexture();
