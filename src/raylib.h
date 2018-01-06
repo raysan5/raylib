@@ -869,6 +869,7 @@ RLAPI void UnloadImage(Image image);                                            
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
 RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory (VRAM)
 RLAPI Color *GetImageData(Image image);                                                                  // Get pixel data from image as a Color struct array
+RLAPI int GetImageDataSize(Image image);                                                                 // Get image data size in bytes
 RLAPI Image GetTextureData(Texture2D texture);                                                           // Get pixel data from GPU texture and return an Image
 RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data
 RLAPI void SaveImageAs(const char *fileName, Image image);                                               // Save image to a PNG file

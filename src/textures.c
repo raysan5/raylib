@@ -515,6 +515,43 @@ Color *GetImageData(Image image)
     return pixels;
 }
 
+// Get pixel data size in bytes (image or texture)
+// NOTE: Size depends on pixel format
+int GetPixelDataSize(int width, int height, int format)
+{
+    int dataSize = 0;       // Size in bytes
+    int bpp = 0;            // Bits per pixel
+
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case UNCOMPRESSED_GRAY_ALPHA:
+        case UNCOMPRESSED_R5G6B5:
+        case UNCOMPRESSED_R5G5B5A1:
+        case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+        case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
+        case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case COMPRESSED_DXT1_RGB:
+        case COMPRESSED_DXT1_RGBA: 
+        case COMPRESSED_ETC1_RGB:
+        case COMPRESSED_ETC2_RGB:
+        case COMPRESSED_PVRT_RGB:
+        case COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case COMPRESSED_DXT3_RGBA:
+        case COMPRESSED_DXT5_RGBA:
+        case COMPRESSED_ETC2_EAC_RGBA:
+        case COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
+        case COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        default: break;
+    }
+
+    dataSize = width*height*bpp/8;  // Total data size in bytes
+    
+    return dataSize;
+}
+
 // Get pixel data from GPU texture and return an Image
 // NOTE: Compressed texture formats not supported
 Image GetTextureData(Texture2D texture)
