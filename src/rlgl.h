@@ -169,7 +169,7 @@ typedef unsigned char byte;
         int width;              // Texture base width
         int height;             // Texture base height
         int mipmaps;            // Mipmap levels, 1 by default
-        int format;             // Data format (TextureFormat)
+        int format;             // Data format (PixelFormat)
     } Texture2D;
 
     // RenderTexture2D type, for texture rendering
@@ -259,8 +259,9 @@ typedef unsigned char byte;
         UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
         UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
         UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-        UNCOMPRESSED_R32G32B32,         // 32 bit per channel (float) - HDR
-        UNCOMPRESSED_R32G32B32A32,      // 32 bit per channel (float) - HDR
+        UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
+        UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
+        UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
         COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
         COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
         COMPRESSED_DXT3_RGBA,           // 8 bpp
@@ -272,7 +273,7 @@ typedef unsigned char byte;
         COMPRESSED_PVRT_RGBA,           // 4 bpp
         COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
         COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
-    } TextureFormat;
+    } PixelFormat;
 
     // Texture parameters: filter mode
     // NOTE 1: Filtering considers mipmaps if available in the texture

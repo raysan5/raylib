@@ -226,11 +226,11 @@ Image LoadImage(const char *fileName)
         
         image.mipmaps = 1;
         
-        if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+        if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
+        else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
         else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
         else 
         {
-            // TODO: Support different number of channels at 32 bit float
             TraceLog(LOG_WARNING, "[%s] Image fileformat not supported", fileName);
             UnloadImage(image);
         }
@@ -318,21 +318,9 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     {
         if (headerSize > 0) fseek(rawFile, headerSize, SEEK_SET);
 
-        unsigned int size = width*height;
-
-        switch (format)
-        {
-            case UNCOMPRESSED_GRAYSCALE: image.data = (unsigned char *)malloc(size); break;               // 8 bit per pixel (no alpha)
-            case UNCOMPRESSED_GRAY_ALPHA: image.data = (unsigned char *)malloc(size*2); size *= 2; break; // 16 bpp (2 channels)
-            case UNCOMPRESSED_R5G6B5: image.data = (unsigned short *)malloc(size); break;                 // 16 bpp
-            case UNCOMPRESSED_R8G8B8: image.data = (unsigned char *)malloc(size*3); size *= 3; break;     // 24 bpp
-            case UNCOMPRESSED_R5G5B5A1: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (1 bit alpha)
-            case UNCOMPRESSED_R4G4B4A4: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (4 bit alpha)
-            case UNCOMPRESSED_R8G8B8A8: image.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
-            case UNCOMPRESSED_R32G32B32: image.data = (float *)malloc(size*12); size *= 12; break;        // 4 byte per channel (12 byte)
-            case UNCOMPRESSED_R32G32B32A32: image.data = (float *)malloc(size*16); size *= 16; break;     // 4 byte per channel (16 byte)
-            default: TraceLog(LOG_WARNING, "Image format not suported"); break;
-        }
+        unsigned int size = GetPixelDataSize(width, height, format);
+        
+        image.data = malloc(size);      // Allocate required memory in bytes
 
         // NOTE: fread() returns num read elements instead of bytes, 
         // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
@@ -531,6 +519,7 @@ int GetPixelDataSize(int width, int height, int format)
         case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
         case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
         case UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case UNCOMPRESSED_R32: bpp = 32; break;
         case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
         case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
         case COMPRESSED_DXT1_RGB:
@@ -727,6 +716,15 @@ void ImageFormat(Image *image, int newFormat)
                         k++;
                     }
                 } break;
+                case UNCOMPRESSED_R32:
+                {
+                    image->data = (float *)malloc(image->width*image->height*sizeof(float));
+
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((float *)image->data)[i] = (float)((float)pixels[i].r*0.299f/255.0f + (float)pixels[i].g*0.587f/255.0f + (float)pixels[i].b*0.114f/255.0f);
+                    }
+                } break;
                 case UNCOMPRESSED_R32G32B32:
                 {
                     image->data = (float *)malloc(image->width*image->height*3*sizeof(float));
@@ -858,39 +856,14 @@ Image ImageCopy(Image image)
 {
     Image newImage = { 0 };
 
-    int byteSize = image.width*image.height;
+    int size = GetPixelDataSize(image.width, image.height, image.format);
 
-    switch (image.format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: break;                 // 8 bpp (1 byte)
-        case UNCOMPRESSED_GRAY_ALPHA:                       // 16 bpp
-        case UNCOMPRESSED_R5G6B5:                           // 16 bpp
-        case UNCOMPRESSED_R5G5B5A1:                         // 16 bpp
-        case UNCOMPRESSED_R4G4B4A4: byteSize *= 2; break;   // 16 bpp (2 bytes)
-        case UNCOMPRESSED_R8G8B8: byteSize *= 3; break;     // 24 bpp (3 bytes)
-        case UNCOMPRESSED_R8G8B8A8: byteSize *= 4; break;   // 32 bpp (4 bytes)
-        case UNCOMPRESSED_R32G32B32: byteSize *= 12; break; // 4 byte per channel (12 bytes)
-        case UNCOMPRESSED_R32G32B32A32: byteSize *= 16; break; // 4 byte per channel (16 bytes)
-        case COMPRESSED_DXT3_RGBA:
-        case COMPRESSED_DXT5_RGBA:
-        case COMPRESSED_ETC2_EAC_RGBA:
-        case COMPRESSED_ASTC_4x4_RGBA: break;               // 8 bpp (1 byte)
-        case COMPRESSED_DXT1_RGB:
-        case COMPRESSED_DXT1_RGBA:
-        case COMPRESSED_ETC1_RGB:
-        case COMPRESSED_ETC2_RGB:
-        case COMPRESSED_PVRT_RGB:
-        case COMPRESSED_PVRT_RGBA: byteSize /= 2; break;    // 4 bpp
-        case COMPRESSED_ASTC_8x8_RGBA: byteSize /= 4; break;// 2 bpp
-        default: TraceLog(LOG_WARNING, "Image format not recognized"); break;
-    }
-
-    newImage.data = malloc(byteSize);
+    newImage.data = malloc(size);
 
     if (newImage.data != NULL)
     {
         // NOTE: Size must be provided in bytes
-        memcpy(newImage.data, image.data, byteSize);
+        memcpy(newImage.data, image.data, size);
 
         newImage.width = image.width;
         newImage.height = image.height;
