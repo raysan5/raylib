@@ -83,7 +83,7 @@
 #define SUPPORT_MOUSE_GESTURES
 #define SUPPORT_CAMERA_SYSTEM
 #define SUPPORT_GESTURES_SYSTEM
-#define SUPPORT_BUSY_WAIT_LOOP
+//#define SUPPORT_BUSY_WAIT_LOOP
 #define SUPPORT_GIF_RECORDING
 //-------------------------------------------------
 
@@ -778,8 +778,8 @@ void DisableCursor()
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
 {
-    // Clear full framebuffer (not only render area) to color
-    rlClearColor(color.r, color.g, color.b, color.a);
+    rlClearColor(color.r, color.g, color.b, color.a);   // Set clear color
+    rlClearScreenBuffers();                             // Clear current framebuffers
 }
 
 // Setup canvas (framebuffer) to start drawing
@@ -789,7 +789,6 @@ void BeginDrawing(void)
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
-    rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
     rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
 
@@ -927,8 +926,6 @@ void BeginTextureMode(RenderTexture2D target)
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlEnableRenderTexture(target.id);   // Enable render target
-
-    rlClearScreenBuffers();             // Clear render texture buffers
 
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
