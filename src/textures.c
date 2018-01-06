@@ -417,6 +417,7 @@ void UnloadRenderTexture(RenderTexture2D target)
 }
 
 // Get pixel data from image in the form of Color struct array
+// TODO: Support float pixel data retrieval
 Color *GetImageData(Image image)
 {
     Color *pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
@@ -719,7 +720,7 @@ void ImageFormat(Image *image, int newFormat)
                 case UNCOMPRESSED_R32:
                 {
                     image->data = (float *)malloc(image->width*image->height*sizeof(float));
-
+                    
                     for (int i = 0; i < image->width*image->height; i++)
                     {
                         ((float *)image->data)[i] = (float)((float)pixels[i].r*0.299f/255.0f + (float)pixels[i].g*0.587f/255.0f + (float)pixels[i].b*0.114f/255.0f);
