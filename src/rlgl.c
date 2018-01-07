@@ -644,6 +644,14 @@ void rlEnd(void)
     // as well as depth buffer bit-depth (16bit or 24bit or 32bit)
     // Correct increment formula would be: depthInc = (zfar - znear)/pow(2, bits)
     currentDepth += (1.0f/20000.0f);
+    
+    // TODO: Verify internal buffers limits
+    // NOTE: Before launching draw, verify no matrix are left in the stack!
+    // NOTE: Probably a lines/triangles margin should be left, rlEnd could be called
+    // after an undetermined number of triangles buffered (check shapes::DrawPoly())
+    if ((lines.vCounter/2 >= MAX_LINES_BATCH - 2) ||
+        (triangles.vCounter/3 >= MAX_TRIANGLES_BATCH - 16) ||
+        (quads.vCounter/4 >= MAX_QUADS_BATCH - 2)) rlglDraw();
 }
 
 // Define one vertex (position)
