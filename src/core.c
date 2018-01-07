@@ -83,7 +83,7 @@
 #define SUPPORT_MOUSE_GESTURES
 #define SUPPORT_CAMERA_SYSTEM
 #define SUPPORT_GESTURES_SYSTEM
-//#define SUPPORT_BUSY_WAIT_LOOP
+#define SUPPORT_BUSY_WAIT_LOOP
 #define SUPPORT_GIF_RECORDING
 //-------------------------------------------------
 
