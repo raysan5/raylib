@@ -890,6 +890,51 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
     ImageFormat(image, prevFormat);
 }
 
+// Crop image depending on alpha value
+void ImageAlphaCrop(Image *image, float threshold)
+{
+    Rectangle crop = { 0 };
+    
+    Color *pixels = GetImageData(*image);
+    
+    int minx = 0;
+    int miny = 0;
+
+    for (int i = 0; i < image->width*image->height; i++) 
+    {
+        if (pixels[i].a > (unsigned char)(threshold*255.0f))
+        {
+            minx = i%image->width;
+            miny = -(-((i/image->width) + 1) + 1);
+
+            if (crop.y == 0) crop.y = miny;
+
+            if (crop.x == 0) crop.x = minx;
+            else if (minx < crop.x) crop.x = minx;
+
+            if (crop.width == 0) crop.width = minx; 
+            else if (crop.width < minx) crop.width = minx;
+
+            if (crop.height == 0) crop.height = miny;
+            else if (crop.height < miny) crop.height = miny;
+        }
+    }
+    
+    crop.width -= (crop.x - 1);
+    crop.height -= (crop.y - 1);
+    
+    TraceLog(LOG_INFO, "Crop rectangle: (%i, %i, %i, %i)", crop.x, crop.y, crop.width, crop.height);
+    
+    free(pixels);
+    
+    // NOTE: Added this weird check to avoid additional 1px crop to
+    // image data that has already been cropped...
+    if ((crop.x != 1) && 
+        (crop.y != 1) && 
+        (crop.width != image->width - 1) &&
+        (crop.height != image->height - 1)) ImageCrop(image, crop);
+}
+
 // Premultiply alpha channel
 void ImageAlphaPremultiply(Image *image)
 {
@@ -911,6 +956,8 @@ void ImageAlphaPremultiply(Image *image)
     
     ImageFormat(image, prevFormat);
 }
+
+
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
 // Crop an image to area defined by a rectangle
