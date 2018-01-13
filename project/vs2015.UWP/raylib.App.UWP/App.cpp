@@ -1,5 +1,4 @@
-﻿
-#include "pch.h"
+﻿#include "pch.h"
 #include "app.h"
 
 #include "raylib.h"
@@ -8,6 +7,7 @@ using namespace Windows::ApplicationModel::Core;
 using namespace Windows::ApplicationModel::Activation;
 using namespace Windows::UI::Core;
 using namespace Windows::UI::Input;
+using namespace Windows::Devices::Input;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Gaming::Input;
@@ -17,8 +17,13 @@ using namespace Platform;
 
 using namespace raylibUWP;
 
-/* GAMEPAD CODE */
+/*
+To-do list
+	- Cache reference to our CoreWindow?
+	- Implement gestures
+*/
 
+/* INPUT CODE */
 // Stand-ins for "core.c" variables
 #define MAX_GAMEPADS              4         // Max number of gamepads supported
 #define MAX_GAMEPAD_BUTTONS       32        // Max bumber of buttons supported (per gamepad)
@@ -28,84 +33,234 @@ static float gamepadAxisState[MAX_GAMEPADS][MAX_GAMEPAD_AXIS];  // Gamepad axis 
 static char previousGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
 static char currentGamepadState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
 
-//#define MAX_KEYS 512
 static char previousKeyState[512] = { 0 };  // Contains previous frame keyboard state
 static char currentKeyState[512] = { 0 };   // Contains current frame keyboard state
 
+//...
+static char previousMouseState[3] = { 0 };  // Registers previous mouse button state
+static char currentMouseState[3] = { 0 };   // Registers current mouse button state
+static int previousMouseWheelY = 0;         // Registers previous mouse wheel variation
+static int currentMouseWheelY = 0;          // Registers current mouse wheel variation
+
+static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
+static bool cursorHidden = false;           // Track if cursor is hidden
+
+static Vector2 mousePosition;
+static Vector2 mouseDelta; // NOTE: Added to keep track of mouse movement while the cursor is locked - no equivalent in "core.c"
+static bool toggleCursorLock;
+
+CoreCursor ^regularCursor = ref new CoreCursor(CoreCursorType::Arrow, 0); // The "visible arrow" cursor type
+
+// Helper to process key events
+void ProcessKeyEvent(Windows::System::VirtualKey key, int action)
+{
+	using Windows::System::VirtualKey;
+	switch (key)
+	{
+	case VirtualKey::Space: currentKeyState[KEY_SPACE] = action; break;
+	case VirtualKey::Escape: currentKeyState[KEY_ESCAPE] = action; break;
+	case VirtualKey::Enter: currentKeyState[KEY_ENTER] = action; break;
+	case VirtualKey::Delete: currentKeyState[KEY_BACKSPACE] = action; break;
+	case VirtualKey::Right: currentKeyState[KEY_RIGHT] = action; break;
+	case VirtualKey::Left: currentKeyState[KEY_LEFT] = action; break;
+	case VirtualKey::Down: currentKeyState[KEY_DOWN] = action; break;
+	case VirtualKey::Up: currentKeyState[KEY_UP] = action; break;
+	case VirtualKey::F1: currentKeyState[KEY_F1] = action; break;
+	case VirtualKey::F2: currentKeyState[KEY_F2] = action; break;
+	case VirtualKey::F3: currentKeyState[KEY_F4] = action; break;
+	case VirtualKey::F4: currentKeyState[KEY_F5] = action; break;
+	case VirtualKey::F5: currentKeyState[KEY_F6] = action; break;
+	case VirtualKey::F6: currentKeyState[KEY_F7] = action; break;
+	case VirtualKey::F7: currentKeyState[KEY_F8] = action; break;
+	case VirtualKey::F8: currentKeyState[KEY_F9] = action; break;
+	case VirtualKey::F9: currentKeyState[KEY_F10] = action; break;
+	case VirtualKey::F10: currentKeyState[KEY_F11] = action; break;
+	case VirtualKey::F11: currentKeyState[KEY_F12] = action; break;
+	case VirtualKey::LeftShift: currentKeyState[KEY_LEFT_SHIFT] = action; break;
+	case VirtualKey::LeftControl: currentKeyState[KEY_LEFT_CONTROL] = action; break;
+	case VirtualKey::LeftMenu: currentKeyState[KEY_LEFT_ALT] = action; break; // NOTE: Potential UWP bug with Alt key: https://social.msdn.microsoft.com/Forums/windowsapps/en-US/9bebfb0a-7637-400e-8bda-e55620091407/unexpected-behavior-in-windowscoreuicorephysicalkeystatusismenukeydown
+	case VirtualKey::RightShift: currentKeyState[KEY_RIGHT_SHIFT] = action; break;
+	case VirtualKey::RightControl: currentKeyState[KEY_RIGHT_CONTROL] = action; break;
+	case VirtualKey::RightMenu: currentKeyState[KEY_RIGHT_ALT] = action; break;
+	case VirtualKey::Number0: currentKeyState[KEY_ZERO] = action; break;
+	case VirtualKey::Number1: currentKeyState[KEY_ONE] = action; break;
+	case VirtualKey::Number2: currentKeyState[KEY_TWO] = action; break;
+	case VirtualKey::Number3: currentKeyState[KEY_THREE] = action; break;
+	case VirtualKey::Number4: currentKeyState[KEY_FOUR] = action; break;
+	case VirtualKey::Number5: currentKeyState[KEY_FIVE] = action; break;
+	case VirtualKey::Number6: currentKeyState[KEY_SIX] = action; break;
+	case VirtualKey::Number7: currentKeyState[KEY_SEVEN] = action; break;
+	case VirtualKey::Number8: currentKeyState[KEY_EIGHT] = action; break;
+	case VirtualKey::Number9: currentKeyState[KEY_NINE] = action; break;
+	case VirtualKey::A: currentKeyState[KEY_A] = action; break;
+	case VirtualKey::B: currentKeyState[KEY_B] = action; break;
+	case VirtualKey::C: currentKeyState[KEY_C] = action; break;
+	case VirtualKey::D: currentKeyState[KEY_D] = action; break;
+	case VirtualKey::E: currentKeyState[KEY_E] = action; break;
+	case VirtualKey::F: currentKeyState[KEY_F] = action; break;
+	case VirtualKey::G: currentKeyState[KEY_G] = action; break;
+	case VirtualKey::H: currentKeyState[KEY_H] = action; break;
+	case VirtualKey::I: currentKeyState[KEY_I] = action; break;
+	case VirtualKey::J: currentKeyState[KEY_J] = action; break;
+	case VirtualKey::K: currentKeyState[KEY_K] = action; break;
+	case VirtualKey::L: currentKeyState[KEY_L] = action; break;
+	case VirtualKey::M: currentKeyState[KEY_M] = action; break;
+	case VirtualKey::N: currentKeyState[KEY_N] = action; break;
+	case VirtualKey::O: currentKeyState[KEY_O] = action; break;
+	case VirtualKey::P: currentKeyState[KEY_P] = action; break;
+	case VirtualKey::Q: currentKeyState[KEY_Q] = action; break;
+	case VirtualKey::R: currentKeyState[KEY_R] = action; break;
+	case VirtualKey::S: currentKeyState[KEY_S] = action; break;
+	case VirtualKey::T: currentKeyState[KEY_T] = action; break;
+	case VirtualKey::U: currentKeyState[KEY_U] = action; break;
+	case VirtualKey::V: currentKeyState[KEY_V] = action; break;
+	case VirtualKey::W: currentKeyState[KEY_W] = action; break;
+	case VirtualKey::X: currentKeyState[KEY_X] = action; break;
+	case VirtualKey::Y: currentKeyState[KEY_Y] = action; break;
+	case VirtualKey::Z: currentKeyState[KEY_Z] = action; break;
+
+	}
+}
+
+/* CALLBACKS */
+void App::PointerPressed(CoreWindow^ window, PointerEventArgs^ args)
+{
+	if (args->CurrentPoint->Properties->IsLeftButtonPressed)
+	{
+		currentMouseState[MOUSE_LEFT_BUTTON] = 1;
+	}
+	if (args->CurrentPoint->Properties->IsRightButtonPressed)
+	{
+		currentMouseState[MOUSE_RIGHT_BUTTON] = 1;
+	}
+	if (args->CurrentPoint->Properties->IsMiddleButtonPressed)
+	{
+		currentMouseState[MOUSE_MIDDLE_BUTTON] = 1;
+	}
+}
+
+void App::PointerReleased(CoreWindow ^window, PointerEventArgs^ args)
+{
+	if (!(args->CurrentPoint->Properties->IsLeftButtonPressed))
+	{
+		currentMouseState[MOUSE_LEFT_BUTTON] = 0;
+	}
+	if (!(args->CurrentPoint->Properties->IsRightButtonPressed))
+	{
+		currentMouseState[MOUSE_RIGHT_BUTTON] = 0;
+	}
+	if (!(args->CurrentPoint->Properties->IsMiddleButtonPressed))
+	{
+		currentMouseState[MOUSE_MIDDLE_BUTTON] = 0;
+	}
+}
+
+void App::PointerWheelChanged(CoreWindow ^window, PointerEventArgs^ args)
+{
+	// TODO: Scale the MouseWheelDelta to match GLFW's mouse wheel sensitivity.
+	currentMouseWheelY += args->CurrentPoint->Properties->MouseWheelDelta;
+}
+
+void App::MouseMoved(Windows::Devices::Input::MouseDevice^ mouseDevice, Windows::Devices::Input::MouseEventArgs^ args)
+{
+	mouseDelta.x += args->MouseDelta.X;
+	mouseDelta.y += args->MouseDelta.Y;
+}
+
+void App::OnKeyDown(CoreWindow ^ sender, KeyEventArgs ^ args)
+{
+	ProcessKeyEvent(args->VirtualKey, 1);
+}
+
+void App::OnKeyUp(CoreWindow ^ sender, KeyEventArgs ^ args)
+{
+	ProcessKeyEvent(args->VirtualKey, 0);
+}
+
+/* REIMPLEMENTED FROM CORE.C */
+// Get one key state
+static bool GetKeyStatus(int key)
+{
+	return currentKeyState[key];
+}
+
+// Show mouse cursor
+void UWPShowCursor()
+{
+	CoreWindow::GetForCurrentThread()->PointerCursor = regularCursor;
+	cursorHidden = false;
+}
+
+// Hides mouse cursor
+void UWPHideCursor()
+{
+	CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
+	cursorHidden = true;
+}
+
+// Set mouse position XY
+void UWPSetMousePosition(Vector2 position)
+{
+	CoreWindow ^window = CoreWindow::GetForCurrentThread();
+	Point mousePosScreen = Point(position.x + window->Bounds.X, position.y + window->Bounds.Y);
+	window->PointerPosition = mousePosScreen;
+	mousePosition = position;
+}
+// Enables cursor (unlock cursor)
+void UWPEnableCursor()
+{
+	UWPShowCursor();
+	UWPSetMousePosition(mousePosition); // The mouse is hidden in the center of the screen - move it to where it should appear
+	toggleCursorLock = false;
+}
+
+// Disables cursor (lock cursor)
+void UWPDisableCursor()
+{
+	UWPHideCursor();
+	toggleCursorLock = true;
+}
+
+// Get one mouse button state
+static bool UWPGetMouseButtonStatus(int button)
+{
+	return currentMouseState[button];
+}
+
+// Poll (store) all input events
 void UWP_PollInput()
 {
-	// Process Keyboard
+	// Register previous keyboard state
+	for (int k = 0; k < 512; k++) previousKeyState[k] = currentKeyState[k];
+
+	// Process Mouse
 	{
-		// Register previous keyboard state
-		for (int k = 0; k < 512; k++) previousKeyState[k] = currentKeyState[k];
+		// Register previous mouse states
+		for (int i = 0; i < 3; i++) previousMouseState[i] = currentMouseState[i];
+		previousMouseWheelY = currentMouseWheelY;
+		currentMouseWheelY = 0;
 
-		// Poll keyboard input
 		CoreWindow ^window = CoreWindow::GetForCurrentThread();
-		using Windows::System::VirtualKey;
-		 // NOTE: Potential UWP bug with Alt key: https://social.msdn.microsoft.com/Forums/windowsapps/en-US/9bebfb0a-7637-400e-8bda-e55620091407/unexpected-behavior-in-windowscoreuicorephysicalkeystatusismenukeydown
-		currentKeyState[KEY_SPACE] = (window->GetAsyncKeyState(VirtualKey::Space) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_ESCAPE] = (window->GetAsyncKeyState(VirtualKey::Escape) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_ENTER] = (window->GetAsyncKeyState(VirtualKey::Enter) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_BACKSPACE] = (window->GetAsyncKeyState(VirtualKey::Back) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_RIGHT] = (window->GetAsyncKeyState(VirtualKey::Right) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_LEFT] = (window->GetAsyncKeyState(VirtualKey::Left) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_DOWN] = (window->GetAsyncKeyState(VirtualKey::Down) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_UP] = (window->GetAsyncKeyState(VirtualKey::Up) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F1] = (window->GetAsyncKeyState(VirtualKey::F1) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F2] = (window->GetAsyncKeyState(VirtualKey::F2) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F3] = (window->GetAsyncKeyState(VirtualKey::F3) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F4] = (window->GetAsyncKeyState(VirtualKey::F4) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F5] = (window->GetAsyncKeyState(VirtualKey::F5) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F6] = (window->GetAsyncKeyState(VirtualKey::F6) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F7] = (window->GetAsyncKeyState(VirtualKey::F7) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F8] = (window->GetAsyncKeyState(VirtualKey::F8) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F9] = (window->GetAsyncKeyState(VirtualKey::F9) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F10] = (window->GetAsyncKeyState(VirtualKey::F10) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F11] = (window->GetAsyncKeyState(VirtualKey::F11) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F12] = (window->GetAsyncKeyState(VirtualKey::F12) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_LEFT_SHIFT] = (window->GetAsyncKeyState(VirtualKey::LeftShift) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_LEFT_CONTROL] = (window->GetAsyncKeyState(VirtualKey::LeftControl) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_LEFT_ALT] = (window->GetAsyncKeyState(VirtualKey::LeftMenu) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_RIGHT_SHIFT] = (window->GetAsyncKeyState(VirtualKey::RightShift) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_RIGHT_CONTROL] = (window->GetAsyncKeyState(VirtualKey::RightControl) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_RIGHT_ALT] = (window->GetAsyncKeyState(VirtualKey::RightMenu) == CoreVirtualKeyStates::Down);
+		if (toggleCursorLock)
+		{
+			// Track cursor movement delta, recenter it on the client
+			mousePosition.x += mouseDelta.x;
+			mousePosition.y += mouseDelta.y;
 
-		currentKeyState[KEY_ZERO] = (window->GetAsyncKeyState(VirtualKey::Number0) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_ONE] = (window->GetAsyncKeyState(VirtualKey::Number1) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_TWO] = (window->GetAsyncKeyState(VirtualKey::Number2) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_THREE] = (window->GetAsyncKeyState(VirtualKey::Number3) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_FOUR] = (window->GetAsyncKeyState(VirtualKey::Number4) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_FIVE] = (window->GetAsyncKeyState(VirtualKey::Number5) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_SIX] = (window->GetAsyncKeyState(VirtualKey::Number6) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_SEVEN] = (window->GetAsyncKeyState(VirtualKey::Number7) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_EIGHT] = (window->GetAsyncKeyState(VirtualKey::Number8) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_NINE] = (window->GetAsyncKeyState(VirtualKey::Number9) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_A] = (window->GetAsyncKeyState(VirtualKey::A) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_B] = (window->GetAsyncKeyState(VirtualKey::B) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_C] = (window->GetAsyncKeyState(VirtualKey::C) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_D] = (window->GetAsyncKeyState(VirtualKey::D) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_E] = (window->GetAsyncKeyState(VirtualKey::E) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_F] = (window->GetAsyncKeyState(VirtualKey::F) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_G] = (window->GetAsyncKeyState(VirtualKey::G) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_H] = (window->GetAsyncKeyState(VirtualKey::H) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_I] = (window->GetAsyncKeyState(VirtualKey::I) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_J] = (window->GetAsyncKeyState(VirtualKey::J) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_K] = (window->GetAsyncKeyState(VirtualKey::K) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_L] = (window->GetAsyncKeyState(VirtualKey::L) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_M] = (window->GetAsyncKeyState(VirtualKey::M) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_N] = (window->GetAsyncKeyState(VirtualKey::N) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_O] = (window->GetAsyncKeyState(VirtualKey::O) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_P] = (window->GetAsyncKeyState(VirtualKey::P) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_Q] = (window->GetAsyncKeyState(VirtualKey::Q) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_R] = (window->GetAsyncKeyState(VirtualKey::R) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_S] = (window->GetAsyncKeyState(VirtualKey::S) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_T] = (window->GetAsyncKeyState(VirtualKey::T) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_U] = (window->GetAsyncKeyState(VirtualKey::U) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_V] = (window->GetAsyncKeyState(VirtualKey::V) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_W] = (window->GetAsyncKeyState(VirtualKey::W) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_X] = (window->GetAsyncKeyState(VirtualKey::X) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_Y] = (window->GetAsyncKeyState(VirtualKey::Y) == CoreVirtualKeyStates::Down);
-		currentKeyState[KEY_Z] = (window->GetAsyncKeyState(VirtualKey::Z) == CoreVirtualKeyStates::Down);
+			// Why we're not using UWPSetMousePosition here...
+			//		 UWPSetMousePosition changes the "mousePosition" variable to match where the cursor actually is.
+			//		 Our cursor is locked to the middle of screen, and we don't want that reflected in "mousePosition"
+			Vector2 centerClient = { (float)(GetScreenWidth() / 2), (float)(GetScreenHeight() / 2) };
+			window->PointerPosition = Point(centerClient.x + window->Bounds.X, centerClient.y + window->Bounds.Y);
+		}
+		else
+		{
+			// Record the cursor's position relative to the client
+			mousePosition.x = window->PointerPosition.X - window->Bounds.X;
+			mousePosition.y = window->PointerPosition.Y - window->Bounds.Y;
+		}
+		
+		mouseDelta = { 0 ,0 };
 	}
 
 	// Process Gamepads
@@ -160,13 +315,7 @@ void UWP_PollInput()
 
 }
 
-// The following functions were reimplemented for UWP from core.c
-static bool GetKeyStatus(int key)
-{
-	return currentKeyState[key];
-}
-
-// The following functions were ripped from core.c
+// The following functions were ripped from core.c and have *no additional work done on them*
 // Detect if a key has been pressed once
 bool UWPIsKeyPressed(int key)
 {
@@ -260,6 +409,14 @@ void App::SetWindow(CoreWindow^ window)
     window->VisibilityChanged += ref new TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &App::OnVisibilityChanged);
     window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &App::OnWindowClosed);
 
+	window->PointerPressed += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &App::PointerPressed);
+	window->PointerReleased += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &App::PointerReleased);
+	window->PointerWheelChanged += ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &App::PointerWheelChanged);
+	window->KeyDown += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &App::OnKeyDown);
+	window->KeyUp += ref new TypedEventHandler<CoreWindow ^, KeyEventArgs ^>(this, &App::OnKeyUp);
+
+	Windows::Devices::Input::MouseDevice::GetForCurrentView()->MouseMoved += ref new TypedEventHandler<MouseDevice^, MouseEventArgs^>(this, &App::MouseMoved);
+	
 	DisplayInformation^ currentDisplayInformation = DisplayInformation::GetForCurrentView();
 	currentDisplayInformation->DpiChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &App::OnDpiChanged);
 	currentDisplayInformation->OrientationChanged += ref new TypedEventHandler<DisplayInformation^, Object^>(this, &App::OnOrientationChanged);
@@ -284,9 +441,6 @@ void App::Run()
     {
         if (mWindowVisible)
         {
-			// Update
-			UWP_PollInput();
-
 			// Draw
 			BeginDrawing();
 
@@ -299,6 +453,7 @@ void App::Run()
 
 				DrawLine(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
 
+				DrawCircle(mousePosition.x, mousePosition.y, 40, BLUE);
 
 				if(UWPIsKeyDown(KEY_S))
 				{
@@ -308,10 +463,13 @@ void App::Run()
 				if(UWPIsKeyPressed(KEY_A))
 				{
 					posX -= 50;
+					UWPEnableCursor();
 				}
 				if (UWPIsKeyPressed(KEY_D))
 				{
 					posX += 50;
+
+					UWPDisableCursor();
 				}
 
 				if(currentKeyState[KEY_LEFT_ALT])
@@ -319,10 +477,18 @@ void App::Run()
 				if (currentKeyState[KEY_BACKSPACE])
 					DrawRectangle(280, 250, 20, 20, BLACK);
 
+				if (currentMouseState[MOUSE_LEFT_BUTTON])
+					DrawRectangle(280, 250, 20, 20, BLACK);
+
+				static int pos = 0;
+				pos -= currentMouseWheelY;
+				DrawRectangle(280, pos + 50, 20, 20, BLACK);
+
 				DrawRectangle(250, 280 + (time++ % 60), 10, 10, PURPLE);
 
 		    EndDrawing();
-			
+			UWP_PollInput();
+
 			CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
         }
         else
