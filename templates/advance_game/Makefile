@@ -49,24 +49,20 @@ USE_WAYLAND_DISPLAY ?= FALSE
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    # No uname.exe on MinGW!, but OS=Windows_NT on Windows! ifeq ($(UNAME),Msys) -> Windows
+    # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
+    # ifeq ($(UNAME),Msys) -> Windows
     ifeq ($(OS),Windows_NT)
         PLATFORM_OS=WINDOWS
-        LIBPATH=win32
     else
         UNAMEOS=$(shell uname)
         ifeq ($(UNAMEOS),Linux)
             PLATFORM_OS=LINUX
-            LIBPATH=linux
         endif
-        UNAMEOS=$(shell uname)
         ifeq ($(UNAMEOS),FreeBSD)
             PLATFORM_OS=FREEBSD
-            LIBPATH=freebsd
         endif
         ifeq ($(UNAMEOS),Darwin)
             PLATFORM_OS=OSX
-            LIBPATH=osx
         endif
     endif
 endif
@@ -75,11 +71,6 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     ifeq ($(UNAMEOS),Linux)
         PLATFORM_OS=LINUX
     endif
-endif
-
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    # RPI cross-compiler
-    RPI_CROSS_COMPILE ?= NO
 endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -93,29 +84,32 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
 
+RAYLIB_RELEASE_PATH ?= $(RAYLIB_PATH)/release/libs
+
 # Define raylib release directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/win32/mingw32
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/win32/mingw32
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/linux
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/linux
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/osx
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/osx
     endif
     ifeq ($(PLATFORM_OS),FREEBSD)
-        RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/freebsd
+        RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/freebsd
     endif
 endif
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/html5
-endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_RELEASE = $(RAYLIB_PATH)/release/libs/rpi
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/rpi
+endif
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/html5
 endif
 
 # Define default C compiler: gcc
+# NOTE: define g++ compiler if using C++
 CC = gcc
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -129,9 +123,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(RPI_CROSS_COMPILE),YES)
-        # RPI cross-compiler
-        CC = armv6j-hardfloat-linux-gnueabi-gcc
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
+        # Define RPI cross-compiler
+        #CC = armv6j-hardfloat-linux-gnueabi-gcc
+        CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
@@ -181,8 +176,9 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
+    # -s WASM=1                  # support Web Assembly (https://github.com/kripken/emscripten/wiki/WebAssembly)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
+    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 --profiling --preload-file resources
     
     # Define a custom shell .html and output extension
     CFLAGS += --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
@@ -202,7 +198,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 
 # Define library paths containing required libs
-LDFLAGS = -L. -L$(RAYLIB_RELEASE) -L$(RAYLIB_PATH)/src 
+LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src 
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),FREEBSD)
@@ -265,7 +261,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
-    LDLIBS = $(RAYLIB_RELEASE)/libraylib.bc
+    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
 endif
 
 # Define all source files required

@@ -36,19 +36,18 @@
 #
 #******************************************************************************
 
-# Please read the wiki to know how to compile raylib, because there are
-# different methods.
+# Please read the wiki to know how to compile raylib, because there are different methods.
+# https://github.com/raysan5/raylib/wiki
 
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-VERSION     = 1.9.2
-API_VERSION = 1
-PLATFORM ?= PLATFORM_DESKTOP
-RAYLIB_PATH = ..
-
+PLATFORM          ?= PLATFORM_DESKTOP
+RAYLIB_PATH        = ..
+RAYLIB_VERSION     = 1.9.2
+RAYLIB_API_VERSION = 1
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE ?= STATIC
+RAYLIB_LIBTYPE    ?= STATIC
 
 # Included raylib audio module on compilation
 # NOTE: Some programs like tools could not require audio support
@@ -120,8 +119,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH = C:/emsdk
-    EMSCRIPTEN_VERSION = 1.37.21
-    CLANG_VERSION=e1.37.21_64bit
+    EMSCRIPTEN_VERSION = 1.37.28
+    CLANG_VERSION=e1.37.28_64bit
     PYTHON_VERSION=2.7.5.3_64bit
     NODE_VERSION=4.1.1_64bit
     export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -192,7 +191,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
-# Default C compiler: gcc
+# Define default C compiler: gcc
 # NOTE: define g++ compiler if using C++
 CC = gcc
 
@@ -259,7 +258,7 @@ endif
 #  -std=gnu99           defines C language mode (GNU C from 1999 revision)
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99
+#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
 
 # Additional flags for compiler (if desired)
@@ -406,30 +405,30 @@ else
         ifeq ($(PLATFORM_OS),LINUX)
             # Compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so $(OBJS) -Wl,-soname,libraylib.$(API_VERSION).so -lGL -lm -lpthread -ldl -lrt
-			@echo "raylib shared library generated (libraylib.$(VERSION).so)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.$(API_VERSION).so
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.so
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lm -lpthread -ldl -lrt
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
         ifeq ($(PLATFORM_OS),OSX)
-			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).dylib $(OBJS) -compatibility_version $(API_VERSION) -current_version $(VERSION) -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa
-			install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).dylib
-			@echo "raylib shared library generated (libraylib.$(VERSION).dylib)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).dylib libraylib.$(API_VERSION).dylib
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).dylib libraylib.dylib
+			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa
+			install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).dylib)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.$(RAYLIB_API_VERSION).dylib
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.dylib
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
         # WARNING: you should type "gmake clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so $(OBJS) -Wl,-soname,libraylib.$(API_VERSION).so -lGL -lpthread
-			@echo "raylib shared library generated (libraylib.$(VERSION).so)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.$(API_VERSION).so
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.so
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lpthread
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
-			@echo "raylib shared library generated (libraylib.$(VERSION).so)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.$(API_VERSION).so
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(VERSION).so libraylib.so
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
     else
         # Compile raylib static library
@@ -495,8 +494,8 @@ ifeq ($(ROOT),root)
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
-			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so /usr/local/lib/libraylib.$(VERSION).so
-			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(API_VERSION).so /usr/local/lib/libraylib.$(API_VERSION).so
+			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so /usr/local/lib/libraylib.$(RAYLIB_VERSION).so
+			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_API_VERSION).so /usr/local/lib/libraylib.$(RAYLIB_API_VERSION).so
 			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.so /usr/local/lib/libraylib.so
         else
 			cp --update raylib.h /usr/local/include/raylib.h
@@ -518,8 +517,8 @@ ifeq ($(ROOT),root)
 			rm --force /usr/local/include/raylib.h
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
 			rm --force /usr/local/lib/libraylib.so
-			rm --force /usr/local/lib/libraylib.$(API_VERSION).so
-			rm --force /usr/local/lib/libraylib.$(VERSION).so
+			rm --force /usr/local/lib/libraylib.$(RAYLIB_API_VERSION).so
+			rm --force /usr/local/lib/libraylib.$(RAYLIB_VERSION).so
         else
 			rm --force /usr/local/lib/libraylib.a
         endif
@@ -536,7 +535,7 @@ clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
 	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
 else
-	rm -f *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so $(RAYLIB_RELEASE_PATH)/libraylib.$(API_VERSION).so $(RAYLIB_RELEASE_PATH)/libraylib.$(VERSION).so external/stb_vorbis.o
+	rm -f *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_API_VERSION).so $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so external/stb_vorbis.o
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN)
