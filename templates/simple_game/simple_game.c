@@ -5,10 +5,10 @@
 *   <Game title>
 *   <Game description>
 *
-*   This game has been created using raylib v1.2 (www.raylib.com)
+*   This game has been created using raylib (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

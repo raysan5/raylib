@@ -29,6 +29,11 @@ PLATFORM ?= PLATFORM_DESKTOP
 RAYLIB_PATH ?= ..
 PROJECT_NAME ?= raylib_example
 
+# Default path for raylib on Raspberry Pi, if installed in different path, update it!
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH ?= /home/pi/raylib
+endif
+
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE ?= STATIC
 
@@ -39,9 +44,8 @@ USE_EXTERNAL_GLFW ?= FALSE
 # by default it uses X11 windowing system
 USE_WAYLAND_DISPLAY ?= FALSE
 
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH ?= /home/pi/raylib
-endif
+# NOTE: On PLATFORM_WEB OpenAL Soft backend is used by default (check raylib/src/Makefile)
+
 
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -81,8 +85,8 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH = C:/emsdk
-    EMSCRIPTEN_VERSION = 1.37.21
-    CLANG_VERSION=e1.37.21_64bit
+    EMSCRIPTEN_VERSION = 1.37.28
+    CLANG_VERSION=e1.37.28_64bit
     PYTHON_VERSION=2.7.5.3_64bit
     NODE_VERSION=4.1.1_64bit
     export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -154,7 +158,7 @@ endif
 #  -fgnu89-inline       declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+CFLAGS += -O1 -s -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
 
 # Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -177,12 +181,17 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # -s ALLOW_MEMORY_GROWTH=1   # to allow memory resizing
     # -s TOTAL_MEMORY=16777216   # to specify heap memory size (default = 16MB)
     # -s USE_PTHREADS=1          # multithreading support
-    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling -s TOTAL_MEMORY=16777216 --preload-file resources
+    # --preload-file resources   # specify a resources folder for data compilation
+    CFLAGS += -s USE_GLFW=3 -s ASSERTIONS=1 --profiling --preload-file resources
+    
+    # Define a custom shell .html and output extension
+    CFLAGS += --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
+    EXT = .html
 endif
 
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
@@ -210,7 +219,7 @@ endif
 # if you want to link libraries (libname.so or libname.a), use the -lname
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        # Libraries for Windows desktop compiling
+        # Libraries for Windows desktop compilation
         LDLIBS = -lraylib -lopengl32 -lgdi32
         
         # Required for physac examples
@@ -258,12 +267,6 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     LDLIBS = $(RAYLIB_RELEASE)/libraylib.bc
 endif
 
-# Define output extension to generate a .html file using provided shell
-ifeq ($(PLATFORM),PLATFORM_WEB)
-    EXT = .html
-    WEB_SHELL = --shell-file $(RAYLIB_PATH)\templates\web_shell\shell.html
-endif
-
 # Define all object files required
 EXAMPLES = \
     core/core_basic_window \
@@ -273,6 +276,7 @@ EXAMPLES = \
     core/core_input_gamepad \
     core/core_random_values \
     core/core_color_select \
+    core/core_drop_files \
     core/core_storage_values \
     core/core_gestures_detection \
     core/core_3d_mode \
@@ -314,9 +318,9 @@ EXAMPLES = \
     models/models_cubicmap \
     models/models_mesh_picking \
     models/models_mesh_generation \
-    models/models_yaw_pitch_roll \
     models/models_material_pbr \
     models/models_skybox \
+    models/models_yaw_pitch_roll \
     shaders/shaders_model_shader \
     shaders/shaders_shapes_textures \
     shaders/shaders_custom_uniform \
@@ -330,11 +334,7 @@ EXAMPLES = \
     physac/physics_movement \
     physac/physics_restitution \
     physac/physics_shatter \
-    fix_dylib \
-    
-ifneq ($(PLATFORM),PLATFORM_RPI)
-    EXAMPLES += core/core_drop_files
-endif
+
 
 CURRENT_MAKEFILE = $(lastword $(MAKEFILE_LIST))
 
@@ -378,3 +378,4 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
+
