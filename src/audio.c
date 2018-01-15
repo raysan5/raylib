@@ -1114,6 +1114,7 @@ void SetSoundPitch(Sound sound, float pitch)
 // Convert wave data to desired format
 void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 {
+#if USE_MINI_AL
     mal_format formatIn  = ((wave->sampleSize == 8) ? mal_format_u8 : ((wave->sampleSize == 16) ? mal_format_s16 : mal_format_f32));
     mal_format formatOut = ((      sampleSize == 8) ? mal_format_u8 : ((      sampleSize == 16) ? mal_format_s16 : mal_format_f32));
 
@@ -1142,7 +1143,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     free(wave->data);
     wave->data = data;
 
-#if 0
+#else
     // Format sample rate
     // NOTE: Only supported 22050 <--> 44100
     if (wave->sampleRate != sampleRate)
