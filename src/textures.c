@@ -1071,6 +1071,81 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
     free(pixels);
 }
 
+// Generate all mipmap levels for a provided image
+// NOTE 1: Supports POT and NPOT images
+// NOTE 2: image.data is scaled to include mipmap levels
+// NOTE 3: Mipmaps format is the same as base image
+void ImageMipmaps(Image *image)
+{
+    int mipCount = 1;                   // Required mipmap levels count (including base level)
+    int mipWidth = image->width;        // Base image width
+    int mipHeight = image->height;      // Base image height
+    int mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);  // Image data size (in bytes)
+
+    // Count mipmap levels required
+    while ((mipWidth != 1) || (mipHeight != 1))
+    {
+        if (mipWidth != 1) mipWidth /= 2;
+        if (mipHeight != 1) mipHeight /= 2;
+        
+        // Security check for NPOT textures
+        if (mipWidth < 1) mipWidth = 1;
+        if (mipHeight < 1) mipHeight = 1;
+
+        TraceLog(LOG_DEBUG, "Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
+
+        mipCount++;
+        mipSize += GetPixelDataSize(mipWidth, mipHeight, image->format);       // Add mipmap size (in bytes)
+    }
+
+    TraceLog(LOG_DEBUG, "Total mipmaps required: %i", mipCount);
+    TraceLog(LOG_DEBUG, "Total size of data required: %i", mipSize);
+    TraceLog(LOG_DEBUG, "Image data original memory point: %i", image->data);
+
+    if (image->mipmaps < mipCount)
+    {
+        void *temp = realloc(image->data, mipSize);
+        
+        if (temp != NULL) 
+        {
+            image->data = temp;      // Assign new pointer (new size) to store mipmaps data
+            TraceLog(LOG_DEBUG, "Image data memory point reallocated: %i", temp);
+        }
+        else TraceLog(LOG_WARNING, "Mipmaps required memory could not be allocated");
+
+        // Pointer to allocated memory point where store next mipmap level data
+        unsigned char *nextmip = image->data + GetPixelDataSize(image->width, image->height, image->format);
+        
+        mipWidth = image->width/2;
+        mipHeight = image->height/2;
+        mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
+        Image imCopy = ImageCopy(*image);
+        
+        for (int i = 1; i < mipCount; i++)
+        {
+            TraceLog(LOG_DEBUG, "Next mipmap level %i (%i x %i) - size %i - mem pos: %i", i, mipWidth, mipHeight, mipSize, nextmip);
+            
+            ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
+
+            memcpy(nextmip, imCopy.data, mipSize);
+            nextmip += mipSize;
+            image->mipmaps++;
+            
+            mipWidth /= 2;
+            mipHeight /= 2;
+            
+            // Security check for NPOT textures
+            if (mipWidth < 1) mipWidth = 1;
+            if (mipHeight < 1) mipHeight = 1;
+            
+            mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
+        }
+
+        UnloadImage(imCopy);
+    }
+    else TraceLog(LOG_WARNING, "Image mipmaps already available");
+}
+
 // Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
 // NOTE: In case selected bpp do not represent an known 16bit format,
 // dithered data is stored in the LSB part of the unsigned short
