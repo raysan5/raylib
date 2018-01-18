@@ -250,16 +250,17 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 endif
 
 # Define compiler flags:
-#  -O1                  defines optimization level
-#  -g                   enable debugging
-#  -s                   strip unnecessary data from build
-#  -Wall                turns on most, but not all, compiler warnings
-#  -std=c99             defines C language mode (standard C from 1999 revision)
-#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
-#  -fgnu89-inline       declaring inline functions support (GCC optimized)
-#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+#  -O1                   defines optimization level
+#  -g                    enable debugging
+#  -s                    strip unnecessary data from build
+#  -Wall                 turns on most, but not all, compiler warnings
+#  -std=c99              defines C language mode (standard C from 1999 revision)
+#  -std=gnu99            defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline        declaring inline functions support (GCC optimized)
+#  -Wno-missing-braces   ignore invalid warning (GCC bug 53119)
+#  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
+#  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith
 
 # Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes

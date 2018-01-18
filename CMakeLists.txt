@@ -11,6 +11,11 @@ if(CMAKE_VERSION VERSION_LESS "3.1")
 else()
   set (CMAKE_C_STANDARD 99)
 endif()
+include(CheckCCompilerFlag)
+CHECK_C_COMPILER_FLAG("-Werror=pointer-arith" COMPILER_HAS_POINTER_ARITH_TOGGLE)
+if(COMPILER_HAS_POINTER_ARITH_TOGGLE)
+    set(CMAKE_C_FLAGS "-Werror=pointer-arith ${CMAKE_C_FLAGS}")
+endif()
 
 add_subdirectory(src release)
 
