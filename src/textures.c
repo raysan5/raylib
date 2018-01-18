@@ -1114,7 +1114,7 @@ void ImageMipmaps(Image *image)
         else TraceLog(LOG_WARNING, "Mipmaps required memory could not be allocated");
 
         // Pointer to allocated memory point where store next mipmap level data
-        unsigned char *nextmip = image->data + GetPixelDataSize(image->width, image->height, image->format);
+        unsigned char *nextmip = (unsigned char *)image->data + GetPixelDataSize(image->width, image->height, image->format);
         
         mipWidth = image->width/2;
         mipHeight = image->height/2;
