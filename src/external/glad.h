@@ -3446,6 +3446,19 @@ typedef void (APIENTRYP PFNGLBLENDFUNCSEPARATEEXTPROC)(GLenum sfactorRGB, GLenum
 GLAPI PFNGLBLENDFUNCSEPARATEEXTPROC glad_glBlendFuncSeparateEXT;
 #define glBlendFuncSeparateEXT glad_glBlendFuncSeparateEXT
 #endif
+#ifndef GL_EXT_debug_marker
+#define GL_EXT_debug_marker 1
+GLAPI int GLAD_GL_EXT_debug_marker;
+typedef void (APIENTRYP PFNGLINSERTEVENTMARKEREXTPROC)(GLsizei length, const GLchar *marker);
+GLAPI PFNGLINSERTEVENTMARKEREXTPROC glad_glInsertEventMarkerEXT;
+#define glInsertEventMarkerEXT glad_glInsertEventMarkerEXT
+typedef void (APIENTRYP PFNGLPUSHGROUPMARKEREXTPROC)(GLsizei length, const GLchar *marker);
+GLAPI PFNGLPUSHGROUPMARKEREXTPROC glad_glPushGroupMarkerEXT;
+#define glPushGroupMarkerEXT glad_glPushGroupMarkerEXT
+typedef void (APIENTRYP PFNGLPOPGROUPMARKEREXTPROC)(void);
+GLAPI PFNGLPOPGROUPMARKEREXTPROC glad_glPopGroupMarkerEXT;
+#define glPopGroupMarkerEXT glad_glPopGroupMarkerEXT
+#endif
 #ifndef GL_EXT_framebuffer_blit
 #define GL_EXT_framebuffer_blit 1
 GLAPI int GLAD_GL_EXT_framebuffer_blit;
@@ -4209,6 +4222,7 @@ int GLAD_GL_ARB_vertex_shader;
 int GLAD_GL_ARB_vertex_attrib_binding;
 int GLAD_GL_ARB_vertex_program;
 int GLAD_GL_EXT_texture_compression_s3tc;
+int GLAD_GL_EXT_debug_marker;
 int GLAD_GL_EXT_texture_swizzle;
 int GLAD_GL_ARB_texture_multisample;
 int GLAD_GL_ARB_texture_rg;
@@ -4391,6 +4405,9 @@ PFNGLGETVARIANTARRAYOBJECTIVATIPROC glad_glGetVariantArrayObjectivATI;
 PFNGLBLENDCOLOREXTPROC glad_glBlendColorEXT;
 PFNGLBLENDEQUATIONSEPARATEEXTPROC glad_glBlendEquationSeparateEXT;
 PFNGLBLENDFUNCSEPARATEEXTPROC glad_glBlendFuncSeparateEXT;
+PFNGLINSERTEVENTMARKEREXTPROC glad_glInsertEventMarkerEXT;
+PFNGLPUSHGROUPMARKEREXTPROC glad_glPushGroupMarkerEXT;
+PFNGLPOPGROUPMARKEREXTPROC glad_glPopGroupMarkerEXT;
 PFNGLBLITFRAMEBUFFEREXTPROC glad_glBlitFramebufferEXT;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glad_glRenderbufferStorageMultisampleEXT;
 PFNGLISRENDERBUFFEREXTPROC glad_glIsRenderbufferEXT;
@@ -5190,6 +5207,12 @@ static void load_GL_EXT_blend_func_separate(GLADloadproc load) {
 	if(!GLAD_GL_EXT_blend_func_separate) return;
 	glad_glBlendFuncSeparateEXT = (PFNGLBLENDFUNCSEPARATEEXTPROC)load("glBlendFuncSeparateEXT");
 }
+static void load_GL_EXT_debug_marker(GLADloadproc load) {
+	if(!GLAD_GL_EXT_debug_marker) return;
+	glad_glInsertEventMarkerEXT = (PFNGLINSERTEVENTMARKEREXTPROC)load("glInsertEventMarkerEXT");
+	glad_glPushGroupMarkerEXT = (PFNGLPUSHGROUPMARKEREXTPROC)load("glPushGroupMarkerEXT");
+	glad_glPopGroupMarkerEXT = (PFNGLPOPGROUPMARKEREXTPROC)load("glPopGroupMarkerEXT");
+}
 static void load_GL_EXT_framebuffer_blit(GLADloadproc load) {
 	if(!GLAD_GL_EXT_framebuffer_blit) return;
 	glad_glBlitFramebufferEXT = (PFNGLBLITFRAMEBUFFEREXTPROC)load("glBlitFramebufferEXT");
@@ -5316,6 +5339,7 @@ static int find_extensionsGL(void) {
 	GLAD_GL_EXT_blend_color = has_ext("GL_EXT_blend_color");
 	GLAD_GL_EXT_blend_equation_separate = has_ext("GL_EXT_blend_equation_separate");
 	GLAD_GL_EXT_blend_func_separate = has_ext("GL_EXT_blend_func_separate");
+	GLAD_GL_EXT_debug_marker = has_ext("GL_EXT_debug_marker");
 	GLAD_GL_EXT_framebuffer_blit = has_ext("GL_EXT_framebuffer_blit");
 	GLAD_GL_EXT_framebuffer_multisample = has_ext("GL_EXT_framebuffer_multisample");
 	GLAD_GL_EXT_framebuffer_multisample_blit_scaled = has_ext("GL_EXT_framebuffer_multisample_blit_scaled");
@@ -5430,6 +5454,7 @@ int gladLoadGLLoader(GLADloadproc load) {
 	load_GL_EXT_blend_color(load);
 	load_GL_EXT_blend_equation_separate(load);
 	load_GL_EXT_blend_func_separate(load);
+	load_GL_EXT_debug_marker(load);
 	load_GL_EXT_framebuffer_blit(load);
 	load_GL_EXT_framebuffer_multisample(load);
 	load_GL_EXT_framebuffer_object(load);

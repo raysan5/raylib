@@ -34,7 +34,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -167,18 +167,7 @@ Image LoadImage(const char *fileName)
 {
     Image image = { 0 };
 
-    if (IsFileExtension(fileName, ".rres"))
-    {
-        RRES rres = LoadResource(fileName, 0);
-
-        // NOTE: Parameters for RRES_TYPE_IMAGE are: width, height, format, mipmaps
-
-        if (rres[0].type == RRES_TYPE_IMAGE) image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
-        else TraceLog(LOG_WARNING, "[%s] Resource file does not contain image data", fileName);
-
-        UnloadResource(rres);
-    }
-    else if ((IsFileExtension(fileName, ".png"))
+    if ((IsFileExtension(fileName, ".png"))
 #if defined(SUPPORT_FILEFORMAT_BMP)
         || (IsFileExtension(fileName, ".bmp"))
 #endif
@@ -237,11 +226,12 @@ Image LoadImage(const char *fileName)
         
         image.mipmaps = 1;
         
-        if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+        if (imgBpp == 1) image.format = UNCOMPRESSED_R32;
+        else if (imgBpp == 3) image.format = UNCOMPRESSED_R32G32B32;
+        else if (imgBpp == 4) image.format = UNCOMPRESSED_R32G32B32A32;
         else 
         {
-            // TODO: Support different number of channels at 32 bit float
-            TraceLog(LOG_WARNING, "[%s] Image fileformat not supported (only 3 channel 32 bit floats)", fileName);
+            TraceLog(LOG_WARNING, "[%s] Image fileformat not supported", fileName);
             UnloadImage(image);
         }
     }
@@ -328,20 +318,9 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     {
         if (headerSize > 0) fseek(rawFile, headerSize, SEEK_SET);
 
-        unsigned int size = width*height;
-
-        switch (format)
-        {
-            case UNCOMPRESSED_GRAYSCALE: image.data = (unsigned char *)malloc(size); break;               // 8 bit per pixel (no alpha)
-            case UNCOMPRESSED_GRAY_ALPHA: image.data = (unsigned char *)malloc(size*2); size *= 2; break; // 16 bpp (2 channels)
-            case UNCOMPRESSED_R5G6B5: image.data = (unsigned short *)malloc(size); break;                 // 16 bpp
-            case UNCOMPRESSED_R8G8B8: image.data = (unsigned char *)malloc(size*3); size *= 3; break;     // 24 bpp
-            case UNCOMPRESSED_R5G5B5A1: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (1 bit alpha)
-            case UNCOMPRESSED_R4G4B4A4: image.data = (unsigned short *)malloc(size); break;               // 16 bpp (4 bit alpha)
-            case UNCOMPRESSED_R8G8B8A8: image.data = (unsigned char *)malloc(size*4); size *= 4; break;   // 32 bpp
-            case UNCOMPRESSED_R32G32B32: image.data = (float *)malloc(size*12); size *= 12; break;        // 4 byte per channel (12 byte)
-            default: TraceLog(LOG_WARNING, "Image format not suported"); break;
-        }
+        unsigned int size = GetPixelDataSize(width, height, format);
+        
+        image.data = malloc(size);      // Allocate required memory in bytes
 
         // NOTE: fread() returns num read elements instead of bytes, 
         // to get bytes we need to read (1 byte size, elements) instead of (x byte size, 1 element)
@@ -438,6 +417,7 @@ void UnloadRenderTexture(RenderTexture2D target)
 }
 
 // Get pixel data from image in the form of Color struct array
+// TODO: Support float pixel data retrieval
 Color *GetImageData(Image image)
 {
     Color *pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
@@ -524,6 +504,44 @@ Color *GetImageData(Image image)
     return pixels;
 }
 
+// Get pixel data size in bytes (image or texture)
+// NOTE: Size depends on pixel format
+int GetPixelDataSize(int width, int height, int format)
+{
+    int dataSize = 0;       // Size in bytes
+    int bpp = 0;            // Bits per pixel
+
+    switch (format)
+    {
+        case UNCOMPRESSED_GRAYSCALE: bpp = 8; break;
+        case UNCOMPRESSED_GRAY_ALPHA:
+        case UNCOMPRESSED_R5G6B5:
+        case UNCOMPRESSED_R5G5B5A1:
+        case UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
+        case UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
+        case UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case UNCOMPRESSED_R32: bpp = 32; break;
+        case UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
+        case UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case COMPRESSED_DXT1_RGB:
+        case COMPRESSED_DXT1_RGBA: 
+        case COMPRESSED_ETC1_RGB:
+        case COMPRESSED_ETC2_RGB:
+        case COMPRESSED_PVRT_RGB:
+        case COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case COMPRESSED_DXT3_RGBA:
+        case COMPRESSED_DXT5_RGBA:
+        case COMPRESSED_ETC2_EAC_RGBA:
+        case COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
+        case COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        default: break;
+    }
+
+    dataSize = width*height*bpp/8;  // Total data size in bytes
+    
+    return dataSize;
+}
+
 // Get pixel data from GPU texture and return an Image
 // NOTE: Compressed texture formats not supported
 Image GetTextureData(Texture2D texture)
@@ -563,15 +581,86 @@ void UpdateTexture(Texture2D texture, const void *pixels)
 }
 
 // Save image to a PNG file
-void SaveImageAs(const char* fileName, Image image)
+void SaveImageAs(const char *fileName, Image image)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI)
-    unsigned char* imgData = (unsigned char*)GetImageData(image); // this works since Color is just a container for the RGBA values
+    // NOTE: Getting Color array as RGBA unsigned char values
+    unsigned char *imgData = (unsigned char *)GetImageData(image);
     SavePNG(fileName, imgData, image.width, image.height, 4);
     free(imgData);
 
     TraceLog(LOG_INFO, "Image saved: %s", fileName);
 #endif
+}
+
+// Copy an image to a new image
+Image ImageCopy(Image image)
+{
+    Image newImage = { 0 };
+
+    int size = GetPixelDataSize(image.width, image.height, image.format);
+
+    newImage.data = malloc(size);
+
+    if (newImage.data != NULL)
+    {
+        // NOTE: Size must be provided in bytes
+        memcpy(newImage.data, image.data, size);
+
+        newImage.width = image.width;
+        newImage.height = image.height;
+        newImage.mipmaps = image.mipmaps;
+        newImage.format = image.format;
+        
+        //if (image.mipmaps > 1) ImageMipmaps(&newImage);
+    }
+
+    return newImage;
+}
+
+// Convert image to POT (power-of-two)
+// NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
+void ImageToPOT(Image *image, Color fillColor)
+{
+    Color *pixels = GetImageData(*image);   // Get pixels data
+
+    // Calculate next power-of-two values
+    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
+    int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
+    int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
+
+    // Check if POT texture generation is required (if texture is not already POT)
+    if ((potWidth != image->width) || (potHeight != image->height))
+    {
+        Color *pixelsPOT = NULL;
+
+        // Generate POT array from NPOT data
+        pixelsPOT = (Color *)malloc(potWidth*potHeight*sizeof(Color));
+
+        for (int j = 0; j < potHeight; j++)
+        {
+            for (int i = 0; i < potWidth; i++)
+            {
+                if ((j < image->height) && (i < image->width)) pixelsPOT[j*potWidth + i] = pixels[j*image->width + i];
+                else pixelsPOT[j*potWidth + i] = fillColor;
+            }
+        }
+
+        TraceLog(LOG_WARNING, "Image converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
+
+        free(pixels);                       // Free pixels data
+        free(image->data);                  // Free old image data
+
+        int format = image->format;         // Store image data format to reconvert later
+
+        // TODO: Image width and height changes... do we want to store new values or keep the old ones?
+        // NOTE: Issues when using image.width and image.height for sprite animations...
+        *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
+
+        free(pixelsPOT);                    // Free POT pixels data
+
+        ImageFormat(image, format);  // Reconvert image to previous format
+    }
 }
 
 // Convert image data to desired format
@@ -689,7 +778,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
 
-                    for (int i = 0; i < image->width*image->height*4; i += 4)
+                    for (int i = 0; i < image->width*image->height*3; i += 3)
                     {
                         ((unsigned char *)image->data)[i] = pixels[k].r;
                         ((unsigned char *)image->data)[i + 1] = pixels[k].g;
@@ -698,10 +787,46 @@ void ImageFormat(Image *image, int newFormat)
                         k++;
                     }
                 } break;
+                case UNCOMPRESSED_R32:
+                {
+                    image->data = (float *)malloc(image->width*image->height*sizeof(float));
+                    
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((float *)image->data)[i] = (float)((float)pixels[i].r*0.299f/255.0f + (float)pixels[i].g*0.587f/255.0f + (float)pixels[i].b*0.114f/255.0f);
+                    }
+                } break;
+                case UNCOMPRESSED_R32G32B32:
+                {
+                    image->data = (float *)malloc(image->width*image->height*3*sizeof(float));
+
+                    for (int i = 0; i < image->width*image->height*3; i += 3)
+                    {
+                        ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
+                        ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
+                        ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
+                        k++;
+                    }
+                } break;
+                case UNCOMPRESSED_R32G32B32A32:
+                {
+                    image->data = (float *)malloc(image->width*image->height*4*sizeof(float));
+
+                    for (int i = 0; i < image->width*image->height*4; i += 4)
+                    {
+                        ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
+                        ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
+                        ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
+                        ((float *)image->data)[i + 3] = (float)pixels[k].a/255.0f;
+                        k++;
+                    }
+                } break;
                 default: break;
             }
 
             free(pixels);
+            
+            //if (image->mipmaps > 1) ImageMipmaps(image);
         }
         else TraceLog(LOG_WARNING, "Image data format is compressed, can not be converted");
     }
@@ -753,99 +878,92 @@ void ImageAlphaMask(Image *image, Image alphaMask)
     }
 }
 
-// Convert image to POT (power-of-two)
-// NOTE: It could be useful on OpenGL ES 2.0 (RPI, HTML5)
-void ImageToPOT(Image *image, Color fillColor)
+// Clear alpha channel to desired color
+// NOTE: Threshold defines the alpha limit, 0.0f to 1.0f
+void ImageAlphaClear(Image *image, Color color, float threshold)
 {
-    Color *pixels = GetImageData(*image);   // Get pixels data
+    Color *pixels = GetImageData(*image);
+    
+    for (int i = 0; i < image->width*image->height; i++) if (pixels[i].a <= (unsigned char)(threshold*255.0f)) pixels[i] = color;
 
-    // Calculate next power-of-two values
-    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
-    int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
-    int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
-
-    // Check if POT texture generation is required (if texture is not already POT)
-    if ((potWidth != image->width) || (potHeight != image->height))
-    {
-        Color *pixelsPOT = NULL;
-
-        // Generate POT array from NPOT data
-        pixelsPOT = (Color *)malloc(potWidth*potHeight*sizeof(Color));
-
-        for (int j = 0; j < potHeight; j++)
-        {
-            for (int i = 0; i < potWidth; i++)
-            {
-                if ((j < image->height) && (i < image->width)) pixelsPOT[j*potWidth + i] = pixels[j*image->width + i];
-                else pixelsPOT[j*potWidth + i] = fillColor;
-            }
-        }
-
-        TraceLog(LOG_WARNING, "Image converted to POT: (%ix%i) -> (%ix%i)", image->width, image->height, potWidth, potHeight);
-
-        free(pixels);                       // Free pixels data
-        free(image->data);                  // Free old image data
-
-        int format = image->format;         // Store image data format to reconvert later
-
-        // TODO: Image width and height changes... do we want to store new values or keep the old ones?
-        // NOTE: Issues when using image.width and image.height for sprite animations...
-        *image = LoadImageEx(pixelsPOT, potWidth, potHeight);
-
-        free(pixelsPOT);                    // Free POT pixels data
-
-        ImageFormat(image, format);  // Reconvert image to previous format
-    }
+    UnloadImage(*image);
+    
+    int prevFormat = image->format;
+    *image = LoadImageEx(pixels, image->width, image->height);
+    
+    ImageFormat(image, prevFormat);
 }
+
+// Crop image depending on alpha value
+void ImageAlphaCrop(Image *image, float threshold)
+{
+    Rectangle crop = { 0 };
+    
+    Color *pixels = GetImageData(*image);
+    
+    int minx = 0;
+    int miny = 0;
+
+    for (int i = 0; i < image->width*image->height; i++) 
+    {
+        if (pixels[i].a > (unsigned char)(threshold*255.0f))
+        {
+            minx = i%image->width;
+            miny = -(-((i/image->width) + 1) + 1);
+
+            if (crop.y == 0) crop.y = miny;
+
+            if (crop.x == 0) crop.x = minx;
+            else if (minx < crop.x) crop.x = minx;
+
+            if (crop.width == 0) crop.width = minx; 
+            else if (crop.width < minx) crop.width = minx;
+
+            if (crop.height == 0) crop.height = miny;
+            else if (crop.height < miny) crop.height = miny;
+        }
+    }
+    
+    crop.width -= (crop.x - 1);
+    crop.height -= (crop.y - 1);
+    
+    TraceLog(LOG_INFO, "Crop rectangle: (%i, %i, %i, %i)", crop.x, crop.y, crop.width, crop.height);
+    
+    free(pixels);
+    
+    // NOTE: Added this weird check to avoid additional 1px crop to
+    // image data that has already been cropped...
+    if ((crop.x != 1) && 
+        (crop.y != 1) && 
+        (crop.width != image->width - 1) &&
+        (crop.height != image->height - 1)) ImageCrop(image, crop);
+}
+
+// Premultiply alpha channel
+void ImageAlphaPremultiply(Image *image)
+{
+    float alpha = 0.0f;
+    Color *pixels = GetImageData(*image);
+    
+    for (int i = 0; i < image->width*image->height; i++) 
+    {
+        alpha = (float)pixels[i].a/255.0f;
+        pixels[i].r = (unsigned char)((float)pixels[i].r*alpha);
+        pixels[i].g = (unsigned char)((float)pixels[i].g*alpha);
+        pixels[i].b = (unsigned char)((float)pixels[i].b*alpha);
+    }
+
+    UnloadImage(*image);
+    
+    int prevFormat = image->format;
+    *image = LoadImageEx(pixels, image->width, image->height);
+    
+    ImageFormat(image, prevFormat);
+}
+
+
 
 #if defined(SUPPORT_IMAGE_MANIPULATION)
-// Copy an image to a new image
-Image ImageCopy(Image image)
-{
-    Image newImage = { 0 };
-
-    int byteSize = image.width*image.height;
-
-    switch (image.format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: break;                 // 8 bpp (1 byte)
-        case UNCOMPRESSED_GRAY_ALPHA:                       // 16 bpp
-        case UNCOMPRESSED_R5G6B5:                           // 16 bpp
-        case UNCOMPRESSED_R5G5B5A1:                         // 16 bpp
-        case UNCOMPRESSED_R4G4B4A4: byteSize *= 2; break;   // 16 bpp (2 bytes)
-        case UNCOMPRESSED_R8G8B8: byteSize *= 3; break;     // 24 bpp (3 bytes)
-        case UNCOMPRESSED_R8G8B8A8: byteSize *= 4; break;   // 32 bpp (4 bytes)
-        case UNCOMPRESSED_R32G32B32: byteSize *= 12; break; // 4 byte per channel (12 bytes)
-        case COMPRESSED_DXT3_RGBA:
-        case COMPRESSED_DXT5_RGBA:
-        case COMPRESSED_ETC2_EAC_RGBA:
-        case COMPRESSED_ASTC_4x4_RGBA: break;               // 8 bpp (1 byte)
-        case COMPRESSED_DXT1_RGB:
-        case COMPRESSED_DXT1_RGBA:
-        case COMPRESSED_ETC1_RGB:
-        case COMPRESSED_ETC2_RGB:
-        case COMPRESSED_PVRT_RGB:
-        case COMPRESSED_PVRT_RGBA: byteSize /= 2; break;    // 4 bpp
-        case COMPRESSED_ASTC_8x8_RGBA: byteSize /= 4; break;// 2 bpp
-        default: TraceLog(LOG_WARNING, "Image format not recognized"); break;
-    }
-
-    newImage.data = malloc(byteSize);
-
-    if (newImage.data != NULL)
-    {
-        // NOTE: Size must be provided in bytes
-        memcpy(newImage.data, image.data, byteSize);
-
-        newImage.width = image.width;
-        newImage.height = image.height;
-        newImage.mipmaps = image.mipmaps;
-        newImage.format = image.format;
-    }
-
-    return newImage;
-}
-
 // Crop an image to area defined by a rectangle
 // NOTE: Security checks are performed in case rectangle goes out of bounds
 void ImageCrop(Image *image, Rectangle crop)
@@ -951,6 +1069,190 @@ void ImageResizeNN(Image *image,int newWidth,int newHeight)
 
     free(output);
     free(pixels);
+}
+
+// Generate all mipmap levels for a provided image
+// NOTE 1: Supports POT and NPOT images
+// NOTE 2: image.data is scaled to include mipmap levels
+// NOTE 3: Mipmaps format is the same as base image
+void ImageMipmaps(Image *image)
+{
+    int mipCount = 1;                   // Required mipmap levels count (including base level)
+    int mipWidth = image->width;        // Base image width
+    int mipHeight = image->height;      // Base image height
+    int mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);  // Image data size (in bytes)
+
+    // Count mipmap levels required
+    while ((mipWidth != 1) || (mipHeight != 1))
+    {
+        if (mipWidth != 1) mipWidth /= 2;
+        if (mipHeight != 1) mipHeight /= 2;
+        
+        // Security check for NPOT textures
+        if (mipWidth < 1) mipWidth = 1;
+        if (mipHeight < 1) mipHeight = 1;
+
+        TraceLog(LOG_DEBUG, "Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
+
+        mipCount++;
+        mipSize += GetPixelDataSize(mipWidth, mipHeight, image->format);       // Add mipmap size (in bytes)
+    }
+
+    TraceLog(LOG_DEBUG, "Total mipmaps required: %i", mipCount);
+    TraceLog(LOG_DEBUG, "Total size of data required: %i", mipSize);
+    TraceLog(LOG_DEBUG, "Image data original memory point: %i", image->data);
+
+    if (image->mipmaps < mipCount)
+    {
+        void *temp = realloc(image->data, mipSize);
+        
+        if (temp != NULL) 
+        {
+            image->data = temp;      // Assign new pointer (new size) to store mipmaps data
+            TraceLog(LOG_DEBUG, "Image data memory point reallocated: %i", temp);
+        }
+        else TraceLog(LOG_WARNING, "Mipmaps required memory could not be allocated");
+
+        // Pointer to allocated memory point where store next mipmap level data
+        unsigned char *nextmip = (unsigned char *)image->data + GetPixelDataSize(image->width, image->height, image->format);
+        
+        mipWidth = image->width/2;
+        mipHeight = image->height/2;
+        mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
+        Image imCopy = ImageCopy(*image);
+        
+        for (int i = 1; i < mipCount; i++)
+        {
+            TraceLog(LOG_DEBUG, "Next mipmap level %i (%i x %i) - size %i - mem pos: %i", i, mipWidth, mipHeight, mipSize, nextmip);
+            
+            ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
+
+            memcpy(nextmip, imCopy.data, mipSize);
+            nextmip += mipSize;
+            image->mipmaps++;
+            
+            mipWidth /= 2;
+            mipHeight /= 2;
+            
+            // Security check for NPOT textures
+            if (mipWidth < 1) mipWidth = 1;
+            if (mipHeight < 1) mipHeight = 1;
+            
+            mipSize = GetPixelDataSize(mipWidth, mipHeight, image->format);
+        }
+
+        UnloadImage(imCopy);
+    }
+    else TraceLog(LOG_WARNING, "Image mipmaps already available");
+}
+
+// Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
+// NOTE: In case selected bpp do not represent an known 16bit format,
+// dithered data is stored in the LSB part of the unsigned short
+void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
+{
+    if (image->format >= COMPRESSED_DXT1_RGB)
+    {
+        TraceLog(LOG_WARNING, "Compressed data formats can not be dithered");
+        return;
+    }
+
+    if ((rBpp+gBpp+bBpp+aBpp) > 16)
+    {
+        TraceLog(LOG_WARNING, "Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
+    }
+    else
+    {
+        Color *pixels = GetImageData(*image);
+
+        free(image->data);      // free old image data
+
+        if ((image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8))
+        {
+            TraceLog(LOG_WARNING, "Image format is already 16bpp or lower, dithering could have no effect");
+        }
+
+        // Define new image format, check if desired bpp match internal known format
+        if ((rBpp == 5) && (gBpp == 6) && (bBpp == 5) && (aBpp == 0)) image->format = UNCOMPRESSED_R5G6B5;
+        else if ((rBpp == 5) && (gBpp == 5) && (bBpp == 5) && (aBpp == 1)) image->format = UNCOMPRESSED_R5G5B5A1;
+        else if ((rBpp == 4) && (gBpp == 4) && (bBpp == 4) && (aBpp == 4)) image->format = UNCOMPRESSED_R4G4B4A4;
+        else
+        {
+            image->format = 0;
+            TraceLog(LOG_WARNING, "Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
+        }
+
+        // NOTE: We will store the dithered data as unsigned short (16bpp)
+        image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
+
+        Color oldPixel = WHITE;
+        Color newPixel = WHITE;
+
+        int rError, gError, bError;
+        unsigned short rPixel, gPixel, bPixel, aPixel;   // Used for 16bit pixel composition
+
+        #define MIN(a,b) (((a)<(b))?(a):(b))
+
+        for (int y = 0; y < image->height; y++)
+        {
+            for (int x = 0; x < image->width; x++)
+            {
+                oldPixel = pixels[y*image->width + x];
+
+                // NOTE: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
+                newPixel.r = oldPixel.r >> (8 - rBpp);     // R bits
+                newPixel.g = oldPixel.g >> (8 - gBpp);     // G bits
+                newPixel.b = oldPixel.b >> (8 - bBpp);     // B bits
+                newPixel.a = oldPixel.a >> (8 - aBpp);     // A bits (not used on dithering)
+
+                // NOTE: Error must be computed between new and old pixel but using same number of bits!
+                // We want to know how much color precision we have lost...
+                rError = (int)oldPixel.r - (int)(newPixel.r << (8 - rBpp));
+                gError = (int)oldPixel.g - (int)(newPixel.g << (8 - gBpp));
+                bError = (int)oldPixel.b - (int)(newPixel.b << (8 - bBpp));
+
+                pixels[y*image->width + x] = newPixel;
+
+                // NOTE: Some cases are out of the array and should be ignored
+                if (x < (image->width - 1))
+                {
+                    pixels[y*image->width + x+1].r = MIN((int)pixels[y*image->width + x+1].r + (int)((float)rError*7.0f/16), 0xff);
+                    pixels[y*image->width + x+1].g = MIN((int)pixels[y*image->width + x+1].g + (int)((float)gError*7.0f/16), 0xff);
+                    pixels[y*image->width + x+1].b = MIN((int)pixels[y*image->width + x+1].b + (int)((float)bError*7.0f/16), 0xff);
+                }
+
+                if ((x > 0) && (y < (image->height - 1)))
+                {
+                    pixels[(y+1)*image->width + x-1].r = MIN((int)pixels[(y+1)*image->width + x-1].r + (int)((float)rError*3.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x-1].g = MIN((int)pixels[(y+1)*image->width + x-1].g + (int)((float)gError*3.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x-1].b = MIN((int)pixels[(y+1)*image->width + x-1].b + (int)((float)bError*3.0f/16), 0xff);
+                }
+
+                if (y < (image->height - 1))
+                {
+                    pixels[(y+1)*image->width + x].r = MIN((int)pixels[(y+1)*image->width + x].r + (int)((float)rError*5.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x].g = MIN((int)pixels[(y+1)*image->width + x].g + (int)((float)gError*5.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x].b = MIN((int)pixels[(y+1)*image->width + x].b + (int)((float)bError*5.0f/16), 0xff);
+                }
+
+                if ((x < (image->width - 1)) && (y < (image->height - 1)))
+                {
+                    pixels[(y+1)*image->width + x+1].r = MIN((int)pixels[(y+1)*image->width + x+1].r + (int)((float)rError*1.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x+1].g = MIN((int)pixels[(y+1)*image->width + x+1].g + (int)((float)gError*1.0f/16), 0xff);
+                    pixels[(y+1)*image->width + x+1].b = MIN((int)pixels[(y+1)*image->width + x+1].b + (int)((float)bError*1.0f/16), 0xff);
+                }
+
+                rPixel = (unsigned short)newPixel.r;
+                gPixel = (unsigned short)newPixel.g;
+                bPixel = (unsigned short)newPixel.b;
+                aPixel = (unsigned short)newPixel.a;
+
+                ((unsigned short *)image->data)[y*image->width + x] = (rPixel << (gBpp + bBpp + aBpp)) | (gPixel << (bBpp + aBpp)) | (bPixel << aBpp) | aPixel;
+            }
+        }
+
+        free(pixels);
+    }
 }
 
 // Draw an image (source) within an image (destination)
@@ -1174,115 +1476,6 @@ void ImageFlipHorizontal(Image *image)
     free(dstPixels);
 
     image->data = processed.data;
-}
-
-// Dither image data to 16bpp or lower (Floyd-Steinberg dithering)
-// NOTE: In case selected bpp do not represent an known 16bit format,
-// dithered data is stored in the LSB part of the unsigned short
-void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
-{
-    if (image->format >= COMPRESSED_DXT1_RGB)
-    {
-        TraceLog(LOG_WARNING, "Compressed data formats can not be dithered");
-        return;
-    }
-
-    if ((rBpp+gBpp+bBpp+aBpp) > 16)
-    {
-        TraceLog(LOG_WARNING, "Unsupported dithering bpps (%ibpp), only 16bpp or lower modes supported", (rBpp+gBpp+bBpp+aBpp));
-    }
-    else
-    {
-        Color *pixels = GetImageData(*image);
-
-        free(image->data);      // free old image data
-
-        if ((image->format != UNCOMPRESSED_R8G8B8) && (image->format != UNCOMPRESSED_R8G8B8A8))
-        {
-            TraceLog(LOG_WARNING, "Image format is already 16bpp or lower, dithering could have no effect");
-        }
-
-        // Define new image format, check if desired bpp match internal known format
-        if ((rBpp == 5) && (gBpp == 6) && (bBpp == 5) && (aBpp == 0)) image->format = UNCOMPRESSED_R5G6B5;
-        else if ((rBpp == 5) && (gBpp == 5) && (bBpp == 5) && (aBpp == 1)) image->format = UNCOMPRESSED_R5G5B5A1;
-        else if ((rBpp == 4) && (gBpp == 4) && (bBpp == 4) && (aBpp == 4)) image->format = UNCOMPRESSED_R4G4B4A4;
-        else
-        {
-            image->format = 0;
-            TraceLog(LOG_WARNING, "Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
-        }
-
-        // NOTE: We will store the dithered data as unsigned short (16bpp)
-        image->data = (unsigned short *)malloc(image->width*image->height*sizeof(unsigned short));
-
-        Color oldPixel = WHITE;
-        Color newPixel = WHITE;
-
-        int rError, gError, bError;
-        unsigned short rPixel, gPixel, bPixel, aPixel;   // Used for 16bit pixel composition
-
-        #define MIN(a,b) (((a)<(b))?(a):(b))
-
-        for (int y = 0; y < image->height; y++)
-        {
-            for (int x = 0; x < image->width; x++)
-            {
-                oldPixel = pixels[y*image->width + x];
-
-                // NOTE: New pixel obtained by bits truncate, it would be better to round values (check ImageFormat())
-                newPixel.r = oldPixel.r >> (8 - rBpp);     // R bits
-                newPixel.g = oldPixel.g >> (8 - gBpp);     // G bits
-                newPixel.b = oldPixel.b >> (8 - bBpp);     // B bits
-                newPixel.a = oldPixel.a >> (8 - aBpp);     // A bits (not used on dithering)
-
-                // NOTE: Error must be computed between new and old pixel but using same number of bits!
-                // We want to know how much color precision we have lost...
-                rError = (int)oldPixel.r - (int)(newPixel.r << (8 - rBpp));
-                gError = (int)oldPixel.g - (int)(newPixel.g << (8 - gBpp));
-                bError = (int)oldPixel.b - (int)(newPixel.b << (8 - bBpp));
-
-                pixels[y*image->width + x] = newPixel;
-
-                // NOTE: Some cases are out of the array and should be ignored
-                if (x < (image->width - 1))
-                {
-                    pixels[y*image->width + x+1].r = MIN((int)pixels[y*image->width + x+1].r + (int)((float)rError*7.0f/16), 0xff);
-                    pixels[y*image->width + x+1].g = MIN((int)pixels[y*image->width + x+1].g + (int)((float)gError*7.0f/16), 0xff);
-                    pixels[y*image->width + x+1].b = MIN((int)pixels[y*image->width + x+1].b + (int)((float)bError*7.0f/16), 0xff);
-                }
-
-                if ((x > 0) && (y < (image->height - 1)))
-                {
-                    pixels[(y+1)*image->width + x-1].r = MIN((int)pixels[(y+1)*image->width + x-1].r + (int)((float)rError*3.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x-1].g = MIN((int)pixels[(y+1)*image->width + x-1].g + (int)((float)gError*3.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x-1].b = MIN((int)pixels[(y+1)*image->width + x-1].b + (int)((float)bError*3.0f/16), 0xff);
-                }
-
-                if (y < (image->height - 1))
-                {
-                    pixels[(y+1)*image->width + x].r = MIN((int)pixels[(y+1)*image->width + x].r + (int)((float)rError*5.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x].g = MIN((int)pixels[(y+1)*image->width + x].g + (int)((float)gError*5.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x].b = MIN((int)pixels[(y+1)*image->width + x].b + (int)((float)bError*5.0f/16), 0xff);
-                }
-
-                if ((x < (image->width - 1)) && (y < (image->height - 1)))
-                {
-                    pixels[(y+1)*image->width + x+1].r = MIN((int)pixels[(y+1)*image->width + x+1].r + (int)((float)rError*1.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x+1].g = MIN((int)pixels[(y+1)*image->width + x+1].g + (int)((float)gError*1.0f/16), 0xff);
-                    pixels[(y+1)*image->width + x+1].b = MIN((int)pixels[(y+1)*image->width + x+1].b + (int)((float)bError*1.0f/16), 0xff);
-                }
-
-                rPixel = (unsigned short)newPixel.r;
-                gPixel = (unsigned short)newPixel.g;
-                bPixel = (unsigned short)newPixel.b;
-                aPixel = (unsigned short)newPixel.a;
-
-                ((unsigned short *)image->data)[y*image->width + x] = (rPixel << (gBpp + bBpp + aBpp)) | (gPixel << (bBpp + aBpp)) | (bPixel << aBpp) | aPixel;
-            }
-        }
-
-        free(pixels);
-    }
 }
 
 // Modify image color: tint
@@ -1574,7 +1767,7 @@ Image GenImageWhiteNoise(int width, int height, float factor)
 }
 
 // Generate image: perlin noise
-Image GenImagePerlinNoise(int width, int height, float scale)
+Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale)
 {
     Color *pixels = (Color *)malloc(width*height*sizeof(Color));
 
@@ -1582,13 +1775,18 @@ Image GenImagePerlinNoise(int width, int height, float scale)
     {
         for (int x = 0; x < width; x++)
         {
-            float nx = (float)x*scale/(float)width;
-            float ny = (float)y*scale/(float)height;
+            float nx = (float)(x + offsetX)*scale/(float)width;
+            float ny = (float)(y + offsetY)*scale/(float)height;
             
-            // we need to translate the data from [-1; 1] to [0; 1]
-            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6, 0, 0, 0) + 1.0f) / 2.0f;
+            // Typical values to start playing with:
+            //   lacunarity = ~2.0   -- spacing between successive octaves (use exactly 2.0 for wrapping output)
+            //   gain       =  0.5   -- relative weighting applied to each successive octave
+            //   octaves    =  6     -- number of "octaves" of noise3() to sum
+
+            // NOTE: We need to translate the data from [-1..1] to [0..1]
+            float p = (stb_perlin_fbm_noise3(nx, ny, 1.0f, 2.0f, 0.5f, 6, 0, 0, 0) + 1.0f)/2.0f;
             
-            int intensity = (int)(p * 255.0f);
+            int intensity = (int)(p*255.0f);
             pixels[y*width + x] = (Color){intensity, intensity, intensity, 255};
         }
     }
@@ -1663,7 +1861,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 // Generate GPU mipmaps for a texture
 void GenTextureMipmaps(Texture2D *texture)
 {
-#if PLATFORM_WEB
+#if defined(PLATFORM_WEB)
     // Calculate next power-of-two values
     int potWidth = (int)powf(2, ceilf(logf((float)texture->width)/logf(2)));
     int potHeight = (int)powf(2, ceilf(logf((float)texture->height)/logf(2)));

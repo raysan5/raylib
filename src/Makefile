@@ -4,7 +4,7 @@
 #
 #  Platforms supported: 
 #    PLATFORM_DESKTOP:  Windows (Win32, Win64)
-#    PLATFORM_DESKTOP:  Linux
+#    PLATFORM_DESKTOP:  Linux (32 and 64 bit)
 #    PLATFORM_DESKTOP:  OSX/macOS
 #    PLATFORM_DESKTOP:  FreeBSD
 #    PLATFORM_ANDROID:  Android (ARM, ARM64)
@@ -14,7 +14,7 @@
 #  Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #  Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
 #
-#  Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+#  Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 #
 #  This software is provided "as-is", without any express or implied warranty.
 #  In no event will the authors be held liable for any damages arising from
@@ -36,30 +36,43 @@
 #
 #******************************************************************************
 
-# Please read the wiki to know how to compile raylib, because there are
-# different methods.
+# Please read the wiki to know how to compile raylib, because there are different methods.
+# https://github.com/raysan5/raylib/wiki
 
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-PLATFORM ?= PLATFORM_DESKTOP
-RAYLIB_PATH ?= ..
+PLATFORM          ?= PLATFORM_DESKTOP
+RAYLIB_PATH        = ..
+RAYLIB_VERSION     = 1.9.2
+RAYLIB_API_VERSION = 1
+# Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
+RAYLIB_LIBTYPE    ?= STATIC
 
-# Library type used for raylib and OpenAL Soft: STATIC (.a) or SHARED (.so/.dll)
-# NOTE: OpenAL Soft library should be provided in the selected form
-RAYLIB_LIBTYPE ?= STATIC
-OPENAL_LIBTYPE ?= STATIC
+# Included raylib audio module on compilation
+# NOTE: Some programs like tools could not require audio support
+INCLUDE_AUDIO_MODULE ?= TRUE
 
-# On PLATFORM_WEB force OpenAL Soft shared library
+# Use OpenAL Soft backend for audio
+USE_OPENAL_BACKEND ?= FALSE
+
+# Use external GLFW library instead of rglfw module
+USE_EXTERNAL_GLFW ?= FALSE
+
+# Use Wayland display server protocol on Linux desktop
+# by default it uses X11 windowing system
+USE_WAYLAND_DISPLAY ?= FALSE
+
+# OpenAL Soft audio backend forced on HTML5 and OSX (see below)
 ifeq ($(PLATFORM),PLATFORM_WEB)
-    OPENAL_LIBTYPE = SHARED
+    USE_OPENAL_BACKEND = TRUE
 endif
 
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    RPI_CROSS_COMPILE ?= NO
+    USE_RPI_CROSS_COMPILER ?= FALSE
     
-    ifeq ($(RPI_CROSS_COMPILE),YES)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
         RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
     endif
@@ -89,12 +102,25 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         endif
     endif
 endif
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    UNAMEOS=$(shell uname)
+    ifeq ($(UNAMEOS),Linux)
+        PLATFORM_OS=LINUX
+    endif
+endif
+
+# Force OpenAL Soft audio backend for OSX platform
+# NOTE 1: mini_al library does not support CoreAudio yet
+# NOTE 2: Required OpenAL libraries should be available on OSX
+ifeq ($(PLATFORM_OS),OSX)
+    USE_OPENAL_BACKEND = TRUE
+endif
 
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH = C:/emsdk
-    EMSCRIPTEN_VERSION = 1.37.21
-    CLANG_VERSION=e1.37.21_64bit
+    EMSCRIPTEN_VERSION = 1.37.28
+    CLANG_VERSION=e1.37.28_64bit
     PYTHON_VERSION=2.7.5.3_64bit
     NODE_VERSION=4.1.1_64bit
     export PATH=$(EMSDK_PATH);$(EMSDK_PATH)\clang\$(CLANG_VERSION);$(EMSDK_PATH)\node\$(NODE_VERSION)\bin;$(EMSDK_PATH)\python\$(PYTHON_VERSION);$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION);C:\raylib\MinGW\bin:$$(PATH)
@@ -165,7 +191,7 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
 
-# Default C compiler: gcc
+# Define default C compiler: gcc
 # NOTE: define g++ compiler if using C++
 CC = gcc
 
@@ -173,6 +199,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # OSX default compiler
         CC = clang
+        GLFW_CFLAGS = -x objective-c
     endif
     ifeq ($(PLATFORM_OS),FREEBSD)
         # FreeBSD default compiler
@@ -180,7 +207,7 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(RPI_CROSS_COMPILE),YES)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         # Define RPI cross-compiler
         #CC = armv6j-hardfloat-linux-gnueabi-gcc
         CC = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-gcc
@@ -205,7 +232,7 @@ endif
 AR = ar
 
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    ifeq ($(RPI_CROSS_COMPILE),YES)
+    ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         # Define RPI cross-archiver
         #CC = armv6j-hardfloat-linux-gnueabi-gcc
         AR = $(RPI_TOOLCHAIN)/bin/arm-linux-gnueabihf-ar
@@ -223,16 +250,17 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
 endif
 
 # Define compiler flags:
-#  -O1                  defines optimization level
-#  -Og                  enable debugging
-#  -s                   strip unnecessary data from build
-#  -Wall                turns on most, but not all, compiler warnings
-#  -std=c99             defines C language mode (standard C from 1999 revision)
-#  -std=gnu99           defines C language mode (GNU C from 1999 revision)
-#  -fgnu89-inline       declaring inline functions support (GCC optimized)
-#  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
-#  -D_DEFAULT_SOURCE    use with -std=c99
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces
+#  -O1                   defines optimization level
+#  -g                    enable debugging
+#  -s                    strip unnecessary data from build
+#  -Wall                 turns on most, but not all, compiler warnings
+#  -std=c99              defines C language mode (standard C from 1999 revision)
+#  -std=gnu99            defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline        declaring inline functions support (GCC optimized)
+#  -Wno-missing-braces   ignore invalid warning (GCC bug 53119)
+#  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
+#  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith
 
 # Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
@@ -263,19 +291,31 @@ ifeq ($(RAYLIB_LIBTYPE),SHARED)
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
 
-# Define required compilation flags for OpenAL Soft STATIC lib
-ifeq ($(OPENAL_LIBTYPE),STATIC)
-    ALFLAGS = -DAL_LIBTYPE_STATIC -Wl,-allow-multiple-definition
+# Use OpenAL Soft backend instead of mini_al
+ifeq ($(USE_OPENAL_BACKEND),TRUE)
+    CFLAGS += -DUSE_OPENAL_BACKEND
+endif
+
+# Use Wayland display on Linux desktop
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS), LINUX)
+        ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
+            CFLAGS += -D_GLFW_WAYLAND
+        endif
+    endif
 endif
 
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -Iexternal -Iexternal/include
+INCLUDE_PATHS = -I. -Iexternal -Iexternal/glfw/include
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),FREEBSD)
         INCLUDE_PATHS += -I/usr/local/include
         LDFLAGS += -L. -Lsrc -L/usr/local/lib -L$(RAYLIB_RELEASE_PATH)
+    endif
+    ifeq ($(USE_EXTERNAL_GLFW),TRUE)
+        LDFLAGS += -lglfw
     endif
 endif
 
@@ -297,21 +337,44 @@ endif
 
 # Define linker options
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    LDFLAGS = -Wl,-soname,libraylib.so -Wl,--exclude-libs,libatomic.a 
+    LDFLAGS = -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a 
     LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
     # Library paths containing required libs
     LDFLAGS += -L. -Lsrc -L$(RAYLIB_RELEASE_PATH)
 
-    LDLIBS = -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
+    LDLIBS = -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm
 endif
 
 # Define all object files required with a wildcard
 # The wildcard takes all files that finish with ".c",
 # and replaces extentions with ".o", that are the object files
-OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
-OBJS += stb_vorbis.o
+# NOTE: Some objects depend on the PLATFORM to be added or not!
+# OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
+
+# Define object required on compilation
+OBJS = core.o \
+       rlgl.o \
+       shapes.o \
+       textures.o \
+       text.o \
+       models.o \
+       utils.o
+       
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(USE_EXTERNAL_GLFW),FALSE)
+        OBJS += rglfw.o
+    endif
+endif
+
+ifeq ($(INCLUDE_AUDIO_MODULE),TRUE)
+    OBJS += audio.o
+    OBJS += stb_vorbis.o
+    ifeq ($(USE_OPENAL_BACKEND),FALSE)
+        OBJS += mini_al.o
+    endif
+endif
 
 # Default target entry
 all: raylib
@@ -336,42 +399,43 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	@echo "raylib library generated (libraylib.bc)!"
 else
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
-        # NOTE: If using OpenAL Soft as static library, all its dependencies must be also linked in the shared library
         ifeq ($(PLATFORM_OS),WINDOWS)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -lglfw3 -lgdi32 -lopenal32 -lwinmm -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/raylib.dll $(OBJS) -L$(RAYLIB_RELEASE_PATH) -static-libgcc -lopengl32 -lgdi32 -Wl,--out-implib,$(RAYLIB_RELEASE_PATH)/libraylibdll.a
 			@echo "raylib dynamic library (raylib.dll) and import library (libraylibdll.a) generated!"
-            @echo "expected OpenAL Soft static library linking"
         endif
         ifeq ($(PLATFORM_OS),LINUX)
             # Compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lm -lpthread -ldl
-			@echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lm -lpthread -ldl -lrt
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
         ifeq ($(PLATFORM_OS),OSX)
-			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.dylib $(OBJS) -L/usr/local/Cellar/glfw/3.2.1/lib -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
-			install_name_tool -id "libraylib.dylib" $(RAYLIB_RELEASE_PATH)/libraylib.dylib
-			@echo "raylib shared library generated (libraylib.dylib)!"
+			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa
+			install_name_tool -id "libraylib.$(VERSION).dylib" $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).dylib)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.$(RAYLIB_API_VERSION).dylib
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).dylib libraylib.dylib
         endif
         ifeq ($(PLATFORM_OS),FREEBSD)
         # WARNING: you should type "gmake clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) -lglfw -lGL -lopenal -lpthread
-			@echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lpthread
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
         ifeq ($(PLATFORM),PLATFORM_ANDROID)
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so $(OBJS) $(LDFLAGS) $(LDLIBS)
-			@echo "raylib shared library generated (libraylib.so)!"
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
+			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
+			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
         endif
     else
         # Compile raylib static library
 		@echo raylib library release path is $(RAYLIB_RELEASE_PATH)
 		$(AR) rcs $(RAYLIB_RELEASE_PATH)/libraylib.a $(OBJS)
 		@echo "raylib static library generated (libraylib.a)!"
-        ifeq ($(OPENAL_LIBTYPE),STATIC)
-			@echo "expected OpenAL Soft static library linking"
-        else
-			@echo "expected OpenAL Soft shared library linking"
-        endif
     endif
 endif
 
@@ -380,6 +444,10 @@ endif
 # Compile core module
 core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
+    
+# Compile rglfw module
+rglfw.o : rglfw.c
+	$(CC) $(GLFW_CFLAGS) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
 
 # Compile rlgl module
 rlgl.o : rlgl.c rlgl.h raymath.h
@@ -403,7 +471,11 @@ models.o : models.c raylib.h rlgl.h raymath.h
 
 # Compile audio module
 audio.o : audio.c raylib.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) $(ALFLAGS)
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+    
+# Compile mini_al audio library
+mini_al.o : external/mini_al.c external/mini_al.h
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) 
 
 # Compile stb_vorbis library
 stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
@@ -423,6 +495,8 @@ ifeq ($(ROOT),root)
         # /usr/local/include/) are for libraries that are installed
         # manually (without a package manager).
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
+			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so /usr/local/lib/libraylib.$(RAYLIB_VERSION).so
+			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_API_VERSION).so /usr/local/lib/libraylib.$(RAYLIB_API_VERSION).so
 			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.so /usr/local/lib/libraylib.so
         else
 			cp --update raylib.h /usr/local/include/raylib.h
@@ -444,6 +518,8 @@ ifeq ($(ROOT),root)
 			rm --force /usr/local/include/raylib.h
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
 			rm --force /usr/local/lib/libraylib.so
+			rm --force /usr/local/lib/libraylib.$(RAYLIB_API_VERSION).so
+			rm --force /usr/local/lib/libraylib.$(RAYLIB_VERSION).so
         else
 			rm --force /usr/local/lib/libraylib.a
         endif
@@ -460,7 +536,7 @@ clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
 	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
 else
-	rm -f *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
+	rm -f *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_API_VERSION).so $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so external/stb_vorbis.o
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN)

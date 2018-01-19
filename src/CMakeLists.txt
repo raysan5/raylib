@@ -2,14 +2,21 @@
 project(raylib)
 include("../utils.cmake")
 
-set(raylib_VERSION_MAJOR 1)
-set(raylib_VERSION_MINOR 8)
+set(PROJECT_VERSION 1.9.2)
+set(API_VERSION 1)
 set(RAYLIB raylib)    # Name of the generated library
 
-
 ### Config options ###
-# Build a static or shared raylib?
+# Shared library is always PIC. Static library should be PIC too if linked into a shared library
+set(WITH_PIC      OFF CACHE BOOL "Compile static library as position-independent code" OFF)
+# Build a static and/or shared raylib?
 set(SHARED_RAYLIB OFF CACHE BOOL "Build raylib as a dynamic library")
+set(STATIC_RAYLIB ON  CACHE BOOL "Build raylib as a static library")
+set(MACOS_FATLIB  ON  CACHE BOOL "Build fat library for both i386 and x86_64 on macOS")
+
+if(NOT (STATIC_RAYLIB OR SHARED_RAYLIB))
+  message(FATAL_ERROR "Nothing to do if both -DSHARED_RAYLIB=OFF and -DSTATIC_RAYLIB=OFF...")
+endif()
 
 # Platform
 set(PLATFORM "Desktop" CACHE STRING "Platform to build for.")
@@ -18,8 +25,9 @@ set_property(CACHE PLATFORM PROPERTY STRINGS "Desktop" "Web" "Android" "Raspberr
 # OpenGL version
 set(OPENGL_VERSION "3.3" CACHE STRING "OpenGL Version to build raylib with")
 set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
-### Config options ###
 
+### Config options ###
+include_directories(external/glfw/include)
 
 # Translate the config options to what raylib wants
 if(${PLATFORM} MATCHES "Desktop")
@@ -40,7 +48,12 @@ if(${PLATFORM} MATCHES "Desktop")
   # See: https://github.com/raysan5/raylib/issues/341
   if(APPLE)
     set(GRAPHICS "GRAPHICS_API_OPENGL_33")
+    set_source_files_properties(rglfw.c PROPERTIES COMPILE_FLAGS "-x objective-c")
+    link_libraries("${LIBS_PRIVATE}")
+  elseif(WIN32)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   endif()
+
 elseif(${PLATFORM} MATCHES "Web")
   set(PLATFORM "PLATFORM_WEB")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
@@ -60,50 +73,98 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 endif()
 
+if(BUILD_MACOS_FATLIB)
+    if (CMAKE_OSX_ARCHITECTURES)
+        message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides BUILD_MACOS_FATLIB=ON")
+    else()
+        SET(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
+    endif()
+endif()
+
 # Get the sources together
 file(GLOB raylib_sources *.c)
 file(GLOB stb_vorbis external/stb_vorbis.c)
-set(sources ${raylib_sources} ${stb_vorbis})
+file(GLOB mini_al external/mini_al.c ${stb_vorbis})
+set(sources ${raylib_sources} ${mini_al})
 
 # Which platform?
 if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
-  # Build a static or shared raylib?
-  # TODO clean this up a bit?
-  if(${SHARED_RAYLIB})
-    # Shared library
-    add_library(${RAYLIB} SHARED ${sources}) 
-  
-    # Will link -framework (if on OS X)
-    link_os_x_frameworks(raylib)
-  else()
-    # Static library
-    add_library(${RAYLIB} STATIC ${sources}) 
-  
-    if(LINUX)
-      # On Linux, need to link a few extra things for static
-      target_link_libraries(${RAYLIB} m pthread dl)
-      target_link_libraries(${RAYLIB} X11 Xrandr Xinerama Xi Xxf86vm Xcursor)  # X11 stuff
-    endif()
-  endif()
-  
-  # Always need to link OpenAL and OpenGL
+
   if(LINUX)
-    # Elsewhere (such as Linux), need `-lopenal -lGL`
-    target_link_libraries(${RAYLIB} openal)
-    target_link_libraries(${RAYLIB} GL)
+    foreach(L ${LIBS_PRIVATE})
+      set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -l${L}")
+    endforeach(L)
   endif()
-  
-  # Add in GLFW as a linking target
-  target_link_libraries(${RAYLIB} glfw)
-  
-  # Library file & Header
-  set_target_properties(${RAYLIB} PROPERTIES PUBLIC_HEADER "raylib.h")
-  install(
-    TARGETS ${RAYLIB}
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include
-  )
+
+  if(APPLE)
+    # TODO extract framework location and name from ${LIBS_PRIVATE}
+    # and specify them as -F and -framework instead of hardcoding
+    foreach(F OpenGL OpenAL Cocoa)
+      set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -framework ${F}")
+    endforeach(F)
+  endif()
+
+  if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
+    foreach(L ${LIBS_PRIVATE})
+    	set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -l${L}")
+    endforeach(L)
+  endif()
+
+  if(${SHARED_RAYLIB})
+    add_library(${RAYLIB}_shared SHARED ${sources})
+
+    target_compile_definitions(${RAYLIB}_shared
+        PUBLIC ${PLATFORM}
+        PUBLIC ${GRAPHICS}
+    )
+
+    set_property(TARGET ${RAYLIB}_shared PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set(CMAKE_MACOSX_RPATH ON)
+
+    target_link_libraries(${RAYLIB}_shared ${LIBS_PRIVATE})
+    set_target_properties(${RAYLIB}_shared PROPERTIES
+        VERSION   ${PROJECT_VERSION}
+        SOVERSION ${API_VERSION}
+        PUBLIC_HEADER "raylib.h"
+    )
+    if(WIN32)
+      install(
+        TARGETS ${RAYLIB}_shared
+        RUNTIME DESTINATION lib
+        PUBLIC_HEADER DESTINATION include
+      )
+    else() # Keep lib*.(a|dll) name, but avoid *.lib files overwriting each other on Windows
+      set_target_properties(${RAYLIB}_shared PROPERTIES OUTPUT_NAME ${RAYLIB})
+      install(
+        TARGETS ${RAYLIB}_shared
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION include
+      )
+    endif()
+  endif(${SHARED_RAYLIB})
+
+  if(${STATIC_RAYLIB})
+    add_library(${RAYLIB} STATIC ${sources})
+
+    target_compile_definitions(${RAYLIB}
+        PUBLIC ${PLATFORM}
+        PUBLIC ${GRAPHICS}
+    )
+
+    if (WITH_PIC)
+      set_property(TARGET ${RAYLIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
+    endif()
+    set_target_properties(${RAYLIB} PROPERTIES PUBLIC_HEADER "raylib.h")
+    install(TARGETS ${RAYLIB}
+      ARCHIVE DESTINATION lib
+      PUBLIC_HEADER DESTINATION include
+    )
+  endif(${STATIC_RAYLIB})
+
+  configure_file(../raylib.pc.in raylib.pc @ONLY)
+  install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION lib/pkgconfig)
   
   # Copy the header files to the build directory
   file(COPY "raylib.h" DESTINATION ".")
@@ -116,17 +177,21 @@ elseif(${PLATFORM} MATCHES "PLATFORM_WEB")
   add_executable(${RAYLIB} ${sources})
 endif()
 
-
-# Set the compile flags to raylib
-target_compile_definitions(${RAYLIB}
-  PUBLIC ${PLATFORM}
-  PUBLIC ${GRAPHICS}
-)
-
-
-
 # Print the flags for the user
 message(STATUS "Compiling with the flags:")
 message(STATUS "  PLATFORM=" ${PLATFORM})
 message(STATUS "  GRAPHICS=" ${GRAPHICS})
 
+# Packaging
+SET(CPACK_PACKAGE_NAME "raylib")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Simple and easy-to-use library to learn videogames programming")
+SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+SET(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+SET(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+SET(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/../README.md")
+SET(CPACK_RESOURCE_FILE_WELCOME "${PROJECT_SOURCE_DIR}/../README.md")
+SET(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/../LICENSE.md")
+SET(CPACK_PACKAGE_FILE_NAME "raylib-${PROJECT_VERSION}$ENV{RAYLIB_PACKAGE_SUFFIX}")
+SET(CPACK_GENERATOR "ZIP;TGZ") # Remove this, if you want the NSIS installer on Windows
+include(CPack)

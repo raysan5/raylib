@@ -83,6 +83,7 @@ int main()
     // NOTE 2: We load the correct shader depending on GLSL version
     Shader shaders[MAX_POSTPRO_SHADERS];
     
+    // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
     shaders[FX_GRAYSCALE] = LoadShader(0, FormatText("resources/shaders/glsl%i/grayscale.fs", GLSL_VERSION));
     shaders[FX_POSTERIZATION] = LoadShader(0, FormatText("resources/shaders/glsl%i/posterization.fs", GLSL_VERSION));
     shaders[FX_DREAM_VISION] = LoadShader(0, FormatText("resources/shaders/glsl%i/dream_vision.fs", GLSL_VERSION));

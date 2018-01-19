@@ -26,14 +26,11 @@
 ********************************************************************************************/
 
 #include <stdio.h>
+#include "audio.h"
 #if defined(_WIN32)
 #include <conio.h>          // Windows only, no stardard library
-#endif
 
-#include "audio.h"
-
-#if defined(__linux__)
-
+#else
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>

@@ -115,9 +115,6 @@ docs/examples/web/*/*.html
 !docs/examples/web/shaders/loader.html
 !docs/examples/web/models/loader.html
 
-# Meson build system
-builddir/
-
 # CMake stuff
 CMakeCache.txt
 CMakeFiles
@@ -137,3 +134,8 @@ build
 
 # Ignore Android generated files and folders
 templates/android_project/output
+
+# Ignore GNU global tags
+GPATH
+GRTAGS
+GTAGS

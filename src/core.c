@@ -15,7 +15,7 @@
 *   CONFIGURATION:
 *
 *   #define PLATFORM_DESKTOP
-*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD (managed by GLFW3 library)
+*       Windowing and input system configured for desktop platforms: Windows, Linux, OSX, FreeBSD
 *       NOTE: Oculus Rift CV1 requires PLATFORM_DESKTOP for mirror rendering - View [rlgl] module to enable it
 *
 *   #define PLATFORM_ANDROID
@@ -23,8 +23,8 @@
 *       NOTE: OpenGL ES 2.0 is required and graphic device is managed by EGL
 *
 *   #define PLATFORM_RPI
-*       Windowing and input system configured for Raspberry Pi (tested on Raspbian), graphic device is managed by EGL 
-*       and inputs are processed is raw mode, reading from /dev/input/
+*       Windowing and input system configured for Raspberry Pi i native mode (no X.org required, tested on Raspbian), 
+*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
@@ -54,15 +54,15 @@
 *       Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
 *
 *   DEPENDENCIES:
-*       GLFW3    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX)
-*       raymath  - 3D math functionality (Vector3, Matrix, Quaternion)
+*       rglfw    - Manage graphic device, OpenGL context and inputs on PLATFORM_DESKTOP (Windows, Linux, OSX. FreeBSD)
+*       raymath  - 3D math functionality (Vector2, Vector3, Matrix, Quaternion)
 *       camera   - Multiple 3D camera modes (free, orbital, 1st person, 3rd person)
 *       gestures - Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -93,6 +93,11 @@
 
 #include "raylib.h"
 
+#if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
+
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 #include "utils.h"          // Required for: fopen() Android mapping
 
@@ -115,10 +120,6 @@
     #include "external/rgif.h"   // Support GIF recording
 #endif
 
-#if defined(__linux__) || defined(PLATFORM_WEB)
-    #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
-#endif
-
 #include <stdio.h>          // Standard input / output lib
 #include <stdlib.h>         // Required for: malloc(), free(), rand(), atexit()
 #include <stdint.h>         // Required for: typedef unsigned long long int uint64_t, used by hi-res timer
@@ -127,7 +128,7 @@
 #include <string.h>         // Required for: strrchr(), strcmp()
 //#include <errno.h>          // Macros for reporting and retrieving error conditions through error codes
 
-#ifdef _WIN32
+#if defined(_WIN32)
     #include <direct.h>             // Required for: _getch(), _chdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
@@ -153,12 +154,11 @@
         #include <GLFW/glfw3native.h>    // which are required for hiding mouse
     #endif
     //#include <GL/gl.h>        // OpenGL functions (GLFW3 already includes gl.h)
-    //#define GLFW_DLL          // Using GLFW DLL on Windows -> No, we use static version!
-    
+
     #if !defined(SUPPORT_BUSY_WAIT_LOOP) && defined(_WIN32)
     // NOTE: Those functions require linking with winmm library
-    __stdcall unsigned int timeBeginPeriod(unsigned int uPeriod);
-    __stdcall unsigned int timeEndPeriod(unsigned int uPeriod);
+    unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+    unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
     #endif
 #endif
 
@@ -296,9 +296,9 @@ static bool fullscreen = false;             // Fullscreen mode (useful only for 
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
-static const char *windowTitle;             // Window text title...
-static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
+static const char *windowTitle = NULL;      // Window text title...
 static bool cursorHidden = false;           // Track if cursor is hidden
+static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static int screenshotCounter = 0;           // Screenshots counter
 
 // Register mouse states
@@ -343,7 +343,7 @@ static double updateTime, drawTime;         // Time measures for update and draw
 static double frameTime = 0.0;              // Time measure for one frame
 static double targetTime = 0.0;             // Desired time for one frame, if 0 not applied
 
-static char configFlags = 0;                // Configuration flags (bit based)
+static unsigned char configFlags = 0;       // Configuration flags (bit based)
 static bool showLogo = false;               // Track if showing logo at init is enabled
 
 #if defined(SUPPORT_GIF_RECORDING)
@@ -365,7 +365,6 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
-static double GetTime(void);                            // Returns time since InitTimer() was run
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
 static bool GetKeyStatus(int key);                      // Returns if a key has been pressed
 static bool GetMouseButtonStatus(int button);           // Returns if a mouse button has been pressed
@@ -429,9 +428,10 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 // Initialize window and OpenGL context
+// NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
 #if defined(PLATFORM_DESKTOP)
     windowTitle = (char *)data;
@@ -443,15 +443,15 @@ void InitWindow(int width, int height, void *data)
 
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
+    
+    // Init hi-res timer
+    InitTimer();
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
     // NOTE: External function (defined in module: text)
     LoadDefaultFont();
 #endif
-
-    // Init hi-res timer
-    InitTimer();
 
 #if defined(PLATFORM_RPI)
     // Init raw input system
@@ -496,15 +496,17 @@ void InitWindow(int width, int height, void *data)
 #endif
 
 #if defined(PLATFORM_ANDROID)
-// Initialize Android activity
-void InitWindow(int width, int height, void *state)
+// Initialize window and OpenGL context (and Android activity)
+// NOTE: data parameter could be used to pass any kind of required data to the initialization
+void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.8.0)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
     screenWidth = width;
     screenHeight = height;
 
-    app = (struct android_app *)state;
+    // Input data is android app pointer
+    app = (struct android_app *)data;
     internalDataPath = app->activity->internalDataPath;
 
     // Set desired windows flags before initializing anything
@@ -533,7 +535,6 @@ void InitWindow(int width, int height, void *state)
     //AConfiguration_getScreenSize(app->config);
     //AConfiguration_getScreenLong(app->config);
 
-    //state->userData = &engine;
     app->onAppCmd = AndroidCommandCallback;
     app->onInputEvent = AndroidInputCallback;
 
@@ -734,7 +735,6 @@ int GetScreenHeight(void)
     return screenHeight;
 }
 
-#if !defined(PLATFORM_ANDROID)
 // Show mouse cursor
 void ShowCursor()
 {
@@ -797,23 +797,21 @@ void DisableCursor()
 #endif
     cursorHidden = true;
 }
-#endif  // !defined(PLATFORM_ANDROID)
 
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
 {
-    // Clear full framebuffer (not only render area) to color
-    rlClearColor(color.r, color.g, color.b, color.a);
+    rlClearColor(color.r, color.g, color.b, color.a);   // Set clear color
+    rlClearScreenBuffers();                             // Clear current framebuffers
 }
 
 // Setup canvas (framebuffer) to start drawing
 void BeginDrawing(void)
 {
-    currentTime = GetTime();            // Number of elapsed seconds since InitTimer() was called
+    currentTime = GetTime();            // Number of elapsed seconds since InitTimer()
     updateTime = currentTime - previousTime;
     previousTime = currentTime;
 
-    rlClearScreenBuffers();             // Clear current framebuffers
     rlLoadIdentity();                   // Reset current matrix (MODELVIEW)
     rlMultMatrixf(MatrixToFloat(downscaleView));       // If downscale required, apply it here
 
@@ -952,8 +950,6 @@ void BeginTextureMode(RenderTexture2D target)
 
     rlEnableRenderTexture(target.id);   // Enable render target
 
-    rlClearScreenBuffers();             // Clear render texture buffers
-
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
 
@@ -1083,6 +1079,24 @@ float GetFrameTime(void)
     return (float)frameTime;
 }
 
+// Get elapsed time measure in seconds since InitTimer()
+// NOTE: On PLATFORM_DESKTOP InitTimer() is called on InitWindow()
+// NOTE: On PLATFORM_DESKTOP, timer is initialized on glfwInit()
+double GetTime(void)
+{
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+    return glfwGetTime();                   // Elapsed time since glfwInit()
+#endif
+
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
+
+    return (double)(time - baseTime)*1e-9;  // Elapsed time since InitTimer()
+#endif
+}
+
 // Converts Color to float array and normalizes
 float *ColorToFloat(Color color)
 {
@@ -1144,7 +1158,7 @@ void ShowLogo(void)
 }
 
 // Setup window configuration flags (view FLAGS)
-void SetConfigFlags(char flags)
+void SetConfigFlags(unsigned char flags)
 {
     configFlags = flags;
 
@@ -1180,7 +1194,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
     return result;
 }
 
-// Get the extension for a filename
+// Get pointer to extension for a filename string
 const char *GetExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
@@ -1189,6 +1203,17 @@ const char *GetExtension(const char *fileName)
     
     return (dot + 1);
 }
+
+// Get pointer to filename for a path string
+const char *GetFileName(const char *filePath)
+{
+    const char *fileName = strrchr(filePath, '\\');
+    
+    if (!fileName || fileName == filePath) return filePath;
+
+    return fileName + 1;
+}
+
 
 // Get directory for a given fileName (with path)
 const char *GetDirectoryPath(const char *fileName)
@@ -2284,22 +2309,6 @@ static void InitTimer(void)
     previousTime = GetTime();       // Get time as double
 }
 
-// Get current time measure (in seconds) since InitTimer()
-static double GetTime(void)
-{
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    return glfwGetTime();
-#endif
-
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t time = (uint64_t)ts.tv_sec*1000000000LLU + (uint64_t)ts.tv_nsec;
-
-    return (double)(time - baseTime)*1e-9;
-#endif
-}
-
 // Wait for some milliseconds (stop program execution)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
 // take longer than expected... for that reason we use the busy wait loop
@@ -2597,7 +2606,9 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
     else
     {
         currentKeyState[key] = action;
-        if (action == GLFW_PRESS) lastKeyPressed = key;
+        
+        // NOTE: lastKeyPressed already registered on CharCallback()
+        //if (action == GLFW_PRESS) lastKeyPressed = key;
     }
 }
 
@@ -2663,12 +2674,15 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 #endif
 }
 
-// GLFW3 Char Key Callback, runs on key pressed (get char value)
+// GLFW3 Char Key Callback, runs on key down (get unicode char value)
 static void CharCallback(GLFWwindow *window, unsigned int key)
-{
+{  
+    // NOTE: Registers any key down considering OS keyboard layout but
+    // do not detects action events, those should be managed by user...
+    // https://github.com/glfw/glfw/issues/668#issuecomment-166794907
+    // http://www.glfw.org/docs/latest/input_guide.html#input_char
+    
     lastKeyPressed = key;
-
-    //TraceLog(LOG_INFO, "Char Callback Key pressed: %i\n", key);
 }
 
 // GLFW3 CursorEnter Callback, when cursor enters the window
@@ -2768,6 +2782,9 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                 {
                     // Init graphics device (display device and OpenGL context)
                     InitGraphicsDevice(screenWidth, screenHeight);
+                    
+                    // Init hi-res timer
+                    InitTimer();
 
                     #if defined(SUPPORT_DEFAULT_FONT)
                     // Load default font
@@ -2789,9 +2806,6 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                         }
                     }
                     */
-
-                    // Init hi-res timer
-                    InitTimer();
 
                     // raylib logo appearing animation (if enabled)
                     if (showLogo)

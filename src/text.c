@@ -17,7 +17,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -288,40 +288,14 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     SpriteFont spriteFont = { 0 };
 
-    // Check file extension
-    if (IsFileExtension(fileName, ".rres"))
-    {
-        // TODO: Read multiple resource blocks from file (RRES_FONT_IMAGE, RRES_FONT_CHARDATA)
-        RRES rres = LoadResource(fileName, 0);
-
-        // Load sprite font texture
-        if (rres[0].type == RRES_TYPE_FONT_IMAGE) 
-        {
-            // NOTE: Parameters for RRES_FONT_IMAGE type are: width, height, format, mipmaps
-            Image image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
-            spriteFont.texture = LoadTextureFromImage(image);
-            UnloadImage(image);
-        }
-        
-        // Load sprite characters data
-        if (rres[1].type == RRES_TYPE_FONT_CHARDATA) 
-        {
-            // NOTE: Parameters for RRES_FONT_CHARDATA type are: fontSize, charsCount
-            spriteFont.baseSize = rres[1].param1;
-            spriteFont.charsCount = rres[1].param2;
-            spriteFont.chars = rres[1].data;
-        }
-
-        // TODO: Do not free rres.data memory (chars info data!)
-        //UnloadResource(rres[0]);
-    }
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    else if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
-    else if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
-#endif
+    if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
     else
+#endif
     {
         Image image = LoadImage(fileName);
         if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);

@@ -145,56 +145,6 @@ typedef unsigned char byte;
     // Boolean type
     typedef enum { false, true } bool;
     #endif
-    
-    // Shader location point type
-    typedef enum {
-        LOC_VERTEX_POSITION = 0,
-        LOC_VERTEX_TEXCOORD01,
-        LOC_VERTEX_TEXCOORD02,
-        LOC_VERTEX_NORMAL,
-        LOC_VERTEX_TANGENT,
-        LOC_VERTEX_COLOR,
-        LOC_MATRIX_MVP,
-        LOC_MATRIX_MODEL,
-        LOC_MATRIX_VIEW,
-        LOC_MATRIX_PROJECTION,
-        LOC_VECTOR_VIEW,
-        LOC_COLOR_DIFFUSE,
-        LOC_COLOR_SPECULAR,
-        LOC_COLOR_AMBIENT,
-        LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
-        LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
-        LOC_MAP_NORMAL,
-        LOC_MAP_ROUGHNESS,
-        LOC_MAP_OCCUSION,
-        LOC_MAP_EMISSION,
-        LOC_MAP_HEIGHT,
-        LOC_MAP_CUBEMAP,
-        LOC_MAP_IRRADIANCE,
-        LOC_MAP_PREFILTER,
-        LOC_MAP_BRDF
-    } ShaderLocationIndex;
-
-    #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
-    #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
-
-    // Material map type
-    typedef enum {
-        MAP_ALBEDO    = 0,       // MAP_DIFFUSE
-        MAP_METALNESS = 1,       // MAP_SPECULAR
-        MAP_NORMAL    = 2,
-        MAP_ROUGHNESS = 3,
-        MAP_OCCLUSION,
-        MAP_EMISSION,
-        MAP_HEIGHT,
-        MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
-        MAP_BRDF
-    } TexmapIndex;
-
-    #define MAP_DIFFUSE      MAP_ALBEDO
-    #define MAP_SPECULAR     MAP_METALNESS
 
     // Color type, RGBA (32bit)
     typedef struct Color {
@@ -204,6 +154,14 @@ typedef unsigned char byte;
         unsigned char a;
     } Color;
     
+    // Rectangle type
+    typedef struct Rectangle {
+        int x;
+        int y;
+        int width;
+        int height;
+    } Rectangle;
+    
     // Texture2D type
     // NOTE: Data stored in GPU memory
     typedef struct Texture2D {
@@ -211,7 +169,7 @@ typedef unsigned char byte;
         int width;              // Texture base width
         int height;             // Texture base height
         int mipmaps;            // Mipmap levels, 1 by default
-        int format;             // Data format (TextureFormat)
+        int format;             // Data format (PixelFormat)
     } Texture2D;
 
     // RenderTexture2D type, for texture rendering
@@ -301,7 +259,9 @@ typedef unsigned char byte;
         UNCOMPRESSED_R5G5B5A1,          // 16 bpp (1 bit alpha)
         UNCOMPRESSED_R4G4B4A4,          // 16 bpp (4 bit alpha)
         UNCOMPRESSED_R8G8B8A8,          // 32 bpp
-        UNCOMPRESSED_R32G32B32,         // 32 bit per channel (float) - HDR
+        UNCOMPRESSED_R32,               // 32 bpp (1 channel - float)
+        UNCOMPRESSED_R32G32B32,         // 32*3 bpp (3 channels - float)
+        UNCOMPRESSED_R32G32B32A32,      // 32*4 bpp (4 channels - float)
         COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
         COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
         COMPRESSED_DXT3_RGBA,           // 8 bpp
@@ -313,7 +273,7 @@ typedef unsigned char byte;
         COMPRESSED_PVRT_RGBA,           // 4 bpp
         COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
         COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
-    } TextureFormat;
+    } PixelFormat;
 
     // Texture parameters: filter mode
     // NOTE 1: Filtering considers mipmaps if available in the texture
@@ -340,6 +300,56 @@ typedef unsigned char byte;
         BLEND_ADDITIVE, 
         BLEND_MULTIPLIED 
     } BlendMode;
+
+    // Shader location point type
+    typedef enum {
+        LOC_VERTEX_POSITION = 0,
+        LOC_VERTEX_TEXCOORD01,
+        LOC_VERTEX_TEXCOORD02,
+        LOC_VERTEX_NORMAL,
+        LOC_VERTEX_TANGENT,
+        LOC_VERTEX_COLOR,
+        LOC_MATRIX_MVP,
+        LOC_MATRIX_MODEL,
+        LOC_MATRIX_VIEW,
+        LOC_MATRIX_PROJECTION,
+        LOC_VECTOR_VIEW,
+        LOC_COLOR_DIFFUSE,
+        LOC_COLOR_SPECULAR,
+        LOC_COLOR_AMBIENT,
+        LOC_MAP_ALBEDO,          // LOC_MAP_DIFFUSE
+        LOC_MAP_METALNESS,       // LOC_MAP_SPECULAR
+        LOC_MAP_NORMAL,
+        LOC_MAP_ROUGHNESS,
+        LOC_MAP_OCCUSION,
+        LOC_MAP_EMISSION,
+        LOC_MAP_HEIGHT,
+        LOC_MAP_CUBEMAP,
+        LOC_MAP_IRRADIANCE,
+        LOC_MAP_PREFILTER,
+        LOC_MAP_BRDF
+    } ShaderLocationIndex;
+
+    #define LOC_MAP_DIFFUSE      LOC_MAP_ALBEDO
+    #define LOC_MAP_SPECULAR     LOC_MAP_METALNESS
+
+    // Material map type
+    typedef enum {
+        MAP_ALBEDO    = 0,       // MAP_DIFFUSE
+        MAP_METALNESS = 1,       // MAP_SPECULAR
+        MAP_NORMAL    = 2,
+        MAP_ROUGHNESS = 3,
+        MAP_OCCLUSION,
+        MAP_EMISSION,
+        MAP_HEIGHT,
+        MAP_CUBEMAP,             // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_IRRADIANCE,          // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_PREFILTER,           // NOTE: Uses GL_TEXTURE_CUBE_MAP
+        MAP_BRDF
+    } TexmapIndex;
+
+    #define MAP_DIFFUSE      MAP_ALBEDO
+    #define MAP_SPECULAR     MAP_METALNESS
 
     // VR Head Mounted Display devices
     typedef enum {
@@ -414,6 +424,7 @@ void rlglClose(void);                           // De-inititialize rlgl (buffers
 void rlglDraw(void);                            // Update and Draw default buffers (lines, triangles, quads)
 
 int rlGetVersion(void);                         // Returns current OpenGL version
+void rlSetDebugMarker(const char *text);        // Set debug marker for analysis
 void rlLoadExtensions(void *loader);            // Load OpenGL extensions
 Vector3 rlUnproject(Vector3 source, Matrix proj, Matrix view);  // Get world coordinates from screen coordinates
 
@@ -448,11 +459,13 @@ Texture2D GetTextureDefault(void);                      // Get default texture
 
 // Shader configuration functions
 int GetShaderLocation(Shader shader, const char *uniformName);              // Get shader uniform location
-void SetShaderValue(Shader shader, int uniformLoc, float *value, int size); // Set shader uniform value (float)
-void SetShaderValuei(Shader shader, int uniformLoc, int *value, int size);  // Set shader uniform value (int)
+void SetShaderValue(Shader shader, int uniformLoc, const float *value, int size); // Set shader uniform value (float)
+void SetShaderValuei(Shader shader, int uniformLoc, const int *value, int size);  // Set shader uniform value (int)
 void SetShaderValueMatrix(Shader shader, int uniformLoc, Matrix mat);       // Set shader uniform value (matrix 4x4)
-void SetMatrixProjection(Matrix proj);                              // Set a custom projection matrix (replaces internal projection matrix)
-void SetMatrixModelview(Matrix view);                               // Set a custom modelview matrix (replaces internal modelview matrix)
+void SetMatrixProjection(Matrix proj);                  // Set a custom projection matrix (replaces internal projection matrix)
+void SetMatrixModelview(Matrix view);                   // Set a custom modelview matrix (replaces internal modelview matrix)
+Matrix GetMatrixModelview();                            // Get internal modelview matrix            
+
 
 // Texture maps generation (PBR)
 // NOTE: Required shaders should be provided
