@@ -285,6 +285,7 @@ static bool useTempBuffer = false;
 // Shaders
 static unsigned int defaultVShaderId;       // Default vertex shader id (used by default shader program)
 static unsigned int defaultFShaderId;       // Default fragment shader Id (used by default shader program)
+
 static Shader defaultShader;                // Basic shader, support vertex color and diffuse texture
 static Shader currentShader;                // Shader to be used on rendering (by default, defaultShader)
 
@@ -1166,7 +1167,7 @@ void rlglInit(int width, int height)
     }
 
 #ifdef _MSC_VER
-    free(extList);
+    //free(extList);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
@@ -2406,6 +2407,9 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    // Shaders loading from external text file
+    char *vShaderStr = LoadText(vsFileName);
+    char *fShaderStr = LoadText(fsFileName);
 
     unsigned int vertexShaderId = defaultVShaderId;
     unsigned int fragmentShaderId = defaultFShaderId;
@@ -3177,26 +3181,42 @@ void EndVrDrawing(void)
 // Compile custom shader and return shader id
 static unsigned int CompileShader(const char *shaderStr, int type)
 {
-    unsigned int shader = glCreateShader(type);
-    glShaderSource(shader, 1, &shaderStr, NULL);
+    unsigned int program = 0;
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    GLuint vertexShader;
+    GLuint fragmentShader;
+
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    const char *pvs = vShaderStr;
+    const char *pfs = fShaderStr;
+
+    glShaderSource(vertexShader, 1, &pvs, NULL);
+    glShaderSource(fragmentShader, 1, &pfs, NULL);
 
     GLint success = 0;
-    glCompileShader(shader);
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    glCompileShader(vertexShader);
+
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 
     if (success != GL_TRUE)
     {
-        TraceLog(LOG_WARNING, "[SHDR ID %i] Failed to compile shader...", shader);
+        TraceLog(LOG_WARNING, "[VSHDR ID %i] Failed to compile vertex shader...", vertexShader);
+
         int maxLength = 0;
         int length;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+
+        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
 
 #ifdef _MSC_VER
         char *log = malloc(maxLength);
 #else
         char log[maxLength];
 #endif
-        glGetShaderInfoLog(shader, maxLength, &length, log);
+        glGetShaderInfoLog(vertexShader, maxLength, &length, log);
 
         TraceLog(LOG_INFO, "%s", log);
 
@@ -3204,19 +3224,39 @@ static unsigned int CompileShader(const char *shaderStr, int type)
         free(log);
 #endif
     }
-    else TraceLog(LOG_INFO, "[SHDR ID %i] Shader compiled successfully", shader);
+    else TraceLog(LOG_INFO, "[VSHDR ID %i] Vertex shader compiled successfully", vertexShader);
 
-    return shader;
-}
+    glCompileShader(fragmentShader);
 
 // Load custom shader strings and return program id
 static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
 {
     unsigned int program = 0;
 
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (success != GL_TRUE)
+    {
+        TraceLog(LOG_WARNING, "[FSHDR ID %i] Failed to compile fragment shader...", fragmentShader);
 
-    GLint success = 0;
+        int maxLength = 0;
+        int length;
+
+        glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
+
+#ifdef _MSC_VER
+        char *log = malloc(maxLength);
+#else
+        char log[maxLength];
+#endif
+        glGetShaderInfoLog(fragmentShader, maxLength, &length, log);
+
+        TraceLog(LOG_INFO, "%s", log);
+
+#ifdef _MSC_VER
+        free(log);
+#endif
+    }
+    else TraceLog(LOG_INFO, "[FSHDR ID %i] Fragment shader compiled successfully", fragmentShader);
+
     program = glCreateProgram();
 
     glAttachShader(program, vShaderId);
@@ -3264,6 +3304,9 @@ static unsigned int LoadShaderProgram(unsigned int vShaderId, unsigned int fShad
         program = 0;
     }
     else TraceLog(LOG_INFO, "[SHDR ID %i] Shader program loaded successfully", program);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
 #endif
     return program;
 }
@@ -3407,6 +3450,7 @@ static void UnloadShaderDefault(void)
     glDetachShader(defaultShader.id, defaultFShaderId);
     glDeleteShader(defaultVShaderId);
     glDeleteShader(defaultFShaderId);
+  
     glDeleteProgram(defaultShader.id);
 }
 

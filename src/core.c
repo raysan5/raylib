@@ -2,15 +2,15 @@
 *
 *   raylib.core - Basic functions to manage windows, OpenGL context and input on multiple platforms
 *
-*   PLATFORMS SUPPORTED:
-*       PLATFORM_DESKTOP:  Windows (Win32, Win64)
-*       PLATFORM_DESKTOP:  Linux (32 and 64 bit)
-*       PLATFORM_DESKTOP:  OSX/macOS
-*       PLATFORM_DESKTOP:  FreeBSD
-*       PLATFORM_ANDROID:  Android (ARM, ARM64)
-*       PLATFORM_RPI:      Raspberry Pi (Raspbian)
-*       PLATFORM_WEB:      HTML5 (Chrome, Firefox)
-*       PLATFORM_UWP:      Universal Windows Platform
+*   PLATFORMS SUPPORTED: 
+*       - PLATFORM_DESKTOP: Windows (Win32, Win64)
+*       - PLATFORM_DESKTOP: Linux (X11 desktop mode)
+*       - PLATFORM_DESKTOP: FreeBSD (X11 desktop)
+*       - PLATFORM_DESKTOP: OSX/macOS
+*       - PLATFORM_ANDROID: Android 4.0 (ARM, ARM64) 
+*       - PLATFORM_RPI:     Raspberry Pi 0,1,2,3 (Raspbian)
+*       - PLATFORM_WEB:     HTML5 with asm.js (Chrome, Firefox)
+*       - PLATFORM_UWP:     Windows 10 App, Windows Phone, Xbox One
 *
 *   CONFIGURATION:
 *
@@ -29,6 +29,10 @@
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
 *       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
+*
+*   #define PLATFORM_UWP
+*       Universal Windows Platform support, using OpenGL ES 2.0 through ANGLE on multiple Windows platforms,
+*       including Windows 10 App, Windows Phone and Xbox One platforms.
 *
 *   #define SUPPORT_DEFAULT_FONT (default)
 *       Default font is loaded on window initialization to be available for the user to render simple text.
@@ -185,6 +189,12 @@
     #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
 #endif
 
+#if defined(PLATFORM_UWP)
+    #include "EGL/egl.h"        // Khronos EGL library - Native platform display device control functions
+    #include "EGL/eglext.h"     // Khronos EGL library - Extensions
+    #include "GLES2/gl2.h"      // Khronos OpenGL ES 2.0 library
+#endif
+
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
     #include <emscripten/html5.h>
@@ -224,8 +234,9 @@
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 static GLFWwindow *window;                      // Native window (graphic device)
-static bool windowMinimized = false;
 #endif
+
+static bool windowMinimized = false;
 
 #if defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
@@ -262,13 +273,17 @@ static pthread_t gamepadThreadId;               // Gamepad reading thread id
 static char gamepadName[64];                    // Gamepad name holder
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
-static EGLDisplay display;                  // Native display device (physical screen connection)
-static EGLSurface surface;                  // Surface to draw on, framebuffers (connected to context)
-static EGLContext context;                  // Graphic context, mode in which drawing can be done
-static EGLConfig config;                    // Graphic config
-static uint64_t baseTime;                   // Base time measure for hi-res timer
-static bool windowShouldClose = false;      // Flag to set window for closing
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+static EGLDisplay display;              // Native display device (physical screen connection)
+static EGLSurface surface;              // Surface to draw on, framebuffers (connected to context)
+static EGLContext context;              // Graphic context, mode in which drawing can be done
+static EGLConfig config;                // Graphic config
+static uint64_t baseTime;               // Base time measure for hi-res timer
+static bool windowShouldClose = false;  // Flag to set window for closing
+#endif
+
+#if defined(PLATFORM_UWP)
+static EGLNativeWindowType uwpWindow;
 #endif
 
 // Display size-related data
@@ -280,10 +295,9 @@ static int renderOffsetY = 0;               // Offset Y from render area (must b
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
 
-static bool cursorHidden = false;           // Track if cursor is hidden
-
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 static const char *windowTitle = NULL;      // Window text title...
+static bool cursorHidden = false;           // Track if cursor is hidden
 static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static int screenshotCounter = 0;           // Screenshots counter
 
@@ -400,6 +414,10 @@ static void InitGamepad(void);                          // Init raw gamepad inpu
 static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif
 
+#if defined(PLATFORM_UWP)
+// Define functions required to manage inputs
+#endif
+
 #if defined(_WIN32)
     // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
     void __stdcall Sleep(unsigned long msTimeout);      // Required for Wait()
@@ -408,15 +426,20 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Window and OpenGL Context Functions
 //----------------------------------------------------------------------------------
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
-    // Input data is window title char data
+#if defined(PLATFORM_DESKTOP)
     windowTitle = (char *)data;
+#endif
+
+#if defined(PLATFORM_UWP)
+    uwpWindow = (EGLNativeWindowType)data;
+#endif
 
     // Init graphics device (display device and OpenGL context)
     InitGraphicsDevice(width, height);
@@ -561,7 +584,7 @@ void CloseWindow(void)
     timeEndPeriod(1);           // Restore time period
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     // Close surface, context and display
     if (display != EGL_NO_DISPLAY)
     {
@@ -609,7 +632,7 @@ bool WindowShouldClose(void)
     return (glfwWindowShouldClose(window));
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     return windowShouldClose;
 #endif
 }
@@ -617,7 +640,7 @@ bool WindowShouldClose(void)
 // Check if window has been minimized (or lost focus)
 bool IsWindowMinimized(void)
 {
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
     return windowMinimized;
 #else
     return false;
@@ -684,7 +707,7 @@ void SetWindowMonitor(int monitor)
     
     if ((monitor >= 0) && (monitor < monitorCount)) 
     {
-        glfwSetWindowMonitor(window, monitors[monitor], 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
+        //glfwSetWindowMonitor(window, monitors[monitor], 0, 0, screenWidth, screenHeight, GLFW_DONT_CARE);
         TraceLog(LOG_INFO, "Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
     }
     else TraceLog(LOG_WARNING, "Selected monitor not found");
@@ -1860,7 +1883,7 @@ static void InitGraphicsDevice(int width, int height)
     }
 #endif // defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     fullscreen = true;
 
     // Screen size security check
@@ -1903,12 +1926,151 @@ static void InitGraphicsDevice(int width, int height)
         EGL_NONE
     };
 
-    EGLint contextAttribs[] =
+    const EGLint contextAttribs[] =
     {
         EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
 
+#if defined(PLATFORM_UWP)
+    const EGLint surfaceAttributes[] =
+    {
+        // EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER is part of the same optimization as EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER (see above).
+        // If you have compilation issues with it then please update your Visual Studio templates.
+        EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        EGL_NONE
+    };
+
+    const EGLint defaultDisplayAttributes[] =
+    {
+        // These are the default display attributes, used to request ANGLE's D3D11 renderer.
+        // eglInitialize will only succeed with these attributes if the hardware supports D3D11 Feature Level 10_0+.
+        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+
+        // EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER is an optimization that can have large performance benefits on mobile devices.
+        // Its syntax is subject to change, though. Please update your Visual Studio templates if you experience compilation issues with it.
+        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        
+        // EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE is an option that enables ANGLE to automatically call 
+        // the IDXGIDevice3::Trim method on behalf of the application when it gets suspended. 
+        // Calling IDXGIDevice3::Trim when an application is suspended is a Windows Store application certification requirement.
+        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
+        EGL_NONE,
+    };
+    
+    const EGLint fl9_3DisplayAttributes[] =
+    {
+        // These can be used to request ANGLE's D3D11 renderer, with D3D11 Feature Level 9_3.
+        // These attributes are used if the call to eglInitialize fails with the default display attributes.
+        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+        EGL_PLATFORM_ANGLE_MAX_VERSION_MAJOR_ANGLE, 9,
+        EGL_PLATFORM_ANGLE_MAX_VERSION_MINOR_ANGLE, 3,
+        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
+        EGL_NONE,
+    };
+
+    const EGLint warpDisplayAttributes[] =
+    {
+        // These attributes can be used to request D3D11 WARP.
+        // They are used if eglInitialize fails with both the default display attributes and the 9_3 display attributes.
+        EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+        EGL_PLATFORM_ANGLE_DEVICE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_DEVICE_TYPE_WARP_ANGLE,
+        EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+        EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
+        EGL_NONE,
+    };
+    
+    EGLConfig config = NULL;
+
+    // eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
+    PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)(eglGetProcAddress("eglGetPlatformDisplayEXT"));
+    if (!eglGetPlatformDisplayEXT) TraceLog(LOG_ERROR, "Failed to get function eglGetPlatformDisplayEXT");
+
+    //
+    // To initialize the display, we make three sets of calls to eglGetPlatformDisplayEXT and eglInitialize, with varying 
+    // parameters passed to eglGetPlatformDisplayEXT:
+    // 1) The first calls uses "defaultDisplayAttributes" as a parameter. This corresponds to D3D11 Feature Level 10_0+.
+    // 2) If eglInitialize fails for step 1 (e.g. because 10_0+ isn't supported by the default GPU), then we try again 
+    //    using "fl9_3DisplayAttributes". This corresponds to D3D11 Feature Level 9_3.
+    // 3) If eglInitialize fails for step 2 (e.g. because 9_3+ isn't supported by the default GPU), then we try again 
+    //    using "warpDisplayAttributes".  This corresponds to D3D11 Feature Level 11_0 on WARP, a D3D11 software rasterizer.
+    //
+    
+    // This tries to initialize EGL to D3D11 Feature Level 10_0+. See above comment for details.
+    display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
+    if (display == EGL_NO_DISPLAY) TraceLog(LOG_ERROR, "Failed to get EGL display");
+
+    if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+    {
+        // This tries to initialize EGL to D3D11 Feature Level 9_3, if 10_0+ is unavailable (e.g. on some mobile devices).
+        display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, fl9_3DisplayAttributes);
+        if (display == EGL_NO_DISPLAY) TraceLog(LOG_ERROR, "Failed to get EGL display");
+
+        if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+        {
+            // This initializes EGL to D3D11 Feature Level 11_0 on WARP, if 9_3+ is unavailable on the default GPU.
+            display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, warpDisplayAttributes);
+            if (display == EGL_NO_DISPLAY) TraceLog(LOG_ERROR, "Failed to get EGL display");
+
+            if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+            {
+                // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
+                TraceLog(LOG_ERROR, "Failed to initialize EGL");
+            }
+        }
+    }
+
+	//SetupFramebufferSize(displayWidth, displayHeight);
+
+    EGLint numConfigs = 0;
+    if ((eglChooseConfig(display, framebufferAttribs, &config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
+    {
+        TraceLog(LOG_ERROR, "Failed to choose first EGLConfig");
+    }
+
+    // Create a PropertySet and initialize with the EGLNativeWindowType.
+    //PropertySet^ surfaceCreationProperties = ref new PropertySet();
+    //surfaceCreationProperties->Insert(ref new String(EGLNativeWindowTypeProperty), window);     // CoreWindow^ window
+
+    // You can configure the surface to render at a lower resolution and be scaled up to 
+    // the full window size. The scaling is often free on mobile hardware.
+    //
+    // One way to configure the SwapChainPanel is to specify precisely which resolution it should render at.
+    // Size customRenderSurfaceSize = Size(800, 600);
+    // surfaceCreationProperties->Insert(ref new String(EGLRenderSurfaceSizeProperty), PropertyValue::CreateSize(customRenderSurfaceSize));
+    //
+    // Another way is to tell the SwapChainPanel to render at a certain scale factor compared to its size.
+    // e.g. if the SwapChainPanel is 1920x1280 then setting a factor of 0.5f will make the app render at 960x640
+    // float customResolutionScale = 0.5f;
+    // surfaceCreationProperties->Insert(ref new String(EGLRenderResolutionScaleProperty), PropertyValue::CreateSingle(customResolutionScale));
+
+    
+    // eglCreateWindowSurface() requires a EGLNativeWindowType parameter, 
+    // In Windows platform: typedef HWND EGLNativeWindowType;
+    
+    
+    // Property: EGLNativeWindowTypeProperty
+    // Type: IInspectable
+    // Description: Set this property to specify the window type to use for creating a surface.
+    //              If this property is missing, surface creation will fail.
+    //
+    //const wchar_t EGLNativeWindowTypeProperty[] = L"EGLNativeWindowTypeProperty";
+    
+    //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
+    
+    //surface = eglCreateWindowSurface(display, config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
+    surface = eglCreateWindowSurface(display, config, uwpWindow, surfaceAttributes);
+    if (surface == EGL_NO_SURFACE) TraceLog(LOG_ERROR, "Failed to create EGL fullscreen surface");
+
+    context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
+    if (context == EGL_NO_CONTEXT) TraceLog(LOG_ERROR, "Failed to create EGL context");
+
+	// Get EGL display window size 
+	eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
+	eglQuerySurface(display, surface, EGL_HEIGHT, &screenHeight);
+    
+#else   // PLATFORM_ANDROID, PLATFORM_RPI
     EGLint numConfigs;
 
     // Get an EGL display connection
@@ -1925,6 +2087,7 @@ static void InitGraphicsDevice(int width, int height)
 
     // Create an EGL rendering context
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
+#endif
 
     // Create an EGL window surface
     //---------------------------------------------------------------------------------
@@ -2007,6 +2170,9 @@ static void InitGraphicsDevice(int width, int height)
         TraceLog(LOG_INFO, "Viewport offsets: %i, %i", renderOffsetX, renderOffsetY);
     }
 #endif // defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+
+	renderWidth = screenWidth;
+	renderHeight = screenHeight;
 
     // Initialize OpenGL context (states and resources)
     // NOTE: screenWidth and screenHeight not used, just stored as globals
@@ -2376,7 +2542,7 @@ static void SwapBuffers(void)
     glfwSwapBuffers(window);
 #endif
 
-#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     eglSwapBuffers(display, surface);
 #endif
 }
