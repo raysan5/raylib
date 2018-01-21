@@ -377,7 +377,7 @@ Texture2D LoadTextureFromImage(Image image)
     texture.mipmaps = image.mipmaps;
     texture.format = image.format;
     
-    TraceLog(LOG_DEBUG, "[TEX ID %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
+    TraceLog(LOG_INFO, "[TEX ID %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
 
     return texture;
 }
@@ -422,20 +422,17 @@ Color *GetImageData(Image image)
 {
     Color *pixels = (Color *)malloc(image.width*image.height*sizeof(Color));
 
-    int k = 0;
-
-    for (int i = 0; i < image.width*image.height; i++)
+    for (int i = 0, k = 0; i < image.width*image.height; i++)
     {
         switch (image.format)
         {
             case UNCOMPRESSED_GRAYSCALE:
             {
-                pixels[i].r = ((unsigned char *)image.data)[k];
-                pixels[i].g = ((unsigned char *)image.data)[k];
-                pixels[i].b = ((unsigned char *)image.data)[k];
+                pixels[i].r = ((unsigned char *)image.data)[i];
+                pixels[i].g = ((unsigned char *)image.data)[i];
+                pixels[i].b = ((unsigned char *)image.data)[i];
                 pixels[i].a = 255;
-
-                k++;
+                
             } break;
             case UNCOMPRESSED_GRAY_ALPHA:
             {
@@ -448,36 +445,33 @@ Color *GetImageData(Image image)
             } break;
             case UNCOMPRESSED_R5G5B5A1:
             {
-                unsigned short pixel = ((unsigned short *)image.data)[k];
+                unsigned short pixel = ((unsigned short *)image.data)[i];
 
                 pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
                 pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
                 pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
                 pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
 
-                k++;
             } break;
             case UNCOMPRESSED_R5G6B5:
             {
-                unsigned short pixel = ((unsigned short *)image.data)[k];
+                unsigned short pixel = ((unsigned short *)image.data)[i];
 
                 pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
                 pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
                 pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
                 pixels[i].a = 255;
 
-                k++;
             } break;
             case UNCOMPRESSED_R4G4B4A4:
             {
-                unsigned short pixel = ((unsigned short *)image.data)[k];
+                unsigned short pixel = ((unsigned short *)image.data)[i];
 
                 pixels[i].r = (unsigned char)((float)((pixel & 0b1111000000000000) >> 12)*(255/15));
                 pixels[i].g = (unsigned char)((float)((pixel & 0b0000111100000000) >> 8)*(255/15));
                 pixels[i].b = (unsigned char)((float)((pixel & 0b0000000011110000) >> 4)*(255/15));
                 pixels[i].a = (unsigned char)((float)(pixel & 0b0000000000001111)*(255/15));
-
-                k++;
+                
             } break;
             case UNCOMPRESSED_R8G8B8A8:
             {
@@ -598,8 +592,22 @@ Image ImageCopy(Image image)
 {
     Image newImage = { 0 };
 
-    int size = GetPixelDataSize(image.width, image.height, image.format);
+    int width = image.width;
+    int height = image.height;
+    int size = 0;
 
+    for (int i = 0; i < image.mipmaps; i++)
+    {
+        size += GetPixelDataSize(width, height, image.format);
+        
+        width /= 2;
+        height /= 2;
+        
+        // Security check for NPOT textures
+        if (width < 1) width = 1;
+        if (height < 1) height = 1;
+    }
+    
     newImage.data = malloc(size);
 
     if (newImage.data != NULL)
@@ -611,8 +619,6 @@ Image ImageCopy(Image image)
         newImage.height = image.height;
         newImage.mipmaps = image.mipmaps;
         newImage.format = image.format;
-        
-        //if (image.mipmaps > 1) ImageMipmaps(&newImage);
     }
 
     return newImage;
@@ -826,7 +832,9 @@ void ImageFormat(Image *image, int newFormat)
 
             free(pixels);
             
-            //if (image->mipmaps > 1) ImageMipmaps(image);
+            // In case original image had mipmaps, generate mipmaps for formated image
+            // NOTE: Original mipmaps are replaced by new ones, if custom mipmaps were used, they are lost
+            if (image->mipmaps > 1) ImageMipmaps(image);
         }
         else TraceLog(LOG_WARNING, "Image data format is compressed, can not be converted");
     }

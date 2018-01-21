@@ -358,6 +358,9 @@ static void UnloadBuffersDefault(void);     // Unload default internal buffers v
 static void GenDrawCube(void);              // Generate and draw cube
 static void GenDrawQuad(void);              // Generate and draw quad
 
+// Get OpenGL internal formats and data type from raylib PixelFormat
+static void GetGlFormats(int format, int *glInternalFormat, int *glFormat, int *glType);
+
 #if defined(SUPPORT_VR_SIMULATOR)
 static void SetStereoConfig(VrDeviceInfo info); // Configure stereo rendering (including distortion shader) with HMD device parameters
 static void SetStereoView(int eye, Matrix matProjection, Matrix matModelView); // Set internal projection and modelview matrix depending on eye
@@ -1418,7 +1421,6 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-
     glGenTextures(1, &id);              // Generate Pointer to the texture
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -1436,76 +1438,28 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     {
         unsigned int mipSize = GetPixelDataSize(mipWidth, mipHeight, format);
         
-        switch (format)
+        int glInternalFormat, glFormat, glType;
+        GetGlFormats(format, &glInternalFormat, &glFormat, &glType);
+        
+        TraceLog(LOG_INFO, "Mip level %i (%i x %i), size: %i, formats: %i - %i", i, mipWidth, mipHeight, mipSize, glInternalFormat, glFormat);
+        
+        if (glInternalFormat != -1)
         {
-        #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
-            case UNCOMPRESSED_GRAYSCALE: glTexImage2D(GL_TEXTURE_2D, i, GL_LUMINANCE, mipWidth, mipHeight, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_GRAY_ALPHA: glTexImage2D(GL_TEXTURE_2D, i, GL_LUMINANCE_ALPHA, mipWidth, mipHeight, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R5G6B5: glTexImage2D(GL_TEXTURE_2D, i, GL_RGB, mipWidth, mipHeight, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R8G8B8: glTexImage2D(GL_TEXTURE_2D, i, GL_RGB, mipWidth, mipHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset); break;
-            #if !defined(GRAPHICS_API_OPENGL_11)
-            case UNCOMPRESSED_R32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, i, GL_LUMINANCE, mipWidth, mipHeight, 0, GL_LUMINANCE, GL_FLOAT, (unsigned char *)data + mipOffset); break;  // NOTE: Requires extension OES_texture_float
-            case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, i, GL_RGB, mipWidth, mipHeight, 0, GL_RGB, GL_FLOAT, (unsigned char *)data + mipOffset); break;  // NOTE: Requires extension OES_texture_float
-            case UNCOMPRESSED_R32G32B32A32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, mipWidth, mipHeight, 0, GL_RGBA, GL_FLOAT, (unsigned char *)data + mipOffset); break;  // NOTE: Requires extension OES_texture_float
-            #endif
-        #elif defined(GRAPHICS_API_OPENGL_33)
-            // NOTE: We define internal (GPU) format as GL_RGBA8 (probably BGRA8 in practice, driver takes care)
-            // NOTE: On embedded systems, we let the driver choose the best internal format
-
-            // Support for multiple color modes (16bit color modes and grayscale)
-            // (sized)internalFormat    format          type
-            // GL_R                     GL_RED      GL_UNSIGNED_BYTE
-            // GL_RGB565                GL_RGB      GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_6_5
-            // GL_RGB5_A1               GL_RGBA     GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_5_5_5_1
-            // GL_RGBA4                 GL_RGBA     GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_4_4_4_4
-            // GL_RGBA8                 GL_RGBA     GL_UNSIGNED_BYTE
-            // GL_RGB8                  GL_RGB      GL_UNSIGNED_BYTE
-
-            case UNCOMPRESSED_GRAYSCALE:
+            if (format < COMPRESSED_DXT1_RGB) glTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, glFormat, glType, (unsigned char *)data + mipOffset);
+            else glCompressedTexImage2D(GL_TEXTURE_2D, i, glInternalFormat, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset);
+        
+        #if defined(GRAPHICS_API_OPENGL_33)
+            if (format == UNCOMPRESSED_GRAYSCALE)
             {
-                glTexImage2D(GL_TEXTURE_2D, i, GL_R8, mipWidth, mipHeight, 0, GL_RED, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset);
-
-                // With swizzleMask we define how a one channel texture will be mapped to RGBA
-                // Required GL >= 3.3 or EXT_texture_swizzle/ARB_texture_swizzle
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-
-                TraceLog(LOG_DEBUG, "[TEX ID %i] Grayscale texture loaded and swizzled", id);
-            } break;
-            case UNCOMPRESSED_GRAY_ALPHA:
+            }
+            else if (format == UNCOMPRESSED_GRAY_ALPHA)
             {
-                glTexImage2D(GL_TEXTURE_2D, i, GL_RG8, mipWidth, mipHeight, 0, GL_RG, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset);
-
                 GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_GREEN };
                 glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-            } break;
-            case UNCOMPRESSED_R5G6B5: glTexImage2D(GL_TEXTURE_2D, i, GL_RGB565, mipWidth, mipHeight, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R8G8B8: glTexImage2D(GL_TEXTURE_2D, i, GL_RGB8, mipWidth, mipHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R5G5B5A1: glTexImage2D(GL_TEXTURE_2D, i, GL_RGB5_A1, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R4G4B4A4: glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA4, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R8G8B8A8: glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA8, mipWidth, mipHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, i, GL_R32F, mipWidth, mipHeight, 0, GL_RED, GL_FLOAT, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R32G32B32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, i, GL_RGB32F, mipWidth, mipHeight, 0, GL_RGB, GL_FLOAT, (unsigned char *)data + mipOffset); break;
-            case UNCOMPRESSED_R32G32B32A32: if (texFloatSupported) glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA32F, mipWidth, mipHeight, 0, GL_RGBA, GL_FLOAT, (unsigned char *)data + mipOffset); break;
+            }
         #endif
-        #if !defined(GRAPHICS_API_OPENGL_11)
-            case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;
-            case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;
-            case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;      // NOTE: Not supported by WebGL
-            case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;      // NOTE: Not supported by WebGL
-            case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_ETC1_RGB8_OES, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;                      // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
-            case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGB8_ETC2, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;               // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-            case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA8_ETC2_EAC, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;     // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
-            case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;    // NOTE: Requires PowerVR GPU
-            case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;  // NOTE: Requires PowerVR GPU
-            case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_ASTC_4x4_KHR, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-            case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) glCompressedTexImage2D(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_ASTC_8x8_KHR, mipWidth, mipHeight, 0, mipSize, (unsigned char *)data + mipOffset); break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
-        #endif
-            default: TraceLog(LOG_WARNING, "Texture format not supported"); break;
         }
     
         mipWidth /= 2;
@@ -1567,33 +1521,15 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
 void rlUpdateTexture(unsigned int id, int width, int height, int format, const void *data)
 {
     glBindTexture(GL_TEXTURE_2D, id);
+   
+    int glInternalFormat, glFormat, glType;
+    GetGlFormats(format, &glInternalFormat, &glFormat, &glType);
 
-#if defined(GRAPHICS_API_OPENGL_33)
-    switch (format)
+    if ((glInternalFormat != -1) && (format < COMPRESSED_DXT1_RGB))
     {
-        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RG, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
-        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        default: TraceLog(LOG_WARNING, "Texture format updating not supported"); break;
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, glFormat, glType, (unsigned char *)data);
     }
-#elif defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
-    switch (format)
-    {
-        case UNCOMPRESSED_GRAYSCALE: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_GRAY_ALPHA: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G6B5: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        case UNCOMPRESSED_R5G5B5A1: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, (unsigned short *)data); break;
-        case UNCOMPRESSED_R4G4B4A4: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, (unsigned short *)data); break;
-        case UNCOMPRESSED_R8G8B8A8: glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char *)data); break;
-        default: TraceLog(LOG_WARNING, "Texture format updating not supported"); break;
-    }
-#endif
+    else TraceLog(LOG_WARNING, "Texture format updating not supported");
 }
 
 // Unload texture from GPU memory
@@ -2211,44 +2147,28 @@ void *rlReadTexturePixels(Texture2D texture)
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
     // Other texture info: GL_TEXTURE_RED_SIZE, GL_TEXTURE_GREEN_SIZE, GL_TEXTURE_BLUE_SIZE, GL_TEXTURE_ALPHA_SIZE
     */
-
-    int glFormat = 0, glType = 0;
-
-    unsigned int size = texture.width*texture.height;
-
-    // NOTE: GL_LUMINANCE and GL_LUMINANCE_ALPHA are removed since OpenGL 3.1
-    // Must be replaced by GL_RED and GL_RG on Core OpenGL 3.3
-
-    switch (texture.format)
-    {
-#if defined(GRAPHICS_API_OPENGL_11)
-        case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_LUMINANCE; glType = GL_UNSIGNED_BYTE; break;            // 8 bit per pixel (no alpha)
-        case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_LUMINANCE_ALPHA; glType = GL_UNSIGNED_BYTE; break;   // 16 bpp (2 channels)
-#elif defined(GRAPHICS_API_OPENGL_33)
-        case UNCOMPRESSED_GRAYSCALE: pixels = (unsigned char *)malloc(size); glFormat = GL_RED; glType = GL_UNSIGNED_BYTE; break;
-        case UNCOMPRESSED_GRAY_ALPHA: pixels = (unsigned char *)malloc(size*2); glFormat = GL_RG; glType = GL_UNSIGNED_BYTE; break;
-#endif
-        case UNCOMPRESSED_R5G6B5: pixels = (unsigned short *)malloc(size); glFormat = GL_RGB; glType = GL_UNSIGNED_SHORT_5_6_5; break;             // 16 bpp
-        case UNCOMPRESSED_R8G8B8: pixels = (unsigned char *)malloc(size*3); glFormat = GL_RGB; glType = GL_UNSIGNED_BYTE; break;                   // 24 bpp
-        case UNCOMPRESSED_R5G5B5A1: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_5_5_5_1; break;        // 16 bpp (1 bit alpha)
-        case UNCOMPRESSED_R4G4B4A4: pixels = (unsigned short *)malloc(size); glFormat = GL_RGBA; glType = GL_UNSIGNED_SHORT_4_4_4_4; break;        // 16 bpp (4 bit alpha)
-        case UNCOMPRESSED_R8G8B8A8: pixels = (unsigned char *)malloc(size*4); glFormat = GL_RGBA; glType = GL_UNSIGNED_BYTE; break;                // 32 bpp
-        default: TraceLog(LOG_WARNING, "Texture data retrieval, format not suported"); break;
-    }
-
+    
     // NOTE: Each row written to or read from by OpenGL pixel operations like glGetTexImage are aligned to a 4 byte boundary by default, which may add some padding.
     // Use glPixelStorei to modify padding with the GL_[UN]PACK_ALIGNMENT setting.
     // GL_PACK_ALIGNMENT affects operations that read from OpenGL memory (glReadPixels, glGetTexImage, etc.)
     // GL_UNPACK_ALIGNMENT affects operations that write to OpenGL memory (glTexImage, etc.)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
+    int glInternalFormat, glFormat, glType;
+	GetGlFormats(texture.format, &glInternalFormat, &glFormat, &glType);
+    unsigned int size = GetPixelDataSize(texture.width, texture.height, texture.format);
+    
+    if ((glInternalFormat != -1) && (texture.format < COMPRESSED_DXT1_RGB))
+    {
+        pixels = (unsigned char *)malloc(size);
+        glGetTexImage(GL_TEXTURE_2D, 0, glFormat, glType, pixels);
+    }
+    else TraceLog(LOG_WARNING, "Texture data retrieval not suported for pixel format");
 
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2)
-
     RenderTexture2D fbo = rlLoadRenderTexture(texture.width, texture.height);
 
     // NOTE: Two possible Options:
@@ -3987,6 +3907,58 @@ static void GenDrawCube(void)
     
     glDeleteBuffers(1, &cubeVBO);
     glDeleteVertexArrays(1, &cubeVAO);
+}
+
+// Get OpenGL internal formats and data type from raylib PixelFormat
+static void GetGlFormats(int format, int *glInternalFormat, int *glFormat, int *glType)
+{
+    *glInternalFormat = -1;
+    *glFormat = -1;
+    *glType = -1;
+    
+    switch (format)
+    {
+    #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_21) || defined(GRAPHICS_API_OPENGL_ES2)
+        // NOTE: on OpenGL ES 2.0 (WebGL), internalFormat must match format and options allowed are: GL_LUMINANCE, GL_RGB, GL_RGBA
+        case UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_UNSIGNED_BYTE; break;
+        case UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_LUMINANCE_ALPHA; *glFormat = GL_LUMINANCE_ALPHA; *glType = GL_UNSIGNED_BYTE; break;
+        case UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
+        case UNCOMPRESSED_R8G8B8: *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_UNSIGNED_BYTE; break;
+        case UNCOMPRESSED_R5G5B5A1: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_5_5_5_1; break;
+        case UNCOMPRESSED_R4G4B4A4: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_4_4_4_4; break;
+        case UNCOMPRESSED_R8G8B8A8: *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_BYTE; break;
+        #if !defined(GRAPHICS_API_OPENGL_11)
+        case UNCOMPRESSED_R32: if (texFloatSupported) *glInternalFormat = GL_LUMINANCE; *glFormat = GL_LUMINANCE; *glType = GL_FLOAT; break;   // NOTE: Requires extension OES_texture_float
+        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) *glInternalFormat = GL_RGB; *glFormat = GL_RGB; *glType = GL_FLOAT; break;         // NOTE: Requires extension OES_texture_float
+        case UNCOMPRESSED_R32G32B32A32: if (texFloatSupported) *glInternalFormat = GL_RGBA; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;    // NOTE: Requires extension OES_texture_float
+        #endif
+    #elif defined(GRAPHICS_API_OPENGL_33)
+        case UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_R8; *glFormat = GL_RED; *glType = GL_UNSIGNED_BYTE; break;
+        case UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_RG8; *glFormat = GL_RG; *glType = GL_UNSIGNED_BYTE; break;
+        case UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB565; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
+        case UNCOMPRESSED_R8G8B8: *glInternalFormat = GL_RGB8; *glFormat = GL_RGB; *glType = GL_UNSIGNED_BYTE; break;
+        case UNCOMPRESSED_R5G5B5A1: *glInternalFormat = GL_RGB5_A1; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_5_5_5_1; break;
+        case UNCOMPRESSED_R4G4B4A4: *glInternalFormat = GL_RGBA4; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_SHORT_4_4_4_4; break;
+        case UNCOMPRESSED_R8G8B8A8: *glInternalFormat = GL_RGBA8; *glFormat = GL_RGBA; *glType = GL_UNSIGNED_BYTE; break;
+        case UNCOMPRESSED_R32: if (texFloatSupported) *glInternalFormat = GL_R32F; *glFormat = GL_RED; *glType = GL_FLOAT; break;
+        case UNCOMPRESSED_R32G32B32: if (texFloatSupported) *glInternalFormat = GL_RGB32F; *glFormat = GL_RGB; *glType = GL_FLOAT; break;
+        case UNCOMPRESSED_R32G32B32A32: if (texFloatSupported) *glInternalFormat = GL_RGBA32F; *glFormat = GL_RGBA; *glType = GL_FLOAT; break;
+    #endif
+        #if !defined(GRAPHICS_API_OPENGL_11)
+        case COMPRESSED_DXT1_RGB: if (texCompDXTSupported) *glInternalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
+        case COMPRESSED_DXT1_RGBA: if (texCompDXTSupported) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+        case COMPRESSED_DXT3_RGBA: if (texCompDXTSupported) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+        case COMPRESSED_DXT5_RGBA: if (texCompDXTSupported) *glInternalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+        case COMPRESSED_ETC1_RGB: if (texCompETC1Supported) *glInternalFormat = GL_ETC1_RGB8_OES; break;                      // NOTE: Requires OpenGL ES 2.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_RGB: if (texCompETC2Supported) *glInternalFormat = GL_COMPRESSED_RGB8_ETC2; break;               // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_ETC2_EAC_RGBA: if (texCompETC2Supported) *glInternalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC; break;     // NOTE: Requires OpenGL ES 3.0 or OpenGL 4.3
+        case COMPRESSED_PVRT_RGB: if (texCompPVRTSupported) *glInternalFormat = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG; break;    // NOTE: Requires PowerVR GPU
+        case COMPRESSED_PVRT_RGBA: if (texCompPVRTSupported) *glInternalFormat = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG; break;  // NOTE: Requires PowerVR GPU
+        case COMPRESSED_ASTC_4x4_RGBA: if (texCompASTCSupported) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_4x4_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        case COMPRESSED_ASTC_8x8_RGBA: if (texCompASTCSupported) *glInternalFormat = GL_COMPRESSED_RGBA_ASTC_8x8_KHR; break;  // NOTE: Requires OpenGL ES 3.1 or OpenGL 4.3
+        #endif
+        default: TraceLog(LOG_WARNING, "Texture format not supported"); break;
+    }
 }
 
 #if defined(SUPPORT_VR_SIMULATOR)
