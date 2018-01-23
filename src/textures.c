@@ -376,8 +376,6 @@ Texture2D LoadTextureFromImage(Image image)
     texture.height = image.height;
     texture.mipmaps = image.mipmaps;
     texture.format = image.format;
-    
-    TraceLog(LOG_INFO, "[TEX ID %i] Parameters: %ix%i, %i mips, format %i", texture.id, texture.width, texture.height, texture.mipmaps, texture.format);
 
     return texture;
 }
@@ -678,7 +676,7 @@ void ImageFormat(Image *image, int newFormat)
         {
             Color *pixels = GetImageData(*image);
 
-            free(image->data);
+            free(image->data);      // WARNING! We loose mipmaps data --> Regenerated at the end...
 
             image->format = newFormat;
 
@@ -700,11 +698,10 @@ void ImageFormat(Image *image, int newFormat)
                 {
                    image->data = (unsigned char *)malloc(image->width*image->height*2*sizeof(unsigned char));
 
-                   for (int i = 0; i < image->width*image->height*2; i += 2)
+                   for (int i = 0; i < image->width*image->height*2; i += 2, k++)
                     {
                         ((unsigned char *)image->data)[i] = (unsigned char)((float)pixels[k].r*0.299f + (float)pixels[k].g*0.587f + (float)pixels[k].b*0.114f);
                         ((unsigned char *)image->data)[i + 1] = pixels[k].a;
-                        k++;
                     }
 
                 } break;
@@ -730,12 +727,11 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)malloc(image->width*image->height*3*sizeof(unsigned char));
 
-                    for (int i = 0; i < image->width*image->height*3; i += 3)
+                    for (int i = 0; i < image->width*image->height*3; i += 3, k++)
                     {
                         ((unsigned char *)image->data)[i] = pixels[k].r;
                         ((unsigned char *)image->data)[i + 1] = pixels[k].g;
                         ((unsigned char *)image->data)[i + 2] = pixels[k].b;
-                        k++;
                     }
                 } break;
                 case UNCOMPRESSED_R5G5B5A1:
@@ -784,13 +780,12 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (unsigned char *)malloc(image->width*image->height*4*sizeof(unsigned char));
 
-                    for (int i = 0; i < image->width*image->height*3; i += 3)
+                    for (int i = 0; i < image->width*image->height*3; i += 3, k++)
                     {
                         ((unsigned char *)image->data)[i] = pixels[k].r;
                         ((unsigned char *)image->data)[i + 1] = pixels[k].g;
                         ((unsigned char *)image->data)[i + 2] = pixels[k].b;
                         ((unsigned char *)image->data)[i + 3] = pixels[k].a;
-                        k++;
                     }
                 } break;
                 case UNCOMPRESSED_R32:
@@ -806,25 +801,23 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     image->data = (float *)malloc(image->width*image->height*3*sizeof(float));
 
-                    for (int i = 0; i < image->width*image->height*3; i += 3)
+                    for (int i = 0; i < image->width*image->height*3; i += 3, k++)
                     {
                         ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
                         ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
                         ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
-                        k++;
                     }
                 } break;
                 case UNCOMPRESSED_R32G32B32A32:
                 {
                     image->data = (float *)malloc(image->width*image->height*4*sizeof(float));
 
-                    for (int i = 0; i < image->width*image->height*4; i += 4)
+                    for (int i = 0; i < image->width*image->height*4; i += 4, k++)
                     {
                         ((float *)image->data)[i] = (float)pixels[k].r/255.0f;
                         ((float *)image->data)[i + 1] = (float)pixels[k].g/255.0f;
                         ((float *)image->data)[i + 2] = (float)pixels[k].b/255.0f;
                         ((float *)image->data)[i + 3] = (float)pixels[k].a/255.0f;
-                        k++;
                     }
                 } break;
                 default: break;
@@ -834,7 +827,11 @@ void ImageFormat(Image *image, int newFormat)
             
             // In case original image had mipmaps, generate mipmaps for formated image
             // NOTE: Original mipmaps are replaced by new ones, if custom mipmaps were used, they are lost
-            if (image->mipmaps > 1) ImageMipmaps(image);
+            if (image->mipmaps > 1) 
+            {
+                image->mipmaps = 1;
+                ImageMipmaps(image);
+            }
         }
         else TraceLog(LOG_WARNING, "Image data format is compressed, can not be converted");
     }
@@ -1106,9 +1103,9 @@ void ImageMipmaps(Image *image)
         mipSize += GetPixelDataSize(mipWidth, mipHeight, image->format);       // Add mipmap size (in bytes)
     }
 
-    TraceLog(LOG_DEBUG, "Total mipmaps required: %i", mipCount);
-    TraceLog(LOG_DEBUG, "Total size of data required: %i", mipSize);
-    TraceLog(LOG_DEBUG, "Image data original memory point: %i", image->data);
+    TraceLog(LOG_DEBUG, "Mipmaps available: %i - Mipmaps required: %i", image->mipmaps, mipCount);
+    TraceLog(LOG_DEBUG, "Mipmaps total size required: %i", mipSize);
+    TraceLog(LOG_DEBUG, "Image data memory start address: 0x%x", image->data);
 
     if (image->mipmaps < mipCount)
     {
@@ -1117,7 +1114,7 @@ void ImageMipmaps(Image *image)
         if (temp != NULL) 
         {
             image->data = temp;      // Assign new pointer (new size) to store mipmaps data
-            TraceLog(LOG_DEBUG, "Image data memory point reallocated: %i", temp);
+            TraceLog(LOG_DEBUG, "Image data memory point reallocated: 0x%x", temp);
         }
         else TraceLog(LOG_WARNING, "Mipmaps required memory could not be allocated");
 
@@ -1131,7 +1128,7 @@ void ImageMipmaps(Image *image)
         
         for (int i = 1; i < mipCount; i++)
         {
-            TraceLog(LOG_DEBUG, "Next mipmap level %i (%i x %i) - size %i - mem pos: %i", i, mipWidth, mipHeight, mipSize, nextmip);
+            TraceLog(LOG_DEBUG, "Gen mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
             
             ImageResize(&imCopy, mipWidth, mipHeight);  // Uses internally Mitchell cubic downscale filter
 

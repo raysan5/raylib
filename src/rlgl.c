@@ -1433,6 +1433,8 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     int mipHeight = height;
     int mipOffset = 0;          // Mipmap data offset
     
+    TraceLog(LOG_DEBUG, "Load texture from data memory address: 0x%x", data);
+    
     // Load the different mipmap levels
     for (int i = 0; i < mipmapCount; i++)
     {
@@ -1441,7 +1443,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
         int glInternalFormat, glFormat, glType;
         GetGlFormats(format, &glInternalFormat, &glFormat, &glType);
         
-        TraceLog(LOG_INFO, "Mip level %i (%i x %i), size: %i, formats: %i - %i", i, mipWidth, mipHeight, mipSize, glInternalFormat, glFormat);
+        TraceLog(LOG_DEBUG, "Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
         
         if (glInternalFormat != -1)
         {
@@ -1511,7 +1513,7 @@ unsigned int rlLoadTexture(void *data, int width, int height, int format, int mi
     // Unbind current texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    if (id > 0) TraceLog(LOG_INFO, "[TEX ID %i] Texture created successfully (%ix%i)", id, width, height);
+    if (id > 0) TraceLog(LOG_INFO, "[TEX ID %i] Texture created successfully (%ix%i - %i mipmaps)", id, width, height, mipmapCount);
     else TraceLog(LOG_WARNING, "Texture could not be created");
 
     return id;
