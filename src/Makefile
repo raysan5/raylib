@@ -48,6 +48,8 @@ RAYLIB_VERSION     = 1.9.2
 RAYLIB_API_VERSION = 1
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE    ?= STATIC
+# Build mode for library: DEBUG or RELEASE
+RAYLIB_BUILD_MODE ?= RELEASE
 
 # Included raylib audio module on compilation
 # NOTE: Some programs like tools could not require audio support
@@ -261,6 +263,10 @@ endif
 #  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
 CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith
+
+ifeq ($(RAYLIB_BUILD_MODE), DEBUG)
+    CFLAGS += -g
+endif
 
 # Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
