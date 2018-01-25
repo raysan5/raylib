@@ -74,6 +74,7 @@
 #if defined(GRAPHICS_API_OPENGL_11)
     #if defined(__APPLE__)
         #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
+        #include <OpenGL/glext.h>
     #else
 		#if defined(_MSC_VER)		// Using MSVC compiler, requires some additional definitions
 			// APIENTRY for OpenGL function pointer declarations is required
@@ -101,6 +102,7 @@
 #if defined(GRAPHICS_API_OPENGL_33)
     #if defined(__APPLE__)
         #include <OpenGL/gl3.h>     // OpenGL 3 library for OSX
+        #include <OpenGL/gl3ext.h>
     #else
         #define GLAD_IMPLEMENTATION
         #if defined(RLGL_STANDALONE)
@@ -124,6 +126,7 @@
 #if !defined(GRAPHICS_API_OPENGL_11) && defined(SUPPORT_DISTORTION_SHADER)
     #include "shader_distortion.h"  // Distortion shader to be embedded
 #endif
+
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
