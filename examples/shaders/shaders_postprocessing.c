@@ -126,10 +126,11 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
 
             BeginTextureMode(target);   // Enable drawing to texture
             
+            	ClearBackground(RAYWHITE);
+
                 Begin3dMode(camera);
 
                     DrawModel(dwarf, position, 2.0f, WHITE);   // Draw 3d model with texture
