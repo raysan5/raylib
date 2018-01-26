@@ -90,25 +90,28 @@ set(sources ${raylib_sources} ${mini_al})
 # Which platform?
 if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
 
-  if(LINUX)
-    foreach(L ${LIBS_PRIVATE})
-      set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -l${L}")
-    endforeach(L)
-  endif()
+  foreach(L ${LIBS_PRIVATE})
+      get_filename_component(DIR  ${L} PATH)
+      get_filename_component(LIBFILE ${L} NAME_WE)
+      STRING(REGEX REPLACE "^lib" "" FILE ${LIBFILE})
 
-  if(APPLE)
-    # TODO extract framework location and name from ${LIBS_PRIVATE}
-    # and specify them as -F and -framework instead of hardcoding
-    foreach(F OpenGL Cocoa)
-      set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -framework ${F}")
-    endforeach(F)
-  endif()
+      if (${L} MATCHES "[.]framework$")
+          set(FILE_OPT "-framework ${FILE}")
+          set(DIR_OPT  "-F${DIR} ")
+      else()
+          set(FILE_OPT "-l${FILE}")
+          set(DIR_OPT  "-L${DIR} ")
+      endif()
 
-  if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
-    foreach(L ${LIBS_PRIVATE})
-    	set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} -l${L}")
-    endforeach(L)
-  endif()
+      if ("${DIR}" STREQUAL "" OR "${DIR}" STREQUAL "${LASTDIR}")
+          set (DIR_OPT "")
+      endif()
+
+      set(LASTDIR ${DIR})
+
+      set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} ${DIR_OPT}${FILE_OPT}")
+  endforeach(L)
+
 
   if(${SHARED_RAYLIB})
     add_library(${RAYLIB}_shared SHARED ${sources})

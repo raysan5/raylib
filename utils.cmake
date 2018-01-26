@@ -1,9 +1,5 @@
 # All sorts of things that we need cross project
-cmake_minimum_required(VERSION 2.8.0)
-
-if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-	set(LINUX TRUE)
-endif()
+cmake_minimum_required(VERSION 2.8.)
 
 # Linking for OS X -framework options
 # Will do nothing on other OSes
@@ -16,31 +12,32 @@ if(APPLE)
 
   set(LIBS_PRIVATE ${OPENGL_LIBRARY} ${COCOA_LIBRARY}
                    ${IOKIT_LIBRARY} ${COREFOUNDATION_LIBRARY} ${COREVIDEO_LIBRARY})
+elseif(WIN32)
+  # no pkg-config --static on Windows yet...
+else()
+  find_library(pthread NAMES pthread)
+  find_package(OpenGL)
+  if ("${OPENGL_LIBRARIES}" STREQUAL "")
+    # CFLAGS=-m32 cmake on Linux fails for some reason, so fallback to hardcoding
+    set(LIBS_PRIVATE m pthread GL X11 Xrandr Xinerama Xi Xxf86vm Xcursor)
+  else()
+    find_package(X11 REQUIRED X11)
+    find_library(XRANDR_LIBRARY Xrandr)
+    find_library(XI_LIBRARY Xi)
+    find_library(XINERAMA_LIBRARY Xinerama)
+    find_library(XXF86VM_LIBRARY Xxf86vm)
+    find_library(XCURSOR_LIBRARY Xcursor)
+
+    include_directories(${OPENGL_INCLUDE_DIR})
+
+    set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${XRANDR_LIBRARY} ${XINERAMA_LIBRARY} ${XI_LIBRARY} ${XXF86VM_LIBRARY} ${XCURSOR_LIBRARY})
+  endif()
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-  set(LIBS_PRIVATE
-      m pthread dl
-      GL
-      X11 Xrandr Xinerama Xi Xxf86vm Xcursor)  # X11 stuff
+  set(LINUX TRUE)
+  set(LIBS_PRIVATE dl ${LIBS_PRIVATE})
 endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
-   find_package(OpenGL REQUIRED)
-   include_directories(${OPENGL_INCLUDE_DIR})
-
-   find_package(X11 REQUIRED)
-   find_library(pthread NAMES pthread)
-   find_library(Xrandr NAMES Xrandr)
-   find_library(Xi NAMES Xi)
-   find_library(Xinerama NAMES Xinerama)
-   find_library(Xxf86vm NAMES Xxf86vm)
-   find_library(Xcursor NAMES Xcursor)
-
-   set(LIBS_PRIVATE m ${pthread} ${X11_LIBRARIES} ${Xrandr} ${Xinerama} ${Xi} ${Xxf86vm} ${Xcursor})
-endif()
-
-# TODO Support Windows
 
 # Do the linking for executables that are meant to link raylib
 function(link_libraries_to_executable executable)
