@@ -949,6 +949,8 @@ void BeginTextureMode(RenderTexture2D target)
     rlglDraw();                         // Draw Buffers (Only OpenGL 3+ and ES2)
 
     rlEnableRenderTexture(target.id);   // Enable render target
+    
+    rlClearScreenBuffers();             // Clear render texture buffers
 
     // Set viewport to framebuffer size
     rlViewport(0, 0, target.texture.width, target.texture.height);
