@@ -262,7 +262,8 @@ endif
 #  -Wno-missing-braces   ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith
+#  -Werror=implicit-function-declaration catch function calls without prior declaration
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith -Werror=implicit-function-declaration
 
 ifeq ($(RAYLIB_BUILD_MODE), DEBUG)
     CFLAGS += -g
