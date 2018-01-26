@@ -26,7 +26,7 @@ before_install:
                               libasound2-dev:$ARCH
                               libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
                               libx11-dev:$ARCH libxrandr-dev:$ARCH libxi-dev:$ARCH
-                              libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH libglew-dev:$ARCH;
+                              libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
       export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
       if [ "$ARCH" == "i386" ]; then export CFLAGS="-m32"; fi;
       if [ "$ARCH" == "amd64" ]; then export CFLAGS="-m64"; fi;
