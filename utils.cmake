@@ -9,18 +9,16 @@ endif()
 # Will do nothing on other OSes
 if(APPLE)
   find_library(OPENGL_LIBRARY OpenGL)
-  find_library(OPENAL_LIBRARY OpenAL)
   find_library(COCOA_LIBRARY Cocoa)
   find_library(IOKIT_LIBRARY IOKit)
   find_library(COREFOUNDATION_LIBRARY CoreFoundation)
   find_library(COREVIDEO_LIBRARY CoreVideo)
 
-  set(LIBS_PRIVATE ${OPENGL_LIBRARY} ${OPENAL_LIBRARY} ${COCOA_LIBRARY}
+  set(LIBS_PRIVATE ${OPENGL_LIBRARY} ${COCOA_LIBRARY}
                    ${IOKIT_LIBRARY} ${COREFOUNDATION_LIBRARY} ${COREVIDEO_LIBRARY})
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-  # Elsewhere (such as Linux), need `-lopenal -lGL`, etc...
   set(LIBS_PRIVATE
       m pthread dl
       GL
@@ -29,11 +27,9 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
    find_package(OpenGL REQUIRED)
-   find_package(OpenAL REQUIRED)
-   include_directories(${OPENGL_INCLUDE_DIR} ${OPENAL_INCLUDE_DIR})
+   include_directories(${OPENGL_INCLUDE_DIR})
 
    find_package(X11 REQUIRED)
-   find_library(OpenAL REQUIRED)
    find_library(pthread NAMES pthread)
    find_library(Xrandr NAMES Xrandr)
    find_library(Xi NAMES Xi)
@@ -41,7 +37,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
    find_library(Xxf86vm NAMES Xxf86vm)
    find_library(Xcursor NAMES Xcursor)
 
-   set(LIBS_PRIVATE m ${pthread} ${OPENAL_LIBRARY} ${X11_LIBRARIES} ${Xrandr} ${Xinerama} ${Xi} ${Xxf86vm} ${Xcursor})
+   set(LIBS_PRIVATE m ${pthread} ${X11_LIBRARIES} ${Xrandr} ${Xinerama} ${Xi} ${Xxf86vm} ${Xcursor})
 endif()
 
 # TODO Support Windows
