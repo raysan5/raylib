@@ -1,5 +1,5 @@
 # All sorts of things that we need cross project
-cmake_minimum_required(VERSION 2.8.)
+cmake_minimum_required(VERSION 2.8.0)
 
 # Linking for OS X -framework options
 # Will do nothing on other OSes
