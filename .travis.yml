@@ -16,7 +16,7 @@ matrix:
       env: ARCH=amd64
       sudo: required
     - os: osx
-      env: ARCH=amd64
+      env: ARCH=universal
 
 before_script:
 
