@@ -38,6 +38,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifndef SYN_DROPPED // < 2.6.39 kernel headers
+#define SYN_DROPPED 3
+#endif
+
 // Apply an EV_KEY event to the specified joystick
 //
 static void handleKeyEvent(_GLFWjoystick* js, int code, int value)
