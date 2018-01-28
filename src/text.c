@@ -66,8 +66,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_FORMATTEXT_LENGTH   64
-#define MAX_SUBTEXT_LENGTH      64
+#define MAX_FORMATTEXT_LENGTH  256
+#define MAX_SUBTEXT_LENGTH     256
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -318,21 +318,20 @@ SpriteFont LoadSpriteFont(const char *fileName)
 SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
     SpriteFont spriteFont = { 0 };
+    int totalChars = 95;            // Default charset [32..126]
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     if (IsFileExtension(fileName, ".ttf"))
     {
-        if ((fontChars == NULL) || (charsCount == 0))
+        if (charsCount != 0) totalChars = charsCount;
+        
+        if (fontChars == NULL)
         {
-            int totalChars = 95;    // Default charset [32..126]
-
-            int *defaultFontChars = (int *)malloc(totalChars*sizeof(int));
-
-            for (int i = 0; i < totalChars; i++) defaultFontChars[i] = i + 32; // Default first character: SPACE[32]
-
-            spriteFont = LoadTTF(fileName, fontSize, totalChars, defaultFontChars);
+            fontChars = (int *)malloc(totalChars*sizeof(int));
+            for (int i = 0; i < totalChars; i++) fontChars[i] = i + 32; // Default first character: SPACE[32]
         }
-        else spriteFont = LoadTTF(fileName, fontSize, charsCount, fontChars);
+        
+        spriteFont = LoadTTF(fileName, fontSize, totalChars, fontChars);
     }
 #endif
 

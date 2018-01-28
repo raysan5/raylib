@@ -1377,13 +1377,12 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 
     Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
     
-    TraceLog(LOG_WARNING, "Text Image size: %f, %f", imSize.x, imSize.y);
+    TraceLog(LOG_DEBUG, "Text Image size: %f, %f", imSize.x, imSize.y);
 
     // NOTE: glGetTexImage() not available in OpenGL ES
     Image imFont = GetTextureData(font.texture);
-
-    ImageFormat(&imFont, UNCOMPRESSED_R8G8B8A8);    // Convert to 32 bit for color tint
-    ImageColorTint(&imFont, tint);                  // Apply color tint to font
+    
+    ImageColorTint(&imFont, tint);                    // Apply color tint to font
 
     // Create image to store text
     Image imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
@@ -1405,7 +1404,7 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     if (fontSize > imSize.y)
     {
         float scaleFactor = fontSize/imSize.y;
-        TraceLog(LOG_INFO, "Scalefactor: %f", scaleFactor);
+        TraceLog(LOG_INFO, "Image text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
         if (font.texture.id == GetDefaultFont().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
