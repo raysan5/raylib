@@ -27,7 +27,7 @@ int main()
     Image radialGradient = GenImageGradientRadial(screenWidth, screenHeight, 0.0f, WHITE, BLACK);
     Image checked = GenImageChecked(screenWidth, screenHeight, 32, 32, RED, BLUE);
     Image whiteNoise = GenImageWhiteNoise(screenWidth, screenHeight, 0.5f);
-    Image perlinNoise = GenImagePerlinNoise(screenWidth, screenHeight, 50, 50, 4.0f);
+    Image perlinNoise = GenImagePerlinNoise(screenWidth, screenHeight, 4.0f);
     Image cellular = GenImageCellular(screenWidth, screenHeight, 32);
 
     Texture2D textures[NUM_TEXTURES];
