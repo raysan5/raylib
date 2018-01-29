@@ -83,10 +83,6 @@ xcschememanagement.plist
 xcuserdata/
 DerivedData/
 
-# external libraries DLLs
-!src/external/glfw3/lib/win32/glfw3.dll
-!src/external/openal_soft/lib/win32/OpenAL32.dll
-
 # Visual Studio project
 project/vs2015/*.db
 project/vs2015/*.opendb
@@ -120,7 +116,6 @@ CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
-Makefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
