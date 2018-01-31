@@ -112,7 +112,7 @@
 #define KEY_DOWN            264
 #define KEY_UP              265
 #define KEY_PAGE_UP         266
-#define PAGE_DOWN           267
+#define KEY_PAGE_DOWN       267
 #define KEY_HOME            268
 #define KEY_END             269
 #define KEY_CAPS_LOCK       280
