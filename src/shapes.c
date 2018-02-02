@@ -457,6 +457,21 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
     }
 }
 
+// Draw rectangle outline with extended parameters
+void DrawRectangleLinesEx(Rectangle rec, int lineThick, Color color)
+{   
+    if (lineThick > rec.width || lineThick > rec.height)
+    {
+        if(rec.width > rec.height) lineThick = rec.height/2;
+        else if (rec.width < rec.height) lineThick = rec.width/2;
+    }        
+    
+    DrawRectangle(rec.x, rec.y, rec.width, lineThick, color);
+    DrawRectangle(rec.x - lineThick + rec.width, rec.y + lineThick, lineThick, rec.height - lineThick*2, color);
+    DrawRectangle(rec.x, rec.y + rec.height - lineThick, rec.width, lineThick, color);
+    DrawRectangle(rec.x, rec.y + lineThick, lineThick, rec.height - lineThick*2, color);
+}
+
 // Draw a triangle
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
