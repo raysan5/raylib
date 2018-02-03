@@ -26,9 +26,19 @@ set_property(CACHE PLATFORM PROPERTY STRINGS "Desktop" "Web" "Android" "Raspberr
 set(OPENGL_VERSION "3.3" CACHE STRING "OpenGL Version to build raylib with")
 set_property(CACHE OPENGL_VERSION PROPERTY STRINGS "3.3" "2.1" "1.1" "ES 2.0")
 
-### Config options ###
-include_directories(external/glfw/include)
+# Get the sources together
+file(GLOB raylib_sources *.c)
+if(glfw3_FOUND)
+  list(REMOVE_ITEM raylib_sources ${CMAKE_CURRENT_SOURCE_DIR}/rglfw.c)
+else()
+  include_directories(external/glfw/include)
+endif()
 
+file(GLOB stb_vorbis external/stb_vorbis.c)
+file(GLOB mini_al external/mini_al.c ${stb_vorbis})
+set(sources ${raylib_sources} ${mini_al})
+
+### Config options ###
 # Translate the config options to what raylib wants
 if(${PLATFORM} MATCHES "Desktop")
   set(PLATFORM "PLATFORM_DESKTOP")
@@ -81,37 +91,8 @@ if(MACOS_FATLIB)
     endif()
 endif()
 
-# Get the sources together
-file(GLOB raylib_sources *.c)
-file(GLOB stb_vorbis external/stb_vorbis.c)
-file(GLOB mini_al external/mini_al.c ${stb_vorbis})
-set(sources ${raylib_sources} ${mini_al})
-
 # Which platform?
 if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
-
-  foreach(L ${LIBS_PRIVATE})
-      get_filename_component(DIR  ${L} PATH)
-      get_filename_component(LIBFILE ${L} NAME_WE)
-      STRING(REGEX REPLACE "^lib" "" FILE ${LIBFILE})
-
-      if (${L} MATCHES "[.]framework$")
-          set(FILE_OPT "-framework ${FILE}")
-          set(DIR_OPT  "-F${DIR} ")
-      else()
-          set(FILE_OPT "-l${FILE}")
-          set(DIR_OPT  "-L${DIR} ")
-      endif()
-
-      if ("${DIR}" STREQUAL "" OR "${DIR}" STREQUAL "${LASTDIR}")
-          set (DIR_OPT "")
-      endif()
-
-      set(LASTDIR ${DIR})
-
-      set(PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE} ${DIR_OPT}${FILE_OPT}")
-  endforeach(L)
-
 
   if(${SHARED_RAYLIB})
     add_library(${RAYLIB}_shared SHARED ${sources})

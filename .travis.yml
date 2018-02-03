@@ -13,7 +13,7 @@ matrix:
       env: ARCH=i386
       sudo: required
     - os: linux
-      env: ARCH=amd64
+      env: ARCH=amd64 GLFW=SYSTEM
       sudo: required
     - os: osx
       env: ARCH=universal
@@ -30,14 +30,22 @@ before_install:
       export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
       if [ "$ARCH" == "i386" ]; then export CFLAGS="-m32"; fi;
       if [ "$ARCH" == "amd64" ]; then export CFLAGS="-m64"; fi;
+      if [ "$GLFW" == "SYSTEM" ]; then
+        wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
+        wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
+        sudo dpkg -i libglfw3_3.2.1-1_amd64.deb libglfw3-dev_3.2.1-1_amd64.deb;
+      fi;
     fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export RAYLIB_PACKAGE_SUFFIX="-macOS"; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      export RAYLIB_PACKAGE_SUFFIX="-macOS";
+      if [ "$GLFW" == "SYSTEM" ]; then brew update; brew install glfw; fi;
+    fi
   - "$CC --version"
 
 script:
   - mkdir build
   - cd build
-  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON ..
+  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DWITH_SYSTEM_GLFW=IF_POSSIBLE ..
   - make VERBOSE=1
   - make package
 
