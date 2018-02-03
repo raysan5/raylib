@@ -73,7 +73,7 @@ elseif(${PLATFORM} MATCHES "Raspberry Pi")
   set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 endif()
 
-if(BUILD_MACOS_FATLIB)
+if(MACOS_FATLIB)
     if (CMAKE_OSX_ARCHITECTURES)
         message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides BUILD_MACOS_FATLIB=ON")
     else()
