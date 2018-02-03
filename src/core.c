@@ -1822,18 +1822,21 @@ static void InitGraphicsDevice(int width, int height)
         // No-fullscreen window creation
         window = glfwCreateWindow(screenWidth, screenHeight, windowTitle, NULL, NULL);
 
+        if (window)
+        {
 #if defined(PLATFORM_DESKTOP)
-        // Center window on screen
-        int windowPosX = displayWidth/2 - screenWidth/2;
-        int windowPosY = displayHeight/2 - screenHeight/2;
+            // Center window on screen
+            int windowPosX = displayWidth/2 - screenWidth/2;
+            int windowPosY = displayHeight/2 - screenHeight/2;
 
-        if (windowPosX < 0) windowPosX = 0;
-        if (windowPosY < 0) windowPosY = 0;
+            if (windowPosX < 0) windowPosX = 0;
+            if (windowPosY < 0) windowPosY = 0;
 
-        glfwSetWindowPos(window, windowPosX, windowPosY);
+            glfwSetWindowPos(window, windowPosX, windowPosY);
 #endif
-        renderWidth = screenWidth;
-        renderHeight = screenHeight;
+            renderWidth = screenWidth;
+            renderHeight = screenHeight;
+        }
     }
 
     if (!window)
