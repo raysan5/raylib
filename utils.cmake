@@ -1,8 +1,8 @@
 # All sorts of things that we need cross project
 cmake_minimum_required(VERSION 2.8.0)
 
-set(WITH_SYSTEM_GLFW  OFF  CACHE STRING "Link raylib against system GLFW instead of embedded one")
-set_property(CACHE WITH_SYSTEM_GLFW PROPERTY STRINGS ON OFF IF_POSSIBLE)
+set(USE_EXTERNAL_GLFW  OFF  CACHE STRING "Link raylib against system GLFW instead of embedded one")
+set_property(CACHE USE_EXTERNAL_GLFW PROPERTY STRINGS ON OFF IF_POSSIBLE)
 
 # Linking for OS X -framework options
 # Will do nothing on other OSes
@@ -36,9 +36,9 @@ else()
   endif()
 endif()
 
-if(WITH_SYSTEM_GLFW STREQUAL "ON")
+if(USE_EXTERNAL_GLFW STREQUAL "ON")
     find_package(glfw3 3.2.1 REQUIRED)
-elseif(WITH_SYSTEM_GLFW STREQUAL "IF_POSSIBLE")
+elseif(USE_EXTERNAL_GLFW STREQUAL "IF_POSSIBLE")
     find_package(glfw3 3.2.1)
 endif()
 if (glfw3_FOUND)
