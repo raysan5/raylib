@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v1.9-dev
+*   raylib v1.9.3-dev
 *
 *   A simple and easy-to-use library to learn videogames programming (www.raylib.com)
 *

@@ -431,7 +431,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9.3-dev)");
 
 #if defined(PLATFORM_DESKTOP)
     windowTitle = (char *)data;
@@ -501,7 +501,7 @@ void InitWindow(int width, int height, void *data)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
 void InitWindow(int width, int height, void *data)
 {
-    TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
+    TraceLog(LOG_INFO, "Initializing raylib (v1.9.3-dev)");
 
     screenWidth = width;
     screenHeight = height;
