@@ -44,7 +44,7 @@
 # Define required raylib variables
 PLATFORM          ?= PLATFORM_DESKTOP
 RAYLIB_PATH        = ..
-RAYLIB_VERSION     = 1.9.2
+RAYLIB_VERSION     = 1.9.4
 RAYLIB_API_VERSION = 1
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE    ?= STATIC
