@@ -633,14 +633,19 @@ bool IsWindowReady(void)
 bool WindowShouldClose(void)
 {
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
-    // While window minimized, stop loop execution
-    while (windowMinimized) glfwWaitEvents();
+    if (windowReady)
+    {
+        // While window minimized, stop loop execution
+        while (windowMinimized) glfwWaitEvents();
 
-    return (glfwWindowShouldClose(window));
+        return (glfwWindowShouldClose(window));
+    }
+    else return true;
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
-    return windowShouldClose;
+    if (windowReady) return windowShouldClose;
+    else return true;
 #endif
 }
 
