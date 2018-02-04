@@ -236,7 +236,8 @@
 static GLFWwindow *window;                      // Native window (graphic device)
 #endif
 
-static bool windowMinimized = false;
+static bool windowReady = false;                // Check if window has been initialized successfully
+static bool windowMinimized = false;            // Check if window has been minimized
 
 #if defined(PLATFORM_ANDROID)
 static struct android_app *app;                 // Android activity
@@ -244,7 +245,6 @@ static struct android_poll_source *source;      // Android events polling source
 static int ident, events;                       // Android ALooper_pollAll() variables
 static const char *internalDataPath;            // Android internal data path to write data (/data/data/<package>/files)
 
-static bool windowReady = false;                // Used to detect display initialization
 static bool appEnabled = true;                  // Used to detec if app is active
 static bool contextRebindRequired = false;      // Used to know context rebind required
 #endif
@@ -429,7 +429,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-bool InitWindow(int width, int height, void *data)
+void InitWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -442,9 +442,9 @@ bool InitWindow(int width, int height, void *data)
 #endif
 
     // Init graphics device (display device and OpenGL context)
-    if (!InitGraphicsDevice(width, height))
-        return false;
-    
+    // NOTE: returns true if window and graphic device has been initialized successfully
+    windowReady = InitGraphicsDevice(width, height);
+
     // Init hi-res timer
     InitTimer();
 
@@ -493,14 +493,13 @@ bool InitWindow(int width, int height, void *data)
         SetTargetFPS(60);
         LogoAnimation();
     }
-    return true;
 }
 #endif
 
 #if defined(PLATFORM_ANDROID)
 // Initialize window and OpenGL context (and Android activity)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-bool InitWindow(int width, int height, void *data)
+void InitWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -557,7 +556,6 @@ bool InitWindow(int width, int height, void *data)
             //if (app->destroyRequested != 0) windowShouldClose = true;
         }
     }
-    return true;
 }
 #endif
 
@@ -623,6 +621,12 @@ void CloseWindow(void)
 #endif
 
     TraceLog(LOG_INFO, "Window closed successfully");
+}
+
+// Check if window has been initialized successfully
+bool IsWindowReady(void)
+{
+    return windowReady;
 }
 
 // Check if KEY_ESCAPE pressed or Close icon pressed
@@ -1700,6 +1704,7 @@ Vector2 GetTouchPosition(int index)
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
+// NOTE: returns false in case graphic device could not be created
 static bool InitGraphicsDevice(int width, int height)
 {
     screenWidth = width;        // User desired width
@@ -1998,7 +2003,11 @@ static bool InitGraphicsDevice(int width, int height)
 
     // eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
     PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)(eglGetProcAddress("eglGetPlatformDisplayEXT"));
-    if (!eglGetPlatformDisplayEXT) TraceLog(LOG_ERROR, "Failed to get function eglGetPlatformDisplayEXT");
+    if (!eglGetPlatformDisplayEXT)
+    {
+        TraceLog(LOG_WARNING, "Failed to get function eglGetPlatformDisplayEXT");
+        return false;
+    }
 
     //
     // To initialize the display, we make three sets of calls to eglGetPlatformDisplayEXT and eglInitialize, with varying 
@@ -2012,24 +2021,37 @@ static bool InitGraphicsDevice(int width, int height)
     
     // This tries to initialize EGL to D3D11 Feature Level 10_0+. See above comment for details.
     display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
-    if (display == EGL_NO_DISPLAY) TraceLog(LOG_ERROR, "Failed to get EGL display");
-
+    if (display == EGL_NO_DISPLAY)
+    {
+        TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+        return false;
+    }
+        
     if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
     {
         // This tries to initialize EGL to D3D11 Feature Level 9_3, if 10_0+ is unavailable (e.g. on some mobile devices).
         display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, fl9_3DisplayAttributes);
-        if (display == EGL_NO_DISPLAY) TraceLog(LOG_ERROR, "Failed to get EGL display");
+        if (display == EGL_NO_DISPLAY)
+        {
+            TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+            return false;
+        }
 
         if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
         {
             // This initializes EGL to D3D11 Feature Level 11_0 on WARP, if 9_3+ is unavailable on the default GPU.
             display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, warpDisplayAttributes);
-            if (display == EGL_NO_DISPLAY) TraceLog(LOG_ERROR, "Failed to get EGL display");
+            if (display == EGL_NO_DISPLAY) 
+            {
+                TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+                return false;
+            }
 
             if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
             {
                 // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
-                TraceLog(LOG_ERROR, "Failed to initialize EGL");
+                TraceLog(LOG_WARNING, "Failed to initialize EGL");
+                return false;
             }
         }
     }
@@ -2039,7 +2061,8 @@ static bool InitGraphicsDevice(int width, int height)
     EGLint numConfigs = 0;
     if ((eglChooseConfig(display, framebufferAttribs, &config, 1, &numConfigs) == EGL_FALSE) || (numConfigs == 0))
     {
-        TraceLog(LOG_ERROR, "Failed to choose first EGLConfig");
+        TraceLog(LOG_WARNING, "Failed to choose first EGLConfig");
+        return false;
     }
 
     // Create a PropertySet and initialize with the EGLNativeWindowType.
@@ -2074,10 +2097,18 @@ static bool InitGraphicsDevice(int width, int height)
     
     //surface = eglCreateWindowSurface(display, config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
     surface = eglCreateWindowSurface(display, config, uwpWindow, surfaceAttributes);
-    if (surface == EGL_NO_SURFACE) TraceLog(LOG_ERROR, "Failed to create EGL fullscreen surface");
+    if (surface == EGL_NO_SURFACE)
+    {
+        TraceLog(LOG_WARNING, "Failed to create EGL fullscreen surface");
+        return false;
+    }
 
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
-    if (context == EGL_NO_CONTEXT) TraceLog(LOG_ERROR, "Failed to create EGL context");
+    if (context == EGL_NO_CONTEXT)
+    {
+        TraceLog(LOG_WARNING, "Failed to create EGL context");
+        return false;
+    }
 
 	// Get EGL display window size 
 	eglQuerySurface(display, surface, EGL_WIDTH, &screenWidth);
@@ -2088,9 +2119,19 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Get an EGL display connection
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (display == EGL_NO_DISPLAY) 
+    {
+        TraceLog(LOG_WARNING, "Failed to initialize EGL display");
+        return false;
+    }
 
     // Initialize the EGL display connection
-    eglInitialize(display, NULL, NULL);
+    if (eglInitialize(display, NULL, NULL) == EGL_FALSE)
+    {
+        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
+        TraceLog(LOG_WARNING, "Failed to initialize EGL");
+        return false;
+    }
 
     // Get an appropriate EGL framebuffer configuration
     eglChooseConfig(display, framebufferAttribs, &config, 1, &numConfigs);
@@ -2100,6 +2141,11 @@ static bool InitGraphicsDevice(int width, int height)
 
     // Create an EGL rendering context
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
+    if (context == EGL_NO_CONTEXT)
+    {
+        TraceLog(LOG_WARNING, "Failed to create EGL context");
+        return false;
+    }
 #endif
 
     // Create an EGL window surface
@@ -2168,7 +2214,8 @@ static bool InitGraphicsDevice(int width, int height)
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE)
     {
-        TraceLog(LOG_ERROR, "Unable to attach EGL rendering context to EGL surface");
+        TraceLog(LOG_WARNING, "Unable to attach EGL rendering context to EGL surface");
+        return false;
     }
     else
     {
