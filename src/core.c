@@ -362,7 +362,7 @@ extern void UnloadDefaultFont(void);        // [Module: text] Unloads default fo
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
-static void InitGraphicsDevice(int width, int height);  // Initialize graphics device
+static bool InitGraphicsDevice(int width, int height);  // Initialize graphics device
 static void SetupFramebufferSize(int displayWidth, int displayHeight);
 static void InitTimer(void);                            // Initialize timer
 static void Wait(float ms);                             // Wait for some milliseconds (stop program execution)
@@ -429,7 +429,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
+bool InitWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -442,7 +442,8 @@ void InitWindow(int width, int height, void *data)
 #endif
 
     // Init graphics device (display device and OpenGL context)
-    InitGraphicsDevice(width, height);
+    if (!InitGraphicsDevice(width, height))
+        return false;
     
     // Init hi-res timer
     InitTimer();
@@ -492,13 +493,14 @@ void InitWindow(int width, int height, void *data)
         SetTargetFPS(60);
         LogoAnimation();
     }
+    return true;
 }
 #endif
 
 #if defined(PLATFORM_ANDROID)
 // Initialize window and OpenGL context (and Android activity)
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height, void *data)
+bool InitWindow(int width, int height, void *data)
 {
     TraceLog(LOG_INFO, "Initializing raylib (v1.9-dev)");
 
@@ -555,6 +557,7 @@ void InitWindow(int width, int height, void *data)
             //if (app->destroyRequested != 0) windowShouldClose = true;
         }
     }
+    return true;
 }
 #endif
 
@@ -1697,7 +1700,7 @@ Vector2 GetTouchPosition(int index)
 // Initialize display device and framebuffer
 // NOTE: width and height represent the screen (framebuffer) desired size, not actual display size
 // If width or height are 0, default display size will be used for framebuffer size
-static void InitGraphicsDevice(int width, int height)
+static bool InitGraphicsDevice(int width, int height)
 {
     screenWidth = width;        // User desired width
     screenHeight = height;      // User desired height
@@ -1711,7 +1714,11 @@ static void InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_WEB)
     glfwSetErrorCallback(ErrorCallback);
 
-    if (!glfwInit()) TraceLog(LOG_ERROR, "Failed to initialize GLFW");
+    if (!glfwInit())
+    {
+        TraceLog(LOG_WARNING, "Failed to initialize GLFW");
+        return false;
+    }
 
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
 #if defined(PLATFORM_DESKTOP)
@@ -1842,7 +1849,8 @@ static void InitGraphicsDevice(int width, int height)
     if (!window)
     {
         glfwTerminate();
-        TraceLog(LOG_ERROR, "GLFW Failed to initialize Window");
+        TraceLog(LOG_WARNING, "GLFW Failed to initialize Window");
+        return false;
     }
     else
     {
@@ -2199,6 +2207,7 @@ static void InitGraphicsDevice(int width, int height)
 #if defined(PLATFORM_ANDROID)
     windowReady = true;             // IMPORTANT!
 #endif
+    return true;
 }
 
 // Set viewport parameters
