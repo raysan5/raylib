@@ -13,7 +13,7 @@ matrix:
       env: ARCH=i386
       sudo: required
     - os: linux
-      env: ARCH=amd64 GLFW=SYSTEM
+      env: ARCH=amd64
       sudo: required
     - os: osx
       env: ARCH=universal
