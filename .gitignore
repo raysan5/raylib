@@ -83,20 +83,20 @@ xcschememanagement.plist
 xcuserdata/
 DerivedData/
 
-# external libraries DLLs
-!src/external/glfw3/lib/win32/glfw3.dll
-!src/external/openal_soft/lib/win32/OpenAL32.dll
-
 # Visual Studio project
 project/vs2015/*.db
 project/vs2015/*.opendb
+project/vs2015.UWP/packages
+project/vs2015.UWP/*.db
 !project/vs2015/raylib.sln
 !project/vs2015/raylib/*.vcxproj
 !project/vs2015/examples/*.vcxproj
-!project/vs2015/external/glfw3/lib/win32/glfw3.dll
-!project/vs2015/external/openal_soft/lib/win32/OpenAL32.dll
-!project/vs2015/external/openal_soft/lib/win64/OpenAL32.dll
-!project/vs2015/external/lua/lib/win32/lua53.dll
+!project/vs2017/raylib.sln
+!project/vs2017/raylib/*.vcxproj
+!project/vs2017/examples/*.vcxproj
+!project/vs2015.UWP/raylib/*.vcxproj
+!project/vs2015.UWP/*.sln
+!project/vs2015.UWP/raylib.App.UWP/*.vcxproj
 
 # Web examples 
 docs/examples/web/*.html
@@ -111,15 +111,11 @@ docs/examples/web/*/*.html
 !docs/examples/web/shaders/loader.html
 !docs/examples/web/models/loader.html
 
-# Meson build system
-builddir/
-
 # CMake stuff
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
-Makefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
@@ -133,3 +129,8 @@ build
 
 # Ignore Android generated files and folders
 templates/android_project/output
+
+# Ignore GNU global tags
+GPATH
+GRTAGS
+GTAGS

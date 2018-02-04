@@ -8,12 +8,12 @@
 *   This game has been created using raylib (www.raylib.com)
 *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "screens/screens.h"    // NOTE: Defines currentScreen
+#include "screens/screens.h"    // NOTE: Defines global variable: currentScreen
 
 #if defined(PLATFORM_ANDROID)
     #include "android_native_app_glue.h"

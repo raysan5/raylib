@@ -17,7 +17,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2017 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -66,8 +66,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_FORMATTEXT_LENGTH   64
-#define MAX_SUBTEXT_LENGTH      64
+#define MAX_FORMATTEXT_LENGTH  256
+#define MAX_SUBTEXT_LENGTH     256
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -288,40 +288,14 @@ SpriteFont LoadSpriteFont(const char *fileName)
 
     SpriteFont spriteFont = { 0 };
 
-    // Check file extension
-    if (IsFileExtension(fileName, ".rres"))
-    {
-        // TODO: Read multiple resource blocks from file (RRES_FONT_IMAGE, RRES_FONT_CHARDATA)
-        RRES rres = LoadResource(fileName, 0);
-
-        // Load sprite font texture
-        if (rres[0].type == RRES_TYPE_FONT_IMAGE) 
-        {
-            // NOTE: Parameters for RRES_FONT_IMAGE type are: width, height, format, mipmaps
-            Image image = LoadImagePro(rres[0].data, rres[0].param1, rres[0].param2, rres[0].param3);
-            spriteFont.texture = LoadTextureFromImage(image);
-            UnloadImage(image);
-        }
-        
-        // Load sprite characters data
-        if (rres[1].type == RRES_TYPE_FONT_CHARDATA) 
-        {
-            // NOTE: Parameters for RRES_FONT_CHARDATA type are: fontSize, charsCount
-            spriteFont.baseSize = rres[1].param1;
-            spriteFont.charsCount = rres[1].param2;
-            spriteFont.chars = rres[1].data;
-        }
-
-        // TODO: Do not free rres.data memory (chars info data!)
-        //UnloadResource(rres[0]);
-    }
 #if defined(SUPPORT_FILEFORMAT_TTF)
-    else if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    if (IsFileExtension(fileName, ".ttf")) spriteFont = LoadSpriteFontEx(fileName, DEFAULT_TTF_FONTSIZE, 0, NULL);
+    else
 #endif
 #if defined(SUPPORT_FILEFORMAT_FNT)
-    else if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
-#endif
+    if (IsFileExtension(fileName, ".fnt")) spriteFont = LoadBMFont(fileName);
     else
+#endif
     {
         Image image = LoadImage(fileName);
         if (image.data != NULL) spriteFont = LoadImageFont(image, MAGENTA, DEFAULT_FIRST_CHAR);
@@ -344,21 +318,20 @@ SpriteFont LoadSpriteFont(const char *fileName)
 SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars)
 {
     SpriteFont spriteFont = { 0 };
+    int totalChars = 95;            // Default charset [32..126]
 
 #if defined(SUPPORT_FILEFORMAT_TTF)
     if (IsFileExtension(fileName, ".ttf"))
     {
-        if ((fontChars == NULL) || (charsCount == 0))
+        if (charsCount != 0) totalChars = charsCount;
+        
+        if (fontChars == NULL)
         {
-            int totalChars = 95;    // Default charset [32..126]
-
-            int *defaultFontChars = (int *)malloc(totalChars*sizeof(int));
-
-            for (int i = 0; i < totalChars; i++) defaultFontChars[i] = i + 32; // Default first character: SPACE[32]
-
-            spriteFont = LoadTTF(fileName, fontSize, totalChars, defaultFontChars);
+            fontChars = (int *)malloc(totalChars*sizeof(int));
+            for (int i = 0; i < totalChars; i++) fontChars[i] = i + 32; // Default first character: SPACE[32]
         }
-        else spriteFont = LoadTTF(fileName, fontSize, charsCount, fontChars);
+        
+        spriteFont = LoadTTF(fileName, fontSize, totalChars, fontChars);
     }
 #endif
 
@@ -872,14 +845,25 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
 
     // NOTE: We try reading up to 16 MB of elements of 1 byte
     fread(ttfBuffer, 1, MAX_TTF_SIZE*1024*1024, ttfFile);
+    
+    // Find font baseline (vertical origin of the font)
+    // NOTE: This value is required because y-offset depends on it!
+    stbtt_fontinfo fontInfo;
+    int ascent, baseline;
+    float scale;
 
+    stbtt_InitFont(&fontInfo, ttfBuffer, 0);
+    scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
+    stbtt_GetFontVMetrics(&fontInfo, &ascent, 0, 0);
+    baseline = (int)(ascent*scale);
+    
     if (fontChars[0] != 32) TraceLog(LOG_WARNING, "TTF spritefont loading: first character is not SPACE(32) character");
 
-    // NOTE: Using stb_truetype crappy packing method, no guarante the font fits the image...
+    // NOTE: Using stb_truetype crappy packing method, no guarantee the font fits the image...
     // TODO: Replace this function by a proper packing method and support random chars order,
     // we already receive a list (fontChars) with the ordered expected characters
     int result = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, dataBitmap, textureSize, textureSize, fontChars[0], charsCount, charData);
-
+    
     //if (result > 0) TraceLog(LOG_INFO, "TTF spritefont loading: first unused row of generated bitmap: %i", result);
     if (result < 0) TraceLog(LOG_WARNING, "TTF spritefont loading: Not all the characters fit in the font");
 
@@ -924,7 +908,7 @@ static SpriteFont LoadTTF(const char *fileName, int fontSize, int charsCount, in
         font.chars[i].rec.height = (int)charData[i].y1 - (int)charData[i].y0;
 
         font.chars[i].offsetX = charData[i].xoff;
-        font.chars[i].offsetY = charData[i].yoff;
+        font.chars[i].offsetY = baseline + charData[i].yoff;
         font.chars[i].advanceX = (int)charData[i].xadvance;
     }
 

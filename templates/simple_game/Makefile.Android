@@ -101,7 +101,7 @@ LDFLAGS += -L. -L$(PROJECT_BUILD_PATH)/obj -L$(PROJECT_BUILD_PATH)/lib/armeabi-v
 
 # Define any libraries to link into executable
 # if you want to link libraries (libname.so or libname.a), use the -lname
-LDLIBS = -lraylib -lnative_app_glue -lopenal -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
+LDLIBS = -lraylib -lnative_app_glue -llog -landroid -lEGL -lGLESv2 -lOpenSLES -latomic -lc -lm -ldl
 
 # Generate target objects list from PROJECT_SOURCE_FILES
 OBJS = $(patsubst %.c, $(PROJECT_BUILD_PATH)/obj/%.o, $(PROJECT_SOURCE_FILES))

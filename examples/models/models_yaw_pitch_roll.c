@@ -119,17 +119,17 @@ int main()
 
                 BeginBlendMode(BLEND_ALPHA);
 
-                DrawTexturePro(texBackground, (Rectangle){0,0,texBackground.width, texBackground.height},
+                DrawTexturePro(texBackground, (Rectangle){ 0, 0, texBackground.width, texBackground.height },
                                (Rectangle){ centerX, centerY, texBackground.width*scaleFactor, texBackground.height*scaleFactor},
-                               (Vector2){texBackground.width/2*scaleFactor, texBackground.height/2*scaleFactor + pitchOffset*scaleFactor}, roll, WHITE);
+                               (Vector2){ texBackground.width/2*scaleFactor, texBackground.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, WHITE);
 
                 DrawTexturePro(texPitch, (Rectangle){ 0, 0, texPitch.width, texPitch.height },
                                (Rectangle){ centerX, centerY, texPitch.width*scaleFactor, texPitch.height*scaleFactor },
                                (Vector2){ texPitch.width/2*scaleFactor, texPitch.height/2*scaleFactor + pitchOffset*scaleFactor }, roll, WHITE);
             
-                DrawTexturePro(texPlane, (Rectangle){0,0,texPlane.width, texPlane.height },
+                DrawTexturePro(texPlane, (Rectangle){ 0, 0, texPlane.width, texPlane.height },
                                (Rectangle){ centerX, centerY, texPlane.width*scaleFactor, texPlane.height*scaleFactor }, 
-                               (Vector2){texPlane.width/2*scaleFactor, texPlane.height/2*scaleFactor }, 0, WHITE);
+                               (Vector2){ texPlane.width/2*scaleFactor, texPlane.height/2*scaleFactor }, 0, WHITE);
                                 
                 EndBlendMode();
 
@@ -144,9 +144,9 @@ int main()
             End3dMode();
 
             // Draw 2D GUI stuff
-            DrawAngleGauge(texAngleGauge, 80, 80, roll, "roll", RED);
-            DrawAngleGauge(texAngleGauge, 190, 80, pitch, "pitch", GREEN);
-            DrawAngleGauge(texAngleGauge, 300, 80, yaw, "yaw", SKYBLUE);
+            DrawAngleGauge(texAngleGauge, 80, 70, roll, "roll", RED);
+            DrawAngleGauge(texAngleGauge, 190, 70, pitch, "pitch", GREEN);
+            DrawAngleGauge(texAngleGauge, 300, 70, yaw, "yaw", SKYBLUE);
             
             DrawRectangle(30, 360, 260, 70, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines(30, 360, 260, 70, Fade(DARKBLUE, 0.5f));

@@ -1,50 +1,62 @@
 language: c
-sudo: required
 dist: trusty
 
 git:
   depth: 3
 
-os:
-  - osx
-  - linux
+# TODO we could use a 32 bit Docker container for running true 32-bit tests
+# services: - docker
 
-env:
-  global:
-    - VERBOSE=1
-  matrix:
-    - CFLAGS=-m64
-    - CFLAGS=-m32
+matrix:
+  include:
+    - os: linux
+      env: ARCH=i386
+      sudo: required
+    - os: linux
+      env: ARCH=amd64 GLFW=SYSTEM
+      sudo: required
+    - os: osx
+      env: ARCH=universal
 
 before_script:
-  - export CFLAGS="-std=gnu99 $CFLAGS"
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       sudo apt-get install -y gcc-multilib
-                              libopenal-dev
-                              libxcursor-dev libxinerama-dev
-                              mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev libglew-dev;
-      wget 'https://github.com/a3f/GLFW-3.2.1-Debian-binary-package/releases/download/v3.2.1/GLFW-3.2.1-Linux.deb' && sudo dpkg -i GLFW-3.2.1-Linux.deb;
+                              libasound2-dev:$ARCH
+                              libxcursor-dev:$ARCH libxinerama-dev:$ARCH mesa-common-dev:$ARCH
+                              libx11-dev:$ARCH libxrandr-dev:$ARCH libxi-dev:$ARCH
+                              libgl1-mesa-dev:$ARCH libglu1-mesa-dev:$ARCH;
+      export RAYLIB_PACKAGE_SUFFIX="-Linux-$ARCH";
+      if [ "$ARCH" == "i386" ]; then export CFLAGS="-m32"; fi;
+      if [ "$ARCH" == "amd64" ]; then export CFLAGS="-m64"; fi;
+      if [ "$GLFW" == "SYSTEM" ]; then
+        wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3_3.2.1-1_amd64.deb';
+        wget 'http://ftp.de.debian.org/debian/pool/main/g/glfw3/libglfw3-dev_3.2.1-1_amd64.deb';
+        sudo dpkg -i libglfw3_3.2.1-1_amd64.deb libglfw3-dev_3.2.1-1_amd64.deb;
+      fi;
     fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install glfw; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      export RAYLIB_PACKAGE_SUFFIX="-macOS";
+      if [ "$GLFW" == "SYSTEM" ]; then brew update; brew install glfw; fi;
+    fi
   - "$CC --version"
 
 script:
   - mkdir build
   - cd build
-  - cmake -DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF ..
-  - make
-#  - make package
-#  - sudo make install
-#
-#deploy:
-#  provider: releases
-#  api_key:
-#    secure: XXX
-#  file_glob: true
-#  file: raylib-*.tar.gz
-#  skip_cleanup: true
-#  on:
-#    branch: master
-#    tags: true
+  - cmake -DMACOS_FATLIB=ON -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=ON -DBUILD_EXAMPLES=ON -DBUILD_GAMES=ON -DUSE_EXTERNAL_GLFW=IF_POSSIBLE ..
+  - make VERBOSE=1
+  - make package
+
+deploy:
+  provider: releases
+  api_key:
+    secure: LvqUIAN/3dJul+Ra2iK3tSaNG5IwsNMmGIwVMy0DK5IBCxiQPBc9pWGiE30RTBPt6Z+N4BhMEE8DtUl+vnISlMoHWNIIhF2zwC66hs/F7zY7qEITMRSmfiLcqxQysknFOnJB06CATgXcFqlEo9j+t4abrG/f3qcb92J4O2uNz336Au2myTx93Q5MxbyA7KiUuEutFnb2dWiPCY4d+sGeXEfsiD2R7aj/8MaWOkoGdZVrTkI9juMgvpImkjQBArvqdjUMeT3MsRrwgOIq5v2GFV9dOl8k1WzPeT8B2JHh00ed/o1/wuFq/cLLOxtYo2+Pv3+xatOrlexoX0WkDm7C9/L1W5U4rLexU3CQ9mMBmHPnp6k/WXZ5QXEE4uUF0+LpN3XlIXzFpdZmZiVV8VLxg2WvyncMmivYiu7/MTkyfZxyKkzwl7sZZslzHA9kOGedGaN7b7/2B77OFHoQK8lKfdFml7jJnarh+89nenNZYMab0E8qkOJOyb2bYlDTa0/2nyxGiyymYgq6YHLNrDbhqB/1LzdgzjMliQ8ri5q9Ux2vjfcqOzhfAmcwFwnY/D6yXJWYi0DWpHZdpKl3du6dYDrypW91/yDWbwiJ/YhrE7ZunzrcB6GH/QkbuzWxdCth39rQAHih8DG01co/K3Gvi4yGjvIH5tFUpyEolMnpMiA=
+  file_glob: true
+  file: raylib-*.tar.gz
+  skip_cleanup: true
+  on:
+    repo: raysan5/raylib
+    branch: develop
+    tags: true

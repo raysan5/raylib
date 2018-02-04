@@ -63,7 +63,7 @@ static void UpdateDrawFrame(void);          // Update and Draw one frame
 #if defined(PLATFORM_ANDROID)
 void android_main(struct android_app *app) 
 #else
-int main(void)
+int main(int argc, char *argv[])
 #endif
 {
 	// Initialization
