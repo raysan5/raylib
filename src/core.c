@@ -1733,7 +1733,13 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
 #if defined(PLATFORM_DESKTOP)
     // Find monitor resolution
-    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    if (!monitor)
+    {
+        TraceLog(LOG_WARNING, "Failed to get monitor");
+        return false;
+    }
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
     displayWidth = mode->width;
     displayHeight = mode->height;
