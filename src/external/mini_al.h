@@ -59,7 +59,7 @@
 //
 // Building (BSD)
 // --------------
-// The BSD build uses OSS and should Just Work without any linking nor include path configuration.
+// BSD build uses OSS. Requires linking to -lossaudio on {Open,Net}BSD, but not FreeBSD.
 //
 // Building (Emscripten)
 // ---------------------
@@ -6711,6 +6711,10 @@ static mal_result mal_device__main_loop__alsa(mal_device* pDevice)
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/soundcard.h>
+
+#ifndef SNDCTL_DSP_HALT
+#define SNDCTL_DSP_HALT SNDCTL_DSP_RESET
+#endif
 
 int mal_open_temp_device__oss()
 {

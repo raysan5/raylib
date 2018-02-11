@@ -32,7 +32,11 @@ else()
     find_library(XCURSOR_LIBRARY Xcursor)
     include_directories(${OPENGL_INCLUDE_DIR})
 
-    set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${XRANDR_LIBRARY} ${XINERAMA_LIBRARY} ${XI_LIBRARY} ${XXF86VM_LIBRARY} ${XCURSOR_LIBRARY})
+    if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
+      find_library(OSS_LIBRARY ossaudio)
+    endif()
+
+    set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${XRANDR_LIBRARY} ${XINERAMA_LIBRARY} ${XI_LIBRARY} ${XXF86VM_LIBRARY} ${XCURSOR_LIBRARY} ${OSS_LIBRARY})
   endif()
 endif()
 
