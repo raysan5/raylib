@@ -518,7 +518,7 @@ utils.o : utils.c utils.h
 # (without a package manager). We'll use /usr/local/lib/raysan5 and /usr/local/include/raysan5
 # for our -L and -I specification to simplify management of the raylib source package.
 # Customize these locations if you like but don't forget to pass them to make
-# for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig,.
+# for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig.
 # Hint: add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
 # See below and ../examples/Makefile for more information.
 
@@ -568,6 +568,8 @@ ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
 		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so*
+		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_API_VERSION)
+		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
 		# Uncomment to clean up the runtime linker cache. See install target.
 		ldconfig
         else
