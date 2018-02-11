@@ -262,15 +262,20 @@ endif
 #  -Wno-missing-braces   ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
-#  -Werror=implicit-function-declaration catch function calls without prior declaration
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith -Werror=implicit-function-declaration
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith
 
 ifeq ($(RAYLIB_BUILD_MODE), DEBUG)
     CFLAGS += -g
 endif
 
 # Additional flags for compiler (if desired)
-#CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
+#  -Wextra                  enables some extra warning flags that are not enabled by -Wall
+#  -Wmissing-prototypes     warn if a global function is defined without a previous prototype declaration
+#  -Wstrict-prototypes      warn if a function is declared or defined without specifying the argument types
+#  -Werror=implicit-function-declaration   catch function calls without prior declaration
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    CFLAGS += -Werror=implicit-function-declaration
+endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # -O2                        # if used, also set --memory-init-file 0
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
@@ -285,7 +290,8 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Compilation functions attributes options
     CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
     # Compiler options for the linker
-    CFLAGS += -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical-prefixes
+    # -Werror=format-security
+    CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
     CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=16
 endif
