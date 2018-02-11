@@ -2,7 +2,7 @@
 #
 #  raylib makefile
 #
-#  Platforms supported: 
+#  Platforms supported:
 #    PLATFORM_DESKTOP:  Windows (Win32, Win64)
 #    PLATFORM_DESKTOP:  Linux (32 and 64 bit)
 #    PLATFORM_DESKTOP:  OSX/macOS
@@ -42,38 +42,52 @@
 .PHONY: all clean install uninstall
 
 # Define required raylib variables
-PLATFORM          ?= PLATFORM_DESKTOP
-RAYLIB_PATH        = ..
 RAYLIB_VERSION     = 1.9.4
 RAYLIB_API_VERSION = 1
+RAYLIB_PATH        = ..
+
+# Define default options
+
+# RAYLIB_RELEASE_PATH points to provided binaries and your immediate build of raylib.
+# It is further modified below by PLATFORM below.
+RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/release/libs
+
+# See install target for *_INSTALL_PATH locations.
+
+# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+PLATFORM             ?= PLATFORM_DESKTOP
+
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
-RAYLIB_LIBTYPE    ?= STATIC
+RAYLIB_LIBTYPE       ?= STATIC
+
 # Build mode for library: DEBUG or RELEASE
-RAYLIB_BUILD_MODE ?= RELEASE
+RAYLIB_BUILD_MODE    ?= RELEASE
 
 # Included raylib audio module on compilation
 # NOTE: Some programs like tools could not require audio support
 INCLUDE_AUDIO_MODULE ?= TRUE
 
 # Use OpenAL Soft backend for audio
-USE_OPENAL_BACKEND ?= FALSE
-
-# Use external GLFW library instead of rglfw module
-USE_EXTERNAL_GLFW ?= FALSE
-
-# Use Wayland display server protocol on Linux desktop
-# by default it uses X11 windowing system
-USE_WAYLAND_DISPLAY ?= FALSE
+USE_OPENAL_BACKEND   ?= FALSE
 
 # OpenAL Soft audio backend forced on HTML5 and OSX (see below)
 ifeq ($(PLATFORM),PLATFORM_WEB)
     USE_OPENAL_BACKEND = TRUE
 endif
 
+# Use external GLFW library instead of rglfw module
+USE_EXTERNAL_GLFW    ?= FALSE
+
+# Use Wayland display server protocol on Linux desktop
+# by default it uses X11 windowing system
+USE_WAYLAND_DISPLAY  ?= FALSE
+
+# See below for more GRAPHICS options.
+
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
     USE_RPI_CROSS_COMPILER ?= FALSE
-    
+
     ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
         RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
@@ -137,8 +151,6 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android architecture: ARM or ARM64
     ANDROID_ARCH ?= ARM
 endif
-
-RAYLIB_RELEASE_PATH ?= $(RAYLIB_PATH)/release/libs
 
 # Define output directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -299,7 +311,7 @@ endif
 # Define required compilation flags for raylib SHARED lib
 ifeq ($(RAYLIB_LIBTYPE),SHARED)
     # make sure code is compiled as position independent
-    # BE CAREFUL: It seems that for gcc -fpic si not the same as -fPIC
+    # BE CAREFUL: It seems that for gcc -fpic is not the same as -fPIC
     # MinGW32 just doesn't need -fPIC, it shows warnings
     CFLAGS += -fPIC -DBUILD_LIBTYPE_SHARED
 endif
@@ -350,8 +362,8 @@ endif
 
 # Define linker options
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    LDFLAGS = -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a 
-    LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings 
+    LDFLAGS = -Wl,-soname,libraylib.$(API_VERSION).so -Wl,--exclude-libs,libatomic.a
+    LDFLAGS += -Wl,--build-id -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings
     # Force linking of library module to define symbol
     LDFLAGS += -u ANativeActivity_onCreate
     # Library paths containing required libs
@@ -374,7 +386,7 @@ OBJS = core.o \
        text.o \
        models.o \
        utils.o
-       
+
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(USE_EXTERNAL_GLFW),FALSE)
         OBJS += rglfw.o
@@ -419,10 +431,10 @@ else
         ifeq ($(PLATFORM_OS),LINUX)
             # Compile raylib to shared library version for GNU/Linux.
             # WARNING: you should type "make clean" before doing this target
-			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so $(OBJS) -Wl,-soname,libraylib.$(RAYLIB_API_VERSION).so -lGL -lm -lpthread -ldl -lrt
-			@echo "raylib shared library generated (libraylib.$(RAYLIB_VERSION).so)!"
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.$(RAYLIB_API_VERSION).so
-			cd $(RAYLIB_RELEASE_PATH) && ln -fs libraylib.$(RAYLIB_VERSION).so libraylib.so
+			$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(OBJS) -shared -Wl,-soname,libraylib.so.$(RAYLIB_API_VERSION) -lGL -lc -lm -lpthread -ldl -lrt
+			@echo "raylib shared library generated (libraylib.so.$(RAYLIB_VERSION))!"
+			cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
+			cd $(RAYLIB_RELEASE_PATH) && ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
         endif
         ifeq ($(PLATFORM_OS),OSX)
 			$(CC) -dynamiclib -o $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).dylib $(OBJS) -compatibility_version $(RAYLIB_API_VERSION) -current_version $(RAYLIB_VERSION) -framework OpenGL -framework OpenAL -framework IOKit -framework CoreVideo -framework Cocoa
@@ -457,7 +469,7 @@ endif
 # Compile core module
 core.o : core.c raylib.h rlgl.h utils.h raymath.h gestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
-    
+
 # Compile rglfw module
 rglfw.o : rglfw.c
 	$(CC) $(GLFW_CFLAGS) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) -D$(GRAPHICS)
@@ -485,10 +497,10 @@ models.o : models.c raylib.h rlgl.h raymath.h
 # Compile audio module
 audio.o : audio.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
-    
+
 # Compile mini_al audio library
 mini_al.o : external/mini_al.c external/mini_al.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM) 
+	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Compile stb_vorbis library
 stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
@@ -499,49 +511,75 @@ utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Install generated and needed files to required directories
-# TODO: add other platforms.
+# TODO: Add other platforms. Remove sudo requirement, i.e. add USER mode.
+# On GNU/Linux and BSDs, there are some standard directories that contain extra
+# libraries and header files. These directories (often /usr/local/lib and
+# /usr/local/include) are for libraries that are installed manually
+# (without a package manager). We'll use /usr/local/lib/raysan5 and /usr/local/include/raysan5
+# for our -L and -I specification to simplify management of the raylib source package.
+# Customize these locations if you like but don't forget to pass them to make
+# for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig,.
+# Hint: add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
+# See below and ../examples/Makefile for more information.
+
+# RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
+RAYLIB_INSTALL_PATH ?= /usr/local/lib/raysan5
+# RAYLIB_H_INSTALL_PATH locates the installed raylib header and associated source files.
+RAYLIB_H_INSTALL_PATH ?= /usr/local/include/raysan5
+
 install :
 ifeq ($(ROOT),root)
+	# Attention! You are root. Consult this Makefile for more information."
     ifeq ($(PLATFORM_OS),LINUX)
-        # On GNU/Linux there are some standard directories that contain
-        # libraries and header files. These directory (/usr/local/lib and
-        # /usr/local/include/) are for libraries that are installed
-        # manually (without a package manager).
-        ifeq ($(RAYLIB_LIBTYPE),SHARED)
-			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so /usr/local/lib/libraylib.$(RAYLIB_VERSION).so
-			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_API_VERSION).so /usr/local/lib/libraylib.$(RAYLIB_API_VERSION).so
-			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.so /usr/local/lib/libraylib.so
-        else
-			cp --update raylib.h /usr/local/include/raylib.h
-			cp --update $(RAYLIB_RELEASE_PATH)/libraylib.a /usr/local/lib/libraylib.a
-        endif
+		# Prepare the environment as needed.
+		mkdir --parents --verbose $(RAYLIB_INSTALL_PATH)
+		mkdir --parents --verbose $(RAYLIB_H_INSTALL_PATH)
+                ifeq ($(RAYLIB_LIBTYPE),SHARED)
+			# Installing the shared library.
+			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
+			cd $(RAYLIB_INSTALL_PATH); ln -fsv libraylib.so.$(RAYLIB_VERSION) libraylib.so.$(RAYLIB_API_VERSION)
+			cd $(RAYLIB_INSTALL_PATH); ln -fsv libraylib.so.$(RAYLIB_API_VERSION) libraylib.so
+			# Uncomment to update the runtime linker cache with RAYLIB_INSTALL_PATH.
+			# Not necessary if later embedding RPATH in your executable. See examples/Makefile.
+			ldconfig $(RAYLIB_INSTALL_PATH)
+                else
+			# Installing the static library.
+			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_INSTALL_PATH)/libraylib.a
+                endif
+		# Let's have all the source.
+		cp --update --recursive $(RAYLIB_PATH)/src/*.h $(RAYLIB_H_INSTALL_PATH)/
+		cp --update --recursive $(RAYLIB_PATH)/src/*.c $(RAYLIB_H_INSTALL_PATH)/
+		cp --update --recursive $(RAYLIB_PATH)/src/external $(RAYLIB_H_INSTALL_PATH)/
+		cp --update --recursive $(RAYLIB_PATH)/release/include/AL $(RAYLIB_H_INSTALL_PATH)/external
 		@echo "raylib dev files installed/updated!"
     else
-		@echo "This function works only on GNU/Linux systems"
+		@echo "This function currently works on GNU/Linux systems. Add yours today (^;"
     endif
 else
-	@echo "Error: no root permissions"
+	@echo "Error: Root permissions needed for installation. Try sudo make install"
 endif
 
 # Remove raylib dev files installed on the system
 # TODO: see 'install' target.
 uninstall :
 ifeq ($(ROOT),root)
+		# Warning! You are root. Please confirm that there is nothing here to keep.
+		# Proceeding will remove everything under the specified locations!
     ifeq ($(PLATFORM_OS),LINUX)
-			rm --force /usr/local/include/raylib.h
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
-			rm --force /usr/local/lib/libraylib.so
-			rm --force /usr/local/lib/libraylib.$(RAYLIB_API_VERSION).so
-			rm --force /usr/local/lib/libraylib.$(RAYLIB_VERSION).so
+		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so*
+		# Uncomment to clean up the runtime linker cache. See install target.
+		ldconfig
         else
-			rm --force /usr/local/lib/libraylib.a
+		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.a
         endif
-		@echo "raylib development files removed!"
+	rm --force --interactive=once --recursive $(RAYLIB_H_INSTALL_PATH)/*
+	@echo "raylib development files removed!"
     else
 		@echo "This function works only on GNU/Linux systems"
     endif
 else
-	@echo "Error: no root permissions"
+	@echo "Error: Root permissions needed for uninstallation. Try sudo make uninstall"
 endif
 
 # Clean everything
@@ -549,7 +587,7 @@ clean:
 ifeq ($(PLATFORM_OS),WINDOWS)
 	del *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so external/stb_vorbis.o
 else
-	rm -f *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_API_VERSION).so $(RAYLIB_RELEASE_PATH)/libraylib.$(RAYLIB_VERSION).so external/stb_vorbis.o
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/libraylib.a $(RAYLIB_RELEASE_PATH)/libraylib.bc $(RAYLIB_RELEASE_PATH)/libraylib.so* external/stb_vorbis.o
 endif
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
 	rm -rf $(ANDROID_TOOLCHAIN)
