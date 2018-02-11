@@ -137,6 +137,8 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
         PUBLIC ${GRAPHICS}
     )
 
+    set(PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE})
+
     if (WITH_PIC)
       set_property(TARGET ${RAYLIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
     endif()
@@ -149,7 +151,7 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
 
   configure_file(../raylib.pc.in raylib.pc @ONLY)
   install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION lib/pkgconfig)
-  
+
   # Copy the header files to the build directory
   file(COPY "raylib.h" DESTINATION ".")
   file(COPY "rlgl.h" DESTINATION ".")
