@@ -633,7 +633,7 @@ void SetMasterVolume(float volume)
     else if (volume > 1.0f) volume = 1.0f;
  
 #if USE_MINI_AL
-    masterVolume = 1;
+    masterVolume = volume;
 #else
     alListenerf(AL_GAIN, volume);
 #endif
