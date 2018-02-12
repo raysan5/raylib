@@ -56,7 +56,7 @@ RAYLIB_H_INSTALL_PATH ?= /usr/local/include/raysan5
 # Implemented for LINUX below with CFLAGS += -Wl,-rpath,$(RAYLIB_RUNTIME_PATH)
 # This should be a fully qualified path. RAYLIB_RELEASE_PATH doesn't work here
 # because it's a relative path. You must spell it out if needed.
-# To see the result, run readelf -d ./core_basic_window
+# To see the result, run readelf -d core/core_basic_window, looking at the RPATH attribute.
 RAYLIB_RUNTIME_PATH   ?= $(RAYLIB_INSTALL_PATH)
 
 # One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
