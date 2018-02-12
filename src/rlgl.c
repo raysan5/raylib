@@ -2324,39 +2324,40 @@ char *LoadText(const char *fileName)
 
 // Load shader from files and bind default locations
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
-Shader LoadShader(char *vsFileName, char *fsFileName)
+Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
+
+    char *vShaderStr = NULL;
+    char *fShaderStr = NULL;
+
+    if (vsFileName != NULL) vShaderStr = LoadText(vsFileName);
+    if (fsFileName != NULL) fShaderStr = LoadText(fsFileName);
     
+    shader = LoadShaderCode(vShaderStr, fShaderStr);
+        
+    if (vShaderStr != NULL) free(vShaderStr);
+    if (fShaderStr != NULL) free(fShaderStr);
+
+    return shader;
+}
+
+// Load shader from code strings
+// NOTE: If shader string is NULL, using default vertex/fragment shaders
+Shader LoadShaderCode(char *vsCode, char *fsCode)
+{
+    Shader shader = { 0 };
+
     // NOTE: All locations must be reseted to -1 (no location)
     for (int i = 0; i < MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
-
+    
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int vertexShaderId = defaultVShaderId;
     unsigned int fragmentShaderId = defaultFShaderId;
-
-    if (vsFileName != NULL)
-    {
-        char *vShaderStr = LoadText(vsFileName);
-        
-        if (vShaderStr != NULL)
-        {
-            vertexShaderId = CompileShader(vShaderStr, GL_VERTEX_SHADER);
-            free(vShaderStr);
-        }
-    }
-
-    if (fsFileName != NULL)
-    {
-        char* fShaderStr = LoadText(fsFileName);
-        
-        if (fShaderStr != NULL)
-        {
-            fragmentShaderId = CompileShader(fShaderStr, GL_FRAGMENT_SHADER);
-            free(fShaderStr);
-        }
-    }
-
+    
+    if (vsCode != NULL) vertexShaderId = CompileShader(vsCode, GL_VERTEX_SHADER);
+    if (fsCode != NULL) fragmentShaderId = CompileShader(fsCode, GL_FRAGMENT_SHADER);
+    
     if ((vertexShaderId == defaultVShaderId) && (fragmentShaderId == defaultFShaderId)) shader = defaultShader;
     else 
     {
@@ -2399,7 +2400,7 @@ Shader LoadShader(char *vsFileName, char *fsFileName)
         TraceLog(LOG_DEBUG, "[SHDR ID %i] Active uniform [%s] set at location: %i", shader.id, name, location);
     }
 #endif
-
+    
     return shader;
 }
 

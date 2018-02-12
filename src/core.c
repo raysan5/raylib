@@ -294,11 +294,11 @@ static int renderOffsetX = 0;               // Offset X from render area (must b
 static int renderOffsetY = 0;               // Offset Y from render area (must be divided by 2)
 static bool fullscreen = false;             // Fullscreen mode (useful only for PLATFORM_DESKTOP)
 static Matrix downscaleView;                // Matrix to downscale view (in case screen size bigger than display size)
+static bool cursorHidden = false;           // Track if cursor is hidden
+static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_RPI) || defined(PLATFORM_WEB) || defined(PLATFORM_UWP)
 static const char *windowTitle = NULL;      // Window text title...
-static bool cursorHidden = false;           // Track if cursor is hidden
-static bool cursorOnScreen = false;         // Tracks if cursor is inside client area
 static int screenshotCounter = 0;           // Screenshots counter
 
 // Register mouse states
@@ -441,12 +441,13 @@ void InitWindow(int width, int height, void *data)
     uwpWindow = (EGLNativeWindowType)data;
 #endif
 
+    // Init hi-res timer
+    InitTimer();
+
     // Init graphics device (display device and OpenGL context)
     // NOTE: returns true if window and graphic device has been initialized successfully
     windowReady = InitGraphicsDevice(width, height);
-
-    // Init hi-res timer
-    InitTimer();
+    if (!windowReady) return;
 
 #if defined(SUPPORT_DEFAULT_FONT)
     // Load default font
@@ -1733,7 +1734,13 @@ static bool InitGraphicsDevice(int width, int height)
     // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
 #if defined(PLATFORM_DESKTOP)
     // Find monitor resolution
-    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    if (!monitor)
+    {
+        TraceLog(LOG_WARNING, "Failed to get monitor");
+        return false;
+    }
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
     displayWidth = mode->width;
     displayHeight = mode->height;

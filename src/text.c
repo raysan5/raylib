@@ -417,12 +417,15 @@ void DrawTextEx(SpriteFont spriteFont, const char *text, Vector2 position, float
                 i++;
             }
             else index = GetCharIndex(spriteFont, (unsigned char)text[i]);
-
-            DrawTexturePro(spriteFont.texture, spriteFont.chars[index].rec,
+            
+            if ((unsigned char)text[i] != ' ')
+            {
+                DrawTexturePro(spriteFont.texture, spriteFont.chars[index].rec,
                            (Rectangle){ position.x + textOffsetX + spriteFont.chars[index].offsetX*scaleFactor,
                                         position.y + textOffsetY + spriteFont.chars[index].offsetY*scaleFactor,
                                         spriteFont.chars[index].rec.width*scaleFactor,
                                         spriteFont.chars[index].rec.height*scaleFactor }, (Vector2){ 0, 0 }, 0.0f, tint);
+            }
 
             if (spriteFont.chars[index].advanceX == 0) textOffsetX += (int)(spriteFont.chars[index].rec.width*scaleFactor + spacing);
             else textOffsetX += (int)(spriteFont.chars[index].advanceX*scaleFactor + spacing);

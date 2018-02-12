@@ -32,7 +32,11 @@ else()
     find_library(XCURSOR_LIBRARY Xcursor)
     include_directories(${OPENGL_INCLUDE_DIR})
 
-    set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${XRANDR_LIBRARY} ${XINERAMA_LIBRARY} ${XI_LIBRARY} ${XXF86VM_LIBRARY} ${XCURSOR_LIBRARY})
+    if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
+      find_library(OSS_LIBRARY ossaudio)
+    endif()
+
+    set(LIBS_PRIVATE m ${pthread} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${XRANDR_LIBRARY} ${XINERAMA_LIBRARY} ${XI_LIBRARY} ${XXF86VM_LIBRARY} ${XCURSOR_LIBRARY} ${OSS_LIBRARY})
   endif()
 endif()
 
@@ -70,8 +74,8 @@ foreach(L ${LIBS_PRIVATE})
 
   set(LASTDIR ${DIR})
 
-  set(PKG_CONFIG_LIBS_PRIVATE ${PKG_CONFIG_LIBS_PRIVATE} ${DIR_OPT} ${FILE_OPT})
-  string (REPLACE ";" " " PKG_CONFIG_LIBS_PRIVATE "${PKG_CONFIG_LIBS_PRIVATE}")
+  set(__PKG_CONFIG_LIBS_PRIVATE ${__PKG_CONFIG_LIBS_PRIVATE} ${DIR_OPT} ${FILE_OPT})
+  string (REPLACE ";" " " __PKG_CONFIG_LIBS_PRIVATE "${__PKG_CONFIG_LIBS_PRIVATE}")
 endforeach(L)
 
 
@@ -82,7 +86,7 @@ function(link_libraries_to_executable executable)
   if (TARGET raylib_shared)
     target_link_libraries(${executable} raylib_shared)
   else()
-    target_link_libraries(${executable} raylib ${PKG_CONFIG_LIBS_PRIVATE})
+    target_link_libraries(${executable} raylib ${__PKG_CONFIG_LIBS_PRIVATE})
   endif()
 endfunction()
 
