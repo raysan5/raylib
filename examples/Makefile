@@ -31,6 +31,9 @@ RAYLIB_PATH        ?= ..
 
 # Define default options
 
+# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+PLATFORM              ?= PLATFORM_DESKTOP
+
 # Default path for raylib on Raspberry Pi, if installed in different path, update it!
 ifeq ($(PLATFORM),PLATFORM_RPI)
     RAYLIB_PATH       ?= /home/pi/raylib
@@ -58,9 +61,6 @@ RAYLIB_H_INSTALL_PATH ?= /usr/local/include/raysan5
 # because it's a relative path. You must spell it out if needed.
 # To see the result, run readelf -d core/core_basic_window, looking at the RPATH attribute.
 RAYLIB_RUNTIME_PATH   ?= $(RAYLIB_INSTALL_PATH)
-
-# One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-PLATFORM              ?= PLATFORM_DESKTOP
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
