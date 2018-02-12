@@ -1112,7 +1112,7 @@ double GetTime(void)
 #endif
 }
 
-// Converts Color to float array and normalizes
+// Returns normalized float array for a Color
 float *ColorToFloat(Color color)
 {
     static float buffer[4];
@@ -1123,6 +1123,64 @@ float *ColorToFloat(Color color)
     buffer[3] = (float)color.a/255;
 
     return buffer;
+}
+
+// Returns hexadecimal value for a Color
+int ColorToInt(Color color)
+{
+    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
+}
+
+// Returns HSV values for a Color
+// NOTE: Hue is returned as degrees [0..360]
+Vector3 ColorToHSV(Color color)
+{
+    Vector3 rgb = { (float)color.r/255.0f, (float)color.g/255.0f, (float)color.b/255.0f };
+    Vector3 hsv = { 0.0f, 0.0f, 0.0f };
+    float min, max, delta;
+
+    min = rgb.x < rgb.y ? rgb.x : rgb.y;
+    min = min  < rgb.z ? min  : rgb.z;
+
+    max = rgb.x > rgb.y ? rgb.x : rgb.y;
+    max = max  > rgb.z ? max  : rgb.z;
+
+    hsv.z = max;            // Value
+    delta = max - min;
+    
+    if (delta < 0.00001f)
+    {
+        hsv.y = 0.0f;
+        hsv.x = 0.0f;       // Undefined, maybe NAN?
+        return hsv;
+    }
+    
+    if (max > 0.0f) 
+    {
+        // NOTE: If max is 0, this divide would cause a crash
+        hsv.y = (delta/max);    // Saturation
+    } 
+    else 
+    {
+        // NOTE: If max is 0, then r = g = b = 0, s = 0, h is undefined
+        hsv.y = 0.0f;
+        hsv.x = NAN;        // Undefined
+        return hsv;
+    }
+    
+    // NOTE: Comparing float values could not work properly
+    if (rgb.x >= max) hsv.x = (rgb.y - rgb.z)/delta;    // Between yellow & magenta
+    else
+    {
+        if (rgb.y >= max) hsv.x = 2.0f + (rgb.z - rgb.x)/delta;  // Between cyan & yellow
+        else hsv.x = 4.0f + (rgb.x - rgb.y)/delta;      // Between magenta & cyan
+    }
+    
+    hsv.x *= 60.0f;     // Convert to degrees
+
+    if (hsv.x < 0.0f) hsv.x += 360.0f;
+
+    return hsv;
 }
 
 // Returns a Color struct from hexadecimal value
@@ -1138,11 +1196,7 @@ Color GetColor(int hexValue)
     return color;
 }
 
-// Returns hexadecimal value for a Color
-int GetHexValue(Color color)
-{
-    return (((int)color.r << 24) | ((int)color.g << 16) | ((int)color.b << 8) | (int)color.a);
-}
+
 
 // Returns a random value between min and max (both included)
 int GetRandomValue(int min, int max)
