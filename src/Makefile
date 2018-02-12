@@ -567,7 +567,7 @@ ifeq ($(ROOT),root)
 		# Proceeding will remove everything under the specified locations!
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
-		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so*
+		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so
 		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_API_VERSION)
 		rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
 		# Uncomment to clean up the runtime linker cache. See install target.
