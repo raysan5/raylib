@@ -529,7 +529,7 @@ RAYLIB_H_INSTALL_PATH ?= /usr/local/include/raysan5
 
 install :
 ifeq ($(ROOT),root)
-	# Attention! You are root. Consult this Makefile for more information."
+	# Attention! You are root. Consult this Makefile for more information.
     ifeq ($(PLATFORM_OS),LINUX)
 		# Prepare the environment as needed.
 		mkdir --parents --verbose $(RAYLIB_INSTALL_PATH)
