@@ -10,12 +10,21 @@ set(RAYLIB raylib)    # Name of the generated library
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
 set(WITH_PIC      OFF CACHE BOOL "Compile static library as position-independent code" OFF)
 # Build a static and/or shared raylib?
-set(SHARED_RAYLIB OFF CACHE BOOL "Build raylib as a dynamic library")
-set(STATIC_RAYLIB ON  CACHE BOOL "Build raylib as a static library")
+set(SHARED OFF CACHE BOOL "Build raylib as a dynamic library")
+set(STATIC ON  CACHE BOOL "Build raylib as a static library")
 set(MACOS_FATLIB  ON  CACHE BOOL "Build fat library for both i386 and x86_64 on macOS")
 
-if(NOT (STATIC_RAYLIB OR SHARED_RAYLIB))
-  message(FATAL_ERROR "Nothing to do if both -DSHARED_RAYLIB=OFF and -DSTATIC_RAYLIB=OFF...")
+if(NOT (STATIC OR SHARED))
+  message(FATAL_ERROR "Nothing to do if both -DSHARED=OFF and -DSTATIC=OFF...")
+endif()
+
+if(DEFINED SHARED_RAYLIB)
+  set(SHARED ${SHARED_RAYLIB})
+  message(DEPRECATION "-DSHARED_RAYLIB is deprecated. Please use -DSHARED instead.")
+endif()
+if(DEFINED STATIC_RAYLIB)
+  set(STATIC ${STATIC_RAYLIB})
+  message(DEPRECATION "-DSTATIC_RAYLIB is deprecated. Please use -DSTATIC instead.")
 endif()
 
 # Platform
@@ -85,7 +94,7 @@ endif()
 
 if(MACOS_FATLIB)
     if (CMAKE_OSX_ARCHITECTURES)
-        message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides BUILD_MACOS_FATLIB=ON")
+        message(FATAL_ERROR "User supplied -DCMAKE_OSX_ARCHITECTURES overrides -DMACOS_FATLIB=ON")
     else()
         SET(CMAKE_OSX_ARCHITECTURES "x86_64;i386")
     endif()
@@ -94,7 +103,7 @@ endif()
 # Which platform?
 if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
 
-  if(${SHARED_RAYLIB})
+  if(${SHARED})
     add_library(${RAYLIB}_shared SHARED ${sources})
 
     target_compile_definitions(${RAYLIB}_shared
@@ -127,9 +136,9 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
         PUBLIC_HEADER DESTINATION include
       )
     endif()
-  endif(${SHARED_RAYLIB})
+  endif(${SHARED})
 
-  if(${STATIC_RAYLIB})
+  if(${STATIC})
     add_library(${RAYLIB} STATIC ${sources})
 
     target_compile_definitions(${RAYLIB}
@@ -147,7 +156,7 @@ if(${PLATFORM} MATCHES "PLATFORM_DESKTOP")
       ARCHIVE DESTINATION lib
       PUBLIC_HEADER DESTINATION include
     )
-  endif(${STATIC_RAYLIB})
+  endif(${STATIC})
 
   configure_file(../raylib.pc.in raylib.pc @ONLY)
   install(FILES ${CMAKE_BINARY_DIR}/release/raylib.pc DESTINATION lib/pkgconfig)
