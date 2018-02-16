@@ -9,6 +9,7 @@ project('projectname', 'c', version: '1.0',
 cc = meson.get_compiler('c')
 
 # Find dependencies
+# glfw3 and openal are not needed for raylib > 1.8.0
 glfw_dep = dependency('glfw3')
 gl_dep = dependency('gl')
 openal_dep = dependency('openal')
