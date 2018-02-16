@@ -18,3 +18,6 @@ We added comments to the file to give you an idea which values you should edit.
 For a full overview of options please check the [meson manual](http://mesonbuild.com/Manual.html).
 
 In the provided file we assume that the build file is located at the root folder of your project, and that all your sources are in a `src` subfolder.
+
+Check out the `examples` directory for a simple example on how to use this template.
+You can also look at [raymario](https://github.com/jubalh/raymario) for a slightly more complex example which also installs resource files.
