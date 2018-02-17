@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_TITLE_CHAR 128
+#define MAX_TITLE_CHAR 256
 #define MAX_SUBTITLE_CHAR 256
 
 //----------------------------------------------------------------------------------
@@ -66,7 +66,12 @@ static int state = 0;
 
 static Mission *missions = NULL;
 
-static bool showResults = false;
+static char headline[MAX_TITLE_CHAR] = "\0";
+
+SpriteFont fontNews;
+
+// String (const char *) replacement function
+static char *StringReplace(char *orig, char *rep, char *with);
 
 //----------------------------------------------------------------------------------
 // Ending Screen Functions Definition
@@ -84,60 +89,43 @@ void InitEndingScreen(void)
     
     texBackground = LoadTexture("resources/textures/ending_background.png");
     texVignette = LoadTexture("resources/textures/message_vignette.png");
-    
     fxNews = LoadSound("resources/audio/fx_batman.ogg");
     
-    // TODO: Check game results!
     missions = LoadMissions("resources/missions.txt");
     int wordsCount = missions[currentMission].wordsCount;
-    TraceLog(LOG_WARNING, "Words count %i", wordsCount);
+
+    strcpy(headline, missions[currentMission].msg);     // Base headline
+    int len = strlen(headline);
     
-    char title[MAX_TITLE_CHAR] = "\0";
-    //char subtitle[MAX_SUBTITLE_CHAR] = "\0";
-    
-    char *ptrTitle = title;
-    int len = 0;
-    
+    // Remove @ from headline
+    // TODO: Also remove additional spaces
+    for (int i = 0; i < len; i++)
+    {
+        if (headline[i] == '@') headline[i] = ' ';
+    }
+
     for (int i = 0; i < wordsCount; i++)
     {
-        if (messageWords[i].id == missions[currentMission].sols[i])
+        if (messageWords[i].id != missions[currentMission].sols[i])
         {
-            len = strlen(messageWords[i].text);
-            strncpy(ptrTitle, messageWords[i].text, len);
-            ptrTitle += len;
+            // WARNING: It fails if the last sentence word has a '.' after space
+            char *title = StringReplace(headline, messageWords[i].text, codingWords[messageWords[i].id]);
             
-            // title[len] = ' ';
-            // len++;
-            // ptrTitle++;
-        }
-        else
-        {
-            TraceLog(LOG_WARNING, "Coding word: %s", codingWords[messageWords[i].id]);
-            len = strlen(codingWords[messageWords[i].id]);
-            TraceLog(LOG_WARNING, "Lenght: %i", len);
-            strncpy(ptrTitle, codingWords[messageWords[i].id], len);
-            ptrTitle += len;
+            strcpy(headline, title);     // Base headline updated
             
-            // title[len] = ' ';
-            // len++;
-            // ptrTitle++;
+            free(title);
         }
     }
     
-    ptrTitle = '\0';
-    
-    //TraceLog(LOG_WARNING, "Titular: %s", title);
+    TraceLog(LOG_WARNING, "Titular: %s", headline);
     
     // Generate newspaper with title and subtitle
     Image imNewspaper = LoadImage("resources/textures/ending_newspaper.png");
-    SpriteFont fontNews = LoadSpriteFontEx("resources/fonts/Lora-Bold.ttf", 82, 250, 0);
-    ImageDrawTextEx(&imNewspaper, (Vector2){ 50, 220 }, fontNews, "FRACASO EN LA GGJ18!", fontNews.baseSize, 0, DARKGRAY);
+    fontNews = LoadSpriteFontEx("resources/fonts/Lora-Bold.ttf", 32, 250, 0);
+    ImageDrawTextEx(&imNewspaper, (Vector2){ 50, 220 }, fontNews, headline, fontNews.baseSize, 0, DARKGRAY);
     
-    // TODO: Draw subtitle message
-    //ImageDrawTextEx(&imNewspaper, (Vector2){ 50, 210 }, fontNews, "SUBE LA ESCALERA!", fontNews.baseSize, 0, DARKGRAY);
-  
     texNewspaper = LoadTextureFromImage(imNewspaper);
-    UnloadSpriteFont(fontNews);
+    //UnloadSpriteFont(fontNews);
     UnloadImage(imNewspaper);
 }
 
@@ -167,8 +155,6 @@ void UpdateEndingScreen(void)
         if (currentMission >= totalMissions) finishScreen = 2;
         else finishScreen = 1;
     }
-    
-    if (IsKeyPressed(KEY_SPACE)) showResults = !showResults;
 }
 
 // Ending Screen Draw logic
@@ -181,16 +167,15 @@ void DrawEndingScreen(void)
                    (Vector2){ (float)texNewspaper.width*scale/2, (float)texNewspaper.height*scale/2 }, rotation, WHITE);
 
     DrawTextureEx(texVignette, (Vector2){ 0, 0 }, 0.0f, 2.0f, WHITE);
+
+    // Draw debug information
+    DrawTextEx(fontNews, headline, (Vector2){ 10, 10 }, fontNews.baseSize, 0, RAYWHITE);
     
-    if (showResults)
+    for (int i = 0; i < missions[currentMission].wordsCount; i++)
     {
-        for (int i = 0; i < missions[currentMission].wordsCount; i++)
-        {
-            if (messageWords[i].id == missions[currentMission].sols[i]) DrawText(messageWords[i].text, 10, 10 + 30*i, 20, GREEN);
-            else DrawText(codingWords[messageWords[i].id], 10, 10 + 30*i, 20, RED);
-        }
+        DrawText(codingWords[messageWords[i].id], 10, 60 + 30*i, 20, (messageWords[i].id == missions[currentMission].sols[i]) ? GREEN : RED);
     }
-    
+
     if (state == 1) DrawButton("continuar");
 }
 
@@ -209,4 +194,55 @@ void UnloadEndingScreen(void)
 int FinishEndingScreen(void)
 {
     return finishScreen;
+}
+
+// String (const char *) replacement function
+// NOTE: Internally allocated memory must be freed by the user (if return != NULL)
+// https://stackoverflow.com/questions/779875/what-is-the-function-to-replace-string-in-c
+static char *StringReplace(char *orig, char *rep, char *with)
+{
+    char *result;   // the return string
+    char *ins;      // the next insert point
+    char *tmp;      // varies
+    int len_rep;    // length of rep (the string to remove)
+    int len_with;   // length of with (the string to replace rep with)
+    int len_front;  // distance between rep and end of last rep
+    int count;      // number of replacements
+
+    // Sanity checks and initialization
+    if (!orig || !rep) return NULL;
+    
+    len_rep = strlen(rep);
+    if (len_rep == 0) return NULL;  // Empty rep causes infinite loop during count
+    
+    if (!with) with = "";           // Replace with nothing if not provided
+    len_with = strlen(with);
+
+    // Count the number of replacements needed
+    ins = orig;
+    for (count = 0; tmp = strstr(ins, rep); ++count) 
+    {
+        ins = tmp + len_rep;
+    }
+
+    tmp = result = malloc(strlen(orig) + (len_with - len_rep)*count + 1);
+
+    if (!result) return NULL;   // Memory could not be allocated
+
+    // First time through the loop, all the variable are set correctly from here on,
+    //    tmp points to the end of the result string
+    //    ins points to the next occurrence of rep in orig
+    //    orig points to the remainder of orig after "end of rep"
+    while (count--) 
+    {
+        ins = strstr(orig, rep);
+        len_front = ins - orig;
+        tmp = strncpy(tmp, orig, len_front) + len_front;
+        tmp = strcpy(tmp, with) + len_with;
+        orig += len_front + len_rep; // move to next "end of rep"
+    }
+    
+    strcpy(tmp, orig);
+    
+    return result;
 }

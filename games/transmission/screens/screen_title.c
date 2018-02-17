@@ -71,7 +71,7 @@ void InitTitleScreen(void)
     
     texBackground = LoadTexture("resources/textures/title_background.png");
     fxTyping = LoadSound("resources/audio/fx_typing.ogg");
-    fontTitle = LoadSpriteFontEx("resources/fonts/fontTitle.ttf", 96, 0, 0);
+    fontTitle = LoadSpriteFontEx("resources/fonts/mom_typewritter.ttf", 96, 0, 0);
     
     titleSize = 44;
     transmissionPosition = (Vector2){519, 221};
