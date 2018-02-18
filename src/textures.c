@@ -1374,6 +1374,8 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 {
     int length = strlen(text);
     int posX = 0;
+    int index;                  // Index position in sprite font
+    unsigned char character;       // Current character
 
     Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
     
@@ -1389,13 +1391,39 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
 
     for (int i = 0; i < length; i++)
     {
-        CharInfo letter = font.chars[(int)text[i] - 32];
-        
-        ImageDraw(&imText, imFont, letter.rec, (Rectangle){ posX + letter.offsetX, 
-                  letter.offsetY, letter.rec.width, letter.rec.height });
+        if ((unsigned char)text[i] == '\n')
+        {
+            // TODO: Support line break
+        }
+        else
+        {
+            if ((unsigned char)text[i] == 0xc2)         // UTF-8 encoding identification HACK!
+            {
+                // Support UTF-8 encoded values from [0xc2 0x80] -> [0xc2 0xbf](¿)
+                character = (unsigned char)text[i + 1];
+                index = GetGlyphIndex(font, (int)character);
+                i++;
+            }
+            else if ((unsigned char)text[i] == 0xc3)    // UTF-8 encoding identification HACK!
+            {
+                // Support UTF-8 encoded values from [0xc3 0x80](À) -> [0xc3 0xbf](ÿ)
+                character = (unsigned char)text[i + 1];
+                index = GetGlyphIndex(font, (int)character + 64);
+                i++;
+            }
+            else index = GetGlyphIndex(font, (unsigned char)text[i]);
 
-        if (letter.advanceX == 0) posX += letter.rec.width + spacing;
-        else posX += letter.advanceX + spacing;
+            CharInfo letter = font.chars[index];
+            
+            if ((unsigned char)text[i] != ' ')
+            {
+                ImageDraw(&imText, imFont, letter.rec, (Rectangle){ posX + letter.offsetX, 
+                          letter.offsetY, letter.rec.width, letter.rec.height });
+            }
+
+            if (letter.advanceX == 0) posX += letter.rec.width + spacing;
+            else posX += letter.advanceX + spacing;
+        }
     }
 
     UnloadImage(imFont);

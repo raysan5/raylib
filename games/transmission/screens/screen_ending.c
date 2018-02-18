@@ -113,7 +113,7 @@ void InitEndingScreen(void)
             
             strcpy(headline, title);     // Base headline updated
             
-            free(title);
+            if (title != NULL) free(title);
         }
     }
     
