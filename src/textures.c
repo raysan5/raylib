@@ -1375,13 +1375,16 @@ Image ImageTextEx(SpriteFont font, const char *text, float fontSize, int spacing
     int length = strlen(text);
     int posX = 0;
     int index;                  // Index position in sprite font
-    unsigned char character;       // Current character
+    unsigned char character;    // Current character
 
+    // TODO: ISSUE: Measured text size does not seem to be correct... issue on ImageDraw()
     Vector2 imSize = MeasureTextEx(font, text, font.baseSize, spacing);
     
     TraceLog(LOG_DEBUG, "Text Image size: %f, %f", imSize.x, imSize.y);
 
     // NOTE: glGetTexImage() not available in OpenGL ES
+    // TODO: This is horrible, retrieving font texture from GPU!!! 
+    // Define ImageFont struct? or include Image spritefont in SpriteFont struct?
     Image imFont = GetTextureData(font.texture);
     
     ImageColorTint(&imFont, tint);                    // Apply color tint to font
