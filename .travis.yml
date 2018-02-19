@@ -58,5 +58,5 @@ deploy:
   skip_cleanup: true
   on:
     repo: raysan5/raylib
-    branch: develop
+    branch: master
     tags: true

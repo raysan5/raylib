@@ -61,5 +61,5 @@ deploy:
     prerelease: false
     force_update: true
     on:
-      branch: develop
+      branch: master
       appveyor_repo_tag: true        # deploy on tag push only
