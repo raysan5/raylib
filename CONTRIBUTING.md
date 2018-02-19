@@ -34,18 +34,6 @@ Source code is extensively commented for that purpose, raylib primary learning m
 
  > learn by reading code and examples
 
-
-### Using raylib develop branch
-
-raylib [master branch](https://github.com/raysan5/raylib) contains the latest raylib release but all 
-the future work is always done on [develop branch](https://github.com/raysan5/raylib/tree/develop), 
-it's far ahead of master and I try to keep it always stable with latest library changes.
-
-Please, if issuing a bug or sending a pull-request, verify that you're using develop branch.
-
-Note that while using develop branch predefined Notepad++ building scripts could not work, in that case,
-use provided [Makefile](https://github.com/raysan5/raylib/blob/develop/src/Makefile) or [CMake](https://github.com/raysan5/raylib/blob/develop/src/CMakeLists.txt) building systems.
-
 For detailed information on building raylib and examples, please check [raylib Wiki](https://github.com/raysan5/raylib/wiki).
 
 ### Opening new Issues
@@ -61,8 +49,6 @@ To open new issue for raylib (bug, enhancement, discussion...), just try to foll
  - You can check other issues to see how is being done!
 
 ### Sending a Pull-Request
-
-To send a pull-request, first of all, make sure you're sending it to [develop branch](https://github.com/raysan5/raylib/tree/develop). Here are some other rules:
 
  - Make sure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
  - Don't send big pull-requests (lots of changelists), they are difficult to review. It's better to send small pull-request, one at a time.
