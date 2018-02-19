@@ -39,7 +39,7 @@ before_build:
   - cd build
 
 build_script:
-  - cmake -G %GENERATOR% -DSTATIC_RAYLIB=ON -DSHARED_RAYLIB=ON -DBUILD_EXAMPLES=%examples% -DBUILD_GAMES=%examples% ..
+  - cmake -G %GENERATOR% -DSTATIC=ON -DSHARED=ON -DBUILD_EXAMPLES=%examples% -DBUILD_GAMES=%examples% ..
   - cmake --build . --target install
 
 after_build:

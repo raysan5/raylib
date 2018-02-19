@@ -1,4 +1,4 @@
-﻿# Total missions
+# Total missions
 # NOTE: Missions follow the order of this file
 t 4
 # -----------------------------------------------------------------
@@ -10,7 +10,7 @@ k oviparo
 #
 # Message to be coded
 # NOTE: Sensible words must be noted using @ 
-m El @presidente es visto en un  @hotel   acompañado de su  @amante  .
+m El @presidente es visto en un  @hotel   acompañado de su  @amante.
 #
 # Solution to mission
 # NOTE: Provide the correct solution nums, according to above words
@@ -26,7 +26,7 @@ k roedor
 #
 # Message to be coded
 # NOTE: Sensible words must be noted using @ 
-m Un   @ovni    ha sido detectado en el    @cielo    del    @pais  . Preparaos para el ataque de un   @alien  .
+m Un   @ovni    ha sido detectado en el    @cielo    del    @pais  . Preparaos para el ataque de un   @alien.
 #
 # NOTE: Provide the correct solution nums, according to above words
 # WARNING: Always provide 8 values, use -1 for not used ones

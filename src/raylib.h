@@ -948,19 +948,20 @@ RLAPI void DrawTexturePro(Texture2D texture, Rectangle sourceRec, Rectangle dest
 RLAPI SpriteFont GetDefaultFont(void);                                                                   // Get the default SpriteFont
 RLAPI SpriteFont LoadSpriteFont(const char *fileName);                                                   // Load SpriteFont from file into GPU memory (VRAM)
 RLAPI SpriteFont LoadSpriteFontEx(const char *fileName, int fontSize, int charsCount, int *fontChars);   // Load SpriteFont from file with extended parameters
-RLAPI void UnloadSpriteFont(SpriteFont spriteFont);                                                      // Unload SpriteFont from GPU memory (VRAM)
+RLAPI void UnloadSpriteFont(SpriteFont font);                                                            // Unload SpriteFont from GPU memory (VRAM)
 
 // Text drawing functions
 RLAPI void DrawFPS(int posX, int posY);                                                                  // Shows current FPS
 RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);                    // Draw text (using default font)
-RLAPI void DrawTextEx(SpriteFont spriteFont, const char* text, Vector2 position,                         // Draw text using SpriteFont and additional parameters
+RLAPI void DrawTextEx(SpriteFont font, const char* text, Vector2 position,                               // Draw text using SpriteFont and additional parameters
                 float fontSize, int spacing, Color tint);
 
 // Text misc. functions
 RLAPI int MeasureText(const char *text, int fontSize);                                                   // Measure string width for default font
-RLAPI Vector2 MeasureTextEx(SpriteFont spriteFont, const char *text, float fontSize, int spacing);       // Measure string size for SpriteFont
+RLAPI Vector2 MeasureTextEx(SpriteFont font, const char *text, float fontSize, int spacing);             // Measure string size for SpriteFont
 RLAPI const char *FormatText(const char *text, ...);                                                     // Formatting of text with variables to 'embed'
 RLAPI const char *SubText(const char *text, int position, int length);                                   // Get a piece of a text string
+RLAPI int GetGlyphIndex(SpriteFont font, int character);                                                 // Returns index position for a unicode character on sprite font
 
 //------------------------------------------------------------------------------------
 // Basic 3d Shapes Drawing Functions (Module: models)
