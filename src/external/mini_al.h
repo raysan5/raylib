@@ -1557,6 +1557,10 @@ void mal_pcm_convert(void* pOut, mal_format formatOut, const void* pIn, mal_form
 #include <string.h> // For memset()
 #endif
 
+#if defined(MAL_APPLE) && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200)
+#include <mach/mach_time.h> // For mach_absolute_time()
+#endif
+
 #ifdef MAL_POSIX
 #include <unistd.h>
 #include <dlfcn.h>
@@ -2081,6 +2085,24 @@ double mal_timer_get_time_in_seconds(mal_timer* pTimer)
     }
 
     return (counter.QuadPart - pTimer->counter) / (double)g_mal_TimerFrequency.QuadPart;
+}
+#elif defined(MAL_APPLE) && (__MAC_OS_X_VERSION_MIN_REQUIRED < 101200)
+static uint64_t g_mal_TimerFrequency = 0;
+void mal_timer_init(mal_timer* pTimer)
+{
+    mach_timebase_info_data_t baseTime;
+    mach_timebase_info(&baseTime);
+    g_mal_TimerFrequency = (baseTime.denom * 1e9) / baseTime.numer;
+    
+    pTimer->counter = mach_absolute_time();
+}
+
+double mal_timer_get_time_in_seconds(mal_timer* pTimer)
+{
+    uint64_t newTimeCounter = mach_absolute_time();
+    uint64_t oldTimeCounter = pTimer->counter;
+    
+    return (newTimeCounter - oldTimeCounter) / g_mal_TimerFrequency;
 }
 #else
 void mal_timer_init(mal_timer* pTimer)
