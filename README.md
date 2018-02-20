@@ -37,8 +37,7 @@ features
 raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option I found for 
 multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, maintained, ...).
 
-raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, [OpenAL Soft](http://kcat.strangesoft.net/openal.html) audio library, in multiple flavours,
-to accomodate to Android, Raspberry Pi and HTML5.
+raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, the amazing [mini_al](https://github.com/dr-soft/mini_al) audio library, single-file header-only and supporting multiple platforms and audio backends.
 
 *On Android, `native_app_glue module` (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
 
@@ -47,11 +46,9 @@ to accomodate to Android, Raspberry Pi and HTML5.
 build and installation
 ----------------------
 
-Binary releases for Windows, Linux and macOS are available at the [Github Releases](https://github.com/raysan5/raylib/releases) page. Raylib is also available via following package managers:
+Binary releases for Windows, Linux and macOS are available at the [Github Releases](https://github.com/raysan5/raylib/releases) page. raylib is also available via multiple package managers on multiple OS distributions. For more info check [raylib Wiki](https://github.com/raysan5/raylib/wiki).
 
-   * Homebrew: `brew install raylib`
-
-To build raylib yourself, check out the [raylib Wiki](https://github.com/raysan5/raylib/wiki) for detailed instructions.
+To build raylib yourself, check out also the [raylib Wiki](https://github.com/raysan5/raylib/wiki) for detailed instructions.
 
 raylib has been developed using exclusively two tools: 
 
