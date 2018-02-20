@@ -34,10 +34,11 @@ features
    *  NO external dependencies, all required libraries included with raylib
    *  Complete bindings to LUA ([raylib-lua](https://github.com/raysan5/raylib-lua)) and Go ([raylib-go](https://github.com/gen2brain/raylib-go))
 
-raylib uses on its core module the outstanding [GLFW3](http://www.glfw.org/) library. The best option I found for 
-multiplatform (Windows, Linux, Mac) window/context and input management (clean, focused, great license, well documented, modern, maintained, ...).
+raylib uses on its [core](https://github.com/raysan5/raylib/blob/master/src/core.c) module the outstanding [GLFW3](http://www.glfw.org/) library, embedded inside raylib in the form of [rglfw](https://github.com/raysan5/raylib/blob/master/src/rglfw.c) module, avoiding that way external dependencies.
 
-raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, the amazing [mini_al](https://github.com/dr-soft/mini_al) audio library, single-file header-only and supporting multiple platforms and audio backends.
+raylib uses on its [audio](https://github.com/raysan5/raylib/blob/master/src/audio.c) module, the amazing [mini_al](https://github.com/dr-soft/mini_al) audio library, single-file header-only and supporting multiple platforms and multiple audio backends.
+
+raylib uses internally multiple single-file header-only libraries to support multiple fileformats loading and saving, all those libraries are embedded with raylib and available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory.
 
 *On Android, `native_app_glue module` (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
 
