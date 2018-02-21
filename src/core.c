@@ -752,7 +752,7 @@ int GetScreenHeight(void)
 void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #if defined(__linux__)
+    #if defined(__linux__) && defined(_GLFW_X11)
         XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
     #else
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -765,7 +765,7 @@ void ShowCursor()
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #if defined(__linux__)
+    #if defined(__linux__) && defined(_GLFW_X11)
         XColor col;
         const char nil[] = {0};
 
