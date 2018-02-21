@@ -44,15 +44,11 @@
 # Define required raylib variables
 RAYLIB_VERSION     = 1.9.4
 RAYLIB_API_VERSION = 1
+
+# See below for alternatives.
 RAYLIB_PATH        = ..
 
 # Define default options
-
-# RAYLIB_RELEASE_PATH points to provided binaries and your immediate build of raylib.
-# It is further modified below by PLATFORM below.
-RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/release/libs
-
-# See install target for *_INSTALL_PATH locations.
 
 # One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM             ?= PLATFORM_DESKTOP
@@ -76,6 +72,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # Use external GLFW library instead of rglfw module
+# TODO: Review usage of examples on Linux.
 USE_EXTERNAL_GLFW    ?= FALSE
 
 # Use Wayland display server protocol on Linux desktop
@@ -84,10 +81,13 @@ USE_WAYLAND_DISPLAY  ?= FALSE
 
 # See below for more GRAPHICS options.
 
+# See below for RAYLIB_RELEASE_PATH.
+
+# See install target for *_INSTALL_PATH locations.
+
 # Use cross-compiler for PLATFORM_RPI
 ifeq ($(PLATFORM),PLATFORM_RPI)
     USE_RPI_CROSS_COMPILER ?= FALSE
-
     ifeq ($(USE_RPI_CROSS_COMPILER),TRUE)
         RPI_TOOLCHAIN ?= C:/SysGCC/Raspberry
         RPI_TOOLCHAIN_SYSROOT ?= $(RPI_TOOLCHAIN)/arm-linux-gnueabihf/sysroot
@@ -125,6 +125,23 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
+# RAYLIB_PATH adjustment for different platforms.
+# If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
+# Required for ldconfig or other tools that do not perform path expansion.
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_PREFIX ?= ..
+        RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
+    endif
+endif
+# Default path for raylib on Raspberry Pi, if installed in different path, update it!
+# TODO: update install: target in src/Makefile for RPI, consider relation to LINUX.
+# WARNING: The following is copied from examples/Makefile and is here only for reference.
+# Consequences of enabling this are UNKNOWN. Please test and report.
+#ifeq ($(PLATFORM),PLATFORM_RPI)
+#    RAYLIB_PATH       ?= /home/pi/raylib
+#endif
+
 # Force OpenAL Soft audio backend for OSX platform
 # NOTE 1: mini_al library does not support CoreAudio yet
 # NOTE 2: Required OpenAL libraries should be available on OSX
@@ -151,6 +168,10 @@ ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # Android architecture: ARM or ARM64
     ANDROID_ARCH ?= ARM
 endif
+
+# RAYLIB_RELEASE_PATH points to provided binaries or your immediate build of raylib.
+# It is further modified below by PLATFORM below.
+RAYLIB_RELEASE_PATH  ?= $(RAYLIB_PATH)/release/libs
 
 # Define output directory for compiled library
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
@@ -189,17 +210,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     #GRAPHICS = GRAPHICS_API_OPENGL_11  # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21  # Uncomment to use OpenGL 2.1
 endif
-
 ifeq ($(PLATFORM),PLATFORM_RPI)
     # On RPI OpenGL ES 2.0 must be used
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
-
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
 endif
-
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS = GRAPHICS_API_OPENGL_ES2
@@ -270,10 +288,11 @@ endif
 #  -Wall                 turns on most, but not all, compiler warnings
 #  -std=c99              defines C language mode (standard C from 1999 revision)
 #  -std=gnu99            defines C language mode (GNU C from 1999 revision)
+#  -fgnu89-inline        declaring inline functions support (GCC optimized)
 #  -Wno-missing-braces   ignore invalid warning (GCC bug 53119)
 #  -D_DEFAULT_SOURCE     use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
 #  -Werror=pointer-arith catch unportable code that does direct arithmetic on void pointers
-CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -Werror=pointer-arith
+CFLAGS += -O1 -Wall -std=c99 -D_DEFAULT_SOURCE -fgnu89-inline -Wno-missing-braces -Werror=pointer-arith
 
 ifeq ($(RAYLIB_BUILD_MODE), DEBUG)
     CFLAGS += -g
@@ -339,13 +358,15 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         LDFLAGS += -L. -Lsrc -L/usr/local/lib -L$(RAYLIB_RELEASE_PATH)
     endif
     ifeq ($(USE_EXTERNAL_GLFW),TRUE)
+        # Check the version name. If GLFW3 was built manually, it may have produced
+        # a static library known as libglfw3.a. In that case, the name should be -lglfw3
         LDFLAGS += -lglfw
     endif
 endif
 
 # Define additional directories containing required header files
 ifeq ($(PLATFORM),PLATFORM_RPI)
-    # RPI requried libraries
+    # RPI required libraries
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vmcs_host/linux
     INCLUDE_PATHS += -I$(RPI_TOOLCHAIN_SYSROOT)/opt/vc/include/interface/vcos/pthreads
@@ -509,8 +530,7 @@ stb_vorbis.o: external/stb_vorbis.c external/stb_vorbis.h
 utils.o : utils.c utils.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
-# Install generated and needed files to required directories
-# TODO: Add other platforms. Remove sudo requirement, i.e. add USER mode.
+# Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
 # libraries and header files. These directories (often /usr/local/lib and
 # /usr/local/include) are for libraries that are installed manually
@@ -520,6 +540,7 @@ utils.o : utils.c utils.h
 # for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig.
 # Hint: add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
 # See below and ../examples/Makefile for more information.
+# TODO: Add other platforms. FreeBSD?  Remove sudo requirement, i.e. add USER mode.
 
 # RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
 RAYLIB_INSTALL_PATH ?= /usr/local/lib/raysan5
