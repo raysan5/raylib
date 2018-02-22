@@ -9,8 +9,9 @@
 *       If not defined, the library is in header only mode and can be included in other headers
 *       or source files without problems. But only ONE file should hold the implementation.
 *
-*   #define RAYMATH_EXTERN_INLINE
-*       Inlines all functions code, so it runs faster. This requires lots of memory on system.
+*   #define RAYMATH_HEADER_ONLY
+*       Define static inline functions code, so #include header suffices for use.
+*       This may use up lots of memory.
 *   
 *   #define RAYMATH_STANDALONE
 *       Avoid raylib.h header inclusion in this file. 
@@ -41,8 +42,8 @@
 #ifndef RAYMATH_H
 #define RAYMATH_H
 
-//#define RAYMATH_STANDALONE        // NOTE: To use raymath as standalone lib, just uncomment this line
-//#define RAYMATH_EXTERN_INLINE     // NOTE: To compile functions as static inline, uncomment this line
+//#define RAYMATH_STANDALONE      // NOTE: To use raymath as standalone lib, just uncomment this line
+//#define RAYMATH_HEADER_ONLY     // NOTE: To compile functions as static inline, uncomment this line
 
 #ifndef RAYMATH_STANDALONE
     #include "raylib.h"             // Required for structs: Vector3, Matrix
@@ -51,14 +52,21 @@
 #ifdef __cplusplus
     #define RMEXTERN extern "C"     // Functions visible from other files (no name mangling of functions in C++)
 #else
-    #define RMEXTERN extern         // Functions visible from other files
+    #define RMEXTERN                // Functions visible from other files
 #endif
 
-#if defined(RAYMATH_EXTERN_INLINE)
-    #define RMDEF RMEXTERN inline   // Functions are embeded inline (compiler generated code)
-#else
-    #define RMDEF RMEXTERN
+#if defined RAYMATH_IMPLEMENTATION && defined RAYMATH_HEADER_ONLY
+    #error "Specifying both RAYMATH_IMPLEMENTATION and RAYMATH_HEADER_ONLY is contradictory"
 #endif
+
+#ifdef RAYMATH_IMPLEMENTATION
+    #define RMDEF extern inline // Provide external definition
+#elif defined RAYMATH_HEADER_ONLY
+    #define RMDEF static inline // Functions may be inlined, no external out-of-line definition
+#else
+    #define RMDEF inline        // Functions may be inlined or external definition used
+#endif
+
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -100,13 +108,15 @@
         float m2, m6, m10, m14;
         float m3, m7, m11, m15;
     } Matrix;
-    typedef struct Float3 {
-        float f[3];
-    } Float3;
-    typedef struct Float16 {
-        float f[16];
-    } Float16;
 #endif
+
+// Helper types to be used instead of array return types for *ToFloat functions
+typedef struct Float3 {
+    float f[3];
+} Float3;
+typedef struct Float16 {
+    float f[16];
+} Float16;
 
 // Quaternion type
 typedef struct Quaternion {
@@ -115,105 +125,6 @@ typedef struct Quaternion {
     float z;
     float w;
 } Quaternion;
-
-#ifndef RAYMATH_EXTERN_INLINE
-
-//------------------------------------------------------------------------------------
-// Functions Declaration - math utils
-//------------------------------------------------------------------------------------
-RMDEF float Clamp(float value, float min, float max);           // Clamp float value
-
-//------------------------------------------------------------------------------------
-// Functions Declaration to work with Vector2
-//------------------------------------------------------------------------------------
-RMDEF Vector2 Vector2Zero(void);                                // Vector with components value 0.0f
-RMDEF Vector2 Vector2One(void);                                 // Vector with components value 1.0f
-RMDEF Vector2 Vector2Add(Vector2 v1, Vector2 v2);               // Add two vectors (v1 + v2)
-RMDEF Vector2 Vector2Subtract(Vector2 v1, Vector2 v2);          // Subtract two vectors (v1 - v2)
-RMDEF float Vector2Length(Vector2 v);                           // Calculate vector length
-RMDEF float Vector2DotProduct(Vector2 v1, Vector2 v2);          // Calculate two vectors dot product
-RMDEF float Vector2Distance(Vector2 v1, Vector2 v2);            // Calculate distance between two vectors
-RMDEF float Vector2Angle(Vector2 v1, Vector2 v2);               // Calculate angle between two vectors in X-axis
-RMDEF void Vector2Scale(Vector2 *v, float scale);               // Scale vector (multiply by value)
-RMDEF void Vector2Negate(Vector2 *v);                           // Negate vector
-RMDEF void Vector2Divide(Vector2 *v, float div);                // Divide vector by a float value
-RMDEF void Vector2Normalize(Vector2 *v);                        // Normalize provided vector
-
-//------------------------------------------------------------------------------------
-// Functions Declaration to work with Vector3
-//------------------------------------------------------------------------------------
-RMDEF Vector3 Vector3Zero(void);                                 // Vector with components value 0.0f
-RMDEF Vector3 Vector3One(void);                                  // Vector with components value 1.0f
-RMDEF Vector3 Vector3Add(Vector3 v1, Vector3 v2);                // Add two vectors
-RMDEF Vector3 Vector3Multiply(Vector3 v, float scalar);          // Multiply vector by scalar
-RMDEF Vector3 Vector3MultiplyV(Vector3 v1, Vector3 v2);          // Multiply vector by vector
-RMDEF Vector3 Vector3Subtract(Vector3 v1, Vector3 v2);           // Substract two vectors
-RMDEF Vector3 Vector3CrossProduct(Vector3 v1, Vector3 v2);       // Calculate two vectors cross product
-RMDEF Vector3 Vector3Perpendicular(Vector3 v);                   // Calculate one vector perpendicular vector
-RMDEF float Vector3Length(const Vector3 v);                      // Calculate vector length
-RMDEF float Vector3DotProduct(Vector3 v1, Vector3 v2);           // Calculate two vectors dot product
-RMDEF float Vector3Distance(Vector3 v1, Vector3 v2);             // Calculate distance between two points
-RMDEF void Vector3Scale(Vector3 *v, float scale);                // Scale provided vector
-RMDEF void Vector3Negate(Vector3 *v);                            // Negate provided vector (invert direction)
-RMDEF void Vector3Normalize(Vector3 *v);                         // Normalize provided vector
-RMDEF void Vector3Transform(Vector3 *v, Matrix mat);             // Transforms a Vector3 by a given Matrix
-RMDEF Vector3 Vector3Lerp(Vector3 v1, Vector3 v2, float amount); // Calculate linear interpolation between two vectors
-RMDEF Vector3 Vector3Reflect(Vector3 vector, Vector3 normal);    // Calculate reflected vector to normal
-RMDEF Vector3 Vector3Min(Vector3 vec1, Vector3 vec2);            // Return min value for each pair of components
-RMDEF Vector3 Vector3Max(Vector3 vec1, Vector3 vec2);            // Return max value for each pair of components
-RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
-RMDEF Float3 Vector3ToFloat_(Vector3 vec);                       // Returns Vector3 as float array
-
-//------------------------------------------------------------------------------------
-// Functions Declaration to work with Matrix
-//------------------------------------------------------------------------------------
-RMDEF float MatrixDeterminant(Matrix mat);                      // Compute matrix determinant
-RMDEF float MatrixTrace(Matrix mat);                            // Returns the trace of the matrix (sum of the values along the diagonal)
-RMDEF void MatrixTranspose(Matrix *mat);                        // Transposes provided matrix
-RMDEF void MatrixInvert(Matrix *mat);                           // Invert provided matrix
-RMDEF void MatrixNormalize(Matrix *mat);                        // Normalize provided matrix
-RMDEF Matrix MatrixIdentity(void);                              // Returns identity matrix
-RMDEF Matrix MatrixAdd(Matrix left, Matrix right);              // Add two matrices
-RMDEF Matrix MatrixSubstract(Matrix left, Matrix right);        // Substract two matrices (left - right)
-RMDEF Matrix MatrixTranslate(float x, float y, float z);        // Returns translation matrix
-RMDEF Matrix MatrixRotate(Vector3 axis, float angle);           // Returns rotation matrix for an angle around an specified axis (angle in radians)
-RMDEF Matrix MatrixRotateX(float angle);                        // Returns x-rotation matrix (angle in radians)
-RMDEF Matrix MatrixRotateY(float angle);                        // Returns y-rotation matrix (angle in radians)
-RMDEF Matrix MatrixRotateZ(float angle);                        // Returns z-rotation matrix (angle in radians)
-RMDEF Matrix MatrixScale(float x, float y, float z);            // Returns scaling matrix
-RMDEF Matrix MatrixMultiply(Matrix left, Matrix right);         // Returns two matrix multiplication
-RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top, double near, double far);  // Returns perspective projection matrix
-RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
-RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);    // Returns orthographic projection matrix
-RMDEF Matrix MatrixLookAt(Vector3 position, Vector3 target, Vector3 up);  // Returns camera look-at matrix (view matrix)
-RMDEF Float16 MatrixToFloat_(Matrix mat);                       // Returns float array of Matrix data
-
-//------------------------------------------------------------------------------------
-// Functions Declaration to work with Quaternions
-//------------------------------------------------------------------------------------
-RMDEF Quaternion QuaternionIdentity(void);                      // Returns identity quaternion
-RMDEF float QuaternionLength(Quaternion quat);                  // Compute the length of a quaternion
-RMDEF void QuaternionNormalize(Quaternion *q);                  // Normalize provided quaternion
-RMDEF void QuaternionInvert(Quaternion *quat);                  // Invert provided quaternion
-RMDEF Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2);    // Calculate two quaternion multiplication
-RMDEF Quaternion QuaternionLerp(Quaternion q1, Quaternion q2, float amount);    // Calculate linear interpolation between two quaternions
-RMDEF Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount);   // Calculate slerp-optimized interpolation between two quaternions
-RMDEF Quaternion QuaternionSlerp(Quaternion q1, Quaternion q2, float amount);   // Calculates spherical linear interpolation between two quaternions
-RMDEF Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to);      // Calculate quaternion based on the rotation from one vector to another
-RMDEF Quaternion QuaternionFromMatrix(Matrix matrix);                 // Returns a quaternion for a given rotation matrix
-RMDEF Matrix QuaternionToMatrix(Quaternion q);                        // Returns a matrix for a given quaternion
-RMDEF Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle);  // Returns rotation quaternion for an angle and axis
-RMDEF void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle);  // Returns the rotation angle and axis for a given quaternion
-RMDEF Quaternion QuaternionFromEuler(float roll, float pitch, float yaw);           // Returns he quaternion equivalent to Euler angles
-RMDEF Vector3 QuaternionToEuler(Quaternion q);                  // Return the Euler angles equivalent to quaternion (roll, pitch, yaw)
-RMDEF void QuaternionTransform(Quaternion *q, Matrix mat);      // Transform a quaternion given a transformation matrix
-
-#endif  // notdef RAYMATH_EXTERN_INLINE
-
-#endif  // RAYMATH_H
-//////////////////////////////////////////////////////////////////// end of header file
-
-#if defined(RAYMATH_IMPLEMENTATION) || defined(RAYMATH_EXTERN_INLINE)
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), fabs()
 
@@ -1390,4 +1301,4 @@ RMDEF void QuaternionTransform(Quaternion *q, Matrix mat)
     q->w = mat.m3*x + mat.m7*y + mat.m11*z + mat.m15*w;
 }
 
-#endif  // RAYMATH_IMPLEMENTATION
+#endif  // RAYMATH_H

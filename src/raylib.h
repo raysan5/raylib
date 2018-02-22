@@ -338,14 +338,6 @@ typedef struct Matrix {
     float m3, m7, m11, m15;
 } Matrix;
 
-typedef struct Float3 {
-    float f[3];
-} Float3;
-
-typedef struct Float16 {
-    float f[16];
-} Float16;
-
 // Color type, RGBA (32bit)
 typedef struct Color {
     unsigned char r;
@@ -749,19 +741,6 @@ RLAPI int ColorToInt(Color color);                                // Returns hex
 RLAPI Vector3 ColorToHSV(Color color);                            // Returns HSV values for a Color
 RLAPI Color GetColor(int hexValue);                               // Returns a Color struct from hexadecimal value
 RLAPI Color Fade(Color color, float alpha);                       // Color fade-in or fade-out, alpha goes from 0.0f to 1.0f
-
-// Math useful functions (available from raymath.h)
-RLAPI Vector3 Vector3Zero(void);                                  // Vector with components value 0.0f
-RLAPI Vector3 Vector3One(void);                                   // Vector with components value 1.0f
-RLAPI Matrix MatrixIdentity(void);                                // Returns identity matrix
-#ifndef Vector3ToFloat
-#define Vector3ToFloat(vec) (Vector3ToFloat_(vec).f)              // Returns Vector3 as float array
-RLAPI Float3 Vector3ToFloat_(Vector3 vec);                        // don't use, use above
-#endif
-#ifndef MatrixToFloat
-#define MatrixToFloat(mat) (MatrixToFloat_(mat).f)                // Returns Matrix as float array
-RLAPI Float16 MatrixToFloat_(Matrix mat);                         // don't use, use above
-#endif
 
 // Misc. functions
 RLAPI void ShowLogo(void);                                        // Activate raylib logo at startup (can be done with flags)
