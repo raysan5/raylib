@@ -1671,14 +1671,13 @@ Material LoadMaterialDefault(void)
 // Unload material from memory
 void UnloadMaterial(Material material)
 {
-    // Unload material shader
-    UnloadShader(material.shader);
+    // Unload material shader (avoid unloading default shader, managed by raylib)
+    if (material.shader.id != GetShaderDefault().id) UnloadShader(material.shader);
 
-    // Unload loaded texture maps
+    // Unload loaded texture maps (avoid unloading default texture, managed by raylib)
     for (int i = 0; i < MAX_MATERIAL_MAPS; i++)
     {
-        // NOTE: We already check for (tex.id > 0) inside function
-        rlDeleteTextures(material.maps[i].texture.id); 
+        if (material.maps[i].texture.id != GetTextureDefault().id) rlDeleteTextures(material.maps[i].texture.id); 
     }
 }
 
