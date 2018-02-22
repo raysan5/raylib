@@ -100,6 +100,12 @@
         float m2, m6, m10, m14;
         float m3, m7, m11, m15;
     } Matrix;
+    typedef struct Float3 {
+        float f[3];
+    } Float3;
+    typedef struct Float16 {
+        float f[16];
+    } Float16;
 #endif
 
 // Quaternion type
@@ -156,7 +162,7 @@ RMDEF Vector3 Vector3Reflect(Vector3 vector, Vector3 normal);    // Calculate re
 RMDEF Vector3 Vector3Min(Vector3 vec1, Vector3 vec2);            // Return min value for each pair of components
 RMDEF Vector3 Vector3Max(Vector3 vec1, Vector3 vec2);            // Return max value for each pair of components
 RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c); // Barycenter coords for p in triangle abc
-RMDEF float *Vector3ToFloat(Vector3 vec);                        // Returns Vector3 as float array
+RMDEF Float3 Vector3ToFloat_(Vector3 vec);                       // Returns Vector3 as float array
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Matrix
@@ -180,7 +186,7 @@ RMDEF Matrix MatrixFrustum(double left, double right, double bottom, double top,
 RMDEF Matrix MatrixPerspective(double fovy, double aspect, double near, double far);                        // Returns perspective projection matrix
 RMDEF Matrix MatrixOrtho(double left, double right, double bottom, double top, double near, double far);    // Returns orthographic projection matrix
 RMDEF Matrix MatrixLookAt(Vector3 position, Vector3 target, Vector3 up);  // Returns camera look-at matrix (view matrix)
-RMDEF float *MatrixToFloat(Matrix mat);                         // Returns float array of Matrix data
+RMDEF Float16 MatrixToFloat_(Matrix mat);                       // Returns float array of Matrix data
 
 //------------------------------------------------------------------------------------
 // Functions Declaration to work with Quaternions
@@ -548,16 +554,19 @@ RMDEF Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 }
 
 // Returns Vector3 as float array
-RMDEF float *Vector3ToFloat(Vector3 vec)
+RMDEF Float3 Vector3ToFloat_(Vector3 vec)
 {
-    static float buffer[3];
+    Float3 buffer;
 
-    buffer[0] = vec.x;
-    buffer[1] = vec.y;
-    buffer[2] = vec.z;
+    buffer.f[0] = vec.x;
+    buffer.f[1] = vec.y;
+    buffer.f[2] = vec.z;
 
     return buffer;
 }
+#ifndef Vector3ToFloat
+#define Vector3ToFloat(vec) (Vector3ToFloat_(vec).f) 
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Matrix math
@@ -993,29 +1002,32 @@ RMDEF Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
 }
 
 // Returns float array of matrix data
-RMDEF float *MatrixToFloat(Matrix mat)
+RMDEF Float16 MatrixToFloat_(Matrix mat)
 {
-    static float buffer[16];
+    Float16 buffer;
 
-    buffer[0] = mat.m0;
-    buffer[1] = mat.m1;
-    buffer[2] = mat.m2;
-    buffer[3] = mat.m3;
-    buffer[4] = mat.m4;
-    buffer[5] = mat.m5;
-    buffer[6] = mat.m6;
-    buffer[7] = mat.m7;
-    buffer[8] = mat.m8;
-    buffer[9] = mat.m9;
-    buffer[10] = mat.m10;
-    buffer[11] = mat.m11;
-    buffer[12] = mat.m12;
-    buffer[13] = mat.m13;
-    buffer[14] = mat.m14;
-    buffer[15] = mat.m15;
+    buffer.f[0] = mat.m0;
+    buffer.f[1] = mat.m1;
+    buffer.f[2] = mat.m2;
+    buffer.f[3] = mat.m3;
+    buffer.f[4] = mat.m4;
+    buffer.f[5] = mat.m5;
+    buffer.f[6] = mat.m6;
+    buffer.f[7] = mat.m7;
+    buffer.f[8] = mat.m8;
+    buffer.f[9] = mat.m9;
+    buffer.f[10] = mat.m10;
+    buffer.f[11] = mat.m11;
+    buffer.f[12] = mat.m12;
+    buffer.f[13] = mat.m13;
+    buffer.f[14] = mat.m14;
+    buffer.f[15] = mat.m15;
 
     return buffer;
 }
+#ifndef MatrixToFloat
+#define MatrixToFloat(mat) (MatrixToFloat_(mat).f)
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Quaternion math
