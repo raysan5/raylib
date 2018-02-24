@@ -8,11 +8,11 @@ set(RAYLIB raylib)    # Name of the generated library
 
 ### Config options ###
 # Shared library is always PIC. Static library should be PIC too if linked into a shared library
-set(WITH_PIC      OFF CACHE BOOL "Compile static library as position-independent code" OFF)
+option(WITH_PIC "Compile static library as position-independent code" OFF)
 # Build a static and/or shared raylib?
-set(SHARED OFF CACHE BOOL "Build raylib as a dynamic library")
-set(STATIC ON  CACHE BOOL "Build raylib as a static library")
-set(MACOS_FATLIB  ON  CACHE BOOL "Build fat library for both i386 and x86_64 on macOS")
+option(SHARED "Build raylib as a dynamic library" OFF)
+option(STATIC "Build raylib as a static library" ON)
+option(MACOS_FATLIB  "Build fat library for both i386 and x86_64 on macOS" ON)
 
 if(NOT (STATIC OR SHARED))
   message(FATAL_ERROR "Nothing to do if both -DSHARED=OFF and -DSTATIC=OFF...")
