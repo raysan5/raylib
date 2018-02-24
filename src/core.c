@@ -98,11 +98,12 @@
     #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
 
-#define RAYMATH_IMPLEMENTATION  // Define external out-of-line implementation of raymath here
-#include "raymath.h"            // Required for: Vector3 and Matrix functions
-
 #include "rlgl.h"           // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 #include "utils.h"          // Required for: fopen() Android mapping
+
+#define RAYMATH_IMPLEMENTATION  // Use raymath as a header-only library (includes implementation)
+#define RAYMATH_EXTERN_INLINE   // Compile raymath functions as static inline (remember, it's a compiler hint)
+#include "raymath.h"            // Required for: Vector3 and Matrix functions
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define GESTURES_IMPLEMENTATION

@@ -62,7 +62,7 @@ int main()
 
             Begin3dMode(camera);
 
-                DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, WHITE);
+                DrawModel(skybox, Vector3Zero(), 1.0f, WHITE);
                 
                 DrawGrid(10, 1.0f);
 
