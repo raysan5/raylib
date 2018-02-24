@@ -1782,14 +1782,14 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     {
         glGenBuffers(1, &mesh->vboId[4]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->vboId[4]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->vertexCount, mesh->tangents, drawHint);
-        glVertexAttribPointer(4, 3, GL_FLOAT, 0, 0, 0);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*mesh->vertexCount, mesh->tangents, drawHint);
+        glVertexAttribPointer(4, 4, GL_FLOAT, 0, 0, 0);
         glEnableVertexAttribArray(4);
     }
     else
     {
         // Default tangents vertex attribute
-        glVertexAttrib3f(4, 0.0f, 0.0f, 0.0f);
+        glVertexAttrib4f(4, 0.0f, 0.0f, 0.0f, 0.0f);
         glDisableVertexAttribArray(4);
     }
 
@@ -1804,7 +1804,7 @@ void rlLoadMesh(Mesh *mesh, bool dynamic)
     }
     else
     {
-        // Default tangents vertex attribute
+        // Default texcoord2 vertex attribute
         glVertexAttrib2f(5, 0.0f, 0.0f);
         glDisableVertexAttribArray(5);
     }
@@ -1868,8 +1868,8 @@ void rlUpdateMesh(Mesh mesh, int buffer, int numVertex)
         case 4:     // Update tangents (vertex tangents)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numVertex, mesh.tangents, GL_DYNAMIC_DRAW);
-            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*3*numVertex, mesh.tangents);
+            if (numVertex >= mesh.vertexCount) glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*numVertex, mesh.tangents, GL_DYNAMIC_DRAW);
+            else glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*4*numVertex, mesh.tangents);
         } break;
         case 5:     // Update texcoords2 (vertex second texture coordinates)
         {
@@ -2019,7 +2019,7 @@ void rlDrawMesh(Mesh mesh, Material material, Matrix transform)
         if (material.shader.locs[LOC_VERTEX_TANGENT] != -1)
         {
             glBindBuffer(GL_ARRAY_BUFFER, mesh.vboId[4]);
-            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TANGENT], 3, GL_FLOAT, 0, 0, 0);
+            glVertexAttribPointer(material.shader.locs[LOC_VERTEX_TANGENT], 4, GL_FLOAT, 0, 0, 0);
             glEnableVertexAttribArray(material.shader.locs[LOC_VERTEX_TANGENT]);
         }
 

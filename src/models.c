@@ -2329,12 +2329,12 @@ static Mesh LoadOBJ(const char *fileName)
     else
     {
         // Attempt to calculate mesh tangents and binormals using positions and texture coordinates
-        mesh.tangents = (float *)malloc(mesh.vertexCount*3*sizeof(float));
+        mesh.tangents = (float *)malloc(mesh.vertexCount*4*sizeof(float));
         // mesh.binormals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
 
         int vCount = 0;
         int uvCount = 0;
-        while (vCount < mesh.vertexCount*3)
+        while (vCount < mesh.vertexCount*4)
         {
             // Calculate mesh vertex positions as Vector3
             Vector3 v0 = { mesh.vertices[vCount], mesh.vertices[vCount + 1], mesh.vertices[vCount + 2] };
@@ -2363,17 +2363,22 @@ static Mesh LoadOBJ(const char *fileName)
             // Calculate vertex tangent
             Vector3 tangent = Vector3Subtract(t1, t2);
             Vector3Scale(&tangent, r);
+            
+            // TODO: Calculate tangent 4th component
 
             // Apply calculated tangents data to mesh struct
             mesh.tangents[vCount + 0] = tangent.x;
             mesh.tangents[vCount + 1] = tangent.y;
             mesh.tangents[vCount + 2] = tangent.z;
-            mesh.tangents[vCount + 3] = tangent.x;
-            mesh.tangents[vCount + 4] = tangent.y;
-            mesh.tangents[vCount + 5] = tangent.z;
-            mesh.tangents[vCount + 6] = tangent.x;
-            mesh.tangents[vCount + 7] = tangent.y;
-            mesh.tangents[vCount + 8] = tangent.z;
+            mesh.tangents[vCount + 3] = 0.0f;
+            mesh.tangents[vCount + 4] = tangent.x;
+            mesh.tangents[vCount + 5] = tangent.y;
+            mesh.tangents[vCount + 6] = tangent.z;
+            mesh.tangents[vCount + 7] = 0.0f;
+            mesh.tangents[vCount + 8] = tangent.x;
+            mesh.tangents[vCount + 9] = tangent.y;
+            mesh.tangents[vCount + 10] = tangent.z;
+            mesh.tangents[vCount + 11] = 0.0f;
 
             // TODO: add binormals to mesh struct and assign buffers id and locations properly
             /* // Calculate vertex binormal
@@ -2392,7 +2397,7 @@ static Mesh LoadOBJ(const char *fileName)
             mesh.binormals[vCount + 8] = binormal.z; */
 
             // Update vertex position and texture coordinates counters
-            vCount += 9;
+            vCount += 12;
             uvCount += 6;
         }
     }

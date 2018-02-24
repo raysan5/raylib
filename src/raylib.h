@@ -322,6 +322,14 @@ typedef struct Vector3 {
     float z;
 } Vector3;
 
+// Vector4 type
+typedef struct Vector4 {
+    float x;
+    float y;
+    float z;
+    float w;
+} Vector4;
+
 // Matrix type (OpenGL style 4x4 - right handed, column major)
 typedef struct Matrix {
     float m0, m4, m8, m12;
@@ -422,7 +430,7 @@ typedef struct Mesh {
     float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
     float *texcoords2;      // Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
     float *normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-    float *tangents;        // Vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+    float *tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
     unsigned char *colors;  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     unsigned short *indices;// Vertex indices (in case vertex data comes indexed)
 

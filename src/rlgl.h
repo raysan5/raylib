@@ -187,7 +187,7 @@ typedef unsigned char byte;
         float *texcoords;       // vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
         float *texcoords2;      // vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
         float *normals;         // vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-        float *tangents;        // vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
+        float *tangents;        // vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
         unsigned char *colors;  // vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
         unsigned short *indices;// vertex indices (in case vertex data comes indexed)
 
