@@ -29,6 +29,8 @@ endfunction()
 
 add_if_flag_works(-Werror=pointer-arith CMAKE_C_FLAGS)
 add_if_flag_works(-Werror=implicit-function-declaration CMAKE_C_FLAGS)
+# src/external/jar_xm.h does shady stuff
+add_if_flag_works(-fno-strict-aliasing CMAKE_C_FLAGS)
 
 if (ENABLE_ASAN)
     add_if_flag_works(-fno-omit-frame-pointer CMAKE_C_FLAGS CMAKE_LINKER_FLAGS)
