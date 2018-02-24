@@ -34,33 +34,19 @@ RAYLIB_PATH        ?= ..
 # One of PLATFORM_DESKTOP, PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
 PLATFORM              ?= PLATFORM_DESKTOP
 
-# Default path for raylib on Raspberry Pi, if installed in different path, update it!
-ifeq ($(PLATFORM),PLATFORM_RPI)
-    RAYLIB_PATH       ?= /home/pi/raylib
-endif
-
-# RAYLIB_RELEASE_PATH points to provided binaries or your immediate build of libraylib.
-# See below for additions.
-RAYLIB_RELEASE_PATH   ?= $(RAYLIB_PATH)/release/libs
-
 # Locations of your newly installed library and associated headers. See ../src/Makefile
-# On Linux, if you have installed raylib but cannot compile the examples, check that the
-# *_INSTALL_PATH values here are the same as those in src/Makefile or point to known locations.
-# To enable system-wide runtime linking to libraylib.so, run sudo ldconfig $(RAYLIB_INSTALL_PATH).
-# ldconfig is not necessary if using RAYLIB_RUNTIME_PATH below.
-RAYLIB_INSTALL_PATH   ?= /usr/local/lib/raysan5
-RAYLIB_H_INSTALL_PATH ?= /usr/local/include/raysan5
-
-# Set runtime path to custom location of shared library if desired, avoiding sudo ldconfig.
-# If you have compiled the examples but cannot run them, examine both RAYLIB_INSTALL_PATH and 
-# RAYLIB_RUNTIME_PATH. To see which libraries a built example is using, ldd core/core_basic_window;
-# Look for libraylib.so.1 => $(RAYLIB_INSTALL_PATH)/libraylib.so.1
-# or libraylib.so.1 => $(RAYLIB_RUNTIME_PATH)/libraylib.so.1 or similar listing.
-# Implemented for LINUX below with CFLAGS += -Wl,-rpath,$(RAYLIB_RUNTIME_PATH)
-# This should be a fully qualified path. RAYLIB_RELEASE_PATH doesn't work here
-# because it's a relative path. You must spell it out if needed.
-# To see the result, run readelf -d core/core_basic_window, looking at the RPATH attribute.
-RAYLIB_RUNTIME_PATH   ?= $(RAYLIB_INSTALL_PATH)
+# On Linux, if you have installed raylib but cannot compile the examples, check that
+# the *_INSTALL_PATH values here are the same as those in src/Makefile or point to known locations.
+# To enable system-wide compile-time and runtime linking to libraylib.so, run ../src/$ sudo make install RAYLIB_LIBTYPE_SHARED.
+# To enable compile-time linking to a special version of libraylib.so, change these variables here.
+# To enable runtime linking to a special version of libraylib.so, see EXAMPLE_RUNTIME_PATH below.
+# If there is a libraylib in both EXAMPLE_RUNTIME_PATH and RAYLIB_INSTALL_PATH, at runtime,
+# the library at EXAMPLE_RUNTIME_PATH, if present, will take precedence over the one at RAYLIB_INSTALL_PATH.
+# RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
+DESTDIR ?= /usr/local
+RAYLIB_INSTALL_PATH ?= $(DESTDIR)/lib
+# RAYLIB_H_INSTALL_PATH locates the installed raylib header and associated source files.
+RAYLIB_H_INSTALL_PATH ?= $(DESTDIR)/include
 
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
@@ -69,6 +55,7 @@ RAYLIB_LIBTYPE        ?= STATIC
 RAYLIB_BUILD_MODE     ?= RELEASE
 
 # Use external GLFW library instead of rglfw module
+# TODO: Review usage on Linux. Target version of choice. Switch on -lglfw or -lglfw3
 USE_EXTERNAL_GLFW     ?= FALSE
 
 # Use Wayland display server protocol on Linux desktop
@@ -103,6 +90,22 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     endif
 endif
 
+# RAYLIB_PATH adjustment for different platforms.
+# If using GNU make, we can get the full path to the top of the tree. Windows? BSD?
+# Required for ldconfig or other tools that do not perform path expansion.
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),LINUX)
+        RAYLIB_PREFIX ?= ..
+        RAYLIB_PATH    = $(realpath $(RAYLIB_PREFIX))
+    endif
+endif
+# Default path for raylib on Raspberry Pi, if installed in different path, update it!
+# This is not currently used by src/Makefile. Not sure of its origin or usage. Refer to wiki.
+# TODO: update install: target in src/Makefile for RPI, consider relation to LINUX.
+ifeq ($(PLATFORM),PLATFORM_RPI)
+    RAYLIB_PATH       ?= /home/pi/raylib
+endif
+
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Emscripten required variables
     EMSDK_PATH = C:/emsdk
@@ -114,7 +117,8 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EMSCRIPTEN=$(EMSDK_PATH)\emscripten\$(EMSCRIPTEN_VERSION)
 endif
 
-# Define raylib release directory for compiled library
+# Define raylib release directory for compiled library.
+# RAYLIB_RELEASE_PATH points to provided binaries or your freshly built version.
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/win32/mingw32
@@ -135,6 +139,20 @@ endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     RAYLIB_RELEASE_PATH = $(RAYLIB_PATH)/release/libs/html5
 endif
+
+# EXAMPLE_RUNTIME_PATH embeds a custom runtime location of libraylib.so or other desired libraries
+# into each example binary compiled with RAYLIB_LIBTYPE=SHARED. It defaults to RAYLIB_RELEASE_PATH
+# so that these examples link at runtime with your version of libraylib.so in ../release/libs/linux
+# without formal installation from ../src/Makefile. It aids portability and is useful if you have
+# multiple versions of raylib, have raylib installed to a non-standard location, or want to
+# bundle libraylib.so with your game. Change it to your liking.
+# Note: If, at runtime, there is a libraylib.so at both EXAMPLE_RUNTIME_PATH and RAYLIB_INSTALL_PATH,
+# The library at EXAMPLE_RUNTIME_PATH, if present, will take precedence over RAYLIB_INSTALL_PATH,
+# Implemented for LINUX below with CFLAGS += -Wl,-rpath,$(EXAMPLE_RUNTIME_PATH)
+# To see the result, run readelf -d core/core_basic_window; looking at the RPATH or RUNPATH attribute.
+# To see which libraries a built example is linking to, ldd core/core_basic_window;
+# Look for libraylib.so.1 => $(RAYLIB_INSTALL_PATH)/libraylib.so.1 or similar listing.
+EXAMPLE_RUNTIME_PATH   ?= $(RAYLIB_RELEASE_PATH)
 
 # Define default C compiler: gcc
 # NOTE: define g++ compiler if using C++
@@ -192,12 +210,16 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         CFLAGS += $(RAYLIB_PATH)/src/resources -Wl,--subsystem,windows
     endif
     ifeq ($(PLATFORM_OS),LINUX)
+        ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+            CFLAGS += -g
+            #CC = clang
+        endif
         ifeq ($(RAYLIB_LIBTYPE),STATIC)
         CFLAGS += -no-pie -D_DEFAULT_SOURCE
         endif
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
-        # Explicitly enable runtime link to libraylib
-        CFLAGS += -Wl,-rpath,$(RAYLIB_RUNTIME_PATH)
+        # Explicitly enable runtime link to libraylib.so
+        CFLAGS += -Wl,-rpath,$(EXAMPLE_RUNTIME_PATH)
         endif
     endif
 endif
@@ -231,6 +253,17 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
     INCLUDE_PATHS += -I/opt/vc/include/interface/vmcs_host/linux
     INCLUDE_PATHS += -I/opt/vc/include/interface/vcos/pthreads
 endif
+ifeq ($(PLATFORM),PLATFORM_DESKTOP)
+    ifeq ($(PLATFORM_OS),FREEBSD)
+        # Consider -L$(RAYLIB_H_INSTALL_PATH)
+        INCLUDE_PATHS += -I/usr/local/include
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        # Reset everything.
+        # Precedence: immediately local, installed version, raysan5 provided libs -I$(RAYLIB_H_INSTALL_PATH) -I$(RAYLIB_PATH)/release/include
+        INCLUDE_PATHS = -I$(RAYLIB_H_INSTALL_PATH) -isystem. -isystem$(RAYLIB_PATH)/src -isystem$(RAYLIB_PATH)/release/include -isystem$(RAYLIB_PATH)/src/external
+    endif
+endif
 
 # Define library paths containing required libs.
 # Precedence: immediately local, then raysan5 provided libs
@@ -238,13 +271,12 @@ LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),FREEBSD)
-        INCLUDE_PATHS += -I/usr/local/include
+        # Consider -L$(RAYLIB_INSTALL_PATH)
         LDFLAGS += -L. -Lsrc -L/usr/local/lib
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Reset everything.
         # Precedence: immediately local, installed version, raysan5 provided libs
-        INCLUDE_PATHS = -I. -I$(RAYLIB_H_INSTALL_PATH) -I$(RAYLIB_PATH)/release/include -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
         LDFLAGS = -L. -L$(RAYLIB_INSTALL_PATH) -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
     endif
 endif
@@ -259,7 +291,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
         LDLIBS = -lraylib -lopengl32 -lgdi32
-
         # Required for physac examples
         LDLIBS += -static -lpthread
     endif
@@ -267,17 +298,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # Libraries for Debian GNU/Linux desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
         LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt
-
         # On X11 requires also below libraries
         LDLIBS += -lX11
         # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
         #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
-
         # On Wayland windowing system, additional libraries requires
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
         endif
-
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
             LDLIBS += -lc
@@ -292,7 +320,6 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
         # Libraries for FreeBSD desktop compiling
         # NOTE: Required packages: mesa-libs
         LDLIBS = -lraylib -lGL -lpthread -lm
-
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
     endif
@@ -422,4 +449,3 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
-
