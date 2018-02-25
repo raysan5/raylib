@@ -708,7 +708,7 @@ static SpriteFont LoadBMFont(const char *fileName)
 
     int fontSize = 0;
     int texWidth, texHeight;
-    char texFileName[128];
+    char texFileName[129];
     int charsCount = 0;
 
     int base;   // Useless data
