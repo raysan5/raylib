@@ -111,7 +111,7 @@ extern void UnloadDefaultFont(void);
 // Load raylib default font
 extern void LoadDefaultFont(void)
 {
-    #define BIT_CHECK(a,b) ((a) & (1 << (b)))
+    #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
     // NOTE: Using UTF8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
     // http://www.utf8-chartable.de/unicode-utf8-table.pl
