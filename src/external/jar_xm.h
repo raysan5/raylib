@@ -2610,6 +2610,7 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx)
 int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const char* filename) {
     FILE* xmf;
     int size;
+    int ret;
 
     xmf = fopen(filename, "rb");
     if(xmf == NULL) {
@@ -2629,16 +2630,20 @@ int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const
     }
 
     char* data = malloc(size + 1);
-    if(fread(data, 1, size, xmf) < size) {
+    if(!data || fread(data, 1, size, xmf) < size) {
         fclose(xmf);
-        DEBUG_ERR("fread() failed");
+        DEBUG_ERR(data ? "fread() failed" : "malloc() failed");
+        free(data);
         *ctx = NULL;
         return 5;
     }
 
     fclose(xmf);
 
-    switch(jar_xm_create_context_safe(ctx, data, size, rate)) {
+    ret = jar_xm_create_context_safe(ctx, data, size, rate);
+    free(data);
+
+    switch(ret) {
     case 0:
         break;
 
