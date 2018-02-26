@@ -1006,6 +1006,11 @@ RLAPI void UnloadModel(Model model);                                            
 RLAPI Mesh LoadMesh(const char *fileName);                                                              // Load mesh from file
 RLAPI void UnloadMesh(Mesh *mesh);                                                                      // Unload mesh from memory (RAM and/or VRAM)
 
+// Mesh manipulation functions
+RLAPI BoundingBox MeshBoundingBox(Mesh mesh);                                                           // Compute mesh bounding box limits
+RLAPI void MeshTangents(Mesh *mesh);                                                                    // Compute mesh tangents 
+RLAPI void MeshBinormals(Mesh *mesh);                                                                   // Compute mesh binormals
+
 // Mesh generation functions
 RLAPI Mesh GenMeshPlane(float width, float length, int resX, int resZ);                                 // Generate plane mesh (with subdivisions)
 RLAPI Mesh GenMeshCube(float width, float height, float length);                                        // Generate cuboid mesh
@@ -1035,7 +1040,6 @@ RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle sourceRe
                             Vector3 center, float size, Color tint);                                    // Draw a billboard texture defined by sourceRec
 
 // Collision detection functions
-RLAPI BoundingBox CalculateBoundingBox(Mesh mesh);                                                      // Calculate mesh bounding box limits
 RLAPI bool CheckCollisionSpheres(Vector3 centerA, float radiusA, Vector3 centerB, float radiusB);       // Detect collision between two spheres
 RLAPI bool CheckCollisionBoxes(BoundingBox box1, BoundingBox box2);                                     // Detect collision between two bounding boxes
 RLAPI bool CheckCollisionBoxSphere(BoundingBox box, Vector3 centerSphere, float radiusSphere);          // Detect collision between box and sphere

@@ -2055,9 +2055,9 @@ RayHitInfo GetCollisionRayGround(Ray ray, float groundHeight)
     return result;
 }
 
-// Calculate mesh bounding box limits
+// Compute mesh bounding box limits
 // NOTE: minVertex and maxVertex should be transformed by model transform matrix
-BoundingBox CalculateBoundingBox(Mesh mesh)
+BoundingBox MeshBoundingBox(Mesh mesh)
 {
     // Get min and max vertex to construct bounds (AABB)
     Vector3 minVertex = { 0 };
@@ -2083,16 +2083,16 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
     return box;
 }
 
-// Compute provided mesh tangents 
+// Compute mesh tangents 
 void MeshTangents(Mesh *mesh)
 {
-    // TODO: Calculate mesh tangents
+    // TODO: Compute mesh tangents
 }
 
-// Compute provided mesh binormals
+// Compute mesh binormals
 void MeshBinormals(Mesh *mesh)
 {
-    // TODO: Calculate mesh binormals
+    // TODO: Compute mesh binormals
 }
 
 //----------------------------------------------------------------------------------
