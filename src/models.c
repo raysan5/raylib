@@ -2083,6 +2083,18 @@ BoundingBox CalculateBoundingBox(Mesh mesh)
     return box;
 }
 
+// Compute provided mesh tangents 
+void MeshTangents(Mesh *mesh)
+{
+    // TODO: Calculate mesh tangents
+}
+
+// Compute provided mesh binormals
+void MeshBinormals(Mesh *mesh)
+{
+    // TODO: Calculate mesh binormals
+}
+
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
@@ -2323,84 +2335,6 @@ static Mesh LoadOBJ(const char *fileName)
     }
 
     fclose(objFile);
-
-    // Security check, just in case no normals or no texcoords defined in OBJ
-    if (texcoordCount == 0) for (int i = 0; i < (2*mesh.vertexCount); i++) mesh.texcoords[i] = 0.0f;
-    else
-    {
-        // Attempt to calculate mesh tangents and binormals using positions and texture coordinates
-        mesh.tangents = (float *)malloc(mesh.vertexCount*4*sizeof(float));
-        // mesh.binormals = (float *)malloc(mesh.vertexCount*3*sizeof(float));
-
-        int vCount = 0;
-        int uvCount = 0;
-        while (vCount < mesh.vertexCount*4)
-        {
-            // Calculate mesh vertex positions as Vector3
-            Vector3 v0 = { mesh.vertices[vCount], mesh.vertices[vCount + 1], mesh.vertices[vCount + 2] };
-            Vector3 v1 = { mesh.vertices[vCount + 3], mesh.vertices[vCount + 4], mesh.vertices[vCount + 5] };
-            Vector3 v2 = { mesh.vertices[vCount + 6], mesh.vertices[vCount + 7], mesh.vertices[vCount + 8] };
-
-            // Calculate mesh texture coordinates as Vector2
-            Vector2 uv0 = { mesh.texcoords[uvCount + 0], mesh.texcoords[uvCount + 1] };
-            Vector2 uv1 = { mesh.texcoords[uvCount + 2], mesh.texcoords[uvCount + 3] };
-            Vector2 uv2 = { mesh.texcoords[uvCount + 4], mesh.texcoords[uvCount + 5] };
-
-            // Calculate edges of the triangle (position delta)
-            Vector3 deltaPos1 = Vector3Subtract(v1, v0);
-            Vector3 deltaPos2 = Vector3Subtract(v2, v0);
-
-            // UV delta
-            Vector2 deltaUV1 = { uv1.x - uv0.x, uv1.y - uv0.y };
-            Vector2 deltaUV2 = { uv2.x - uv0.x, uv2.y - uv0.y };
-
-            float r = 1.0f/(deltaUV1.x*deltaUV2.y - deltaUV1.y*deltaUV2.x);
-            Vector3 t1 = { deltaPos1.x*deltaUV2.y, deltaPos1.y*deltaUV2.y, deltaPos1.z*deltaUV2.y };
-            Vector3 t2 = { deltaPos2.x*deltaUV1.y, deltaPos2.y*deltaUV1.y, deltaPos2.z*deltaUV1.y };
-            // Vector3 b1 = { deltaPos2.x*deltaUV1.x, deltaPos2.y*deltaUV1.x, deltaPos2.z*deltaUV1.x };
-            // Vector3 b2 = { deltaPos1.x*deltaUV2.x, deltaPos1.y*deltaUV2.x, deltaPos1.z*deltaUV2.x };
-
-            // Calculate vertex tangent
-            Vector3 tangent = Vector3Subtract(t1, t2);
-            Vector3Scale(&tangent, r);
-            
-            // TODO: Calculate tangent 4th component
-
-            // Apply calculated tangents data to mesh struct
-            mesh.tangents[vCount + 0] = tangent.x;
-            mesh.tangents[vCount + 1] = tangent.y;
-            mesh.tangents[vCount + 2] = tangent.z;
-            mesh.tangents[vCount + 3] = 0.0f;
-            mesh.tangents[vCount + 4] = tangent.x;
-            mesh.tangents[vCount + 5] = tangent.y;
-            mesh.tangents[vCount + 6] = tangent.z;
-            mesh.tangents[vCount + 7] = 0.0f;
-            mesh.tangents[vCount + 8] = tangent.x;
-            mesh.tangents[vCount + 9] = tangent.y;
-            mesh.tangents[vCount + 10] = tangent.z;
-            mesh.tangents[vCount + 11] = 0.0f;
-
-            // TODO: add binormals to mesh struct and assign buffers id and locations properly
-            /* // Calculate vertex binormal
-            Vector3 binormal = Vector3Subtract(b1, b2);
-            Vector3Scale(&binormal, r);
-
-            // Apply calculated binormals data to mesh struct
-            mesh.binormals[vCount + 0] = binormal.x;
-            mesh.binormals[vCount + 1] = binormal.y;
-            mesh.binormals[vCount + 2] = binormal.z;
-            mesh.binormals[vCount + 3] = binormal.x;
-            mesh.binormals[vCount + 4] = binormal.y;
-            mesh.binormals[vCount + 5] = binormal.z;
-            mesh.binormals[vCount + 6] = binormal.x;
-            mesh.binormals[vCount + 7] = binormal.y;
-            mesh.binormals[vCount + 8] = binormal.z; */
-
-            // Update vertex position and texture coordinates counters
-            vCount += 12;
-            uvCount += 6;
-        }
-    }
 
     // Now we can free temp mid* arrays
     free(midVertices);
