@@ -752,11 +752,7 @@ int GetScreenHeight(void)
 void ShowCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #if defined(__linux__) && defined(_GLFW_X11)
-        XUndefineCursor(glfwGetX11Display(), glfwGetX11Window(window));
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    #endif
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
     cursorHidden = false;
 }
@@ -765,18 +761,7 @@ void ShowCursor()
 void HideCursor()
 {
 #if defined(PLATFORM_DESKTOP)
-    #if defined(__linux__) && defined(_GLFW_X11)
-        XColor col;
-        const char nil[] = {0};
-
-        Pixmap pix = XCreateBitmapFromData(glfwGetX11Display(), glfwGetX11Window(window), nil, 1, 1);
-        Cursor cur = XCreatePixmapCursor(glfwGetX11Display(), pix, pix, &col, &col, 0, 0);
-
-        XDefineCursor(glfwGetX11Display(), glfwGetX11Window(window), cur);
-        XFreeCursor(glfwGetX11Display(), cur);
-    #else
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    #endif
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 #endif
     cursorHidden = true;
 }
